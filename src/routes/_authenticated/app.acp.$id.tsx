@@ -405,6 +405,27 @@ function AcpDetailPage() {
         </div>
       ) : null}
 
+      {analysis.sanityCheck ? (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm"
+        >
+          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
+          <div className="space-y-1">
+            <p className="font-medium">
+              Estimarea diferă cu {analysis.sanityCheck.deviationPercent > 0 ? "+" : ""}
+              {analysis.sanityCheck.deviationPercent}% față de prețul de listare (
+              {formatMoney(analysis.sanityCheck.listingPrice, currency)}). Verifică comparabilele.
+            </p>
+            <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+              {analysis.sanityCheck.causes.map((cause) => (
+                <li key={cause}>{cause}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ) : null}
+
       <div data-tour="acp-result" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
           label="Valoare estimată · Calcul ACP"

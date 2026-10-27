@@ -17,6 +17,8 @@ import {
   ACP_CURRENT_ENGINE_VERSION,
   engineSupportsLiveMarketQuery,
   normalizeAcpEngineVersion,
+  engineSupportsGeoLocation,
+  engineVersionForRerun,
 } from "./engine-version";
 // `time-adjustment.server.ts` este server-only: se importă dinamic în handler.
 import type {
@@ -25,7 +27,8 @@ import type {
   AcpTimeAdjustmentSummary,
 } from "./time-adjustment";
 import type { AcpSubject } from "./scoring";
-import type { AcpComparableResult } from "./engine";
+import { detectResidentialComplex, residentialComplexByKey } from "./complexes";
+import type { AcpComparableResult, AcpSanityCheck } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
 import { acpDbError, acpError, acpSafeMessage } from "./safe-error";
 import {
@@ -75,7 +78,7 @@ const MEDIA_BUCKET = "property-media";
 const CANDIDATE_STATUSES = ["active", "reserved", "negotiation", "sold", "rented"] as const;
 
 const PROPERTY_COLUMNS =
-  "id,organization_id,title,reference,property_type,transaction_kind,status,archived_at,city,county,district,lat,lng,rooms,usable_surface,surface,floor,building_floors,build_year,finish_state,parking,parking_spaces,balcony,furnishing,price,currency";
+  "id,organization_id,title,reference,property_type,transaction_kind,status,archived_at,city,county,district,lat,lng,rooms,usable_surface,surface,floor,building_floors,build_year,finish_state,parking,parking_spaces,balcony,furnishing,price,currency,description";
 
 type PropertyRow = {
   id: string;
@@ -210,6 +213,28 @@ type SourceStat = {
  * același tip de proprietate, același tip de tranzacție și, când se cunoaște,
  * același oraș.
  */
+/**
+ * Motor v4: completează ansamblul rezidențial al proprietății analizate din
+ * titlul și descrierea ei (doar citire; fișa proprietății nu se modifică).
+ */
+async function prepareTargetSubject(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  subject: AcpSubject,
+  targetData: unknown,
+  propertyId: string | null,
+  engineVersion: number,
+): Promise<AcpSubject> {
+  if (!engineSupportsGeoLocation(engineVersion) || subject.complex) return subject;
+  const title = (targetData as { title?: string | null } | null)?.title ?? null;
+  let description: string | null = null;
+  if (propertyId) {
+    const { data } = await admin.from("properties").select("title,description").eq("id", propertyId).maybeSingle();
+    description = (data as { description?: string | null } | null)?.description ?? null;
+  }
+  const complex = detectResidentialComplex(title, description, subject.district, subject.neighborhood);
+  return complex ? { ...subject, complex: complex.key } : subject;
+}
+
 async function collectCandidates(params: {
   admin: Awaited<ReturnType<typeof loadAdmin>>;
   actor: Actor;
@@ -225,6 +250,8 @@ async function collectCandidates(params: {
   marketQueryContexts: MarketQueryMarketContext[];
 }> {
   const { admin, actor, target, targetPropertyId, sources } = params;
+  const geo = engineSupportsGeoLocation(params.engineVersion);
+  const targetComplex = geo ? residentialComplexByKey(target.complex) : null;
   const candidates: AcpCandidate[] = [];
   const stats: SourceStat[] = [];
   const marketQueryContexts: MarketQueryMarketContext[] = [];
@@ -233,7 +260,13 @@ async function collectCandidates(params: {
     query: T,
   ): T => {
     let out = query;
-    if (target.propertyType) out = out.eq("property_type", target.propertyType as never);
+    // Motor v4: garsoniera = apartament cu 1 cameră, în ambele sensuri.
+    const studioPair =
+      geo &&
+      (target.propertyType === "studio" ||
+        (target.propertyType === "apartment" && target.rooms === 1));
+    if (studioPair) out = (out as unknown as { in: (c: string, v: string[]) => T }).in("property_type", ["studio", "apartment"]);
+    else if (target.propertyType) out = out.eq("property_type", target.propertyType as never);
     if (target.transactionType) out = out.eq("transaction_kind", target.transactionType as never);
     if (target.city) out = out.eq("city", target.city as never);
     return out;
@@ -363,6 +396,42 @@ async function collectCandidates(params: {
       const widened = await runPoolQuery(false);
       if (widened.error) throw acpDbError("collect market listings", widened.error);
       rows = widened.data ?? [];
+    }
+    // Motor v4: pentru un ansamblu rezidențial se adaugă ofertele din
+    // localitatea ansamblului și cele care îl menționează explicit.
+    if (targetComplex) {
+      const extraQueries = [
+        applyMarketLocationFilters(
+          (() => {
+            let q = admin.from("market_listings").select("*").in("status", ["active", "inactive"]).order("last_seen_at", { ascending: false }).limit(200);
+            if (scope.propertyType) q = q.eq("property_type", scope.propertyType);
+            if (scope.transactionType) q = q.eq("transaction_type", scope.transactionType);
+            return q;
+          })(),
+          { city: targetComplex.city },
+        ),
+        (() => {
+          let q = admin
+            .from("market_listings")
+            .select("*")
+            .in("status", ["active", "inactive"])
+            .or(targetComplex.searchTerms.flatMap((t) => [`title.ilike.%${t}%`, `address.ilike.%${t}%`, `neighborhood.ilike.%${t}%`]).join(","))
+            .order("last_seen_at", { ascending: false })
+            .limit(200);
+          if (scope.propertyType) q = q.eq("property_type", scope.propertyType);
+          if (scope.transactionType) q = q.eq("transaction_type", scope.transactionType);
+          return q;
+        })(),
+      ];
+      const seen = new Set(rows.map((r) => (r as { id: string }).id));
+      for (const extra of await Promise.all(extraQueries)) {
+        if (extra.error) throw acpDbError("collect market listings", extra.error);
+        for (const r of extra.data ?? []) {
+          if (seen.has((r as { id: string }).id)) continue;
+          seen.add((r as { id: string }).id);
+          rows = [...rows, r];
+        }
+      }
     }
     const deduped = dedupeMarketCandidates(rows as never);
     // Portalurile suplimentare ale unei oferte unite între portaluri: fără ele,
@@ -585,6 +654,7 @@ async function persistRun(params: {
         priceHistory: c.priceHistory,
         relevanceScore: c.relevanceScore,
         timeAdjustment: c.timeAdjustment ?? null,
+        distanceKm: c.distanceKm ?? null,
       } as never,
     }));
     const { error } = await admin.from("acp_comparables").insert(rows);
@@ -673,6 +743,8 @@ async function persistRun(params: {
         timeAdjustment: result.timeAdjustment ?? null,
         // Motor v3: cifrele publicate de sursele interogate live, separat.
         marketQueryContexts: params.marketQueryContexts ?? [],
+        // Motor v4: avertismentul de bun-simț față de prețul de listare.
+        sanityCheck: result.sanityCheck ?? null,
       } as never,
 
     })
@@ -1017,7 +1089,7 @@ async function recalculate(
   if (!verdict.allowed) throw acpError(verdict.message);
 
   const previousStatus = analysis.status;
-  const subject = readSubject(analysis.target_data);
+  const storedSubject = readSubject(analysis.target_data);
   const sources = (analysis.sources as Record<string, boolean> | null) ?? {
     own_properties: true,
   };
@@ -1040,6 +1112,8 @@ async function recalculate(
 
   try {
 
+    const rerunVersion = engineVersionForRerun(storedEngineVersion);
+    const subject = await prepareTargetSubject(admin, storedSubject, analysis.target_data, analysis.property_id, rerunVersion);
     const { candidates, stats, marketQueryContexts } = await collectCandidates({
       admin,
       actor,
@@ -1049,10 +1123,10 @@ async function recalculate(
       // Recalcularea în loc păstrează versiunea motorului a analizei:
       // metodologia nu se schimbă în spatele utilizatorului, iar o analiză v1/v2
       // nu face nicio cerere de rețea.
-      engineVersion: storedEngineVersion,
+      engineVersion: rerunVersion,
     });
     const calibration = await loadCalibration(admin, actor.organizationId);
-    const engineVersion = storedEngineVersion;
+    const engineVersion = rerunVersion;
     const priceIndex = await loadPriceIndex(admin);
     const result = runAcpAnalysis(subject, candidates, overrides, {
       calibration,
@@ -1146,6 +1220,8 @@ export type AcpAnalysisView = {
   quality: ReturnType<typeof runAcpAnalysis>["quality"] | null;
   advanced: ReturnType<typeof runAcpAnalysis>["advanced"] | null;
   calibration: AcpCalibrationModel | null;
+  /** Motor v4: avertisment când estimarea diferă mult de prețul de listare. */
+  sanityCheck: AcpSanityCheck | null;
   comparables: AcpComparableView[];
   aiConfigured: boolean;
   ai: {
@@ -1214,6 +1290,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       quality?: AcpAnalysisView["quality"];
       advanced?: AcpAnalysisView["advanced"];
       calibration?: AcpCalibrationModel | null;
+      sanityCheck?: AcpSanityCheck | null;
       ai?: {
         provider?: string | null;
         model?: string | null;
@@ -1276,6 +1353,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       quality: analysisData.quality ?? null,
       advanced: analysisData.advanced ?? null,
       calibration: analysisData.calibration ?? null,
+      sanityCheck: analysisData.sanityCheck ?? null,
       aiConfigured: Boolean(process.env["LOVABLE_API_KEY"]),
       ai: analysisData.ai
         ? {
@@ -1712,7 +1790,13 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
         await admin.from("acp_analyses").update({ root_analysis_id: rootId }).eq("id", source.id);
       }
 
-      const subject = readSubject(source.target_data);
+      const subject = await prepareTargetSubject(
+        admin,
+        readSubject(source.target_data),
+        source.target_data,
+        source.property_id,
+        ACP_CURRENT_ENGINE_VERSION,
+      );
       const sources = (source.sources as Record<string, boolean> | null) ?? {
         own_properties: true,
       };
@@ -1802,3 +1886,4 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
       };
     },
   );
+
