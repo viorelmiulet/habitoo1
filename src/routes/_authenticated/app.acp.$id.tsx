@@ -11,6 +11,7 @@ import {
   Info,
   Layers,
   RefreshCw,
+  Sparkles,
   Target,
   TriangleAlert,
 } from "lucide-react";
@@ -33,6 +34,8 @@ import {
   type AcpComparableView,
 } from "@/lib/acp/analyses.functions";
 import { AcpAiInsight } from "@/components/app/AcpAiInsight";
+import { reviewAcpComparables } from "@/lib/acp/ai.functions";
+import type { AcpReviewVerdict } from "@/lib/acp/ai/review";
 import { useAiFeatures } from "@/hooks/use-ai-features";
 import { MarketIntelligenceCard } from "@/components/app/MarketIntelligenceCard";
 import { AcpVersionsCard } from "@/components/app/AcpVersionsCard";
@@ -94,7 +97,9 @@ function ComparableRow({
   engineVersion,
   onOverride,
   pending,
+  review,
 }: {
+  review?: AcpReviewVerdict | null;
   comparable: AcpComparableView;
   currency: string;
   engineVersion: number;
@@ -109,7 +114,7 @@ function ComparableRow({
     timeAdjustment: comparable.timeAdjustment,
   });
   return (
-    <li className={cn("px-5 py-4", !comparable.isSelected && "bg-muted/30")}>
+    <li className={cn("px-5 py-4", !comparable.isSelected && "bg-muted/30", review?.verdict === "suspect" && comparable.isSelected && "bg-warning/10")}>
       <div className="flex flex-wrap items-start gap-4">
         <div className="size-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
           {comparable.imageUrl ? (
@@ -134,6 +139,8 @@ function ComparableRow({
               {ACP_TIER_LABELS[comparable.tier] ?? comparable.tier}
             </StatusBadge>
             {comparable.isOutlier ? <StatusBadge tone="warning">Atipic</StatusBadge> : null}
+            {review?.verdict === "suspect" ? <StatusBadge tone="warning">Suspect (AI)</StatusBadge> : null}
+            {review?.verdict === "ok" ? <StatusBadge tone="success">OK (AI)</StatusBadge> : null}
             {comparable.manualOverride ? (
               <StatusBadge tone="info">
                 {comparable.manualOverride === "include" ? "Inclus manual" : "Exclus manual"}
@@ -156,6 +163,12 @@ function ComparableRow({
               .join(" · ") || "Date parțiale"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">{comparable.selectionReason}</p>
+          {review?.verdict === "suspect" && review.reason ? (
+            <p className="mt-1 flex items-start gap-1 text-xs font-medium text-foreground">
+              <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-warning" aria-hidden />
+              Verificare AI: {review.reason}
+            </p>
+          ) : null}
           {time ? (
             <p className="mt-1 text-xs text-muted-foreground">
               {time.applied
@@ -309,6 +322,7 @@ function AcpDetailPage() {
   const rerun = useServerFn(rerunAcpAnalysis);
   const setOverride = useServerFn(setAcpComparableOverride);
   const aiFeatures = useAiFeatures();
+  const review = useServerFn(reviewAcpComparables);
 
 
   const { data: analysis, isLoading } = useQuery({
@@ -338,6 +352,22 @@ function AcpDetailPage() {
       invalidate();
     },
     onError: (error: unknown) => toastError(error),
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: () => review({ data: { analysisId: id } }),
+    onSuccess: (result) => {
+      if (result.status === "ok") {
+        toast.success(
+          result.suspectCount === 0
+            ? "Verificare AI: niciun comparabil suspect"
+            : `Verificare AI: ${result.suspectCount} comparabile suspecte. Decizi tu dacă le excluzi.`,
+          { duration: 4000 },
+        );
+        invalidate();
+      } else toast.error(result.message);
+    },
+    onError: toastError,
   });
 
   const currency = analysis?.target.subject.currency ?? "EUR";
@@ -387,6 +417,18 @@ function AcpDetailPage() {
           </>
         }
         actions={
+          <>
+          {aiFeatures.isEnabled("acp_ai") && analysis.lastRunAt ? (
+            <Button
+              variant="outline"
+              data-tour="acp-ai-review"
+              disabled={reviewMutation.isPending || selectedCount === 0}
+              onClick={() => reviewMutation.mutate(undefined)}
+            >
+              <Sparkles className={cn("size-4", reviewMutation.isPending && "animate-pulse")} />
+              {reviewMutation.isPending ? "Se verifică…" : "Verificare AI"}
+            </Button>
+          ) : null}
           <Button
             variant="outline"
             data-tour="acp-rerun" disabled={rerunMutation.isPending}
@@ -395,6 +437,7 @@ function AcpDetailPage() {
             <RefreshCw className={cn("size-4", rerunMutation.isPending && "animate-spin")} />
             {rerunMutation.isPending ? "Se recalculează…" : "Recalculează"}
           </Button>
+          </>
         }
       />
 
@@ -540,7 +583,11 @@ function AcpDetailPage() {
 
       <div data-tour="acp-comparables"><SectionCard
         title="Comparabile"
-        description="Ordonate după scorul de similaritate. Poți include sau exclude manual orice comparabil — analiza se recalculează."
+        description={
+          analysis.aiReview && aiFeatures.isEnabled("acp_ai")
+            ? `Verificare AI din ${formatDateTime(analysis.aiReview.reviewedAt)}: ${Object.values(analysis.aiReview.items).filter((i) => i.verdict === "suspect").length} suspecte. Nimic nu se exclude automat — tu decizi, iar analiza se recalculează după decizia ta.`
+            : "Ordonate după scorul de similaritate. Poți include sau exclude manual orice comparabil — analiza se recalculează."
+        }
         icon={Building2}
         flush
       >
@@ -558,6 +605,7 @@ function AcpDetailPage() {
                 key={c.id}
                 comparable={c}
                 currency={currency}
+                review={aiFeatures.isEnabled("acp_ai") ? (analysis.aiReview?.items[c.key] ?? null) : null}
                 engineVersion={analysis.engineVersion}
                 pending={overrideMutation.isPending}
                 onOverride={(override) =>

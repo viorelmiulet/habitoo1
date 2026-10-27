@@ -1265,6 +1265,8 @@ export type AcpAnalysisView = {
     legacy: boolean;
     insight: AcpAiInsight | null;
   } | null;
+  /** „Verificare AI” a comparabilelor, salvată la această versiune. */
+  aiReview: import("./ai/review").AcpAiReviewRecord | null;
 };
 
 /** Detaliul complet al unei analize, cu imagini semnate pentru comparabile. */
@@ -1321,6 +1323,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       advanced?: AcpAnalysisView["advanced"];
       calibration?: AcpCalibrationModel | null;
       sanityCheck?: AcpSanityCheck | null;
+      aiReview?: import("./ai/review").AcpAiReviewRecord | null;
       ai?: {
         provider?: string | null;
         model?: string | null;
@@ -1385,6 +1388,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       calibration: analysisData.calibration ?? null,
       sanityCheck: analysisData.sanityCheck ?? null,
       aiConfigured: Boolean(process.env["LOVABLE_API_KEY"]),
+      aiReview: analysisData.aiReview ?? null,
       ai: analysisData.ai
         ? {
             provider: analysisData.ai.provider ?? null,
