@@ -62,6 +62,8 @@ import { useFilterList } from "@/hooks/use-list-state";
 import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 import { announceGuideContext } from "@/lib/onboarding-tour";
+import { ContactConsentFields } from "@/components/app/ContactConsentFields";
+import { EMPTY_CONTACT_CONSENT, contactConsentPatch } from "@/lib/contact-consent";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/")({
   head: () => { const title = "Habitoo CRM — contacte"; const description = "Clienții, proprietarii și partenerii agenției, cu filtre și detalii de contact."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -80,6 +82,7 @@ type Filters = {
   q: string;
   type: string;
   source: string;
+  consent: string;
   assigned: string;
   status: string;
   mine: boolean;
@@ -90,6 +93,7 @@ const emptyFilters: Filters = {
   q: "",
   type: "all",
   source: "all",
+  consent: "all",
   assigned: "all",
   status: "all",
   mine: false,
@@ -201,6 +205,8 @@ function ContactsPage() {
         .eq("organization_id", user!.organization!.id);
       if (filters.type !== "all") query = query.eq("type", filters.type as never);
       if (filters.source !== "all") query = query.eq("source", filters.source);
+      if (filters.consent === "yes") query = query.eq("gdpr_consent", true);
+      if (filters.consent === "no") query = query.or("gdpr_consent.eq.false,gdpr_consent.is.null");
       if (filters.assigned !== "all") query = query.eq("assigned_to", filters.assigned);
       if (filters.status !== "all") query = query.eq("status", filters.status);
       if (filters.mine) query = query.eq("assigned_to", user!.userId);
@@ -225,6 +231,7 @@ function ContactsPage() {
   const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "—";
 
   const [form, setForm] = useState({
+    ...EMPTY_CONTACT_CONSENT,
     first_name: "",
     last_name: "",
     type: "buyer",
@@ -248,7 +255,7 @@ function ContactsPage() {
         phone: form.phone || null,
         email: form.email || null,
         company: form.company || null,
-        source: form.source || null,
+        ...contactConsentPatch(form),
         notes: form.notes || null,
       });
       if (error) throw error;
@@ -257,6 +264,7 @@ function ContactsPage() {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       setDialogOpen(false);
       setForm({
+        ...EMPTY_CONTACT_CONSENT,
         first_name: "",
         last_name: "",
         type: "buyer",
