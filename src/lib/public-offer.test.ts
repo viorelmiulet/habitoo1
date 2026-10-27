@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 const mock = vi.hoisted(() => ({ filters: [] as unknown[][], order: [] as unknown[][], limits: [] as unknown[][] }));
 vi.mock('@tanstack/react-start', () => ({ createServerFn: () => { const chain = { inputValidator: () => chain, handler: (fn: unknown) => fn }; return chain; } }));
 vi.mock('@/integrations/supabase/client.server', () => ({ supabaseAdmin: { from: (table: string) => {
- const images = Array.from({length:12},(_,position)=>({id:`photo-${position}`,alt:null,is_primary:position===3,position,width:1200,height:900,include_in_publish:true,is_confidential:false}));
+ const images = Array.from({length:12},(_,position)=>({id:`photo-${position}`,alt:null,is_primary:position===3,property_id:'offer',position,width:1200,height:900,include_in_publish:true,is_confidential:false}));
  images.push({...images[0],id:'private',is_confidential:true}, {...images[1],id:'excluded',include_in_publish:false});
  let rows: any[] = table==='property_images'?images:table==='properties'?[{id:'offer',organization_id:'agency',features:[],utilities:[]}]:[{name:'Agency'}];
  const chain: Record<string, any> = { select:()=>chain, eq:(key:string,value:unknown)=>{ mock.filters.push([table,key,value]); if(table==='property_images') rows=rows.filter(r=>r[key]===value); return chain; }, is:()=>chain, in:()=>chain,
