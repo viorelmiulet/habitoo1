@@ -15,6 +15,7 @@ import {
   type AcpScoreComponent,
 } from "./config";
 import { marketPoolScope } from "../market/acp-location";
+import { residentialComplexByKey } from "./complexes";
 import { normalizePropertyType, normalizeTransactionType } from "../market/normalize";
 
 /** Reprezentarea normalizată a unei proprietăți folosită de motor. */
@@ -40,7 +41,20 @@ export type AcpSubject = {
   price?: number | null;
   currency?: string | null;
   pricePerSqm?: number | null;
+  /** Cheia ansamblului rezidențial recunoscut (vezi `complexes.ts`). */
+  complex?: string | null;
 };
+
+/** Opțiuni de scoring dependente de versiunea motorului. */
+export type AcpScoringOptions = {
+  /** Motor v4: locație după distanță, ansambluri, garsonieră = 1 cameră. */
+  geoLocation?: boolean;
+};
+
+/** Motor v4: distanța maximă (km) a unui comparabil direct. */
+export const ACP_DIRECT_MAX_DISTANCE_KM = 2;
+/** Motor v4: până la această distanță (km) scorul de locație e maxim. */
+export const ACP_LOCATION_FULL_SCORE_KM = 1;
 
 export type AcpSimilarityResult = {
   /** Scor total 0–100, rotunjit la 2 zecimale. */
@@ -52,6 +66,8 @@ export type AcpSimilarityResult = {
   tier: AcpComparableTier;
   /** Componente pentru care lipseau date și au primit scor neutru. */
   missing: AcpScoreComponent[];
+  /** Distanța în km, când ambele au coordonate. */
+  distanceKm?: number | null;
 };
 
 const DIACRITICS: Record<string, string> = {
@@ -240,6 +256,56 @@ export function scoreOther(target: AcpSubject, candidate: AcpSubject): number | 
   return (checks.filter(Boolean).length / checks.length) * 100;
 }
 
+/** Garsoniera / studio fără număr de camere = apartament cu 1 cameră. */
+export function effectiveRooms(subject: AcpSubject): number | null {
+  const rooms = num(subject.rooms);
+  if (rooms !== null) return rooms;
+  const type = normalizeText(subject.propertyType);
+  return /\b(studio|garsoniera)\b/.test(type) ? 1 : null;
+}
+
+/** Locul folosit la comparația pe nume: ansamblul are propria localitate. */
+function complexPlace(subject: AcpSubject): AcpSubject {
+  const complex = residentialComplexByKey(subject.complex);
+  if (!complex) return subject;
+  return {
+    ...subject,
+    city: complex.city,
+    county: complex.county,
+    sector: null,
+    district: complex.label,
+    neighborhood: complex.label,
+  };
+}
+
+/**
+ * Motor v4: scorul de locație. Același ansamblu = maxim; cu coordonate la
+ * ambele, scorul vine din distanță (≤1 km maxim, 0 peste 5 km); altfel numele
+ * zonei, cu ansamblul tratat ca zonă proprie (localitatea lui are prioritate).
+ */
+export function scoreLocationV4(target: AcpSubject, candidate: AcpSubject): number | null {
+  if (target.complex && target.complex === candidate.complex) return 100;
+  const km = haversineKm(target, candidate);
+  if (km !== null) {
+    if (km <= ACP_LOCATION_FULL_SCORE_KM) return 100;
+    const max = ACP_TOLERANCES.distanceMaxKm;
+    if (km >= max) return 0;
+    return clamp((100 * (max - km)) / (max - ACP_LOCATION_FULL_SCORE_KM));
+  }
+  const t = complexPlace(target);
+  const c = complexPlace(candidate);
+  const targetComplex = residentialComplexByKey(target.complex);
+  if (targetComplex && !candidate.complex) {
+    const sameCity = normalizeText(c.city) !== "" && normalizeText(c.city) === normalizeText(targetComplex.city);
+    if (sameCity) return 85;
+  }
+  return scoreLocation(t, c);
+}
+
+function scoreRoomsV4(target: AcpSubject, candidate: AcpSubject): number | null {
+  return scoreRooms({ ...target, rooms: effectiveRooms(target) }, { ...candidate, rooms: effectiveRooms(candidate) });
+}
+
 const SCORERS: Record<AcpScoreComponent, (t: AcpSubject, c: AcpSubject) => number | null> = {
   location: scoreLocation,
   area: scoreArea,
@@ -259,14 +325,18 @@ const SCORERS: Record<AcpScoreComponent, (t: AcpSubject, c: AcpSubject) => numbe
 export function calculateComparableSimilarity(
   target: AcpSubject,
   candidate: AcpSubject,
+  options: AcpScoringOptions = {},
 ): AcpSimilarityResult {
+  const scorers = options.geoLocation
+    ? { ...SCORERS, location: scoreLocationV4, rooms: scoreRoomsV4 }
+    : SCORERS;
   const components = {} as Record<AcpScoreComponent, number>;
   const weighted = {} as Record<AcpScoreComponent, number>;
   const missing: AcpScoreComponent[] = [];
   let total = 0;
 
   for (const key of ACP_SCORE_COMPONENTS) {
-    const raw = SCORERS[key](target, candidate);
+    const raw = scorers[key](target, candidate);
     const score = raw === null ? ACP_NEUTRAL_SCORE : clamp(raw);
     if (raw === null) missing.push(key);
     const contribution = (score * ACP_SCORE_WEIGHTS[key]) / 100;
@@ -276,5 +346,17 @@ export function calculateComparableSimilarity(
   }
 
   const similarityScore = round2(clamp(total));
-  return { similarityScore, components, weighted, tier: classifyComparable(similarityScore), missing };
+  let tier = classifyComparable(similarityScore);
+  const distanceKm = haversineKm(target, candidate);
+  if (!options.geoLocation) return { similarityScore, components, weighted, tier, missing };
+  // Motor v4: un comparabil direct trebuie să fie la cel mult 2 km.
+  if (tier === "direct" && distanceKm !== null && distanceKm > ACP_DIRECT_MAX_DISTANCE_KM) tier = "secondary";
+  return {
+    similarityScore,
+    components,
+    weighted,
+    tier,
+    missing,
+    distanceKm: distanceKm === null ? null : round2(distanceKm),
+  };
 }

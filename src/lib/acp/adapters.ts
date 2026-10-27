@@ -8,6 +8,7 @@
  */
 import type { AcpSubject } from "./scoring";
 import { pricePerSqm } from "./statistics";
+import { detectResidentialComplex } from "./complexes";
 
 type PropertyLike = {
   property_type?: string | null;
@@ -30,6 +31,8 @@ type PropertyLike = {
   furnishing?: string | null;
   price?: number | null;
   currency?: string | null;
+  title?: string | null;
+  description?: string | null;
 };
 
 /** Proprietate din Habitoo → subiect ACP. */
@@ -61,6 +64,7 @@ export function propertyToSubject(property: PropertyLike): AcpSubject {
     price: property.price ?? null,
     currency: property.currency ?? null,
     pricePerSqm: pricePerSqm(property.price, area),
+    complex: detectResidentialComplex(property.title, property.description, property.district)?.key ?? null,
   };
 }
 
@@ -87,6 +91,9 @@ type MarketListingLike = {
   price?: number | null;
   currency?: string | null;
   price_per_sqm?: number | null;
+  title?: string | null;
+  address?: string | null;
+  description?: string | null;
 };
 
 /** Ofertă de piață normalizată → subiect ACP. */
@@ -114,5 +121,8 @@ export function marketListingToSubject(listing: MarketListingLike): AcpSubject {
     price: listing.price ?? null,
     currency: listing.currency ?? null,
     pricePerSqm: listing.price_per_sqm ?? pricePerSqm(listing.price, area),
+    complex:
+      detectResidentialComplex(listing.title, listing.address, listing.neighborhood, listing.description)?.key ??
+      null,
   };
 }
