@@ -3770,6 +3770,56 @@ export type Database = {
           },
         ]
       }
+      listing_image_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          listing_id: string
+          locked_until: string | null
+          position: number
+          source_url: string
+          status: string
+          stored_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          listing_id: string
+          locked_until?: string | null
+          position: number
+          source_url: string
+          status?: string
+          stored_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          listing_id?: string
+          locked_until?: string | null
+          position?: number
+          source_url?: string
+          status?: string
+          stored_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_image_jobs_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
           availability: string | null
@@ -10170,6 +10220,28 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_listing_image_jobs: {
+        Args: { _batch_size: number; _lease_seconds: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          listing_id: string
+          locked_until: string | null
+          position: number
+          source_url: string
+          status: string
+          stored_url: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "listing_image_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       claim_onboarding_guide: { Args: { p_guide_id: string }; Returns: boolean }
       claim_portal_bulk_property: {
         Args: { _job_id: string; _property_id: string; _ttl_seconds: number }
@@ -10487,6 +10559,10 @@ export type Database = {
       is_superadmin: { Args: never; Returns: boolean }
       lacheie_resend_arm: { Args: never; Returns: undefined }
       lacheie_resend_tick: { Args: never; Returns: undefined }
+      listing_image_replace: {
+        Args: { _job_id: string; _stored_url: string }
+        Returns: boolean
+      }
       listing_place_label: { Args: { v: string }; Returns: string }
       listing_sector_label: { Args: { v: string }; Returns: string }
       mail_rate_limit_hit: {
