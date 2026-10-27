@@ -11,7 +11,7 @@ import { AiFeatureGate } from "@/components/app/ai/AiFeatureGate";
 import { MarketingAgentPanel } from "@/components/app/MarketingAgentPanel";
 
 export const Route = createFileRoute("/_authenticated/app/ai-marketing")({
-  head: () => appHead("AI Marketing — texte pentru anunțuri și social media"),
+  head: () => { const title = "AI Marketing — texte pentru anunțuri și social media"; const description = 'Pregătirea textelor pentru proprietăți și verificarea propunerilor AI Marketing.'; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: GatedMarketingAgentPage,
 });
 

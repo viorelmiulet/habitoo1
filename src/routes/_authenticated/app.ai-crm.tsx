@@ -27,7 +27,7 @@ import {
 } from "@/lib/ai/agents/crm/crm-client";
 
 export const Route = createFileRoute("/_authenticated/app/ai-crm")({
-  head: () => appHead("AI CRM — asistentul pentru clienți și lead-uri"),
+  head: () => { const title = "AI CRM — asistentul pentru clienți și lead-uri"; const description = 'Întrebări despre clienți, lead-uri și cereri, cu aprobarea acțiunilor propuse.'; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: GatedCrmAgentPage,
 });
 
@@ -70,7 +70,7 @@ function ApprovalCard({
   if (!proposal) return null;
   const isDraft = proposal.risk === "draft";
   return (
-    <Card className="border-primary/40">
+    <Card data-tour="ai-crm-approval" className="border-primary/40">
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">
@@ -238,7 +238,7 @@ function CrmAgentPage() {
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
         <Card>
           <CardContent className="space-y-4 py-6">
-            <div className="flex flex-wrap gap-2">
+            <div data-tour="ai-crm-examples" className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((suggestion) => (
                 <Button
                   key={suggestion.label}
@@ -320,7 +320,7 @@ function CrmAgentPage() {
             </div>
 
             <div className="space-y-2">
-              <Textarea
+              <Textarea data-tour="ai-crm-input"
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="Întreabă-mă despre clienți, lead-uri sau proprietăți..."
@@ -333,7 +333,7 @@ function CrmAgentPage() {
                 }}
               />
               <div className="flex justify-end">
-                <Button onClick={() => submit(input)} disabled={busy || input.trim() === ""}>
+                <Button data-tour="ai-crm-submit" onClick={() => submit(input)} disabled={busy || input.trim() === ""}>
                   {askMutation.isPending ? "Se trimite…" : "Trimite"}
                 </Button>
               </div>
@@ -341,7 +341,7 @@ function CrmAgentPage() {
           </CardContent>
         </Card>
 
-        <Card className="h-fit">
+        <Card data-tour="ai-crm-history" className="h-fit">
           <CardHeader>
             <CardTitle className="text-base">Istoric cereri</CardTitle>
           </CardHeader>

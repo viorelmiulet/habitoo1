@@ -123,7 +123,7 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div data-tour="listing-detail" className="space-y-6">
       <BackLink source={listing.source} />
       <PageHeader
         title={listing.title?.trim() || "Anunț fără titlu"}
@@ -178,14 +178,14 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
               <ImportListingButton listingId={listing.id} />
               {listing.phone ? (
                 <Button asChild variant="outline">
-                  <a href={`tel:${listing.phone}`}>
+                  <a data-tour="listing-phone" href={`tel:${listing.phone}`}>
                     <Phone className="size-4" /> {listing.phone}
                   </a>
                 </Button>
               ) : null}
               {listing.url ? (
                 <Button asChild>
-                  <a href={listing.url} target="_blank" rel="noopener noreferrer">
+                  <a data-tour="listing-original" href={listing.url} target="_blank" rel="noopener noreferrer">
                     {listing.source === "facebook" ? "Vezi postarea pe Facebook" : "Anunțul original"} <ExternalLink className="size-4" />
                   </a>
                 </Button>
@@ -236,7 +236,7 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
               variant="secondary"
               size="icon"
               className="absolute right-2 top-1/2 -translate-y-1/2"
-              aria-label="Poza următoare"
+              data-tour="listing-photo-next" aria-label="Poza următoare"
               disabled={current >= images.length - 1}
               onClick={() => setIndex(current + 1)}
             >
@@ -299,7 +299,7 @@ function Comments({ listingId }: { listingId: string }) {
   };
 
   return (
-    <section className="space-y-3 rounded-lg border border-border bg-card p-4">
+    <section data-tour="listing-comments" className="space-y-3 rounded-lg border border-border bg-card p-4">
       <h2 className="flex items-center gap-2 font-semibold">
         <MessageSquare className="size-4" />
         Comentarii{comments.data?.length ? ` (${comments.data.length})` : ""}
@@ -339,7 +339,7 @@ function Comments({ listingId }: { listingId: string }) {
           placeholder="Scrie un comentariu pentru ceilalți agenți…"
           maxLength={LISTING_COMMENT_MAX_LENGTH}
           rows={3}
-          aria-label="Comentariu nou"
+          data-tour="listing-comment-input" aria-label="Comentariu nou"
         />
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">

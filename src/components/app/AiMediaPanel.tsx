@@ -155,13 +155,13 @@ export function AiMediaPanel() {
   const busy = generate.isPending || uploading;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+    <div data-tour="studio-page" className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="size-4" /> Generare nouă
           </CardTitle>
-          {status.data?.monthlyUsage ? <p className="text-sm text-muted-foreground" aria-label="Consum Studio AI luna curentă">
+          {status.data?.monthlyUsage ? <p data-tour="studio-usage" className="text-sm text-muted-foreground" aria-label="Consum Studio AI luna curentă">
             Video {status.data.monthlyUsage.used.photo_video}/{status.data.monthlyUsage.limits.photo_video} · Imagini {status.data.monthlyUsage.used.marketing_image}/{status.data.monthlyUsage.limits.marketing_image} · Îmbunătățiri {status.data.monthlyUsage.used.photo_enhance}/{status.data.monthlyUsage.limits.photo_enhance}
           </p> : null}
         </CardHeader>
@@ -176,7 +176,7 @@ export function AiMediaPanel() {
           <Tabs value={kind} onValueChange={(value) => setKind(value as Kind)}>
             <TabsList className="grid w-full grid-cols-3">
               {KINDS.map((option) => (
-                <TabsTrigger key={option.kind} value={option.kind} className="min-h-11 text-xs">
+                <TabsTrigger data-tour={`studio-${option.kind}`} aria-label={option.label} key={option.kind} value={option.kind} className="min-h-11 text-xs">
                   <option.icon className="mr-1.5 size-4" />
                   <span className="hidden sm:inline">{option.label}</span>
                 </TabsTrigger>
@@ -226,6 +226,7 @@ export function AiMediaPanel() {
           </div>
 
           <Button
+            data-tour="studio-generate"
             type="button"
             className="min-h-11 w-full"
             disabled={busy || status.data?.configured === false}
@@ -244,7 +245,7 @@ export function AiMediaPanel() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-tour="studio-history">
         <CardHeader>
           <CardTitle>Rezultate</CardTitle>
         </CardHeader>

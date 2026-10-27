@@ -13,7 +13,7 @@ import { appHead } from "@/components/app/app-head";
 import { formatMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/app/acp/")({
-  head: () => appHead("Habitoo CRM — analize comparative de piață"),
+  head: () => { const title = "Habitoo CRM — analize comparative de piață"; const description = 'Analizele comparative salvate ale agenției, rezultate și comparabile.'; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: AcpListPage,
 });
 
@@ -43,14 +43,14 @@ function AcpListPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div data-tour="acp-saved" className="space-y-6">
       <PageHeader
         eyebrow="ACP"
         title="Analize salvate"
         description="Analizele comparative de piață create în agenția ta, cu comparabilele și scorurile păstrate pentru transparență."
         actions={
           <Button asChild>
-            <Link to="/app/acp/new">
+            <Link data-tour="acp-new-open" to="/app/acp/new">
               <PlusCircle className="size-4" /> Analiză nouă
             </Link>
           </Button>
@@ -66,7 +66,7 @@ function AcpListPage() {
           description="Creează prima analiză comparativă pentru a estima valoarea unei proprietăți pe baza pieței."
           action={
             <Button asChild>
-              <Link to="/app/acp/new">Analiză nouă</Link>
+              <Link data-tour="acp-new-open" to="/app/acp/new">Analiză nouă</Link>
             </Button>
           }
         />
@@ -76,7 +76,7 @@ function AcpListPage() {
             {(analyses ?? []).map((a) => (
               <li key={a.id}>
                 <Link
-                  to="/app/acp/$id"
+                  data-tour="acp-saved-row" to="/app/acp/$id"
                   params={{ id: a.id }}
                   className="flex flex-wrap items-center gap-3 px-5 py-3.5 transition-colors hover:bg-muted/50"
                 >

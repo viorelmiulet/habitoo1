@@ -188,7 +188,7 @@ export function MarketingAgentPanel({
         </CardHeader>
         <CardContent className="space-y-4">
           {allowPropertyPicker ? (
-            <div className="space-y-2">
+            <div data-tour="marketing-properties" className="space-y-2">
               <Label>Proprietăți (maximum 5)</Label>
               <div className="flex flex-wrap gap-2">
                 {(properties.data ?? []).slice(0, 60).map((option) => (
@@ -211,7 +211,7 @@ export function MarketingAgentPanel({
             </div>
           ) : null}
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div data-tour="marketing-options" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
               <Label>Canal</Label>
               <Select value={channel} onValueChange={(value) => setChannel(value as MarketingChannel)}>
@@ -290,6 +290,7 @@ export function MarketingAgentPanel({
 
           <div className="flex flex-wrap items-center gap-2">
             <Button
+              data-tour="marketing-generate"
               disabled={busy || ids.length === 0}
               onClick={() => generateMutation.mutate()}
             >
@@ -372,7 +373,7 @@ export function MarketingAgentPanel({
       ) : null}
 
       {(run?.results ?? []).map((result, index) => (
-        <Card key={`${result.propertyId}-${index}`}>
+        <Card data-tour="marketing-result" key={`${result.propertyId}-${index}`}>
           <CardHeader className="pb-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{result.propertyLabel}</Badge>

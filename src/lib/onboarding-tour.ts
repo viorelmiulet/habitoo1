@@ -1,5 +1,6 @@
 import type { AppRole } from "@/hooks/use-session";
 import type { AiFeatureKey, AiFeatureMap } from "@/lib/ai/features/keys";
+import { stage4Guides } from './onboarding-stage4';
 
 export type TourStep = {
   id: string; title: string; text: string;
@@ -8,7 +9,7 @@ export type TourStep = {
   event?: "click" | "input";
   hint?: string;
   confirmation?: string;
-  show?: "menu" | "portfolio" | "clients" | "management" | "filters" | "publish" | "details" | "contacts-cards" | "contact-requests" | "contact-leads" | "contact-activities" | "contact-documents" | "contact-notes" | "contact-timeline" | "request-create" | "request-leads" | "request-activities" | "contract-create" | "contract-edit" | "activity-reschedule" | "calendar-day" | "calendar-create" | "matching-direction" | "support-create";
+  show?: "menu" | "portfolio" | "clients" | "management" | "filters" | "publish" | "details" | "contacts-cards" | "contact-requests" | "contact-leads" | "contact-activities" | "contact-documents" | "contact-notes" | "contact-timeline" | "request-create" | "request-leads" | "request-activities" | "contract-create" | "contract-edit" | "activity-reschedule" | "calendar-day" | "calendar-create" | "matching-direction" | "support-create" | "map-filters" | "map-places" | "acp-adjustments" | "studio-video" | "studio-marketing" | "studio-enhance" | "topbar-search-open" | "topbar-search-close" | "topbar-add-open";
   fallbackNote?: string;
   /** Pasul se sare singur dacă elementul nu există pentru utilizatorul curent. */
   optional?: boolean;
@@ -27,6 +28,7 @@ export type GuideDefinition = {
   steps: TourStep[];
 };
 export const GUIDE_IDS = [
+  "anunturi-particulari", "anunturi-particulari-detail", "anunturi-import", "acp-new", "acp-saved", "acp-detail", "ai-crm", "ai-marketing", "ai-media", "ai-manager", "habitoo-ai", "agent-chat", "topbar-tools",
   "first-steps", "properties-list", "property-create",
   "properties-tools", "property-detail", "property-edit", "property-media",
   "property-publishing", "property-promotions", "property-video-social",
@@ -41,6 +43,7 @@ const adminRoles: AppRole[] = ["agency_admin", "superadmin"];
 const PROPERTY = "/app/properties/:id";
 
 const guideDefinitions: GuideDefinition[] = [
+  ...stage4Guides,
   { id: "first-steps", title: "Primii pași", group: "Dashboard", path: "/app", roles: ["agent", "agency_admin"], steps: [
     { id: "welcome", title: "Primii pași", text: "Bun venit! Descoperim pagina de start și principalele zone. Nu salvăm și nu trimitem nimic." },
     { id: "overview", title: "Privirea de ansamblu", text: "Aici vezi portofoliul și activitatea. Cifrele sunt cele la care ai acces.", selector: '[data-tour="dashboard-overview"]' },
@@ -295,6 +298,7 @@ export function guidePathMatches(guidePath: string, pathname: string): boolean {
   const path = pathname.replace(/\/$/, "") || "/";
   const want = guidePath.split("/").filter(Boolean);
   const have = path.split("/").filter(Boolean);
+  if (guidePath === "/app/*") return path === "/app" || path.startsWith("/app/");
   if (want.length !== have.length) return false;
   return want.every((segment, i) => segment.startsWith(":") || segment === have[i]);
 }
@@ -324,7 +328,7 @@ export function acceptsGuideInput(value: string): boolean { return value.trim().
 export function canShowAutomatically(autoStart: boolean, progress: { guide_id: string }[], id: string): boolean {
   return autoStart && !progress.some((p) => p.guide_id === id);
 }
-export const SAFE_SHOW_SELECTORS = {'contacts-cards': '[data-tour="contacts-cards"]', 'contact-requests': '[data-tour="contact-tab-requests"]', 'contact-leads': '[data-tour="contact-tab-leads"]', 'contact-activities': '[data-tour="contact-tab-activities"]', 'contact-documents': '[data-tour="contact-tab-documents"]', 'contact-notes': '[data-tour="contact-tab-notes"]', 'contact-timeline': '[data-tour="contact-tab-timeline"]', 'request-create': '[data-tour="request-create-open"]', 'request-leads': '[data-tour="request-tab-leads"]', 'request-activities': '[data-tour="request-tab-activities"]', 'contract-create': '[data-tour="contract-create-open"]', 'contract-edit': '[data-tour="contract-edit"]', 'activity-reschedule': '[data-tour="activity-reschedule"]', 'calendar-day': '[data-tour="calendar-day"]', 'calendar-create': '[data-tour="calendar-create"]', 'matching-direction': '[data-tour="matching-direction"]', 'support-create': '[data-tour="support-button"]'} as const;
+export const SAFE_SHOW_SELECTORS = {'map-filters':'[data-tour="map-filters-toggle"]','map-places':'[data-tour="map-places"] button','acp-adjustments':'[data-tour="acp-adjustments-toggle"]','studio-video':'[data-tour="studio-photo_video"]','studio-marketing':'[data-tour="studio-marketing_image"]','studio-enhance':'[data-tour="studio-photo_enhance"]','topbar-search-open':'[data-tour="global-search-open"]','topbar-search-close':'[data-tour="global-search-close"]','topbar-add-open':'[data-tour="quick-add-open"]','contacts-cards': '[data-tour="contacts-cards"]', 'contact-requests': '[data-tour="contact-tab-requests"]', 'contact-leads': '[data-tour="contact-tab-leads"]', 'contact-activities': '[data-tour="contact-tab-activities"]', 'contact-documents': '[data-tour="contact-tab-documents"]', 'contact-notes': '[data-tour="contact-tab-notes"]', 'contact-timeline': '[data-tour="contact-tab-timeline"]', 'request-create': '[data-tour="request-create-open"]', 'request-leads': '[data-tour="request-tab-leads"]', 'request-activities': '[data-tour="request-tab-activities"]', 'contract-create': '[data-tour="contract-create-open"]', 'contract-edit': '[data-tour="contract-edit"]', 'activity-reschedule': '[data-tour="activity-reschedule"]', 'calendar-day': '[data-tour="calendar-day"]', 'calendar-create': '[data-tour="calendar-create"]', 'matching-direction': '[data-tour="matching-direction"]', 'support-create': '[data-tour="support-button"]'} as const;
 export const SAFE_SHOW_ACTIONS = ["menu", "portfolio", "clients", "management", "filters", "publish", "details", ...Object.keys(SAFE_SHOW_SELECTORS)] as const;
 
 export const GUIDE_CONTEXT_EVENT = "habitoo:guide-context";

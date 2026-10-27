@@ -28,7 +28,7 @@ import { createAcpAnalysis } from "@/lib/acp/analyses.functions";
 
 
 export const Route = createFileRoute("/_authenticated/app/acp/new")({
-  head: () => appHead("Habitoo CRM — analiză comparativă nouă"),
+  head: () => { const title = "Habitoo CRM — analiză comparativă nouă"; const description = 'Pregătirea unei analize ACP cu proprietatea și sursele de comparabile.'; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: NewAcpPage,
 });
 
@@ -143,7 +143,7 @@ function NewAcpPage() {
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>Proprietate</Label>
                 <Select value={propertyId} onValueChange={setPropertyId}>
-                  <SelectTrigger>
+                  <SelectTrigger data-tour="acp-property-picker">
                     <SelectValue placeholder="Selectează o proprietate din portofoliu" />
                   </SelectTrigger>
                   <SelectContent>
@@ -168,7 +168,7 @@ function NewAcpPage() {
             </div>
 
             {subject ? (
-              <dl className="mt-5 grid grid-cols-2 gap-4 rounded-xl border border-border bg-muted/40 p-4 text-sm sm:grid-cols-4">
+              <dl data-tour="acp-subject" className="mt-5 grid grid-cols-2 gap-4 rounded-xl border border-border bg-muted/40 p-4 text-sm sm:grid-cols-4">
                 {[
                   ["Camere", subject.rooms ?? "—"],
                   ["Suprafață utilă", subject.usableArea ? `${subject.usableArea} mp` : "—"],
@@ -198,7 +198,7 @@ function NewAcpPage() {
             description="Alege de unde se colectează comparabilele."
             icon={Layers}
           >
-            <ul className="space-y-3">
+            <ul data-tour="acp-sources" className="space-y-3">
               {SOURCES.map((source) => (
                 <li
                   key={source.type}
@@ -236,7 +236,7 @@ function NewAcpPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button
-              size="lg"
+              data-tour="acp-create" size="lg"
               disabled={!selected || create.isPending}
               onClick={() => create.mutate(undefined)}
             >
@@ -255,7 +255,7 @@ function NewAcpPage() {
           description="Ponderi fixe, aceleași pentru orice analiză."
           icon={BarChart3}
         >
-          <ul className="space-y-2 text-sm">
+          <ul data-tour="acp-scoring" className="space-y-2 text-sm">
             {Object.entries(ACP_SCORE_WEIGHTS).map(([key, weight]) => (
               <li key={key} className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { useCurrentUser } from "@/hooks/use-session";
 import { getPrivateListingImports, importPrivateListing } from "@/lib/private-listing-import.functions";
+import { announceGuideContext } from '@/lib/onboarding-tour';
 
 export function ImportListingButton({ listingId }: { listingId: string }) {
   const [open, setOpen] = useState(false);
@@ -38,8 +39,8 @@ export function ImportListingButton({ listingId }: { listingId: string }) {
     } finally { locked.current = false; setPending(false); }
   };
   return <>
-    <Button type="button" variant="outline" className="min-h-10 h-auto whitespace-normal" disabled={pending || imports.isLoading || imports.isError || !user?.organization?.id}
-      onClick={() => existingId ? void openProperty(existingId) : setOpen(true)}>
+    <Button data-tour={existingId ? 'listing-imported' : 'listing-import-open'} type="button" variant="outline" className="min-h-10 h-auto whitespace-normal" disabled={pending || imports.isLoading || imports.isError || !user?.organization?.id}
+      onClick={() => { if(existingId) void openProperty(existingId); else { setOpen(true); announceGuideContext('listing:import'); } }}>
       {pending ? <LoaderCircle className="size-4 animate-spin" /> : existingId ? <Check className="size-4" /> : <Import className="size-4" />}
       {pending ? "Se importă…" : existingId ? "Importat" : "Importă în portofoliu"}
     </Button>

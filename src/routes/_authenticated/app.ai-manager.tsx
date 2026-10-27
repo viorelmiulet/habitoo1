@@ -11,7 +11,7 @@ import { AiFeatureGate } from "@/components/app/ai/AiFeatureGate";
 import { ManagerAgentPanel } from "@/components/app/ManagerAgentPanel";
 
 export const Route = createFileRoute("/_authenticated/app/ai-manager")({
-  head: () => appHead("Habitoo Manager — orchestrare agenți AI pentru agenția ta"),
+  head: () => { const title = "Habitoo Manager — orchestrare agenți AI pentru agenția ta"; const description = 'Planuri coordonate pentru CRM, ACP și marketing, cu aprobare umană.'; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: GatedManagerAgentPage,
 });
 
