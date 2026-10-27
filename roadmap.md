@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Trimite unui colaborator — ofertă neutră
+- [ ] Cod aleator revocabil, pagină și fotografii fără identitate, noindex și previzualizare neutră
+- [ ] Dialog cu agenți parteneri/destinatar manual, canale și activitate, butoane în detaliu/listă
+- [ ] Teste de confidențialitate/revocare și verificare fără cont desktop/telefon; fără mesaje reale
+
 ## Trimite oferta către client
 - [x] Buton pe pagina proprietății și meniul listei, dialog mobil complet cu client/canale/mesaj
 - [x] Eligibilitate activă/publicată și client din aceeași agenție pe server; email prin sendEmail existent, cheie stabilă, activitate/audit atomic; WhatsApp/SMS numai după confirmarea agentului
