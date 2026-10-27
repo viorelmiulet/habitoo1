@@ -54,8 +54,9 @@ export const getSocialRequests = createServerFn({ method: "POST" })
     if (data.propertyType) q = q.ilike("property_type", TYPE_PATTERNS[propertyTypeKey(data.propertyType)] ?? data.propertyType);
     if (data.rooms?.length) q = data.rooms.includes(5) ? q.or(`rooms.in.(${data.rooms.join(",")}),rooms.gte.5`) : q.in("rooms", data.rooms);
     // Buget: intervalul cererii se suprapune cu cel căutat.
-    if (data.budgetMin !== undefined) q = q.gte("budget_max", data.budgetMin);
-    if (data.budgetMax !== undefined) q = q.lte("budget_min", data.budgetMax);
+    // Cererile fără buget nu apar când filtrezi după buget; un singur capăt cunoscut e suficient.
+    if (data.budgetMin !== undefined) q = q.or(`budget_max.gte.${data.budgetMin},and(budget_max.is.null,budget_min.not.is.null)`);
+    if (data.budgetMax !== undefined) q = q.or(`budget_min.lte.${data.budgetMax},and(budget_min.is.null,budget_max.not.is.null)`);
     if (data.days !== undefined) q = q.gte("first_seen_at", daysCutoff(data.days));
     const { data: rows, count, error } = await q
       .order("posted_at", { ascending: false, nullsFirst: false }).order("first_seen_at", { ascending: false })
