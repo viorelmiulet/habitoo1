@@ -1,5 +1,6 @@
 // Modulul „Anunțuri particulari”: citește anunțurile importate (hbsync) ca
 // utilizatorul conectat. Orice agent sau administrator de agenție activă are acces.
+import { buildSearchPlaces, placeChoiceSchema, type SearchPlaceOption } from "./search-places";
 import { isListPageSize } from "@/lib/list-page-size";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -45,6 +46,7 @@ const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
 export const privateListingsFiltersSchema = z.object({
   scope: z.enum(["habitoo", "facebook"]).optional(),
+  places: z.array(placeChoiceSchema).optional(),
   county: z.string().max(100).optional(),
   city: z.string().max(80).optional(),
   zone: z.array(z.string().max(80)).max(30).optional(),
@@ -93,9 +95,9 @@ function applyOwnerFilters<Q extends OwnerFilterQuery<Q>>(query: Q, data: Privat
   const county = geographyKey(data.county);
   const city = geographyKey(data.city);
   const zones = [...new Set((data.zone ?? []).map(geographyKey).filter(Boolean))];
-  if (county) query = query.eq("county_key", county);
-  if (city) query = query.eq("city_key", city);
-  if (zones.length) {
+  if (!data.places?.length && county) query = query.eq("county_key", county);
+  if (!data.places?.length && city) query = query.eq("city_key", city);
+  if (!data.places?.length && zones.length) {
     // Mai multe zone odată: anunțurile din oricare zonă aleasă. Un sector include
     // și anunțurile fără cartier; linkurile vechi pot viza coloana zone.
     const sectors = zones.filter((z) => /^sector [1-6]$/.test(z));
@@ -163,8 +165,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     const todayStart = romaniaTodayStart().toISOString();
 
     if (sort !== "newest") {
-      let query = context.supabase
-        .from("listings")
+      let query = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }) : context.supabase.from("listings"))
         .select(LISTING_COLUMNS, { count: "exact" })
         .eq("is_owner", true);
       query = applyOwnerFilters(query, data);
@@ -175,8 +176,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
         .order("id")
         .range(from, from + size - 1);
       if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");
-      let todayQuery = context.supabase
-        .from("listings")
+      let todayQuery = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }) : context.supabase.from("listings"))
         .select("id", { count: "exact", head: true })
         .eq("is_owner", true);
       todayQuery = applyOwnerFilters(todayQuery, data).gte("first_seen_at", todayStart);
@@ -192,8 +192,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     // „Cele mai noi": faza 1 citește doar id/sursă/dată pentru toate
     // rezultatele filtrate, faza 2 aduce rândurile complete ale paginii
     // intercalate pe surse. Totalul și filtrele rămân identice.
-    let idQuery = context.supabase
-      .from("listings")
+    let idQuery = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }) : context.supabase.from("listings"))
       .select("id, source, first_seen_at")
       .eq("is_owner", true);
     idQuery = applyOwnerFilters(idQuery, data);
@@ -208,8 +207,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     const newToday = matches.filter((row) => (row.first_seen_at ?? "") >= todayStart).length;
     const pageIds = ordered.slice(from, from + size).map((row) => row.id);
     if (pageIds.length === 0) return { total: ordered.length, newToday, items: [] };
-    const pageQuery = context.supabase
-      .from("listings")
+    const pageQuery = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }) : context.supabase.from("listings"))
       .select(LISTING_COLUMNS)
       .eq("is_owner", true);
     const { data: rows, error } = await applyOwnerScope(pageQuery, data.scope)
@@ -230,7 +228,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
 export const getOwnerListingFacets = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ scope: z.enum(["habitoo", "facebook"]).optional() }).parse(input ?? {}))
-  .handler(async ({ data: input, context }): Promise<ListingFacets> => {
+  .handler(async ({ data: input, context }): Promise<ListingFacets & { places: SearchPlaceOption[] }> => {
     const rows: GeographyRow[] = [];
     for (let from = 0; ; from += 1000) {
       const query = context.supabase.from("listings")
@@ -241,7 +239,7 @@ export const getOwnerListingFacets = createServerFn({ method: "GET" })
       rows.push(...(data ?? []));
       if ((data?.length ?? 0) < 1000) break;
     }
-    return buildListingFacets(rows);
+    return { ...buildListingFacets(rows), places: buildSearchPlaces(rows) };
   });
 
 const LISTING_COLUMNS =

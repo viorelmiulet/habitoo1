@@ -6,8 +6,8 @@ import { z } from "zod";
 import { ChevronDown, ChevronUp, ExternalLink, MapPin, Phone, Search, SearchX, X } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
-import { SearchableSelect } from "@/components/app/SearchableSelect";
-import { ZonePickerDialog } from "@/components/app/ZonePickerDialog";
+import { SearchPlacesPicker } from "@/components/app/SearchPlacesPicker";
+import { legacyPlaceChoices, parsePlaceChoices, serializePlaces } from "@/lib/search-places";
 import { ImportListingButton } from "@/components/app/ImportListingButton";
 import { ArgusTab } from "@/components/app/argus/ArgusTab";
 import { HabitooMapIcon } from "@/components/brand/HabitooMapIcon";
@@ -35,12 +35,13 @@ import { normalizeListPageSize, type ListPageSize } from "@/lib/list-page-size";
 import { ListPagination, PageRange, PageSizeSelect } from "@/components/app/ListPagination";
 import { useListState } from "@/hooks/use-list-state";
 import { useCurrentUser } from "@/hooks/use-session";
-import { geographyKey, localityScope } from "@/lib/private-listing-geography";
+import { geographyKey } from "@/lib/private-listing-geography";
 
 const searchSchema = z.object({
   // Lipsa listei păstrează linkurile vechi în MAP Habitoo.
   lista: z.string().optional(),
   tab: z.enum(["apartamente", "case", "comerciale", "terenuri"]).optional(),
+  locuri: z.string().optional(),
   judet: z.string().optional(),
   oras: z.string().optional(),
   // Mai multe zone odată; linkurile vechi cu o singură zonă (string) rămân valide.
@@ -125,6 +126,7 @@ function money(value: number | null, currency: string | null) {
 /** Ciorna filtrelor: se aplică abia la „Căutare” sau Enter, nu la fiecare modificare. */
 type Draft = {
   tranzactie: string;
+  locuri: string;
   judet: string;
   oras: string;
   zona: string[];
@@ -153,6 +155,7 @@ const zonaList = (zona: Search["zona"]): string[] =>
 function draftFromSearch(search: Search): Draft {
   return {
     tranzactie: search.tranzactie ?? "",
+    locuri: search.locuri ?? serializePlaces(legacyPlaceChoices(search.judet, search.oras, search.zona)),
     judet: search.judet ?? "",
     oras: search.oras ?? "",
     zona: zonaList(search.zona),
@@ -223,9 +226,7 @@ function PrivateListingsPage() {
         sortare: prev.sortare,
         perPagina: prev.perPagina,
         tranzactie: (next.tranzactie || undefined) as Search["tranzactie"],
-        judet: next.judet || undefined,
-        oras: next.judet ? next.oras || undefined : undefined,
-        zona: next.judet && next.oras && next.zona.length ? next.zona : undefined,
+        locuri: next.locuri || undefined,
         zile: next.zile === "" ? undefined : Number(next.zile),
         pretMin: parseNum(next.pretMin),
         pretMax: parseNum(next.pretMax),
@@ -259,7 +260,7 @@ function PrivateListingsPage() {
   });
   const listings = useQuery({
     queryKey: [
-      "owner-listings", scope, search.tab, search.judet, search.oras, selectedZones.join(","), rooms.join(","), search.q, page, pageSize,
+      "owner-listings", scope, search.locuri, search.tab, search.judet, search.oras, selectedZones.join(","), rooms.join(","), search.q, page, pageSize,
       source, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
       search.sortare, search.zile, search.id, search.etajMin, search.etajMax, search.anMin, search.anMax,
       search.anNespecificat,
@@ -268,6 +269,7 @@ function PrivateListingsPage() {
       fetchListings({
         data: {
           scope,
+          places: parsePlaceChoices(search.locuri),
           category: search.tab,
           county: search.judet, city: search.oras, zone: selectedZones.length ? selectedZones : undefined, rooms, q: search.q, page, pageSize,
           source, transaction: search.tranzactie,
@@ -285,10 +287,6 @@ function PrivateListingsPage() {
     enabled: habitooTab,
   });
 
-  const draftCountyKey = geographyKey(draft.judet);
-  const draftCityKey = geographyKey(draft.oras);
-  const localities = facets.data?.localities[draftCountyKey] ?? [];
-  const zones = draft.oras ? (facets.data?.zones[localityScope(draft.judet, draft.oras)] ?? []) : [];
   const total = listings.data?.total ?? 0;
   const newToday = listings.data?.newToday ?? 0;
   const pages = Math.max(1, Math.ceil(total / pageSize));
@@ -300,7 +298,7 @@ function PrivateListingsPage() {
     search.mpMin, search.mpMax, search.etajMin, search.etajMax, search.anMin, search.anMax,
   ].filter((v) => v !== undefined && v !== "").length;
   const hasFilters = Boolean(
-    search.judet || search.oras || selectedZones.length || rooms.length || search.q || source || search.tranzactie ||
+    search.locuri || search.judet || search.oras || selectedZones.length || rooms.length || search.q || source || search.tranzactie ||
       search.tip || search.id || search.zile !== undefined ||
       search.pretMin !== undefined || search.pretMax !== undefined ||
       search.mpMin !== undefined || search.mpMax !== undefined ||
@@ -401,14 +399,7 @@ function PrivateListingsPage() {
               <SelectItem value="rent_day">Închiriere pe zi</SelectItem>
             </SelectContent>
           </Select>
-          <SearchableSelect
-            ariaLabel="Județ"
-            placeholder="Județ"
-            allLabel="Toate județele"
-            value={draftCountyKey}
-            options={facets.data?.counties ?? []}
-            onChange={(v) => patch({ judet: v, oras: "", zona: [] })}
-          />
+          <SearchPlacesPicker options={facets.data?.places ?? []} value={draft.locuri} onApply={(locuri) => { const next = { ...draft, locuri, judet: "", oras: "", zona: [] }; setDraft(next); void apply(next); }} />
           <Select value={draft.zile || ALL} onValueChange={(v) => patch({ zile: v === ALL ? "" : v })}>
             <SelectTrigger aria-label="Zile în piață"><SelectValue placeholder="Zile în piață" /></SelectTrigger>
             <SelectContent>
@@ -440,22 +431,6 @@ function PrivateListingsPage() {
         {extendedOpen ? (
           <div className="space-y-3 border border-border bg-card p-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <SearchableSelect
-                ariaLabel="Localitate"
-                placeholder="Localitate"
-                allLabel="Toate localitățile"
-                value={draftCityKey}
-                disabled={!draft.judet && !draft.oras}
-                options={localities}
-                onChange={(v) => patch({ oras: v, zona: [] })}
-              />
-              <ZonePickerDialog
-                zones={zones}
-                isBucharest={draftCityKey === "bucuresti"}
-                selected={draft.zona}
-                disabled={!draft.oras || zones.length === 0}
-                onApply={(next) => patch({ zona: next })}
-              />
               {scope === "habitoo" ? <Select value={draft.sursa || ALL} onValueChange={(v) => patch({ sursa: v === ALL ? "" : v })}>
                 <SelectTrigger aria-label="Sursă"><SelectValue placeholder="Sursă" /></SelectTrigger>
                 <SelectContent>

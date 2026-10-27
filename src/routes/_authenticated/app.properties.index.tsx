@@ -1,4 +1,6 @@
 import { createFileRoute, Link, useBlocker, useNavigate } from "@tanstack/react-router";
+import { SearchPlacesPicker } from "@/components/app/SearchPlacesPicker";
+import { buildSearchPlaces, legacyPlaceChoices, parsePlaceChoices, serializePlaces } from "@/lib/search-places";
 import { StatusChangeDialog } from "@/components/app/StatusChangeDialog";
 import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
@@ -335,12 +337,13 @@ function PropertiesPage() {
     queryKey: ["properties-meta", orgId],
     enabled: Boolean(orgId),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("properties")
-        .select("city,district,source")
-        .eq("organization_id", orgId as string)
-        .is("deleted_at", null);
-      if (error) throw error;
+      const data: { city: string | null; county: string | null; district: string | null; source: string | null }[] = [];
+      for (let offset = 0; ; offset += 1000) {
+        const { data: batch, error } = await supabase.from("properties").select("city,county,district,source").eq("organization_id", orgId as string).is("deleted_at", null).order("id").range(offset, offset + 999);
+        if (error) throw error;
+        data.push(...(batch ?? []));
+        if ((batch?.length ?? 0) < 1000) break;
+      }
       return {
         rows: data,
         sources: [...new Set(data.map((p) => p.source).filter(Boolean) as string[])].sort(),
@@ -348,21 +351,8 @@ function PropertiesPage() {
     },
   });
 
-  const cityOptions = useMemo(() => buildCityFilterOptions(meta?.rows ?? []), [meta?.rows]);
-  const selectedCityRawValues = useMemo(
-    () => cityRawValues(cityOptions, filters.city),
-    [cityOptions, filters.city],
-  );
-  const districtOptions = useMemo(
-    () => buildDistrictFilterOptions(meta?.rows ?? [], filters.city, cityOptions),
-    [meta?.rows, filters.city, cityOptions],
-  );
-
-  useEffect(() => {
-    if (meta?.rows && filters.district !== "all" && !districtOptions.some((option) => option.value === filters.district)) {
-      setFilters((current) => ({ ...current, district: "all" }));
-    }
-  }, [districtOptions, filters.district, meta?.rows]);
+  const placeOptions = useMemo(() => buildSearchPlaces(meta?.rows ?? []), [meta?.rows]);
+  const placeValue = filters.locuri || serializePlaces(legacyPlaceChoices(undefined, filters.city, filters.district));
 
   const { data: portfolioTotal = 0 } = useQuery({
     queryKey: ["properties", "portfolio-count", orgId],
@@ -444,8 +434,8 @@ function PropertiesPage() {
       (!portalFilter || portalIds !== undefined) &&
       (promotionValues.length === 0 || promotionIds !== undefined),
     queryFn: async () => {
-      let query = supabase
-        .from("properties")
+      const choices = parsePlaceChoices(placeValue);
+      let query = (choices.length ? supabase.rpc("search_properties_places", { _choices: choices }) : supabase.from("properties"))
         .select("*", { count: "exact" })
         .eq("organization_id", orgId as string)
         .is("deleted_at", null);
@@ -457,10 +447,6 @@ function PropertiesPage() {
       if (filters.transaction !== "all")
         query = query.eq("transaction_kind", filters.transaction as never);
       if (filters.type !== "all") query = query.eq("property_type", filters.type);
-      if (filters.city !== "all") {
-        query = query.in("city", selectedCityRawValues.length > 0 ? selectedCityRawValues : [filters.city]);
-      }
-      if (filters.district !== "all") query = query.eq("district", filters.district);
       if (filters.source !== "all") query = query.eq("source", filters.source);
       const agentClause = mainAgentFilter ? agentFilterClause(filters.agent) : ({ kind: "none" } as const);
       if (agentClause.kind === "unassigned") query = query.is("assigned_to", null);
@@ -734,7 +720,7 @@ function PropertiesPage() {
   const clearPill = (key: keyof Filters) =>
     setFilters((f) => ({ ...f, [key]: emptyFilters[key] }) as Filters);
 
-  const filtersActive = activePills.length > 0;
+  const filtersActive = activePills.length > 0 || Boolean(filters.locuri);
   const hiddenFilterKeys: (keyof Filters)[] = [
     "city", "district", "priceMin", "priceMax", "surfaceMin", "surfaceMax", "rooms",
     "bathrooms", "floorMin", "floorMax", "addedAfter", "addedBefore", "agent", "source",
@@ -878,14 +864,7 @@ function PropertiesPage() {
           ) : null}
 
           {shouldShowAdvancedFilters(filtersExpanded) ? <>
-            <div>
-              <label htmlFor="property-city" className={fieldLabelClass}>Oraș</label>
-              <Select value={filters.city} onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}><SelectTrigger id="property-city" className={cn("w-full", filters.city !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate orașele</SelectItem>{cityOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label} ({option.count})</SelectItem>)}</SelectContent></Select>
-            </div>
-            <div>
-              <label htmlFor="property-district" className={fieldLabelClass}>Zonă</label>
-              <Select value={filters.district} onValueChange={(v) => setFilters((f) => ({ ...f, district: v }))}><SelectTrigger id="property-district" className={cn("w-full", filters.district !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate zonele</SelectItem>{districtOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label} ({option.count})</SelectItem>)}</SelectContent></Select>
-            </div>
+            <div className="md:col-span-2"><label className={fieldLabelClass}>Localități și zone</label><SearchPlacesPicker options={placeOptions} value={placeValue} onApply={locuri => setFilters(f => ({ ...f, locuri, city: "all", district: "all" }))}/></div>
             <fieldset>
               <legend className={fieldLabelClass}>Preț (EUR)</legend>
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"><Input aria-label="Preț minim" inputMode="numeric" placeholder="Min" value={formatThousands(filters.priceMin)} onChange={(e) => setDigits("priceMin", e.target.value)} className={cn(filters.priceMin && valuedControlClass)} /><span className="text-muted-foreground">–</span><Input aria-label="Preț maxim" inputMode="numeric" placeholder="Max" value={formatThousands(filters.priceMax)} onChange={(e) => setDigits("priceMax", e.target.value)} className={cn(filters.priceMax && valuedControlClass)} /></div>
