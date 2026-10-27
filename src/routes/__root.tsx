@@ -108,6 +108,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       ...(matches.some(m => m.pathname.startsWith('/o/')) ? [] : [{ name: "author", content: "Habitoo" }]),
+      ...(matches.some(m => m.pathname.startsWith('/o/')) ? [] : [
       // Sitewide default — folosit doar de paginile fără titlu propriu.
       // Paginile publice își definesc titlul prin publicHead().
       { title: "Habitoo CRM — CRM imobiliar pentru agenții din România" },
@@ -122,6 +123,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Habitoo CRM organizează proprietățile, clienții, cererile și lead-urile agenției tale, cu matching automat, pipeline vizual, calendar și rapoarte. Creează agenția în câteva minute.",
       },
+      ]),
       // Doar ruta rădăcină potrivită = URL inexistent (404 global).
       ...(matches.length === 1
         ? [
