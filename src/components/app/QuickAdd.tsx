@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
 import { contactTypeLabels } from "@/lib/labels";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
+import { announceGuideContext } from '@/lib/onboarding-tour';
 
 function ContactSheet({
   open,
@@ -225,14 +226,14 @@ export function QuickAdd() {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={open=>{if(open)announceGuideContext('topbar:tools');}}>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" className="gap-1.5">
+          <Button data-tour="quick-add-open" aria-label="Adăugare rapidă" size="sm" className="gap-1.5">
             <Plus className="size-4" />
             <span className="hidden sm:inline">Adaugă</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent data-tour="quick-add-menu" align="end" className="w-56">
           <DropdownMenuLabel>Adăugare rapidă</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>

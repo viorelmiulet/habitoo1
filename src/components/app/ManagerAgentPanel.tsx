@@ -185,7 +185,7 @@ export function ManagerAgentPanel({ propertyId }: { propertyId?: string }) {
           </div>
 
           {propertyId ? null : (
-            <div className="space-y-2">
+            <div data-tour="manager-properties" className="space-y-2">
               <Label>Proprietăți implicate (opțional, maximum 5)</Label>
               <div className="flex flex-wrap gap-2">
                 {(properties.data ?? []).slice(0, 40).map((option) => (
@@ -246,6 +246,7 @@ export function ManagerAgentPanel({ propertyId }: { propertyId?: string }) {
 
           <div className="flex flex-wrap gap-2">
             <Button
+              data-tour="manager-run"
               type="button"
               disabled={busy || request.trim() === ""}
               onClick={() => runMutation.mutate()}
@@ -264,7 +265,7 @@ export function ManagerAgentPanel({ propertyId }: { propertyId?: string }) {
       </Card>
 
       {run ? (
-        <Card>
+        <Card data-tour="manager-plan">
           <CardHeader className="pb-3">
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle className="text-base">{run.intentLabel}</CardTitle>
@@ -335,7 +336,7 @@ export function ManagerAgentPanel({ propertyId }: { propertyId?: string }) {
             {approval ? (
               <>
                 <Separator />
-                <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
+                <div data-tour="manager-approval" className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
                   <div>
                     <p className="text-sm font-medium">{approval.label}</p>
                     <p className="text-xs text-muted-foreground">

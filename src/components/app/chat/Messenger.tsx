@@ -30,6 +30,7 @@ import {
 import type { CurrentUser } from "@/hooks/use-session";
 import { useAvatarUrl } from "@/components/app/UserAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { announceGuideContext } from '@/lib/onboarding-tour';
 
 /** Înălțimea vizibilă reală (scade când apare tastatura pe iOS/Android). */
 function useVisualViewport(active: boolean) {
@@ -252,7 +253,8 @@ export function Messenger({ user }: { user: CurrentUser }) {
       {!ui.panel && !mobileConv ? (
         <button
           type="button"
-          onClick={() => setUi((s) => ({ ...s, panel: true }))}
+          data-tour="chat-open"
+          onClick={() => {setUi((s) => ({ ...s, panel: true }));announceGuideContext('chat:directory');}}
           className={cn(
             "fixed right-3 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-40 flex size-12 items-center justify-center gap-2 rounded-full bg-primary text-sm font-medium text-primary-foreground shadow-lg transition-transform md:right-4 md:bottom-20 md:size-auto md:h-11 md:px-4 lg:bottom-5",
             flash && "animate-pulse ring-4 ring-primary/40",
@@ -270,6 +272,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
       ) : null}
       {ui.panel && !mobileConv ? (
         <aside
+          data-tour="chat-directory"
           style={vpStyle}
           aria-label="Mesaje"
           className="fixed inset-x-0 top-0 z-50 flex h-[100dvh] flex-col overflow-x-hidden border-l border-border bg-surface md:inset-auto md:top-16 md:right-0 md:bottom-0 md:z-40 md:w-80 md:shadow-xl"
@@ -304,6 +307,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
             <label className="relative block">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
+                data-tour="chat-search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Caută agent sau agenție"

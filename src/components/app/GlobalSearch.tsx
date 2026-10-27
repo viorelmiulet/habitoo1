@@ -11,6 +11,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
+import { announceGuideContext } from '@/lib/onboarding-tour';
+import { Button } from '@/components/ui/button';
 
 type Result =
   | { kind: "property"; id: string; label: string; meta: string }
@@ -128,18 +130,18 @@ export function GlobalSearch({ compact = false }: { compact?: boolean } = {}) {
   return (
     <>
       {compact ? (
-        <button
+        <button data-tour="global-search-open"
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => {setOpen(true);announceGuideContext('topbar:tools');}}
           aria-label="Caută în agenție (⌘K)"
           className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <Search className="size-[18px]" />
         </button>
       ) : (
-        <button
+        <button data-tour="global-search-open"
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => {setOpen(true);announceGuideContext('topbar:tools');}}
           aria-label="Caută în agenție (⌘K)"
           className="flex h-11 w-full min-w-0 items-center gap-2.5 rounded-2xl border border-border bg-surface px-4 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
@@ -152,8 +154,9 @@ export function GlobalSearch({ compact = false }: { compact?: boolean } = {}) {
       )}
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput value={term} onValueChange={setTerm} placeholder="Caută în toată agenția…" />
-        <CommandList>
+        <Button data-tour="global-search-close" variant="ghost" size="sm" onClick={()=>setOpen(false)} className="self-end">Închide căutarea</Button>
+        <CommandInput data-tour="global-search-input" value={term} onValueChange={setTerm} placeholder="Caută în toată agenția…" />
+        <CommandList data-tour="global-search-results">
           {term.trim().length < 2 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               Scrie minim 2 caractere. Funcționează și cu numere de telefon sau ID-uri externe.

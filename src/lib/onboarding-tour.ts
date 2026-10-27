@@ -1,5 +1,6 @@
 import type { AppRole } from "@/hooks/use-session";
 import type { AiFeatureKey, AiFeatureMap } from "@/lib/ai/features/keys";
+import { stage4Guides } from './onboarding-stage4';
 
 export type TourStep = {
   id: string; title: string; text: string;
@@ -42,6 +43,7 @@ const adminRoles: AppRole[] = ["agency_admin", "superadmin"];
 const PROPERTY = "/app/properties/:id";
 
 const guideDefinitions: GuideDefinition[] = [
+  ...stage4Guides,
   { id: "first-steps", title: "Primii pași", group: "Dashboard", path: "/app", roles: ["agent", "agency_admin"], steps: [
     { id: "welcome", title: "Primii pași", text: "Bun venit! Descoperim pagina de start și principalele zone. Nu salvăm și nu trimitem nimic." },
     { id: "overview", title: "Privirea de ansamblu", text: "Aici vezi portofoliul și activitatea. Cifrele sunt cele la care ai acces.", selector: '[data-tour="dashboard-overview"]' },
