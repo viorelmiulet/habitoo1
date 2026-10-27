@@ -55,7 +55,7 @@ export const privateListingsFiltersSchema = z.object({
   page: z.number().int().min(0).max(1000).optional(),
   pageSize: z.number().int().refine(isListPageSize, "Mărime de pagină invalidă.").optional(),
   sort: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
-  source: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar", "anuntul", "facebook"]).optional(),
+  source: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar", "anuntul", "facebook", "homezz"]).optional(),
   transaction: z.enum(["sale", "rent", "rent_day"]).optional(),
   priceMin: z.number().min(0).max(1e9).optional(),
   priceMax: z.number().min(0).max(1e9).optional(),
