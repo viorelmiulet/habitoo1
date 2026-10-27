@@ -15,6 +15,10 @@ export const hbsyncMarketListingSchema = z.object({
   deal_type: text(50), property_type: text(100), price: number, currency: text(8),
   surface_built: number, rooms: z.number().int().nonnegative().nullish(),
   city: text(100), county: text(100), sector: text(150), neighborhood: text(150),
+  // Coordonate opționale: o valoare în afara intervalului devine null, nu respinge anunțul.
+  latitude: z.number().finite().min(-90).max(90).nullish().catch(null),
+  longitude: z.number().finite().min(-180).max(180).nullish().catch(null),
+
   publisher_type: z.enum(["particular", "agency", "unknown"]).nullish(),
   first_seen_at: z.string().datetime({ offset: true }).nullish(),
   last_seen_at: z.string().datetime({ offset: true }).nullish(),
@@ -31,6 +35,8 @@ const mapping: MarketFieldMapping = {
   propertyType: "property_type", transactionType: "transaction", city: "city", county: "county",
   district: "neighborhood", neighborhood: "neighborhood", rooms: "rooms", totalArea: "surface",
   price: "price", currency: "currency", status: "status",
+  latitude: "latitude", longitude: "longitude",
+
 };
 const types: Record<string, string> = {
   apartment: "apartament", house: "casa", land: "teren", office: "birou",
@@ -64,6 +70,8 @@ export function normalizeHbsyncMarketListing(input: unknown):
     neighborhood: row.neighborhood ?? crm?.zona, rooms: row.rooms ?? crm?.camere,
     surface: row.surface_built ?? crm?.suprafata_mp, price: row.price ?? crm?.pret_eur,
     currency, status: row.status, image: images[0],
+    latitude: row.latitude, longitude: row.longitude,
+
   }, mapping);
   if (!result.ok) return { ok: false, reference: row.external_id, message: result.issues.map(i => i.message).join("; ") };
   const missing = hasAcpMinimumData(result.listing);
