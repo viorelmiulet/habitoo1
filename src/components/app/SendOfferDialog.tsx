@@ -12,14 +12,14 @@ import { getOfferClientDraft, previewOfferClientSend, sendOfferClient } from '@/
 import { offerMessage, OFFER_CHANNEL_LABELS, type OfferChannel } from '@/lib/offer-client';
 import { geographyKey } from '@/lib/private-listing-geography';
 
-export function SendOfferDialog({propertyId,open,onOpenChange}:{propertyId:string;open:boolean;onOpenChange:(open:boolean)=>void}){
+export function SendOfferDialog({propertyId,open,onOpenChange,initialPhone=''}:{propertyId:string;open:boolean;onOpenChange:(open:boolean)=>void;initialPhone?:string}){
  const load=useServerFn(getOfferClientDraft),preview=useServerFn(previewOfferClientSend),send=useServerFn(sendOfferClient);
  const qc=useQueryClient();
  const draft=useQuery({queryKey:['offer-client-draft',propertyId],queryFn:()=>load({data:{propertyId}}),enabled:open,staleTime:0});
  const [channel,setChannel]=useState<OfferChannel>('whatsapp'),[selected,setSelected]=useState(''),[query,setQuery]=useState(''),[phone,setPhone]=useState(''),[email,setEmail]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[handoff,setHandoff]=useState(false),[error,setError]=useState(''),[done,setDone]=useState(false);
  const key=useRef(''),lock=useRef(false),opened=useRef(false),initialized=useRef(false);
  const client=draft.data?.recipients.find(c=>c.key===selected);
- useEffect(()=>{if(open&&!opened.current){initialized.current=false;key.current=crypto.randomUUID();setChannel('whatsapp');setSelected('');setQuery('');setPhone('');setEmail('');setHandoff(false);setError('');setDone(false);setMessage('');}opened.current=open;},[open]);
+ useEffect(()=>{if(open&&!opened.current){initialized.current=false;key.current=crypto.randomUUID();setChannel('whatsapp');setSelected('');setQuery('');setPhone(initialPhone);setEmail('');setHandoff(false);setError('');setDone(false);setMessage('');}opened.current=open;},[open,initialPhone]);
  useEffect(()=>{if(open&&draft.data&&!initialized.current){setMessage(draft.data.message);initialized.current=true;}},[open,draft.data]);
  const payload=()=>({propertyId,channel,recipient:channel==='email'?email:phone,message,sendKey:key.current,contactId:client?.contactId??null,leadId:client?.leadId??null});
  const finish=async()=>{const result=await send({data:{...payload(),confirmed:true}});await Promise.all([qc.invalidateQueries({queryKey:['property',propertyId]}),qc.invalidateQueries({queryKey:['activities']}),qc.invalidateQueries({queryKey:['contact']}),qc.invalidateQueries({queryKey:['lead-detail']}),qc.invalidateQueries({queryKey:['lead']})]);setDone(true);toast.success(channel==='email'?'Oferta a fost trimisă.':'Activitatea „Ofertă trimisă” a fost salvată.');return result;};
