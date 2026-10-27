@@ -262,7 +262,7 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
                 i === current ? "border-primary" : "border-transparent"
               }`}
             >
-              <img src={src} alt="" loading="lazy" className="h-16 w-20 object-cover" />
+              <img referrerPolicy="no-referrer" src={src} alt="" loading="lazy" className="h-16 w-20 object-cover" />
             </button>
           ))}
         </div>
