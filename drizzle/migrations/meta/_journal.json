@@ -1359,6 +1359,20 @@
       "when": 1793082126521,
       "tag": "0193_offer_client_delivery_scope_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 194,
+      "version": "7",
+      "when": 1793082562897,
+      "tag": "0194_neutral_collaborator_offers",
+      "breakpoints": true
+    },
+    {
+      "idx": 195,
+      "version": "7",
+      "when": 1793083069179,
+      "tag": "0195_neutral_offer_privacy_hardening",
+      "breakpoints": true
     }
   ]
 }

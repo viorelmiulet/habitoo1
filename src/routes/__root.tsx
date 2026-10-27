@@ -6,6 +6,7 @@ import {
   createRootRouteWithContext,
   redirect,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -106,7 +107,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "author", content: "Habitoo" },
+      ...(matches.some(m => m.pathname.startsWith('/o/')) ? [] : [{ name: "author", content: "Habitoo" }]),
+      ...(matches.some(m => m.pathname.startsWith('/o/')) ? [] : [
       // Sitewide default — folosit doar de paginile fără titlu propriu.
       // Paginile publice își definesc titlul prin publicHead().
       { title: "Habitoo CRM — CRM imobiliar pentru agenții din România" },
@@ -121,6 +123,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Habitoo CRM organizează proprietățile, clienții, cererile și lead-urile agenției tale, cu matching automat, pipeline vizual, calendar și rapoarte. Creează agenția în câteva minute.",
       },
+      ]),
       // Doar ruta rădăcină potrivită = URL inexistent (404 global).
       ...(matches.length === 1
         ? [
@@ -134,7 +137,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      ...(matches.some(m => m.pathname.startsWith('/o/')) ? [{ rel: "icon", href: "data:," }] : [{ rel: "icon", href: "/favicon.png", type: "image/png" }]),
     ],
   }),
   shellComponent: RootShell,
@@ -159,13 +162,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const neutral = useRouterState({ select: state => state.location.pathname.startsWith('/o/') });
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster position="top-right" richColors />
-      <PublicTrackers />
+      {!neutral && <PublicTrackers />}
     </QueryClientProvider>
   );
 }

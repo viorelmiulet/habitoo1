@@ -1,4 +1,6 @@
 import { SendOfferDialog } from "@/components/app/SendOfferDialog";
+import { SendCollaboratorOfferDialog } from "@/components/app/SendCollaboratorOfferDialog";
+import { neutralOfferReason } from "@/lib/neutral-offer";
 import { offerSendReason } from "@/lib/offer-client";
 import { formatFloorLabel } from "@/lib/property-floor";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
@@ -181,6 +183,7 @@ function PropertyDetailPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const [sendOfferOpen, setSendOfferOpen] = useState(false);
+  const [collaboratorOfferOpen, setCollaboratorOfferOpen] = useState(false);
   const [reassignOpen, setReassignOpen] = useState(false);
   const agencyLogoUrl = useAgencyLogoUrl(user?.organization?.logo_path);
 
@@ -833,6 +836,7 @@ function PropertyDetailPage() {
         <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5" data-tour="property-actions">
           {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" data-tour="property-edit-button" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
           <span title={offerSendReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(offerSendReason(property))} onClick={() => setSendOfferOpen(true)}><Share2 /> Trimite oferta</Button></span>
+          <span title={neutralOfferReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(neutralOfferReason(property))} onClick={() => setCollaboratorOfferOpen(true)}><Share2 /> Trimite unui colaborator</Button></span>
           {offerSendReason(property) ? <span className="text-xs text-muted-foreground">{offerSendReason(property)}</span> : null}
           <Button variant="outline" data-tour="property-viewing" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
           <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
@@ -1311,12 +1315,12 @@ function PropertyDetailPage() {
 
         <TabsContent value="history">
           <div className="panel overflow-hidden">
-            {data?.activities.filter(a => a.title === "Ofertă trimisă").map(a => <div key={a.id} className="border-b border-border px-5 py-3 text-sm"><p className="font-medium">{a.title}</p><p className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)} · {a.description}</p></div>)}
-            {(data?.audit.length ?? 0) === 0 && !data?.activities.some(a => a.title === "Ofertă trimisă") ? (
+            {data?.activities.filter(a => ["Ofertă trimisă", "Ofertă trimisă colaboratorului"].includes(a.title)).map(a => <div key={a.id} className="border-b border-border px-5 py-3 text-sm"><p className="font-medium">{a.title}</p><p className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)} · {a.description}</p></div>)}
+            {(data?.audit.length ?? 0) === 0 && !data?.activities.some(a => ["Ofertă trimisă", "Ofertă trimisă colaboratorului"].includes(a.title)) ? (
               <EmptyState title="Niciun eveniment în istoric" />
             ) : (
               <ul className="divide-y divide-border">
-                {data?.audit.filter(a => a.action !== "Ofertă trimisă" || !data.activities.some(activity => activity.title === "Ofertă trimisă")).map((a) => (
+                {data?.audit.filter(a => !["Ofertă trimisă", "Ofertă trimisă colaboratorului"].includes(a.action) || !data.activities.some(activity => activity.title === a.action)).map((a) => (
                   <li key={a.id} className="px-5 py-3 text-sm">
                     <p className="font-medium">{a.action}</p>
                     <p className="text-xs text-muted-foreground">{formatDateTime(a.created_at)}</p>
@@ -1329,6 +1333,7 @@ function PropertyDetailPage() {
       </Tabs>
 
       <SendOfferDialog propertyId={id} open={sendOfferOpen} onOpenChange={setSendOfferOpen} />
+      <SendCollaboratorOfferDialog propertyId={id} open={collaboratorOfferOpen} onOpenChange={setCollaboratorOfferOpen} />
       <ActivityDialog
         open={activityDialog.open}
         onOpenChange={(open) => setActivityDialog((s) => ({ ...s, open }))}
