@@ -148,10 +148,8 @@ export const listAcpAiInsights = createServerFn({ method: "POST" })
     return records;
   });
 
-export const generateAcpAiAnalysis = createServerFn({ method: "POST" })
-  .middleware([requireActiveOrgAuth])
-  .inputValidator((data: unknown) => z.object({ analysisId: z.string().uuid() }).parse(data))
-  .handler(async ({ context, data }): Promise<AcpAiGenerateResult> => {
+/** Handler pur (testabil fără compilatorul de server functions). */
+export async function runGenerateAcpAiAnalysis({ context, data }: { context: unknown; data: { analysisId: string } }): Promise<AcpAiGenerateResult> {
     const userId = (context as AuthContext).userId;
     const admin = await loadAdmin();
     const organizationId = await loadOrganizationId(admin, userId);
@@ -428,7 +426,12 @@ export const generateAcpAiAnalysis = createServerFn({ method: "POST" })
       analysisVersion,
       snapshotAt,
     };
-  });
+}
+
+export const generateAcpAiAnalysis = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) => z.object({ analysisId: z.string().uuid() }).parse(data))
+  .handler(runGenerateAcpAiAnalysis);
 
 // ==================== Verificare AI a comparabilelor ====================
 
