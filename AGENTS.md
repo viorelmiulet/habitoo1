@@ -60,4 +60,4 @@
 - Galleries share PhotoViewer; client offers follow src/lib/AGENTS.md; guide clicks stay safe. Why: privacy.
 - Lists share ListPagination/use-list-state; geography uses scoped choices/invoker RPCs (src/lib/AGENTS.md). Why: safe OR/counts.
 - Public SSR/feeds read the DB via `publicRead` (timeout, logged fallback); `public_llms_statistics` reads an hourly cron cache. Why: no 500s under load.
-- Social client requests (Facebook groups) live only in `social_requests` (upsert on source/external_id via `/api/public/requests/upsert`, DB trigger normalizes geography, 30-day RLS window + nightly purge); matching rules live in `src/lib/social-requests.ts`. Why: personal data kept separate from offers and from MAP Facebook.
+- FB client requests: only `social_requests` (keyed upsert, DB geography, 30-day RLS+purge); matching in `src/lib/social-requests.ts`. Why: personal data apart from offers.
