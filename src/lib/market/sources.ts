@@ -71,6 +71,11 @@ export const MARKET_SOURCES: MarketSourceDefinition[] = [
     notes: "Import separat prin /api/public/market-listings/upsert; particulari și agenții.",
   },
   {
+    id: "homezz", name: "Homezz.ro", description: "Oferte de piață importate din hbsync cu proveniență explicită.",
+    formats: ["json"], pull: false, mapping: HABITOO_MAPPING,
+    notes: "Import separat prin /api/public/market-listings/upsert; particulari și agenții.",
+  },
+  {
     id: "imobiliare", name: "Imobiliare.ro", description: "Oferte de piață importate din hbsync cu proveniență explicită.",
     formats: ["json"], pull: false, mapping: HABITOO_MAPPING,
     notes: "Import separat prin /api/public/market-listings/upsert; particulari și agenții.",

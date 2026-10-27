@@ -168,6 +168,13 @@ describe("import fără telefoane", () => {
       .toMatchObject({ source: "facebook", external_id: "fb1", phone: "0744555666" });
   });
 
+  it("păstrează telefonul primit pentru sursa homezz, dar nu pentru storia", async () => {
+    const { buildListingRow } = await import("@/routes/api/public/listings/upsert");
+    expect(buildListingRow({ source: "homezz", external_id: "hz1", phone: "0744555666" }))
+      .toMatchObject({ source: "homezz", external_id: "hz1", phone: "0744555666" });
+    expect(buildListingRow({ source: "storia", external_id: "st1", phone: "0744555666" }).phone).toBeNull();
+  });
+
   it("același anunț cu sursa storia rămâne fără telefon", async () => {
     const { buildListingRow } = await import("@/routes/api/public/listings/upsert");
     const row = buildListingRow({ source: "storia", external_id: "a1", phone: "0744555666" });

@@ -52,7 +52,7 @@ const searchSchema = z.object({
   pagina: z.coerce.number().int().min(1).optional(),
   perPagina: z.coerce.number().int().optional(),
   sortare: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
-  sursa: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar", "anuntul", "facebook"]).optional(),
+  sursa: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar", "anuntul", "facebook", "homezz"]).optional(),
   tranzactie: z.enum(["sale", "rent", "rent_day"]).optional(),
   tip: z.string().max(80).optional(), // linkuri vechi, înlocuit de tab
   zile: z.coerce.number().int().min(0).max(7).optional(),
@@ -78,6 +78,7 @@ const SOURCE_LABELS: Record<string, string> = {
   imoradar: "Imoradar24",
   anuntul: "Anuntul.ro",
   facebook: "Facebook",
+  homezz: "Homezz.ro",
 };
 
 const SORT_LABELS: Record<PrivateListingsSort, string> = {
