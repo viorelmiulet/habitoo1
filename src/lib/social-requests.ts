@@ -110,7 +110,7 @@ export function requestPlaceChoices(r: Pick<RequestForMatch, "county" | "city" |
 /**
  * Potrivire deterministă. Tranzacția și tipul sunt obligatorii dacă cererea le are;
  * camerele, bugetul (±10%) și zona trebuie să se potrivească când sunt cunoscute.
- * Scorul = criterii confirmate / criterii cunoscute. Null = nu se potrivește.
+ * Scorul = criterii confirmate din cele 5; o cerere cu date lipsă are scor mai mic. Null = nu se potrivește.
  */
 export function matchRequestProperty(r: RequestForMatch, p: PropertyForMatch): RequestMatch | null {
   const reasons: string[] = [];
@@ -145,5 +145,6 @@ export function matchRequestProperty(r: RequestForMatch, p: PropertyForMatch): R
     if (!placeMatches({ county: p.county, city: p.city, district: p.district }, choices)) return null;
     ok++; reasons.push("zonă");
   }
-  return { score: known ? Math.round((ok / known) * 100) : 0, reasons };
+  void known;
+  return { score: Math.round((ok / 5) * 100), reasons };
 }
