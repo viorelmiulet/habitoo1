@@ -953,7 +953,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
         engineVersion: ACP_CURRENT_ENGINE_VERSION,
       });
       const calibration = await loadCalibration(admin, actor.organizationId);
-      const priceIndex = await loadPriceIndex(admin);
+      const priceIndex = await loadPriceIndex(admin, { city: subject.city, county: subject.county });
       const result = runAcpAnalysis(subject, candidates, {}, {
         calibration,
         priceIndex,
@@ -1168,7 +1168,7 @@ async function recalculate(
     });
     const calibration = await loadCalibration(admin, actor.organizationId);
     const engineVersion = rerunVersion;
-    const priceIndex = await loadPriceIndex(admin);
+    const priceIndex = await loadPriceIndex(admin, { city: subject.city, county: subject.county });
     const result = runAcpAnalysis(subject, candidates, overrides, {
       calibration,
       priceIndex,
@@ -1859,7 +1859,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
           engineVersion: ACP_CURRENT_ENGINE_VERSION,
         });
         const calibration = await loadCalibration(admin, actor.organizationId);
-        const priceIndex = await loadPriceIndex(admin);
+        const priceIndex = await loadPriceIndex(admin, { city: subject.city, county: subject.county });
         const result = runAcpAnalysis(subject, candidates, overrides, {
           calibration,
           priceIndex,
