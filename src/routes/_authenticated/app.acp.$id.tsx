@@ -186,7 +186,7 @@ function ComparableRow({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => setOpen((v) => !v)}>
+        <Button data-tour="acp-adjustments-toggle" aria-expanded={open} variant="ghost" size="sm" onClick={() => setOpen((v) => !v)}>
           <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
           Detalii scor și ajustări
         </Button>
@@ -389,7 +389,7 @@ function AcpDetailPage() {
         actions={
           <Button
             variant="outline"
-            disabled={rerunMutation.isPending}
+            data-tour="acp-rerun" disabled={rerunMutation.isPending}
             onClick={() => rerunMutation.mutate(undefined)}
           >
             <RefreshCw className={cn("size-4", rerunMutation.isPending && "animate-spin")} />
@@ -405,7 +405,7 @@ function AcpDetailPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div data-tour="acp-result" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
           label="Valoare estimată · Calcul ACP"
           value={formatMoney(analysis.estimate?.estimatedValue, currency)}
@@ -449,16 +449,16 @@ function AcpDetailPage() {
 
       {/* Analiza AI apare doar dacă funcția este activată pentru agenție. */}
       {aiFeatures.isEnabled("acp_ai") ? (
-        <AcpAiInsight analysis={analysis} onGenerated={invalidate} />
+        <div data-tour="acp-ai"><AcpAiInsight analysis={analysis} onGenerated={invalidate} /></div>
       ) : null}
 
       <AcpPrecisionCard analysis={analysis} />
 
       <AcpTimeAdjustmentCard analysis={analysis} />
 
-      <AcpVersionsCard analysisId={analysis.id} />
+      <div data-tour="acp-versions"><AcpVersionsCard analysisId={analysis.id} /></div>
 
-      <AcpReportCard analysisId={analysis.id} />
+      <div data-tour="acp-report"><AcpReportCard analysisId={analysis.id} /></div>
 
 
       <div className="grid gap-6 xl:grid-cols-3">
@@ -517,7 +517,7 @@ function AcpDetailPage() {
         </SectionCard>
       </div>
 
-      <SectionCard
+      <div data-tour="acp-comparables"><SectionCard
         title="Comparabile"
         description="Ordonate după scorul de similaritate. Poți include sau exclude manual orice comparabil — analiza se recalculează."
         icon={Building2}
@@ -546,7 +546,7 @@ function AcpDetailPage() {
             ))}
           </ul>
         )}
-      </SectionCard>
+      </SectionCard></div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <SectionCard title="Baza de dovezi" icon={Layers}>

@@ -138,7 +138,7 @@ function AiPage() {
         </Card>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
-          <Card className="h-fit">
+          <Card data-tour="assistant-conversations" className="h-fit">
             <CardHeader>
               <CardTitle className="text-base">Conversații</CardTitle>
             </CardHeader>
@@ -175,7 +175,7 @@ function AiPage() {
 
           <Card>
             <CardContent className="space-y-4 py-6">
-              <div className="space-y-3">
+              <div data-tour="assistant-response" className="space-y-3">
                 {shown.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     Întreabă, de exemplu: „Ce apartamente cu 3 camere am în portofoliu?”
@@ -229,7 +229,7 @@ function AiPage() {
               </div>
 
               <div className="space-y-2">
-                <Textarea
+                <Textarea data-tour="assistant-input"
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   placeholder="Scrie întrebarea ta…"
@@ -243,7 +243,7 @@ function AiPage() {
                   }}
                 />
                 <div className="flex justify-end">
-                  <Button onClick={submit} disabled={busy || input.trim() === ""}>
+                  <Button data-tour="assistant-submit" onClick={submit} disabled={busy || input.trim() === ""}>
                     {busy ? "Se trimite…" : "Trimite"}
                   </Button>
                 </div>
@@ -251,7 +251,7 @@ function AiPage() {
             </CardContent>
           </Card>
 
-          <div className="lg:col-start-2">
+          <div data-tour="assistant-workflow" className="lg:col-start-2">
             <AiWorkflowCard />
           </div>
         </div>

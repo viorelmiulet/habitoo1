@@ -313,7 +313,7 @@ function PrivateListingsPage() {
         description="Anunțuri de la proprietari, aduse automat din alte site-uri. Verifică datele înainte să contactezi proprietarul."
       />
 
-      <div className="flex gap-3 border-b border-border sm:gap-5" role="tablist" aria-label="Sursa anunțurilor">
+      <div data-tour="map-tabs" className="flex gap-3 border-b border-border sm:gap-5" role="tablist" aria-label="Sursa anunțurilor">
         {([
           { value: "", label: "MAP Habitoo" },
           { value: "facebook", label: "MAP Facebook" },
@@ -322,6 +322,7 @@ function PrivateListingsPage() {
           const active = (search.lista === "argus" || search.lista === "facebook" ? search.lista : "") === value;
           return (
             <Button
+              data-tour={`map-tab-${value || "habitoo"}`}
               key={value || "habitoo"}
               type="button"
               variant="ghost"
@@ -357,7 +358,7 @@ function PrivateListingsPage() {
           apply(draft);
         }}
       >
-        <div className="flex gap-5 overflow-x-auto border-b border-border" role="tablist" aria-label="Categorie proprietate">
+        <div data-tour="map-categories" className="flex gap-5 overflow-x-auto border-b border-border" role="tablist" aria-label="Categorie proprietate">
           {Object.entries(TAB_LABELS).map(([value, label]) => {
             const active = (search.tab ?? "toate") === value;
             return (
@@ -399,7 +400,7 @@ function PrivateListingsPage() {
               <SelectItem value="rent_day">Închiriere pe zi</SelectItem>
             </SelectContent>
           </Select>
-          <SearchPlacesPicker options={facets.data?.places ?? []} value={draft.locuri} onApply={(locuri) => { if (!locuri && Object.keys(search).every(k => ["locuri", "judet", "oras", "zona", "lista"].includes(k) || search[k as keyof typeof search] === undefined)) clearListState(); const next = { ...draft, locuri, judet: "", oras: "", zona: [] }; setDraft(next); void apply(next); }} />
+          <div data-tour="map-places"><SearchPlacesPicker options={facets.data?.places ?? []} value={draft.locuri} onApply={(locuri) => { if (!locuri && Object.keys(search).every(k => ["locuri", "judet", "oras", "zona", "lista"].includes(k) || search[k as keyof typeof search] === undefined)) clearListState(); const next = { ...draft, locuri, judet: "", oras: "", zona: [] }; setDraft(next); void apply(next); }} /></div>
           <Select value={draft.zile || ALL} onValueChange={(v) => patch({ zile: v === ALL ? "" : v })}>
             <SelectTrigger aria-label="Zile în piață"><SelectValue placeholder="Zile în piață" /></SelectTrigger>
             <SelectContent>
@@ -414,6 +415,7 @@ function PrivateListingsPage() {
           <Button
             type="button"
             variant="outline"
+            data-tour="map-filters-toggle"
             aria-expanded={extendedOpen}
             onClick={() => setExtendedOpen((v) => !v)}
           >
@@ -423,7 +425,7 @@ function PrivateListingsPage() {
               <span className="text-xs text-muted-foreground">+{extendedCount} filtre</span>
             ) : null}
           </Button>
-          <Button type="submit">
+          <Button data-tour="map-search" type="submit">
             <Search className="size-4" /> Căutare
           </Button>
         </div>
@@ -495,7 +497,7 @@ function PrivateListingsPage() {
               <Button type="button" variant="outline" onClick={() => setExtendedOpen(false)}>
                 Închide filtre <ChevronUp className="size-4" />
               </Button>
-              <Button type="submit">
+              <Button data-tour="map-search" type="submit">
                 <Search className="size-4" /> Căutare
               </Button>
             </div>
@@ -511,7 +513,7 @@ function PrivateListingsPage() {
           <span aria-hidden="true">·</span>
           <button
             type="button"
-            className="font-medium text-primary hover:underline disabled:text-muted-foreground disabled:no-underline"
+            data-tour="map-new" className="font-medium text-primary hover:underline disabled:text-muted-foreground disabled:no-underline"
             disabled={newToday === 0 || search.zile === 0}
             onClick={() =>
               navigate({ search: (prev) => ({ ...prev, pagina: undefined, zile: 0 }), replace: true })
@@ -520,7 +522,7 @@ function PrivateListingsPage() {
             {newToday} anunțuri noi
           </button>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div data-tour="map-order" className="flex flex-wrap items-center gap-2">
         <PageSizeSelect
           value={pageSize}
           onChange={(size) => {
