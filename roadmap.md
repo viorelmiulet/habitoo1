@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Ghiduri interactive — etapa 5
+- [ ] Completare 8 ghiduri Management, inventar fără planificate și progres corect per rol
+- [ ] Teste siguranță și acces agent/admin, parcurgere desktop/telefon fără modificări de date
+- [ ] Inventar final și capturi ghiduri Comisioane, Setări profil/agenție și Integrări în Files
+
 ## Ghiduri interactive — etapa 4
 - [x] Eliminare inventar SuperAdmin și completare 13 ghiduri MAP/import/ACP/AI/chat/bara de sus
 - [x] 53 teste trec; toate cele 13 ghiduri parcurse desktop/telefon, fără generări/salvări/importuri/trimiteri; numerele proprietăților, ACP, comentariilor, chatului și consumului AI neschimbate; build OK
