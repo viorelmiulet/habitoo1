@@ -435,7 +435,7 @@ function PropertiesPage() {
       (promotionValues.length === 0 || promotionIds !== undefined),
     queryFn: async () => {
       const choices = parsePlaceChoices(placeValue);
-      let query = (choices.length ? supabase.rpc("search_properties_places", { _choices: choices }) : supabase.from("properties"))
+      let query = (choices.length ? supabase.rpc("search_properties_places", { _choices: choices }, { count: "exact" }) : supabase.from("properties"))
         .select("*", { count: "exact" })
         .eq("organization_id", orgId as string)
         .is("deleted_at", null);

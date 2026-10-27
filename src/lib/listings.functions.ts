@@ -165,7 +165,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     const todayStart = romaniaTodayStart().toISOString();
 
     if (sort !== "newest") {
-      let query = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }) : context.supabase.from("listings"))
+      let query = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }, { count: "exact" }) : context.supabase.from("listings"))
         .select(LISTING_COLUMNS, { count: "exact" })
         .eq("is_owner", true);
       query = applyOwnerFilters(query, data);
@@ -176,7 +176,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
         .order("id")
         .range(from, from + size - 1);
       if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");
-      let todayQuery = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }) : context.supabase.from("listings"))
+      let todayQuery = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }, { count: "exact" }) : context.supabase.from("listings"))
         .select("id", { count: "exact", head: true })
         .eq("is_owner", true);
       todayQuery = applyOwnerFilters(todayQuery, data).gte("first_seen_at", todayStart);
@@ -192,7 +192,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     // „Cele mai noi": faza 1 citește doar id/sursă/dată pentru toate
     // rezultatele filtrate, faza 2 aduce rândurile complete ale paginii
     // intercalate pe surse. Totalul și filtrele rămân identice.
-    let idQuery = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }) : context.supabase.from("listings"))
+    let idQuery = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }, { count: "exact" }) : context.supabase.from("listings"))
       .select("id, source, first_seen_at")
       .eq("is_owner", true);
     idQuery = applyOwnerFilters(idQuery, data);
@@ -207,7 +207,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     const newToday = matches.filter((row) => (row.first_seen_at ?? "") >= todayStart).length;
     const pageIds = ordered.slice(from, from + size).map((row) => row.id);
     if (pageIds.length === 0) return { total: ordered.length, newToday, items: [] };
-    const pageQuery = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }) : context.supabase.from("listings"))
+    const pageQuery = (data.places?.length ? context.supabase.rpc("search_listings_places", { _choices: data.places }, { count: "exact" }) : context.supabase.from("listings"))
       .select(LISTING_COLUMNS)
       .eq("is_owner", true);
     const { data: rows, error } = await applyOwnerScope(pageQuery, data.scope)

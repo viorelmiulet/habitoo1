@@ -10,5 +10,5 @@ it("uses parameterized geography RPC in both count phases and preserves scope an
  const places=[...legacyPlaceChoices('București','București','Militari'),...legacyPlaceChoices('Ilfov','Chiajna')];
  const run=getOwnerListings as unknown as (v:unknown)=>Promise<unknown>;
  await run({data:privateListingsFiltersSchema.parse({places,scope:'facebook',priceMin:100,sort:'price_asc'}),context:{supabase:{rpc,from:vi.fn(()=>chain)}}});
- expect(rpc).toHaveBeenCalledTimes(2);expect(rpc).toHaveBeenCalledWith('search_listings_places',{_choices:places});expect(eq).toHaveBeenCalledWith('source','facebook');expect(gte).toHaveBeenCalledWith('price',100);
+ expect(rpc).toHaveBeenCalledTimes(2);expect(rpc).toHaveBeenCalledWith('search_listings_places',{_choices:places},{count:'exact'});expect(eq).toHaveBeenCalledWith('source','facebook');expect(gte).toHaveBeenCalledWith('price',100);
 });

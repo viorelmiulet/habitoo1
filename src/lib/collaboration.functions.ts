@@ -296,7 +296,7 @@ export const listCollaborationOffers = createServerFn({ method: "GET" })
     if (agencies.size === 0 || (data.agencyId && !agencies.has(data.agencyId))) return { offers: [], total: 0 };
 
     const admin = await loadAdmin();
-    let query = (data.places?.length ? admin.rpc("search_properties_places", { _choices: data.places }) : admin.from("properties"))
+    let query = (data.places?.length ? admin.rpc("search_properties_places", { _choices: data.places }, { count: "exact" }) : admin.from("properties"))
       .select(OFFER_COLUMNS, { count: "exact" })
       .in("organization_id", [...agencies.keys()])
       .eq("collaboration", true)
