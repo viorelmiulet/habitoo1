@@ -1,3 +1,5 @@
+import { SendOfferDialog } from "@/components/app/SendOfferDialog";
+import { offerSendReason } from "@/lib/offer-client";
 import { formatFloorLabel } from "@/lib/property-floor";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -178,6 +180,7 @@ function PropertyDetailPage() {
   const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
+  const [sendOfferOpen, setSendOfferOpen] = useState(false);
   const [reassignOpen, setReassignOpen] = useState(false);
   const agencyLogoUrl = useAgencyLogoUrl(user?.organization?.logo_path);
 
@@ -829,6 +832,8 @@ function PropertyDetailPage() {
         </div>
         <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5" data-tour="property-actions">
           {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" data-tour="property-edit-button" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
+          <span title={offerSendReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(offerSendReason(property))} onClick={() => setSendOfferOpen(true)}><Share2 /> Trimite oferta</Button></span>
+          {offerSendReason(property) ? <span className="text-xs text-muted-foreground">{offerSendReason(property)}</span> : null}
           <Button variant="outline" data-tour="property-viewing" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
           <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
           <Button variant="outline" onClick={() => setTab("acp")}><BarChart3 /> Analiză comparativă de piață (ACP)</Button>
@@ -1322,6 +1327,7 @@ function PropertyDetailPage() {
         </TabsContent>
       </Tabs>
 
+      <SendOfferDialog propertyId={id} open={sendOfferOpen} onOpenChange={setSendOfferOpen} />
       <ActivityDialog
         open={activityDialog.open}
         onOpenChange={(open) => setActivityDialog((s) => ({ ...s, open }))}
