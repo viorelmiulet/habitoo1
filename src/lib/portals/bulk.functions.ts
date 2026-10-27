@@ -97,18 +97,16 @@ export const startPortalBulkJob = createServerFn({ method: "POST" })
         for (const item of blocked) accepted.splice(accepted.indexOf(item), 1);
       }
     }
-    const { data: job, error } = await admin.from("portal_bulk_jobs").insert({ organization_id: organizationId, requested_by: context.userId, total: data.items.length, done: skipped.length }).select("id").single();
-    if (error || !job) throw new Error("Jobul de publicare nu a putut fi creat.");
-    await admin.from("portal_bulk_items").insert([
-      ...accepted.map((item) => ({ job_id: job.id, property_id: item.propertyId, portal_key: item.portalId, enabled: item.enabled, promoted: item.promoted ?? null })),
-      ...skipped.map(({ item, message }) => ({ job_id: job.id, property_id: item.propertyId, portal_key: item.portalId, enabled: item.enabled, promoted: item.promoted ?? null, status: "skipped", message, finished_at: new Date().toISOString() })),
-    ]);
-    if (accepted.length === 0) await admin.from("portal_bulk_jobs").update({ status: "done", finished_at: new Date().toISOString() }).eq("id", job.id);
-    else {
-      const { error: armError } = await admin.rpc("portal_bulk_arm");
-      if (armError) throw new Error("Procesarea în fundal nu a putut fi pornită.");
-    }
-    return { jobId: job.id, queued: accepted.length, skipped: skipped.length };
+    // O singură tranzacție: lotul, toate anunțurile și armarea workerului.
+    const { data: started, error } = await admin.rpc("start_portal_bulk_job", {
+      _org: organizationId,
+      _requested_by: context.userId,
+      _accepted: accepted.map((item) => ({ property_id: item.propertyId, portal_key: item.portalId, enabled: item.enabled, promoted: item.promoted ?? null })),
+      _skipped: skipped.map(({ item, message }) => ({ property_id: item.propertyId, portal_key: item.portalId, enabled: item.enabled, promoted: item.promoted ?? null, message })),
+    });
+    const job = started as { job_id?: string } | null;
+    if (error || !job?.job_id) throw new Error("Jobul de publicare nu a putut fi creat.");
+    return { jobId: job.job_id, queued: accepted.length, skipped: skipped.length };
   });
 
 export const getPortalBulkJob = createServerFn({ method: "POST" })
