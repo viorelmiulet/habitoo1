@@ -63,4 +63,31 @@ describe("hbsync market contract", () => {
     expect(marketListingToSubject({ city: "București", sector: "Sector 3", district: "Titan" }))
       .toMatchObject({ city: "București", sector: "Sector 3", district: "Titan", neighborhood: "Titan" });
   });
+  it("saves hbsync coordinates and turns invalid ones into null without rejecting the listing", async () => {
+    const result = normalizeHbsyncMarketListing({
+      ...listing, source: "homezz", external_id: "hz-1", latitude: 44.4268, longitude: 26.0966,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.message);
+    expect(result.listing.latitude).toBe(44.4268);
+    expect(result.listing.longitude).toBe(26.0966);
+    const { repo, store } = createFakeRepository();
+    await ingestListings(repo, {
+      source: "homezz", mode: "partial", runId: null, now: "2026-10-27T00:00:00Z",
+    }, [result.listing]);
+    expect(store.listings[0]?.listing.latitude).toBe(44.4268);
+    expect(store.listings[0]?.listing.longitude).toBe(26.0966);
+    for (const bad of [{ latitude: 91 }, { longitude: -181 }, { latitude: "militari" }, { latitude: NaN }]) {
+      const invalid = normalizeHbsyncMarketListing({
+        ...listing, source: "homezz", external_id: "hz-2", latitude: 44.4268, longitude: 26.0966, ...bad,
+      });
+      expect(invalid.ok).toBe(true);
+      if (!invalid.ok) throw new Error(invalid.message);
+      expect(invalid.listing.latitude).toBeNull();
+      expect(invalid.listing.longitude).toBeNull();
+    }
+    const absent = normalizeHbsyncMarketListing({ ...listing, source: "homezz", external_id: "hz-3" });
+    expect(absent.ok && absent.listing.latitude).toBeNull();
+    expect(absent.ok && absent.listing.longitude).toBeNull();
+  });
 });
