@@ -1,5 +1,9 @@
 # SEO public — pasul 1a
 
+## Republicare în fundal
+- [x] Închidere la pornire, progres/redeschidere raport și notificare atomică persistentă cu link la lot
+- [x] 9 teste trec (inclusiv notificare SQL atomică/idempotentă); browser: simulare 2 anunțuri, închidere/toast, 0/2 → 1/2, redeschidere, final după navigare, click notificare simulată și raport după reload. Fără joburi, notificări de test sau apeluri reale la portaluri. Build OK.
+
 ## Publicare — ordinea cardurilor
 - [x] Inversare exclusiv vizuală Imobiliare.ro/VDI, păstrând indicii pentru locuri și toate comportamentele/conținuturile
 - [x] HB-1168 verificată 1440/900/390 px, 3/2/1 coloane; Imobiliare.ro ultimul, fără rânduri următoare împinse în jos; spațiu lateral mare rămâne în ultimul rând la 3/2 coloane. Capturi salvate; build OK; nicio publicare. Storia era în sincronizare, deci starea publicată simultan pe absolut toate portalurile nu este verificată.
