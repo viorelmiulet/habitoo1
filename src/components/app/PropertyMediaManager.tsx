@@ -262,6 +262,7 @@ export function PropertyMediaManager({
   return (
     <div className="space-y-4">
       <div
+        data-tour="media-upload"
         className={`panel flex flex-col items-center justify-center gap-2 border-2 border-dashed p-8 text-center transition-colors ${
           dragOver ? "border-primary bg-primary/5" : "border-border"
         }`}
@@ -315,7 +316,7 @@ export function PropertyMediaManager({
           description="Adaugă poze pentru acest anunț."
         />
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div data-tour="media-grid" className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {images.map((img, idx) => {
             const url = imgUrl(img);
             return (

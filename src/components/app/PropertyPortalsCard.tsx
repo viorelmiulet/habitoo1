@@ -637,6 +637,7 @@ export const PropertyPortalsCard = forwardRef<
                   <Button
                     onClick={onPublish}
                     disabled={!editing || publishPending}
+                    data-tour="publishing-publish"
                     title={editing ? undefined : "Apasă Editează pentru a publica."}
                     className="max-sm:w-full"
                   >
