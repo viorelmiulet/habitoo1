@@ -1,9 +1,10 @@
 # SEO public — pasul 1a
 
 ## Trimite unui colaborator — ofertă neutră
-- [ ] Cod aleator revocabil, pagină și fotografii fără identitate, noindex și previzualizare neutră
-- [ ] Dialog cu agenți parteneri/destinatar manual, canale și activitate, butoane în detaliu/listă
-- [ ] Teste de confidențialitate/revocare și verificare fără cont desktop/telefon; fără mesaje reale
+- [x] Cod aleator revocabil, pagină și fotografii originale fără watermark aplicat, metadate foto eliminate; noindex, fără identitate/ID-uri/adresă exactă/comision în DTO/HTML și previzualizare neutră
+- [x] Dialog cu căutare trei agenți parteneri verificată, destinatar manual/canale/mesaj editabil, generare și dezactivare; butoane în detaliu/listă și activitate recitită în istoricul proprietății
+- [x] 21 teste trec; fără cont desktop/telefon: 16 poze cu +10, vizualizator, HTML/head fără agenție/agent, fără JSON-LD, codul nu deschide /oferta; dezactivare manuală și media 404. WhatsApp interceptat, email simulat; nicio trimitere reală. Build OK
+- [ ] Verificare vizuală pe proprietate inactivă: contul disponibil nu are proprietăți inactive; blocarea server/UI și revocarea ireversibilă la schimbarea statusului verificate izolat.
 
 ## Trimite oferta către client
 - [x] Buton pe pagina proprietății și meniul listei, dialog mobil complet cu client/canale/mesaj
