@@ -11,6 +11,7 @@ beforeAll(async () => {
     CREATE TABLE contacts(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid, source text, gdpr_consent boolean DEFAULT false);
     CREATE TABLE leads(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid,contact_id uuid,source text);`);
   await db.exec(readFileSync('drizzle/migrations/0196_contacts_source_consent_history.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0197_contact_source_portal_aliases.sql', 'utf8'));
 });
 afterAll(async () => { await db.close(); });
 async function add(consent = true, method = 'email', source = 'OLX') {
@@ -42,7 +43,7 @@ it('client cannot forge or erase dates, agent or history by editing', async () =
   const next=await row(id); expect(next.gdpr_consent_history).toEqual(c.gdpr_consent_history); expect(next.gdpr_consent_at).toEqual(c.gdpr_consent_at); expect(next.gdpr_consent_by).toBe(actor); expect(next.gdpr_consent_method).toBe('email');
 });
 it('automatic site, portal and MAP sources are canonicalized without implied consent', async () => {
-  for (const [source,label] of [['website','Site-ul agenției'],['imobiliare','Imobiliare.ro'],['map','Anunțuri particulari (MAP)']]) {
+  for (const [source,label] of [['website','Site-ul agenției'],['website:contact','Site-ul agenției'],['Storia.ro','Storia'],['vdi','Imobiliare.ro'],['imobiliare','Imobiliare.ro'],['map','Anunțuri particulari (MAP)']]) {
     const c=await row(await add(false,'',source)); expect(c.source).toBe(label); expect(c.gdpr_consent).toBe(false); expect(c.gdpr_consent_history).toEqual([]);
   }
 });

@@ -63,7 +63,7 @@ import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 import { announceGuideContext } from "@/lib/onboarding-tour";
 import { ContactConsentFields } from "@/components/app/ContactConsentFields";
-import { EMPTY_CONTACT_CONSENT, contactConsentPatch } from "@/lib/contact-consent";
+import { CONTACT_SOURCES, EMPTY_CONTACT_CONSENT, contactConsentPatch } from "@/lib/contact-consent";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/")({
   head: () => { const title = "Habitoo CRM — contacte"; const description = "Clienții, proprietarii și partenerii agenției, cu filtre și detalii de contact."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -187,7 +187,7 @@ function ContactsPage() {
   });
 
   const sources = useMemo(
-    () => [...new Set(metaContacts.map((c) => c.source).filter(Boolean) as string[])].sort(),
+    () => [...new Set([...CONTACT_SOURCES, ...metaContacts.map((c) => c.source).filter(Boolean) as string[]])].sort(),
     [metaContacts],
   );
   const tags = useMemo(
