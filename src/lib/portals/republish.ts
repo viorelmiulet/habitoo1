@@ -76,3 +76,20 @@ export function staggerRepublishPairs(pairs: RepublishPair[], nowMs: number) {
     return { ...pair, nextAttemptAt: new Date(nowMs + i * REPUBLISH_PORTAL_SPACING_MS).toISOString() };
   });
 }
+
+/** Arguments for the atomic `start_portal_republish_batch` RPC (batch + jobs + arm in one transaction). */
+export function republishStartArgs(input: {
+  organizationId: string; userId: string; scope: RepublishScope; portalKeys: string[];
+  kind: "republish" | "imoradar"; operation: "republish" | "imoradar"; superadmin: boolean; syncExisting: boolean;
+  skippedItems: { propertyId: string; portalId: string; message: string }[];
+  pairs: { propertyId: string; portalId: string; nextAttemptAt: string }[];
+  busyMessage: string;
+}) {
+  return {
+    _org: input.organizationId, _requested_by: input.userId, _scope: input.scope, _portal_keys: input.portalKeys,
+    _kind: input.kind, _operation: input.operation, _superadmin: input.superadmin, _sync_existing: input.syncExisting,
+    _skipped_items: input.skippedItems,
+    _pairs: input.pairs.map((p) => ({ property_id: p.propertyId, portal_key: p.portalId, next_attempt_at: p.nextAttemptAt })),
+    _busy_message: input.busyMessage,
+  };
+}
