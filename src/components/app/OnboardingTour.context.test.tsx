@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { OnboardingTourProvider } from "./OnboardingTour";
-import { GUIDE_CONTEXT_EVENT } from "@/lib/onboarding-tour";
+import { GUIDE_CONTEXT_EVENT, implementedGuides } from "@/lib/onboarding-tour";
 import type { CurrentUser } from "@/hooks/use-session";
 
 const mock = vi.hoisted(() => ({ path: "/app/properties/abc", records: new Map<string, string>(), auto: true, claims: [] as string[], mutations: 0 }));
@@ -84,5 +84,34 @@ describe("ghiduri contextuale pe pagina proprietății", () => {
     expect(document.querySelector("[data-guide]")?.getAttribute("data-guide")).toBe("collaboration");
     await act(async () => click("Sari peste")); await wait(100);
     await act(async () => root.unmount()); client.clear();
+  });
+});
+
+
+describe("étape 3: chaque guide, agent/admin et desktop/téléphone", () => {
+  const ids = ["contacts-list", "contact-detail", "contact-create", "requests-list", "request-detail", "leads-list", "contracts-list", "contract-detail", "activities", "calendar", "matching", "notifications", "clipurile-mele", "support"];
+  it.each(ids)("%s ne démarre qu’une fois et ne touche aucune action finale", async (id) => {
+    const guide = implementedGuides.find((g) => g.id === id);
+    if (!guide) throw Error("missing guide");
+    for (const [role, width] of [["agent",1280],["agency_admin",1280],["agent",390],["agency_admin",390]] as const) {
+      mock.records.clear(); mock.claims=[]; mock.auto=true; mock.path=guide.path.replace(":id", "existing-record");
+      vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT",true);
+      vi.stubGlobal("ResizeObserver",class{observe(){}disconnect(){}});
+      window.scrollBy=vi.fn(); Object.defineProperty(window,"innerWidth",{value:width,configurable:true});
+      const host=document.createElement("div"); document.body.append(host);
+      const root=createRoot(host); const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}});
+      const user={userId:role,role,profile:{id:role},impersonation:null} as unknown as CurrentUser;
+      const before=mock.mutations;
+      await act(async()=>root.render(<QueryClientProvider client={client}><OnboardingTourProvider user={user} openMenu={()=>{}} closeMenu={()=>{}}><button data-tour="contract-send" onClick={()=>mock.mutations++}>Trimite</button><button data-tour="contact-create-save" onClick={()=>mock.mutations++}>Salvează</button><button onClick={()=>mock.mutations++}>Șterge</button></OnboardingTourProvider></QueryClientProvider>));
+      if (guide.context) { await wait(750); if(document.querySelector("[data-guide]")) await act(async()=>click("Sari peste")); await announce(String(guide.context)); }
+      await wait(750); await wait(100);
+      expect(document.querySelector("[data-guide]")?.getAttribute("data-guide")).toBe(id);
+      if(width===390) expect((document.querySelector("[data-guide]") as HTMLElement).style.bottom).toBe("12px");
+      await act(async()=>click("Sari peste")); await wait(750);
+      expect(document.querySelector("[data-guide]")).toBeNull();
+      expect(mock.claims.filter((g)=>g===id)).toHaveLength(1);
+      expect(mock.mutations).toBe(before);
+      await act(async()=>root.unmount()); client.clear();host.remove();
+    }
   });
 });
