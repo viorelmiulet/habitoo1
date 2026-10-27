@@ -11,6 +11,7 @@
  *  - propunerile și mesajele sunt protejate suplimentar de RLS: le văd doar
  *    cele două agenții implicate.
  */
+import { buildSearchPlaces, placeChoiceSchema, type SearchPlaceOption } from "./search-places";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -144,6 +145,7 @@ async function participatingOrgIds(
 const filtersSchema = z
   .object({
     q: z.string().trim().max(120).optional(),
+    places: z.array(placeChoiceSchema).optional(),
     city: z.string().trim().max(80).optional(),
     propertyType: z.string().trim().max(40).optional(),
     transaction: z.enum(["all", "sale", "rent"]).optional(),
@@ -294,8 +296,7 @@ export const listCollaborationOffers = createServerFn({ method: "GET" })
     if (agencies.size === 0 || (data.agencyId && !agencies.has(data.agencyId))) return { offers: [], total: 0 };
 
     const admin = await loadAdmin();
-    let query = admin
-      .from("properties")
+    let query = (data.places?.length ? admin.rpc("search_properties_places", { _choices: data.places }, { count: "exact" }) : admin.from("properties"))
       .select(OFFER_COLUMNS, { count: "exact" })
       .in("organization_id", [...agencies.keys()])
       .eq("collaboration", true)
@@ -306,7 +307,7 @@ export const listCollaborationOffers = createServerFn({ method: "GET" })
       .range(data.offset ?? 0, (data.offset ?? 0) + (data.limit ?? PARTNER_OFFERS_PAGE_SIZE) - 1);
 
     if (data.agencyId) query = query.eq("organization_id", data.agencyId);
-    if (data.city && data.city !== "all") query = query.eq("city", data.city);
+    if (!data.places?.length && data.city && data.city !== "all") query = query.eq("city", data.city);
     if (data.propertyType && data.propertyType !== "all") {
       query = query.eq("property_type", data.propertyType);
     }
@@ -391,19 +392,19 @@ export const getCollaborationOffer = createServerFn({ method: "GET" })
 export const getCollaborationFacets = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
   .handler(
-    async ({ context }): Promise<{ cities: string[]; types: string[]; participating: boolean; agencies: { id: string; name: string }[] }> => {
+    async ({ context }): Promise<{ places: SearchPlaceOption[]; cities: string[]; types: string[]; participating: boolean; agencies: { id: string; name: string }[] }> => {
       const actor = await loadActor(context as AuthContext);
-      if (!actor.collaborationEnabled) return { cities: [], types: [], participating: false, agencies: [] };
+      if (!actor.collaborationEnabled) return { places: [], cities: [], types: [], participating: false, agencies: [] };
       const agencies = await participatingOrgIds(actor);
-      if (agencies.size === 0) return { cities: [], types: [], participating: true, agencies: [] };
+      if (agencies.size === 0) return { places: [], cities: [], types: [], participating: true, agencies: [] };
       const admin = await loadAdmin();
-      const { data } = await admin
-        .from("properties")
-        .select("city,property_type,organization_id")
-        .in("organization_id", [...agencies.keys()])
-        .eq("collaboration", true)
-        .is("deleted_at", null)
-        .in("status", [...OFFERABLE_STATUSES]);
+      const data: { city: string | null; county: string | null; district: string | null; property_type: string; organization_id: string }[] = [];
+      for (let offset = 0; ; offset += 1000) {
+        const { data: batch, error } = await admin.from("properties").select("city,county,district,property_type,organization_id").in("organization_id", [...agencies.keys()]).eq("collaboration", true).is("deleted_at", null).in("status", [...OFFERABLE_STATUSES]).order("id").range(offset, offset + 999);
+        if (error) throw error;
+        data.push(...(batch ?? []));
+        if ((batch?.length ?? 0) < 1000) break;
+      }
       const cities = new Set<string>();
       const types = new Set<string>();
       for (const row of data ?? []) {
@@ -411,6 +412,7 @@ export const getCollaborationFacets = createServerFn({ method: "GET" })
         if (row.property_type) types.add(row.property_type);
       }
       return {
+        places: buildSearchPlaces(data),
         cities: [...cities].sort((a, b) => a.localeCompare(b, "ro")),
         types: [...types].sort(),
         participating: true,

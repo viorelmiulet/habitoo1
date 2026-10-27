@@ -9,6 +9,8 @@
  * Datele vin exclusiv prin server functions cu proiecție de coloane sigure:
  * nu se expun proprietarul, notele interne sau agentul agenției sursă.
  */
+import { SearchPlacesPicker } from "@/components/app/SearchPlacesPicker";
+import { legacyPlaceChoices, parsePlaceChoices, serializePlaces } from "@/lib/search-places";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -82,6 +84,7 @@ const statusTone: Record<
 
 type Filters = {
   q: string;
+  locuri: string;
   city: string;
   type: string;
   transaction: "all" | "sale" | "rent";
@@ -93,6 +96,7 @@ type Filters = {
 
 const emptyFilters: Filters = {
   q: "",
+  locuri: "",
   city: "all",
   type: "all",
   transaction: "all",
@@ -152,6 +156,7 @@ function CollaborationPage() {
         data: {
           offset: pageParam, limit: PARTNER_OFFERS_PAGE_SIZE, sort, agencyId: agencyId === "all" ? undefined : agencyId,
           q: filters.q.trim() || undefined,
+          places: parsePlaceChoices(filters.locuri),
           city: filters.city,
           propertyType: filters.type,
           transaction: filters.transaction,
@@ -227,22 +232,7 @@ function CollaborationPage() {
                 onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
               />
             </div>
-            <Select
-              value={filters.city}
-              onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Oraș" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toate orașele</SelectItem>
-                {(facets.data?.cities ?? []).map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchPlacesPicker options={facets.data?.places ?? []} value={filters.locuri || serializePlaces(legacyPlaceChoices(undefined, filters.city))} onApply={locuri => setFilters(f => ({ ...f, locuri, city: "all" }))}/>
             <Select
               value={filters.type}
               onValueChange={(v) => setFilters((f) => ({ ...f, type: v }))}

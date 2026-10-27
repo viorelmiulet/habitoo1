@@ -1,10 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-const mocks = vi.hoisted(() => ({ from: vi.fn(), orders: vi.fn(), range: vi.fn(), eq: vi.fn(), sign: vi.fn(async () => ({ data: [] })) }));
+const mocks = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn(), orders: vi.fn(), range: vi.fn(), eq: vi.fn(), sign: vi.fn(async () => ({ data: [] })) }));
 vi.mock("@tanstack/react-start", () => ({ createServerFn: () => { const fn = { middleware: () => fn, inputValidator: () => fn, handler: (handler: unknown) => handler }; return fn; } }));
 vi.mock("@/lib/org-access", () => ({ requireActiveOrgAuth: {} }));
-vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: mocks.from, storage: { from: () => ({ createSignedUrls: mocks.sign }) } } }));
+vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { rpc: mocks.rpc, from: mocks.from, storage: { from: () => ({ createSignedUrls: mocks.sign }) } } }));
 import { listCollaborationOffers } from "./collaboration.functions";
+import { legacyPlaceChoices } from "./search-places";
 
 describe("partner offers read-only global pagination", () => {
   beforeEach(() => {
@@ -25,6 +26,7 @@ describe("partner offers read-only global pagination", () => {
       for (const method of ["in", "neq", "is", "gte", "lte", "or", "maybeSingle"]) chain[method] = () => chain;
       return chain;
     });
+    mocks.rpc.mockImplementation(() => mocks.from("properties"));
   });
   const run = listCollaborationOffers as unknown as (input: { context: { userId: string }; data: Record<string, unknown> }) => Promise<{ offers: unknown[]; total: number }>;
 
@@ -42,5 +44,12 @@ describe("partner offers read-only global pagination", () => {
   it("does not return an agency outside the eligible partner set", async () => {
     expect(await run({ context: { userId: "agent" }, data: { agencyId: "mine" } })).toEqual({ offers: [], total: 0 });
     expect(mocks.range).not.toHaveBeenCalled();
+  });
+  it("uses scoped parameterized choices with exact counts before partner paging", async () => {
+    const places = [...legacyPlaceChoices("București", "București", "Militari"), ...legacyPlaceChoices("Ilfov", "Chiajna")];
+    await run({ context: { userId: "agent" }, data: { places, offset: 24 } });
+    expect(mocks.rpc).toHaveBeenCalledWith("search_properties_places", { _choices: places }, { count: "exact" });
+    expect(mocks.range).toHaveBeenCalledWith(24, 47);
+    expect(mocks.eq).toHaveBeenCalledWith("properties", "collaboration", true);
   });
 });

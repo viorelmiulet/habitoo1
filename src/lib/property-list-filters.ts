@@ -6,6 +6,7 @@ export type PropertyListFilters = {
   status: string;
   transaction: string;
   type: string;
+  locuri: string;
   city: string;
   district: string;
   agent: string;
@@ -33,6 +34,7 @@ export const emptyPropertyListFilters: PropertyListFilters = {
   status: "all",
   transaction: "all",
   type: "all",
+  locuri: "",
   city: "all",
   district: "all",
   agent: "all",
@@ -78,6 +80,7 @@ export const propertyListSearchSchema = z.object({
   status: optionalSearchString,
   transaction: optionalSearchString,
   type: optionalSearchString,
+  locuri: optionalSearchString,
   city: optionalSearchString,
   district: optionalSearchString,
   agent: optionalSearchString,
