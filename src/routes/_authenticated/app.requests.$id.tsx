@@ -73,7 +73,7 @@ import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/requests/$id")({
-  head: () => appHead("Habitoo CRM — detalii cerere"),
+  head: () => { const title = "Habitoo CRM — detalii cerere"; const description = "Criteriile clientului, proprietățile compatibile, lead-uri și activități."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: RequestDetailPage,
 });
 

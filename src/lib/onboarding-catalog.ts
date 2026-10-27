@@ -44,7 +44,7 @@ export const plannedGuides: PlannedGuide[] = [
   { id: "abonament", title: "Abonament", group: "Management", trigger: "Prima deschidere a paginii Abonament", access: "Admin", roles: admin, feature: null },
 
   // ————— AI (doar cu funcția activată) —————
-  { id: "habitoo-ai", title: "Habitoo AI — asistentul", group: "AI", trigger: "Prima deschidere a paginii /app/ai", access: "Agent, admin; asistentul AI activat", roles: agency, feature: "ai_crm" },
+  { id: "habitoo-ai", title: "Habitoo AI — asistentul", group: "AI", trigger: "Prima deschidere a paginii /app/ai", access: "Agent, admin; asistentul AI activat", roles: agency, feature: "ai_assistant" },
   { id: "ai-crm", title: "AI CRM", group: "AI", trigger: "Prima deschidere a paginii AI CRM", access: "Agent, admin; funcția AI CRM activată", roles: agency, feature: "ai_crm" },
   { id: "ai-marketing", title: "AI Marketing", group: "AI", trigger: "Prima deschidere a paginii AI Marketing", access: "Agent, admin; funcția AI Marketing activată", roles: agency, feature: "ai_marketing" },
   { id: "ai-media", title: "Studio AI", group: "AI", trigger: "Prima deschidere a paginii Studio AI", access: "Agent, admin; funcția Studio AI activată", roles: agency, feature: "ai_media" },

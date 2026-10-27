@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/calendar")({
-  head: () => appHead("Habitoo CRM — calendar"),
+  head: () => { const title = "Habitoo CRM — calendar"; const description = "Calendarul activităților și vizionărilor agenției."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: CalendarPage,
 });
 

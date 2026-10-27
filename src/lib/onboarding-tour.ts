@@ -193,7 +193,7 @@ const guideDefinitions: GuideDefinition[] = [
     { id: "name", title: "Numele clientului", text: "Completează prenumele; numele de familie este și el obligatoriu.", selector: '#first_name', mode: "do", event: "input", confirmation: "Ai completat prenumele.", hint: "Scrie în câmpul Prenume sau sari pasul." },
     { id: "type", title: "Alege tipul", text: "Tipul arată relația cu persoana: cumpărător, proprietar, chiriaș sau partener.", selector: '[data-tour="contact-create-type"]' },
     { id: "contact", title: "Telefon și email", text: "Verifică numărul și adresa înainte de a le folosi. Compania se completează dacă este cazul.", selector: '#phone' },
-    { id: "source", title: "Sursa contactului", text: "Sursa arată de unde a venit clientul. Acest formular nu are câmp Sursă; o poți completa ulterior din editarea contactului." },
+    { id: "source", title: "Sursa contactului", text: "Sursa arată de unde a venit clientul. Sursa existentă apare în prezentarea contactului; acest formular nu are câmp Sursă." },
     { id: "consent", title: "Consimțământul", text: "Adăugarea unui contact nu înseamnă acord pentru mesaje. Formularul nu cere consimțământ; verifică acordul înainte de comunicări." },
     { id: "notes", title: "Note utile echipei", text: "Notează contextul discuției, fără date sensibile care nu sunt necesare.", selector: '#notes' },
     { id: "stop", title: "Ne oprim înainte de salvare", text: "Salvează ar crea contactul. Ghidul nu apasă butonul; Renunță închide formularul fără să creeze nimic.", selector: '[data-tour="contact-create-save"]' },
@@ -225,7 +225,7 @@ const guideDefinitions: GuideDefinition[] = [
   ]},
   { id: "contracts-list", title: "Contracte", group: "Clienți", path: "/app/contracts", roles: agencyRoles, steps: [
     { id: "overview", title: "Contracte și documente", text: "Aici urmărești documentele agenției și starea semnăturilor.", selector: '[data-tour="contracts-filters"]' },
-    { id: "types", title: "Tipurile de document", text: "Mandate de reprezentare, procese-verbale de vizionare și alte documente. Alegi tipul potrivit în Document nou." },
+    { id: "types", title: "Tipurile de document", text: "Contract de închiriere sau contract de reprezentare exclusivă: alegi tipul potrivit în Document nou." },
     { id: "search", title: "Caută un document", text: "Scrie o parte din titlu pentru a restrânge lista.", selector: '[data-tour="contracts-search"]', mode: "do", event: "input", confirmation: "Ai căutat un document." },
     { id: "status", title: "Starea documentului", text: "Filtrul separă ciornele, documentele trimise, semnate sau anulate. Numărul de semnături arată cine mai are de semnat.", selector: '[data-tour="contracts-status"]' },
     { id: "new", title: "Document nou", text: "Arată-mi formularul. Alegerea unui tip nu creează încă un contract.", selector: '[data-tour="contract-create-open"]', mode: "show", show: "contract-create" },

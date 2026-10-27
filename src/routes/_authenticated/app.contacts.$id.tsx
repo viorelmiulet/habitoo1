@@ -56,7 +56,7 @@ import { requestStatusLabels, requestStatusTone, activityStatusTone } from "@/li
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/$id")({
-  head: () => appHead("Habitoo CRM — detalii contact"),
+  head: () => { const title = "Habitoo CRM — detalii contact"; const description = "Datele contactului, proprietăți, cereri, activități și cronologia interacțiunilor."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: ContactDetailPage,
 });
 

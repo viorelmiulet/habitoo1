@@ -23,7 +23,7 @@ import { listMySupportTickets, SUPPORT_CATEGORY_LABELS } from "@/lib/support.fun
 
 export const Route = createFileRoute("/_authenticated/app/support")({
   validateSearch: z.object({ ticket: z.string().uuid().optional() }),
-  head: () => appHead("Habitoo CRM — tichetele mele de suport"),
+  head: () => { const title = "Habitoo CRM — tichetele mele de suport"; const description = "Tichetele de suport și răspunsurile echipei Habitoo."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: MyTicketsPage,
 });
 

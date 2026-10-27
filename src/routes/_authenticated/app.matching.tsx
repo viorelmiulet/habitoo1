@@ -47,7 +47,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/matching")({
-  head: () => appHead("Habitoo CRM — potriviri"),
+  head: () => { const title = "Habitoo CRM — potriviri"; const description = "Potrivirile dintre cererile clienților și proprietățile agenției."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: MatchingPage,
 });
 

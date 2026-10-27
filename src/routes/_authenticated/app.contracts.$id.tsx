@@ -40,7 +40,7 @@ import {
 } from "@/lib/contracts.functions";
 
 export const Route = createFileRoute("/_authenticated/app/contracts/$id")({
-  head: () => appHead("Habitoo CRM — document"),
+  head: () => { const title = "Habitoo CRM — document"; const description = "Conținutul contractului, părțile semnatare și fișierele PDF."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: ContractDetailPage,
 });
 

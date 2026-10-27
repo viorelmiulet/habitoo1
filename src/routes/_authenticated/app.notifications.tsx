@@ -14,7 +14,7 @@ import { appHead } from "@/components/app/app-head";
 import { safeInternalPath } from "@/lib/host";
 
 export const Route = createFileRoute("/_authenticated/app/notifications")({
-  head: () => appHead("Habitoo CRM — notificări"),
+  head: () => { const title = "Habitoo CRM — notificări"; const description = "Alertele utilizatorului despre lead-uri, activități și evenimentele din CRM."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: NotificationsPage,
 });
 
