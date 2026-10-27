@@ -33,6 +33,8 @@ export type ExistingListing = {
   priceChanges: number;
   statusChanges: number;
   firstSeenAt: string;
+  lastSeenAt?: string | null;
+  disappearedAt?: string | null;
   marketEntityId: string | null;
   dedupeStatus: string;
 };
@@ -277,6 +279,15 @@ export async function ingestListings(
         continue;
       }
 
+      // O observație istorică mai veche decât cea deja salvată nu poate
+      // suprascrie starea curentă (retrimiterea istoricului e idempotentă).
+      const incomingSeen = listing.observedLastSeenAt ? Date.parse(listing.observedLastSeenAt) : NaN;
+      const storedSeen = existing.lastSeenAt ? Date.parse(existing.lastSeenAt) : NaN;
+      if (Number.isFinite(incomingSeen) && Number.isFinite(storedSeen) && incomingSeen < storedSeen) {
+        summary.unchanged += 1;
+        continue;
+      }
+
       // Ofertă existentă: comparăm și înregistrăm doar schimbările reale.
       const priceChanged = !samePrice(existing.price, listing.price);
       const statusChanged = existing.status !== listing.status;
@@ -336,7 +347,10 @@ export async function ingestListings(
         priceChanges: existing.priceChanges + (priceChanged ? 1 : 0),
         statusChanges: existing.statusChanges + (statusChanged ? 1 : 0),
         initialPrice: existing.initialPrice ?? listing.price,
-        disappearedAt: listing.status === "active" ? null : options.now,
+        disappearedAt:
+          listing.status === "active"
+            ? null
+            : (listing.observedDisappearedAt ?? existing.disappearedAt ?? options.now),
         runId: options.runId,
         now: options.now,
         ...entityPatch,
