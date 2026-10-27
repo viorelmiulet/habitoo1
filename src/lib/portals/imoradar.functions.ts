@@ -136,32 +136,15 @@ export const startImoradarBackfill = createServerFn({ method: "POST" })
     });
     if (selection.queued.length === 0 && selection.skipped.length === 0) throw new Error("Nu există anunțuri publicate pe Imobiliare.ro.");
     const skippedItems = selection.skipped.map((s) => ({ propertyId: s.propertyId, portalId: IMOBILIARE_PORTAL_KEY, message: IMORADAR_SKIP_MESSAGE[s.reason] }));
-    const { data: batch, error } = await admin.from("portal_republish_batches").insert({
-      organization_id: organizationId, requested_by: userId, scope: "all", kind: "imoradar",
-      portal_keys: [IMOBILIARE_PORTAL_KEY], total: selection.queued.length + skippedItems.length,
-      skipped: skippedItems.length, skipped_items: skippedItems,
-    }).select("id").single();
-    if (error || !batch) throw new Error("Acțiunea nu a putut fi pornită.");
     const now = Date.now();
-    const busy: typeof skippedItems = [];
-    for (const [i, propertyId] of selection.queued.entries()) {
-      const { error: insertError } = await admin.from("portal_publish_jobs").insert({
-        organization_id: organizationId, property_id: propertyId, portal_key: IMOBILIARE_PORTAL_KEY,
-        enabled: true, promoted: null, sync_existing: false, requested_by: userId, superadmin: false,
-        operation: "imoradar", republish_batch_id: batch.id,
-        next_attempt_at: new Date(now + i * IMORADAR_BACKFILL_SPACING_MS).toISOString(),
-      });
-      if (insertError) busy.push({ propertyId, portalId: IMOBILIARE_PORTAL_KEY, message: "Anunțul se sincronizează deja; sărit." });
-    }
-    if (busy.length) {
-      await admin.from("portal_republish_batches").update({ skipped: skippedItems.length + busy.length, skipped_items: [...skippedItems, ...busy] }).eq("id", batch.id);
-    }
-    if (selection.queued.length > busy.length) {
-      const { error: armError } = await admin.rpc("portal_publish_arm");
-      if (armError) console.error("[imoradar-backfill] armarea a eșuat", armError.message);
-    } else {
-      const { refreshRepublishBatches } = await import("@/lib/portals/republish.server");
-      await refreshRepublishBatches(admin);
-    }
-    return { batchId: batch.id, queued: selection.queued.length - busy.length, skipped: skippedItems.length + busy.length };
+    const { republishStartArgs } = await import("@/lib/portals/republish");
+    const { data: started, error } = await admin.rpc("start_portal_republish_batch", republishStartArgs({
+      organizationId, userId, scope: "all", portalKeys: [IMOBILIARE_PORTAL_KEY], kind: "imoradar", operation: "imoradar",
+      superadmin: false, syncExisting: false, skippedItems,
+      pairs: selection.queued.map((propertyId, i) => ({ propertyId, portalId: IMOBILIARE_PORTAL_KEY, nextAttemptAt: new Date(now + i * IMORADAR_BACKFILL_SPACING_MS).toISOString() })),
+      busyMessage: "Anunțul se sincronizează deja; sărit.",
+    }));
+    if (error || !started) throw new Error("Acțiunea nu a putut fi pornită.");
+    const res = started as { batch_id: string; queued: number; busy: number };
+    return { batchId: res.batch_id, queued: res.queued, skipped: skippedItems.length + res.busy };
   });
