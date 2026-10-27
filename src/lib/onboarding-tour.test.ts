@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GUIDE_IDS, SAFE_SHOW_SELECTORS, accessibleGuides, guideForPath, guidePathMatches, guidesForContext, implementedGuides, stepsForUser } from "./onboarding-tour";
+import { GUIDE_IDS, SAFE_SHOW_SELECTORS, accessibleGuides, guideProgressSummary, guideForPath, guidePathMatches, guidesForContext, implementedGuides, stepsForUser } from "./onboarding-tour";
 import { plannedGuides } from "./onboarding-catalog";
 import { emptyAiFeatureMap, type AiFeatureMap } from "./ai/features/keys";
 
@@ -114,4 +114,41 @@ describe('etapa 4 — siguranță și acces',()=>{
  it('explicația ACP AI dispare fără activare',()=>{const g=implementedGuides.find(g=>g.id==='acp-detail');if(!g)throw Error('missing');expect(stepsForUser(g,'agent',emptyAiFeatureMap()).some(s=>s.id==='ai')).toBe(false);expect(stepsForUser(g,'agent',{...emptyAiFeatureMap(),acp_ai:true}).some(s=>s.id==='ai')).toBe(true);});
  it('contextele ferestrelor funcționează pe orice pagină CRM',()=>{expect(guidesForContext('/app/anunturi-particulari/abc','listing:import').map(g=>g.id)).toEqual(['anunturi-import']);expect(guidesForContext('/app/properties','chat:directory').map(g=>g.id)).toEqual(['agent-chat']);expect(guidesForContext('/app/ai','topbar:tools').map(g=>g.id)).toEqual(['topbar-tools']);expect(guidesForContext('/superadmin','chat:directory')).toEqual([]);});
  it('niciun pas interactiv nu execută acțiuni finale sau AI',()=>{const forbidden=/generate|submit|create|rerun|approve|send|import-open|chat-contact|pdf|save/;for(const g of implementedGuides.filter(g=>ids.includes(g.id)))for(const s of g.steps){if(s.mode==='do')expect(s.selector).not.toMatch(forbidden);if(s.show){expect(SAFE_SHOW_SELECTORS[s.show as keyof typeof SAFE_SHOW_SELECTORS]).not.toMatch(forbidden);}}});
+});
+
+describe('etapa 5 — inventar final și progres per rol', () => {
+ const ids = ['team','team-member','comisioane','reports','goals','settings','settings-integrations','abonament'];
+ it('toate cele opt ghiduri sunt disponibile, fără planificate', () => {
+  expect(plannedGuides).toEqual([]);
+  expect(implementedGuides.filter(g => ids.includes(g.id))).toHaveLength(8);
+  for(const id of ids) expect(GUIDE_IDS).toContain(id);
+  expect(new Set(implementedGuides.map(g=>g.id)).size).toBe(50);
+ });
+ it('agentul vede doar Comisioane și Setări; adminul vede toate cele opt', () => {
+  expect(accessibleGuides(implementedGuides,'agent',emptyAiFeatureMap()).filter(g=>ids.includes(g.id)).map(g=>g.id)).toEqual(['comisioane','settings']);
+  expect(accessibleGuides(implementedGuides,'agency_admin',emptyAiFeatureMap()).filter(g=>ids.includes(g.id))).toHaveLength(8);
+ });
+ it('numără doar finalizările distincte accesibile: agent 38 și admin 44 fără AI', () => {
+  const progress=[...implementedGuides.map(g=>({guide_id:g.id,status:'completed'})),{guide_id:'team',status:'completed'},{guide_id:'removed',status:'completed'}];
+  expect(guideProgressSummary(accessibleGuides(implementedGuides,'agent',emptyAiFeatureMap()),progress)).toEqual({completed:38,total:38});
+  expect(guideProgressSummary(accessibleGuides(implementedGuides,'agency_admin',emptyAiFeatureMap()),progress)).toEqual({completed:44,total:44});
+ });
+ it('cu toate funcțiile AI agentul are 44 și adminul 50; văzut/sărit nu înseamnă finalizat', () => {
+  const enabled=Object.fromEntries(Object.keys(emptyAiFeatureMap()).map(k=>[k,true])) as AiFeatureMap;
+  expect(guideProgressSummary(accessibleGuides(implementedGuides,'agent',enabled),[{guide_id:'settings',status:'seen'},{guide_id:'comisioane',status:'skipped'}])).toEqual({completed:0,total:44});
+  expect(accessibleGuides(implementedGuides,'agency_admin',enabled)).toHaveLength(50);
+ });
+ it('setările urmează fila deschisă din URL sau din meniu', () => {
+  expect(guidesForContext('/app/settings','settings:profile').map(g=>g.id)).toEqual(['settings']);
+  for(const key of ['portals','integrations','promotion'])expect(guidesForContext('/app/settings',`settings:${key}`).map(g=>g.id)).toEqual(['settings-integrations']);
+ });
+ it('maximum 8 pași și fără acțiuni finale automate', () => {
+  for(const g of implementedGuides.filter(g=>ids.includes(g.id))) {
+   expect(g.steps.length).toBeLessThanOrEqual(8);
+   for(const s of g.steps) if(s.mode==='do'||s.mode==='show') {
+    expect(s.selector).not.toMatch(/save|submit|delete|toggle|upload|approve|disconnect|test-connection|manual-progress/);
+    if(s.show)expect(SAFE_SHOW_SELECTORS[s.show as keyof typeof SAFE_SHOW_SELECTORS]).toBe(s.selector);
+   }
+  }
+ });
 });

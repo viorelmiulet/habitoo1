@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { OnboardingTourProvider } from "./OnboardingTour";
-import { GUIDE_CONTEXT_EVENT, implementedGuides } from "@/lib/onboarding-tour";
+import { GUIDE_CONTEXT_EVENT, implementedGuides, useOnboardingTour as unused } from "@/lib/onboarding-tour";
 import type { CurrentUser } from "@/hooks/use-session";
 
 const mock = vi.hoisted(() => ({ path: "/app/properties/abc", records: new Map<string, string>(), auto: true, claims: [] as string[], mutations: 0 }));
