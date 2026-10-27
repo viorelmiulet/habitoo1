@@ -53,6 +53,7 @@ function apiKeyOf(ctx: PortalContext): string | PortalFail {
 
 export function createImo24Adapter(deps: Imo24Deps = {}): PortalAdapter {
   return {
+    id: "imo24",
     async testConnection(ctx): Promise<PortalResult<ConnectionStatusOutcome>> {
       const key = apiKeyOf(ctx);
       if (typeof key !== "string") return key;
