@@ -278,6 +278,7 @@ function FeaturesPage() {
             <Button asChild variant="link"><Link to="/anunturi-proprietari">Anunțuri de la proprietari, filtre și import în portofoliu <ArrowRight /></Link></Button>
             <Button asChild variant="link"><Link to="/analiza-comparativa-de-piata">Analiză comparativă de piață, ajustări și raport PDF <ArrowRight /></Link></Button>
             <Button asChild variant="link" className="h-auto whitespace-normal"><Link to="/colaborare-intre-agentii">Colaborare între agenții, proprietăți și comision <ArrowRight className="shrink-0" /></Link></Button>
+            <Button asChild variant="link" className="h-auto whitespace-normal"><Link to="/comisioane-agenti-imobiliari">Evidența comisioanelor, rapoarte și exporturi <ArrowRight className="shrink-0" /></Link></Button>
           </div>
         </Container>
       </section>

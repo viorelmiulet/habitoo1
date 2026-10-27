@@ -16,6 +16,7 @@ import { Route as AgentiiRouteImport } from './routes/agentii'
 import { Route as AnalizaComparativaDePiataRouteImport } from './routes/analiza-comparativa-de-piata'
 import { Route as AnunturiProprietariRouteImport } from './routes/anunturi-proprietari'
 import { Route as ColaborareIntreAgentiiRouteImport } from './routes/colaborare-intre-agentii'
+import { Route as ComisioaneAgentiImobiliariRouteImport } from './routes/comisioane-agenti-imobiliari'
 import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
@@ -209,6 +210,12 @@ const ColaborareIntreAgentiiRoute = ColaborareIntreAgentiiRouteImport.update({
   path: '/colaborare-intre-agentii',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComisioaneAgentiImobiliariRoute =
+  ComisioaneAgentiImobiliariRouteImport.update({
+    id: '/comisioane-agenti-imobiliari',
+    path: '/comisioane-agenti-imobiliari',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ConfidentialitateRoute = ConfidentialitateRouteImport.update({
   id: '/confidentialitate',
   path: '/confidentialitate',
@@ -1093,6 +1100,7 @@ export interface FileRoutesByFullPath {
   '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/colaborare-intre-agentii': typeof ColaborareIntreAgentiiRoute
+  '/comisioane-agenti-imobiliari': typeof ComisioaneAgentiImobiliariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -1257,6 +1265,7 @@ export interface FileRoutesByTo {
   '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/colaborare-intre-agentii': typeof ColaborareIntreAgentiiRoute
+  '/comisioane-agenti-imobiliari': typeof ComisioaneAgentiImobiliariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -1421,6 +1430,7 @@ export interface FileRoutesById {
   '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/colaborare-intre-agentii': typeof ColaborareIntreAgentiiRoute
+  '/comisioane-agenti-imobiliari': typeof ComisioaneAgentiImobiliariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -1588,6 +1598,7 @@ export interface FileRouteTypes {
     | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
     | '/colaborare-intre-agentii'
+    | '/comisioane-agenti-imobiliari'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1752,6 +1763,7 @@ export interface FileRouteTypes {
     | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
     | '/colaborare-intre-agentii'
+    | '/comisioane-agenti-imobiliari'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1915,6 +1927,7 @@ export interface FileRouteTypes {
     | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
     | '/colaborare-intre-agentii'
+    | '/comisioane-agenti-imobiliari'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -2082,6 +2095,7 @@ export interface RootRouteChildren {
   AnalizaComparativaDePiataRoute: typeof AnalizaComparativaDePiataRoute
   AnunturiProprietariRoute: typeof AnunturiProprietariRoute
   ColaborareIntreAgentiiRoute: typeof ColaborareIntreAgentiiRoute
+  ComisioaneAgentiImobiliariRoute: typeof ComisioaneAgentiImobiliariRoute
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
@@ -2225,6 +2239,13 @@ declare module '@tanstack/react-router' {
       path: '/colaborare-intre-agentii'
       fullPath: '/colaborare-intre-agentii'
       preLoaderRoute: typeof ColaborareIntreAgentiiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comisioane-agenti-imobiliari': {
+      id: '/comisioane-agenti-imobiliari'
+      path: '/comisioane-agenti-imobiliari'
+      fullPath: '/comisioane-agenti-imobiliari'
+      preLoaderRoute: typeof ComisioaneAgentiImobiliariRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/confidentialitate': {
@@ -3577,6 +3598,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalizaComparativaDePiataRoute: AnalizaComparativaDePiataRoute,
   AnunturiProprietariRoute: AnunturiProprietariRoute,
   ColaborareIntreAgentiiRoute: ColaborareIntreAgentiiRoute,
+  ComisioaneAgentiImobiliariRoute: ComisioaneAgentiImobiliariRoute,
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,
