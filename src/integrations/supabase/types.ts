@@ -4250,6 +4250,7 @@ export type Database = {
           model: string | null
           price_suspect: boolean | null
           price_suspect_confidence: number | null
+          price_suspect_kind: string | null
           price_suspect_reason: string | null
           prompt_version: string
           provider: string | null
@@ -4275,6 +4276,7 @@ export type Database = {
           model?: string | null
           price_suspect?: boolean | null
           price_suspect_confidence?: number | null
+          price_suspect_kind?: string | null
           price_suspect_reason?: string | null
           prompt_version: string
           provider?: string | null
@@ -4300,6 +4302,7 @@ export type Database = {
           model?: string | null
           price_suspect?: boolean | null
           price_suspect_confidence?: number | null
+          price_suspect_kind?: string | null
           price_suspect_reason?: string | null
           prompt_version?: string
           provider?: string | null

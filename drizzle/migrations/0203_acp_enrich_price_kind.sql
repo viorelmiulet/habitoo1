@@ -1,0 +1,1 @@
+ALTER TABLE public.market_listing_enrichments ADD COLUMN price_suspect_kind text CHECK (price_suspect_kind IS NULL OR price_suspect_kind IN ('chirie_la_vanzare','pret_pe_mp','avans','moneda','altul'));
