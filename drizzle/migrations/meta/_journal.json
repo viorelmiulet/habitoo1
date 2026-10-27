@@ -1429,6 +1429,13 @@
       "when": 1793130867613,
       "tag": "0203_acp_enrich_price_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 204,
+      "version": "7",
+      "when": 1793131829651,
+      "tag": "0204_market_listings_retention_12_months",
+      "breakpoints": true
     }
   ]
 }

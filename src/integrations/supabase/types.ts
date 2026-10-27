@@ -10562,6 +10562,7 @@ export type Database = {
         Args: { _bucket: string; _token: string; _ttl_seconds: number }
         Returns: boolean
       }
+      market_listings_lifecycle: { Args: { _now?: string }; Returns: Json }
       market_sync_claim: {
         Args: { _source: string; _stale_seconds?: number }
         Returns: boolean
