@@ -827,14 +827,14 @@ function PropertyDetailPage() {
             {usableSurface ? <p className="mt-3 text-sm text-muted-foreground">{pricePerSqm ? `${formatNumber(pricePerSqm)} €/m² · ` : ""}{formatNumber(usableSurface)} m² utili</p> : null}
           </div>
         </div>
-        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5">
-          {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
-          <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
+        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5" data-tour="property-actions">
+          {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" data-tour="property-edit-button" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
+          <Button variant="outline" data-tour="property-viewing" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
           <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
           <Button variant="outline" onClick={() => setTab("acp")}><BarChart3 /> Analiză comparativă de piață (ACP)</Button>
           <Button variant="outline" asChild><Link to="/app/comisioane" search={{ nou: true, proprietate: id }}>Adaugă comision</Link></Button>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni"><MoreHorizontal /></Button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni" data-tour="property-more"><MoreHorizontal /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>Clonează</DropdownMenuItem>
               <DropdownMenuItem onClick={() => { setReadyPdf(null); setPresentationDialogOpen(true); }}><Download /> Generează fișa de proprietate</DropdownMenuItem>
