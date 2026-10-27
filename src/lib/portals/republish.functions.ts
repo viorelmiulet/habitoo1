@@ -7,6 +7,7 @@ import {
   AUTO_PULL_MESSAGE,
   countByPortal,
   effectiveRepublishScope,
+  republishStartArgs,
   staggerRepublishPairs,
 } from "@/lib/portals/republish";
 
@@ -37,6 +38,7 @@ async function prepare(context: unknown, data: z.infer<typeof inputSchema>) {
 }
 
 async function activeBatch(admin: Awaited<ReturnType<typeof loadAdmin>>, organizationId: string) {
+  await admin.rpc("close_stale_republish_batches", { _org: organizationId });
   const { data } = await admin.from("portal_republish_batches").select("id").eq("organization_id", organizationId).eq("status", "running").maybeSingle();
   return data?.id ?? null;
 }
@@ -67,40 +69,17 @@ export const startRepublish = createServerFn({ method: "POST" })
     if (await activeBatch(admin, org.organizationId)) throw new Error("O republicare rulează deja pentru agenție. Așteaptă să se termine.");
     if (pairs.queued.length === 0 && pairs.autoPull.length === 0) throw new Error("Nu există anunțuri publicate de republicat.");
     const autoItems = pairs.autoPull.map((p) => ({ propertyId: p.propertyId, portalId: p.portalId, message: AUTO_PULL_MESSAGE }));
-    const { data: batch, error } = await admin.from("portal_republish_batches").insert({
-      organization_id: org.organizationId, requested_by: userId, scope,
-      portal_keys: data.portalKeys ?? [], total: pairs.queued.length + autoItems.length,
-      skipped: autoItems.length, skipped_items: autoItems,
-    }).select("id").single();
-    if (error || !batch) {
+    // One RPC = one transaction: batch, all jobs, audit and worker arm. Nothing is left half-done.
+    const { data: started, error } = await admin.rpc("start_portal_republish_batch", republishStartArgs({
+      organizationId: org.organizationId, userId, scope, portalKeys: data.portalKeys ?? [], kind: "republish",
+      operation: "republish", superadmin: org.superadmin, syncExisting: true, skippedItems: autoItems,
+      pairs: staggerRepublishPairs(pairs.queued, Date.now()), busyMessage: "Se sincronizează deja; sărit.",
+    }));
+    if (error || !started) {
       if ((error as { code?: string } | null)?.code === "23505") throw new Error("O republicare rulează deja pentru agenție. Așteaptă să se termine.");
       throw new Error("Republicarea nu a putut fi pornită.");
     }
-    const busy: { propertyId: string; portalId: string; message: string }[] = [];
-    for (const pair of staggerRepublishPairs(pairs.queued, Date.now())) {
-      const { error: insertError } = await admin.from("portal_publish_jobs").insert({
-        organization_id: org.organizationId, property_id: pair.propertyId, portal_key: pair.portalId,
-        enabled: true, promoted: null, sync_existing: true, requested_by: userId, superadmin: org.superadmin,
-        operation: "republish", republish_batch_id: batch.id, next_attempt_at: pair.nextAttemptAt,
-      });
-      if (insertError) busy.push({ propertyId: pair.propertyId, portalId: pair.portalId, message: "Se sincronizează deja; sărit." });
-    }
-    if (busy.length) {
-      await admin.from("portal_republish_batches").update({ skipped: autoItems.length + busy.length, skipped_items: [...autoItems, ...busy] }).eq("id", batch.id);
-    }
-    await admin.from("audit_logs").insert({
-      organization_id: org.organizationId, actor_id: userId, action: "portal_republish_started",
-      entity: "portal_republish_batch", entity_id: batch.id,
-      new_values: { scope, portals: data.portalKeys ?? "all", queued: pairs.queued.length - busy.length },
-    } as never).then(() => undefined, () => undefined);
-    if (pairs.queued.length > busy.length) {
-      const { error: armError } = await admin.rpc("portal_publish_arm");
-      if (armError) console.error("[portal-republish] armarea a eșuat", armError.message);
-    } else {
-      const { refreshRepublishBatches } = await import("@/lib/portals/republish.server");
-      await refreshRepublishBatches(admin);
-    }
-    return { batchId: batch.id };
+    return { batchId: (started as { batch_id: string }).batch_id };
   });
 
 export const getRepublishBatch = createServerFn({ method: "POST" })
