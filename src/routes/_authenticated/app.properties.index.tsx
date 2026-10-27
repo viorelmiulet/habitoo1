@@ -93,6 +93,7 @@ import {
   transactionLabels,
 } from "@/lib/labels";
 import { appHead } from "@/components/app/app-head";
+import { announceGuideContext } from "@/lib/onboarding-tour";
 import { cn } from "@/lib/utils";
 import { canShowDeleteAction, formatPropertyListDetails, formatPropertyListPrice, portalDotTone, portalStateLabel } from "@/lib/property-list-row";
 import { agentFilterClause, buildAgentFilterOptions, showMainAgentFilter, UNASSIGNED_AGENT_FILTER } from "@/lib/property-list-filters";
@@ -161,6 +162,10 @@ function PropertiesPage() {
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState(filters.q);
   const [selected, setSelected] = useState<string[]>([]);
+  // Ghidul „Unelte din listă” pornește o singură dată: la prima vedere schimbată sau prima selecție.
+  const toolsAnnounced = useRef(false);
+  const announceTools = () => { if (!toolsAnnounced.current) { toolsAnnounced.current = true; announceGuideContext("properties:tools"); } };
+  useEffect(() => { if (selected.length > 0) announceTools(); }, [selected.length]);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -201,6 +206,7 @@ function PropertiesPage() {
 
   const setSort = (nextSort: SortKey) => void writeUrlState(filters, nextSort);
   const setView = (nextView: PropertyListView) => {
+    announceTools();
     if (nextView !== "publish" && view === "publish" && Object.keys(portalDrafts).length > 0) {
       if (!window.confirm(`Renunți la ${Object.keys(portalDrafts).length} modificări?`)) return;
       setPortalDrafts({});
