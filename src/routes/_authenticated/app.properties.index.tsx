@@ -1,4 +1,6 @@
 import { SendOfferDialog } from "@/components/app/SendOfferDialog";
+import { SendCollaboratorOfferDialog } from "@/components/app/SendCollaboratorOfferDialog";
+import { neutralOfferReason } from "@/lib/neutral-offer";
 import { offerSendReason } from "@/lib/offer-client";
 import { createFileRoute, Link, useBlocker, useNavigate } from "@tanstack/react-router";
 import { SearchPlacesPicker } from "@/components/app/SearchPlacesPicker";
@@ -172,6 +174,7 @@ function PropertiesPage() {
   useEffect(() => { if (selected.length > 0) announceTools(); }, [selected.length]);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [sendOfferTarget, setSendOfferTarget] = useState<string | null>(null);
+  const [collaboratorOfferTarget, setCollaboratorOfferTarget] = useState<string | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
@@ -1183,6 +1186,7 @@ function PropertiesPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild><Link to="/app/properties/$id" params={{ id: p.id }}><ExternalLink /> Deschide</Link></DropdownMenuItem>
                         <DropdownMenuItem disabled={Boolean(offerSendReason(p))} title={offerSendReason(p) ?? undefined} onSelect={() => setSendOfferTarget(p.id)}><Send /> Trimite oferta</DropdownMenuItem>
+                        <DropdownMenuItem disabled={Boolean(neutralOfferReason(p))} title={neutralOfferReason(p) ?? undefined} onSelect={() => setCollaboratorOfferTarget(p.id)}><Send /> Trimite unui colaborator</DropdownMenuItem>
                         {offerSendReason(p) ? <p className="max-w-64 px-2 py-1 text-xs text-muted-foreground">{offerSendReason(p)}</p> : null}
                         <DropdownMenuItem asChild><a href={`/app/properties/${p.id}?edit=true`}><Pencil /> Editează</a></DropdownMenuItem>
                         <DropdownMenuItem asChild><a href={`/app/properties/${p.id}?tab=publishing`}><ExternalLink /> Publicare pe portaluri</a></DropdownMenuItem>
@@ -1260,6 +1264,7 @@ function PropertiesPage() {
         }}
       />
       {sendOfferTarget ? <SendOfferDialog propertyId={sendOfferTarget} open onOpenChange={open => !open && setSendOfferTarget(null)} /> : null}
+      {collaboratorOfferTarget ? <SendCollaboratorOfferDialog propertyId={collaboratorOfferTarget} open onOpenChange={open => !open && setCollaboratorOfferTarget(null)} /> : null}
       <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
       <PortalBulkSelectionDialog
         mode={portalBulkMode}
