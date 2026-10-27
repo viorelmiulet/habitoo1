@@ -34,7 +34,7 @@ import {
 } from "@/lib/listings.functions";
 import { type PrivateListingsSort } from "@/lib/private-listings";
 import { normalizeListPageSize, type ListPageSize } from "@/lib/list-page-size";
-import { ListPagination, PageRange, PageSizeSelect } from "@/components/app/ListPagination";
+import { ListPagination, PageSizeSelect } from "@/components/app/ListPagination";
 import { useListState } from "@/hooks/use-list-state";
 import { useCurrentUser } from "@/hooks/use-session";
 import { geographyKey } from "@/lib/private-listing-geography";

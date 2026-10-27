@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { ExternalLink, Phone } from "lucide-react";
 import type { OwnerListing } from "@/lib/listings.functions";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import facebookLogo from "@/assets/portals/facebook.svg";
 import imobiliareLogo from "@/assets/portals/imobiliare_ro.png";
 import olxLogo from "@/assets/portals/olx.png";
@@ -63,6 +63,7 @@ export function OwnerListingsTable({ items, sourceLabels }: { items: OwnerListin
   const navigate = useNavigate();
   const open = (id: string) => navigate({ to: "/app/anunturi-particulari/$id", params: { id } });
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-sm">
         <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
@@ -162,5 +163,6 @@ export function OwnerListingsTable({ items, sourceLabels }: { items: OwnerListin
         </tbody>
       </table>
     </div>
+    </TooltipProvider>
   );
 }
