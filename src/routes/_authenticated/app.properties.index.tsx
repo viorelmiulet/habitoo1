@@ -864,7 +864,7 @@ function PropertiesPage() {
           ) : null}
 
           {shouldShowAdvancedFilters(filtersExpanded) ? <>
-            <div className="md:col-span-2"><label className={fieldLabelClass}>Localități și zone</label><SearchPlacesPicker options={placeOptions} value={placeValue} onApply={locuri => setFilters(f => ({ ...f, locuri, city: "all", district: "all" }))}/></div>
+            <div className="md:col-span-2"><label className={fieldLabelClass}>Localități și zone</label><SearchPlacesPicker options={placeOptions} value={placeValue} onApply={locuri => { if (!locuri && Object.keys(search).every(k => ["locuri", "city", "district"].includes(k) || search[k as keyof typeof search] === undefined)) clearListState(); setFilters(f => ({ ...f, locuri, city: "all", district: "all" })); }}/></div>
             <fieldset>
               <legend className={fieldLabelClass}>Preț (EUR)</legend>
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"><Input aria-label="Preț minim" inputMode="numeric" placeholder="Min" value={formatThousands(filters.priceMin)} onChange={(e) => setDigits("priceMin", e.target.value)} className={cn(filters.priceMin && valuedControlClass)} /><span className="text-muted-foreground">–</span><Input aria-label="Preț maxim" inputMode="numeric" placeholder="Max" value={formatThousands(filters.priceMax)} onChange={(e) => setDigits("priceMax", e.target.value)} className={cn(filters.priceMax && valuedControlClass)} /></div>

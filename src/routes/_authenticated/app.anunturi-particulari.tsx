@@ -399,7 +399,7 @@ function PrivateListingsPage() {
               <SelectItem value="rent_day">Închiriere pe zi</SelectItem>
             </SelectContent>
           </Select>
-          <SearchPlacesPicker options={facets.data?.places ?? []} value={draft.locuri} onApply={(locuri) => { const next = { ...draft, locuri, judet: "", oras: "", zona: [] }; setDraft(next); void apply(next); }} />
+          <SearchPlacesPicker options={facets.data?.places ?? []} value={draft.locuri} onApply={(locuri) => { if (!locuri && Object.keys(search).every(k => ["locuri", "judet", "oras", "zona", "lista"].includes(k) || search[k as keyof typeof search] === undefined)) clearListState(); const next = { ...draft, locuri, judet: "", oras: "", zona: [] }; setDraft(next); void apply(next); }} />
           <Select value={draft.zile || ALL} onValueChange={(v) => patch({ zile: v === ALL ? "" : v })}>
             <SelectTrigger aria-label="Zile în piață"><SelectValue placeholder="Zile în piață" /></SelectTrigger>
             <SelectContent>

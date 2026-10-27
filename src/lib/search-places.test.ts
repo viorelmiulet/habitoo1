@@ -25,7 +25,8 @@ describe("cross-region geography", () => {
   await db.exec(readFileSync('drizzle/migrations/0190_multi_geography_read_filters.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0191_multi_geography_legacy_sector_scope.sql','utf8'));
   for (const [i,r] of rows.entries()) await db.query('INSERT INTO properties VALUES ($1,$2,$3,$4,$5)',[i,r.county,r.city,r.district,100+i]);
-  expect((await db.query('SELECT id FROM search_properties_places($1::jsonb) ORDER BY id',[serializePlaces(choices)])).rows).toEqual([{id:0},{id:1}]);
+  await db.query('INSERT INTO properties VALUES (5,$1,$2,$3,100)', ['Bucureşti','Sector 6','Militari']);
+  expect((await db.query('SELECT id FROM search_properties_places($1::jsonb) ORDER BY id',[serializePlaces(choices)])).rows).toEqual([{id:0},{id:1},{id:5}]);
   expect((await db.query('SELECT id FROM search_properties_places($1::jsonb) WHERE price >= $2 ORDER BY id',[serializePlaces([...choices,...legacyPlaceChoices('Ilfov')]),101])).rows).toEqual([{id:1},{id:2}]);
   expect((await db.query('SELECT id FROM search_properties_places($1::jsonb)',[serializePlaces([{kind:'zone',county:'',city:'bucuresti',zone:'militari),id.gt.0'}])])).rows).toEqual([]);
   await db.close();
