@@ -418,6 +418,7 @@ function ActivitiesPage() {
             size="icon"
             variant="ghost"
             title="Reprogramează"
+            data-tour="activity-reschedule"
             onClick={() => {
               setReschedule(a);
               setRescheduleValue(a.starts_at.slice(0, 16));
@@ -463,8 +464,9 @@ function ActivitiesPage() {
         }
       />
 
-      <div className="panel flex flex-wrap items-center gap-2 p-3">
+      <div data-tour="activities-filters" className="panel flex flex-wrap items-center gap-2 p-3">
         <Input
+          data-tour="activities-search"
           placeholder="Caută…"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
@@ -598,7 +600,7 @@ function ActivitiesPage() {
 
       {reschedule ? (
         <AlertDialog open={Boolean(reschedule)} onOpenChange={(v) => !v && setReschedule(null)}>
-          <AlertDialogContent>
+          <AlertDialogContent data-tour="activity-reschedule-form">
             <AlertDialogHeader>
               <AlertDialogTitle>Reprogramează activitatea</AlertDialogTitle>
             </AlertDialogHeader>

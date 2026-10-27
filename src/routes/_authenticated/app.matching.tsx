@@ -47,7 +47,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/matching")({
-  head: () => appHead("Habitoo CRM — potriviri"),
+  head: () => { const title = "Habitoo CRM — potriviri"; const description = "Potrivirile dintre cererile clienților și proprietățile agenției."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: MatchingPage,
 });
 
@@ -370,7 +370,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
         }
       />
 
-      <div className="panel space-y-4 p-4">
+      <div data-tour="matching-filters" className="panel space-y-4 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
@@ -382,6 +382,8 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
           <Button
             size="sm"
             variant={mode === "property-to-request" ? "default" : "outline"}
+            data-tour="matching-direction"
+            aria-pressed={mode === "property-to-request"}
             onClick={() => setMode("property-to-request")}
           >
             Proprietate → Clienți
@@ -484,7 +486,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex min-w-56 flex-1 items-center gap-3">
+          <div data-tour="matching-score" className="flex min-w-56 flex-1 items-center gap-3">
             <Label className="whitespace-nowrap text-xs">Scor minim: {minScore}%</Label>
             <Slider
               value={[minScore]}
@@ -496,6 +498,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
             />
           </div>
           <Input
+            data-tour="matching-search"
             placeholder="Caută cerere sau proprietate…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -527,7 +530,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
             const text = shareText(row.request, row.property);
             const tone = matchTone(row.match.score);
             return (
-              <article key={row.key} className="panel flex flex-col gap-4 p-5">
+              <article data-tour="matching-result" key={row.key} className="panel flex flex-col gap-4 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1 space-y-1">
                     <Link

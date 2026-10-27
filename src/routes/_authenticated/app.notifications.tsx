@@ -14,7 +14,7 @@ import { appHead } from "@/components/app/app-head";
 import { safeInternalPath } from "@/lib/host";
 
 export const Route = createFileRoute("/_authenticated/app/notifications")({
-  head: () => appHead("Habitoo CRM — notificări"),
+  head: () => { const title = "Habitoo CRM — notificări"; const description = "Alertele utilizatorului despre lead-uri, activități și evenimentele din CRM."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: NotificationsPage,
 });
 
@@ -66,6 +66,7 @@ function NotificationsPage() {
     const isUnread = !n.read_at;
     return (
       <li
+        data-tour="notification-item"
         key={n.id}
         className={`flex items-start gap-3 px-5 py-4 text-sm transition-colors ${
           isUnread ? "bg-primary/[0.04]" : "hover:bg-surface"
@@ -109,7 +110,7 @@ function NotificationsPage() {
   };
 
   return (
-    <>
+    <div data-tour="notifications-page">
       <PageHeader
         title="Notificări"
         description="Alerte despre lead-uri noi, activități apropiate și schimbări în portofoliu."
@@ -126,6 +127,7 @@ function NotificationsPage() {
         actions={
           unread.length > 0 ? (
             <Button
+              data-tour="notifications-read-all"
               size="sm"
               variant="outline"
               onClick={() => markRead.mutate(unread.map((n) => n.id))}
@@ -167,6 +169,6 @@ function NotificationsPage() {
           ) : null}
         </div>
       )}
-    </>
+    </div>
   );
 }

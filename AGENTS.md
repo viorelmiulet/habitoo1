@@ -27,12 +27,12 @@
 - Chat emails use `renderHabitooEmail`, read after claim, sign private images and resolve recipient-visible conversations; retain unsubscribe. Why: consistent delivery and privacy.
 - Property features share taxonomy metadata and module-level edit/read groups; view preferences hydrate after mount. Why: preserve values, focus and SSR consistency.
 - Property PDFs share privacy-filtered fragments and measured pagination in a lazy browser renderer; hydrate overrides, use agency defaults and mobile ready-file clicks. Why: consistent privacy and delivery.
-- Subdirectories (e.g. `src/lib`, `src/lib/meta`) have their own `AGENTS.md`; read it before changing files there.
+- Read nested `AGENTS.md` before editing its directory (e.g. `src/lib`, `src/lib/meta`).
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
 - Completed property video generations store caller-owned metadata and server-resolved music snapshots in generated_video_clips, not media files; history uses caller RLS and does not publish. Why: include unpublished clips and retain soundtrack identity after library edits without storing large videos.
 - Video narration uses a direct MiniMax TTS server boundary with validated hex decoding, atomic organization-locked reservations and character usage, caller-RLS private audio signing, and one offline audio mix for both encoders. Why: preserve quotas and privacy without provider prediction polling.
-- No global `entities` aliases or version overrides. Why: consumers require different majors and package exports.
-- Integrations overview has a separate registry-derived presentation module. Why: no duplicates or false claims, unchanged detail pages.
+- No global `entities` aliases/version overrides: consumers need different majors/exports.
+- Integrations overview uses separate registry-derived presentation; details unchanged. Why: no duplicates/false claims.
 - Property-list portal and promotion selections share PortalFilterSelect while retaining independent URL fields and existing server filters. Why: unified presentation without changing OR semantics, access controls or legacy links.
 - Imobiliare.ro destination and promotion drafts use the existing durable publication queue; requested mode lives on publications/jobs and confirmed mode on listings, with no new portal. Destination changes send both statuses in one POST; unchanged published promotions remain partial; Bonus and imoradar-only bypass local capacity reads/checks. Why: keep destination switching recoverable and let the portal decide capacity.
 - hbsync private listings: `/api/public/listings/upsert` is idempotent on (source, external_id), mirrors images into private `listing-images`, prefixes `period`, normalizes URLs and preserves stored URL/images on empty re-import; buildListingRow enforces source-specific phone handling without changing descriptions; purge_old_listings retains the existing 60-day rule. Why: preserve imports, contact rules and links independently of public aggregates and ACP.
@@ -57,6 +57,6 @@
 - AI music uses a server-only direct fal ACE-Step call (no queue, 110 s timeout), handler-scoped FAL_KEY, 30 successes/day, inactive tracks and failure cleanup; recoverable failures return safe-message DTOs and record stage codes in ai_usage_events.extra_info, never provider bodies; unexpected errors also record sanitized error_name/message. Why: preserve privacy and actionable production diagnostics.
 
 - Studio AI uses direct MiniMax images/Hailuo tasks and fal Kontext, private media and one terminal-updated usage event. Monthly reservations lock the agency before insertion; failed rows free slots, archived successes retain consumption; quotas use Romania months. SuperAdmin alone edits limits. Why: no duplicate usage, races or refunds.
-- Galleries share PhotoViewer. Why: one gesture model.
+- Galleries share PhotoViewer; dialogs retain guide-panel clicks. Why: consistent gestures and safe tours.
 - Lists share `ListPagination` + user/list-scoped `use-list-state` (URL priority, scroll/reset). Why: private preferences.
 - Public SSR/feeds read the DB via `publicRead` (timeout, logged fallback); `public_llms_statistics` reads an hourly cron cache. Why: no 500s under load.

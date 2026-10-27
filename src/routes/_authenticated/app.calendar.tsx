@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/calendar")({
-  head: () => appHead("Habitoo CRM — calendar"),
+  head: () => { const title = "Habitoo CRM — calendar"; const description = "Calendarul activităților și vizionărilor agenției."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: CalendarPage,
 });
 
@@ -376,9 +376,11 @@ function CalendarPage() {
         description="Activități, vizionări și follow-up-uri ale echipei."
         actions={
           <>
-            <div className="flex items-center overflow-hidden rounded-lg border border-border">
+            <div data-tour="calendar-views" className="flex items-center overflow-hidden rounded-lg border border-border">
               {(["day", "week", "month"] as ViewMode[]).map((v) => (
                 <button
+                  data-tour={`calendar-${v}`}
+                  aria-pressed={view === v}
                   key={v}
                   onClick={() => setView(v)}
                   className={cn(
@@ -401,14 +403,14 @@ function CalendarPage() {
             <Button variant="outline" size="sm" onClick={() => navigate(1)}>
               <ChevronRight className="size-4" />
             </Button>
-            <Button size="sm" onClick={() => openCreate(new Date())}>
+            <Button data-tour="calendar-create" size="sm" onClick={() => openCreate(new Date())}>
               Activitate nouă
             </Button>
           </>
         }
       />
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div data-tour="calendar-filters" className="mt-4 flex flex-wrap items-center gap-3">
         <p className="text-sm font-semibold">{rangeLabel}</p>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Select value={agentFilter} onValueChange={setAgentFilter}>

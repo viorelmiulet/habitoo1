@@ -8,7 +8,7 @@ export type TourStep = {
   event?: "click" | "input";
   hint?: string;
   confirmation?: string;
-  show?: "menu" | "portfolio" | "clients" | "management" | "filters" | "publish" | "details";
+  show?: "menu" | "portfolio" | "clients" | "management" | "filters" | "publish" | "details" | "contacts-cards" | "contact-requests" | "contact-leads" | "contact-activities" | "contact-documents" | "contact-notes" | "contact-timeline" | "request-create" | "request-leads" | "request-activities" | "contract-create" | "contract-edit" | "activity-reschedule" | "calendar-day" | "calendar-create" | "matching-direction" | "support-create";
   fallbackNote?: string;
   /** Pasul se sare singur dacă elementul nu există pentru utilizatorul curent. */
   optional?: boolean;
@@ -32,6 +32,7 @@ export const GUIDE_IDS = [
   "property-publishing", "property-promotions", "property-video-social",
   "property-leads", "property-documents", "property-acp", "property-marketing",
   "collaboration",
+  "contacts-list", "contact-detail", "contact-create", "requests-list", "request-detail", "leads-list", "contracts-list", "contract-detail", "activities", "calendar", "matching", "notifications", "clipurile-mele", "support",
 ] as const;
 export type GuideId = (typeof GUIDE_IDS)[number];
 
@@ -39,7 +40,7 @@ const agencyRoles: AppRole[] = ["agent", "agency_admin", "superadmin"];
 const adminRoles: AppRole[] = ["agency_admin", "superadmin"];
 const PROPERTY = "/app/properties/:id";
 
-export const implementedGuides: GuideDefinition[] = [
+const guideDefinitions: GuideDefinition[] = [
   { id: "first-steps", title: "Primii pași", group: "Dashboard", path: "/app", roles: ["agent", "agency_admin"], steps: [
     { id: "welcome", title: "Primii pași", text: "Bun venit! Descoperim pagina de start și principalele zone. Nu salvăm și nu trimitem nimic." },
     { id: "overview", title: "Privirea de ansamblu", text: "Aici vezi portofoliul și activitatea. Cifrele sunt cele la care ai acces.", selector: '[data-tour="dashboard-overview"]' },
@@ -167,7 +168,127 @@ export const implementedGuides: GuideDefinition[] = [
     { id: "tabs", title: "Trimise și primite", text: "Propunerile mele sunt cele trimise de tine; Cereri primite sunt propunerile altora pe proprietățile tale.", selector: '[data-tour="collab-tabs"]' },
     { id: "answer", title: "Cum răspunzi la o propunere", text: "Din Cereri primite deschizi discuția și accepți, programezi vizionarea sau refuzi. Mesajele merg direct la cealaltă agenție.", selector: '[data-tour="collab-incoming"]' },
   ]},
+  // ————— Etapa 3: Clienți și Activitate —————
+  { id: "contacts-list", title: "Contacte", group: "Clienți", path: "/app/contacts", roles: agencyRoles, steps: [
+    { id: "overview", title: "Contactele agenției", text: "Clienți, proprietari și parteneri, cu datele la care ai acces.", selector: '[data-tour="contacts-filters"]' },
+    { id: "search", title: "Caută un contact", text: "Scrie un nume, un telefon sau un email. Căutarea nu schimbă contactul.", selector: '[data-tour="contacts-search"]', mode: "do", event: "input", confirmation: "Ai folosit căutarea.", hint: "Scrie în câmpul de căutare; poți șterge textul după ghid." },
+    { id: "types", title: "Tipul contactului", text: "Filtrul Tip separă cumpărătorii, proprietarii, chiriașii și celelalte contacte.", selector: '[data-tour="contacts-type"]' },
+    { id: "filters", title: "Restrânge lista", text: "Alege sursa, agentul, statusul sau eticheta. Resetează elimină filtrele, nu contactele.", selector: '[data-tour="contacts-filters"]' },
+    { id: "cards", title: "Vezi contactele pe carduri", text: "Arată-mi vederea Carduri. Datele rămân aceleași.", selector: '[data-tour="contacts-cards"]', mode: "show", show: "contacts-cards" },
+    { id: "list", title: "Revino la listă", text: "Apasă pictograma Listă ca să compari rândurile.", selector: '[data-tour="contacts-list-view"]', mode: "do", event: "click", confirmation: "Ai revenit la listă." },
+    { id: "create", title: "Un contact nou", text: "Adaugă contact deschide formularul, care are propriul ghid. Nimic nu se salvează la deschidere.", selector: '[data-tour="contact-create-open"]' },
+  ]},
+  { id: "contact-detail", title: "Pagina contactului", group: "Clienți", path: "/app/contacts/:id", roles: agencyRoles, steps: [
+    { id: "overview", title: "Prezentarea contactului", text: "Overview este prezentarea: date de contact, tip și agent. Filele adună tot ce ai lucrat cu acest client.", selector: '[data-tour="contact-tabs"]' },
+    { id: "properties", title: "Proprietățile contactului", text: "Apasă Proprietăți pentru anunțurile în care contactul este proprietar.", selector: '[data-tour="contact-tab-properties"]', mode: "do", event: "click", confirmation: "Ai deschis proprietățile contactului." },
+    { id: "requests", title: "Cererile clientului", text: "Arată-mi Cereri: aici vezi ce caută clientul și poți deschide criteriile lui.", selector: '[data-tour="contact-tab-requests"]', mode: "show", show: "contact-requests" },
+    { id: "leads", title: "Lead-urile", text: "Lead-uri arată oportunitățile și etapa discuțiilor cu acest contact.", selector: '[data-tour="contact-tab-leads"]', mode: "show", show: "contact-leads" },
+    { id: "activities", title: "Activități și vizionări", text: "Arată-mi Activități. Apelurile și întâlnirile sunt aici; fila Vizionări arată vizitele. Programarea se păstrează doar când o salvezi tu.", selector: '[data-tour="contact-tab-activities"]', mode: "show", show: "contact-activities" },
+    { id: "documents", title: "Documentele contactului", text: "Arată-mi Documente: actele și atașamentele legate de contact. Ghidul nu încarcă fișiere.", selector: '[data-tour="contact-tab-documents"]', mode: "show", show: "contact-documents" },
+    { id: "notes", title: "Note interne", text: "Arată-mi Note. Scrii informații utile echipei; adăugarea lor rămâne decizia ta.", selector: '[data-tour="contact-tab-notes"]', mode: "show", show: "contact-notes" },
+    { id: "timeline", title: "Cronologia", text: "Arată-mi Timeline, cronologia interacțiunilor. Citești ce s-a întâmplat fără să schimbi date.", selector: '[data-tour="contact-tab-timeline"]', mode: "show", show: "contact-timeline" },
+  ]},
+  { id: "contact-create", title: "Adaugă un contact", group: "Clienți", path: "/app/contacts", context: "contact:creating", roles: agencyRoles, steps: [
+    { id: "form", title: "Contact nou", text: "Completezi datele clientului. Formularul nu salvează până nu confirmi tu.", selector: '[data-tour="contact-create-form"]' },
+    { id: "name", title: "Numele clientului", text: "Completează prenumele; numele de familie este și el obligatoriu.", selector: '#first_name', mode: "do", event: "input", confirmation: "Ai completat prenumele.", hint: "Scrie în câmpul Prenume sau sari pasul." },
+    { id: "type", title: "Alege tipul", text: "Tipul arată relația cu persoana: cumpărător, proprietar, chiriaș sau partener.", selector: '[data-tour="contact-create-type"]' },
+    { id: "contact", title: "Telefon și email", text: "Verifică numărul și adresa înainte de a le folosi. Compania se completează dacă este cazul.", selector: '#phone' },
+    { id: "source", title: "Sursa contactului", text: "Sursa arată de unde a venit clientul. Sursa existentă apare în prezentarea contactului; acest formular nu are câmp Sursă." },
+    { id: "consent", title: "Consimțământul", text: "Adăugarea unui contact nu înseamnă acord pentru mesaje. Formularul nu cere consimțământ; verifică acordul înainte de comunicări." },
+    { id: "notes", title: "Note utile echipei", text: "Notează contextul discuției, fără date sensibile care nu sunt necesare.", selector: '#notes' },
+    { id: "stop", title: "Ne oprim înainte de salvare", text: "Salvează ar crea contactul. Ghidul nu apasă butonul; Renunță închide formularul fără să creeze nimic.", selector: '[data-tour="contact-create-save"]' },
+  ]},
+  { id: "requests-list", title: "Cereri", group: "Clienți", path: "/app/requests", roles: agencyRoles, steps: [
+    { id: "overview", title: "Ce caută clienții", text: "Fiecare cerere păstrează criteriile unui client și ajută la găsirea proprietăților potrivite.", selector: '[data-tour="requests-filters"]' },
+    { id: "search", title: "Caută o cerere", text: "Scrie o parte din titlu. Schimbi doar lista afișată.", selector: '[data-tour="requests-search"]', mode: "do", event: "input", confirmation: "Ai căutat o cerere." },
+    { id: "filters", title: "Filtrează cererile", text: "Tip, status, prioritate, agent și oraș te ajută să alegi cererile relevante.", selector: '[data-tour="requests-filters"]' },
+    { id: "detail", title: "Deschide criteriile", text: "Din titlul unei cereri ajungi la criterii, proprietăți compatibile, lead-uri și activități." },
+    { id: "new", title: "Adaugă o cerere", text: "Arată-mi formularul. Alegi clientul și criteriile; nu salvăm nimic.", selector: '[data-tour="request-create-open"]', mode: "show", show: "request-create" },
+    { id: "stop", title: "Criterii și salvare", text: "Completează bugetul, zona și caracteristicile dorite. Salvează ar crea cererea; închide fereastra dacă doar explorezi.", selector: '[data-tour="request-create-form"]' },
+  ]},
+  { id: "request-detail", title: "Pagina cererii", group: "Clienți", path: "/app/requests/:id", roles: agencyRoles, steps: [
+    { id: "criteria", title: "Criteriile clientului", text: "Overview prezintă tranzacția, bugetul, zona și caracteristicile căutate. Verifică-le cu clientul.", selector: '[data-tour="request-tabs"]' },
+    { id: "matching", title: "Proprietăți compatibile", text: "Apasă fila pentru a vedea ofertele care se potrivesc cererii.", selector: '[data-tour="request-tab-matching"]', mode: "do", event: "click", confirmation: "Ai deschis proprietățile compatibile." },
+    { id: "score", title: "Scor și motive", text: "Scorul compară criteriile cererii cu proprietatea. Citește potrivirile și lipsurile; scorul nu garantează interesul clientului.", selector: '[data-tour="request-matches"]' },
+    { id: "leads", title: "Lead-uri pentru cerere", text: "Arată-mi Lead-uri. Legarea clientului de o ofertă creează o oportunitate doar când confirmi tu.", selector: '[data-tour="request-tab-leads"]', mode: "show", show: "request-leads" },
+    { id: "activities", title: "Următorul pas", text: "Arată-mi Activități. Vezi apelurile și vizionările legate de cerere; programările noi cer salvarea ta.", selector: '[data-tour="request-tab-activities"]', mode: "show", show: "request-activities" },
+    { id: "stop", title: "Tu alegi ce trimiți", text: "Trimiterea pe email sau WhatsApp și crearea unui lead sunt acțiuni reale. Ghidul nu le execută." },
+  ]},
+  { id: "leads-list", title: "Lead-uri", group: "Clienți", path: "/app/leads", roles: agencyRoles, steps: [
+    { id: "pipeline", title: "Pipeline-ul", text: "Coloanele sunt etapele discuției, de la primul contact până la tranzacție. Cardurile sunt lead-urile.", selector: '[data-tour="leads-pipeline"]' },
+    { id: "drag", title: "Mutarea între etape", text: "Tragerea unui card în altă coloană schimbă imediat etapa. La Pierdut se cere motivul. Ghidul doar explică, fără să mute carduri." },
+    { id: "search", title: "Caută în lead-uri", text: "Scrie un nume, telefon sau email. Căutarea nu modifică lead-ul.", selector: '[data-tour="leads-search"]', mode: "do", event: "input", confirmation: "Ai folosit căutarea." },
+    { id: "filters", title: "Lista și filtrele", text: "Lista este organizată pe coloane. Filtrezi după agent, sursă și campanie; Doar ale mele restrânge lead-urile afișate.", selector: '[data-tour="leads-filters"]' },
+    { id: "details", title: "Detaliile unui lead", text: "Apasă pe un card ca să vezi istoricul și mesajele. Schimbarea etapei din detalii este tot o modificare reală.", selector: '[data-tour="lead-open"]', mode: "do", event: "click", confirmation: "Ai deschis detaliile, fără să schimbi etapa." },
+    { id: "agent", title: "Atribuirea pe agent", text: "Ca administrator, alegi agentul în formularul de adăugare sau editare. Filtrul Agent doar caută; nu reasignează.", roles: adminRoles },
+    { id: "stop", title: "Acțiunile rămân la tine", text: "Adăugarea, editarea și ștergerea cer decizia ta. Ghidul nu salvează, nu mută și nu șterge lead-uri." },
+  ]},
+  { id: "contracts-list", title: "Contracte", group: "Clienți", path: "/app/contracts", roles: agencyRoles, steps: [
+    { id: "overview", title: "Contracte și documente", text: "Aici urmărești documentele agenției și starea semnăturilor.", selector: '[data-tour="contracts-filters"]' },
+    { id: "types", title: "Tipurile de document", text: "Contract de închiriere sau contract de reprezentare exclusivă: alegi tipul potrivit în Document nou." },
+    { id: "search", title: "Caută un document", text: "Scrie o parte din titlu pentru a restrânge lista.", selector: '[data-tour="contracts-search"]', mode: "do", event: "input", confirmation: "Ai căutat un document." },
+    { id: "status", title: "Starea documentului", text: "Filtrul separă ciornele, documentele trimise, semnate sau anulate. Numărul de semnături arată cine mai are de semnat.", selector: '[data-tour="contracts-status"]' },
+    { id: "new", title: "Document nou", text: "Arată-mi formularul. Alegerea unui tip nu creează încă un contract.", selector: '[data-tour="contract-create-open"]', mode: "show", show: "contract-create" },
+    { id: "identity", title: "Datele și actul de identitate", text: "În pașii formularului completezi părțile și poți citi actul de identitate. Verifică datele extrase; ghidul nu încarcă acte și nu creează documentul." },
+    { id: "detail", title: "Pagina contractului", text: "Deschide un document existent pentru conținut, părți semnatare și PDF. Fereastra Document nou se poate închide fără salvare." },
+  ]},
+  { id: "contract-detail", title: "Pagina contractului", group: "Clienți", path: "/app/contracts/:id", roles: agencyRoles, steps: [
+    { id: "body", title: "Citește documentul", text: "Verifică textul, datele și condițiile înainte de a trimite documentul la semnat.", selector: '[data-tour="contract-body"]' },
+    { id: "identity", title: "Citirea actului de identitate", text: "Citirea actului se face în Document nou, înainte de creare. Verifici numele și datele extrase; ghidul nu trimite imagini pentru citire." },
+    { id: "parties", title: "Părțile semnatare", text: "Aici vezi persoanele și starea semnării. Datele actului sunt sensibile; consultă-le doar când este necesar.", selector: '[data-tour="contract-parties"]' },
+    { id: "edit", title: "Completarea textului", text: "Arată-mi editarea, dacă documentul este ciornă. Doar deschidem câmpurile, fără modificări sau salvare.", selector: '[data-tour="contract-edit"]', mode: "show", show: "contract-edit" },
+    { id: "review", title: "Verificarea finală", text: "Salvează ar păstra modificările textului. Renunță revine la citire. Documentele care nu mai sunt ciorne nu au această editare." },
+    { id: "pdf", title: "PDF-ul", text: "PDF generează și atașează un fișier documentului. Fișierele existente sunt în Fișiere PDF. Ghidul nu generează sau salvează fișiere.", selector: '[data-tour="contract-pdf"]' },
+    { id: "sign", title: "Trimiterea și semnarea", text: "Bifezi semnatarii, apoi Trimite la semnat creează linkuri și le trimite unde este posibil. Semnarea aparține persoanei; ghidul nu trimite și nu semnează.", selector: '[data-tour="contract-send"]' },
+    { id: "stop", title: "Ne oprim aici", text: "Nu s-a salvat sau trimis nimic prin ghid. Verifică documentul și decide tu când îl salvezi, generezi PDF-ul sau îl trimiți." },
+  ]},
+  { id: "activities", title: "Activități", group: "Activitate", path: "/app/activities", roles: agencyRoles, steps: [
+    { id: "types", title: "Agenda ta de lucru", text: "Apeluri, întâlniri, vizionări, emailuri și sarcini. Fiecare are dată, responsabil și stare.", selector: '[data-tour="activities-filters"]' },
+    { id: "search", title: "Caută o activitate", text: "Scrie un cuvânt din titlu. Filtrele aleg starea, tipul, agentul și perioada.", selector: '[data-tour="activities-search"]', mode: "do", event: "input", confirmation: "Ai căutat în agendă." },
+    { id: "done", title: "Marchează ca finalizat", text: "Bifa Finalizează schimbă imediat starea. Se poate aplica și unei selecții. Ghidul doar explică, fără să o apese." },
+    { id: "reschedule", title: "Reprogramarea", text: "Arată-mi fereastra de reprogramare a unei activități. Deschiderea nu schimbă data.", selector: '[data-tour="activity-reschedule"]', mode: "show", show: "activity-reschedule" },
+    { id: "date", title: "Alegi o altă dată", text: "Salvează ar modifica programarea; Renunță o lasă neschimbată.", selector: '[data-tour="activity-reschedule-form"]' },
+    { id: "delete", title: "Ștergerea", text: "Șterge elimină activitatea după confirmare. Ghidul nu deschide confirmarea și nu șterge nimic." },
+  ]},
+  { id: "calendar", title: "Calendar", group: "Activitate", path: "/app/calendar", roles: agencyRoles, steps: [
+    { id: "views", title: "Zi, săptămână și lună", text: "Alegi cât din program vezi. Săgețile schimbă intervalul, iar Azi revine la data curentă.", selector: '[data-tour="calendar-views"]' },
+    { id: "day", title: "Vederea pe zi", text: "Arată-mi programul unei zile. Nu modificăm activitățile.", selector: '[data-tour="calendar-day"]', mode: "show", show: "calendar-day" },
+    { id: "week", title: "Vederea pe săptămână", text: "Apasă Săptămână ca să compari programul zilelor.", selector: '[data-tour="calendar-week"]', mode: "do", event: "click", confirmation: "Ai deschis vederea pe săptămână." },
+    { id: "filters", title: "Programul relevant", text: "Filtrează după agent sau tip și folosește Doar ale mele pentru agenda ta.", selector: '[data-tour="calendar-filters"]' },
+    { id: "new", title: "Programează o vizionare", text: "Arată-mi Activitate nouă. În formular alegi Vizionare, proprietatea, clientul și ora. Poți porni și dintr-un loc liber al calendarului.", selector: '[data-tour="calendar-create"]', mode: "show", show: "calendar-create" },
+    { id: "stop", title: "Fără programări automate", text: "Salvează ar crea activitatea; închide formularul dacă explorezi. Tragerea unei activități în calendar îi schimbă programarea — ghidul nu o mută." },
+  ]},
+  { id: "matching", title: "Potriviri", group: "Activitate", path: "/app/matching", roles: agencyRoles, steps: [
+    { id: "overview", title: "Cereri și proprietăți", text: "Matching compară criteriile clienților cu ofertele din portofoliu.", selector: '[data-tour="matching-filters"]' },
+    { id: "direction", title: "Schimbă direcția", text: "Arată-mi Proprietate → Clienți. Poți căuta oferte pentru o cerere sau clienți pentru o proprietate.", selector: '[data-tour="matching-direction"]', mode: "show", show: "matching-direction" },
+    { id: "score", title: "Scorul de potrivire", text: "Scorul arată cât de bine se aliniază criteriile. Scor minim restrânge rezultatele; nu este probabilitatea unei vânzări.", selector: '[data-tour="matching-score"]' },
+    { id: "reasons", title: "Motive și lipsuri", text: "Citește ce se potrivește și ce lipsește. Confirmă detaliile cu clientul înainte de a-i propune oferta.", selector: '[data-tour="matching-result"]' },
+    { id: "search", title: "Găsește o potrivire", text: "Scrie titlul unei cereri sau al unei proprietăți.", selector: '[data-tour="matching-search"]', mode: "do", event: "input", confirmation: "Ai folosit căutarea." },
+    { id: "stop", title: "Următorul pas îl alegi tu", text: "Crearea unui lead și trimiterea unei oferte sunt acțiuni reale. Ghidul nu le execută." },
+  ]},
+  { id: "notifications", title: "Notificări", group: "Activitate", path: "/app/notifications", roles: agencyRoles, steps: [
+    { id: "overview", title: "Ce cere atenție", text: "Aici vezi alerte despre lead-uri, activități și alte evenimente. Mesajele între agenți au zona lor separată.", selector: '[data-tour="notifications-page"]' },
+    { id: "unread", title: "Necitite și citite", text: "Eticheta Nou și secțiunea Necitite te ajută să vezi alertele recente.", selector: '[data-tour="notification-item"]' },
+    { id: "links", title: "Deschide detaliile", text: "Titlul unei alerte te poate duce la pagina relevantă. Ghidul rămâne aici, fără să deschidă sau să marcheze notificări." },
+    { id: "read", title: "Marchează citit", text: "Marchează citit și Marchează toate ca citite schimbă starea alertelor. Le apeși tu când ai verificat; ghidul nu le apasă.", selector: '[data-tour="notifications-read-all"]' },
+  ]},
+  { id: "clipurile-mele", title: "Clipurile mele", group: "Portofoliu", path: "/app/clipurile-mele", roles: agencyRoles, steps: [
+    { id: "history", title: "Istoricul clipurilor", text: "Aici găsești clipurile generate de tine, inclusiv cele nepublicate, înregistrate de la introducerea istoricului.", selector: '[data-tour="clips-page"]' },
+    { id: "details", title: "Datele clipului", text: "Fiecare rând arată proprietatea, numele fișierului, data, formatul și durata. Pagina păstrează istoricul, nu fișierul video.", selector: '[data-tour="clip-item"]' },
+    { id: "music", title: "Muzica folosită", text: "Vezi piesa folosită la generare, cu informațiile disponibile despre autor, stil și licență.", selector: '[data-tour="clip-music"]' },
+    { id: "pages", title: "Mai multe clipuri", text: "Săgețile parcurg paginile. Proprietate deschide anunțul, de unde poți crea un clip nou; aici nu publici nimic.", selector: 'nav[aria-label="Paginare clipuri"]' },
+  ]},
+  { id: "support", title: "Suport", group: "Activitate", path: "/app/support", roles: agencyRoles, steps: [
+    { id: "tickets", title: "Tichetele mele", text: "Aici urmărești discuțiile cu suportul. Agentul vede tichetele lui, administratorul pe cele ale agenției.", selector: '[data-tour="support-page"]' },
+    { id: "new", title: "Deschide un tichet", text: "Arată-mi formularul de ajutor. Doar deschidem fereastra, fără să trimitem ceva.", selector: '[data-tour="support-button"]', mode: "show", show: "support-create" },
+    { id: "subject", title: "Spune pe scurt problema", text: "Completează subiectul. Textul rămâne în formular până îl trimiți tu.", selector: '#support-subject', mode: "do", event: "input", confirmation: "Ai completat subiectul." },
+    { id: "message", title: "Categorie și mesaj", text: "Alege categoria și descrie ce ai încercat și ce s-a întâmplat. Nu include parole sau chei de acces.", selector: '#support-body' },
+    { id: "stop", title: "Ne oprim înainte de trimitere", text: "Trimite tichetul ar deschide discuția cu suportul. Ghidul nu apasă butonul; Anulează închide fără trimitere.", selector: '[data-tour="support-send"]' },
+    { id: "reply", title: "Unde vezi răspunsul", text: "Revii la Tichetele mele și deschizi tichetul. Răspunsurile apar în conversație; mesajele tale pleacă doar când le trimiți." },
+  ]},
+
 ];
+export const implementedGuides: GuideDefinition[] = guideDefinitions.map((guide) => ({ ...guide, steps: guide.steps.map((step) => ({ ...step, optional: step.selector ? true : step.optional })) }));
 
 /** `:id` și orice segment care începe cu `:` se potrivește cu o valoare oarecare. */
 export function guidePathMatches(guidePath: string, pathname: string): boolean {
@@ -203,7 +324,8 @@ export function acceptsGuideInput(value: string): boolean { return value.trim().
 export function canShowAutomatically(autoStart: boolean, progress: { guide_id: string }[], id: string): boolean {
   return autoStart && !progress.some((p) => p.guide_id === id);
 }
-export const SAFE_SHOW_ACTIONS = ["menu", "portfolio", "clients", "management", "filters", "publish", "details"] as const;
+export const SAFE_SHOW_SELECTORS = {'contacts-cards': '[data-tour="contacts-cards"]', 'contact-requests': '[data-tour="contact-tab-requests"]', 'contact-leads': '[data-tour="contact-tab-leads"]', 'contact-activities': '[data-tour="contact-tab-activities"]', 'contact-documents': '[data-tour="contact-tab-documents"]', 'contact-notes': '[data-tour="contact-tab-notes"]', 'contact-timeline': '[data-tour="contact-tab-timeline"]', 'request-create': '[data-tour="request-create-open"]', 'request-leads': '[data-tour="request-tab-leads"]', 'request-activities': '[data-tour="request-tab-activities"]', 'contract-create': '[data-tour="contract-create-open"]', 'contract-edit': '[data-tour="contract-edit"]', 'activity-reschedule': '[data-tour="activity-reschedule"]', 'calendar-day': '[data-tour="calendar-day"]', 'calendar-create': '[data-tour="calendar-create"]', 'matching-direction': '[data-tour="matching-direction"]', 'support-create': '[data-tour="support-button"]'} as const;
+export const SAFE_SHOW_ACTIONS = ["menu", "portfolio", "clients", "management", "filters", "publish", "details", ...Object.keys(SAFE_SHOW_SELECTORS)] as const;
 
 export const GUIDE_CONTEXT_EVENT = "habitoo:guide-context";
 /** Paginile anunță contextul (filă deschisă, editare pornită) ca să pornească ghidul potrivit. */

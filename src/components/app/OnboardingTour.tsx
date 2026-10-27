@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { CurrentUser } from "@/hooks/use-session";
 import { useAiFeatures } from "@/hooks/use-ai-features";
-import { GUIDE_CONTEXT_EVENT, accessibleGuides, acceptsGuideInput, canShowAutomatically, guideForPath, guidePathMatches, guidesForContext, implementedGuides, stepsForUser, type GuideDefinition, type GuideId, type TourStep } from "@/lib/onboarding-tour";
+import { GUIDE_CONTEXT_EVENT, SAFE_SHOW_SELECTORS, accessibleGuides, acceptsGuideInput, canShowAutomatically, guideForPath, guidePathMatches, guidesForContext, implementedGuides, stepsForUser, type GuideDefinition, type GuideId, type TourStep } from "@/lib/onboarding-tour";
 import { claimGuide, finishGuide, getGuideProgress, setGuideAutoStart } from "@/lib/onboarding.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   const planned = plannedGuides.filter((g) => g.roles.includes(user.role) && (!g.feature || features[g.feature]));
   const [contextKey, setContextKey] = useState<string | null>(null);
   useEffect(() => {
-    const handler = (event: Event) => setContextKey((event as CustomEvent<string>).detail);
+    const handler = (event: Event) => setContextKey((event as CustomEvent<string>).detail || null);
     window.addEventListener(GUIDE_CONTEXT_EVENT, handler);
     return () => window.removeEventListener(GUIDE_CONTEXT_EVENT, handler);
   }, []);
@@ -158,6 +158,13 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
       let r = target.getBoundingClientRect();
       const mobile = window.innerWidth < 768;
       const safeBottom = window.innerHeight - (mobile ? cardHeight + 32 : 16);
+      const dialog = target.closest<HTMLElement>('[role="dialog"], [role="alertdialog"]');
+      if (mobile && dialog && !dialog.hasAttribute("data-guide") && r.bottom > safeBottom) {
+        const shift = r.bottom - safeBottom + 12;
+        dialog.style.top = `${dialog.getBoundingClientRect().top - shift}px`;
+        dialog.style.transform = "translateX(-50%)";
+        r = target.getBoundingClientRect();
+      }
       if ((!scrolled || (mobile && r.height < 180)) && (r.top < 80 || Math.min(r.bottom, r.top + 160) > safeBottom)) {
         const targetY = Math.max(88, (safeBottom - Math.min(r.height,180)) / 2);
         window.scrollBy({ top: r.top - targetY, behavior: "instant" });
@@ -167,8 +174,10 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
       // Large sections highlight their heading, not an entire scrollable page.
       setRect({ top: r.top, left: r.left, width: r.width, height: Math.min(r.height, 160) });
     };
+    const dialogs = Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"], [role="alertdialog"]')).filter((el) => !el.hasAttribute("data-guide"));
+    const original = dialogs.map((el) => ({ el, top: el.style.top, transform: el.style.transform }));
     sync(); const timer = setInterval(sync, 150);
-    return () => clearInterval(timer);
+    return () => { clearInterval(timer); for (const { el, top, transform } of original) { el.style.top = top; el.style.transform = transform; } };
   }, [cardHeight, ready, step]);
   useEffect(() => {
     if (!cardRef.current) return;
@@ -210,10 +219,10 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
       if (el?.getAttribute("aria-expanded") === "false") el.click();
     } else {
       closeMenu();
-      const selectors = { filters: '[data-tour="properties-filters-toggle"]', publish: '[data-tour="properties-view-publish"]', details: '[data-tour="new-details"]' };
+      const selectors = { filters: '[data-tour="properties-filters-toggle"]', publish: '[data-tour="properties-view-publish"]', details: '[data-tour="new-details"]', ...SAFE_SHOW_SELECTORS };
       const selector = selectors[s.show as keyof typeof selectors];
       const el = visibleTarget(selector);
-      if (el && el.getAttribute("aria-expanded") !== "true" && el.getAttribute("aria-pressed") !== "true" && el.getAttribute("data-state") !== "open") el.click();
+      if (el && el.getAttribute("aria-expanded") !== "true" && el.getAttribute("aria-pressed") !== "true" && el.getAttribute("data-state") !== "open" && el.getAttribute("data-state") !== "active") el.click();
     }
     setShowDone(true);
   };

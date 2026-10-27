@@ -61,6 +61,7 @@ import { UserAvatar } from "@/components/app/UserAvatar";
 import { useFilterList } from "@/hooks/use-list-state";
 import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
+import { announceGuideContext } from "@/lib/onboarding-tour";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/")({
   head: () => { const title = "Habitoo CRM — contacte"; const description = "Clienții, proprietarii și partenerii agenției, cu filtre și detalii de contact."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -126,6 +127,10 @@ function ContactsPage() {
   const setView = (value: "list" | "card") => persisted.set("view", value);
   const [selected, setSelected] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(Boolean(openNew));
+  useEffect(() => {
+    const timer = setTimeout(() => announceGuideContext(dialogOpen ? "contact:creating" : ""), 100);
+    return () => clearTimeout(timer);
+  }, [dialogOpen]);
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
 
@@ -337,18 +342,19 @@ function ContactsPage() {
             <Button variant="outline" size="sm" onClick={exportCsv}>
               <Download className="size-4" /> Export CSV
             </Button>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>
+            <Button data-tour="contact-create-open" size="sm" onClick={() => setDialogOpen(true)}>
               Adaugă contact
             </Button>
           </>
         }
       />
 
-      <div className="panel space-y-3 p-4">
+      <div data-tour="contacts-filters" className="panel space-y-3 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-56 flex-1">
             <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
             <Input
+              data-tour="contacts-search"
               value={filters.q}
               onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
               placeholder="Caută nume, telefon, email, companie…"
@@ -359,7 +365,7 @@ function ContactsPage() {
             value={filters.type}
             onValueChange={(v) => setFilters((f) => ({ ...f, type: v }))}
           >
-            <SelectTrigger className="w-44">
+            <SelectTrigger data-tour="contacts-type" className="w-44">
               <SelectValue placeholder="Tip contact" />
             </SelectTrigger>
             <SelectContent>
@@ -451,6 +457,7 @@ function ContactsPage() {
               size="icon"
               className="size-8"
               aria-label="Vizualizare listă"
+              data-tour="contacts-list-view"
               aria-pressed={view === "list"}
               onClick={() => setView("list")}
             >
@@ -461,6 +468,7 @@ function ContactsPage() {
               size="icon"
               className="size-8"
               aria-label="Vizualizare carduri"
+              data-tour="contacts-cards"
               aria-pressed={view === "card"}
               onClick={() => setView("card")}
             >
@@ -706,7 +714,7 @@ function ContactsPage() {
       ) : null}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent data-tour="contact-create-form">
           <DialogHeader>
             <DialogTitle>Contact nou</DialogTitle>
             <DialogDescription>
@@ -745,7 +753,7 @@ function ContactsPage() {
                   value={form.type}
                   onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger data-tour="contact-create-type">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -796,7 +804,7 @@ function ContactsPage() {
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Renunță
               </Button>
-              <Button type="submit" disabled={create.isPending}>
+              <Button data-tour="contact-create-save" type="submit" disabled={create.isPending}>
                 Salvează
               </Button>
             </DialogFooter>

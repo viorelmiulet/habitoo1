@@ -544,8 +544,9 @@ function LeadsPage() {
         }
       />
 
-      <div className="panel flex flex-wrap items-center gap-2 p-3">
+      <div data-tour="leads-filters" className="panel flex flex-wrap items-center gap-2 p-3">
         <Input
+          data-tour="leads-search"
           placeholder="Caută nume, telefon, email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -648,6 +649,7 @@ function LeadsPage() {
                     const agentName = agentById.get(l.assigned_to ?? "") ?? null;
                     return (
                       <div
+                        data-tour="lead-open"
                         key={l.id}
                         draggable
                         onDragStart={() => setDragId(l.id)}

@@ -56,7 +56,7 @@ import { requestStatusLabels, requestStatusTone, activityStatusTone } from "@/li
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/$id")({
-  head: () => appHead("Habitoo CRM — detalii contact"),
+  head: () => { const title = "Habitoo CRM — detalii contact"; const description = "Datele contactului, proprietăți, cereri, activități și cronologia interacțiunilor."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: ContactDetailPage,
 });
 
@@ -425,16 +425,16 @@ function ContactDetailPage() {
       ) : null}
 
       <Tabs defaultValue="overview">
-        <TabsList className="flex-wrap">
+        <TabsList data-tour="contact-tabs" className="flex-wrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="properties">Proprietăți ({data?.properties.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="requests">Cereri ({data?.requests.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="leads">Lead-uri ({data?.leads.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="activities">Activități</TabsTrigger>
-          <TabsTrigger value="viewings">Vizionări</TabsTrigger>
-          <TabsTrigger value="documents">Documente</TabsTrigger>
-          <TabsTrigger value="notes">Note</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger data-tour="contact-tab-properties" value="properties">Proprietăți ({data?.properties.length ?? 0})</TabsTrigger>
+          <TabsTrigger data-tour="contact-tab-requests" value="requests">Cereri ({data?.requests.length ?? 0})</TabsTrigger>
+          <TabsTrigger data-tour="contact-tab-leads" value="leads">Lead-uri ({data?.leads.length ?? 0})</TabsTrigger>
+          <TabsTrigger data-tour="contact-tab-activities" value="activities">Activități</TabsTrigger>
+          <TabsTrigger data-tour="contact-tab-viewings" value="viewings">Vizionări</TabsTrigger>
+          <TabsTrigger data-tour="contact-tab-documents" value="documents">Documente</TabsTrigger>
+          <TabsTrigger data-tour="contact-tab-notes" value="notes">Note</TabsTrigger>
+          <TabsTrigger data-tour="contact-tab-timeline" value="timeline">Timeline</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="panel space-y-2 p-5 text-sm">

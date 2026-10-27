@@ -73,7 +73,7 @@ import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/requests/$id")({
-  head: () => appHead("Habitoo CRM — detalii cerere"),
+  head: () => { const title = "Habitoo CRM — detalii cerere"; const description = "Criteriile clientului, proprietățile compatibile, lead-uri și activități."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: RequestDetailPage,
 });
 
@@ -491,11 +491,11 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
       )}
 
       <Tabs defaultValue="overview">
-        <TabsList className="flex-wrap">
+        <TabsList data-tour="request-tabs" className="flex-wrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="matching">Proprietăți compatibile ({matches.length})</TabsTrigger>
-          <TabsTrigger value="leads">Lead-uri ({leads.length})</TabsTrigger>
-          <TabsTrigger value="activities">Activități ({activities.length})</TabsTrigger>
+          <TabsTrigger data-tour="request-tab-matching" value="matching">Proprietăți compatibile ({matches.length})</TabsTrigger>
+          <TabsTrigger data-tour="request-tab-leads" value="leads">Lead-uri ({leads.length})</TabsTrigger>
+          <TabsTrigger data-tour="request-tab-activities" value="activities">Activități ({activities.length})</TabsTrigger>
           <TabsTrigger value="documents">Documente</TabsTrigger>
         </TabsList>
 
@@ -735,7 +735,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
           )}
         </TabsContent>
 
-        <TabsContent value="matching">
+        <TabsContent data-tour="request-matches" value="matching">
           <div className="panel overflow-hidden">
             <div className="border-b border-border px-5 py-5 sm:px-6">
               <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
