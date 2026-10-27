@@ -318,8 +318,8 @@ function PrivateListingsPage() {
         {([
           { value: "", label: "MAP Habitoo" },
           { value: "facebook", label: "MAP Facebook" },
-          { value: "argus", label: "Argus" },
           { value: "cereri", label: "Cereri Facebook" },
+          { value: "argus", label: "Argus" },
         ] as const).map(({ value, label }) => {
           const active = (search.lista === "argus" || search.lista === "facebook" || search.lista === "cereri" ? search.lista : "") === value;
           return (
