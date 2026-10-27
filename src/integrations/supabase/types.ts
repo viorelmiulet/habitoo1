@@ -4973,6 +4973,94 @@ export type Database = {
           },
         ]
       }
+      offer_client_deliveries: {
+        Row: {
+          activity_id: string | null
+          agent_id: string
+          channel: string
+          contact_id: string | null
+          created_at: string
+          id: string
+          lead_id: string | null
+          organization_id: string
+          property_id: string
+          recipient: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          activity_id?: string | null
+          agent_id: string
+          channel: string
+          contact_id?: string | null
+          created_at?: string
+          id: string
+          lead_id?: string | null
+          organization_id: string
+          property_id: string
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          activity_id?: string | null
+          agent_id?: string
+          channel?: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          organization_id?: string
+          property_id?: string
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_client_deliveries_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_client_deliveries_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_client_deliveries_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_client_deliveries_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_client_deliveries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_client_deliveries_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_guide_progress: {
         Row: {
           completed_at: string | null
@@ -9895,6 +9983,7 @@ export type Database = {
         Returns: undefined
       }
       ensure_superadmin_profile: { Args: { _user: string }; Returns: undefined }
+      finish_offer_client_delivery: { Args: { _id: string }; Returns: string }
       finish_onboarding_guide: {
         Args: { p_completed: boolean; p_guide_id: string }
         Returns: undefined
