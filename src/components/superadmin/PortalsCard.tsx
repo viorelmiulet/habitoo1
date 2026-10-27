@@ -257,7 +257,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
 
   const test = useMutation({
     mutationFn: (portalId: string) => runTest({ data: { organizationId, portalId } }),
-    onSuccess: (res) => {
+    onSuccess: (res, portalId) => {
       invalidate();
       if (res.ok) {
         if ("olxAccount" in res && res.olxAccount) {
