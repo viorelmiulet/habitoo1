@@ -1,5 +1,9 @@
 # SEO public — pasul 1a
 
+## Oferta publică — galerie foto
+- [x] PhotoViewer comun pe toate pozele publice, șase miniaturi și +N pe ultima; noindex și restul paginii neschimbate
+- [x] Oferta cerută fără cont: 8 imagini distincte decodate desktop/telefon, +2 deschide 6/8, săgeți/taste și gesturi tactile reale în ambele direcții, Escape; fără erori. 17 teste trec, captură mobil în Files
+
 ## Ghiduri interactive — etapa 3
 - [x] Implementarea celor 14 ghiduri Clienți și Activitate, maximum 8 pași, doar interacțiuni fără salvare
 - [x] Inventar actualizat: ACP, Habitoo AI, Mesaje și bara de sus planificate; 29 disponibile + 38 planificate
