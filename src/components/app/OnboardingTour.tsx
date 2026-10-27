@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { CurrentUser } from "@/hooks/use-session";
 import { useAiFeatures } from "@/hooks/use-ai-features";
-import { accessibleGuides, acceptsGuideInput, canShowAutomatically, guideForPath, implementedGuides, type GuideDefinition, type GuideId, type TourStep } from "@/lib/onboarding-tour";
+import { GUIDE_CONTEXT_EVENT, accessibleGuides, acceptsGuideInput, canShowAutomatically, guideForPath, guidePathMatches, guidesForContext, implementedGuides, stepsForUser, type GuideDefinition, type GuideId, type TourStep } from "@/lib/onboarding-tour";
 import { claimGuide, finishGuide, getGuideProgress, setGuideAutoStart } from "@/lib/onboarding.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,15 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   const state = useQuery({ queryKey: key, queryFn: () => load(), enabled: available, staleTime: 0, refetchOnWindowFocus: true });
   const guides = useMemo(() => accessibleGuides(implementedGuides, user.role, features), [user.role, features]);
   const planned = plannedGuides.filter((g) => g.roles.includes(user.role) && (!g.feature || features[g.feature]));
-  const current = guideForPath(pathname);
+  const [contextKey, setContextKey] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = (event: Event) => setContextKey((event as CustomEvent<string>).detail);
+    window.addEventListener(GUIDE_CONTEXT_EVENT, handler);
+    return () => window.removeEventListener(GUIDE_CONTEXT_EVENT, handler);
+  }, []);
+  useEffect(() => { setContextKey(null); }, [pathname]);
+  const contextGuides = useMemo(() => guidesForContext(pathname, contextKey), [pathname, contextKey]);
+  const current = contextGuides[0] ?? guideForPath(pathname);
   const [active, setActive] = useState<GuideDefinition | null>(null);
   const [index, setIndex] = useState(0);
   const [library, setLibrary] = useState(false);
