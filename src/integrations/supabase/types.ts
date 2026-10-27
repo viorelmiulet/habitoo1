@@ -9280,6 +9280,81 @@ export type Database = {
           },
         ]
       }
+      social_requests: {
+        Row: {
+          author_name: string | null
+          budget_max: number | null
+          budget_min: number | null
+          city: string | null
+          county: string | null
+          currency: string | null
+          external_id: string
+          first_seen_at: string
+          group_name: string | null
+          id: string
+          phone: string | null
+          posted_at: string | null
+          property_type: string | null
+          publisher_type: string | null
+          rooms: number | null
+          source: string
+          text: string | null
+          transaction_type: string | null
+          updated_at: string
+          url: string | null
+          zone: string | null
+          zones: string[]
+        }
+        Insert: {
+          author_name?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          city?: string | null
+          county?: string | null
+          currency?: string | null
+          external_id: string
+          first_seen_at?: string
+          group_name?: string | null
+          id?: string
+          phone?: string | null
+          posted_at?: string | null
+          property_type?: string | null
+          publisher_type?: string | null
+          rooms?: number | null
+          source: string
+          text?: string | null
+          transaction_type?: string | null
+          updated_at?: string
+          url?: string | null
+          zone?: string | null
+          zones?: string[]
+        }
+        Update: {
+          author_name?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          city?: string | null
+          county?: string | null
+          currency?: string | null
+          external_id?: string
+          first_seen_at?: string
+          group_name?: string | null
+          id?: string
+          phone?: string | null
+          posted_at?: string | null
+          property_type?: string | null
+          publisher_type?: string | null
+          rooms?: number | null
+          source?: string
+          text?: string | null
+          transaction_type?: string | null
+          updated_at?: string
+          url?: string | null
+          zone?: string | null
+          zones?: string[]
+        }
+        Relationships: []
+      }
       social_temp_files: {
         Row: {
           created_at: string
@@ -10410,6 +10485,7 @@ export type Database = {
       public_partner_logo_path: { Args: { _id: string }; Returns: string }
       purge_expired_portal_messages: { Args: never; Returns: number }
       purge_old_listings: { Args: never; Returns: number }
+      purge_old_social_requests: { Args: never; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
       rate_limit_hit: {
@@ -10676,6 +10752,39 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "properties"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      search_social_requests_places: {
+        Args: { _choices: Json }
+        Returns: {
+          author_name: string | null
+          budget_max: number | null
+          budget_min: number | null
+          city: string | null
+          county: string | null
+          currency: string | null
+          external_id: string
+          first_seen_at: string
+          group_name: string | null
+          id: string
+          phone: string | null
+          posted_at: string | null
+          property_type: string | null
+          publisher_type: string | null
+          rooms: number | null
+          source: string
+          text: string | null
+          transaction_type: string | null
+          updated_at: string
+          url: string | null
+          zone: string | null
+          zones: string[]
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "social_requests"
           isOneToOne: false
           isSetofReturn: true
         }

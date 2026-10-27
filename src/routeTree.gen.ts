@@ -132,6 +132,7 @@ import { Route as ApiPublicMarketListingsUpsertRouteImport } from './routes/api/
 import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta/data-deletion'
 import { Route as ApiPublicMetaDeauthorizeRouteImport } from './routes/api/public/meta/deauthorize'
 import { Route as ApiPublicPartnerLogoIdRouteImport } from './routes/api/public/partner-logo/$id'
+import { Route as ApiPublicRequestsUpsertRouteImport } from './routes/api/public/requests/upsert'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -847,6 +848,11 @@ const ApiPublicPartnerLogoIdRoute = ApiPublicPartnerLogoIdRouteImport.update({
   path: '/api/public/partner-logo/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRequestsUpsertRoute = ApiPublicRequestsUpsertRouteImport.update({
+  id: '/api/public/requests/upsert',
+  path: '/api/public/requests/upsert',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -1189,6 +1195,7 @@ export interface FileRoutesByFullPath {
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
+  '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1348,6 +1355,7 @@ export interface FileRoutesByTo {
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
+  '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1513,6 +1521,7 @@ export interface FileRoutesById {
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
+  '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1678,6 +1687,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/data-deletion'
     | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
+    | '/api/public/requests/upsert'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -1837,6 +1847,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/data-deletion'
     | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
+    | '/api/public/requests/upsert'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -2001,6 +2012,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/data-deletion'
     | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
+    | '/api/public/requests/upsert'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -2115,6 +2127,7 @@ export interface RootRouteChildren {
   ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
   ApiPublicMetaDeauthorizeRoute: typeof ApiPublicMetaDeauthorizeRoute
   ApiPublicPartnerLogoIdRoute: typeof ApiPublicPartnerLogoIdRoute
+  ApiPublicRequestsUpsertRoute: typeof ApiPublicRequestsUpsertRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -3013,6 +3026,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPartnerLogoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/requests/upsert': {
+      id: '/api/public/requests/upsert'
+      path: '/api/public/requests/upsert'
+      fullPath: '/api/public/requests/upsert'
+      preLoaderRoute: typeof ApiPublicRequestsUpsertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -3596,6 +3616,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,
   ApiPublicMetaDeauthorizeRoute: ApiPublicMetaDeauthorizeRoute,
   ApiPublicPartnerLogoIdRoute: ApiPublicPartnerLogoIdRoute,
+  ApiPublicRequestsUpsertRoute: ApiPublicRequestsUpsertRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
