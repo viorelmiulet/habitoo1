@@ -28,7 +28,7 @@ import { createAcpAnalysis } from "@/lib/acp/analyses.functions";
 
 
 export const Route = createFileRoute("/_authenticated/app/acp/new")({
-  head: () => appHead("Habitoo CRM — analiză comparativă nouă"),
+  head: () => { const title = "Habitoo CRM — analiză comparativă nouă"; const description = 'Pregătirea unei analize ACP cu proprietatea și sursele de comparabile.'; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: NewAcpPage,
 });
 

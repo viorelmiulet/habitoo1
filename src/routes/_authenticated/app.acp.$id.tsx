@@ -47,7 +47,7 @@ import {
 import { ACP_SCORE_LABELS, ACP_SCORE_WEIGHTS, ACP_THRESHOLDS, ACP_TIER_LABELS } from "@/lib/acp/config";
 
 export const Route = createFileRoute("/_authenticated/app/acp/$id")({
-  head: () => appHead("Habitoo CRM — detaliu analiză comparativă"),
+  head: () => { const title = "Habitoo CRM — detaliu analiză comparativă"; const description = 'Rezultatul analizei ACP, comparabile, ajustări, versiuni și raport PDF.'; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: AcpDetailPage,
 });
 

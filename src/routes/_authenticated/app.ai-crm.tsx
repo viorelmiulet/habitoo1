@@ -27,7 +27,7 @@ import {
 } from "@/lib/ai/agents/crm/crm-client";
 
 export const Route = createFileRoute("/_authenticated/app/ai-crm")({
-  head: () => appHead("AI CRM — asistentul pentru clienți și lead-uri"),
+  head: () => { const title = "AI CRM — asistentul pentru clienți și lead-uri"; const description = 'Întrebări despre clienți, lead-uri și cereri, cu aprobarea acțiunilor propuse.'; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: GatedCrmAgentPage,
 });
 

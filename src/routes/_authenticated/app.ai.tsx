@@ -26,7 +26,7 @@ import {
 } from "@/lib/ai/ai-client";
 
 export const Route = createFileRoute("/_authenticated/app/ai")({
-  head: () => appHead("Habitoo AI — asistentul agenției"),
+  head: () => { const title = "Habitoo AI — asistentul agenției"; const description = 'Conversațiile private ale agenției cu asistentul Habitoo AI.'; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: GatedAiPage,
 });
 

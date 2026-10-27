@@ -13,7 +13,7 @@ import { appHead } from "@/components/app/app-head";
 import { formatMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/app/acp/")({
-  head: () => appHead("Habitoo CRM — analize comparative de piață"),
+  head: () => { const title = "Habitoo CRM — analize comparative de piață"; const description = 'Analizele comparative salvate ale agenției, rezultate și comparabile.'; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: AcpListPage,
 });
 
