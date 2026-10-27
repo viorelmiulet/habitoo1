@@ -227,6 +227,16 @@ export const PropertyPortalsCard = forwardRef<
     () => matrix.data?.properties[propertyId] ?? [],
     [matrix.data, propertyId],
   );
+  const displayCellIndices = useMemo(() => {
+    const indices = cells.map((_, index) => index);
+    const imobiliare = cells.findIndex(cell => cell.portalId === "imobiliare_ro");
+    const vdi = cells.findIndex(cell => cell.portalId === "vdi");
+    if (imobiliare >= 0 && vdi >= 0) {
+      indices[imobiliare] = vdi;
+      indices[vdi] = imobiliare;
+    }
+    return indices;
+  }, [cells]);
   const sessionUser = useCurrentUser().data;
   const loadMine = useServerFn(getMyPortalSlot);
   const slotQueries = useQueries({
@@ -857,7 +867,9 @@ export const PropertyPortalsCard = forwardRef<
               </li>
             ) : null}
 
-            {cells.map((cell, index) => {
+            {displayCellIndices.map(index => {
+              const cell = cells[index];
+              if (!cell) return null;
               const value = checked[cell.portalId] ?? cell.selected;
               const slot = slotQueries[index]?.data;
               const noSlots = cell.portalId !== "imobiliare_ro" && !value && !cell.selected && Boolean(slot && (slot.remaining === 0 || slot.agencyExhausted));
