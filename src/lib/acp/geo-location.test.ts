@@ -18,8 +18,8 @@ describe("ACP v4 — locație după distanță", () => {
   });
   it("direct doar la cel mult 2 km", () => {
     const t = { ...base, rooms: 2, usableArea: 55, propertyType: "apartment" };
-    expect(calculateComparableSimilarity(t, { ...t, ...at(1.5) }, { geoLocation: true }).tier).toBe("direct");
-    expect(calculateComparableSimilarity(t, { ...t, ...at(2.5) }, { geoLocation: true }).tier).toBe("secondary");
+    expect(calculateComparableSimilarity(t, { ...t, ...at(1.9) }, { geoLocation: true }).tier).toBe("direct");
+    expect(calculateComparableSimilarity(t, { ...t, ...at(2.1) }, { geoLocation: true }).tier).toBe("secondary");
   });
 });
 
