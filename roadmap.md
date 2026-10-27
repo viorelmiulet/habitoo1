@@ -1,9 +1,10 @@
 # SEO public — pasul 1a
 
 ## Ghiduri interactive — etapa 3
-- [ ] Implementarea celor 14 ghiduri Clienți și Activitate, maximum 8 pași, doar interacțiuni fără salvare
-- [ ] Inventar actualizat: ACP, Habitoo AI, Mesaje și bara de sus planificate
-- [ ] Teste ale regulilor și parcurgere în cont desktop/telefon fără mutații de date; inventar și capturi 2/6/8 în Files
+- [x] Implementarea celor 14 ghiduri Clienți și Activitate, maximum 8 pași, doar interacțiuni fără salvare
+- [x] Inventar actualizat: ACP, Habitoo AI, Mesaje și bara de sus planificate; 29 disponibile + 38 planificate
+- [x] 35 teste trecute; 11 ghiduri parcurse în cont desktop/telefon, fără salvări/trimiteri/ștergeri de date de lucru; inventar și capturi ghid 6 în Files
+- [ ] Parcurgere reală și capturi ghiduri 2/8 + pagina cererii: lipsesc contacte, cereri și contracte în cont; fără creare de date pentru teste
 
 ## Ghiduri interactive — etapa 1
 - [x] Fundație: progres per utilizator pe server, revendicare atomică între dispozitive, setare automată și bibliotecă filtrată după acces; inventarul viitor nu este executabil
