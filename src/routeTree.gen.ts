@@ -22,6 +22,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FunctionalitatiRouteImport } from './routes/functionalitati'
+import { Route as ImportProprietatiRouteImport } from './routes/import-proprietati'
 import { Route as IntegrariRouteImport } from './routes/integrari'
 import { Route as IntrebariFrecventeRouteImport } from './routes/intrebari-frecvente'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
@@ -239,6 +240,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const FunctionalitatiRoute = FunctionalitatiRouteImport.update({
   id: '/functionalitati',
   path: '/functionalitati',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportProprietatiRoute = ImportProprietatiRouteImport.update({
+  id: '/import-proprietati',
+  path: '/import-proprietati',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IntegrariRoute = IntegrariRouteImport.update({
@@ -1106,6 +1112,7 @@ export interface FileRoutesByFullPath {
   '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
+  '/import-proprietati': typeof ImportProprietatiRoute
   '/integrari': typeof IntegrariRoute
   '/intrebari-frecvente': typeof IntrebariFrecventeRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -1271,6 +1278,7 @@ export interface FileRoutesByTo {
   '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
+  '/import-proprietati': typeof ImportProprietatiRoute
   '/integrari': typeof IntegrariRoute
   '/intrebari-frecvente': typeof IntrebariFrecventeRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -1436,6 +1444,7 @@ export interface FileRoutesById {
   '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
+  '/import-proprietati': typeof ImportProprietatiRoute
   '/integrari': typeof IntegrariRoute
   '/intrebari-frecvente': typeof IntrebariFrecventeRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -1604,6 +1613,7 @@ export interface FileRouteTypes {
     | '/despre'
     | '/forgot-password'
     | '/functionalitati'
+    | '/import-proprietati'
     | '/integrari'
     | '/intrebari-frecvente'
     | '/llms.txt'
@@ -1769,6 +1779,7 @@ export interface FileRouteTypes {
     | '/despre'
     | '/forgot-password'
     | '/functionalitati'
+    | '/import-proprietati'
     | '/integrari'
     | '/intrebari-frecvente'
     | '/llms.txt'
@@ -1933,6 +1944,7 @@ export interface FileRouteTypes {
     | '/despre'
     | '/forgot-password'
     | '/functionalitati'
+    | '/import-proprietati'
     | '/integrari'
     | '/intrebari-frecvente'
     | '/llms.txt'
@@ -2101,6 +2113,7 @@ export interface RootRouteChildren {
   DespreRoute: typeof DespreRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FunctionalitatiRoute: typeof FunctionalitatiRoute
+  ImportProprietatiRoute: typeof ImportProprietatiRoute
   IntegrariRoute: typeof IntegrariRoute
   IntrebariFrecventeRoute: typeof IntrebariFrecventeRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
@@ -2281,6 +2294,13 @@ declare module '@tanstack/react-router' {
       path: '/functionalitati'
       fullPath: '/functionalitati'
       preLoaderRoute: typeof FunctionalitatiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/import-proprietati': {
+      id: '/import-proprietati'
+      path: '/import-proprietati'
+      fullPath: '/import-proprietati'
+      preLoaderRoute: typeof ImportProprietatiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/integrari': {
@@ -3604,6 +3624,7 @@ const rootRouteChildren: RootRouteChildren = {
   DespreRoute: DespreRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   FunctionalitatiRoute: FunctionalitatiRoute,
+  ImportProprietatiRoute: ImportProprietatiRoute,
   IntegrariRoute: IntegrariRoute,
   IntrebariFrecventeRoute: IntrebariFrecventeRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
