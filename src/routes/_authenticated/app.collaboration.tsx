@@ -199,7 +199,7 @@ function CollaborationPage() {
       ) : null}
 
       <Tabs value={participating ? persisted.state.tab : "outgoing"} onValueChange={(value) => persisted.set("tab", value)}>
-        <TabsList className="flex-wrap">
+        <TabsList className="flex-wrap" data-tour="collab-tabs">
           {participating ? (
             <TabsTrigger value="offers">Oferte partenere ({totalOffers})</TabsTrigger>
           ) : null}
@@ -217,7 +217,7 @@ function CollaborationPage() {
         </TabsList>
 
         <TabsContent value="offers" className="space-y-4">
-          <div className="panel grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div data-tour="collab-filters" className="panel grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="relative sm:col-span-2">
               <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
               <Input
@@ -337,7 +337,7 @@ function CollaborationPage() {
             <EmptyState icon={Handshake} title="Nicio ofertă de colaborare disponibilă" description="Momentan nicio ofertă nu corespunde filtrelor tale." />
           ) : (
             <>
-              <ul className={view === "cards" ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "divide-y divide-border"}>
+              <ul data-tour="collab-offers" className={view === "cards" ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "divide-y divide-border"}>
                 {allOffers.map((offer) => <PartnerOfferItem key={offer.id} offer={offer} view={view} onDetails={setDetailOffer} onPropose={setProposeFor} />)}
               </ul>
               {offers.hasNextPage ? <div className="flex justify-center py-4"><Button variant="outline" disabled={offers.isFetchingNextPage} onClick={() => { persisted.set("batches", (offers.data?.pages.length ?? 1) + 1); void offers.fetchNextPage(); }}>{offers.isFetchingNextPage ? "Se încarcă…" : "Încarcă mai multe"}</Button></div> : null}
@@ -357,7 +357,7 @@ function CollaborationPage() {
           />
         </TabsContent>
 
-        <TabsContent value="incoming">
+        <TabsContent value="incoming" data-tour="collab-incoming">
           <ProposalList
             proposals={proposals.data?.incoming ?? []}
             loading={proposals.isLoading}
