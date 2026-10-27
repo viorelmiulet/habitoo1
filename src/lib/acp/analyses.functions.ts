@@ -164,9 +164,12 @@ function marketListingMeta(
  * Indicele trimestrial pentru ajustarea în timp, citit doar din baza de date.
  * Tabel gol ⇒ `null` ⇒ motorul nu aplică nicio ajustare în timp.
  */
-async function loadPriceIndex(admin: unknown): Promise<AcpPriceIndexSnapshot | null> {
+async function loadPriceIndex(
+  admin: unknown,
+  zone: { city?: string | null; county?: string | null } = {},
+): Promise<AcpPriceIndexSnapshot | null> {
   const { loadAcpPriceIndex } = await import("./time-adjustment.server");
-  return loadAcpPriceIndex(admin as never);
+  return loadAcpPriceIndex(admin as never, zone);
 }
 
 async function loadCalibration(
