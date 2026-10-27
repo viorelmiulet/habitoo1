@@ -62,8 +62,7 @@ export const implementedGuides: GuideDefinition[] = [
   { id: "property-create", title: "Adaugă o proprietate", group: "Portofoliu", path: "/app/properties/new", roles: agencyRoles, steps: [
     { id: "welcome", title: "Adaugă o proprietate", text: "Completezi datele esențiale. Ghidul te lasă înainte de salvare; tu decizi dacă păstrezi anunțul." },
     { id: "title", title: "Titlul anunțului", text: "Scrie un titlu scurt: tip, camere și zonă. Folosește datele proprietății tale.", selector: '#title', mode: "do", event: "input", hint: "Scrie titlul în câmpul Titlu anunț.", confirmation: "Titlul este completat." },
-    { id: "description", title: "Descrierea publică", text: "Textul de aici poate ajunge în anunțul public. Evită datele personale ale proprietarului.", selector: '#description' },
-    { id: "general", title: "Status și proprietar", text: "Draft este alegerea inițială. Poți asocia un contact proprietar existent.", selector: '[data-tour="new-general"]' },
+    { id: "description", title: "Descrierea publică", text: "Textul de aici poate ajunge în anunțul public. Evită datele personale ale proprietarului. Draft este statusul inițial și poți asocia un contact proprietar existent.", selector: '#description' },
     { id: "location", title: "Localizarea", text: "Alegi județul și localitatea, apoi adresa și poziția pe hartă. Verifică precizia înainte de publicare.", selector: '[data-tour="new-location"]' },
     { id: "price", title: "Preț și tranzacție", text: "Completează prețul de vânzare. Dacă oferta este doar pentru chirie, sari pasul și alege închirierea.", selector: '#new-sale-price', mode: "do", event: "input", hint: "Introdu prețul fără separator de mii sau sari pasul dacă nu vinzi.", confirmation: "Prețul este completat." },
     { id: "details", title: "Detaliile proprietății", text: "Arată-mi câmpurile pentru tip, camere și etaj.", selector: '[data-tour="new-details"]', mode: "show", show: "details" },
