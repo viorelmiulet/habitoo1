@@ -9,6 +9,9 @@ import { getCurrentHostname } from "@/lib/current-host";
 import { formatMoney } from "@/lib/format";
 import { contactLines, safeAccent } from "@/lib/materials";
 import { offerOgMeta } from "@/lib/share";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { PhotoViewer } from "@/components/app/PhotoViewer";
 
 export const Route = createFileRoute("/oferta/$id")({
   loader: async ({ params }) => {
@@ -68,6 +71,8 @@ function OfferNotFound() {
 function OfferPage() {
   const { offer } = Route.useLoaderData();
   const origin = mediaOriginForHost(getCurrentHostname());
+  const [openAt, setOpenAt] = useState<number | null>(null);
+  const photos = offer.images.map((image) => ({ src: feedImageUrl(origin, image.id), alt: image.alt ?? offer.title }));
 
   const specs: [string, string][] = [
     ["Tip", offer.propertyType],
@@ -120,13 +125,22 @@ function OfferPage() {
           {offer.images.length ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {offer.images.slice(0, 6).map((img, index) => (
-                <img
+                <Button
                   key={img.id}
-                  src={feedImageUrl(origin, img.id)}
-                  alt={img.alt ?? offer.title}
-                  loading={index === 0 ? "eager" : "lazy"}
-                  className="aspect-[4/3] w-full rounded-xl object-cover"
-                />
+                  type="button"
+                  variant="ghost"
+                  aria-label={`Deschide fotografia ${index + 1} din ${photos.length}`}
+                  onClick={() => setOpenAt(index)}
+                  className="relative block h-auto w-full overflow-hidden rounded-xl p-0 hover:bg-transparent"
+                >
+                  <img
+                    src={feedImageUrl(origin, img.id)}
+                    alt={img.alt ?? offer.title}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                  {index === 5 && photos.length > 6 ? <span className="absolute inset-0 flex items-center justify-center bg-foreground/60 text-3xl font-semibold text-background">+{photos.length - 6}</span> : null}
+                </Button>
               ))}
             </div>
           ) : null}
@@ -181,6 +195,7 @@ function OfferPage() {
           </footer>
         </Container>
       </Section>
+      <PhotoViewer images={photos} title={offer.title} openAt={openAt} onOpenAtChange={setOpenAt} />
     </PublicLayout>
   );
 }
