@@ -1,3 +1,5 @@
+import { SendOfferDialog } from "@/components/app/SendOfferDialog";
+import { offerSendReason } from "@/lib/offer-client";
 import { createFileRoute, Link, useBlocker, useNavigate } from "@tanstack/react-router";
 import { SearchPlacesPicker } from "@/components/app/SearchPlacesPicker";
 import { buildSearchPlaces, legacyPlaceChoices, parsePlaceChoices, serializePlaces } from "@/lib/search-places";
@@ -169,6 +171,7 @@ function PropertiesPage() {
   const announceTools = () => { if (!toolsAnnounced.current) { toolsAnnounced.current = true; announceGuideContext("properties:tools"); } };
   useEffect(() => { if (selected.length > 0) announceTools(); }, [selected.length]);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
+  const [sendOfferTarget, setSendOfferTarget] = useState<string | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
@@ -1179,6 +1182,8 @@ function PropertiesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild><Link to="/app/properties/$id" params={{ id: p.id }}><ExternalLink /> Deschide</Link></DropdownMenuItem>
+                        <DropdownMenuItem disabled={Boolean(offerSendReason(p))} title={offerSendReason(p) ?? undefined} onSelect={() => setSendOfferTarget(p.id)}><Send /> Trimite oferta</DropdownMenuItem>
+                        {offerSendReason(p) ? <p className="max-w-64 px-2 py-1 text-xs text-muted-foreground">{offerSendReason(p)}</p> : null}
                         <DropdownMenuItem asChild><a href={`/app/properties/${p.id}?edit=true`}><Pencil /> Editează</a></DropdownMenuItem>
                         <DropdownMenuItem asChild><a href={`/app/properties/${p.id}?tab=publishing`}><ExternalLink /> Publicare pe portaluri</a></DropdownMenuItem>
                         {p.status === "archived" ? <DropdownMenuItem disabled={unarchiveOne.isPending} onSelect={() => unarchiveOne.mutate(p.id)}><ArchiveRestore /> Dezarhivează</DropdownMenuItem> : null}
@@ -1254,6 +1259,7 @@ function PropertiesPage() {
           setDeleteTarget(null);
         }}
       />
+      {sendOfferTarget ? <SendOfferDialog propertyId={sendOfferTarget} open onOpenChange={open => !open && setSendOfferTarget(null)} /> : null}
       <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
       <PortalBulkSelectionDialog
         mode={portalBulkMode}

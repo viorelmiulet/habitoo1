@@ -57,6 +57,6 @@
 - AI music uses a server-only direct fal ACE-Step call (no queue, 110 s timeout), handler-scoped FAL_KEY, 30 successes/day, inactive tracks and failure cleanup; recoverable failures return safe-message DTOs and record stage codes in ai_usage_events.extra_info, never provider bodies; unexpected errors also record sanitized error_name/message. Why: preserve privacy and actionable production diagnostics.
 
 - Studio AI uses direct MiniMax images/Hailuo tasks and fal Kontext, private media and one terminal-updated usage event. Monthly reservations lock the agency before insertion; failed rows free slots, archived successes retain consumption; quotas use Romania months. SuperAdmin alone edits limits. Why: no duplicate usage, races or refunds.
-- Galleries share PhotoViewer; dialogs retain guide-panel clicks. Why: consistent gestures and safe tours.
+- Galleries share PhotoViewer; client offers follow src/lib/AGENTS.md; guide clicks stay safe. Why: privacy.
 - Lists share ListPagination/use-list-state; geography uses scoped choices/invoker RPCs (src/lib/AGENTS.md). Why: safe OR/counts.
 - Public SSR/feeds read the DB via `publicRead` (timeout, logged fallback); `public_llms_statistics` reads an hourly cron cache. Why: no 500s under load.

@@ -1345,6 +1345,20 @@
       "when": 1793081197501,
       "tag": "0191_multi_geography_legacy_sector_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 192,
+      "version": "7",
+      "when": 1793081975643,
+      "tag": "0192_offer_client_delivery_activity",
+      "breakpoints": true
+    },
+    {
+      "idx": 193,
+      "version": "7",
+      "when": 1793082126521,
+      "tag": "0193_offer_client_delivery_scope_guard",
+      "breakpoints": true
     }
   ]
 }
