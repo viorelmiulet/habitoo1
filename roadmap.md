@@ -302,6 +302,6 @@
 - [x] Reverificare reală după mărirea limitei de stocare: „Test AI Energic 60 secunde”, stil Energic, 60 s (~0,012 $), generată o singură dată; apare inactivă și redarea din listă este confirmată.
 
 ## Imopedia
-- [ ] Etapa 4: publicare/actualizare/retragere SOAP (în lucru)
-- [ ] Etapa 5: imagini și video (existsFile/addFile/syncFiles/deleteFile, tabel imopedia_listing_files)
-- [ ] Etapa 6: Gold prin bifa „Promovat” și buton boost (saveBoost)
+- [x] Etapa 4: publicare/actualizare/retragere SOAP
+- [x] Etapa 5: imagini și video (existsFile/addFile/syncFiles/deleteFile, tabel imopedia_listing_files)
+- [x] Etapa 6: Gold prin bifa „Promovat” și buton boost (saveBoost)
