@@ -35,7 +35,12 @@ function fakeAdmin(tables: Record<string, Row[]>, claim: Row[] = []) {
     };
     return q;
   };
-  return { from, rpc: async () => ({ data: claim, error: null }), inserts, updates };
+  // Coada atomică: start_portal_publish_jobs întoarce cheile portalurilor puse în coadă.
+  const rpc = async (name: string, args?: { _jobs?: { portal_key: string }[] }) =>
+    name === "start_portal_publish_jobs"
+      ? { data: (args?._jobs ?? []).map((j) => j.portal_key), error: null }
+      : { data: claim, error: null };
+  return { from, rpc, inserts, updates };
 }
 
 const schedule = {

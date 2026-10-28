@@ -44,7 +44,7 @@ describe("grila portalurilor pentru administratorul agenției", () => {
   it("fila Portaluri e doar pentru admin, fără „Portalurile mele”", () => {
     const src = readFileSync("src/routes/_authenticated/app.settings.tsx", "utf8");
     expect(visibleSettingsTabs({ role: "agent", isAdmin: false })).not.toContain("portals");
-    expect(src).toMatch(/user\?\.isAdmin \? \(\s*<TabsContent value="portals"/);
+    expect(src).toMatch(/user\?\.isAdmin \? \(\s*<TabsContent (?:data-tour="settings-portals" )?value="portals"/);
     expect(src).not.toMatch(/MyPortalsCard|user\?\.organization \|\| user\?\.isAdmin/);
     expect(src.match(/<AgencyPortalCatalogCard \/>/g)?.length).toBe(1);
   });

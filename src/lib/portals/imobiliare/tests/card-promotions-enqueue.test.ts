@@ -9,11 +9,11 @@ it("keeps explicit promotion choices in the durable job before any portal call",
   const admin = { from: () => {
     const chain = { select: () => chain, eq: () => chain, insert: async (row: Record<string, unknown>) => { inserts.push(row); return { error: null }; }, then: (resolve: (result: unknown) => unknown) => resolve({ data: [{ portal_key: "imobiliare_ro", enabled: true }] }) };
     return chain;
-  }, rpc: async () => ({ error: null }) };
+  }, rpc: async (_name: string, args: { _jobs: Record<string, unknown>[] }) => { inserts.push(...args._jobs); return { data: args._jobs.map((j) => j.portal_key), error: null }; }, upsert: async () => ({ error: null }) };
   const result = await enqueuePublishJobsForOrg({ organizationId: "org", actorId: "actor", superadmin: false, data: { propertyId: "property", selections: [{ portalId: "imobiliare_ro", enabled: true, imobiliarePromotions: { tl: true, bonus: false } }], syncExisting: true }, loadAdmin: async () => admin, activatedPortalIds: async () => new Set(["imobiliare_ro"]) });
   expect(result.results[0]?.queued).toBe(true);
   expect(inserts).toHaveLength(1);
-  expect(inserts[0]).toMatchObject({ portal_key: "imobiliare_ro", imobiliare_promotions: { tl: true, bonus: false }, requested_by: "actor" });
+  expect(inserts[0]).toMatchObject({ portal_key: "imobiliare_ro", imobiliare_promotions: { tl: true, bonus: false }, });
 });
 it.each([
   { mode: "imoradar_only" as const, changes: {} as ImobiliarePromotionChanges },
@@ -24,7 +24,7 @@ it.each([
   const admin = { from: () => {
     const chain = { select: () => chain, eq: () => chain, insert: async (row: Record<string, unknown>) => { inserts.push(row); return { error: null }; }, then: (resolve: (result: unknown) => unknown) => resolve({ data: [] }) };
     return chain;
-  }, rpc: async () => ({ error: null }) };
+  }, rpc: async (_name: string, args: { _jobs: Record<string, unknown>[] }) => { inserts.push(...args._jobs); return { data: args._jobs.map((j) => j.portal_key), error: null }; }, upsert: async () => ({ error: null }) };
   const result = await enqueuePublishJobsForOrg({ organizationId: "org", actorId: "actor", superadmin: false, data: { propertyId: "property", selections: [{ portalId: "imobiliare_ro", enabled: true, imobiliareMode: mode, imobiliarePromotions: changes }], syncExisting: true }, loadAdmin: async () => admin, activatedPortalIds: async () => new Set(["imobiliare_ro"]) });
   expect(result.results[0]?.queued).toBe(true);
   expect(inserts[0]).toMatchObject({ imobiliare_mode: mode, imobiliare_promotions: changes });

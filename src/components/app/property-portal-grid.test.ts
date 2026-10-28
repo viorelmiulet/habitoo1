@@ -6,9 +6,10 @@ const view = readFileSync("src/components/app/PropertyPortalsCard.tsx", "utf8");
 describe("grila de publicare", () => {
   it("păstrează o singură intrare per portal, în ordinea existentă, cu 1/2/3 coloane", () => {
     expect(view).toContain('grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3');
-    expect(view.match(/cells\.map\(\(cell, index\) =>/g)).toHaveLength(1);
+    // Ordinea afișată trece prin displayCellIndices (Imobiliare.ro ↔ VDI inversate intenționat).
+    expect(view.match(/displayCellIndices\.map\(index =>/g)).toHaveLength(1);
     expect(view.indexOf('portal-facebook-catalog')).toBeLessThan(view.indexOf('portal-habitoo-collaboration'));
-    expect(view.indexOf('portal-habitoo-collaboration')).toBeLessThan(view.indexOf('cells.map((cell, index)'));
+    expect(view.indexOf('portal-habitoo-collaboration')).toBeLessThan(view.indexOf('displayCellIndices.map(index =>'));
     expect(view).toContain('<PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={40} />');
   });
 
@@ -32,7 +33,7 @@ describe("grila de publicare", () => {
     const card = view.indexOf('portal-habitoo-collaboration');
     const percent = view.indexOf('id="collab-percent"');
     const terms = view.indexOf('id="collab-terms"');
-    const cells = view.indexOf('cells.map((cell, index)');
+    const cells = view.indexOf('displayCellIndices.map(index =>');
     // Rândurile de portal vin după card; câmpurile sunt în interiorul lui.
     expect(card).toBeGreaterThan(-1);
     expect(percent).toBeGreaterThan(card);
