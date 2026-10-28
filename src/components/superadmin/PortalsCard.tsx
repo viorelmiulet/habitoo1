@@ -49,6 +49,10 @@ import {
   revokeStoriaAuthorization,
   startStoriaAuthorization,
 } from "@/lib/portals/storia.functions";
+import {
+  getImopediaNomenclatureStatus,
+  syncImopediaNomenclature,
+} from "@/lib/portals/imopedia/nomenclature.functions";
 import { revokeOlxAuthorization, startOlxAuthorization } from "@/lib/portals/olx.functions";
 import {
   getStoriaTaxonomyState,
@@ -1040,6 +1044,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                           {item.feedOnly ? "Verifică feedul" : "Testează conexiunea"}
                         </Button>
                       ) : null}
+                      {item.portal.id === "imopedia" ? <ImopediaNomenclaturePanel /> : null}
                       {item.supportsFeedPreview ? (
                         <Button
                           type="button"
@@ -1214,6 +1219,39 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
 }
 
 /** Diferențele dintre cerințele reale ale portalului și maparea din Habitoo. */
+function ImopediaNomenclaturePanel() {
+  const qc = useQueryClient();
+  const loadStatus = useServerFn(getImopediaNomenclatureStatus);
+  const runSync = useServerFn(syncImopediaNomenclature);
+  const status = useQuery({ queryKey: ["imopedia-nomenclature"], queryFn: () => loadStatus() });
+  const sync = useMutation({
+    mutationFn: () => runSync(),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["imopedia-nomenclature"] });
+      const f = (c: typeof r.areas) =>
+        `${c.read} citite, ${c.inserted} inserate, ${c.updated} actualizate, ${c.rejected} respinse`;
+      toast.success(
+        `Regiuni: ${f(r.regions)}. Zone: ${f(r.areas)}, ${r.areas.disabled} marcate neutilizabile.`,
+        { duration: 10_000 },
+      );
+    },
+    onError: (e: Error) => toastError(e),
+  });
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button type="button" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+        <RefreshCw className={cn("mr-2 size-4", sync.isPending && "animate-spin")} />
+        Actualizează nomenclatorul Imopedia
+      </Button>
+      <span className="text-xs text-muted-foreground">
+        {status.data?.syncedAt
+          ? `Ultima sincronizare: ${formatDateTime(status.data.syncedAt)} · ${status.data.usableAreas} zone utilizabile`
+          : "Nomenclatorul nu a fost importat încă."}
+      </span>
+    </div>
+  );
+}
+
 function TaxonomyDiscrepancies({
   cache,
 }: {
