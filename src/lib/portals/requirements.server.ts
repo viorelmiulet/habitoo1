@@ -7,6 +7,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { imo24BlockingReasons } from "./imo24/mapper";
 import {
   validatePortalRequirements,
   type PortalRequirementReport,
@@ -97,6 +98,7 @@ export async function loadRequirementSubject(
     agentEmail,
     contactPhone:
       resolveImobiliareWhatsapp(agentPhone) ?? resolveImobiliareContactPhone(agentPhone),
+    imo24Reasons: imo24BlockingReasons(row as any),
   };
 }
 
@@ -193,6 +195,7 @@ export async function loadRequirementSubjects(
       agentEmail: (profile as any)?.email ?? null,
       contactPhone:
         resolveImobiliareWhatsapp(agentPhone) ?? resolveImobiliareContactPhone(agentPhone),
+      imo24Reasons: imo24BlockingReasons(row as any),
     });
   }
   return result;
