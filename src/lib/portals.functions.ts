@@ -1656,7 +1656,7 @@ export async function executeListingAction(input: {
         ? result.detail
         : result.code,
     // imo24: și la succes păstrăm mesajul (rezultat, avertismente), afișat ca informație în card.
-    errorMessage: result.ok ? (definition.id === "imo24" ? (result.data.message ?? null) : null) : result.message,
+    errorMessage: result.ok ? (definition.id === "imo24" || definition.id === "zonata" ? (result.data.message ?? null) : null) : result.message,
     // Și la succes: statusul HTTP și corpul răspunsului (sanitizate), ca
     // jurnalul să dovedească ce a confirmat portalul, nu doar ce a refuzat.
     httpStatus: result.ok ? (result.data.httpStatus ?? null) : (result.httpStatus ?? null),

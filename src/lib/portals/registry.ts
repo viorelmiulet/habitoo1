@@ -314,14 +314,13 @@ export const PORTALS: PortalDefinition[] = [
     id: "zonata",
     display_name: "ZonaTa.ro",
     description:
-      "ZonaTa.ro expune un API REST de publicare: Habitoo se conectează cu cheia de agenție creată în contul ZonaTa (Contul meu → API). Deocamdată se verifică doar conexiunea; publicarea vine în curând.",
+      "ZonaTa.ro expune un API REST de publicare: Habitoo se conectează cu cheia de agenție creată în contul ZonaTa (Contul meu → API). Publici, actualizezi și retragi anunțurile din Habitoo, cu statusul real de pe ZonaTa.",
     logo: "ZT",
     status: "available",
     directions: ["habitoo_to_portal"],
     // Cheia (zt_live_… / zt_test_…) este CREATĂ DE AGENȚIE în contul ZonaTa.
     authentication: ["portal_api_key"],
-    capabilities: ["test_connection"],
-    publish_coming_soon: true,
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "sync"],
     configuration_schema: {
       fields: [
         {
@@ -338,7 +337,7 @@ export const PORTALS: PortalDefinition[] = [
     website: "https://zonata.ro",
     docs: "https://zonata.ro/api",
     notes:
-      "API ZonaTa v1 pe https://zonata.ro/api/v1, JSON UTF-8. Testul conexiunii folosește GET /me (cont, pachet, modul cheii, limite). Limita portalului este 300 de cereri la 10 minute pe cheie; Habitoo rămâne sub ea, iar la 429 face o pauză și o singură reîncercare. Cheia live cere pachetul Enterprise al agenției (650 lei / 30 de zile, plătit de agenție). Publicarea nu este încă disponibilă.",
+      "API ZonaTa v1 pe https://zonata.ro/api/v1, JSON UTF-8. Testul conexiunii folosește GET /me (cont, pachet, modul cheii, limite). Limita portalului este 300 de cereri la 10 minute pe cheie; Habitoo rămâne sub ea, iar la 429 face o pauză și o singură reîncercare. Publicarea: POST /listings, idempotent după external_id (câte un anunț pe tranzacție, -v / -i); republicarea după retragere: PATCH status active, apoi POST; retragerea: DELETE fără permanent. Statusul: GET /listings/ext:{external_id}, cel mult o dată pe minut pe anunț. Cheia live cere pachetul Enterprise al agenției (650 lei / 30 de zile, plătit de agenție); Habitoo nu cumpără pachete sau promovări. Cheia zt_test_ doar validează.",
   },
   {
     id: "homepitch",
