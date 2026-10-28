@@ -220,4 +220,43 @@ describe("raport ACP 2.0 — PDF fără rețea", () => {
     const withAppendix = await buildAcpReportPdf(build(version(), true), { loadImage, imageTimeoutMs: 50 });
     expect((await PDFDocument.load(withAppendix)).getPageCount()).toBeGreaterThan(13);
   }, 30_000);
+
+  const geoVersion = () => {
+    const v = version();
+    v.target.subject = { ...v.target.subject, latitude: 44.4355, longitude: 25.9998 };
+    v.comparables = v.comparables.map((c, i) =>
+      i === 2 ? c : { ...c, subject: { ...c.subject, latitude: 44.4355 + (i % 2) * 0.004, longitude: 25.9998 + i * 0.002 } },
+    );
+    return v;
+  };
+
+  it("pagina hărții apare după copertă, cu legenda comparabilelor fără coordonate", async () => {
+    const m = build(geoVersion());
+    expect(m.locationMap).toMatchObject({ subject: { lat: 44.4355 }, missing: 1 });
+    expect(m.locationMap!.comparables.map((c) => c.index)).not.toContain(m.used.find((u) => !u.sheet.geo)!.index);
+    expect(build().locationMap).toBeNull();
+    const tile = encodePng({ width: 4, height: 4, data: new Uint8Array(64).fill(220), channels: 4 });
+    const tiles: string[] = [];
+    const bytes = await buildAcpReportPdf(m, {
+      loadImage: async () => sampleJpeg(),
+      loadTile: async (t) => {
+        tiles.push(`${t.z}/${t.x}/${t.y}`);
+        return tile;
+      },
+    });
+    expect(tiles.length).toBeGreaterThan(0);
+    expect(tiles.length).toBeLessThanOrEqual(64);
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(14);
+  }, 30_000);
+
+  it("furnizorul de hărți căzut nu oprește raportul", async () => {
+    const started = Date.now();
+    const bytes = await buildAcpReportPdf(build(geoVersion()), {
+      loadImage: async () => sampleJpeg(),
+      loadTile: () => new Promise(() => {}),
+      mapTimeoutMs: 100,
+    });
+    expect(Date.now() - started).toBeLessThan(10_000);
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(14);
+  }, 30_000);
 });
