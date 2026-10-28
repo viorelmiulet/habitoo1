@@ -74,6 +74,10 @@ export function zonataSubcategoryFor(
   nomenclature: ZonataSubcategory[],
 ): ZonataSubcategory | null {
   const patterns = TYPE_KEYWORDS[(propertyType ?? "").toLowerCase()];
+  return findSub(patterns, tx, nomenclature);
+}
+
+function findSub(patterns: RegExp[] | undefined, tx: ZonataTransaction, nomenclature: ZonataSubcategory[]): ZonataSubcategory | null {
   if (!patterns) return null;
   for (const re of patterns) {
     const hit = nomenclature.find((n) => {
@@ -129,6 +133,58 @@ export function zonataImages(images: ZonataImage[]): { urls: string[]; skipped: 
 
 // ---------------------------------------------------------------- fields
 
+function constructionStageValue(v: unknown): string | null {
+  const n = normalizeZt(v as string);
+  if (!n) return null;
+  if (n === "finalizata") return "Finalizată";
+  if (n === "in constructie") return "În construcție / Plan";
+  return String(v);
+}
+
+function furnishingValue(v: unknown, field: ZonataField): string | null {
+  const n = normalizeZt(v as string);
+  if (!n) return null;
+  const house = /locuinta/.test(normalizeZt(`${field.slug} ${field.label}`));
+  if (n === "complet") return house ? "Complet" : "Mobilat";
+  if (n === "partial") return house ? "Parțial" : "Parțial mobilat";
+  if (n === "nemobilat") return house ? "Nemobilată / Neutilată" : "Nemobilat";
+  return String(v);
+}
+
+function seismicValue(v: unknown): string | null {
+  const n = normalizeZt(v as string);
+  if (!n) return null;
+  return n === "fara risc" ? "Fără risc seismic" : String(v);
+}
+
+function buildingTypeValue(v: unknown): string | null {
+  const n = normalizeZt(v as string);
+  if (!n) return null;
+  return n === "bloc" ? "Bloc de apartamente" : String(v);
+}
+
+/** Ce trebuie completat în Habitoo pentru un câmp obligatoriu ZonaTa. */
+const REQUIRED_HINTS: Array<[RegExp, string]> = [
+  [/stadiu/, "Stadiul construcției"],
+  [/camer/, "numărul de camere"],
+  [/suprafata teren/, "suprafața terenului"],
+  [/suprafata/, "suprafața utilă"],
+  [/niveluri|etaje/, "regimul de înălțime (etaje)"],
+  [/etaj/, "etajul"],
+  [/\ban\b.*constructie/, "anul construcției"],
+  [/mobil/, "Mobilarea"],
+  [/risc seismic/, "Riscul seismic"],
+  [/tip de locuinta/, "tipul locuinței (Habitoo nu are încă acest câmp)"],
+  [/apropiere/, "punctele de interes din apropiere (Habitoo nu are încă acest câmp)"],
+];
+export function zonataRequiredMessage(field: ZonataField, subLabel: string): string {
+  const text = normalizeZt(`${field.slug.replace(/_/g, " ")} ${field.label}`);
+  const hint = REQUIRED_HINTS.find(([re]) => re.test(text))?.[1];
+  return hint
+    ? `${field.label} lipsește: completează ${hint} în fișa proprietății (${subLabel}).`
+    : `Câmpul obligatoriu ZonaTa „${field.label}” (${subLabel}) lipsește sau nu are o valoare acceptată.`;
+}
+
 function findField(fields: ZonataField[], keys: string[], exclude?: RegExp): ZonataField | null {
   const norm = (f: ZonataField) => [normalizeZt(f.slug.replace(/_num$/, "")), normalizeZt(f.label)];
   for (const k of keys) {
@@ -149,10 +205,15 @@ export function matchOption(field: ZonataField, raw: string | number): string | 
   const exact = field.options.find((o) => normalizeZt(o.value) === v || normalizeZt(o.label) === v);
   if (exact) return exact.value;
   if (typeof raw === "number") {
-    // „5+” / „peste 5” acceptă valorile mai mari.
+    // „1 cameră” / „3 camere”.
+    const rooms = field.options.find((o) => [normalizeZt(o.value), normalizeZt(o.label)].includes(normalizeZt(`${raw} ${raw === 1 ? "cameră" : "camere"}`)));
+    if (rooms) return rooms.value;
+    // „5+”, „peste 5”, „5 sau mai multe”, „10 și peste” acceptă valorile mai mari sau egale.
     for (const o of field.options) {
-      const m = /^(?:peste )?(\d+)\s*\+?$/.exec(normalizeZt(o.label)) ?? /^(\d+)\s*\+$/.exec(normalizeZt(o.value));
-      if (m && /\+|peste/.test(`${o.label} ${o.value}`) && raw >= Number(m[1])) return o.value;
+      for (const text of [normalizeZt(o.label), normalizeZt(o.value)]) {
+        const m = /^peste (\d+)$/.exec(text) ?? /^(\d+)\s*(?:\+|sau mai multe|si peste)$/.exec(text);
+        if (m && raw >= Number(m[1])) return o.value;
+      }
     }
   }
   return null;
@@ -199,11 +260,17 @@ export function zonataFields(p: Row, sub: ZonataSubcategory): Record<string, Zon
   setValue(out, findField(f, ["numar bai", "bai"]), num(p.bathrooms) !== null ? Math.round(p.bathrooms as number) : null);
   setValue(out, findField(f, ["an constructie", "anul constructiei"]), num(p.build_year) !== null ? Math.round(p.build_year as number) : null);
   setValue(out, findField(f, ["compartimentare"]), p.layout ?? null);
-  const comfort = p.comfort ? (/^\d$/.test(String(p.comfort).trim()) ? `confort ${String(p.comfort).trim()}` : String(p.comfort)) : null;
+  const comfortRaw = p.comfort ? String(p.comfort).trim() : "";
+  const comfort = comfortRaw ? (/^\d$/.test(comfortRaw) || normalizeZt(comfortRaw) === "lux" ? `confort ${comfortRaw}` : comfortRaw) : null;
   const comfortField = findField(f, ["confort"]);
   setValue(out, comfortField, comfort);
   if (comfortField && out[comfortField.slug] === undefined) setValue(out, comfortField, p.comfort ?? null);
-  setValue(out, findField(f, ["stare"]), p.finish_state ?? p.condition ?? null);
+  setValue(out, findField(f, ["stare"], /stadiu/), p.finish_state ?? p.condition ?? null);
+  setValue(out, findField(f, ["stadiu constructie", "stadiu de constructie", "stadiu"], /stare/), constructionStageValue(p.construction_stage));
+  const furnishField = findField(f, ["mobilat", "locuinta mobilata utilata", "mobilata"]);
+  if (furnishField) setValue(out, furnishField, furnishingValue(p.furnishing, furnishField));
+  setValue(out, findField(f, ["risc seismic"]), seismicValue(p.seismic_risk));
+  setValue(out, findField(f, ["tip de imobil", "tip imobil"]), buildingTypeValue(p.building_type));
 
   // Dotări: fiecare câmp checkbox primește opțiunile cu etichetă identică (normalizată).
   const labels = new Set(featureLabels(p).map(normalizeZt));
@@ -242,7 +309,9 @@ export function mapPropertyToZonata(
   const bodies: ZonataListingBody[] = [];
   for (const tx of txs) {
     const label = TX_LABEL[tx];
-    const sub = ctx.nomenclature.length ? zonataSubcategoryFor(p.property_type, tx, ctx.nomenclature) : null;
+    // Apartamentele cu o cameră merg la garsoniere (ZonaTa nu are „1” la apartamente).
+    const effType = (p.property_type ?? "").toLowerCase() === "apartment" && num(p.rooms) !== null && Math.round(p.rooms as number) === 1 ? "studio" : p.property_type;
+    const sub = ctx.nomenclature.length ? zonataSubcategoryFor(effType, tx, ctx.nomenclature) : null;
     if (ctx.nomenclature.length && !sub) {
       reasons.push(`Tipul „${TYPE_LABEL[(p.property_type ?? "").toLowerCase()] ?? (p.property_type || "necunoscut")}” la ${label} nu are categorie ZonaTa.`);
     }
@@ -253,7 +322,7 @@ export function mapPropertyToZonata(
     if (!sub) continue;
     const fields = zonataFields(p, sub);
     for (const req of sub.fields.filter((x) => x.required && fields[x.slug] === undefined)) {
-      reasons.push(`Câmpul obligatoriu ZonaTa „${req.label}” (${sub.subcategory_label ?? sub.subcategory_slug}) lipsește sau nu are o valoare acceptată.`);
+      reasons.push(zonataRequiredMessage(req, sub.subcategory_label ?? sub.subcategory_slug));
     }
     bodies.push({
       external_id: zonataExternalId(p, tx),
