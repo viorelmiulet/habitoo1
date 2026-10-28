@@ -1,0 +1,492 @@
+{
+  "meta": {
+    "source": "Nomenclatoare - API Imopedia.ro.xlsx",
+    "source_sheet": "FINISAJE",
+    "generated_on": "2026-05-29",
+    "description": "Finisaje disponibile, grupate pe tip de imobil."
+  },
+  "by_property_type": {
+    "1": [
+      "parchet",
+      "dusumea",
+      "mocheta",
+      "linoleum",
+      "marmura",
+      "gresie",
+      "vinarom",
+      "huma",
+      "calciu",
+      "tapet",
+      "pereti lambrisati",
+      "faianta",
+      "geamuri termopan",
+      "jaluzele verticale",
+      "lampi",
+      "spoturi",
+      "aplice",
+      "galerii perdele",
+      "calorifere aluminiu"
+    ],
+    "2": [
+      "parchet",
+      "dusumea",
+      "mocheta",
+      "linoleum",
+      "marmura",
+      "gresie",
+      "vinarom",
+      "calciu",
+      "tapet",
+      "pereti lambrisati",
+      "faianta",
+      "geamuri termopan",
+      "jaluzele verticale",
+      "lampi",
+      "spoturi",
+      "aplice",
+      "galerii perdele",
+      "calorifere aluminiu"
+    ],
+    "3": [
+      "parchet",
+      "dusumea",
+      "mocheta",
+      "linoleum",
+      "marmura",
+      "gresie",
+      "vinarom",
+      "huma",
+      "calciu",
+      "tapet",
+      "pereti lambrisati",
+      "faianta",
+      "geamuri termopan",
+      "jaluzele verticale",
+      "lampi",
+      "spoturi",
+      "aplice",
+      "galerii perdele",
+      "calorifere aluminiu"
+    ],
+    "5": [
+      "parchet",
+      "dusumea",
+      "mocheta",
+      "linoleum",
+      "marmura",
+      "gresie",
+      "vinarom",
+      "huma",
+      "calciu",
+      "tapet",
+      "pereti lambrisati",
+      "faianta",
+      "geamuri termopan",
+      "jaluzele verticale",
+      "lampi",
+      "spoturi",
+      "aplice",
+      "galerii perdele",
+      "calorifere aluminiu"
+    ],
+    "8": [
+      "parchet",
+      "dusumea",
+      "mocheta",
+      "linoleum",
+      "marmura",
+      "gresie",
+      "vinarom",
+      "huma",
+      "calciu",
+      "tapet",
+      "pereti lambrisati",
+      "faianta",
+      "geamuri termopan",
+      "jaluzele verticale",
+      "lampi",
+      "spoturi",
+      "aplice",
+      "galerii perdele",
+      "calorifere aluminiu"
+    ]
+  },
+  "items": [
+    {
+      "property_type": 1,
+      "value": "parchet"
+    },
+    {
+      "property_type": 1,
+      "value": "dusumea"
+    },
+    {
+      "property_type": 1,
+      "value": "mocheta"
+    },
+    {
+      "property_type": 1,
+      "value": "linoleum"
+    },
+    {
+      "property_type": 1,
+      "value": "marmura"
+    },
+    {
+      "property_type": 1,
+      "value": "gresie"
+    },
+    {
+      "property_type": 1,
+      "value": "vinarom"
+    },
+    {
+      "property_type": 1,
+      "value": "huma"
+    },
+    {
+      "property_type": 1,
+      "value": "calciu"
+    },
+    {
+      "property_type": 1,
+      "value": "tapet"
+    },
+    {
+      "property_type": 1,
+      "value": "pereti lambrisati"
+    },
+    {
+      "property_type": 1,
+      "value": "faianta"
+    },
+    {
+      "property_type": 1,
+      "value": "geamuri termopan"
+    },
+    {
+      "property_type": 1,
+      "value": "jaluzele verticale"
+    },
+    {
+      "property_type": 1,
+      "value": "lampi"
+    },
+    {
+      "property_type": 1,
+      "value": "spoturi"
+    },
+    {
+      "property_type": 1,
+      "value": "aplice"
+    },
+    {
+      "property_type": 1,
+      "value": "galerii perdele"
+    },
+    {
+      "property_type": 1,
+      "value": "calorifere aluminiu"
+    },
+    {
+      "property_type": 2,
+      "value": "parchet"
+    },
+    {
+      "property_type": 2,
+      "value": "dusumea"
+    },
+    {
+      "property_type": 2,
+      "value": "mocheta"
+    },
+    {
+      "property_type": 2,
+      "value": "linoleum"
+    },
+    {
+      "property_type": 2,
+      "value": "marmura"
+    },
+    {
+      "property_type": 2,
+      "value": "gresie"
+    },
+    {
+      "property_type": 2,
+      "value": "vinarom"
+    },
+    {
+      "property_type": 2,
+      "value": "calciu"
+    },
+    {
+      "property_type": 2,
+      "value": "tapet"
+    },
+    {
+      "property_type": 2,
+      "value": "pereti lambrisati"
+    },
+    {
+      "property_type": 2,
+      "value": "faianta"
+    },
+    {
+      "property_type": 2,
+      "value": "geamuri termopan"
+    },
+    {
+      "property_type": 2,
+      "value": "jaluzele verticale"
+    },
+    {
+      "property_type": 2,
+      "value": "lampi"
+    },
+    {
+      "property_type": 2,
+      "value": "spoturi"
+    },
+    {
+      "property_type": 2,
+      "value": "aplice"
+    },
+    {
+      "property_type": 2,
+      "value": "galerii perdele"
+    },
+    {
+      "property_type": 2,
+      "value": "calorifere aluminiu"
+    },
+    {
+      "property_type": 3,
+      "value": "parchet"
+    },
+    {
+      "property_type": 3,
+      "value": "dusumea"
+    },
+    {
+      "property_type": 3,
+      "value": "mocheta"
+    },
+    {
+      "property_type": 3,
+      "value": "linoleum"
+    },
+    {
+      "property_type": 3,
+      "value": "marmura"
+    },
+    {
+      "property_type": 3,
+      "value": "gresie"
+    },
+    {
+      "property_type": 3,
+      "value": "vinarom"
+    },
+    {
+      "property_type": 3,
+      "value": "huma"
+    },
+    {
+      "property_type": 3,
+      "value": "calciu"
+    },
+    {
+      "property_type": 3,
+      "value": "tapet"
+    },
+    {
+      "property_type": 3,
+      "value": "pereti lambrisati"
+    },
+    {
+      "property_type": 3,
+      "value": "faianta"
+    },
+    {
+      "property_type": 3,
+      "value": "geamuri termopan"
+    },
+    {
+      "property_type": 3,
+      "value": "jaluzele verticale"
+    },
+    {
+      "property_type": 3,
+      "value": "lampi"
+    },
+    {
+      "property_type": 3,
+      "value": "spoturi"
+    },
+    {
+      "property_type": 3,
+      "value": "aplice"
+    },
+    {
+      "property_type": 3,
+      "value": "galerii perdele"
+    },
+    {
+      "property_type": 3,
+      "value": "calorifere aluminiu"
+    },
+    {
+      "property_type": 5,
+      "value": "parchet"
+    },
+    {
+      "property_type": 5,
+      "value": "dusumea"
+    },
+    {
+      "property_type": 5,
+      "value": "mocheta"
+    },
+    {
+      "property_type": 5,
+      "value": "linoleum"
+    },
+    {
+      "property_type": 5,
+      "value": "marmura"
+    },
+    {
+      "property_type": 5,
+      "value": "gresie"
+    },
+    {
+      "property_type": 5,
+      "value": "vinarom"
+    },
+    {
+      "property_type": 5,
+      "value": "huma"
+    },
+    {
+      "property_type": 5,
+      "value": "calciu"
+    },
+    {
+      "property_type": 5,
+      "value": "tapet"
+    },
+    {
+      "property_type": 5,
+      "value": "pereti lambrisati"
+    },
+    {
+      "property_type": 5,
+      "value": "faianta"
+    },
+    {
+      "property_type": 5,
+      "value": "geamuri termopan"
+    },
+    {
+      "property_type": 5,
+      "value": "jaluzele verticale"
+    },
+    {
+      "property_type": 5,
+      "value": "lampi"
+    },
+    {
+      "property_type": 5,
+      "value": "spoturi"
+    },
+    {
+      "property_type": 5,
+      "value": "aplice"
+    },
+    {
+      "property_type": 5,
+      "value": "galerii perdele"
+    },
+    {
+      "property_type": 5,
+      "value": "calorifere aluminiu"
+    },
+    {
+      "property_type": 8,
+      "value": "parchet"
+    },
+    {
+      "property_type": 8,
+      "value": "dusumea"
+    },
+    {
+      "property_type": 8,
+      "value": "mocheta"
+    },
+    {
+      "property_type": 8,
+      "value": "linoleum"
+    },
+    {
+      "property_type": 8,
+      "value": "marmura"
+    },
+    {
+      "property_type": 8,
+      "value": "gresie"
+    },
+    {
+      "property_type": 8,
+      "value": "vinarom"
+    },
+    {
+      "property_type": 8,
+      "value": "huma"
+    },
+    {
+      "property_type": 8,
+      "value": "calciu"
+    },
+    {
+      "property_type": 8,
+      "value": "tapet"
+    },
+    {
+      "property_type": 8,
+      "value": "pereti lambrisati"
+    },
+    {
+      "property_type": 8,
+      "value": "faianta"
+    },
+    {
+      "property_type": 8,
+      "value": "geamuri termopan"
+    },
+    {
+      "property_type": 8,
+      "value": "jaluzele verticale"
+    },
+    {
+      "property_type": 8,
+      "value": "lampi"
+    },
+    {
+      "property_type": 8,
+      "value": "spoturi"
+    },
+    {
+      "property_type": 8,
+      "value": "aplice"
+    },
+    {
+      "property_type": 8,
+      "value": "galerii perdele"
+    },
+    {
+      "property_type": 8,
+      "value": "calorifere aluminiu"
+    }
+  ]
+}

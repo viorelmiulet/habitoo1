@@ -1,0 +1,642 @@
+{
+  "meta": {
+    "source": "Nomenclatoare - API Imopedia.ro.xlsx",
+    "source_sheet": "DETALII",
+    "generated_on": "2026-05-29",
+    "description": "Detalii disponibile, grupate pe tip de imobil."
+  },
+  "items": [
+    {
+      "property_type": 2,
+      "value": "mobilat"
+    },
+    {
+      "property_type": 2,
+      "value": "semi-mobilat"
+    },
+    {
+      "property_type": 2,
+      "value": "nemobilat"
+    },
+    {
+      "property_type": 2,
+      "value": "interior nou"
+    },
+    {
+      "property_type": 2,
+      "value": "interior renovat"
+    },
+    {
+      "property_type": 2,
+      "value": "interior in stare foarte buna"
+    },
+    {
+      "property_type": 2,
+      "value": "interior curat"
+    },
+    {
+      "property_type": 2,
+      "value": "interiorul necesita renovari"
+    },
+    {
+      "property_type": 2,
+      "value": "mobiler modern"
+    },
+    {
+      "property_type": 2,
+      "value": "mobilier clasic"
+    },
+    {
+      "property_type": 2,
+      "value": "mobilier stil"
+    },
+    {
+      "property_type": 2,
+      "value": "mobilier obisnuit"
+    },
+    {
+      "property_type": 2,
+      "value": "imobil in stare exceptionala"
+    },
+    {
+      "property_type": 2,
+      "value": "imobil in stare buna"
+    },
+    {
+      "property_type": 2,
+      "value": "imobil in stare insalubra"
+    },
+    {
+      "property_type": 2,
+      "value": "imobil ruina"
+    },
+    {
+      "property_type": 2,
+      "value": "incalzire prin termoficare"
+    },
+    {
+      "property_type": 2,
+      "value": "incalzire cu centrala proprie"
+    },
+    {
+      "property_type": 2,
+      "value": "incalzire cu sobe"
+    },
+    {
+      "property_type": 2,
+      "value": "strazi amenajate"
+    },
+    {
+      "property_type": 2,
+      "value": "strazi neamenajate"
+    },
+    {
+      "property_type": 2,
+      "value": "vedere stradala"
+    },
+    {
+      "property_type": 2,
+      "value": "vedere pe spate"
+    },
+    {
+      "property_type": 2,
+      "value": "vedere mixta"
+    },
+    {
+      "property_type": 2,
+      "value": "vedere laterala"
+    },
+    {
+      "property_type": 2,
+      "value": "acces stradal"
+    },
+    {
+      "property_type": 2,
+      "value": "acces prin spate"
+    },
+    {
+      "property_type": 3,
+      "value": "mobilat"
+    },
+    {
+      "property_type": 3,
+      "value": "semi-mobilat"
+    },
+    {
+      "property_type": 3,
+      "value": "nemobilat"
+    },
+    {
+      "property_type": 3,
+      "value": "mobiler modern"
+    },
+    {
+      "property_type": 3,
+      "value": "mobilier clasic"
+    },
+    {
+      "property_type": 3,
+      "value": "mobilier stil"
+    },
+    {
+      "property_type": 3,
+      "value": "mobilier obisnuit"
+    },
+    {
+      "property_type": 3,
+      "value": "curte comuna"
+    },
+    {
+      "property_type": 3,
+      "value": "curte individuala"
+    },
+    {
+      "property_type": 3,
+      "value": "interior nou"
+    },
+    {
+      "property_type": 3,
+      "value": "interior renovat"
+    },
+    {
+      "property_type": 3,
+      "value": "interior in stare foarte buna"
+    },
+    {
+      "property_type": 3,
+      "value": "interior curat"
+    },
+    {
+      "property_type": 3,
+      "value": "interiorul necesita renovari"
+    },
+    {
+      "property_type": 3,
+      "value": "imobil in stare exceptionala"
+    },
+    {
+      "property_type": 3,
+      "value": "imobil in stare buna"
+    },
+    {
+      "property_type": 3,
+      "value": "imobil in stare insalubra"
+    },
+    {
+      "property_type": 3,
+      "value": "imobil ruina"
+    },
+    {
+      "property_type": 3,
+      "value": "incalzire prin termoficare"
+    },
+    {
+      "property_type": 3,
+      "value": "incalzire cu centrala proprie"
+    },
+    {
+      "property_type": 3,
+      "value": "incalzire cu sobe"
+    },
+    {
+      "property_type": 3,
+      "value": "strazi amenajate"
+    },
+    {
+      "property_type": 3,
+      "value": "strazi neamenajate"
+    },
+    {
+      "property_type": 1,
+      "value": "mobilat"
+    },
+    {
+      "property_type": 1,
+      "value": "semi-mobilat"
+    },
+    {
+      "property_type": 1,
+      "value": "nemobilat"
+    },
+    {
+      "property_type": 1,
+      "value": "mobiler modern"
+    },
+    {
+      "property_type": 1,
+      "value": "mobilier clasic"
+    },
+    {
+      "property_type": 1,
+      "value": "mobilier stil"
+    },
+    {
+      "property_type": 1,
+      "value": "mobilier obisnuit"
+    },
+    {
+      "property_type": 1,
+      "value": "interior nou"
+    },
+    {
+      "property_type": 1,
+      "value": "interior renovat"
+    },
+    {
+      "property_type": 1,
+      "value": "interior in stare foarte buna"
+    },
+    {
+      "property_type": 1,
+      "value": "interior curat"
+    },
+    {
+      "property_type": 1,
+      "value": "interiorul necesita renovari"
+    },
+    {
+      "property_type": 1,
+      "value": "amplasat in imobil nou"
+    },
+    {
+      "property_type": 1,
+      "value": "amplasat in imobil renovat"
+    },
+    {
+      "property_type": 1,
+      "value": "amplasat in imobil vechi"
+    },
+    {
+      "property_type": 1,
+      "value": "imobil in stare exceptionala"
+    },
+    {
+      "property_type": 1,
+      "value": "imobil in stare buna"
+    },
+    {
+      "property_type": 1,
+      "value": "imobil in stare insalubra"
+    },
+    {
+      "property_type": 1,
+      "value": "imobil ruina"
+    },
+    {
+      "property_type": 1,
+      "value": "incalzire prin termoficare"
+    },
+    {
+      "property_type": 1,
+      "value": "centrala proprie a imobilului"
+    },
+    {
+      "property_type": 1,
+      "value": "centrala proprie a apartamentului"
+    },
+    {
+      "property_type": 1,
+      "value": "incalzire cu sobe"
+    },
+    {
+      "property_type": 1,
+      "value": "strazi amenajate"
+    },
+    {
+      "property_type": 1,
+      "value": "strazi neamenajate"
+    },
+    {
+      "property_type": 1,
+      "value": "vedere stradala"
+    },
+    {
+      "property_type": 1,
+      "value": "vedere pe spate"
+    },
+    {
+      "property_type": 1,
+      "value": "vedere laterala"
+    },
+    {
+      "property_type": 1,
+      "value": "vedere mixta"
+    },
+    {
+      "property_type": 1,
+      "value": "acces stradal"
+    },
+    {
+      "property_type": 1,
+      "value": "acces prin spate"
+    },
+    {
+      "property_type": 1,
+      "value": "acces mixt"
+    },
+    {
+      "property_type": 7,
+      "value": "strazi amenajate"
+    },
+    {
+      "property_type": 7,
+      "value": "strazi neamenajate"
+    },
+    {
+      "property_type": 7,
+      "value": "acces stradal"
+    },
+    {
+      "property_type": 7,
+      "value": "acces lateral"
+    },
+    {
+      "property_type": 7,
+      "value": "acces mixt"
+    },
+    {
+      "property_type": 5,
+      "value": "mobilat"
+    },
+    {
+      "property_type": 5,
+      "value": "semi-mobilat"
+    },
+    {
+      "property_type": 5,
+      "value": "nemobilat"
+    },
+    {
+      "property_type": 5,
+      "value": "mobiler modern"
+    },
+    {
+      "property_type": 5,
+      "value": "mobilier clasic"
+    },
+    {
+      "property_type": 5,
+      "value": "mobilier stil"
+    },
+    {
+      "property_type": 5,
+      "value": "mobilier obisnuit"
+    },
+    {
+      "property_type": 5,
+      "value": "interior nou"
+    },
+    {
+      "property_type": 5,
+      "value": "interior renovat"
+    },
+    {
+      "property_type": 5,
+      "value": "interior in stare foarte buna"
+    },
+    {
+      "property_type": 5,
+      "value": "interior curat"
+    },
+    {
+      "property_type": 5,
+      "value": "interiorul necesita renovari"
+    },
+    {
+      "property_type": 5,
+      "value": "amplasat in imobil nou"
+    },
+    {
+      "property_type": 5,
+      "value": "amplasat in imobil renovat"
+    },
+    {
+      "property_type": 5,
+      "value": "amplasat in imobil vechi"
+    },
+    {
+      "property_type": 5,
+      "value": "imobil in stare exceptionala"
+    },
+    {
+      "property_type": 5,
+      "value": "imobil in stare buna"
+    },
+    {
+      "property_type": 5,
+      "value": "imobil in stare insalubra"
+    },
+    {
+      "property_type": 5,
+      "value": "imobil ruina"
+    },
+    {
+      "property_type": 5,
+      "value": "incalzire prin termoficare"
+    },
+    {
+      "property_type": 5,
+      "value": "incalzire cu centrala proprie"
+    },
+    {
+      "property_type": 5,
+      "value": "incalzire cu sobe"
+    },
+    {
+      "property_type": 5,
+      "value": "strazi amenajate"
+    },
+    {
+      "property_type": 5,
+      "value": "strazi neamenajate"
+    },
+    {
+      "property_type": 5,
+      "value": "vedere stradala"
+    },
+    {
+      "property_type": 5,
+      "value": "vedere pe spate"
+    },
+    {
+      "property_type": 5,
+      "value": "vedere mixta"
+    },
+    {
+      "property_type": 5,
+      "value": "vedere laterala"
+    },
+    {
+      "property_type": 5,
+      "value": "acces stradal"
+    },
+    {
+      "property_type": 5,
+      "value": "acces prin spate"
+    },
+    {
+      "property_type": 2,
+      "value": "amplasat in imobil nou"
+    },
+    {
+      "property_type": 2,
+      "value": "amplasat in imobil renovat"
+    },
+    {
+      "property_type": 2,
+      "value": "amplasat in imobil vechi"
+    },
+    {
+      "property_type": 2,
+      "value": "constructie la rosu"
+    },
+    {
+      "property_type": 3,
+      "value": "constructie la rosu"
+    },
+    {
+      "property_type": 1,
+      "value": "constructie la rosu"
+    },
+    {
+      "property_type": 5,
+      "value": "constructie la rosu"
+    }
+  ],
+  "by_property_type": {
+    "2": [
+      "mobilat",
+      "semi-mobilat",
+      "nemobilat",
+      "interior nou",
+      "interior renovat",
+      "interior in stare foarte buna",
+      "interior curat",
+      "interiorul necesita renovari",
+      "mobiler modern",
+      "mobilier clasic",
+      "mobilier stil",
+      "mobilier obisnuit",
+      "imobil in stare exceptionala",
+      "imobil in stare buna",
+      "imobil in stare insalubra",
+      "imobil ruina",
+      "incalzire prin termoficare",
+      "incalzire cu centrala proprie",
+      "incalzire cu sobe",
+      "strazi amenajate",
+      "strazi neamenajate",
+      "vedere stradala",
+      "vedere pe spate",
+      "vedere mixta",
+      "vedere laterala",
+      "acces stradal",
+      "acces prin spate",
+      "amplasat in imobil nou",
+      "amplasat in imobil renovat",
+      "amplasat in imobil vechi",
+      "constructie la rosu"
+    ],
+    "3": [
+      "mobilat",
+      "semi-mobilat",
+      "nemobilat",
+      "mobiler modern",
+      "mobilier clasic",
+      "mobilier stil",
+      "mobilier obisnuit",
+      "curte comuna",
+      "curte individuala",
+      "interior nou",
+      "interior renovat",
+      "interior in stare foarte buna",
+      "interior curat",
+      "interiorul necesita renovari",
+      "imobil in stare exceptionala",
+      "imobil in stare buna",
+      "imobil in stare insalubra",
+      "imobil ruina",
+      "incalzire prin termoficare",
+      "incalzire cu centrala proprie",
+      "incalzire cu sobe",
+      "strazi amenajate",
+      "strazi neamenajate",
+      "constructie la rosu"
+    ],
+    "1": [
+      "mobilat",
+      "semi-mobilat",
+      "nemobilat",
+      "mobiler modern",
+      "mobilier clasic",
+      "mobilier stil",
+      "mobilier obisnuit",
+      "interior nou",
+      "interior renovat",
+      "interior in stare foarte buna",
+      "interior curat",
+      "interiorul necesita renovari",
+      "amplasat in imobil nou",
+      "amplasat in imobil renovat",
+      "amplasat in imobil vechi",
+      "imobil in stare exceptionala",
+      "imobil in stare buna",
+      "imobil in stare insalubra",
+      "imobil ruina",
+      "incalzire prin termoficare",
+      "centrala proprie a imobilului",
+      "centrala proprie a apartamentului",
+      "incalzire cu sobe",
+      "strazi amenajate",
+      "strazi neamenajate",
+      "vedere stradala",
+      "vedere pe spate",
+      "vedere laterala",
+      "vedere mixta",
+      "acces stradal",
+      "acces prin spate",
+      "acces mixt",
+      "constructie la rosu"
+    ],
+    "7": [
+      "strazi amenajate",
+      "strazi neamenajate",
+      "acces stradal",
+      "acces lateral",
+      "acces mixt"
+    ],
+    "5": [
+      "mobilat",
+      "semi-mobilat",
+      "nemobilat",
+      "mobiler modern",
+      "mobilier clasic",
+      "mobilier stil",
+      "mobilier obisnuit",
+      "interior nou",
+      "interior renovat",
+      "interior in stare foarte buna",
+      "interior curat",
+      "interiorul necesita renovari",
+      "amplasat in imobil nou",
+      "amplasat in imobil renovat",
+      "amplasat in imobil vechi",
+      "imobil in stare exceptionala",
+      "imobil in stare buna",
+      "imobil in stare insalubra",
+      "imobil ruina",
+      "incalzire prin termoficare",
+      "incalzire cu centrala proprie",
+      "incalzire cu sobe",
+      "strazi amenajate",
+      "strazi neamenajate",
+      "vedere stradala",
+      "vedere pe spate",
+      "vedere mixta",
+      "vedere laterala",
+      "acces stradal",
+      "acces prin spate",
+      "constructie la rosu"
+    ]
+  }
+}
