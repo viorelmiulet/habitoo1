@@ -113,3 +113,42 @@ describe("testul conexiunii", () => {
     expect(validatePortalConfigValues("imopedia", { endpointUrl: "1.5" })).toMatch(/întreg/);
   });
 });
+
+// --- Răspunsuri reale Imopedia (înregistrate la primul apel) -----------------
+
+const REAL_VIEW_AGENCY_INVALID_SESSION =
+  `<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns1="http://xml.apache.org/xml-soap" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><SOAP-ENV:Body><SOAP-ENV:viewAgencyResponse><viewAgencyReturn xsi:type="ns1:Map"><item><key xsi:type="xsd:string">_isValid</key><value xsi:type="xsd:boolean">false</value></item><item><key xsi:type="xsd:string">_errors</key><value SOAP-ENC:arrayType="ns1:Map[1]" xsi:type="SOAP-ENC:Array"><item xsi:type="ns1:Map"><item><key xsi:type="xsd:string">field</key><value xsi:type="xsd:string">soap</value></item><item><key xsi:type="xsd:string">errorMessage</key><value xsi:type="xsd:string">Invalid or expired session.</value></item><item><key xsi:type="xsd:string">errorCode</key><value xsi:type="xsd:string"></value></item></item></value></item><item><key xsi:type="xsd:string">_warnings</key><value SOAP-ENC:arrayType="xsd:ur-type[0]" xsi:type="SOAP-ENC:Array"/></item><item><key xsi:type="xsd:string">_success</key><value SOAP-ENC:arrayType="xsd:ur-type[0]" xsi:type="SOAP-ENC:Array"/></item></viewAgencyReturn></SOAP-ENV:viewAgencyResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>`;
+
+const REAL_FAULT =
+  `<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Body><SOAP-ENV:Fault><faultcode>SOAP-ENV:Client</faultcode><faultstring>Invalid or expired session.</faultstring><faultactor>user.session.expired</faultactor></SOAP-ENV:Fault></SOAP-ENV:Body></SOAP-ENV:Envelope>`;
+
+describe("răspunsuri reale Imopedia", () => {
+  it("viewAgency cu sesiune invalidă: un singur mesaj din _errors (fără numele câmpului)", () => {
+    const r = readImopediaResult(parseSoapResponse(REAL_VIEW_AGENCY_INVALID_SESSION));
+    expect(r.isValid).toBe(false);
+    expect(r.errors).toEqual(["Invalid or expired session."]);
+    expect(r.warnings).toEqual([]);
+    expect(r.success).toEqual([]);
+  });
+  it("Fault real, întors cu HTTP 200 → SOAP_FAULT cu faultstring", () => {
+    try {
+      parseSoapResponse(REAL_FAULT);
+      expect.unreachable("ar fi trebuit să arunce SOAP_FAULT");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ImopediaSoapError);
+      expect((e as ImopediaSoapError).code).toBe("SOAP_FAULT");
+      expect((e as Error).message).toBe("Invalid or expired session.");
+    }
+  });
+  it("Fault real cu HTTP 200 la viewAgency → testul conexiunii raportează mesajul portalului", async () => {
+    const calls: string[] = [];
+    const fetch = async (_u: string, init: RequestInit) => {
+      const op = String((init.headers as Record<string, string>).SOAPAction).match(/method=(\w+)/)![1]!;
+      calls.push(op);
+      return new Response(op === "viewAgency" ? REAL_FAULT : op === "login" ? loginOk : env(`<x><return>true</return></x>`), { status: 200 });
+    };
+    const r = await createImopediaAdapter({ fetch }).testConnection(ctx());
+    expect(calls).toEqual(["login", "viewAgency", "logout"]);
+    expect(r.ok === false && r.message).toBe("Invalid or expired session.");
+  });
+});
