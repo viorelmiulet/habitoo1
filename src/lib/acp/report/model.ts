@@ -10,6 +10,7 @@ import { acpSourceOutcomeLabel } from "../source-outcome";
 import type { AcpAiInsight } from "../ai/schema";
 import { ACP_ADJUSTMENT_LABELS } from "../adjustments";
 import { snapshotGeo, type GeoPoint } from "./map";
+import type { AcpReportDemand } from "./demand";
 
 export type AcpReportSubject = {
   rooms?: number | null;
@@ -336,6 +337,8 @@ export type AcpReportModel = {
   engineVersion: number;
   /** Raport v2: secțiunile tehnice apar doar dacă agentul a bifat anexa. */
   includeAppendix: boolean;
+  /** Cererile active la data raportului (nu fac parte din snapshot-ul analizei). */
+  demand: AcpReportDemand | null;
   cover: AcpReportCover;
   /** Comparabilele folosite în calcul, numerotate #1..#n. */
   used: AcpReportUsedComparable[];
@@ -536,6 +539,7 @@ export function buildAcpReportModel(params: {
   reportNumber: number;
   generatedAt: string;
   includeAppendix?: boolean;
+  demand?: AcpReportDemand | null;
   generatedBy?: { name: string | null; role: string | null } | null;
 }): AcpReportModel {
   const { version, agency, reportNumber, generatedAt } = params;
@@ -741,6 +745,7 @@ export function buildAcpReportModel(params: {
     engineVersion: finite(version.engineVersion ?? null) ?? 1,
     ...buildV2Sections(version, agency, currency, generatedAt, params.generatedBy ?? null),
     includeAppendix: params.includeAppendix === true,
+    demand: params.demand ?? null,
     legalNotice: ACP_REPORT_LEGAL_NOTICE,
   };
 }
