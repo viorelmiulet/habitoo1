@@ -9,6 +9,7 @@
 import { acpSourceOutcomeLabel } from "../source-outcome";
 import type { AcpAiInsight } from "../ai/schema";
 import { ACP_ADJUSTMENT_LABELS } from "../adjustments";
+import { snapshotGeo, type GeoPoint } from "./map";
 
 export type AcpReportSubject = {
   rooms?: number | null;
@@ -24,6 +25,9 @@ export type AcpReportSubject = {
   transactionKind?: string | null;
   price?: number | null;
   currency?: string | null;
+  /** Coordonatele salvate în snapshot; nu sunt geocodate. */
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 export type AcpReportAdjustment = {
@@ -336,6 +340,7 @@ export type AcpReportModel = {
   /** Comparabilele folosite în calcul, numerotate #1..#n. */
   used: AcpReportUsedComparable[];
   subjectSheet: AcpReportSheet;
+  locationMap: AcpReportLocationMap | null;
   /** Tabelul de comparație, câte 4 comparabile pe pagină. */
   comparisonPages: AcpReportComparisonPage[];
   priceChart: AcpReportPriceChart | null;
@@ -374,6 +379,16 @@ export type AcpReportSheet = {
   description: string | null;
   adjustments: { label: string; basis: string; amount: string }[];
   finalAdjustedPrice: string | null;
+  /** Coordonatele din snapshot pentru mini-hartă; null → fără mini-hartă. */
+  geo: GeoPoint | null;
+};
+
+/** Pagina „Localizarea comparabilelor”; null când niciun punct nu are coordonate. */
+export type AcpReportLocationMap = {
+  subject: GeoPoint | null;
+  comparables: (GeoPoint & { index: number })[];
+  usedCount: number;
+  missing: number;
 };
 
 export type AcpReportUsedComparable = {
@@ -1077,7 +1092,7 @@ function buildV2Sections(
   generatedBy: { name: string | null; role: string | null } | null,
 ): Pick<
   AcpReportModel,
-  "cover" | "used" | "subjectSheet" | "comparisonPages" | "priceChart" | "valuation" | "recommendations"
+  "cover" | "used" | "subjectSheet" | "locationMap" | "comparisonPages" | "priceChart" | "valuation" | "recommendations"
 > {
   const target = version.target;
   const s = target.subject;
@@ -1096,6 +1111,7 @@ function buildV2Sections(
     description: target.description ?? null,
     adjustments: [],
     finalAdjustedPrice: null,
+    geo: snapshotGeo(s),
   };
 
   const usedInputs = version.comparables
@@ -1138,9 +1154,21 @@ function buildV2Sections(
         description: c.description ?? null,
         adjustments: c.adjustments.map((a) => ({ label: a.label, basis: a.basis, amount: signedMoney(a.amount, cur) })),
         finalAdjustedPrice: c.adjustments.length > 0 ? reportMoney(c.adjustedPrice, cur) : null,
+        geo: snapshotGeo(c.subject),
       },
     };
   });
+
+  const mapComparables = used.flatMap((u) => (u.sheet.geo ? [{ ...u.sheet.geo, index: u.index }] : []));
+  const locationMap: AcpReportLocationMap | null =
+    subjectSheet.geo || mapComparables.length > 0
+      ? {
+          subject: subjectSheet.geo,
+          comparables: mapComparables,
+          usedCount: used.length,
+          missing: used.length - mapComparables.length,
+        }
+      : null;
 
   const comparisonPages: AcpReportComparisonPage[] = chunkComparables(usedInputs).map((chunk, pageIndex) => {
     const offset = pageIndex * ACP_REPORT_COMPARABLES_PER_PAGE;
@@ -1255,6 +1283,7 @@ function buildV2Sections(
     },
     used,
     subjectSheet,
+    locationMap,
     comparisonPages,
     priceChart,
     valuation: {
