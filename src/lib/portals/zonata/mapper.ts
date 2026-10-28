@@ -197,7 +197,7 @@ export function zonataFields(p: Row, sub: ZonataSubcategory): Record<string, Zon
   if (floorField && floorField.type !== "text" && floor === 0) setValue(out, floorField, "parter");
   setValue(out, floorField, floor !== null ? Math.round(floor) : (p.floor_label ?? null));
   setValue(out, findField(f, ["numar bai", "bai"]), num(p.bathrooms) !== null ? Math.round(p.bathrooms as number) : null);
-  setValue(out, findField(f, ["an constructie", "anul constructiei", "an"]), num(p.build_year) !== null ? Math.round(p.build_year as number) : null);
+  setValue(out, findField(f, ["an constructie", "anul constructiei"]), num(p.build_year) !== null ? Math.round(p.build_year as number) : null);
   setValue(out, findField(f, ["compartimentare"]), p.layout ?? null);
   const comfort = p.comfort ? (/^\d$/.test(String(p.comfort).trim()) ? `confort ${String(p.comfort).trim()}` : String(p.comfort)) : null;
   const comfortField = findField(f, ["confort"]);
