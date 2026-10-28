@@ -1135,12 +1135,14 @@ export const PropertyPortalsCard = forwardRef<
                     {missingReqs.length > 0 ? (
                       <div className="pointer-events-none relative z-10 mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 pl-3 text-xs">
                         <p className="font-medium text-warning-foreground">
-                          Completează: {missingReqs.map((m) => m.label).join(", ")}
+                          {missingReqs.every((m) => !m.requirement)
+                            ? "Nu se poate publica încă:"
+                            : <>Completează: {missingReqs.map((m) => m.label).join(", ")}</>}
                         </p>
                         <ul className="mt-1 list-disc space-y-0.5 pl-4 text-warning-foreground">
                           {missingReqs.map((m) => (
                             <li key={m.key}>
-                              {m.label} — {m.requirement}
+                              {m.requirement ? <>{m.label} — {m.requirement}</> : m.label}
                             </li>
                           ))}
                         </ul>
