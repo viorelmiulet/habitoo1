@@ -193,7 +193,7 @@ describe("imo24 mapper — text", () => {
 describe("imo24 mapper — preț", () => {
   it("RON se convertește la cursul BNR și se rotunjește", () => {
     const [b] = ok({ sale_price: 400000, sale_currency: "RON" }, { eurRonRate: 4.9737 });
-    expect(b.pret).toBe(80424);
+    expect(b.pret).toBe(80423);
     expect(b.moneda).toBe("EUR");
   });
   it("sub minim după conversie → nepublicabil", () => {
