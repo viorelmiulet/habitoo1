@@ -92,26 +92,33 @@ const containsContact = (text: string) =>
 /** Elimină telefoane, emailuri, URL-uri și conturi sociale fără placeholdere; frazele rămase fără sens dispar. */
 export function cleanImopediaText(input: string): { text: string; removed: string[] } {
   const removed: string[] = [];
-  const paragraphs = input.split(/\n/).map((para) => {
+  const MARK = "\u0001";
+  // Întâi pe tot textul (emailurile și URL-urile conțin puncte), apoi pe fraze.
+  let marked = input;
+  for (const [label, re] of [["email", EMAIL_RE], ["URL", URL_RE], ["telefon", PHONE_RE], ["cont social media", SOCIAL_RE]] as const) {
+    marked = marked.replace(new RegExp(re.source, re.flags), () => {
+      if (!removed.includes(label)) removed.push(label);
+      return MARK;
+    });
+  }
+  const paragraphs = marked.split(/\n/).map((para) => {
     const sentences = para.match(/[^.!?]+[.!?]*\s*/g) ?? [para];
     return sentences
       .map((s) => {
-        let out = s;
-        let hit = false;
-        for (const [label, re] of [["email", EMAIL_RE], ["URL", URL_RE], ["telefon", PHONE_RE], ["cont social media", SOCIAL_RE]] as const) {
-          out = out.replace(new RegExp(re.source, re.flags), () => {
-            hit = true;
-            if (!removed.includes(label)) removed.push(label);
-            return " ";
-          });
-        }
-        if (!hit) return s;
-        out = out.replace(/\s*([,;:])\s*(?=[,;:.!?]|$)/g, "").replace(/[ \t]{2,}/g, " ").replace(/\s+([.,;:!?])/g, "$1");
+        if (!s.includes(MARK)) return s;
+        const out = s
+          .split(MARK).join(" ")
+          .replace(/\s+([.,;:!?])/g, "$1")
+          .replace(/([,;:])(?=[,;:.!?]|\s*$)/g, "")
+          .replace(/\b(pe|la|sau|si|și|ori)\s*([,.;:!?]|$)/gi, "$2")
+          .replace(/[ \t]{2,}/g, " ")
+          .replace(/\s+([.,;:!?])/g, "$1")
+          .trim();
         const norm = normalizeLabel(out);
         const words = norm ? norm.split(" ").length : 0;
         // Fraza de contact (sau un rest de sub 4 cuvinte) nu mai are sens fără date.
         if (words < 4 || CONTACT_WORD.test(norm)) return "";
-        return out.trim() + " ";
+        return out + " ";
       })
       .join("")
       .trim();

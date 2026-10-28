@@ -130,7 +130,7 @@ describe("mapPropertyToImopedia", () => {
     const obs = String(r.fields.find((f) => f.name === "OBSERVATII")!.value);
     expect(obs).not.toMatch(/0722|@|www|\[|telefon/);
     expect(obs.startsWith(DESC)).toBe(true);
-    expect(obs).toContain("Mai multe poze pe, cu plan inclus.".replace("pe,", "pe,"));
+    expect(obs).toBe(`${DESC} Mai multe poze, cu plan inclus.`);
     expect(r.warnings.some((w) => /telefon/.test(w))).toBe(true);
     expect(r.warnings.some((w) => /email/.test(w))).toBe(true);
     expect(r.warnings.some((w) => /URL/.test(w))).toBe(true);
