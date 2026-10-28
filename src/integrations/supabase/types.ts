@@ -3242,6 +3242,27 @@ export type Database = {
           },
         ]
       }
+      homedirect_location_cache: {
+        Row: {
+          cache_key: string
+          fetched_at: string
+          kind: string
+          payload: Json
+        }
+        Insert: {
+          cache_key: string
+          fetched_at?: string
+          kind: string
+          payload: Json
+        }
+        Update: {
+          cache_key?: string
+          fetched_at?: string
+          kind?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       imo24_image_retries: {
         Row: {
           attempts: number

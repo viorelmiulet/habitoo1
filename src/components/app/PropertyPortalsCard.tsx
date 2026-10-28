@@ -33,6 +33,7 @@ import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImopediaBoostButton } from "@/components/app/ImopediaBoostButton";
 import { ZonataPreviewButton } from "@/components/app/ZonataPreviewButton";
+import { HomedirectPreviewButton } from "@/components/app/HomedirectPreviewButton";
 import { ZonataStatusPanel } from "@/components/app/ZonataStatusPanel";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
@@ -1124,6 +1125,7 @@ export const PropertyPortalsCard = forwardRef<
                         ) : null}
                         {cell.portalId === "zonata" && cell.selected ? <ZonataStatusPanel organizationId={organizationId} propertyId={propertyId} /> : null}
                         {cell.portalId === "zonata" && isSuperadmin ? <ZonataPreviewButton propertyId={propertyId} /> : null}
+                        {cell.portalId === "homedirect" && isSuperadmin ? <HomedirectPreviewButton propertyId={propertyId} /> : null}
                         {cell.portalId === "imopedia" && cell.selected ? (
                           <ImopediaBoostButton organizationId={organizationId} propertyId={propertyId} />
                         ) : null}
