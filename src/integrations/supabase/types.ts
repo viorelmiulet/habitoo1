@@ -3242,6 +3242,48 @@ export type Database = {
           },
         ]
       }
+      homedirect_listings: {
+        Row: {
+          external_id: string
+          homedirect_id: string | null
+          id: string
+          organization_id: string
+          property_id: string
+          short_id: string | null
+          slug: string | null
+          status: string
+          transaction: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          external_id: string
+          homedirect_id?: string | null
+          id?: string
+          organization_id: string
+          property_id: string
+          short_id?: string | null
+          slug?: string | null
+          status: string
+          transaction: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          external_id?: string
+          homedirect_id?: string | null
+          id?: string
+          organization_id?: string
+          property_id?: string
+          short_id?: string | null
+          slug?: string | null
+          status?: string
+          transaction?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       homedirect_location_cache: {
         Row: {
           cache_key: string

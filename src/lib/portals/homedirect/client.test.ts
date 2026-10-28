@@ -22,10 +22,11 @@ beforeEach(() => resetHomedirectClientState());
 
 describe("HomeDirect configurare", () => {
   const def = getPortalDefinition("homedirect")!;
-  it("registry: cheie globală, fără câmpuri, publicare „În curând”", () => {
-    expect(def).toMatchObject({ display_name: "HomeDirect.ro", activation: "approval", logo: "HD", capabilities: ["test_connection"], publish_coming_soon: true });
+  it("registry: cheie globală, fără câmpuri, publicare activă (etapa 3)", () => {
+    expect(def).toMatchObject({ display_name: "HomeDirect.ro", activation: "approval", logo: "HD", capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "sync"] });
+    expect(def.publish_coming_soon).toBeFalsy();
     expect(def.configuration_schema.fields).toEqual([]);
-    expect(portalCanPublish("homedirect")).toBe(false);
+    expect(portalCanPublish("homedirect")).toBe(true);
   });
   it("fără cheie pe server → Deconectat, chiar dacă e activat", () => {
     expect(homedirectKeyMissing("homedirect", {})).toBe(true);
