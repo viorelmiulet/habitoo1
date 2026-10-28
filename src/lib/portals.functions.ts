@@ -60,6 +60,8 @@ export type PortalHubItem = {
     hasPortalCredential: boolean;
     /** Doar existența secretului de webhook (VDI.ro), niciodată valoarea. */
     hasWebhookSecret: boolean;
+    /** ZonaTa: modul cheii salvate (din prefix), niciodată cheia. */
+    keyMode?: "live" | "test" | null;
     endpointUrl: string | null;
     allowLiveRequests: boolean;
     /** Superadmin a activat explicit portalul pentru această agenție. */
