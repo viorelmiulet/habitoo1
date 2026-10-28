@@ -97,9 +97,7 @@ export function isExpiredSession(errors: string[]): boolean {
 
 /** Mesajul afișat pentru `_isValid=false`. */
 export function imopediaRejectionMessage(errors: string[]): string {
-  if (errors.length === 0 || errors.some((e) => /^server:\s*internal server error/i.test(e) || /^internal server error$/i.test(e))) {
-    if (errors.length === 0 || errors.every((e) => /internal server error/i.test(e))) return IMOPEDIA_SERVER_REJECTION;
-  }
+  if (errors.length === 0 || errors.every((e) => /internal server error/i.test(e))) return IMOPEDIA_SERVER_REJECTION;
   return `Imopedia.ro: ${errors.join("; ")}`;
 }
 
