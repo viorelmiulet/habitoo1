@@ -986,7 +986,7 @@ export const PropertyPortalsCard = forwardRef<
                           view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
                         />
                       <div className="relative z-10 mt-3 flex min-w-0 flex-wrap items-center gap-2 [&>*]:pointer-events-auto">
-                        {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo") &&
+                        {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo" || cell.portalId === "imo24") &&
                         cell.offerLinks.length > 0 &&
                         !cell.publicWarning ? (
                           cell.offerLinks.map((link) => (
