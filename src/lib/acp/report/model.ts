@@ -1123,7 +1123,7 @@ function buildV2Sections(
       firstSeen: reportDate(c.firstSeenAt ?? null, false),
       disappeared: reportDate(c.disappearedAt ?? null, false),
       price: reportMoney(c.price, cur),
-      adjustmentTotal: c.adjustments.length === 0 ? "0" : signedMoney(total, cur),
+      adjustmentTotal: c.adjustments.length === 0 ? reportMoney(0, cur) : signedMoney(total, cur),
       adjustedPrice: reportMoney(c.adjustedPrice, cur),
       photo: photos[0] ?? null,
       sheet: {

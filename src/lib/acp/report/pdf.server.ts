@@ -347,9 +347,12 @@ export async function buildAcpReportPdf(
       const x = M + LABEL_W + i * COL_W + 3;
       const w = COL_W - 6;
       box(page, x, top, w, 92, { fill: i === 0 ? NAVY : WHITE, border: i === 0 ? undefined : LINE, radius: 8 });
-      const lw = bold.widthOfTextAtSize(h.label, 7.6);
-      text(page, fit(h.label, bold, 7.6, w - 8), x + Math.max(4, (w - lw) / 2), top + 8, 7.6, { font: bold, color: i === 0 ? WHITE : NAVY });
-      photo(page, h.photo, x + 5, top + 24, w - 10, 62);
+      const labelLines = wrap(h.label, bold, 7.4, w - 8).slice(0, 2);
+      labelLines.forEach((l, li) => {
+        const lw = bold.widthOfTextAtSize(l, 7.4);
+        text(page, l, x + Math.max(4, (w - lw) / 2), top + (labelLines.length === 1 ? 11 : 6) + li * 9, 7.4, { font: bold, color: i === 0 ? WHITE : NAVY });
+      });
+      photo(page, h.photo, x + 5, top + 26, w - 10, 60);
     });
     top += 100;
     const drawRow = (label: string, cells: { value: string; adjustment: string | null }[], zebra: boolean) => {
