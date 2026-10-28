@@ -31,3 +31,8 @@ export function readHomedirectKey(env: Record<string, string | undefined> = proc
 export function hasHomedirectKey(env: Record<string, string | undefined> = process.env): boolean {
   return readHomedirectKey(env) !== null;
 }
+
+/** HomeDirect fără cheie CRM pe server → „Deconectat” peste tot. Alte portaluri: `false`. */
+export function homedirectKeyMissing(portalId: string, env: Record<string, string | undefined> = process.env): boolean {
+  return portalId === HOMEDIRECT_PORTAL_KEY && !hasHomedirectKey(env);
+}

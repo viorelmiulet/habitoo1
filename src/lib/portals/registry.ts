@@ -836,9 +836,13 @@ export function derivePortalConnectionStatus(input: {
   lastSyncStatus?: string | null;
   /** Portalurile cu OAuth au tokenurile agenției salvate. */
   hasOAuthTokens?: boolean;
+  /** Portal cu cheie CRM globală (ex. HomeDirect) a cărei cheie lipsește din secretele serverului. */
+  serverKeyMissing?: boolean;
 }): PortalConnectionStatus {
   let configured: boolean;
-  if (input.definition.authentication.includes("oauth")) {
+  if (input.serverKeyMissing) {
+    configured = false;
+  } else if (input.definition.authentication.includes("oauth")) {
     configured = Boolean(input.hasOAuthTokens);
   } else if (isFeedPullPortal(input.definition)) {
     configured = true;
