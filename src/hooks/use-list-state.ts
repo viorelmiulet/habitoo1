@@ -1,51 +1,47 @@
 import { useEffect, useRef } from "react";
-import { useLocation } from "@tanstack/react-router";
-import { compactListSearch, listStateKey, readListState } from "@/lib/list-state";
+import { useRouterState } from "@tanstack/react-router";
+import { compactListSearch, listStateKey, ListRestoreTracker, readListState, type ListSnapshot } from "@/lib/list-state";
+
+const canonicalSnapshot = (snapshot: ListSnapshot | null, canonicalize: (s: Record<string, unknown>) => Record<string, unknown>) =>
+  snapshot ? { ...snapshot, search: compactListSearch(canonicalize(snapshot.search)) } : null;
 
 /** URL remains authoritative; storage is consulted only when entering a list. */
-export function useListState<T extends Record<string, unknown>>({ list, userId, search, apply, enabled = true, family, ready = true }: {
+export function useListState<T extends Record<string, unknown>>({ list, userId, search, apply, enabled = true, family, ready = true, canonicalize }: {
   list: string; userId?: string; search: T; apply: (search: T) => void;
   enabled?: boolean; family?: string; ready?: boolean;
+  /** Maps equivalent searches (e.g. a default tab parameter) to one stored/compared form. */
+  canonicalize?: (search: Record<string, unknown>) => Record<string, unknown>;
 }) {
-  const location = useLocation();
-  const active = useRef("");
-  const previousSearch = useRef("");
-  const clearing = useRef(false);
+  // Single source of truth for the search is the route's `search`; we only wait until navigation settles.
+  const pending = useRouterState({ select: (state) => state.status === "pending" });
+  const tracker = useRef(new ListRestoreTracker());
   const restoring = useRef<number | null>(null);
-  const latest = useRef({ search, apply });
-  latest.current = { search, apply };
-  const serialized = JSON.stringify(compactListSearch(search));
+  const latest = useRef({ search, apply, canonicalize });
+  latest.current = { search, apply, canonicalize };
+  const canon = (value: Record<string, unknown>) => compactListSearch((latest.current.canonicalize ?? ((s) => s))(value));
+  const serialized = JSON.stringify(canon(search));
   useEffect(() => {
-    if (!userId || !enabled) { active.current = ""; return; }
+    if (!userId || !enabled) { tracker.current.reset(); return; }
+    if (pending) return;
     const identity = listStateKey(userId, list);
     try {
-      const firstEntry = active.current === "";
-      const bareNavigation = !Object.keys(compactListSearch(location.search)).some((key) => key !== "lista") && previousSearch.current !== serialized;
-      const suppressRestore = clearing.current;
-      const entering = active.current !== identity || (bareNavigation && !suppressRestore);
-      previousSearch.current = serialized;
-      if (bareNavigation) clearing.current = false;
-      active.current = identity;
-      const explicit = Object.keys(compactListSearch(location.search)).some((key) => key !== "lista");
-      let saved = readListState(localStorage, userId, list);
-      if (firstEntry && !explicit && family && !location.search.lista) saved = readListState(localStorage, userId, family) ?? saved;
-      if (entering && saved && !suppressRestore) {
-        const savedSearch = JSON.stringify(compactListSearch(saved.search));
-        if (!explicit || savedSearch === serialized) restoring.current = saved.scroll;
-        if (!explicit && savedSearch !== serialized) {
-          latest.current.apply(saved.search as T);
-          return;
-        }
-      }
-      if (suppressRestore && !bareNavigation) return;
-      const snapshot = { search: JSON.parse(serialized), scroll: restoring.current ?? window.scrollY };
+      const c = latest.current.canonicalize ?? ((s: Record<string, unknown>) => s);
+      const step = tracker.current.step({
+        identity, search: JSON.parse(serialized), scrollY: window.scrollY,
+        saved: canonicalSnapshot(readListState(localStorage, userId, list), c),
+        familySaved: family ? canonicalSnapshot(readListState(localStorage, userId, family), c) : undefined,
+      });
+      if (step.action === "restore") { restoring.current = step.scroll; latest.current.apply(step.search as T); return; }
+      if (step.scroll !== null) restoring.current = step.scroll;
+      if (step.action === "none") return;
+      const snapshot = { search: step.snapshot.search, scroll: restoring.current ?? window.scrollY };
       localStorage.setItem(identity, JSON.stringify(snapshot));
       if (family) localStorage.setItem(listStateKey(userId, family), JSON.stringify(snapshot));
     } catch { /* Browser storage may be disabled. URL navigation still works. */ }
-  }, [list, userId, enabled, family, serialized, location.search]);
+  }, [list, userId, enabled, family, serialized, pending]);
 
   useEffect(() => {
-    if (!enabled || !userId || !ready || restoring.current === null) return;
+    if (!enabled || !userId || !ready || pending || restoring.current === null) return;
     const target = restoring.current;
     let attempts = 0;
     let stable = 0;
@@ -58,15 +54,18 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
         window.clearInterval(timer);
       }
     }, 100);
-    return () => window.clearInterval(timer);
-  }, [enabled, userId, ready, serialized]);
+    const stop = () => { restoring.current = null; window.clearInterval(timer); };
+    window.addEventListener("wheel", stop, { passive: true });
+    window.addEventListener("touchstart", stop, { passive: true });
+    return () => { window.clearInterval(timer); window.removeEventListener("wheel", stop); window.removeEventListener("touchstart", stop); };
+  }, [enabled, userId, ready, serialized, pending]);
 
   useEffect(() => {
     if (!userId || !enabled) return;
     const saveScroll = () => {
-      if (restoring.current !== null || clearing.current) return;
+      if (restoring.current !== null || tracker.current.clearing) return;
       try {
-        const snapshot = { search: compactListSearch(latest.current.search), scroll: window.scrollY };
+        const snapshot = { search: canon(latest.current.search), scroll: window.scrollY };
         localStorage.setItem(listStateKey(userId, list), JSON.stringify(snapshot));
         if (family) localStorage.setItem(listStateKey(userId, family), JSON.stringify(snapshot));
       } catch { /* Storage unavailable. */ }
@@ -76,7 +75,7 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
   }, [list, userId, enabled, family]);
 
   return () => {
-    clearing.current = true;
+    tracker.current.clearing = true;
     restoring.current = null;
     if (!userId) return;
     try {
@@ -86,7 +85,6 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
     } catch { /* Storage unavailable. */ }
   };
 }
-
 /** Local filter lists use the same URL/storage contract without changing their controls. */
 export function useFilterList<T extends Record<string, string | number | boolean>>(list: string, userId: string | undefined, defaults: T, search: Partial<T> & { new?: boolean }, apply: (search: Partial<T> & { new?: boolean }) => void) {
   const state = { ...defaults, ...search } as T;
