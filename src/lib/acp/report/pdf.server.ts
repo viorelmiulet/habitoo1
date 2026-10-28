@@ -525,7 +525,55 @@ export async function buildAcpReportPdf(
   /* ================= 3. Analiza comparativă ================= */
   newPage();
   sectionTitle([["Analiza ", false], ["comparativă", true]]);
-  // Loc rezervat pentru caseta „analiza cererii” (pasul 3).
+  // Caseta „Analiza cererii pe piață”, deasupra tabelului Active.
+  {
+    const d = model.demand;
+    subTitle("Analiza cererii pe piață");
+    const hasAny = !!d && d.score !== null;
+    const boxH = hasAny ? 96 : 44;
+    box(page, M, top, CW, boxH, { fill: SOFT, border: LINE, radius: 8 });
+    if (!d) {
+      text(page, "Analiza cererii nu este disponibilă pentru acest raport.", M + 12, top + 16, 9, { color: MUTED });
+    } else if (!hasAny) {
+      text(page, "Nu există cereri potrivite la data raportului", M + 12, top + 16, 9.5, { font: bold, color: NAVY });
+    } else {
+      const circleW = 110;
+      const tableW = CW - circleW - 16;
+      const labelW = 108;
+      const cols = ["Cereri proprii", "Cereri rețea Habitoo", "Cereri Facebook", "Total"];
+      const colW = (tableW - labelW) / cols.length;
+      const x0 = M + 10;
+      let y = top + 10;
+      cols.forEach((c, i) => {
+        const lines = wrap(c, bold, 7.4, colW - 6).slice(0, 2);
+        lines.forEach((l, li) => text(page, l, x0 + labelW + i * colW + (colW - bold.widthOfTextAtSize(l, 7.4)) / 2, y + li * 9, 7.4, { font: bold, color: NAVY }));
+      });
+      y += 24;
+      const rows: [string, typeof d.exact][] = [["Potrivire exactă", d.exact], ["Potrivire flexibilă", d.flexible]];
+      rows.forEach(([label, c], ri) => {
+        if (ri === 0) box(page, x0 - 4, y - 5, tableW, 22, { fill: WHITE, radius: 5 });
+        text(page, label, x0, y + 2, 8.4, { font: bold, color: INK });
+        [c.own, c.network, c.facebook, c.total].forEach((v, i) => {
+          const sv = String(v);
+          const f = i === 3 ? bold : regular;
+          text(page, sv, x0 + labelW + i * colW + (colW - f.widthOfTextAtSize(sv, 9)) / 2, y + 2, 9, { font: f, color: i === 3 ? NAVY : INK });
+        });
+        y += 24;
+      });
+      const cx = M + CW - circleW / 2 - 6;
+      const cy = H - (top + 42);
+      page.drawCircle({ x: cx, y: cy, size: 28, color: NAVY, borderColor: GOLD, borderWidth: 2.5 });
+      const sv = `${d.score}`;
+      text(page, sv, cx - bold.widthOfTextAtSize(sv, 20) / 2, top + 30, 20, { font: bold, color: WHITE });
+      const sl = "Scor interes";
+      text(page, sl, cx - regular.widthOfTextAtSize(sl, 7.2) / 2, top + 74, 7.2, { color: MUTED });
+      const lb = d.scoreLabel ?? "";
+      text(page, lb, cx - bold.widthOfTextAtSize(lb, 8.4) / 2, top + 84, 8.4, { font: bold, color: GOLD });
+    }
+    top += boxH + 6;
+    if (d) text(page, `Cereri active la data raportului: ${reportDate(d.asOf, false)}`, M, top, 7.5, { color: MUTED });
+    top += 18;
+  }
   const active = model.used.filter((c) => c.active);
   const inactive = model.used.filter((c) => !c.active);
   const table = (
