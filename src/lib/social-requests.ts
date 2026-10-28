@@ -114,8 +114,12 @@ export type MatchMode = "strict" | "close";
 
 /** Zonele cererii ca alegeri „Localități și zone” (aceeași regulă ca filtrele). */
 export function requestPlaceChoices(r: Pick<RequestForMatch, "county" | "city" | "zones">): PlaceChoice[] {
-  const county = geographyKey(r.county), city = geographyKey(r.city);
+  // Aceeași cheie de localitate ca `placeMatches` („Sector 6” → București), altfel sectoarele nu se potrivesc niciodată.
+  const county = geographyKey(r.county), city = placeCityKey(r.city);
+  const sector = geographyKey(r.city).match(/^sector [1-6]$/)?.[0];
   if (r.zones.length && city) return r.zones.map((z) => ({ kind: "zone", county, city, zone: geographyKey(z) }));
+  // Doar sectorul, fără zone: rămâne limitat la acel sector.
+  if (sector) return [{ kind: "zone", county, city, zone: sector }];
   if (city) return [{ kind: "city", county, city, zone: "" }];
   if (county) return [{ kind: "county", county, city: "", zone: "" }];
   return [];
