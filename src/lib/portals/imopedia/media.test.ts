@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createImopediaAdapter, type ImopediaDeps } from "../adapters/imopedia.server";
 import { getPortalDefinition } from "../registry";
 import type { PortalContext } from "../adapter";
-import { imopediaSaveBoost } from "../adapters/imopedia.server";
+import { imopediaSaveBoost, syncImopediaMedia } from "../adapters/imopedia.server";
 import { imopediaFileId } from "./media";
 
 const env = (inner: string) =>
@@ -28,7 +28,7 @@ function fakeFetch(responses: Record<string, string[]>) {
     calls.push({ op, body: String(init.body) });
     if (op === "login") return new Response(loginOk(++logins), { status: 200 });
     if (op === "logout") return new Response(logoutOk, { status: 200 });
-    const queue = responses[op] ?? [];
+    const queue = responses[op] ?? (op === "saveAgent" ? [ok("saveAgent")] : []);
     const xml = queue.length > 1 ? queue.shift()! : queue[0]!;
     return new Response(xml, { status: 200 });
   };
@@ -146,10 +146,9 @@ describe("imagini și video", () => {
     expect(r.ok).toBe(true);
     expect(ops(f)).toEqual(["saveProperty", "syncFiles", "addFile", "syncFiles"]);
   });
-  it("toate imaginile șterse → deleteFile, fără syncFiles gol", async () => {
+  it("fără nicio imagine publicabilă → blocare înainte de orice apel", async () => {
     const f = fakeFetch({ saveProperty: [saved(1009)], deleteFile: [ok("deleteFile")] });
     const m = mediaDeps([], [{ fileId: "hb-a-11111111", photoId: "1", order: 1 }, { fileId: "hb-b-22222222", photoId: "2", order: 2 }]);
-    // Publicarea cere minimum o imagine: aici testăm doar curățarea, deci ocolim blocarea.
     const r = await createImopediaAdapter({ ...m.d, fetch: f.fetch }).updateListing(ctx, upd);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.message).toContain("cel puțin o fotografie");
@@ -171,19 +170,15 @@ describe("imagini și video", () => {
   });
 });
 
-describe("ștergerea tuturor fișierelor (fără blocarea pentru imagini)", () => {
-  it("deleteFile cu FILE.ID pentru fiecare, fără syncFiles", async () => {
-    const f = fakeFetch({ saveProperty: [saved(1009)], deleteFile: [ok("deleteFile")] });
-    const m = mediaDeps([], [{ fileId: "hb-a-11111111", photoId: "1", order: 1 }, { fileId: "hb-b-22222222", photoId: "2", order: 2 }]);
-    // Fără `loadMedia` în blocare: simulăm o ofertă la care imaginile au dispărut după validare.
-    let first = true;
-    const d = { ...m.d, loadMedia: async () => { if (first) { first = false; return { images: [img(1)], videoUrl: null }; } return { images: [], videoUrl: null }; } } as ImopediaDeps;
-    void d;
-    const { createImopediaAdapter: _c } = await import("../adapters/imopedia.server");
-    void _c;
-    const del = await import("./media");
-    expect(del.buildDeleteFileEnvelope("S", 4321, 1009, "hb-a-11111111")).toContain(`<FILE xsi:type="tns:FileType"><ID xsi:type="xsd:string">hb-a-11111111</ID></FILE>`);
-    expect(() => del.buildSyncFilesEnvelope("S", 4321, 1009, [])).toThrow();
+describe("ștergerea tuturor fișierelor", () => {
+  it("deleteFile cu FILE.ID (string) pentru fiecare, fără syncFiles; evidența se golește", async () => {
+    const f = fakeFetch({ deleteFile: [ok("deleteFile")] });
+    const { imopediaCall } = await import("./soap.server");
+    const run = (op: string, build: (sid: string) => string) => imopediaCall(op, build("S1"), { fetch: f.fetch });
+    const out = await syncImopediaMedia(run, 4321, 1009, [], [{ fileId: "hb-a-11111111", photoId: "1", order: 1 }, { fileId: "hb-b-22222222", photoId: "2", order: 2 }]);
+    expect(f.calls.map((c) => c.op)).toEqual(["deleteFile", "deleteFile"]);
+    expect(f.calls[0]!.body).toContain(`<FILE xsi:type="tns:FileType"><ID xsi:type="xsd:string">hb-a-11111111</ID></FILE>`);
+    expect(out.final).toEqual([]);
   });
 });
 

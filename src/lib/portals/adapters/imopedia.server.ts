@@ -110,7 +110,7 @@ type DesiredFile = { fileId: string; photoId: string | null; type: "image" | "yo
  * Imaginile/video după un `saveProperty` valid. Erorile devin avertismente;
  * oferta rămâne publicată, iar următoarea actualizare reia ce lipsește.
  */
-async function syncImopediaMedia(
+export async function syncImopediaMedia(
   run: Runner,
   agencyId: number,
   idLocal: number,
