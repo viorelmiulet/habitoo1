@@ -41,9 +41,9 @@ describe("cheia ZonaTa", () => {
     expect(validatePortalConfigValues("zonata", { credential: "abc" })).toMatch(/zt_live_/);
     expect(validatePortalConfigValues("zonata", { credential: TEST })).toBeNull();
   });
-  it("publicarea rămâne indisponibilă la pasul 1", () => {
-    expect(portalCanPublish("zonata")).toBe(false);
-    expect(getPortalDefinition("zonata")?.publish_coming_soon).toBe(true);
+  it("publicarea este activă de la pasul 3", () => {
+    expect(portalCanPublish("zonata")).toBe(true);
+    expect(getPortalDefinition("zonata")?.publish_coming_soon).toBeUndefined();
   });
 });
 
