@@ -181,6 +181,11 @@ export const updatePlatformUser = createServerFn({ method: "POST" })
         _new_org: data.organizationId as string,
       });
       if (moveError) throw new Error(moveError.message);
+      // HomeDirect: agentul a ieșit din agenția veche (idempotent, best effort).
+      if (before.organization_id) {
+        const { removeHomedirectAgent } = await import("@/lib/portals/homedirect/load.server");
+        await removeHomedirectAgent(before.organization_id, data.userId).catch(() => undefined);
+      }
     }
 
     // 4. Rolul în agenție (superadminii nu sunt atinși).

@@ -81,6 +81,19 @@ async function zonataReasonsLoader(admin: Admin, organizationId: string, propert
   };
 }
 
+/** HomeDirect: motivele blocante doar când agenția are conexiune HomeDirect. */
+async function homedirectReasonsLoader(admin: Admin, organizationId: string) {
+  const { data: conn } = await admin
+    .from("portal_connections")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("portal", "homedirect")
+    .maybeSingle();
+  if (!conn) return null;
+  const { homedirectReasonsFor } = await import("./homedirect/load.server");
+  return (row: Record<string, any>) => homedirectReasonsFor(admin, row as never).catch(() => ["Verificarea HomeDirect a eșuat; reîncearcă."]);
+}
+
 export async function loadRequirementSubject(
   admin: Admin,
   organizationId: string,
@@ -110,6 +123,8 @@ export async function loadRequirementSubject(
 
   const imopedia = await imopediaReasonsLoader(admin, organizationId, [propertyId]);
   const zonata = await zonataReasonsLoader(admin, organizationId, [propertyId]);
+  const homedirect = await homedirectReasonsLoader(admin, organizationId);
+  const homedirectReasons = homedirect ? await homedirect(row) : null;
   let agentProfile: any = null;
   let agentName: string | null = null;
   let agentEmail: string | null = null;
@@ -169,6 +184,7 @@ export async function loadRequirementSubject(
     imo24Reasons: imo24BlockingReasons(row as any),
     ...(imopedia ? { imopediaReasons: imopedia(row, agentProfile) } : {}),
     ...(zonata ? { zonataReasons: zonata(row) } : {}),
+    ...(homedirectReasons ? { homedirectReasons } : {}),
   };
 }
 
@@ -224,6 +240,7 @@ export async function loadRequirementSubjects(
     : { data: [] as any[] };
   const imopedia = await imopediaReasonsLoader(admin, organizationId, propertyIds);
   const zonata = await zonataReasonsLoader(admin, organizationId, propertyIds);
+  const homedirect = await homedirectReasonsLoader(admin, organizationId);
   const profileById = new Map((profiles ?? []).map((p: any) => [p.id as string, p]));
 
   for (const property of properties ?? []) {
@@ -270,6 +287,7 @@ export async function loadRequirementSubjects(
       imo24Reasons: imo24BlockingReasons(row as any),
       ...(imopedia ? { imopediaReasons: imopedia(row, profile) } : {}),
       ...(zonata ? { zonataReasons: zonata(row) } : {}),
+      ...(homedirect ? { homedirectReasons: await homedirect(row) } : {}),
     });
   }
   return result;

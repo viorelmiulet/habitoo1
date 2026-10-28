@@ -68,6 +68,8 @@ export type PortalRequirementSubject = {
   imopediaReasons?: string[];
   /** ZonaTa: motivele blocante ale mapper-ului ZonaTa (`mapPropertyToZonata`). */
   zonataReasons?: string[];
+  /** HomeDirect.ro: mapper + locație + emailuri + cheie (`homedirectReasonsFor`). */
+  homedirectReasons?: string[];
 };
 
 export type PortalRequirementRule = {
@@ -454,7 +456,7 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
   // ZonaTa: cerințele vin la pasul de publicare; până atunci bifa e „În curând”.
   zonata: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.zonataReasons ?? [] },
   // HomeDirect.ro: cerințele vin odată cu maparea (etapa 2); până atunci bifa e „În curând”.
-  homedirect: { required: [], allowed: COMMON_ALLOWED },
+  homedirect: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.homedirectReasons ?? [] },
   imo24: {
     required: [],
     allowed: COMMON_ALLOWED,

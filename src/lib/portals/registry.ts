@@ -343,20 +343,19 @@ export const PORTALS: PortalDefinition[] = [
     id: "homedirect",
     display_name: "HomeDirect.ro",
     description:
-      "HomeDirect.ro expune un API CRM: Habitoo se conectează cu o singură cheie CRM păstrată pe server, iar agenția și agentul sunt identificați prin ID-urile Habitoo. Publicarea vine în curând.",
+      "HomeDirect.ro expune un API CRM: Habitoo se conectează cu o singură cheie CRM păstrată pe server, iar agenția și agentul sunt identificați prin ID-urile Habitoo.",
     logo: "HD",
     status: "available",
     activation: "approval",
     directions: ["habitoo_to_portal"],
     // Cheia este a FURNIZORULUI CRM (HOMEDIRECT_CRM_API_KEY), în secretele de server.
     authentication: ["portal_api_key"],
-    capabilities: ["test_connection"],
-    publish_coming_soon: true,
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "sync"],
     configuration_schema: { fields: [] },
     website: "https://www.homedirect.ro",
     docs: "https://www.homedirect.ro/api/docs/",
     notes:
-      "Integrare prin cheia CRM Habitoo (una pentru toate agențiile). La primul anunț, HomeDirect creează automat contul agenției și al agentului și le trimite email de activare. Dacă agenția are deja cont HomeDirect pe același email, legarea e refuzată de HomeDirect. Publicarea vine în etapele următoare.",
+      "Integrare prin cheia CRM Habitoo (una pentru toate agențiile). La primul anunț, HomeDirect creează automat contul agenției și al agentului și le trimite email de activare. Dacă agenția are deja cont HomeDirect pe același email, legarea e refuzată de HomeDirect. Un anunț per tranzacție (-v / -i), idempotent pe externalIds.post. Retragerea = status inactive (reversibil); vândut → sold, închiriat → rented; ștergerea definitivă (DELETE) doar la ștergerea proprietății în Habitoo. Prețurile în lei se convertesc în EUR la cursul BNR al zilei.",
   },
   {
     id: "homepitch",
