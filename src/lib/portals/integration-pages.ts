@@ -2,7 +2,7 @@
  * Paginile publice /integrari/<slug>: o pagină per integrare disponibilă din registru.
  * Textele sunt scrise pentru agenți, fără termeni tehnici, și descriu doar ce face codul.
  */
-import { PORTALS, PROMOTION_CATALOGS, portalIntegrationOwner, type PortalDefinition } from "./registry";
+import { isPortalCovered, PORTAL_GROUPS, PORTALS, PROMOTION_CATALOGS, portalIntegrationOwner, type PortalDefinition } from "./registry";
 import { isKeyRequestPortal } from "./imospot-key-request";
 
 export const INTEGRATION_PAGES_LASTMOD = "2026-10-10";
@@ -415,4 +415,23 @@ export function integrationPageText(p: IntegrationPage): string {
 
 export function wordCount(text: string): number {
   return text.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
+}
+
+/**
+ * Portalurile prezentate pe homepage: doar cele cu pagină publică în /integrari,
+ * în ordinea din registru. OLX direct și portalurile acoperite de un grup nu apar separat;
+ * cataloagele de promovare (Facebook) nu intră în grilă.
+ */
+export function homepagePortals(): { portal: PortalDefinition; label: string }[] {
+  const withPage = new Set(INTEGRATION_PAGES.map((p) => p.portalId));
+  return PORTALS.filter(
+    (portal) =>
+      portal.status === "available" &&
+      !isPortalCovered(portal.id) &&
+      portal.id !== "olx_direct" &&
+      withPage.has(portal.id),
+  ).map((portal) => ({
+    portal,
+    label: PORTAL_GROUPS.find((g) => g.primary === portal.id)?.label ?? portal.display_name,
+  }));
 }

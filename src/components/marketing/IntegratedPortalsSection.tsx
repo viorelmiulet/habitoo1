@@ -1,24 +1,9 @@
 import { hasPortalLogo, PortalLogo } from "@/components/app/PortalLogo";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
-import { isPortalCovered, PORTAL_GROUPS, PORTALS } from "@/lib/portals/registry";
+import { homepagePortals } from "@/lib/portals/integration-pages";
 
-const integratedPortals = PORTALS.filter(
-  (portal) =>
-    portal.status === "available" &&
-    !isPortalCovered(portal.id) &&
-    // OLX direct (cont prepaid) rămâne doar în aplicație; pe homepage OLX
-    // apare deja prin cardul Storia+OLX.
-    portal.id !== "olx_direct" &&
-    // Portalurile încă fără publicare nu se prezintă public ca integrate.
-    portal.capabilities.includes("publish_listing"),
-);
-
-/** Portalurile care acoperă alte portaluri (ex. Storia+OLX) își arată grupul pe homepage. */
-function homepageLabel(portalId: string, fallback: string): string {
-  const group = PORTAL_GROUPS.find((g) => g.primary === portalId);
-  return group ? group.label : fallback;
-}
+const integratedPortals = homepagePortals();
 
 export function IntegratedPortalsSection() {
   return (
@@ -34,7 +19,7 @@ export function IntegratedPortalsSection() {
           text="Publici anunțurile direct din Habitoo, pe portalurile folosite de agențiile din România."
         />
         <ul className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-          {integratedPortals.map((portal, i) => (
+          {integratedPortals.map(({ portal, label }, i) => (
             <li key={portal.id}>
               <Reveal delay={i * 40} className="h-full">
                 <div className="panel flex h-full min-w-0 items-center gap-3 p-4">
@@ -49,12 +34,12 @@ export function IntegratedPortalsSection() {
                         className="shrink-0"
                       />
                       <span className="truncate text-sm font-semibold text-navy">
-                        {homepageLabel(portal.id, portal.display_name)}
+                        {label}
                       </span>
                     </>
                   ) : (
                     <span className="truncate text-sm font-semibold text-navy">
-                      {homepageLabel(portal.id, portal.display_name)}
+                      {label}
                     </span>
                   )}
                 </div>
