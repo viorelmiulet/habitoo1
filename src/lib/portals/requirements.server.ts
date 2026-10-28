@@ -58,6 +58,29 @@ async function imopediaReasonsLoader(admin: Admin, organizationId: string, prope
     });
 }
 
+/** ZonaTa: motivele blocante doar când agenția are conexiune ZonaTa. */
+async function zonataReasonsLoader(admin: Admin, organizationId: string, propertyIds: string[]) {
+  const { data: conn } = await admin
+    .from("portal_connections")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("portal", "zonata")
+    .maybeSingle();
+  if (!conn) return null;
+  const [{ loadZonataNomenclature, loadZonataImages }, { mapPropertyToZonata }] = await Promise.all([
+    import("./zonata/context.server"),
+    import("./zonata/mapper"),
+  ]);
+  const [nomenclature, images] = await Promise.all([
+    loadZonataNomenclature(admin),
+    loadZonataImages(admin, organizationId, propertyIds),
+  ]);
+  return (row: Record<string, any>) => {
+    const r = mapPropertyToZonata(row as never, { nomenclature, images: images.get(row.id) ?? [] });
+    return r.ok ? [] : r.reasons;
+  };
+}
+
 export async function loadRequirementSubject(
   admin: Admin,
   organizationId: string,
@@ -86,6 +109,7 @@ export async function loadRequirementSubject(
   ]);
 
   const imopedia = await imopediaReasonsLoader(admin, organizationId, [propertyId]);
+  const zonata = await zonataReasonsLoader(admin, organizationId, [propertyId]);
   let agentProfile: any = null;
   let agentName: string | null = null;
   let agentEmail: string | null = null;
@@ -144,6 +168,7 @@ export async function loadRequirementSubject(
       resolveImobiliareWhatsapp(agentPhone) ?? resolveImobiliareContactPhone(agentPhone),
     imo24Reasons: imo24BlockingReasons(row as any),
     ...(imopedia ? { imopediaReasons: imopedia(row, agentProfile) } : {}),
+    ...(zonata ? { zonataReasons: zonata(row) } : {}),
   };
 }
 
@@ -198,6 +223,7 @@ export async function loadRequirementSubjects(
         .in("id", agentIds)
     : { data: [] as any[] };
   const imopedia = await imopediaReasonsLoader(admin, organizationId, propertyIds);
+  const zonata = await zonataReasonsLoader(admin, organizationId, propertyIds);
   const profileById = new Map((profiles ?? []).map((p: any) => [p.id as string, p]));
 
   for (const property of properties ?? []) {
@@ -243,6 +269,7 @@ export async function loadRequirementSubjects(
         resolveImobiliareWhatsapp(agentPhone) ?? resolveImobiliareContactPhone(agentPhone),
       imo24Reasons: imo24BlockingReasons(row as any),
       ...(imopedia ? { imopediaReasons: imopedia(row, profile) } : {}),
+      ...(zonata ? { zonataReasons: zonata(row) } : {}),
     });
   }
   return result;
