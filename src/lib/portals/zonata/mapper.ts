@@ -181,7 +181,7 @@ export function zonataRequiredMessage(field: ZonataField, subLabel: string): str
   const text = normalizeZt(`${field.slug.replace(/_/g, " ")} ${field.label}`);
   const hint = REQUIRED_HINTS.find(([re]) => re.test(text))?.[1];
   return hint
-    ? `${field.label} lipsește (${subLabel}): completează ${hint} în fișa proprietății.`
+    ? `${field.label} lipsește: completează ${hint} în fișa proprietății (${subLabel}).`
     : `Câmpul obligatoriu ZonaTa „${field.label}” (${subLabel}) lipsește sau nu are o valoare acceptată.`;
 }
 

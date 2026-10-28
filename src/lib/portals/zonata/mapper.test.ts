@@ -183,3 +183,94 @@ describe("nomenclatorul ZonaTa", () => {
     expect(d.changes).toEqual({ added: ["imobiliare/b"], removed: ["imobiliare/c"], fieldsChanged: ["imobiliare/a"] });
   });
 });
+
+// Extras din nomenclatorul ZonaTa sincronizat (28 oct 2026).
+const opt = (slug: string, label: string, options: string[], required = false, type = "select") => ({
+  slug, label, type, required, options: options.map((o) => ({ value: o, label: o })),
+});
+const RISC = ["Fără risc seismic", "Rs I", "Rs II", "Rs III", "Rs IV", "Neexpertizat", "Informație indisponibilă"];
+const STADIU = ["Construcție nouă", "Finalizată", "În construcție / Plan"];
+const ETAJ = ["Subsol", "Demisol", "Parter", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10 și peste", "Mansardă", "Ultimele doua etaje", "Exclus ultimul etaj"];
+const REAL: ZonataSubcategory[] = [
+  sub("apartamente-de-vanzare", "Apartamente de vânzare", [
+    opt("numar_de_camere", "Număr de camere", ["2", "3", "4", "5 sau mai multe"], true),
+    txt("suprafata_utila_num", "Suprafață utilă m2", true),
+    opt("tip_de_imobil", "Tip de imobil", ["Bloc de apartamente", "Casă / Vilă"]),
+    opt("etaj", "Etaj", ETAJ, true),
+    opt("bai", "Băi", ["1", "2", "3 sau mai multe"]),
+    opt("confort", "Confort", ["Confort 1", "Confort 2", "Confort 3", "Confort lux"]),
+    opt("mobilat", "Mobilat", ["Mobilat", "Nemobilat", "Parțial mobilat"]),
+    opt("stadiu_constructie", "Stadiu construcție", STADIU, true),
+    opt("stare_interior", "Stare interior", ["Renovat", "Stare bună", "Necesită renovare"]),
+    opt("risc_seismic", "Risc seismic", RISC),
+  ]),
+  sub("garsoniere-de-vanzare", "Garsoniere de vânzare", [
+    txt("suprafata_utila_num", "Suprafață utilă m2", true),
+    opt("etaj", "Etaj", ETAJ, true),
+    opt("stadiu_constructie", "Stadiu construcție", STADIU, true),
+    opt("mobilat", "Mobilat", ["Mobilat", "Nemobilat", "Parțial mobilat"]),
+  ]),
+  sub("case-de-vanzare", "Case de vânzare", [
+    opt("camere", "Camere", ["1 cameră", "2 camere", "3 camere", "4 camere", "5 sau mai multe"], true),
+    opt("stadiu_de_constructie", "Stadiu de construcție", STADIU, true),
+    opt("locuinta_mobilata_utilata", "Locuință mobilată / utilată", ["Complet", "Parțial", "Nemobilată / Neutilată"], true),
+    opt("risc_seismic", "Risc seismic", RISC, true),
+  ]),
+];
+const realCtx = { nomenclature: REAL, images: IMAGES };
+const apt = { ...base, rooms: 2, floor: 1, bathrooms: 1, construction_stage: "Finalizată", finish_state: null, layout: null };
+const bodyOf = (p: any) => {
+  const r = mapPropertyToZonata(p, realCtx);
+  if (!r.ok) throw new Error(r.reasons.join("; "));
+  return r.bodies[0];
+};
+
+describe("ZonaTa – nomenclator real", () => {
+  it("apartament 2 camere, etaj 1, Finalizată: niciun obligatoriu lipsă", () => {
+    const b = bodyOf(apt);
+    expect(b.subcategory).toBe("apartamente-de-vanzare");
+    expect(b.fields).toMatchObject({ numar_de_camere: "2", etaj: "1", stadiu_constructie: "Finalizată", suprafata_utila_num: "72" });
+  });
+  it("„În construcție” → „În construcție / Plan”; „stare” nu prinde „Stadiu”", () => {
+    const b = bodyOf({ ...apt, construction_stage: "În construcție", finish_state: "Renovat" });
+    expect(b.fields.stadiu_constructie).toBe("În construcție / Plan");
+    expect(b.fields.stare_interior).toBe("Renovat");
+  });
+  it("apartament cu 1 cameră → garsoniere", () => {
+    expect(bodyOf({ ...apt, rooms: 1 }).subcategory).toBe("garsoniere-de-vanzare");
+  });
+  it("6 camere → „5 sau mai multe”; etaj 12 → „10 și peste”; 4 băi → „3 sau mai multe”", () => {
+    const b = bodyOf({ ...apt, rooms: 6, floor: 12, bathrooms: 4 });
+    expect(b.fields).toMatchObject({ numar_de_camere: "5 sau mai multe", etaj: "10 și peste", bai: "3 sau mai multe" });
+  });
+  const house = { ...base, property_type: "house", rooms: 3, construction_stage: "Finalizată", furnishing: "Parțial", seismic_risk: "Fără risc" };
+  it("casă cu 3 camere → „3 camere”, mobilare și risc seismic", () => {
+    const b = bodyOf(house);
+    expect(b.subcategory).toBe("case-de-vanzare");
+    expect(b.fields).toMatchObject({ camere: "3 camere", stadiu_de_constructie: "Finalizată", locuinta_mobilata_utilata: "Parțial", risc_seismic: "Fără risc seismic" });
+    expect(bodyOf({ ...house, furnishing: "Nemobilat" }).fields.locuinta_mobilata_utilata).toBe("Nemobilată / Neutilată");
+    expect(bodyOf({ ...house, furnishing: "Complet", seismic_risk: "Rs II" }).fields).toMatchObject({ locuinta_mobilata_utilata: "Complet", risc_seismic: "Rs II" });
+  });
+  it("mobilare apartament, confort lux, tip imobil", () => {
+    expect(bodyOf({ ...apt, furnishing: "Complet" }).fields.mobilat).toBe("Mobilat");
+    expect(bodyOf({ ...apt, furnishing: "Parțial" }).fields.mobilat).toBe("Parțial mobilat");
+    expect(bodyOf({ ...apt, furnishing: "Nemobilat" }).fields.mobilat).toBe("Nemobilat");
+    expect(bodyOf({ ...apt, comfort: "Lux" }).fields.confort).toBe("Confort lux");
+    expect(bodyOf({ ...apt, comfort: "1" }).fields.confort).toBe("Confort 1");
+    expect(bodyOf({ ...apt, seismic_risk: "Rs I" }).fields.risc_seismic).toBe("Rs I");
+    expect(bodyOf({ ...apt, building_type: "Bloc" }).fields.tip_de_imobil).toBe("Bloc de apartamente");
+  });
+  it("construction_stage gol → blocare cu mesaj clar", () => {
+    const r = mapPropertyToZonata({ ...apt, construction_stage: null }, realCtx);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reasons).toContain("Stadiu construcție lipsește: completează Stadiul construcției în fișa proprietății (Apartamente de vânzare).");
+  });
+  it("casă fără date nu ghicește: obligatoriile rămân lipsă", () => {
+    const r = mapPropertyToZonata({ ...house, furnishing: null, seismic_risk: null }, realCtx);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.reasons.some((x) => x.startsWith("Locuință mobilată / utilată lipsește"))).toBe(true);
+      expect(r.reasons.some((x) => x.startsWith("Risc seismic lipsește"))).toBe(true);
+    }
+  });
+});
