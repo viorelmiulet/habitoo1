@@ -278,13 +278,13 @@ export const PORTALS: PortalDefinition[] = [
     id: "imo24",
     display_name: "imo24.ro",
     description:
-      "imo24.ro expune un API REST de publicare: Habitoo se conectează direct cu cheia de agenție generată în panoul imo24.ro. În această etapă este disponibil doar testul conexiunii; publicarea anunțurilor urmează.",
+      "imo24.ro expune un API REST de publicare: Habitoo se conectează direct cu cheia de agenție generată în panoul imo24.ro și publică, actualizează și retrage anunțurile, cu poze și agentul responsabil.",
     logo: "imo24",
     status: "available",
     directions: ["habitoo_to_portal"],
     // Cheia (i24_<8 hex>_<40 hex>) este GENERATĂ DE AGENȚIE în panoul imo24.ro.
     authentication: ["portal_api_key"],
-    capabilities: ["test_connection"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing"],
     configuration_schema: {
       fields: [
         {
@@ -301,7 +301,7 @@ export const PORTALS: PortalDefinition[] = [
     website: "https://imo24.ro",
     docs: "https://imo24.ro/api/v1",
     notes:
-      "API imo24 v1.0.1, doar HTTPS pe https://imo24.ro/api/v1. Testul conexiunii folosește GET /me (agenția, starea pachetului, sloturi libere/total și scopurile cheii). Limita este 600 de cereri pe oră pe cheie; un răspuns 401 nu se reîncearcă. Publicarea anunțurilor, imaginile, creditele și promovarea nu sunt încă implementate.",
+      "API imo24 v1.0.1, doar HTTPS pe https://imo24.ro/api/v1. Testul conexiunii folosește GET /me. Publicarea: PUT /anunturi/by-external/{external_id}, câte un anunț pe tranzacție; retragerea: DELETE pe același cod. Poze JPEG/WebP (max. 30); imaginile amânate se retrimit automat de cel mult 3 ori. Limita este 600 de cereri pe oră pe cheie; un răspuns 401 nu se reîncearcă. Creditele și promovarea nu se folosesc.",
   },
   {
     id: "homepitch",

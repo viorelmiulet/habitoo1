@@ -1477,6 +1477,7 @@ export async function executeListingAction(input: {
         imobiliareModeChanged: input.imobiliareModeChanged,
         actorId,
       } : {}),
+      ...(definition.id === "imo24" ? { actorId } : {}),
     };
     result =
       action === "publish"

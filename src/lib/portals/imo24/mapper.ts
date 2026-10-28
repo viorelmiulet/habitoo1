@@ -67,6 +67,9 @@ export type Imo24Anunt = {
   clasificare_teren?: string | null;
   locatie: { judet: string; localitate?: string; strada?: string; lat: number; lng: number };
   dotari?: number[];
+  /** Adăugate la publicare: URL-uri JPEG/WebP (max. 30) și emailul agentului sau null. */
+  imagini?: string[];
+  agent?: string | null;
 };
 
 export type Imo24MapOptions = {
