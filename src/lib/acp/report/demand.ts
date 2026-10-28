@@ -74,7 +74,6 @@ function toMatchProperty(p: DemandProperty): PropertyForMatch {
 
 function placeOk(r: DemandRequest, mp: PropertyForMatch, withZones: boolean): boolean {
   if (!r.cities.length) {
-    if (withZones && r.zones.length) return requestPlaceRelation({ county: r.county, city: null, zones: r.zones }, mp)?.rel === "strict";
     return !r.county || requestPlaceRelation({ county: r.county, city: null, zones: [] }, mp)?.rel === "strict";
   }
   return r.cities.some((city) =>
