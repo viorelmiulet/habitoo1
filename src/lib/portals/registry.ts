@@ -285,7 +285,9 @@ export const PORTALS: PortalDefinition[] = [
     directions: ["habitoo_to_portal"],
     // Cheia (i24_<8 hex>_<40 hex>) este GENERATĂ DE AGENȚIE în panoul imo24.ro.
     authentication: ["portal_api_key"],
-    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "manage_media"],
+    // Bifa „Promovat” = Gold Imopedia (GOLD=1/0 trimis explicit la fiecare salvare).
+    supports_promoted_flag: true,
     configuration_schema: {
       fields: [
         {
@@ -506,7 +508,7 @@ export const PORTALS: PortalDefinition[] = [
     website: "https://www.imopedia.ro",
     docs: "https://docs.imopedia.ro/",
     notes:
-      "API SOAP 1.1 RPC/encoded, WSDL https://www.imopedia.ro/soap.wsdl. Credențialele (user, parolă, ID agenție) se obțin de la support@imopedia.ro. Publicare/actualizare prin saveProperty (ID_LOCAL = numărul din referința proprietății, fix după prima publicare; agentul prin saveAgent), retragere prin deleteProperty. Imaginile vin în etapa următoare.",
+      "API SOAP 1.1 RPC/encoded, WSDL https://www.imopedia.ro/soap.wsdl. Credențialele (user, parolă, ID agenție) se obțin de la support@imopedia.ro. Publicare/actualizare prin saveProperty (ID_LOCAL = numărul din referința proprietății, fix după prima publicare; agentul prin saveAgent), retragere prin deleteProperty. Imaginile se trimit după saveProperty ca FILE_URL (existsFile/addFile/syncFiles, deleteFile când nu mai rămâne niciuna); Imopedia nu documentează reordonarea, deci o schimbare de ordine se aplică doar imaginilor nou adăugate. „Promovat” = Gold; boost-ul se cere din cardul proprietății.",
   },
   {
     id: "primulanunt",
