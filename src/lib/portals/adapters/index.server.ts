@@ -5,6 +5,7 @@ import { imobiliareAdapter } from "./imobiliare.server";
 import { imoveAdapter } from "./imove.server";
 import { imospotAdapter } from "./imospot.server";
 import { imo24Adapter } from "./imo24.server";
+import { imopediaAdapter } from "./imopedia.server";
 import { lacheieAdapter } from "./lacheie.server";
 import { primulanuntAdapter } from "./primulanunt.server";
 import { homepitchAdapter } from "./homepitch.server";
@@ -19,6 +20,7 @@ const ADAPTERS: Record<string, PortalAdapter> = {
   imove: imoveAdapter,
   imospot: imospotAdapter,
   imo24: imo24Adapter,
+  imopedia: imopediaAdapter,
   lacheie: lacheieAdapter,
   primulanunt: primulanuntAdapter,
   homepitch: homepitchAdapter,

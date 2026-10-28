@@ -445,6 +445,8 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     allowed: COMMON_ALLOWED,
   },
   // imo24.ro: regulile vin integral din mapper-ul imo24 (`src/lib/portals/imo24/mapper.ts`).
+  // Imopedia: cerințele se declară odată cu maparea ofertei (etapele următoare); publicarea nu e încă disponibilă.
+  imopedia: { required: [], allowed: COMMON_ALLOWED },
   imo24: {
     required: [],
     allowed: COMMON_ALLOWED,

@@ -99,6 +99,8 @@ export type ListingOutcome = {
 
 export type ConnectionStatusOutcome = {
   configured: boolean;
+  /** Răspunsul brut (redactat) al portalului, jurnalizat la testul conexiunii. */
+  portalResponse?: unknown;
   live: boolean;
   detail: string;
   /** Diagnoză reală a feedului pe care îl consumă portalul. */
