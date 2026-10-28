@@ -555,10 +555,29 @@ export async function generateAcpReportForVersion(
 
       let model: AcpReportModel;
       try {
+        const generatedAt = new Date();
+        let demand = null;
+        try {
+          const { loadReportDemand, demandPropertyFromSnapshot } = await import("./report/demand.server");
+          demand = await loadReportDemand(
+            admin,
+            actor.organizationId,
+            demandPropertyFromSnapshot(
+              (input.target.subject ?? {}) as Record<string, unknown>,
+              input.estimate?.estimatedValue ?? null,
+              { title: input.target.title, locationLabel: input.target.locationLabel },
+            ),
+            generatedAt,
+          );
+        } catch (e) {
+          console.error("[acp-report] demand", e instanceof Error ? e.message : e);
+          demand = null;
+        }
         model = buildAcpReportModel({
+          demand,
           version: input,
           reportNumber: row.reportNumber,
-          generatedAt: new Date().toISOString(),
+          generatedAt: generatedAt.toISOString(),
           agency: {
             name: org?.name ?? "Agenție imobiliară",
             legalName: org?.legal_name ?? null,
