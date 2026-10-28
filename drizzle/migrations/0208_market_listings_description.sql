@@ -1,0 +1,2 @@
+ALTER TABLE public.market_listings ADD COLUMN IF NOT EXISTS description text;
+COMMENT ON COLUMN public.market_listings.description IS 'Descriere redactată (fără telefoane/emailuri/linkuri/nume), max 3000 caractere; folosită de îmbogățirea AI și raportul ACP.';

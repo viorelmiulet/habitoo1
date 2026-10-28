@@ -4528,6 +4528,7 @@ export type Database = {
           dedupe_reasons: Json
           dedupe_score: number | null
           dedupe_status: string
+          description: string | null
           disappeared_at: string | null
           district: string | null
           features: Json
@@ -4587,6 +4588,7 @@ export type Database = {
           dedupe_reasons?: Json
           dedupe_score?: number | null
           dedupe_status?: string
+          description?: string | null
           disappeared_at?: string | null
           district?: string | null
           features?: Json
@@ -4646,6 +4648,7 @@ export type Database = {
           dedupe_reasons?: Json
           dedupe_score?: number | null
           dedupe_status?: string
+          description?: string | null
           disappeared_at?: string | null
           district?: string | null
           features?: Json
@@ -10049,6 +10052,7 @@ export type Database = {
           dedupe_reasons: Json
           dedupe_score: number | null
           dedupe_status: string
+          description: string | null
           disappeared_at: string | null
           district: string | null
           features: Json

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { hasAcpMinimumData } from "./adapter";
+import { redactListingText } from "@/lib/acp/enrichment";
 import { normalizeRecord, type MarketFieldMapping, type NormalizedListing } from "./normalize";
 
 const text = (max: number) => z.string().max(max).nullish();
@@ -18,6 +19,10 @@ export const hbsyncMarketListingSchema = z.object({
   // Coordonate opționale: o valoare în afara intervalului devine null, nu respinge anunțul.
   latitude: z.number().finite().min(-90).max(90).nullish().catch(null),
   longitude: z.number().finite().min(-180).max(180).nullish().catch(null),
+  // Câmpuri descriptive opționale: o valoare invalidă devine null, nu respinge anunțul.
+  description: z.string().max(3000).nullish().catch(null),
+  floor: z.number().int().min(-3).max(80).nullish().catch(null),
+  year_built: z.number().int().min(1800).max(2100).nullish().catch(null),
 
   publisher_type: z.enum(["particular", "agency", "unknown"]).nullish(),
   first_seen_at: z.string().datetime({ offset: true }).nullish(),
@@ -36,6 +41,7 @@ const mapping: MarketFieldMapping = {
   district: "neighborhood", neighborhood: "neighborhood", rooms: "rooms", totalArea: "surface",
   price: "price", currency: "currency", status: "status",
   latitude: "latitude", longitude: "longitude",
+  floor: "floor", constructionYear: "year_built",
 
 };
 const types: Record<string, string> = {
@@ -71,6 +77,7 @@ export function normalizeHbsyncMarketListing(input: unknown):
     surface: row.surface_built ?? crm?.suprafata_mp, price: row.price ?? crm?.pret_eur,
     currency, status: row.status, image: images[0],
     latitude: row.latitude, longitude: row.longitude,
+    floor: row.floor, year_built: row.year_built,
 
   }, mapping);
   if (!result.ok) return { ok: false, reference: row.external_id, message: result.issues.map(i => i.message).join("; ") };
@@ -91,6 +98,10 @@ export function normalizeHbsyncMarketListing(input: unknown):
     ...result.listing,
     publisherType: row.publisher_type ?? null,
     isPrivate: row.publisher_type === "particular" ? true : row.publisher_type === "agency" ? false : null,
+    // Redactare înainte de salvare (telefoane, emailuri, linkuri, nume după cuvinte de contact).
+    description: redactListingText(row.description ?? null) || null,
+    // Valorile validate de schemă au prioritate față de normalizarea generică.
+    floor: row.floor ?? null, constructionYear: row.year_built ?? null,
     sector: row.sector ?? crm?.sector ?? null, images, importProvider: "hbsync", period,
     observedFirstSeenAt: firstSeenAt,
     observedLastSeenAt: lastSeenAt,

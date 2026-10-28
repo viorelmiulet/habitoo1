@@ -5,7 +5,7 @@
  * (fără a duplica tabele), apelează motorul pur `runAcpAnalysis` și persistă
  * rezultatul. Nu există AI, scraping sau acces direct la portaluri.
  */
-import { marketListingPhotoUrls, reportDescriptionExcerpt } from "./report/photos";
+import { marketListingPhotoUrls, reportDescriptionExcerpt, marketReportDescription } from "./report/photos";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -80,7 +80,7 @@ const MEDIA_BUCKET = "property-media";
 const CANDIDATE_STATUSES = ["active", "reserved", "negotiation", "sold", "rented"] as const;
 
 const PROPERTY_COLUMNS =
-  "id,organization_id,title,reference,property_type,transaction_kind,status,archived_at,city,county,district,lat,lng,rooms,usable_surface,surface,floor,building_floors,build_year,finish_state,parking,parking_spaces,balcony,furnishing,price,currency,description";
+  "id,organization_id,title,reference,property_type,transaction_kind,status,archived_at,city,county,district,lat,lng,rooms,usable_surface,surface,floor,building_floors,build_year,finish_state,parking,parking_spaces,balcony,furnishing,price,currency,description,bathrooms";
 
 type PropertyRow = {
   id: string;
@@ -390,6 +390,7 @@ async function collectCandidates(params: {
         photoPaths: gallery.get(item.row.id) ?? [],
         status: "active",
         description: reportDescriptionExcerpt((item.row as { description?: string | null }).description ?? null),
+        bathrooms: (item.row as { bathrooms?: number | null }).bathrooms ?? null,
       },
     });
   }
@@ -547,7 +548,8 @@ async function collectCandidates(params: {
           status: row.status === "inactive" ? "inactive" : "active",
           firstSeenAt: (row as { first_seen_at?: string | null }).first_seen_at ?? null,
           disappearedAt: (row as { disappeared_at?: string | null }).disappeared_at ?? null,
-          description: reportDescriptionExcerpt((row as { description?: string | null }).description ?? null),
+          description: marketReportDescription((row as { description?: string | null }).description ?? null),
+          bathrooms: (row as { bathrooms?: number | null }).bathrooms ?? null,
         },
         // Stage 7: prospețime și istoric de preț din datele reale ale ofertei.
         meta: marketListingMeta(item.row as unknown as Record<string, unknown>, {
@@ -956,6 +958,8 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
           locationLabel: locationLabel(row),
           capturedAt: new Date().toISOString(),
           subject,
+          // Doar pentru raport (fișa proprietății); motorul nu folosește băile.
+          bathrooms: (row as { bathrooms?: number | null }).bathrooms ?? null,
         } as never,
         sources: data.sources as never,
       })

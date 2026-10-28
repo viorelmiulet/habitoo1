@@ -86,6 +86,7 @@ export type NormalizedListing = {
   status: MarketListingStatus;
   rawData: { source: string; original: Record<string, string> };
   /** Optional provider metadata; absent for existing importers. */
+  description?: string | null;
   publisherType?: string | null;
   isPrivate?: boolean | null;
   sector?: string | null;
