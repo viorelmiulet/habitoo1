@@ -565,7 +565,7 @@ async function collectCandidates(params: {
           };
         })(),
         reportExtras: {
-          reference: (row as { external_id?: string | null }).external_id ?? null,
+          reference: (row as { source_listing_id?: string | null }).source_listing_id ?? null,
           photos: marketListingPhotoUrls(row as never),
           status: row.status === "inactive" ? "inactive" : "active",
           firstSeenAt: (row as { first_seen_at?: string | null }).first_seen_at ?? null,
