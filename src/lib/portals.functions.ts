@@ -605,6 +605,10 @@ export const getPortalHub = createServerFn({ method: "POST" })
           externalAccountId: row?.external_account_id ?? null,
           hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
           hasWebhookSecret: typeof settings["webhook_secret_encrypted"] === "string",
+          keyMode:
+            settings["key_mode"] === "live" || settings["key_mode"] === "test"
+              ? (settings["key_mode"] as "live" | "test")
+              : null,
           endpointUrl:
             typeof settings["endpoint_url"] === "string"
               ? String(settings["endpoint_url"])
@@ -880,6 +884,11 @@ export const savePortalConnection = createServerFn({ method: "POST" })
     }
     if (data.credential) {
       patch["portal_credentials_encrypted"] = encryptPortalCredential(data.credential);
+      if (definition.id === "zonata") {
+        // Doar modul (din prefixul public), nu cheia: afișat lângă cheie în SuperAdmin.
+        const { zonataKeyMode } = await import("@/lib/portals/zonata/key");
+        settings["key_mode"] = zonataKeyMode(data.credential);
+      }
     }
     // Orice modificare de configurare invalidează un test reușit anterior.
     patch["status"] = "ready";
