@@ -33,7 +33,6 @@ import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImopediaBoostButton } from "@/components/app/ImopediaBoostButton";
 import { ZonataPreviewButton } from "@/components/app/ZonataPreviewButton";
-import { useCurrentUser } from "@/hooks/use-session";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
 import { getImobiliareMediaStatus } from "@/lib/portals/imobiliare-media.functions";

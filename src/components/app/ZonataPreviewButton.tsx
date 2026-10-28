@@ -43,9 +43,9 @@ export function ZonataPreviewButton({ propertyId }: { propertyId: string }) {
                   {preview.data.warnings.map((r) => <li key={r}>{r}</li>)}
                 </ul>
               ) : null}
-              {preview.data.bodies.length ? (
+              {preview.data.bodiesJson ? (
                 <pre className="max-h-[60vh] overflow-auto rounded-md bg-muted p-3 text-xs">
-                  {JSON.stringify(preview.data.bodies, null, 2)}
+                  {preview.data.bodiesJson}
                 </pre>
               ) : null}
             </div>

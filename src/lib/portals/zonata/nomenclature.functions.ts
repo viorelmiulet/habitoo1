@@ -98,7 +98,11 @@ export const previewZonataPayload = createServerFn({ method: "POST" })
       loadZonataImages(admin, p.organization_id, [p.id]),
     ]);
     const result = mapPropertyToZonata(p, { nomenclature, images: images.get(p.id) ?? [] });
-    return result.ok
-      ? { ok: true as const, bodies: JSON.parse(JSON.stringify(result.bodies)) as unknown[], reasons: [] as string[], warnings: result.warnings }
-      : { ok: false as const, bodies: [] as unknown[], reasons: result.reasons, warnings: result.warnings };
+    return {
+      ok: result.ok,
+      /** Corpul exact, ca JSON formatat (fără cheie). */
+      bodiesJson: result.ok ? JSON.stringify(result.bodies, null, 2) : null,
+      reasons: result.ok ? ([] as string[]) : result.reasons,
+      warnings: result.warnings,
+    };
   });
