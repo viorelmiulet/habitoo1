@@ -1,0 +1,29 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import { homepagePortals } from "./integration-pages";
+
+const labels = homepagePortals().map((p) => p.label);
+const ids = homepagePortals().map((p) => p.portal.id);
+
+describe("homepage portals", () => {
+  it("lists exactly the portals with a public integration page, in registry order", () => {
+    expect(labels).toEqual([
+      "ClickImob", "iMove.ro", "Properstar", "La Cheie", "Imospot.ro", "HomePitch.ro",
+      "Imobiliare.ro", "Storia.ro + OLX.ro", "Publi24.ro + Romimo.ro", "PrimulAnunț.ro", "VDI.ro",
+    ]);
+  });
+  it("hides unverified, covered and catalog integrations", () => {
+    for (const id of ["imo24", "imopedia", "zonata", "olx_direct", "olx", "publi24", "facebook_catalog"]) {
+      expect(ids).not.toContain(id);
+    }
+  });
+  it("homepage FAQ mentions every portal in the grid", () => {
+    const src = readFileSync("src/routes/index.tsx", "utf8");
+    const answer = src.match(/Pe ce portaluri imobiliare pot publica[^\n]*\n\s*a: "([^"]+)"/)![1];
+    const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f\s]/g, "").toLowerCase();
+    const faq = norm(answer);
+    for (const label of labels) {
+      for (const part of label.split(" + ")) expect(faq, label).toContain(norm(part.replace(/\.ro$/, "")));
+    }
+  });
+});
