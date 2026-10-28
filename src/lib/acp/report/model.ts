@@ -949,3 +949,325 @@ function buildMarketSection(
     note: a.insufficient ? a.insufficientReason : null,
   };
 }
+
+/* ======================= Raport v2: pagini de prezentare ======================= */
+
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  apartment: "Apartament",
+  studio: "Garsonieră",
+  house: "Casă",
+  villa: "Vilă",
+  land: "Teren",
+  commercial: "Spațiu comercial",
+  office: "Birou",
+  industrial: "Spațiu industrial",
+};
+
+function capitalize(value: string): string {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+}
+
+function yesNo(value: boolean | null | undefined): string {
+  return value === true ? "Da" : value === false ? "Nu" : "—";
+}
+
+function floorLabel(value: number | null | undefined): string {
+  const n = finite(value ?? null);
+  if (n === null) return "—";
+  return n === 0 ? "Parter" : n < 0 ? "Demisol" : String(n);
+}
+
+/** Titlul unei fișe, ex. „Apartament 2 camere 60 m²”. */
+export function reportPropertyHeadline(subject: AcpReportSubject, fallback: string): string {
+  const type = subject.propertyType ? (PROPERTY_TYPE_LABELS[subject.propertyType] ?? capitalize(subject.propertyType)) : null;
+  const rooms = finite(subject.rooms ?? null);
+  const area = finite(subject.usableArea ?? null);
+  const parts = [
+    type,
+    rooms === null || subject.propertyType === "studio" ? null : `${rooms} ${rooms === 1 ? "cameră" : "camere"}`,
+    area === null ? null : `${Math.round(area)} m²`,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : fallback;
+}
+
+type FeatureRow = {
+  label: string;
+  /** Factorul ajustării afișate pe acest rând. */
+  factor: string | null;
+  value: (s: AcpReportSubject) => string;
+};
+
+/** Rândurile de caracteristici din tabelul de comparație (ordinea din raport). */
+export const ACP_REPORT_FEATURE_ROWS: FeatureRow[] = [
+  { label: "Camere", factor: "rooms", value: (s) => reportNumberValue(s.rooms ?? null) },
+  { label: "Suprafață utilă", factor: "area", value: (s) => reportNumberValue(s.usableArea ?? null, " m²") },
+  { label: "Etaj", factor: "floor", value: (s) => floorLabel(s.floor) },
+  { label: "Etaje bloc", factor: null, value: (s) => reportNumberValue(s.totalFloors ?? null) },
+  { label: "An construcție", factor: "year", value: (s) => (s.constructionYear ? String(s.constructionYear) : "—") },
+  { label: "Stare", factor: "condition", value: (s) => (s.condition ? capitalize(s.condition) : "—") },
+  { label: "Balcon", factor: "balcony", value: (s) => yesNo(s.balcony) },
+  { label: "Parcare", factor: "parking", value: (s) => yesNo(s.parking) },
+  { label: "Mobilat", factor: "furnished", value: (s) => yesNo(s.furnished) },
+];
+
+const LABEL_TO_FACTOR = new Map<string, string>(
+  Object.entries(ACP_ADJUSTMENT_LABELS).map(([factor, label]) => [label.toLowerCase(), factor]),
+);
+
+/** Factorul unei ajustări: din snapshot sau dedus din etichetă. */
+export function adjustmentFactor(adjustment: AcpReportAdjustment): string | null {
+  if (adjustment.factor) return adjustment.factor;
+  return LABEL_TO_FACTOR.get(adjustment.label.trim().toLowerCase()) ?? null;
+}
+
+function signedMoney(amount: number, currency: string): string {
+  return `${amount > 0 ? "+" : ""}${reportMoney(amount, currency)}`;
+}
+
+/** Suma ajustărilor unui comparabil pentru un factor (0 dacă nu există). */
+export function adjustmentForFactor(c: AcpReportComparableInput, factor: string): number {
+  return c.adjustments
+    .filter((a) => adjustmentFactor(a) === factor)
+    .reduce((sum, a) => sum + a.amount, 0);
+}
+
+function characteristics(subject: AcpReportSubject, currency: string): { label: string; value: string }[] {
+  const rows = [
+    {
+      label: "Tip proprietate",
+      value: subject.propertyType ? (PROPERTY_TYPE_LABELS[subject.propertyType] ?? capitalize(subject.propertyType)) : "—",
+    },
+    ...ACP_REPORT_FEATURE_ROWS.map((row) => ({ label: row.label, value: row.value(subject) })),
+    {
+      label: "Preț / m²",
+      value:
+        finite(subject.price ?? null) !== null && finite(subject.usableArea ?? null)
+          ? `${reportMoney((subject.price as number) / (subject.usableArea as number), currency)}/m²`
+          : "—",
+    },
+  ];
+  return rows.filter((r) => r.value !== "—");
+}
+
+function daysBetween(from: string | null | undefined, to: string): number | null {
+  const a = from ? Date.parse(from) : NaN;
+  const b = Date.parse(to);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  return Math.max(0, Math.round((b - a) / 86_400_000));
+}
+
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
+}
+
+/** Împarte comparabilele folosite în pagini de câte `size`. */
+export function chunkComparables<T>(items: T[], size = ACP_REPORT_COMPARABLES_PER_PAGE): T[][] {
+  const pages: T[][] = [];
+  for (let i = 0; i < items.length; i += size) pages.push(items.slice(i, i + size));
+  return pages;
+}
+
+function buildV2Sections(
+  version: AcpReportVersionInput,
+  agency: AcpReportAgency,
+  currency: string,
+  generatedAt: string,
+  generatedBy: { name: string | null; role: string | null } | null,
+): Pick<
+  AcpReportModel,
+  "cover" | "used" | "subjectSheet" | "comparisonPages" | "priceChart" | "valuation" | "recommendations"
+> {
+  const target = version.target;
+  const s = target.subject;
+  const targetPhotos = (target.photos ?? []).filter(Boolean);
+  const snapshotAt = version.snapshotAt ?? generatedAt;
+
+  const subjectSheet: AcpReportSheet = {
+    label: "Proprietatea analizată",
+    title: reportPropertyHeadline(s, target.title),
+    reference: target.reference,
+    photos: targetPhotos.slice(0, 3),
+    statusLabel: null,
+    active: true,
+    price: reportMoney(s.price ?? null, currency),
+    characteristics: characteristics(s, currency),
+    description: target.description ?? null,
+    adjustments: [],
+    finalAdjustedPrice: null,
+  };
+
+  const usedInputs = version.comparables
+    .filter((c) => c.isSelected)
+    .sort(
+      (a, b) =>
+        (finite(b.similarityScore) ?? 0) - (finite(a.similarityScore) ?? 0) || a.key.localeCompare(b.key),
+    );
+
+  const used: AcpReportUsedComparable[] = usedInputs.map((c, i) => {
+    const cur = c.subject.currency || currency;
+    const active = c.status !== "inactive";
+    const days = finite(c.daysOnMarket ?? null) ?? daysBetween(c.firstSeenAt, c.disappearedAt ?? snapshotAt);
+    const total = c.adjustments.reduce((sum, a) => sum + a.amount, 0);
+    const photos = (c.photos ?? []).filter(Boolean).slice(0, 3);
+    const statusLabel = active ? "Activă" : "Inactivă";
+    return {
+      index: i + 1,
+      key: c.key,
+      reference: c.reference || `#${i + 1}`,
+      address: c.locationLabel || c.title,
+      active,
+      statusLabel,
+      daysOnMarket: days === null ? "—" : `${days} ${days === 1 ? "zi" : "zile"}`,
+      firstSeen: reportDate(c.firstSeenAt ?? null, false),
+      disappeared: reportDate(c.disappearedAt ?? null, false),
+      price: reportMoney(c.price, cur),
+      adjustmentTotal: c.adjustments.length === 0 ? "0" : signedMoney(total, cur),
+      adjustedPrice: reportMoney(c.adjustedPrice, cur),
+      photo: photos[0] ?? null,
+      sheet: {
+        label: `Comparabila #${i + 1}`,
+        title: reportPropertyHeadline(c.subject, c.title),
+        reference: c.reference ?? null,
+        photos,
+        statusLabel,
+        active,
+        price: reportMoney(c.price, cur),
+        characteristics: characteristics(c.subject, cur),
+        description: c.description ?? null,
+        adjustments: c.adjustments.map((a) => ({ label: a.label, basis: a.basis, amount: signedMoney(a.amount, cur) })),
+        finalAdjustedPrice: c.adjustments.length > 0 ? reportMoney(c.adjustedPrice, cur) : null,
+      },
+    };
+  });
+
+  const comparisonPages: AcpReportComparisonPage[] = chunkComparables(usedInputs).map((chunk, pageIndex) => {
+    const offset = pageIndex * ACP_REPORT_COMPARABLES_PER_PAGE;
+    const views = chunk.map((_, i) => used[offset + i]!);
+    const keep = (row: { cells: AcpReportComparisonCell[] }) => row.cells.some((cell) => cell.value !== "—");
+    const top = [
+      {
+        label: "Adresă / zonă",
+        cells: [
+          { value: target.locationLabel || "—", adjustment: null },
+          ...views.map((v) => ({ value: v.address || "—", adjustment: null })),
+        ],
+      },
+      {
+        label: "Status",
+        cells: [{ value: "—", adjustment: null }, ...views.map((v) => ({ value: v.statusLabel, adjustment: null }))],
+      },
+      {
+        label: "Preț",
+        cells: [
+          { value: reportMoney(s.price ?? null, currency), adjustment: null },
+          ...views.map((v) => ({ value: v.price, adjustment: null })),
+        ],
+      },
+    ].filter(keep);
+    const features = ACP_REPORT_FEATURE_ROWS.map((row) => ({
+      label: row.label,
+      cells: [
+        { value: row.value(s), adjustment: null },
+        ...chunk.map((c) => ({
+          value: row.value(c.subject),
+          adjustment: row.factor ? signedMoney(adjustmentForFactor(c, row.factor), c.subject.currency || currency) : null,
+        })),
+      ],
+    })).filter(keep);
+    return {
+      columns: views.map((v) => v.index),
+      headers: [
+        { label: "Proprietatea analizată", photo: targetPhotos[0] ?? null },
+        ...views.map((v) => ({ label: `Comparabila #${v.index}`, photo: v.photo })),
+      ],
+      top,
+      features,
+      adjusted: views.map((v) => v.adjustedPrice),
+    };
+  });
+
+  const adjustedValues = usedInputs
+    .map((c) => finite(c.adjustedPrice))
+    .filter((v): v is number => v !== null && v > 0);
+  const est = version.estimate;
+  const priceChart: AcpReportPriceChart | null =
+    adjustedValues.length === 0
+      ? null
+      : {
+          bars: [
+            { label: "Minim", value: Math.min(...adjustedValues) },
+            { label: "Medie", value: adjustedValues.reduce((a, b) => a + b, 0) / adjustedValues.length },
+            { label: "Mediană", value: median(adjustedValues) },
+            { label: "Maxim", value: Math.max(...adjustedValues) },
+          ].map((b) => ({ ...b, display: reportMoney(b.value, currency) })),
+          recommended:
+            finite(est?.recommendedListingPrice ?? null) !== null
+              ? {
+                  value: est!.recommendedListingPrice as number,
+                  display: reportMoney(est!.recommendedListingPrice, currency),
+                }
+              : null,
+          band:
+            finite(est?.estimatedMin ?? null) !== null && finite(est?.estimatedMax ?? null) !== null
+              ? {
+                  min: est!.estimatedMin as number,
+                  max: est!.estimatedMax as number,
+                  display: `${reportMoney(est!.estimatedMin, currency)} – ${reportMoney(est!.estimatedMax, currency)}`,
+                }
+              : null,
+        };
+
+  const insight = version.ai?.sections ?? null;
+  let recommendations: AcpReportModel["recommendations"] = null;
+  if (version.ai) {
+    const groups: { title: string; body?: string; items?: string[] }[] = [];
+    if (insight) {
+      if (insight.key_drivers.length > 0)
+        groups.push({ title: "Puncte forte și factori determinanți", items: insight.key_drivers });
+      if (insight.recommended_positioning.trim())
+        groups.push({ title: "Poziționare recomandată", body: insight.recommended_positioning });
+      if (insight.client_friendly_summary.trim())
+        groups.push({ title: "Pe scurt, pentru client", body: insight.client_friendly_summary });
+    } else if ((version.ai.summary ?? "").trim()) {
+      groups.push({ title: "Pe scurt, pentru client", body: version.ai.summary!.trim() });
+    }
+    if (groups.length > 0) {
+      recommendations = {
+        note: "Text generat automat pe baza cifrelor din această analiză; nu modifică niciuna dintre valorile calculate.",
+        groups,
+      };
+    }
+  }
+
+  return {
+    cover: {
+      dateLabel: reportDate(generatedAt, false),
+      title: "Raport analiză de piață comparativă",
+      photo: targetPhotos[0] ?? null,
+      propertyTitle: target.title,
+      address: target.locationLabel,
+      disclaimer: ACP_REPORT_COVER_DISCLAIMER,
+      agentName: generatedBy?.name ?? version.authorName ?? null,
+      agentRole: generatedBy?.role ?? null,
+      agencyName: agency.name,
+    },
+    used,
+    subjectSheet,
+    comparisonPages,
+    priceChart,
+    valuation: {
+      cards: [
+        { label: "Preț minim recomandat", value: reportMoney(est?.estimatedMin ?? null, currency), highlight: false },
+        { label: "Preț optim", value: reportMoney(est?.estimatedValue ?? null, currency), highlight: true },
+        { label: "Preț maxim", value: reportMoney(est?.estimatedMax ?? null, currency), highlight: false },
+      ],
+      listingNote:
+        finite(est?.recommendedListingPrice ?? null) === null
+          ? null
+          : `Preț recomandat de listare: ${reportMoney(est!.recommendedListingPrice, currency)} (include marja de negociere)`,
+    },
+    recommendations,
+  };
+}
