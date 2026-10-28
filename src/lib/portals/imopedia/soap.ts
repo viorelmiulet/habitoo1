@@ -137,13 +137,16 @@ export function soapValue(node: XmlNode): unknown {
   }
   if (type === "Array" || allItems) return kids.map(soapValue);
   const out: Record<string, unknown> = {};
+  const repeated = new Set<string>();
   for (const c of kids) {
     const key = local(c.name);
     const value = soapValue(c);
-    if (key in out) {
-      const prev = out[key];
-      out[key] = Array.isArray(prev) && (prev as unknown[] & { __dup?: true }).__dup ? [...prev, value] : [prev, value];
-    } else out[key] = value;
+    if (!(key in out)) out[key] = value;
+    else if (repeated.has(key)) (out[key] as unknown[]).push(value);
+    else {
+      out[key] = [out[key], value];
+      repeated.add(key);
+    }
   }
   return out;
 }
