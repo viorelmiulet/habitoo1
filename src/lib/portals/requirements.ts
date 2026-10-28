@@ -522,6 +522,6 @@ export function requirementBlockMessage(
   portalName: string,
   report: PortalRequirementReport,
 ): string {
-  const fields = report.missing.map((m) => `${m.label} (${m.requirement})`).join(", ");
+  const fields = report.missing.map((m) => (m.requirement ? `${m.label} (${m.requirement})` : m.label)).join(", ");
   return `${portalName}: publicarea este blocată — completează: ${fields}.`;
 }
