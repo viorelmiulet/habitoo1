@@ -32,6 +32,8 @@ import {
   REPORT_IMAGE_TIMEOUT_MS,
   type ReportImageLoader,
 } from "./images.server";
+import { layoutMap, tileKey, MAP_NEIGHBORHOOD_ZOOM, type MapLayout, type MapPinInput } from "./map";
+import { fetchOsmTile, loadMapTiles, MAP_ATTRIBUTION, REPORT_MAP_TIMEOUT_MS, type MapTileLoader } from "./map.server";
 
 const W = 595.28;
 const H = 841.89;
@@ -57,7 +59,50 @@ export type AcpReportPdfAssets = {
   /** Încărcătorul pozelor; implicit descărcare https cu limită de 5 s. */
   loadImage?: ReportImageLoader;
   imageTimeoutMs?: number;
+  /** Încărcătorul tile-urilor de hartă; implicit OpenStreetMap. */
+  loadTile?: MapTileLoader;
+  /** Limita comună pentru toate hărțile raportului (implicit 8 s). */
+  mapTimeoutMs?: number;
 };
+
+const GREEN = rgb(0.12, 0.55, 0.33);
+export const MAIN_MAP_HEIGHT = 470;
+const MAIN_MAP_TILE = 200;
+const MINI_MAP_TILE = 160;
+const FEAT_RATIO = 0.64;
+const featuresHeight = (n: number) => Math.ceil(n / 2) * 17 + 14;
+export const miniMapHeight = (n: number) => Math.max(featuresHeight(n), 120);
+
+/** Layout-urile hărților raportului (pagina principală + mini-hărțile fișelor). */
+export function reportMapLayouts(model: AcpReportModel): {
+  main: MapLayout | null;
+  sheets: Map<AcpReportSheet, MapLayout>;
+} {
+  let main: MapLayout | null = null;
+  const lm = model.locationMap;
+  if (lm) {
+    const pts: MapPinInput[] = [];
+    if (lm.subject) pts.push({ ...lm.subject, id: "subject", label: "", kind: "subject" });
+    for (const c of lm.comparables) pts.push({ lat: c.lat, lng: c.lng, id: `c${c.index}`, label: `#${c.index}`, kind: "comparable" });
+    main = layoutMap(pts, CW, MAIN_MAP_HEIGHT, { padding: 36, tileSize: MAIN_MAP_TILE });
+  }
+  const sheets = new Map<AcpReportSheet, MapLayout>();
+  const miniW = CW - CW * FEAT_RATIO - 10;
+  const all: [AcpReportSheet, "subject" | "comparable"][] = [
+    [model.subjectSheet, "subject"],
+    ...model.used.map((u): [AcpReportSheet, "comparable"] => [u.sheet, "comparable"]),
+  ];
+  for (const [sheet, kind] of all) {
+    if (!sheet.geo) continue;
+    const layout = layoutMap([{ ...sheet.geo, id: "p", label: "", kind }], miniW, miniMapHeight(sheet.characteristics.length), {
+      zoom: MAP_NEIGHBORHOOD_ZOOM,
+      tileSize: MINI_MAP_TILE,
+    });
+    if (layout) sheets.set(sheet, layout);
+  }
+  return { main, sheets };
+}
+
 
 function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const out: string[] = [];
@@ -145,6 +190,26 @@ export async function buildAcpReportPdf(
   await Promise.all(Array.from({ length: Math.min(6, queue.length) }, worker));
   const img = (url: string | null | undefined) => (url ? (images.get(url) ?? null) : null);
 
+  /* ---------------- Hărți: tile-uri OSM, limită comună de timp ---------------- */
+  const maps = reportMapLayouts(model);
+  const mapTiles = [...(maps.main?.tiles ?? []), ...[...maps.sheets.values()].flatMap((l) => l.tiles)];
+  const tileImages = new Map<string, PDFImage | null>();
+  if (mapTiles.length > 0) {
+    const bytesByKey = await loadMapTiles(mapTiles, assets.loadTile ?? fetchOsmTile, assets.mapTimeoutMs ?? REPORT_MAP_TIMEOUT_MS);
+    for (const [key, bytes] of bytesByKey) {
+      let image: PDFImage | null = null;
+      if (bytes) {
+        try {
+          const kind = imageKind(bytes);
+          image = kind === "png" ? await doc.embedPng(bytes) : kind === "jpeg" ? await doc.embedJpg(bytes) : null;
+        } catch {
+          image = null;
+        }
+      }
+      tileImages.set(key, image);
+    }
+  }
+
   let logo: PDFImage | null = null;
   if (assets.logo) {
     try {
@@ -206,6 +271,40 @@ export async function buildAcpReportPdf(
     p.pushOperators(pushGraphicsState(), rectangle(x, H - t - h, w, h), clip(), endPath());
     p.drawImage(image, { x: x + (w - iw) / 2, y: H - t - h + (h - ih) / 2, width: iw, height: ih });
     p.pushOperators(popGraphicsState());
+  };
+  /** Hartă din tile-uri, cu pini și atribuire; caseta „Harta nu este disponibilă” la orice tile lipsă. */
+  const drawMap = (p: PDFPage, layout: MapLayout | null | undefined, x: number, t: number, w: number, h: number) => {
+    const ready = layout && layout.tiles.length > 0 && layout.tiles.every((tile) => tileImages.get(tileKey(tile)));
+    if (!layout || !ready) {
+      box(p, x, t, w, h, { fill: PLACEHOLDER, radius: 8 });
+      const label = "Harta nu este disponibilă";
+      const size = Math.min(10, Math.max(7, w / 22));
+      const lw = regular.widthOfTextAtSize(label, size);
+      text(p, label, x + (w - lw) / 2, t + h / 2 - size / 2, size, { color: MUTED });
+      return;
+    }
+    p.pushOperators(pushGraphicsState(), rectangle(x, H - t - h, w, h), clip(), endPath());
+    for (const tile of layout.tiles) {
+      p.drawImage(tileImages.get(tileKey(tile))!, { x: x + tile.left, y: H - t - tile.top - tile.size, width: tile.size, height: tile.size });
+    }
+    const pins = [...layout.pins].sort((a, b) => (a.kind === "subject" ? 1 : 0) - (b.kind === "subject" ? 1 : 0));
+    for (const pin of pins) {
+      const cx = x + pin.x;
+      const cy = H - t - pin.y;
+      const subject = pin.kind === "subject";
+      const size = 6.4;
+      const lw = pin.label ? bold.widthOfTextAtSize(pin.label, size) : 0;
+      const r = subject ? 8 : Math.max(7.5, lw / 2 + 3);
+      p.drawCircle({ x: cx, y: cy, size: r, color: subject ? GOLD : GREEN, borderColor: WHITE, borderWidth: 1.4 });
+      if (subject) p.drawCircle({ x: cx, y: cy, size: 2.6, color: WHITE });
+      else p.drawText(pin.label, { x: cx - lw / 2, y: cy - size * 0.35, size, font: bold, color: WHITE });
+    }
+    const asize = 6;
+    const aw = regular.widthOfTextAtSize(MAP_ATTRIBUTION, asize) + 8;
+    p.drawRectangle({ x: x + w - aw, y: H - t - h, width: aw, height: asize + 5, color: WHITE, opacity: 0.85 });
+    p.drawText(MAP_ATTRIBUTION, { x: x + w - aw + 4, y: H - t - h + 3, size: asize, font: regular, color: INK });
+    p.pushOperators(popGraphicsState());
+    box(p, x, t, w, h, { border: LINE, radius: 1 });
   };
   const newPage = () => {
     page = doc.addPage([W, H]);
@@ -334,6 +433,36 @@ export async function buildAcpReportPdf(
     text(p, agent, x, baseTop + 6, 12, { font: bold, color: NAVY });
     const roleLine = [model.cover.agentName ? model.cover.agentRole : null, model.cover.agencyName].filter(Boolean).join(" · ");
     text(p, fit(roleLine, regular, 9.5, W - M - x), x, baseTop + 24, 9.5, { color: MUTED });
+  }
+
+  /* ================= 1b. Localizarea comparabilelor ================= */
+  if (model.locationMap) {
+    const lm = model.locationMap;
+    newPage();
+    sectionTitle([["Localizarea ", false], ["comparabilelor", true]]);
+    drawMap(page, maps.main, M, top, CW, MAIN_MAP_HEIGHT);
+    top += MAIN_MAP_HEIGHT + 16;
+    let x = M;
+    const legend = (color: RGB, label: string) => {
+      page.drawCircle({ x: x + 5, y: H - top - 5, size: 5, color, borderColor: WHITE, borderWidth: 1 });
+      text(page, label, x + 15, top + 1, 8.5, { color: INK });
+      x += 15 + regular.widthOfTextAtSize(label, 8.5) + 22;
+    };
+    if (lm.subject) legend(GOLD, "Proprietatea analizată");
+    legend(GREEN, `Comparabile (${lm.comparables.length})`);
+    top += 18;
+    if (lm.missing > 0) {
+      const label =
+        lm.missing === 1
+          ? "1 comparabilă fără coordonate nu apare pe hartă"
+          : `${lm.missing} comparabile fără coordonate nu apar pe hartă`;
+      text(page, label, M, top, 8.5, { color: MUTED });
+      top += 14;
+    }
+    if (!lm.subject) {
+      text(page, "Proprietatea analizată nu are coordonate și nu apare pe hartă", M, top, 8.5, { color: MUTED });
+      top += 14;
+    }
   }
 
   /* ================= 2. Tabel comparație ================= */
@@ -584,20 +713,23 @@ export async function buildAcpReportPdf(
     if (s.statusLabel) x += badge(page, s.statusLabel, M, top + 3, s.active, 8) + 12;
     text(page, s.price, x, top, 15, { font: bold, color: NAVY });
     top += 28;
-    // Caracteristici în două coloane; dreapta rămâne liberă pentru harta mică (pasul 2).
-    const featW = CW * 0.64;
+    // Caracteristici în două coloane; în dreapta mini-harta, când există coordonate.
+    const mini = maps.sheets.get(s);
+    const featW = mini ? CW * FEAT_RATIO : CW;
     subTitle("Caracteristici proprietate", 10.5);
-    const rowsN = Math.ceil(s.characteristics.length / 2);
-    const fh = rowsN * 17 + 14;
+    const rowsN = Math.ceil(s.characteristics.length / (mini ? 2 : 3));
+    const fh = mini ? miniMapHeight(s.characteristics.length) : featuresHeight(s.characteristics.length * (2 / 3));
     ensure(fh);
     box(page, M, top, featW, fh, { fill: SOFT, radius: 8 });
+    if (mini) drawMap(page, mini, M + featW + 10, top, CW - featW - 10, fh);
     s.characteristics.forEach((c, i) => {
-      const col = i < rowsN ? 0 : 1;
-      const row = col === 0 ? i : i - rowsN;
-      const cx = M + 10 + col * (featW / 2);
+      const cols = mini ? 2 : 3;
+      const col = Math.floor(i / rowsN);
+      const row = i - col * rowsN;
+      const cx = M + 10 + col * (featW / cols);
       const t = top + 8 + row * 17;
       text(page, fit(c.label, regular, 8, 70), cx, t, 8, { color: MUTED });
-      text(page, fit(c.value, bold, 8.2, featW / 2 - 92), cx + 76, t, 8.2, { font: bold, color: INK });
+      text(page, fit(c.value, bold, 8.2, featW / cols - 92), cx + 76, t, 8.2, { font: bold, color: INK });
     });
     top += fh + 12;
     if (s.description) textBox("Descriere", s.description, [], 8.5);
