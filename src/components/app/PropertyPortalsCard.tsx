@@ -953,7 +953,8 @@ export const PropertyPortalsCard = forwardRef<
                         >
                           {detail}
                         </p>
-                        {cell.portalId === "imobiliare_ro" && (cell.lastError || latestOperationFailed) ? <p role="alert" className="mt-2 break-words text-xs text-destructive">{cell.lastError ?? latestOperation?.errorMessage}</p> : null}
+                        {(cell.portalId === "imobiliare_ro" || cell.portalId === "imo24") && (cell.lastError || latestOperationFailed) ? <p role="alert" className="mt-2 break-words text-xs text-destructive">{cell.lastError ?? latestOperation?.errorMessage}</p> : null}
+                        {cell.portalId === "imo24" && !cell.lastError && latestOperation?.success === true && latestOperation.errorMessage ? <p className="mt-2 break-words text-xs text-muted-foreground">{latestOperation.errorMessage}</p> : null}
                         {cell.portalId === "imobiliare_ro" && cell.configured ? (
                           <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                             <p>{imobiliareMedia.data ? `${imobiliareMedia.data.sent ?? "?"}/${imobiliareMedia.data.total} poze trimise` : imobiliareMedia.isError ? "Numărul pozelor nu a putut fi verificat." : "Se verifică pozele…"}</p>
@@ -985,7 +986,7 @@ export const PropertyPortalsCard = forwardRef<
                           view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
                         />
                       <div className="relative z-10 mt-3 flex min-w-0 flex-wrap items-center gap-2 [&>*]:pointer-events-auto">
-                        {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo") &&
+                        {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo" || cell.portalId === "imo24") &&
                         cell.offerLinks.length > 0 &&
                         !cell.publicWarning ? (
                           cell.offerLinks.map((link) => (

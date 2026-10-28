@@ -110,7 +110,7 @@ const ERROR_MESSAGE: Partial<Record<string, string>> = {
   cont_blocat: "Contul agenției este blocat pe imo24.ro.",
   limita_pachet: "Pachetul imo24.ro nu mai are sloturi libere. Eliberează un anunț sau mărește pachetul din contul imo24.ro.",
   pachet_inactiv: "Pachetul imo24.ro al agenției nu este activ. Activează sau reînnoiește pachetul din contul imo24.ro.",
-  anunt_duplicat: "imo24.ro a găsit deja un anunț identic în contul agenției.",
+  anunt_duplicat: "imo24.ro a găsit deja un anunț activ cu același titlu sau aceeași descriere în contul agenției. Modifică titlul sau descrierea.",
   external_id_existent: "Există deja un anunț imo24.ro cu același identificator Habitoo.",
   camp_imutabil: "imo24.ro nu permite modificarea unui câmp după publicare.",
   validare: "imo24.ro a respins datele anunțului.",

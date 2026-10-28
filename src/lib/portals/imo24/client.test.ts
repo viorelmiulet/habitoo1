@@ -99,7 +99,7 @@ describe("imo24 client", () => {
     for (const [code, re] of [
       ["limita_pachet", /sloturi libere/],
       ["pachet_inactiv", /nu este activ/],
-      ["anunt_duplicat", /identic/],
+      ["anunt_duplicat", /același titlu sau aceeași descriere/],
       ["camp_imutabil", /modificarea unui câmp/],
     ] as const) {
       resetImo24ClientState();
