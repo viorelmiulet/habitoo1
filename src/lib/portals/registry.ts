@@ -11,6 +11,7 @@
  */
 import { CRM_URL } from "@/lib/host";
 import { IMO24_KEY_FORMAT_MESSAGE, isValidImo24Key } from "./imo24/key";
+import { ZONATA_KEY_FORMAT_MESSAGE, isValidZonataKey } from "./zonata/key";
 import { IMOPEDIA_AGENCY_ID_MESSAGE, parseImopediaAgencyId } from "./imopedia/config";
 
 export type PortalId = string;
@@ -56,7 +57,7 @@ export type PortalConfigField = {
   secret?: boolean;
   optional?: boolean;
   /** Validare suplimentară de format, aplicată în UI și server-side. */
-  validate?: "email" | "imo24_key" | "positive_int";
+  validate?: "email" | "imo24_key" | "zonata_key" | "positive_int";
   /** Unde se persistă: identificatorul contului, credențialul criptat sau setările. */
   target: "external_account_id" | "credentials" | "settings" | "webhook_secret";
 };
@@ -97,6 +98,11 @@ export type PortalDefinition = {
    * anunțul (ex. Romimo `ad.promoted`). Afișează bifa „Promovat” în Publicare.
    */
   supports_promoted_flag?: boolean;
+  /**
+   * Apare în Publicare, dar bifa rămâne indisponibilă („În curând”) până la
+   * implementarea publicării (ex. ZonaTa, pasul 1).
+   */
+  publish_coming_soon?: boolean;
 };
 
 
@@ -303,6 +309,36 @@ export const PORTALS: PortalDefinition[] = [
     docs: "https://imo24.ro/api/v1",
     notes:
       "API imo24 v1.0.1, doar HTTPS pe https://imo24.ro/api/v1. Testul conexiunii folosește GET /me. Publicarea: PUT /anunturi/by-external/{external_id}, câte un anunț pe tranzacție; retragerea: DELETE pe același cod. Poze JPEG/WebP (max. 30); imaginile amânate se retrimit automat de cel mult 3 ori. Limita este 600 de cereri pe oră pe cheie; un răspuns 401 nu se reîncearcă. Creditele și promovarea nu se folosesc.",
+  },
+  {
+    id: "zonata",
+    display_name: "ZonaTa.ro",
+    description:
+      "ZonaTa.ro expune un API REST de publicare: Habitoo se conectează cu cheia de agenție creată în contul ZonaTa (Contul meu → API). Deocamdată se verifică doar conexiunea; publicarea vine în curând.",
+    logo: "ZT",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    // Cheia (zt_live_… / zt_test_…) este CREATĂ DE AGENȚIE în contul ZonaTa.
+    authentication: ["portal_api_key"],
+    capabilities: ["test_connection"],
+    publish_coming_soon: true,
+    configuration_schema: {
+      fields: [
+        {
+          key: "api_key",
+          label: "Cheie API ZonaTa",
+          help: "Cheia creată de agenție în contul ZonaTa (Contul meu → API). zt_live_… = producție (cere pachetul Enterprise ZonaTa), zt_test_… = mod test (validează tot, nu salvează nimic). O salvăm criptat și o trimitem ca Bearer token.",
+          placeholder: "zt_live_… sau zt_test_…",
+          secret: true,
+          validate: "zonata_key",
+          target: "credentials",
+        },
+      ],
+    },
+    website: "https://zonata.ro",
+    docs: "https://zonata.ro/api",
+    notes:
+      "API ZonaTa v1 pe https://zonata.ro/api/v1, JSON UTF-8. Testul conexiunii folosește GET /me (cont, pachet, modul cheii, limite). Limita portalului este 300 de cereri la 10 minute pe cheie; Habitoo rămâne sub ea, iar la 429 face o pauză și o singură reîncercare. Cheia live cere pachetul Enterprise al agenției (650 lei / 30 de zile, plătit de agenție). Publicarea nu este încă disponibilă.",
   },
   {
     id: "homepitch",
@@ -677,6 +713,10 @@ export function validatePortalConfigValues(
       if (parseImopediaAgencyId(value) === null) {
         return definition.id === "imopedia" ? IMOPEDIA_AGENCY_ID_MESSAGE : `„${field.label}" trebuie să fie un număr întreg ≥ 1.`;
       }
+      continue;
+    }
+    if (field.validate === "zonata_key") {
+      if (!isValidZonataKey(value)) return ZONATA_KEY_FORMAT_MESSAGE;
       continue;
     }
     if (field.validate === "imo24_key") {

@@ -23,6 +23,7 @@ import properstarLogo from "@/assets/portals/properstar.png.asset.json";
 import vdiLogo from "@/assets/portals/vdi.png";
 import romimoLogo from "@/assets/portals/romimo.png";
 import storiaLogo from "@/assets/portals/storia.png";
+import zonataLogo from "@/assets/portals/zonata.png";
 import { portalLogoIds } from "@/lib/portals/registry";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   romimo: romimoLogo,
   primulanunt: primulanuntLogo,
   vdi: vdiLogo,
+  zonata: zonataLogo,
 };
 
 /** Există logo local pentru portalul dat? */
