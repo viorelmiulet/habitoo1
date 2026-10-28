@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { toLenientNumber } from "@/routes/api/public/listings/upsert";
 import { geographyKey } from "./private-listing-geography";
-import { placeMatches, type PlaceChoice } from "./search-places";
+import { placeCityKey, placeMatches, type PlaceChoice } from "./search-places";
 import { detectResidentialComplex } from "./acp/complexes";
 import { zoneRelation } from "./bucharest-zones";
 
@@ -114,8 +114,12 @@ export type MatchMode = "strict" | "close";
 
 /** Zonele cererii ca alegeri „Localități și zone” (aceeași regulă ca filtrele). */
 export function requestPlaceChoices(r: Pick<RequestForMatch, "county" | "city" | "zones">): PlaceChoice[] {
-  const county = geographyKey(r.county), city = geographyKey(r.city);
+  // Aceeași cheie de localitate ca `placeMatches` („Sector 6” → București), altfel sectoarele nu se potrivesc niciodată.
+  const county = geographyKey(r.county), city = placeCityKey(r.city);
+  const sector = geographyKey(r.city).match(/^sector [1-6]$/)?.[0];
   if (r.zones.length && city) return r.zones.map((z) => ({ kind: "zone", county, city, zone: geographyKey(z) }));
+  // Doar sectorul, fără zone: rămâne limitat la acel sector.
+  if (sector) return [{ kind: "zone", county, city, zone: sector }];
   if (city) return [{ kind: "city", county, city, zone: "" }];
   if (county) return [{ kind: "county", county, city: "", zone: "" }];
   return [];
@@ -128,7 +132,9 @@ export function requestPlaceRelation(r: Pick<RequestForMatch, "county" | "city" 
   const choices = requestPlaceChoices(r);
   const complex = detectResidentialComplex(p.title, p.address, p.district);
   // Ansamblul are propria localitate (ex. Militari Residence → Chiajna), indiferent de fișă.
-  const loc = complex ? { county: complex.county, city: complex.city, district: complex.label } : { county: p.county, city: p.city, district: p.district };
+  const loc = complex
+    ? { county: complex.county, city: complex.city, district: complex.label }
+    : { county: p.county, city: p.city, district: p.district, zone: geographyKey(p.city).match(/^sector [1-6]$/)?.[0] ?? null };
   if (placeMatches(loc, choices)) return { rel: "strict", reason: complex ? `${complex.label} (${complex.city})` : "zonă" };
   const reqBuc = geographyKey(r.city).includes("bucuresti") || geographyKey(r.county).includes("bucuresti");
   const propZone = complex ? complex.label : p.district;
