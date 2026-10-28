@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createHomedirectAdapter, type HomedirectAdapterDeps } from "../adapters/homedirect.server";
 import type { PortalContext } from "../adapter";
-import { getPortal } from "../registry";
+import { getPortalDefinition } from "../registry";
 import { resetHomedirectClientState } from "./client.server";
 import type { HomedirectBody } from "./mapper";
 import { HOMEDIRECT_AGENCY_LINK_HINT, withAccounts, type HomedirectStored } from "./publish";
@@ -9,7 +9,7 @@ import { HOMEDIRECT_AGENCY_LINK_HINT, withAccounts, type HomedirectStored } from
 const ORG = "org-1";
 const USER = "user-1";
 const env = { HOMEDIRECT_CRM_API_KEY: "hd_crm_secret_key" };
-const ctx = { organizationId: ORG, definition: getPortal("homedirect")!, direction: "habitoo_to_portal", authenticationMode: "portal_api_key", externalAccountId: null, portalCredential: null, settings: {}, allowLiveRequests: true } as unknown as PortalContext;
+const ctx = { organizationId: ORG, definition: getPortalDefinition("homedirect")!, direction: "habitoo_to_portal", authenticationMode: "portal_api_key", externalAccountId: null, portalCredential: null, settings: {}, allowLiveRequests: true } as unknown as PortalContext;
 const ref = { propertyId: "prop-1", externalId: null };
 
 const agency = { name: "Agenția Test", email: "office@test.ro", phone: "0700000000" };
