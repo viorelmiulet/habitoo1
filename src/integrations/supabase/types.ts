@@ -3242,6 +3242,42 @@ export type Database = {
           },
         ]
       }
+      imo24_image_retries: {
+        Row: {
+          attempts: number
+          organization_id: string
+          property_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          organization_id: string
+          property_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          organization_id?: string
+          property_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imo24_image_retries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imo24_image_retries_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imobiliare_agents: {
         Row: {
           created_at: string
@@ -6646,6 +6682,7 @@ export type Database = {
           created_at: string
           enabled: boolean
           finished_at: string | null
+          followup_at: string | null
           id: string
           imobiliare_mode: string | null
           imobiliare_promotions: Json | null
@@ -6671,6 +6708,7 @@ export type Database = {
           created_at?: string
           enabled: boolean
           finished_at?: string | null
+          followup_at?: string | null
           id?: string
           imobiliare_mode?: string | null
           imobiliare_promotions?: Json | null
@@ -6696,6 +6734,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           finished_at?: string | null
+          followup_at?: string | null
           id?: string
           imobiliare_mode?: string | null
           imobiliare_promotions?: Json | null
@@ -10276,6 +10315,7 @@ export type Database = {
           created_at: string
           enabled: boolean
           finished_at: string | null
+          followup_at: string | null
           id: string
           imobiliare_mode: string | null
           imobiliare_promotions: Json | null
@@ -10811,6 +10851,16 @@ export type Database = {
       restore_lead: { Args: { _id: string }; Returns: string }
       restore_property: { Args: { _id: string }; Returns: string }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
+      schedule_imo24_image_retry: {
+        Args: {
+          _actor: string
+          _delay_seconds: number
+          _max: number
+          _org: string
+          _property: string
+        }
+        Returns: number
+      }
       search_listings_places: {
         Args: { _choices: Json }
         Returns: {
