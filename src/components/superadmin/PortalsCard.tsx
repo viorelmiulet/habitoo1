@@ -14,6 +14,7 @@ import {
   ExternalLink,
   KeyRound,
   PlugZap,
+  RefreshCw,
   Save,
   Trash2,
   Unplug,
