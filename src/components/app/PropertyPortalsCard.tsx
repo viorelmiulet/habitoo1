@@ -908,7 +908,7 @@ export const PropertyPortalsCard = forwardRef<
               const latestOperation = latestOperationByPortal.get(cell.portalId);
               const latestOperationFailed = latestOperation?.success === false;
               const detail = publishSoon
-                ? "Publicare în curând"
+                ? "În curând"
                 : busy
                 ? "Se sincronizează…"
                 : latestOperationFailed && cell.state !== "needs_packet" && !unconfirmed

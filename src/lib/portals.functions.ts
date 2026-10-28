@@ -1906,7 +1906,7 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
         p.status === "available" &&
         !isPortalCovered(p.id) &&
         // Portalurile doar cu test de conexiune (ex. Imopedia, etapa 1) nu apar în Publicare.
-        (p.capabilities.includes("publish_listing") || p.capabilities.includes("feed_pull")) &&
+        (p.capabilities.includes("publish_listing") || p.capabilities.includes("feed_pull") || p.publish_coming_soon === true) &&
         (visiblePortals === null || visiblePortals.has(p.id)),
     );
 
