@@ -8,13 +8,18 @@
  */
 import { acpSourceOutcomeLabel } from "../source-outcome";
 import type { AcpAiInsight } from "../ai/schema";
+import { ACP_ADJUSTMENT_LABELS } from "../adjustments";
 
 export type AcpReportSubject = {
   rooms?: number | null;
   usableArea?: number | null;
   floor?: number | null;
+  totalFloors?: number | null;
   constructionYear?: number | null;
   condition?: string | null;
+  balcony?: boolean | null;
+  parking?: boolean | null;
+  furnished?: boolean | null;
   propertyType?: string | null;
   transactionKind?: string | null;
   price?: number | null;
@@ -25,6 +30,8 @@ export type AcpReportAdjustment = {
   label: string;
   basis: string;
   amount: number;
+  /** Factorul motorului (area, rooms…), când e salvat. */
+  factor?: string | null;
 };
 
 export type AcpReportComparableInput = {
@@ -48,6 +55,14 @@ export type AcpReportComparableInput = {
   subject: AcpReportSubject;
   /** Motor v2: aducerea prețului la trimestrul analizei. Absent la versiunile v1. */
   timeAdjustment?: AcpReportTimeAdjustmentInput | null;
+  /** Raport v2: date de afișare din snapshot (sau completate pentru versiunile vechi). */
+  reference?: string | null;
+  status?: "active" | "inactive" | null;
+  firstSeenAt?: string | null;
+  disappearedAt?: string | null;
+  daysOnMarket?: number | null;
+  photos?: string[];
+  description?: string | null;
 };
 
 /** Ajustarea în timp a unui comparabil, așa cum a fost salvată în snapshot. */
@@ -110,6 +125,9 @@ export type AcpReportVersionInput = {
     capturedAt: string | null;
     pricePerSqm: number | null;
     subject: AcpReportSubject;
+    /** Raport v2: pozele proprietății analizate (URL-uri semnate). */
+    photos?: string[];
+    description?: string | null;
   };
   estimate: {
     estimatedMin: number | null;
@@ -312,9 +330,93 @@ export type AcpReportModel = {
   } | null;
   /** Versiunea motorului determinist folosit la calcul. */
   engineVersion: number;
+  /** Raport v2: secțiunile tehnice apar doar dacă agentul a bifat anexa. */
+  includeAppendix: boolean;
+  cover: AcpReportCover;
+  /** Comparabilele folosite în calcul, numerotate #1..#n. */
+  used: AcpReportUsedComparable[];
+  subjectSheet: AcpReportSheet;
+  /** Tabelul de comparație, câte 4 comparabile pe pagină. */
+  comparisonPages: AcpReportComparisonPage[];
+  priceChart: AcpReportPriceChart | null;
+  valuation: {
+    cards: { label: string; value: string; highlight: boolean }[];
+    listingNote: string | null;
+  };
+  recommendations: {
+    note: string;
+    groups: { title: string; body?: string; items?: string[] }[];
+  } | null;
+  legalNotice: string;
 };
 
-export const ACP_REPORT_FORMAT_VERSION = "1.0";
+export type AcpReportCover = {
+  dateLabel: string;
+  title: string;
+  photo: string | null;
+  propertyTitle: string;
+  address: string | null;
+  disclaimer: string;
+  agentName: string | null;
+  agentRole: string | null;
+  agencyName: string;
+};
+
+export type AcpReportSheet = {
+  label: string;
+  title: string;
+  reference: string | null;
+  photos: string[];
+  statusLabel: string | null;
+  active: boolean;
+  price: string;
+  characteristics: { label: string; value: string }[];
+  description: string | null;
+  adjustments: { label: string; basis: string; amount: string }[];
+  finalAdjustedPrice: string | null;
+};
+
+export type AcpReportUsedComparable = {
+  index: number;
+  key: string;
+  reference: string;
+  address: string;
+  active: boolean;
+  statusLabel: string;
+  daysOnMarket: string;
+  firstSeen: string;
+  disappeared: string;
+  price: string;
+  adjustmentTotal: string;
+  adjustedPrice: string;
+  photo: string | null;
+  sheet: AcpReportSheet;
+};
+
+export type AcpReportComparisonCell = { value: string; adjustment: string | null };
+export type AcpReportComparisonPage = {
+  /** Indicii (#n) comparabilelor de pe pagină. */
+  columns: number[];
+  headers: { label: string; photo: string | null }[];
+  top: { label: string; cells: AcpReportComparisonCell[] }[];
+  features: { label: string; cells: AcpReportComparisonCell[] }[];
+  adjusted: string[];
+};
+
+export type AcpReportPriceChart = {
+  bars: { label: string; value: number; display: string }[];
+  recommended: { value: number; display: string } | null;
+  band: { min: number; max: number; display: string } | null;
+};
+
+export const ACP_REPORT_FORMAT_VERSION = "2.0";
+export const ACP_REPORT_COMPARABLES_PER_PAGE = 4;
+
+export const ACP_REPORT_COVER_DISCLAIMER =
+  "Raport generat în Habitoo CRM prin metoda comparației directe, pe baza datelor disponibile la data analizei. Exprimă opinia agentului imobiliar și nu constituie o evaluare autorizată ANEVAR, o expertiză judiciară sau o consultanță juridică ori financiară.";
+
+export const ACP_REPORT_LEGAL_NOTICE =
+  "Prezentul raport este o estimare orientativă de piață, realizată în Habitoo CRM prin metoda comparației directe pe baza datelor disponibile la data analizei, și exprimă opinia agentului imobiliar. Nu constituie o evaluare autorizată ANEVAR, o expertiză judiciară sau o consultanță juridică ori financiară. Prețul de tranzacționare efectiv poate diferi în funcție de negociere, starea reală a imobilului și evoluția pieței.";
 
 const TIER_LABELS: Record<string, string> = {
   direct: "Comparabil direct",
@@ -418,6 +520,8 @@ export function buildAcpReportModel(params: {
   agency: AcpReportAgency;
   reportNumber: number;
   generatedAt: string;
+  includeAppendix?: boolean;
+  generatedBy?: { name: string | null; role: string | null } | null;
 }): AcpReportModel {
   const { version, agency, reportNumber, generatedAt } = params;
   const currency = version.currency || version.target.subject.currency || "EUR";
@@ -620,6 +724,9 @@ export function buildAcpReportModel(params: {
     precision: buildPrecisionSection(version.precision ?? null, currency),
     timeAdjustment: buildTimeAdjustmentSection(version.timeAdjustment ?? null),
     engineVersion: finite(version.engineVersion ?? null) ?? 1,
+    ...buildV2Sections(version, agency, currency, generatedAt, params.generatedBy ?? null),
+    includeAppendix: params.includeAppendix === true,
+    legalNotice: ACP_REPORT_LEGAL_NOTICE,
   };
 }
 
