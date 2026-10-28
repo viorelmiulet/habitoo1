@@ -10070,6 +10070,51 @@ export type Database = {
           },
         ]
       }
+      zonata_listings: {
+        Row: {
+          expires_at: string | null
+          external_id: string
+          id: string
+          last_checked_at: string | null
+          organization_id: string
+          property_id: string
+          rejected_reason: string | null
+          status: string
+          transaction: string
+          updated_at: string
+          url: string | null
+          zonata_id: string | null
+        }
+        Insert: {
+          expires_at?: string | null
+          external_id: string
+          id?: string
+          last_checked_at?: string | null
+          organization_id: string
+          property_id: string
+          rejected_reason?: string | null
+          status: string
+          transaction: string
+          updated_at?: string
+          url?: string | null
+          zonata_id?: string | null
+        }
+        Update: {
+          expires_at?: string | null
+          external_id?: string
+          id?: string
+          last_checked_at?: string | null
+          organization_id?: string
+          property_id?: string
+          rejected_reason?: string | null
+          status?: string
+          transaction?: string
+          updated_at?: string
+          url?: string | null
+          zonata_id?: string | null
+        }
+        Relationships: []
+      }
       zonata_nomenclature_syncs: {
         Row: {
           changes: Json
