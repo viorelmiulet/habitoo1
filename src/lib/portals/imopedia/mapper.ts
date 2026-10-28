@@ -80,7 +80,7 @@ export function imopediaCommissionPercent(value: string | null | undefined): str
 
 // ---------------------------------------------------------------- text curat
 
-const URL_RE = /\b(?:https?:\/\/|www\.)\S+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:ro|com|net|org|eu|info|biz|io)(?:\/\S*)?/gi;
+const URL_RE = /\b(?:https?:\/\/|www\.)[^\s,;]*[^\s,;.!?]|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:ro|com|net|org|eu|info|biz|io)(?:\/[^\s,;]*[^\s,;.!?])?/gi;
 const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 const PHONE_RE = /(?:\+?40|\b0)[\s.\-/()]*7(?:[\s.\-/()]*\d){8}\b|(?:\+?40|\b0)[\s.\-/()]*[23](?:[\s.\-/()]*\d){8}\b/g;
 const SOCIAL_RE = /(?:\b(?:facebook|fb|instagram|insta|tiktok|whatsapp|telegram|youtube|linkedin)\b\s*[:\-]?\s*)?@[a-z0-9._]{2,}|\b(?:facebook|instagram|tiktok|whatsapp|telegram)\s*[:\-]\s*\S+/gi;
