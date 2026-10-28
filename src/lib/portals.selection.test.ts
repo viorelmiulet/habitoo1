@@ -169,15 +169,15 @@ vi.mock("@/lib/portals/adapters/index.server", () => ({
       };
     }
     return {
-      publishListing: async (ctx: { settings: Record<string, unknown>; imobiliarePromotions?: unknown }) => {
+      publishListing: async (ctx: { settings: Record<string, unknown> }, ref?: { imobiliarePromotions?: unknown }) => {
         adapterContexts.push({ portal: id, settings: ctx.settings });
         // La publicare, promovările Imobiliare.ro pleacă în același POST cu anunțul.
-        if (ctx.imobiliarePromotions) promotionCalls.push(ctx.imobiliarePromotions);
+        if (ref?.imobiliarePromotions) promotionCalls.push(ref.imobiliarePromotions);
         return {
           ok: true,
           data: {
             live: true, detail: null, externalId: "CI-1", message: null,
-            promotionErrors: ctx.imobiliarePromotions && promotionRejection ? [{ promotionId: "tl", message: "Top Listing: locurile s-au ocupat" }] : [],
+            promotionErrors: ref?.imobiliarePromotions && promotionRejection ? [{ promotionId: "tl", message: "Top Listing: locurile s-au ocupat" }] : [],
           },
         };
       },
