@@ -33,6 +33,7 @@ import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImopediaBoostButton } from "@/components/app/ImopediaBoostButton";
 import { ZonataPreviewButton } from "@/components/app/ZonataPreviewButton";
+import { ZonataStatusPanel } from "@/components/app/ZonataStatusPanel";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
 import { getImobiliareMediaStatus } from "@/lib/portals/imobiliare-media.functions";
@@ -901,9 +902,16 @@ export const PropertyPortalsCard = forwardRef<
                 (cell.state === "error" ||
                   Boolean(cell.lastError) ||
                   (cell.availability === "available" && value && !cell.configured));
+              const latestOperationFailedFor = (id: string) => latestOperationByPortal.get(id)?.success === false;
               const stateView =
                 cell.portalId === "olx_direct" && cell.state === "syncing"
                   ? { label: "În moderare OLX", pill: "pending" as StatusPillState }
+                  : cell.portalId === "zonata" && cell.state === "syncing"
+                  ? { label: "În verificare", pill: "pending" as StatusPillState }
+                  : cell.portalId === "zonata" && cell.state === "needs_packet"
+                  ? { label: "Necesită pachet ZonaTa", pill: "pending" as StatusPillState }
+                  : cell.portalId === "zonata" && cell.state === "error" && !latestOperationFailedFor(cell.portalId)
+                  ? { label: "Respins", pill: "error" as StatusPillState }
                   : cell.portalId === "imobiliare_ro" && cell.imobiliareConfirmedMode === "imoradar_only" && cell.selected && !cell.lastError && cell.state !== "error"
                     ? { label: "Trimis pe imoradar24", pill: "published" as StatusPillState }
                     : STATE_VIEW[cell.state];
@@ -1114,6 +1122,7 @@ export const PropertyPortalsCard = forwardRef<
                             Promovat
                           </label>
                         ) : null}
+                        {cell.portalId === "zonata" && cell.selected ? <ZonataStatusPanel organizationId={organizationId} propertyId={propertyId} /> : null}
                         {cell.portalId === "zonata" && isSuperadmin ? <ZonataPreviewButton propertyId={propertyId} /> : null}
                         {cell.portalId === "imopedia" && cell.selected ? (
                           <ImopediaBoostButton organizationId={organizationId} propertyId={propertyId} />

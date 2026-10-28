@@ -129,6 +129,7 @@ import { Route as ApiPublicCronStoriaMetaRouteImport } from './routes/api/public
 import { Route as ApiPublicCronStoriaWebhookRetryRouteImport } from './routes/api/public/cron/storia-webhook-retry'
 import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
 import { Route as ApiPublicCronVdiLeadsRouteImport } from './routes/api/public/cron/vdi-leads'
+import { Route as ApiPublicCronZonataStatusRouteImport } from './routes/api/public/cron/zonata-status'
 import { Route as ApiPublicListingsUpsertRouteImport } from './routes/api/public/listings/upsert'
 import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
 import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
@@ -836,6 +837,12 @@ const ApiPublicCronVdiLeadsRoute = ApiPublicCronVdiLeadsRouteImport.update({
   path: '/api/public/cron/vdi-leads',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronZonataStatusRoute =
+  ApiPublicCronZonataStatusRouteImport.update({
+    id: '/api/public/cron/zonata-status',
+    path: '/api/public/cron/zonata-status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicListingsUpsertRoute = ApiPublicListingsUpsertRouteImport.update({
   id: '/api/public/listings/upsert',
   path: '/api/public/listings/upsert',
@@ -1218,6 +1225,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
+  '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -1382,6 +1390,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
+  '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -1552,6 +1561,7 @@ export interface FileRoutesById {
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
+  '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -1722,6 +1732,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/cron/vdi-leads'
+    | '/api/public/cron/zonata-status'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -1886,6 +1897,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/cron/vdi-leads'
+    | '/api/public/cron/zonata-status'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -2055,6 +2067,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/cron/vdi-leads'
+    | '/api/public/cron/zonata-status'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -2174,6 +2187,7 @@ export interface RootRouteChildren {
   ApiPublicCronStoriaWebhookRetryRoute: typeof ApiPublicCronStoriaWebhookRetryRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
   ApiPublicCronVdiLeadsRoute: typeof ApiPublicCronVdiLeadsRoute
+  ApiPublicCronZonataStatusRoute: typeof ApiPublicCronZonataStatusRoute
   ApiPublicListingsUpsertRoute: typeof ApiPublicListingsUpsertRoute
   ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
   ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
@@ -3059,6 +3073,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronVdiLeadsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/zonata-status': {
+      id: '/api/public/cron/zonata-status'
+      path: '/api/public/cron/zonata-status'
+      fullPath: '/api/public/cron/zonata-status'
+      preLoaderRoute: typeof ApiPublicCronZonataStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/listings/upsert': {
       id: '/api/public/listings/upsert'
       path: '/api/public/listings/upsert'
@@ -3695,6 +3716,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronStoriaWebhookRetryRoute: ApiPublicCronStoriaWebhookRetryRoute,
   ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
   ApiPublicCronVdiLeadsRoute: ApiPublicCronVdiLeadsRoute,
+  ApiPublicCronZonataStatusRoute: ApiPublicCronZonataStatusRoute,
   ApiPublicListingsUpsertRoute: ApiPublicListingsUpsertRoute,
   ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
   ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,
