@@ -8,6 +8,7 @@
 import { useState } from "react";
 import clickimobLogo from "@/assets/portals/clickimob-logo.webp.asset.json";
 import facebookLogo from "@/assets/portals/facebook.svg";
+import homedirectLogo from "@/assets/portals/homedirect.png";
 import homepitchLogo from "@/assets/portals/homepitch.png";
 import imobiliareRoLogo from "@/assets/portals/imobiliare_ro.png";
 import imospotLogo from "@/assets/portals/imospot.png";
@@ -35,6 +36,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   imospot: imospotLogo,
   imo24: imo24Logo,
   imopedia: imopediaLogo,
+  homedirect: homedirectLogo,
   homepitch: homepitchLogo,
   imobiliare_ro: imobiliareRoLogo,
   storia: storiaLogo,
