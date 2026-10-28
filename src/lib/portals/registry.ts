@@ -11,6 +11,7 @@
  */
 import { CRM_URL } from "@/lib/host";
 import { IMO24_KEY_FORMAT_MESSAGE, isValidImo24Key } from "./imo24/key";
+import { IMOPEDIA_AGENCY_ID_MESSAGE, parseImopediaAgencyId } from "./imopedia/config";
 
 export type PortalId = string;
 
@@ -55,7 +56,7 @@ export type PortalConfigField = {
   secret?: boolean;
   optional?: boolean;
   /** Validare suplimentară de format, aplicată în UI și server-side. */
-  validate?: "email" | "imo24_key";
+  validate?: "email" | "imo24_key" | "positive_int";
   /** Unde se persistă: identificatorul contului, credențialul criptat sau setările. */
   target: "external_account_id" | "credentials" | "settings" | "webhook_secret";
 };
@@ -477,6 +478,37 @@ export const PORTALS: PortalDefinition[] = [
     supports_promoted_flag: true,
   },
   {
+    id: "imopedia",
+    activation: "approval",
+    display_name: "Imopedia.ro",
+    description:
+      "Integrare directă prin API-ul SOAP Imopedia.ro, cu credențialele emise de Imopedia pentru agenție. Deocamdată este disponibil doar testul conexiunii.",
+    logo: "IP",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    // Credențialele (user, parolă, ID agenție) le EMITE IMOPEDIA; le introduce SuperAdminul.
+    authentication: ["username_password"],
+    capabilities: ["test_connection"],
+    configuration_schema: {
+      fields: [
+        { key: "username", label: "Utilizator API Imopedia", target: "external_account_id" },
+        { key: "password", label: "Parolă API Imopedia", secret: true, target: "credentials" },
+        {
+          key: "agency_id",
+          label: "ID agenție Imopedia (AGENTIA)",
+          help: "ID-ul numeric al agenției, primit de la Imopedia odată cu credențialele.",
+          placeholder: "ex. 123",
+          validate: "positive_int",
+          target: "settings",
+        },
+      ],
+    },
+    website: "https://www.imopedia.ro",
+    docs: "https://docs.imopedia.ro/",
+    notes:
+      "API SOAP 1.1 RPC/encoded, WSDL https://www.imopedia.ro/soap.wsdl. Credențialele (user, parolă, ID agenție) se obțin de la support@imopedia.ro. Publicarea și media vor fi adăugate în etapele următoare.",
+  },
+  {
     id: "primulanunt",
     display_name: "PrimulAnunț.ro",
     description:
@@ -639,6 +671,12 @@ export function validatePortalConfigValues(
     const value = (raw ?? "").trim();
     // Câmpul necompletat nu e validat aici: lipsa lui e semnalată la conectare.
     if (value.length === 0) continue;
+    if (field.validate === "positive_int") {
+      if (parseImopediaAgencyId(value) === null) {
+        return definition.id === "imopedia" ? IMOPEDIA_AGENCY_ID_MESSAGE : `„${field.label}" trebuie să fie un număr întreg ≥ 1.`;
+      }
+      continue;
+    }
     if (field.validate === "imo24_key") {
       if (!isValidImo24Key(value)) return IMO24_KEY_FORMAT_MESSAGE;
       continue;

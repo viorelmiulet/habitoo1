@@ -606,7 +606,11 @@ export const getPortalHub = createServerFn({ method: "POST" })
           hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
           hasWebhookSecret: typeof settings["webhook_secret_encrypted"] === "string",
           endpointUrl:
-            typeof settings["endpoint_url"] === "string" ? String(settings["endpoint_url"]) : null,
+            typeof settings["endpoint_url"] === "string"
+              ? String(settings["endpoint_url"])
+              : portal.id === "imopedia" && typeof settings["agency_id"] === "number"
+                ? String(settings["agency_id"])
+                : null,
           allowLiveRequests: settings["allow_live"] === true,
           activated: row?.activated === true,
           lastSyncAt: row?.last_sync_at ?? null,
@@ -845,7 +849,13 @@ export const savePortalConnection = createServerFn({ method: "POST" })
     const { encryptPortalCredential } = await import("@/lib/portals/crypto.server");
     const { row } = await buildContext(organizationId, definition);
     const settings = { ...((row?.settings ?? {}) as Record<string, unknown>) };
-    if (data.endpointUrl !== undefined) {
+    if (data.endpointUrl !== undefined && definition.id === "imopedia") {
+      // Imopedia: câmpul „settings” este ID-ul numeric al agenției (AGENTIA).
+      const { parseImopediaAgencyId } = await import("@/lib/portals/imopedia/config");
+      const agencyId = parseImopediaAgencyId(data.endpointUrl);
+      if (agencyId !== null) settings["agency_id"] = agencyId;
+      else delete settings["agency_id"];
+    } else if (data.endpointUrl !== undefined) {
       if (data.endpointUrl) settings["endpoint_url"] = data.endpointUrl;
       else delete settings["endpoint_url"];
     }
@@ -1021,7 +1031,11 @@ export const testPortalConnection = createServerFn({ method: "POST" })
       errorCode: result.ok ? null : result.code,
       errorMessage: result.ok ? null : result.message,
       ...(result.ok ? {} : { httpStatus: result.httpStatus ?? null }),
-      ...(result.ok ? {} : { portalResponse: result.portalResponse ?? null }),
+      ...(result.ok
+        ? result.data.portalResponse !== undefined
+          ? { portalResponse: result.data.portalResponse }
+          : {}
+        : { portalResponse: result.portalResponse ?? null }),
       actorId: context.userId,
       durationMs: testDurationMs,
     });
