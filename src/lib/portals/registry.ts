@@ -412,7 +412,9 @@ export const PORTALS: PortalDefinition[] = [
     status: "available",
     directions: ["habitoo_to_portal"],
     authentication: ["oauth"],
-    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "manage_media"],
+    // Bifa „Promovat” = Gold Imopedia (GOLD=1/0 trimis explicit la fiecare salvare).
+    supports_promoted_flag: true,
     configuration_schema: { fields: [] },
     website: "https://www.olx.ro",
     docs: "https://www.olx.ro/api/partner",
