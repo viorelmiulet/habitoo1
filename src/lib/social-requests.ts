@@ -132,7 +132,9 @@ export function requestPlaceRelation(r: Pick<RequestForMatch, "county" | "city" 
   const choices = requestPlaceChoices(r);
   const complex = detectResidentialComplex(p.title, p.address, p.district);
   // Ansamblul are propria localitate (ex. Militari Residence → Chiajna), indiferent de fișă.
-  const loc = complex ? { county: complex.county, city: complex.city, district: complex.label } : { county: p.county, city: p.city, district: p.district };
+  const loc = complex
+    ? { county: complex.county, city: complex.city, district: complex.label }
+    : { county: p.county, city: p.city, district: p.district, zone: geographyKey(p.city).match(/^sector [1-6]$/)?.[0] ?? null };
   if (placeMatches(loc, choices)) return { rel: "strict", reason: complex ? `${complex.label} (${complex.city})` : "zonă" };
   const reqBuc = geographyKey(r.city).includes("bucuresti") || geographyKey(r.county).includes("bucuresti");
   const propZone = complex ? complex.label : p.district;
