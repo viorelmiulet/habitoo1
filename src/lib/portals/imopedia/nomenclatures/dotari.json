@@ -1,0 +1,166 @@
+{
+  "meta": {
+    "source": "Nomenclatoare - API Imopedia.ro.xlsx",
+    "source_sheet": "DOTARI",
+    "generated_on": "2026-05-29",
+    "description": "Dotări disponibile, grupate pe tip de imobil."
+  },
+  "items": [
+    {
+      "property_type": 1,
+      "value": "aer conditionat"
+    },
+    {
+      "property_type": 1,
+      "value": "sistem de alarma"
+    },
+    {
+      "property_type": 1,
+      "value": "sensor pentru incendii"
+    },
+    {
+      "property_type": 1,
+      "value": "video"
+    },
+    {
+      "property_type": 1,
+      "value": "HI-FI"
+    },
+    {
+      "property_type": 1,
+      "value": "interfon"
+    },
+    {
+      "property_type": 1,
+      "value": "semineu"
+    },
+    {
+      "property_type": 1,
+      "value": "scara interioara"
+    },
+    {
+      "property_type": 1,
+      "value": "jacuzzi"
+    },
+    {
+      "property_type": 1,
+      "value": "sauna"
+    },
+    {
+      "property_type": 1,
+      "value": "sala de fitness"
+    },
+    {
+      "property_type": 1,
+      "value": "lift"
+    },
+    {
+      "property_type": 1,
+      "value": "usa metalica"
+    },
+    {
+      "property_type": 1,
+      "value": "telecomanda garaj"
+    },
+    {
+      "property_type": 1,
+      "value": "masina de spalat"
+    },
+    {
+      "property_type": 8,
+      "value": "aer conditionat"
+    },
+    {
+      "property_type": 8,
+      "value": "sistem de alarma"
+    },
+    {
+      "property_type": 8,
+      "value": "sensor pentru incendii"
+    },
+    {
+      "property_type": 8,
+      "value": "video"
+    },
+    {
+      "property_type": 8,
+      "value": "interfon"
+    },
+    {
+      "property_type": 8,
+      "value": "semineu"
+    },
+    {
+      "property_type": 8,
+      "value": "scara interioara"
+    },
+    {
+      "property_type": 8,
+      "value": "termo-instant baie"
+    },
+    {
+      "property_type": 8,
+      "value": "termo-instant bucatarie"
+    },
+    {
+      "property_type": 8,
+      "value": "Jacuzzi"
+    },
+    {
+      "property_type": 8,
+      "value": "sauna"
+    },
+    {
+      "property_type": 8,
+      "value": "sala de fitness"
+    },
+    {
+      "property_type": 8,
+      "value": "lift"
+    },
+    {
+      "property_type": 8,
+      "value": "usa metalica"
+    },
+    {
+      "property_type": 8,
+      "value": "telecomanda garaj"
+    }
+  ],
+  "by_property_type": {
+    "1": [
+      "aer conditionat",
+      "sistem de alarma",
+      "sensor pentru incendii",
+      "video",
+      "HI-FI",
+      "interfon",
+      "semineu",
+      "scara interioara",
+      "jacuzzi",
+      "sauna",
+      "sala de fitness",
+      "lift",
+      "usa metalica",
+      "telecomanda garaj",
+      "masina de spalat"
+    ],
+    "8": [
+      "aer conditionat",
+      "sistem de alarma",
+      "sensor pentru incendii",
+      "video",
+      "interfon",
+      "semineu",
+      "scara interioara",
+      "termo-instant baie",
+      "termo-instant bucatarie",
+      "Jacuzzi",
+      "sauna",
+      "sala de fitness",
+      "lift",
+      "usa metalica",
+      "telecomanda garaj"
+    ]
+  }
+}

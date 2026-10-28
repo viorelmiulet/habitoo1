@@ -1,0 +1,406 @@
+{
+  "meta": {
+    "source": "Nomenclatoare - API Imopedia.ro.xlsx",
+    "source_sheet": "VECINATATI",
+    "generated_on": "2026-05-29",
+    "description": "Vecinătăți disponibile și tipurile de imobile asociate."
+  },
+  "items": [
+    {
+      "name": "bar/pub",
+      "property_types": [
+        3
+      ]
+    },
+    {
+      "name": "restaurant",
+      "property_types": [
+        3
+      ]
+    },
+    {
+      "name": "vedere la mare",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "magazine",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "piata",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "gradinita",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "scoala",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "transport in comun",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "parc",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "lac",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "padure",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "drum national",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "drum forestier",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "drum urban",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "hotel",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "aeroport",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "bar/pub",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "restaurant",
+      "property_types": [
+        5
+      ]
+    },
+    {
+      "name": "vedere la mare",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "magazine",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "piata",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "gradinita",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "scoala",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "transport in comun",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "parc",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "lac",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "padure",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "drum national",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "drum forestier",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "drum urban",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "hotel",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "aeroport",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "bar/pub",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "restaurant",
+      "property_types": [
+        2
+      ]
+    },
+    {
+      "name": "vedere la mare",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "magazine",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "piata",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "gradinita",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "scoala",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "transport in comun",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "parc",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "lac",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "padure",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "drum national",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "drum forestier",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "drum urban",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "hotel",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "aeroport",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "bar/pub",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "restaurant",
+      "property_types": [
+        7
+      ]
+    },
+    {
+      "name": "vedere la mare",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "magazine",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "piata",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "gradinita",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "scoala",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "transport in comun",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "parc",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "lac",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "padure",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "drum national",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "drum forestier",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "drum urban",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "hotel",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "aeroport",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "bar/pub",
+      "property_types": [
+        8
+      ]
+    },
+    {
+      "name": "restaurant",
+      "property_types": [
+        8
+      ]
+    }
+  ]
+}
