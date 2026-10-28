@@ -62,6 +62,8 @@ export type PortalRequirementSubject = {
   agentEmail: string | null;
   /** Telefonul de contact efectiv trimis: agentul, altfel agenția. */
   contactPhone: string | null;
+  /** imo24.ro: motivele blocante calculate de mapper-ul imo24 (`imo24BlockingReasons`). */
+  imo24Reasons?: string[];
 };
 
 export type PortalRequirementRule = {
@@ -78,6 +80,8 @@ export type PortalRequirementSpec = {
   required: PortalRequirementRule[];
   /** Permise: se trimit doar dacă există date reale. */
   allowed: string[];
+  /** Motive blocante calculate integral de mapper-ul portalului (fără reguli statice). */
+  mapperReasons?: (s: PortalRequirementSubject) => string[];
 };
 
 const text = (value: string | null | undefined) => (value ?? "").trim();
@@ -440,16 +444,11 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     ],
     allowed: COMMON_ALLOWED,
   },
-  // imo24.ro (pasul 1, doar conexiunea): setul minim comun. Limitele reale din
-  // `GET /me` (titlu, descriere, preț minim) se adaugă odată cu publicarea.
+  // imo24.ro: regulile vin integral din mapper-ul imo24 (`src/lib/portals/imo24/mapper.ts`).
   imo24: {
-    required: [
-      RULE.transaction(),
-      RULE.price(),
-      RULE.propertyType(),
-      RULE.location(),
-    ],
+    required: [],
     allowed: COMMON_ALLOWED,
+    mapperReasons: (s) => s.imo24Reasons ?? [],
   },
   // VDI.ro: obligatorii idintern, titlu (≥10, completat de mapper), tip ofertă,
   // tip operațiune, județ, localitate, monedă. Emailul agentului e verificat în adaptor.
@@ -505,6 +504,9 @@ export function validatePortalRequirements(
   const missing = required
     .filter((r) => !r.ok)
     .map(({ key, label, requirement }) => ({ key, label, requirement }));
+  for (const [index, reason] of (spec.mapperReasons?.(subject) ?? []).entries()) {
+    missing.push({ key: `${portalId}_${index}`, label: reason, requirement: "" });
+  }
   return {
     portalId,
     known: true,
