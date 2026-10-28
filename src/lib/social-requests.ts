@@ -4,7 +4,7 @@ import { toLenientNumber } from "@/routes/api/public/listings/upsert";
 import { geographyKey } from "./private-listing-geography";
 import { placeMatches, type PlaceChoice } from "./search-places";
 import { detectResidentialComplex } from "./acp/complexes";
-import { neighborhoodOf, zoneRelation } from "./bucharest-zones";
+import { zoneRelation } from "./bucharest-zones";
 
 export const SOCIAL_REQUESTS_MAX_PER_CALL = 500;
 export const SOCIAL_REQUESTS_RETENTION_DAYS = 30;
@@ -137,7 +137,7 @@ export function requestPlaceRelation(r: Pick<RequestForMatch, "county" | "city" 
   let near: PlaceResult = null;
   for (const z of r.zones) {
     const rel = zoneRelation(z, propZone);
-    if (rel === "same") return { rel: "strict", reason: `${propZone} face parte din ${neighborhoodOf(z) === geographyKey(z) ? z : "același cartier"}` };
+    if (rel === "same") return { rel: "strict", reason: `zonă înrudită: ${z} ↔ ${propZone}` };
     if (rel === "neighbor" && !near) near = { rel: "near", reason: `${propZone} e zonă vecină cu ${z}` };
   }
   return near;
