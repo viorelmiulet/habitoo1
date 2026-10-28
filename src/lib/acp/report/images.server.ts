@@ -89,8 +89,15 @@ export function normalizeReportImage(
       const data = new Uint8Array(png.width * png.height * 4);
       const channels = png.channels;
       const scale = png.depth === 16 ? 257 : 1;
-      if (png.palette) return null;
-      for (let i = 0; i < png.width * png.height; i++) {
+      const palette = png.palette as number[][] | undefined;
+      if (palette) {
+        for (let i = 0; i < png.width * png.height; i++) {
+          const entry = palette[Number(png.data[i] ?? 0)] ?? [255, 255, 255];
+          const alpha = entry[3] ?? 255;
+          for (let c = 0; c < 3; c++) data[i * 4 + c] = Math.round(((entry[c] ?? 255) * alpha) / 255 + 255 * (1 - alpha / 255));
+          data[i * 4 + 3] = 255;
+        }
+      } else for (let i = 0; i < png.width * png.height; i++) {
         const src = i * channels;
         const value = (offset: number) => Math.round(Number(png.data[src + offset] ?? 0) / scale);
         const alpha = channels === 2 ? value(1) : channels === 4 ? value(3) : 255;
