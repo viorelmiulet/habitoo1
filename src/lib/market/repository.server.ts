@@ -70,6 +70,7 @@ function listingRow(listing: NormalizedListing) {
       sector: listing.sector,
       images: listing.images,
       period: listing.period,
+      description: listing.description ?? null,
     } : {}),
   };
 }
@@ -302,6 +303,10 @@ export function createMarketRepository(admin: Admin): MarketRepository {
         last_import_run_id: patch.runId,
         updated_at: patch.now,
       };
+      // Un import fără aceste câmpuri nu șterge valorile deja salvate.
+      for (const key of ["description", "floor", "construction_year"]) {
+        if (update[key] === null || update[key] === undefined) delete update[key];
+      }
       if (patch.marketEntityId !== undefined) update.market_entity_id = patch.marketEntityId;
       if (patch.dedupeStatus !== undefined) update.dedupe_status = patch.dedupeStatus;
       if (patch.dedupeScore !== undefined) update.dedupe_score = patch.dedupeScore;

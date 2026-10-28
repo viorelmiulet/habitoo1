@@ -13,6 +13,7 @@ import { snapshotGeo, type GeoPoint } from "./map";
 import type { AcpReportDemand } from "./demand";
 
 export type AcpReportSubject = {
+  bathrooms?: number | null;
   rooms?: number | null;
   usableArea?: number | null;
   floor?: number | null;
@@ -1021,6 +1022,7 @@ type FeatureRow = {
 export const ACP_REPORT_FEATURE_ROWS: FeatureRow[] = [
   { label: "Camere", factor: "rooms", value: (s) => reportNumberValue(s.rooms ?? null) },
   { label: "Suprafață utilă", factor: "area", value: (s) => reportNumberValue(s.usableArea ?? null, " m²") },
+  { label: "Băi", factor: null, value: (s) => reportNumberValue(s.bathrooms ?? null) },
   { label: "Etaj", factor: "floor", value: (s) => floorLabel(s.floor) },
   { label: "Etaje bloc", factor: null, value: (s) => reportNumberValue(s.totalFloors ?? null) },
   { label: "An construcție", factor: "year", value: (s) => (s.constructionYear ? String(s.constructionYear) : "—") },

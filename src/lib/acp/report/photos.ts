@@ -1,3 +1,4 @@
+import { redactListingText } from "@/lib/acp/enrichment";
 /** Ajutoare pure pentru pozele și descrierile din raportul ACP. */
 
 /** Până la 3 URL-uri https de poze ale unei oferte de piață (pentru raport). */
@@ -24,3 +25,8 @@ export function reportDescriptionExcerpt(value: string | null | undefined, max =
   return clean.length > max ? `${clean.slice(0, max).replace(/\s+\S*$/, "")}…` : clean;
 }
 
+
+/** Fragment (~600 caractere) din descrierea unei oferte de piață, redactat pentru snapshot. */
+export function marketReportDescription(value: string | null | undefined): string | null {
+  return reportDescriptionExcerpt(redactListingText(value), 600);
+}

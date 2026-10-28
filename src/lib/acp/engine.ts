@@ -129,6 +129,7 @@ export type AcpReportExtras = {
   firstSeenAt?: string | null;
   disappearedAt?: string | null;
   description?: string | null;
+  bathrooms?: number | null;
 };
 
 /** Opțiuni Stage 7: calibrare activă și momentul de referință pentru prospețime. */
