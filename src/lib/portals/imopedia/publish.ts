@@ -106,7 +106,11 @@ export type ImopediaBlockingInput = {
   ctx: ImopediaMapContext;
   agent: ImopediaAgent | null;
   externalId?: string | null;
+  /** Imagini publicabile; verificat doar când e cunoscut. */
+  imageCount?: number;
 };
+
+export const IMOPEDIA_NO_IMAGE = "Adaugă cel puțin o fotografie publicabilă: Imopedia nu afișează oferte fără imagini.";
 
 /** Toate motivele blocante, în ordinea afișată în Publicare. */
 export function imopediaBlockingReasons(input: ImopediaBlockingInput): string[] {
@@ -114,6 +118,7 @@ export function imopediaBlockingReasons(input: ImopediaBlockingInput): string[] 
   const reasons = mapped.ok ? [] : [...mapped.reasons];
   const idLocal = input.externalId ? imopediaIdLocal(input.externalId) : imopediaIdLocal(input.row.reference);
   if (idLocal === null) reasons.push(IMOPEDIA_NO_ID_LOCAL);
+  if (input.imageCount !== undefined && input.imageCount < 1) reasons.push(IMOPEDIA_NO_IMAGE);
   if (!input.agent) reasons.push(IMOPEDIA_NO_AGENT);
   else if (!(input.agent.phone ?? "").trim()) reasons.push(IMOPEDIA_NO_PHONE);
   return reasons;

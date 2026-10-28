@@ -1623,7 +1623,7 @@ export async function executeListingAction(input: {
               action,
               ok: result.ok,
               saved: savedPromoted,
-              requested: requestedPromoted,
+              requested: result.ok && result.data.promotedConfirmed === false ? false : requestedPromoted,
             }),
           }
         : {}),

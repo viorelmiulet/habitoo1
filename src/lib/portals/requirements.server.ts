@@ -18,7 +18,7 @@ import { resolveImobiliareContactPhone, resolveImobiliareWhatsapp } from "./imob
 type Admin = SupabaseClient<any, any, any>;
 
 /** Imopedia: motivele blocante doar când agenția are conexiune Imopedia (evită încărcarea nomenclatorului altfel). */
-async function imopediaReasonsLoader(admin: Admin, organizationId: string) {
+async function imopediaReasonsLoader(admin: Admin, organizationId: string, propertyIds: string[]) {
   const { data: conn } = await admin
     .from("portal_connections")
     .select("settings")
@@ -38,6 +38,15 @@ async function imopediaReasonsLoader(admin: Admin, organizationId: string) {
     .select("property_id, external_id")
     .eq("organization_id", organizationId)
     .eq("portal", "imopedia");
+  const { data: pubImages } = await admin
+    .from("property_images")
+    .select("property_id")
+    .eq("organization_id", organizationId)
+    .eq("include_in_publish", true)
+    .eq("is_confidential", false)
+    .in("property_id", propertyIds);
+  const imageCount = new Map<string, number>();
+  for (const i of (pubImages ?? []) as any[]) imageCount.set(i.property_id, (imageCount.get(i.property_id) ?? 0) + 1);
   const ext = new Map(((listings ?? []) as any[]).map((l) => [l.property_id as string, (l.external_id as string | null) ?? null]));
   return (row: Record<string, any>, profile: any) =>
     imopediaBlockingReasons({
@@ -45,6 +54,7 @@ async function imopediaReasonsLoader(admin: Admin, organizationId: string) {
       ctx: imopediaMapContext(row, agencyId, nomenclature),
       agent: row.assigned_to && profile ? { userId: row.assigned_to, fullName: profile.full_name ?? null, email: profile.email ?? null, phone: profile.phone ?? null } : null,
       externalId: ext.get(row.id) ?? null,
+      imageCount: imageCount.get(row.id) ?? 0,
     });
 }
 
@@ -75,7 +85,7 @@ export async function loadRequirementSubject(
       .maybeSingle(),
   ]);
 
-  const imopedia = await imopediaReasonsLoader(admin, organizationId);
+  const imopedia = await imopediaReasonsLoader(admin, organizationId, [propertyId]);
   let agentProfile: any = null;
   let agentName: string | null = null;
   let agentEmail: string | null = null;
@@ -187,7 +197,7 @@ export async function loadRequirementSubjects(
         .select("id, full_name, email, phone")
         .in("id", agentIds)
     : { data: [] as any[] };
-  const imopedia = await imopediaReasonsLoader(admin, organizationId);
+  const imopedia = await imopediaReasonsLoader(admin, organizationId, propertyIds);
   const profileById = new Map((profiles ?? []).map((p: any) => [p.id as string, p]));
 
   for (const property of properties ?? []) {
