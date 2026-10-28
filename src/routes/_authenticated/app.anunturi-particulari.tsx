@@ -110,6 +110,13 @@ export const Route = createFileRoute("/_authenticated/app/anunturi-particulari")
   component: PrivateListingsPage,
 });
 
+/** MAP Habitoo is the default tab, so `lista=habitoo` and no `lista` are the same list state. */
+function canonicalMapSearch(search: Record<string, unknown>) {
+  if (search.lista !== "habitoo") return search;
+  const { lista: _omit, ...rest } = search;
+  return rest;
+}
+
 const ROOM_OPTIONS = [1, 2, 3, 4, 5];
 const ALL = "__all";
 
@@ -207,9 +214,11 @@ function PrivateListingsPage() {
       navigate({ search: (prev) => ({ ...prev, pagina: undefined, perPagina: size === 15 ? undefined : size }), replace: true }),
     [navigate],
   );
+  // `?lista=habitoo` is the default tab: keep a single canonical URL without it.
+  useEffect(() => { if (search.lista === "habitoo") void navigate({ search: (prev) => ({ ...prev, lista: undefined }), replace: true, resetScroll: false }); }, [search.lista, navigate]);
   const clearListState = useListState({
     list: scope === "facebook" ? "map-facebook" : "map-habitoo",
-    family: "map-last", userId: currentUser?.userId, search,
+    family: "map-last", userId: currentUser?.userId, search, canonicalize: canonicalMapSearch,
     enabled: search.lista !== "argus" && search.lista !== "cereri",
     apply: (saved) => { const parsed = searchSchema.safeParse(saved); if (parsed.success) void navigate({ search: parsed.data, replace: true, resetScroll: false }); },
   });
@@ -339,7 +348,7 @@ function PrivateListingsPage() {
               }`}
               onClick={() =>
                 navigate({
-                  search: { lista: value || "habitoo" },
+                  search: value ? { lista: value } : {},
                   replace: true,
                 })
               }
