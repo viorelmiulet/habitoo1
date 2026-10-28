@@ -289,7 +289,10 @@ async function loadVersionInput(
     engineVersion?: number | null;
     timeAdjustment?: AcpReportVersionInput["timeAdjustment"];
   };
-  const subject = (target.subject ?? {}) as AcpReportVersionInput["target"]["subject"];
+  const subject = {
+    ...((target.subject ?? {}) as AcpReportVersionInput["target"]["subject"]),
+    bathrooms: (target as { bathrooms?: number | null }).bathrooms ?? null,
+  };
 
   const input: AcpReportVersionInput = {
     analysisId: row.id,
@@ -347,7 +350,10 @@ async function loadVersionInput(
       };
       const extras = snapshot.report ?? null;
       const media = photosByComparable.get(c.id) ?? [];
-      const compSubject = (snapshot.subject ?? {}) as AcpReportVersionInput["target"]["subject"];
+      const compSubject = {
+        ...((snapshot.subject ?? {}) as AcpReportVersionInput["target"]["subject"]),
+        bathrooms: (extras as { bathrooms?: number | null } | null)?.bathrooms ?? null,
+      };
       return {
         key: snapshot.key ?? c.id,
         title: snapshot.title ?? "Comparabil",
