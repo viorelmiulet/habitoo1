@@ -1,4 +1,5 @@
 import { imobiliarePromotionChangesSchema, imobiliarePublicationModeSchema, imobiliarePortalDecidesSlots, type ImobiliarePublicationMode, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
+import { HOMEDIRECT_KEY_MISSING_MESSAGE, homedirectKeyMissing } from "@/lib/portals/homedirect/config";
 import { visibleOlxLinks } from "@/lib/portals/storia/vas";
 import { portalCanPublish, publishUnavailableMessage } from "@/lib/portals/registry";
 import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/offer-links";
@@ -600,6 +601,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
             lastError,
             lastSyncStatus: lastError ? (row?.last_sync_status ?? null) : null,
             hasOAuthTokens: Boolean(row?.portal_credentials_encrypted),
+            serverKeyMissing: homedirectKeyMissing(portal.id),
           }),
 
           direction: row?.direction ?? portal.directions[0] ?? "habitoo_to_portal",
@@ -621,7 +623,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
           activated: row?.activated === true,
           lastSyncAt: row?.last_sync_at ?? null,
           lastSyncStatus: row?.last_sync_status ?? null,
-          lastSyncError: lastError,
+          lastSyncError: homedirectKeyMissing(portal.id) ? HOMEDIRECT_KEY_MISSING_MESSAGE : lastError,
         },
         keys: portalKeys.map((k) => ({
           id: k.id,

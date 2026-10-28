@@ -340,6 +340,25 @@ export const PORTALS: PortalDefinition[] = [
       "API ZonaTa v1 pe https://zonata.ro/api/v1, JSON UTF-8. Testul conexiunii folosește GET /me (cont, pachet, modul cheii, limite). Limita portalului este 300 de cereri la 10 minute pe cheie; Habitoo rămâne sub ea, iar la 429 face o pauză și o singură reîncercare. Publicarea: POST /listings, idempotent după external_id (câte un anunț pe tranzacție, -v / -i); republicarea după retragere: PATCH status active, apoi POST; retragerea: DELETE fără permanent. Statusul: GET /listings/ext:{external_id}, cel mult o dată pe minut pe anunț. Cheia live cere pachetul Enterprise al agenției (650 lei / 30 de zile, plătit de agenție); Habitoo nu cumpără pachete sau promovări. Cheia zt_test_ doar validează.",
   },
   {
+    id: "homedirect",
+    display_name: "HomeDirect.ro",
+    description:
+      "HomeDirect.ro expune un API CRM: Habitoo se conectează cu o singură cheie CRM păstrată pe server, iar agenția și agentul sunt identificați prin ID-urile Habitoo. Publicarea vine în curând.",
+    logo: "HD",
+    status: "available",
+    activation: "approval",
+    directions: ["habitoo_to_portal"],
+    // Cheia este a FURNIZORULUI CRM (HOMEDIRECT_CRM_API_KEY), în secretele de server.
+    authentication: ["portal_api_key"],
+    capabilities: ["test_connection"],
+    publish_coming_soon: true,
+    configuration_schema: { fields: [] },
+    website: "https://www.homedirect.ro",
+    docs: "https://www.homedirect.ro/api/docs/",
+    notes:
+      "Integrare prin cheia CRM Habitoo (una pentru toate agențiile). La primul anunț, HomeDirect creează automat contul agenției și al agentului și le trimite email de activare. Dacă agenția are deja cont HomeDirect pe același email, legarea e refuzată de HomeDirect. Publicarea vine în etapele următoare.",
+  },
+  {
     id: "homepitch",
     withdraws_via_feed: true,
     display_name: "HomePitch.ro",
@@ -817,9 +836,13 @@ export function derivePortalConnectionStatus(input: {
   lastSyncStatus?: string | null;
   /** Portalurile cu OAuth au tokenurile agenției salvate. */
   hasOAuthTokens?: boolean;
+  /** Portal cu cheie CRM globală (ex. HomeDirect) a cărei cheie lipsește din secretele serverului. */
+  serverKeyMissing?: boolean;
 }): PortalConnectionStatus {
   let configured: boolean;
-  if (input.definition.authentication.includes("oauth")) {
+  if (input.serverKeyMissing) {
+    configured = false;
+  } else if (input.definition.authentication.includes("oauth")) {
     configured = Boolean(input.hasOAuthTokens);
   } else if (isFeedPullPortal(input.definition)) {
     configured = true;

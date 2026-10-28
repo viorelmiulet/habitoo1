@@ -453,6 +453,8 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
   imopedia: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.imopediaReasons ?? [] },
   // ZonaTa: cerințele vin la pasul de publicare; până atunci bifa e „În curând”.
   zonata: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.zonataReasons ?? [] },
+  // HomeDirect.ro: cerințele vin odată cu maparea (etapa 2); până atunci bifa e „În curând”.
+  homedirect: { required: [], allowed: COMMON_ALLOWED },
   imo24: {
     required: [],
     allowed: COMMON_ALLOWED,
