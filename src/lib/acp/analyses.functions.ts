@@ -5,6 +5,7 @@
  * (fără a duplica tabele), apelează motorul pur `runAcpAnalysis` și persistă
  * rezultatul. Nu există AI, scraping sau acces direct la portaluri.
  */
+import { marketListingPhotoUrls, reportDescriptionExcerpt } from "./report/photos";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -77,8 +78,6 @@ const MEDIA_BUCKET = "property-media";
 
 /** Statusuri de proprietate care pot servi ca dovadă de piață. */
 const CANDIDATE_STATUSES = ["active", "reserved", "negotiation", "sold", "rented"] as const;
-
-import { marketListingPhotoUrls, reportDescriptionExcerpt } from "./report/photos";
 
 const PROPERTY_COLUMNS =
   "id,organization_id,title,reference,property_type,transaction_kind,status,archived_at,city,county,district,lat,lng,rooms,usable_surface,surface,floor,building_floors,build_year,finish_state,parking,parking_spaces,balcony,furnishing,price,currency,description";

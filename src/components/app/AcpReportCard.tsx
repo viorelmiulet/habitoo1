@@ -22,6 +22,7 @@ export function AcpReportCard({ analysisId }: { analysisId: string }) {
   const fetchVersions = useServerFn(listAcpVersions);
   const listReports = useServerFn(listAcpReports);
   const [selected, setSelected] = useState<string>(analysisId);
+  const [includeAppendix, setIncludeAppendix] = useState(false);
 
   const versionsQuery = useQuery({
     queryKey: ["acp-versions", analysisId],
@@ -47,7 +48,7 @@ export function AcpReportCard({ analysisId }: { analysisId: string }) {
   });
 
   const generateMutation = useMutation({
-    mutationFn: () => generate({ data: { analysisId: selected } }),
+    mutationFn: () => generate({ data: { analysisId: selected, includeAppendix } }),
     onSuccess: (result) => {
       if (!result.ok) {
         toast.error(result.errorMessage ?? "Raportul nu a putut fi generat.", { duration: 4000 });
@@ -108,6 +109,15 @@ export function AcpReportCard({ analysisId }: { analysisId: string }) {
                 </option>
               ))}
             </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={includeAppendix}
+              onChange={(event) => setIncludeAppendix(event.target.checked)}
+            />
+            Include anexa tehnică
           </label>
           {selectedVersion ? (
             <p className="text-xs text-muted-foreground">
