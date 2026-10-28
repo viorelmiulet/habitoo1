@@ -220,11 +220,11 @@ export function getHomedirectStats(deps?: HomedirectDeps) {
 }
 
 export function describeHomedirectStats(body: unknown, environment: HomedirectEnvironment): string {
-  const root = rec(rec(body)?.["data"]) ?? rec(body) ?? {};
+  const root = rec(rec(body)?.["stats"]) ?? rec(rec(body)?.["data"]) ?? rec(body) ?? {};
   const rl = rec(root["rateLimit"]) ?? {};
   const limit = str(rl["limit"]) ?? str(root["rateLimit"]) ?? str(root["limit"]);
-  const remaining = str(rl["remaining"]) ?? str(root["remaining"]);
-  const reset = str(rl["reset"]) ?? str(rl["resetAt"]) ?? str(root["reset"]) ?? str(root["resetAt"]);
+  const remaining = str(rl["remaining"]) ?? str(root["remainingRequests"]) ?? str(root["remaining"]);
+  const reset = str(rl["reset"]) ?? str(rl["resetAt"]) ?? str(root["resetTime"]) ?? str(root["reset"]) ?? str(root["resetAt"]);
   let resetText = reset;
   if (reset) {
     const n = Number(reset);
