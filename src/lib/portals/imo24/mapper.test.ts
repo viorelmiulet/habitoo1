@@ -140,7 +140,7 @@ describe("imo24 mapper — dotări", () => {
     );
     let t = 1_000_000;
     const deps = { fetch: fetchMock as unknown as typeof fetch, now: () => t, sleep: async () => {} };
-    const key = "imo24_" + "a".repeat(40);
+    const key = "i24_" + "a".repeat(8) + "_" + "b".repeat(40);
     await getImo24Features(key, "apartament", deps);
     t += 23 * 3600_000;
     await getImo24Features(key, "apartament", deps);
