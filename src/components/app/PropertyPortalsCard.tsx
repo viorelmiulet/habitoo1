@@ -32,6 +32,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImopediaBoostButton } from "@/components/app/ImopediaBoostButton";
+import { ZonataPreviewButton } from "@/components/app/ZonataPreviewButton";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
 import { getImobiliareMediaStatus } from "@/lib/portals/imobiliare-media.functions";
@@ -165,6 +166,7 @@ export const PropertyPortalsCard = forwardRef<
 >(function PropertyPortalsCard({ organizationId, propertyId, assignedTo, onCompleteMissing, onOpenMedia, editing, onPublish, publishPending, showPortalJournal = false }, ref) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
+  const isSuperadmin = useCurrentUser().data?.isSuperadmin === true;
   const enqueueFn = useServerFn(enqueuePortalPublishJobs);
   const loadJobs = useServerFn(getPropertyPublishJobs);
   const queryKey = ["property-portals-selection", organizationId, propertyId] as const;
@@ -1112,6 +1114,7 @@ export const PropertyPortalsCard = forwardRef<
                             Promovat
                           </label>
                         ) : null}
+                        {cell.portalId === "zonata" && isSuperadmin ? <ZonataPreviewButton propertyId={propertyId} /> : null}
                         {cell.portalId === "imopedia" && cell.selected ? (
                           <ImopediaBoostButton organizationId={organizationId} propertyId={propertyId} />
                         ) : null}

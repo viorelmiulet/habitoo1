@@ -10070,6 +10070,66 @@ export type Database = {
           },
         ]
       }
+      zonata_nomenclature_syncs: {
+        Row: {
+          changes: Json
+          counts: Json
+          id: string
+          organization_id: string | null
+          raw_categories: Json | null
+          synced_at: string
+          synced_by: string | null
+        }
+        Insert: {
+          changes?: Json
+          counts?: Json
+          id?: string
+          organization_id?: string | null
+          raw_categories?: Json | null
+          synced_at?: string
+          synced_by?: string | null
+        }
+        Update: {
+          changes?: Json
+          counts?: Json
+          id?: string
+          organization_id?: string | null
+          raw_categories?: Json | null
+          synced_at?: string
+          synced_by?: string | null
+        }
+        Relationships: []
+      }
+      zonata_subcategories: {
+        Row: {
+          active: boolean
+          category_label: string | null
+          category_slug: string
+          fields: Json
+          subcategory_label: string | null
+          subcategory_slug: string
+          synced_at: string
+        }
+        Insert: {
+          active?: boolean
+          category_label?: string | null
+          category_slug: string
+          fields?: Json
+          subcategory_label?: string | null
+          subcategory_slug: string
+          synced_at?: string
+        }
+        Update: {
+          active?: boolean
+          category_label?: string | null
+          category_slug?: string
+          fields?: Json
+          subcategory_label?: string | null
+          subcategory_slug?: string
+          synced_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

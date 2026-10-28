@@ -66,6 +66,8 @@ export type PortalRequirementSubject = {
   imo24Reasons?: string[];
   /** Imopedia.ro: motivele blocante (mapper + localizare + agent + ID_LOCAL), `imopediaBlockingReasons`. */
   imopediaReasons?: string[];
+  /** ZonaTa: motivele blocante ale mapper-ului ZonaTa (`mapPropertyToZonata`). */
+  zonataReasons?: string[];
 };
 
 export type PortalRequirementRule = {
@@ -450,7 +452,7 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
   // Imopedia.ro: regulile vin integral din `imopediaBlockingReasons` (`src/lib/portals/imopedia/publish.ts`).
   imopedia: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.imopediaReasons ?? [] },
   // ZonaTa: cerințele vin la pasul de publicare; până atunci bifa e „În curând”.
-  zonata: { required: [], allowed: COMMON_ALLOWED },
+  zonata: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.zonataReasons ?? [] },
   imo24: {
     required: [],
     allowed: COMMON_ALLOWED,
