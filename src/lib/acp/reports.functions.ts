@@ -26,6 +26,9 @@ import {
 
 } from "./report/model";
 
+import type { AcpReportExtras } from "./engine";
+import { marketListingPhotoUrls, reportDescriptionExcerpt } from "./report/photos";
+
 export const ACP_REPORTS_BUCKET = "acp-reports";
 
 export const ACP_REPORT_RATE_LIMITS = {
@@ -136,9 +139,89 @@ function adjustmentsFrom(value: unknown): AcpReportAdjustment[] {
       label: typeof row["label"] === "string" ? row["label"] : String(row["factor"] ?? "Ajustare"),
       basis: typeof row["basis"] === "string" ? row["basis"] : "",
       amount,
+      factor: typeof row["factor"] === "string" ? row["factor"] : null,
     });
   }
   return out;
+}
+
+const MEDIA_BUCKET = "property-media";
+
+async function signPaths(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  paths: string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const unique = [...new Set(paths.filter(Boolean))];
+  if (unique.length === 0) return out;
+  const { data } = await admin.storage.from(MEDIA_BUCKET).createSignedUrls(unique, 60 * 30);
+  for (const item of data ?? []) if (item.path && item.signedUrl) out.set(item.path, item.signedUrl);
+  return out;
+}
+
+/**
+ * Pozele comparabilelor pentru raport: întâi cele salvate în snapshot; pentru
+ * versiunile vechi, poza proprietății (`image_path`) sau pozele anunțului din
+ * piață, dacă mai există. Doar pozele se completează — cifrele nu.
+ */
+async function comparablePhotos(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  rows: { id: string; image_path?: string | null; market_listing_id?: string | null; snapshot?: unknown }[],
+): Promise<Map<string, string[]>> {
+  const plan = new Map<string, { urls: string[]; paths: string[]; listingId: string | null }>();
+  const listingIds: string[] = [];
+  for (const r of rows) {
+    const extras = ((r.snapshot ?? {}) as { report?: AcpReportExtras | null }).report ?? null;
+    const urls = (extras?.photos ?? []).slice(0, 3);
+    const paths = (extras?.photoPaths ?? (r.image_path ? [r.image_path] : [])).slice(0, 3);
+    const legacyListing = !extras && r.market_listing_id ? r.market_listing_id : null;
+    if (legacyListing) listingIds.push(legacyListing);
+    plan.set(r.id, { urls, paths, listingId: legacyListing });
+  }
+  const legacy = new Map<string, string[]>();
+  for (let i = 0; i < listingIds.length; i += 200) {
+    const { data } = await admin
+      .from("market_listings")
+      .select("id,images,image_url")
+      .in("id", listingIds.slice(i, i + 200));
+    for (const l of data ?? []) legacy.set(l.id, marketListingPhotoUrls(l as never));
+  }
+  const signed = await signPaths(admin, [...plan.values()].flatMap((p) => p.paths));
+  const out = new Map<string, string[]>();
+  for (const [id, p] of plan) {
+    const list = [
+      ...p.urls,
+      ...p.paths.map((path) => signed.get(path)).filter((u): u is string => Boolean(u)),
+      ...(p.listingId ? (legacy.get(p.listingId) ?? []) : []),
+    ];
+    out.set(id, list.slice(0, 3));
+  }
+  return out;
+}
+
+/** Pozele publicabile ale proprietății analizate (max 3) și un fragment din descriere. */
+async function targetPhotos(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  propertyId: string | null,
+): Promise<{ photos: string[]; description: string | null }> {
+  if (!propertyId) return { photos: [], description: null };
+  const [{ data: imgs }, { data: prop }] = await Promise.all([
+    admin
+      .from("property_images")
+      .select("storage_path,position,is_primary")
+      .eq("property_id", propertyId)
+      .eq("is_confidential", false)
+      .order("is_primary", { ascending: false })
+      .order("position", { ascending: true })
+      .limit(3),
+    admin.from("properties").select("description").eq("id", propertyId).maybeSingle(),
+  ]);
+  const paths = (imgs ?? []).map((i) => i.storage_path).filter((p): p is string => Boolean(p));
+  const signed = await signPaths(admin, paths);
+  return {
+    photos: paths.map((p) => signed.get(p)).filter((u): u is string => Boolean(u)),
+    description: reportDescriptionExcerpt((prop as { description?: string | null } | null)?.description ?? null),
+  };
 }
 
 /** Reconstruiește datele versiunii din snapshot-ul salvat în baza de date. */
@@ -177,6 +260,9 @@ async function loadVersionInput(
       .maybeSingle();
     authorName = profile?.full_name ?? null;
   }
+
+  const photosByComparable = await comparablePhotos(admin, comparables ?? []);
+  const targetMedia = await targetPhotos(admin, row.property_id ?? null);
 
   const target = (row.target_data ?? {}) as {
     title?: string;
@@ -226,6 +312,8 @@ async function loadVersionInput(
       capturedAt: target.capturedAt ?? null,
       pricePerSqm: analysisData.targetPricePerSqm ?? null,
       subject,
+      photos: targetMedia.photos,
+      description: targetMedia.description,
     },
     estimate: analysisData.estimate ?? {
       estimatedMin: row.estimated_min,
@@ -254,7 +342,11 @@ async function loadVersionInput(
         locationLabel?: string | null;
         subject?: Record<string, unknown>;
         timeAdjustment?: unknown;
+        report?: AcpReportExtras | null;
+        priceHistory?: { listedForDays?: number | null } | null;
       };
+      const extras = snapshot.report ?? null;
+      const media = photosByComparable.get(c.id) ?? [];
       const compSubject = (snapshot.subject ?? {}) as AcpReportVersionInput["target"]["subject"];
       return {
         key: snapshot.key ?? c.id,
@@ -277,6 +369,15 @@ async function loadVersionInput(
         subject: compSubject,
         timeAdjustment:
           (snapshot.timeAdjustment as AcpReportComparableInput["timeAdjustment"]) ?? null,
+        reference: extras?.reference ?? null,
+        status:
+          extras?.status ??
+          (/nu mai e activ/i.test(c.source_name ?? "") ? "inactive" : "active"),
+        firstSeenAt: extras?.firstSeenAt ?? null,
+        disappearedAt: extras?.disappearedAt ?? null,
+        daysOnMarket: extras?.firstSeenAt ? null : (snapshot.priceHistory?.listedForDays ?? null),
+        photos: media,
+        description: extras?.description ?? null,
       };
     }),
     sources: (sources ?? []).map((s) => ({
@@ -422,6 +523,7 @@ async function insertReportRow(
 export async function generateAcpReportForVersion(
   actor: Actor,
   analysisId: string,
+  options: { includeAppendix?: boolean } = {},
 ): Promise<{ report: AcpReportListItem | null; ok: boolean; errorMessage: string | null }> {
   {
     {
@@ -437,10 +539,11 @@ export async function generateAcpReportForVersion(
       const { data: org } = await admin
         .from("organizations")
         .select(
-          "name,legal_name,cui,trade_registry_number,material_address,material_phone,material_email,material_website,phone,email",
+          "name,legal_name,cui,trade_registry_number,material_address,material_phone,material_email,material_website,phone,email,logo_path",
         )
         .eq("id", actor.organizationId)
         .maybeSingle();
+      const generatedBy = await loadGenerator(admin, actor);
 
       const row = await insertReportRow(admin, actor, {
         analysisId: input.analysisId,
@@ -466,10 +569,21 @@ export async function generateAcpReportForVersion(
             email: org?.material_email ?? org?.email ?? null,
             website: org?.material_website ?? null,
           },
+          includeAppendix: options.includeAppendix === true,
+          generatedBy,
         });
 
+        let logo: Uint8Array | null = null;
+        if (org?.logo_path && /\.(png|jpe?g)$/i.test(org.logo_path)) {
+          try {
+            const { data: file } = await admin.storage.from("agency-logos").download(org.logo_path);
+            if (file) logo = new Uint8Array(await file.arrayBuffer());
+          } catch {
+            logo = null;
+          }
+        }
         const { buildAcpReportPdf } = await import("./report/pdf.server");
-        const bytes = await buildAcpReportPdf(model);
+        const bytes = await buildAcpReportPdf(model, { logo });
         const path = `${actor.organizationId}/${input.analysisId}/raport-v${input.version}-${row.reportNumber}.pdf`;
         const { error: uploadError } = await admin.storage
           .from(ACP_REPORTS_BUCKET)
@@ -531,17 +645,44 @@ export async function generateAcpReportForVersion(
   }
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  agency_admin: "Administrator agenție",
+  agent: "Agent imobiliar",
+  superadmin: "Administrator",
+};
+
+/** Numele și rolul utilizatorului care generează raportul (pentru copertă). */
+async function loadGenerator(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  actor: Actor,
+): Promise<{ name: string | null; role: string | null }> {
+  const [{ data: profile }, { data: roles }] = await Promise.all([
+    admin.from("profiles").select("full_name,job_title").eq("id", actor.userId).maybeSingle(),
+    admin.from("user_roles").select("role").eq("user_id", actor.userId),
+  ]);
+  const roleKeys = (roles ?? []).map((r) => r.role as string);
+  const roleKey = ["agency_admin", "agent", "superadmin"].find((r) => roleKeys.includes(r)) ?? null;
+  return {
+    name: profile?.full_name ?? null,
+    role: profile?.job_title?.trim() || (roleKey ? ROLE_LABELS[roleKey]! : "Agent imobiliar"),
+  };
+}
+
 /** Generează raportul PDF pentru o versiune ACP și îl salvează în storage privat. */
 export const generateAcpReport = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((data: unknown) => z.object({ analysisId: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) =>
+    z.object({ analysisId: z.string().uuid(), includeAppendix: z.boolean().optional() }).parse(data),
+  )
   .handler(
     async ({
       context,
       data,
     }): Promise<{ report: AcpReportListItem | null; ok: boolean; errorMessage: string | null }> => {
       const actor = await loadActor(context as AuthContext);
-      return await generateAcpReportForVersion(actor, data.analysisId);
+      return await generateAcpReportForVersion(actor, data.analysisId, {
+        includeAppendix: data.includeAppendix === true,
+      });
     },
   );
 

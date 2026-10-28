@@ -114,6 +114,21 @@ export type AcpCandidate = {
   meta?: AcpListingMeta | null;
   /** Motor v4: preț semnalat ca suspect de îmbogățirea AI (încredere ≥ 0,7). */
   priceSuspect?: string | null;
+  /** Date doar pentru raport (poze, stare, descriere); nu intră în calcul. */
+  reportExtras?: AcpReportExtras | null;
+};
+
+/** Informații de afișare salvate în snapshot pentru raportul PDF; nu influențează cifrele. */
+export type AcpReportExtras = {
+  reference?: string | null;
+  /** URL-uri publice de poze (max 3), pentru ofertele de piață. */
+  photos?: string[];
+  /** Căi din storage-ul privat (max 3), pentru proprietățile din Habitoo. */
+  photoPaths?: string[];
+  status?: "active" | "inactive" | null;
+  firstSeenAt?: string | null;
+  disappearedAt?: string | null;
+  description?: string | null;
 };
 
 /** Opțiuni Stage 7: calibrare activă și momentul de referință pentru prospețime. */
@@ -180,6 +195,8 @@ export type AcpComparableResult = {
   distanceKm?: number | null;
   /** Motor v5: ponderea după vechime (1 = activă). */
   ageWeight?: number;
+  /** Date doar pentru raport, copiate neschimbate din candidat. */
+  reportExtras?: AcpReportExtras;
 };
 
 /** Motor v4: estimarea diferă cu peste acest procent de prețul de listare. */
@@ -389,6 +406,7 @@ export function runAcpAnalysis(
       locationLabel: row.candidate.locationLabel ?? null,
       imagePath: row.candidate.imagePath ?? null,
       url: row.candidate.url ?? null,
+      ...(row.candidate.reportExtras ? { reportExtras: row.candidate.reportExtras } : {}),
       subject: row.candidate.subject,
       similarityScore: row.similarity.similarityScore,
       components: row.similarity.components,

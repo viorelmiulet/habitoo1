@@ -5,6 +5,7 @@
  * (fără a duplica tabele), apelează motorul pur `runAcpAnalysis` și persistă
  * rezultatul. Nu există AI, scraping sau acces direct la portaluri.
  */
+import { marketListingPhotoUrls, reportDescriptionExcerpt } from "./report/photos";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -193,6 +194,7 @@ function locationLabel(row: { district?: string | null; city?: string | null; co
 async function primaryImages(
   admin: Awaited<ReturnType<typeof loadAdmin>>,
   propertyIds: string[],
+  gallery?: Map<string, string[]>,
 ): Promise<Map<string, string>> {
   const map = new Map<string, string>();
   if (propertyIds.length === 0) return map;
@@ -207,7 +209,15 @@ async function primaryImages(
     if (!row.storage_path) continue;
     const current = map.get(row.property_id);
     if (!current || row.is_primary) map.set(row.property_id, row.storage_path);
+    if (gallery) {
+      // Raport: până la 3 poze publicabile, cu poza principală prima.
+      const list = gallery.get(row.property_id) ?? [];
+      if (row.is_primary) list.unshift(row.storage_path);
+      else list.push(row.storage_path);
+      gallery.set(row.property_id, list);
+    }
   }
+  if (gallery) for (const [id, list] of gallery) gallery.set(id, list.slice(0, 3));
   return map;
 }
 
@@ -358,9 +368,11 @@ async function collectCandidates(params: {
     });
   }
 
+  const gallery = new Map<string, string[]>();
   const images = await primaryImages(
     admin,
     propertyRows.map((p) => p.row.id),
+    gallery,
   );
 
   for (const item of propertyRows) {
@@ -373,6 +385,12 @@ async function collectCandidates(params: {
       locationLabel: locationLabel(item.row),
       imagePath: images.get(item.row.id) ?? null,
       subject: propertyToSubject(item.row as never),
+      reportExtras: {
+        reference: item.row.reference ?? null,
+        photoPaths: gallery.get(item.row.id) ?? [],
+        status: "active",
+        description: reportDescriptionExcerpt((item.row as { description?: string | null }).description ?? null),
+      },
     });
   }
 
@@ -523,6 +541,14 @@ async function collectCandidates(params: {
             priceSuspect: use.priceSuspectReason,
           };
         })(),
+        reportExtras: {
+          reference: (row as { source_listing_id?: string | null }).source_listing_id ?? null,
+          photos: marketListingPhotoUrls(row as never),
+          status: row.status === "inactive" ? "inactive" : "active",
+          firstSeenAt: (row as { first_seen_at?: string | null }).first_seen_at ?? null,
+          disappearedAt: (row as { disappeared_at?: string | null }).disappeared_at ?? null,
+          description: reportDescriptionExcerpt((row as { description?: string | null }).description ?? null),
+        },
         // Stage 7: prospețime și istoric de preț din datele reale ale ofertei.
         meta: marketListingMeta(item.row as unknown as Record<string, unknown>, {
           status: row.status,
@@ -696,6 +722,8 @@ async function persistRun(params: {
         relevanceScore: c.relevanceScore,
         timeAdjustment: c.timeAdjustment ?? null,
         distanceKm: c.distanceKm ?? null,
+        // Raport PDF: poze și stare salvate, ca raportul să nu depindă de piața live.
+        report: c.reportExtras ?? null,
       } as never,
     }));
     const { error } = await admin.from("acp_comparables").insert(rows);
