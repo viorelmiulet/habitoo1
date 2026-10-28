@@ -78,6 +78,8 @@ const MEDIA_BUCKET = "property-media";
 /** Statusuri de proprietate care pot servi ca dovadă de piață. */
 const CANDIDATE_STATUSES = ["active", "reserved", "negotiation", "sold", "rented"] as const;
 
+import { marketListingPhotoUrls, reportDescriptionExcerpt } from "./report/photos";
+
 const PROPERTY_COLUMNS =
   "id,organization_id,title,reference,property_type,transaction_kind,status,archived_at,city,county,district,lat,lng,rooms,usable_surface,surface,floor,building_floors,build_year,finish_state,parking,parking_spaces,balcony,furnishing,price,currency,description";
 
@@ -125,30 +127,6 @@ async function loadActor(context: AuthContext): Promise<Actor> {
 
 /** Metadate reale de prospețime/istoric pentru o ofertă de piață. */
 /** Eticheta unei oferte de piață inactive: „ofertă din <lună an>, nu mai e activă”. */
-/** Până la 3 URL-uri https de poze ale unei oferte de piață (pentru raport). */
-export function marketListingPhotoUrls(row: { images?: unknown; image_url?: string | null }): string[] {
-  const urls: string[] = [];
-  const push = (value: unknown) => {
-    if (typeof value === "string" && /^https:\/\//i.test(value) && !urls.includes(value)) urls.push(value);
-  };
-  if (Array.isArray(row.images)) for (const v of row.images) push(v);
-  push(row.image_url);
-  return urls.slice(0, 3);
-}
-
-/** Fragment de descriere pentru raport, fără telefoane sau emailuri. */
-export function reportDescriptionExcerpt(value: string | null | undefined, max = 420): string | null {
-  if (!value) return null;
-  const clean = value
-    .replace(/<[^>]+>/g, " ")
-    .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "")
-    .replace(/(\+?4?0|0)[\s.-]?\d{2,3}([\s.-]?\d{3}){2}/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!clean) return null;
-  return clean.length > max ? `${clean.slice(0, max).replace(/\s+\S*$/, "")}…` : clean;
-}
-
 export function inactiveOfferLabel(lastSeenAt: string | null): string {
   const time = lastSeenAt ? Date.parse(lastSeenAt) : NaN;
   if (!Number.isFinite(time)) return "ofertă care nu mai e activă";
