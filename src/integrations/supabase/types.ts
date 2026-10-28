@@ -3409,6 +3409,60 @@ export type Database = {
           },
         ]
       }
+      imopedia_areas: {
+        Row: {
+          area: string
+          area_normalized: string
+          depth: number
+          id: number
+          parent_id: number | null
+          region_id: number
+          synced_at: string
+          usable_in_api: boolean
+        }
+        Insert: {
+          area: string
+          area_normalized: string
+          depth: number
+          id: number
+          parent_id?: number | null
+          region_id: number
+          synced_at?: string
+          usable_in_api?: boolean
+        }
+        Update: {
+          area?: string
+          area_normalized?: string
+          depth?: number
+          id?: number
+          parent_id?: number | null
+          region_id?: number
+          synced_at?: string
+          usable_in_api?: boolean
+        }
+        Relationships: []
+      }
+      imopedia_regions: {
+        Row: {
+          id: number
+          name: string
+          name_normalized: string
+          synced_at: string
+        }
+        Insert: {
+          id: number
+          name: string
+          name_normalized: string
+          synced_at?: string
+        }
+        Update: {
+          id?: number
+          name?: string
+          name_normalized?: string
+          synced_at?: string
+        }
+        Relationships: []
+      }
       impersonation_requests: {
         Row: {
           approve_token_hash: string | null

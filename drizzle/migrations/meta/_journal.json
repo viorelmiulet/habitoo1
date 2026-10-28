@@ -1464,6 +1464,13 @@
       "when": 1793209163466,
       "tag": "0208_market_listings_description",
       "breakpoints": true
+    },
+    {
+      "idx": 209,
+      "version": "7",
+      "when": 1793211195542,
+      "tag": "0209_imopedia_nomenclature",
+      "breakpoints": true
     }
   ]
 }
