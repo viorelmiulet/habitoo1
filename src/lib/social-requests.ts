@@ -3,6 +3,8 @@ import { z } from "zod";
 import { toLenientNumber } from "@/routes/api/public/listings/upsert";
 import { geographyKey } from "./private-listing-geography";
 import { placeMatches, type PlaceChoice } from "./search-places";
+import { detectResidentialComplex } from "./acp/complexes";
+import { zoneRelation } from "./bucharest-zones";
 
 export const SOCIAL_REQUESTS_MAX_PER_CALL = 500;
 export const SOCIAL_REQUESTS_RETENTION_DAYS = 30;
@@ -105,8 +107,10 @@ export type RequestForMatch = {
 export type PropertyForMatch = {
   transaction_kind: "sale" | "rent"; property_type: string | null; rooms: number | null;
   price: number | null; currency: string | null; county: string | null; city: string | null; district: string | null;
+  title?: string | null; address?: string | null;
 };
-export type RequestMatch = { score: number; reasons: string[] };
+export type RequestMatch = { score: number; reasons: string[]; kind: "strict" | "close"; differences: string[] };
+export type MatchMode = "strict" | "close";
 
 /** Zonele cererii ca alegeri „Localități și zone” (aceeași regulă ca filtrele). */
 export function requestPlaceChoices(r: Pick<RequestForMatch, "county" | "city" | "zones">): PlaceChoice[] {
@@ -117,44 +121,77 @@ export function requestPlaceChoices(r: Pick<RequestForMatch, "county" | "city" |
   return [];
 }
 
+type PlaceResult = { rel: "strict" | "near"; reason: string } | null;
+
+/** Zona cererii vs proprietate: localitate/zonă exactă, subzonă↔cartier, ansamblu (ACP) sau vecinătate. */
+export function requestPlaceRelation(r: Pick<RequestForMatch, "county" | "city" | "zones">, p: PropertyForMatch): PlaceResult {
+  const choices = requestPlaceChoices(r);
+  const complex = detectResidentialComplex(p.title, p.address, p.district);
+  // Ansamblul are propria localitate (ex. Militari Residence → Chiajna), indiferent de fișă.
+  const loc = complex ? { county: complex.county, city: complex.city, district: complex.label } : { county: p.county, city: p.city, district: p.district };
+  if (placeMatches(loc, choices)) return { rel: "strict", reason: complex ? `${complex.label} (${complex.city})` : "zonă" };
+  const reqBuc = geographyKey(r.city).includes("bucuresti") || geographyKey(r.county).includes("bucuresti");
+  const propZone = complex ? complex.label : p.district;
+  const propBuc = complex ? true : geographyKey(p.city).includes("bucuresti") || geographyKey(p.county).includes("bucuresti");
+  if (!reqBuc || !propBuc || !r.zones.length) return null;
+  let near: PlaceResult = null;
+  for (const z of r.zones) {
+    const rel = zoneRelation(z, propZone);
+    if (rel === "same") return { rel: "strict", reason: `zonă înrudită: ${z} ↔ ${propZone}` };
+    if (rel === "neighbor" && !near) near = { rel: "near", reason: `${propZone} e zonă vecină cu ${z}` };
+  }
+  return near;
+}
+
 /**
- * Potrivire deterministă. Tranzacția și tipul sunt obligatorii dacă cererea le are;
- * camerele, bugetul (±10%) și zona trebuie să se potrivească când sunt cunoscute.
- * Scorul = criterii confirmate din cele 5; o cerere cu date lipsă are scor mai mic. Null = nu se potrivește.
+ * Potrivire deterministă. Tranzacția și tipul sunt obligatorii dacă cererea le are.
+ * Strict: camere exacte, buget ±10%, zonă (inclusiv subzonă↔cartier și ansamblu).
+ * Apropiat: camere ±1, buget ±20%, zonă vecină — cu motivul fiecărei diferențe și scor mai mic.
+ * Null = nu se potrivește.
  */
-export function matchRequestProperty(r: RequestForMatch, p: PropertyForMatch): RequestMatch | null {
-  const reasons: string[] = [];
-  let known = 0, ok = 0;
+export function matchRequestProperty(r: RequestForMatch, p: PropertyForMatch, mode: MatchMode = "strict"): RequestMatch | null {
+  const reasons: string[] = [], differences: string[] = [];
+  let ok = 0, penalty = 0;
+  const close = mode === "close";
   if (r.transaction_type) {
-    known++;
     if ((r.transaction_type === "inchiriere" ? "rent" : "sale") !== p.transaction_kind) return null;
     ok++; reasons.push(REQUEST_TRANSACTION_LABELS[r.transaction_type as keyof typeof REQUEST_TRANSACTION_LABELS] ?? r.transaction_type);
   }
   if (r.property_type) {
-    known++;
     if (propertyTypeKey(r.property_type) !== propertyTypeKey(p.property_type)) return null;
     ok++; reasons.push("tip");
   }
   if (r.rooms !== null) {
-    known++;
-    if (p.rooms === null || p.rooms !== r.rooms) return null;
-    ok++; reasons.push(`${r.rooms} camere`);
+    if (p.rooms === null) return null;
+    const d = Math.abs(p.rooms - r.rooms);
+    if (d === 0) { ok++; reasons.push(`${r.rooms} camere`); }
+    else if (close && d === 1) { ok += 0.5; penalty += 10; differences.push(`${p.rooms} camere în loc de ${r.rooms}`); }
+    else return null;
   }
   if (r.budget_min !== null || r.budget_max !== null) {
-    known++;
     const sameCurrency = (r.currency ?? "EUR").toUpperCase() === (p.currency ?? "EUR").toUpperCase();
     if (p.price === null || !sameCurrency) return null;
-    const lo = r.budget_min !== null ? r.budget_min * 0.9 : 0;
-    const hi = r.budget_max !== null ? r.budget_max * 1.1 : Number.POSITIVE_INFINITY;
-    if (p.price < lo || p.price > hi) return null;
-    ok++; reasons.push("buget");
+    const within = (f: number) => (r.budget_min === null || p.price! >= r.budget_min * (1 - f)) && (r.budget_max === null || p.price! <= r.budget_max * (1 + f));
+    if (within(0.1)) { ok++; reasons.push("buget"); }
+    else if (close && within(0.2)) {
+      ok += 0.5; penalty += 10;
+      differences.push(r.budget_max !== null && p.price > r.budget_max ? `preț cu ${Math.round((p.price / r.budget_max - 1) * 100)}% peste buget` : "preț sub bugetul minim");
+    } else return null;
   }
-  const choices = requestPlaceChoices(r);
-  if (choices.length) {
-    known++;
-    if (!placeMatches({ county: p.county, city: p.city, district: p.district }, choices)) return null;
-    ok++; reasons.push("zonă");
+  if (requestPlaceChoices(r).length) {
+    const place = requestPlaceRelation(r, p);
+    if (!place) return null;
+    if (place.rel === "strict") { ok++; reasons.push(place.reason); }
+    else if (close) { ok += 0.5; penalty += 10; differences.push(place.reason); }
+    else return null;
   }
-  void known;
-  return { score: Math.round((ok / 5) * 100), reasons };
+  return { score: Math.max(0, Math.round((ok / 5) * 100) - penalty), reasons, kind: differences.length ? "close" : "strict", differences };
+}
+
+/** Potrivirile stricte; dacă nu există, potrivirile apropiate (ordonate după scor). */
+export function rankRequestMatches<T extends PropertyForMatch>(r: RequestForMatch, props: T[], limit = 30): { kind: "strict" | "close"; items: { property: T; match: RequestMatch }[] } {
+  const run = (mode: MatchMode) => props.flatMap((p) => { const m = matchRequestProperty(r, p, mode); return m && (mode === "strict" || m.kind === "close") ? [{ property: p, match: m }] : []; })
+    .sort((a, b) => b.match.score - a.match.score).slice(0, limit);
+  const strict = run("strict");
+  return strict.length ? { kind: "strict", items: strict } : { kind: "close", items: run("close") };
 }

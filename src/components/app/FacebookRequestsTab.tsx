@@ -179,15 +179,17 @@ function MatchesDialog({ request, open, onOpenChange }: { request: SocialRequest
         <p className="text-sm text-muted-foreground">Proprietățile active ale agenției care se potrivesc ca tranzacție, tip, camere, buget (±10%) și zonă.</p>
         {q.isLoading ? <Skeleton className="h-24" /> : q.isError ? <p className="text-destructive">Potrivirile nu pot fi încărcate.</p>
           : !q.data?.items.length ? <p className="py-6 text-center text-sm text-muted-foreground">Nicio proprietate activă nu se potrivește.</p>
-          : <ul className="divide-y divide-border">{q.data.items.map((p) => (
+          : <>{q.data.kind === "close" && <p className="rounded-md border border-border bg-muted p-2 text-sm"><strong>Potriviri apropiate</strong> — nicio potrivire exactă; acestea diferă prin zonă vecină, buget (±20%) sau camere (±1).</p>}
+          <ul className="divide-y divide-border">{q.data.items.map((p) => (
             <li key={p.id} className="flex flex-wrap items-center gap-3 py-3">
               <Badge>{p.score}%</Badge>
               <div className="min-w-0 flex-1">
                 <Link to="/app/properties/$id" params={{ id: p.id }} className="font-medium hover:underline">{p.title}</Link>
                 <p className="text-xs text-muted-foreground">{[p.code, p.price !== null ? `${fmt(p.price)} ${p.currency ?? ""}` : null, p.rooms !== null ? `${p.rooms} camere` : null, [p.district, p.city].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}</p>
+                {p.differences.length > 0 && <p className="text-xs text-muted-foreground">Diferențe: {p.differences.join("; ")}</p>}
               </div>
               <Button size="sm" variant="outline" disabled={!p.canSend} title={p.canSend ? undefined : "Oferta nu este disponibilă public"} onClick={() => setSendFor(p.id)}><Send className="size-4" /> Trimite oferta</Button>
-            </li>))}</ul>}
+            </li>))}</ul></>}
         {sendFor && <SendOfferDialog propertyId={sendFor} open={Boolean(sendFor)} onOpenChange={(o) => { if (!o) setSendFor(null); }} initialPhone={request.phone ?? ""} />}
       </DialogContent>
     </Dialog>

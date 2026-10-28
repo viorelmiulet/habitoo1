@@ -5,7 +5,7 @@ import { requireActiveOrgAuth } from "@/lib/org-access";
 import { isListPageSize } from "@/lib/list-page-size";
 import { daysCutoff } from "@/lib/private-listings";
 import { buildSearchPlaces, placeChoiceSchema, type SearchPlaceOption } from "./search-places";
-import { matchRequestProperty, propertyTypeKey } from "./social-requests";
+import { rankRequestMatches, propertyTypeKey } from "./social-requests";
 import { offerSendReason } from "./offer-client";
 
 export type SocialRequest = {
@@ -86,16 +86,15 @@ export const getSocialRequestMatches = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const r = await loadRequest(context.supabase, data.id);
     const { data: profile } = await context.supabase.from("profiles").select("organization_id").eq("id", context.userId).maybeSingle();
-    if (!profile?.organization_id) return { items: [] };
+    if (!profile?.organization_id) return { items: [], kind: "strict" as const };
     const { data: props, error } = await context.supabase.from("properties")
-      .select("id,reference,title,status,publish_status,deleted_at,transaction_kind,property_type,rooms,price,currency,county,city,district")
+      .select("id,reference,title,status,publish_status,deleted_at,transaction_kind,property_type,rooms,price,currency,county,city,district,address")
       .eq("organization_id", profile.organization_id).eq("status", "active").is("deleted_at", null).limit(2000);
     if (error) throw new Error("Proprietățile nu au putut fi încărcate.");
-    const items = (props ?? []).flatMap((p) => {
-      const m = matchRequestProperty({ ...r, budget_min: r.budgetMin, budget_max: r.budgetMax, transaction_type: r.transactionType, property_type: r.propertyType }, { ...p, price: p.price === null ? null : Number(p.price) });
-      return m ? [{ id: p.id, code: p.reference, title: p.title, price: p.price === null ? null : Number(p.price), currency: p.currency, city: p.city, district: p.district, rooms: p.rooms, score: m.score, reasons: m.reasons, canSend: offerSendReason(p) === null }] : [];
-    }).sort((a, b) => b.score - a.score).slice(0, 30);
-    return { items };
+    const req = { ...r, budget_min: r.budgetMin, budget_max: r.budgetMax, transaction_type: r.transactionType, property_type: r.propertyType };
+    const ranked = rankRequestMatches(req, (props ?? []).map((p) => ({ ...p, price: p.price === null ? null : Number(p.price) })));
+    const items = ranked.items.map(({ property: p, match: m }) => ({ id: p.id, code: p.reference, title: p.title, price: p.price, currency: p.currency, city: p.city, district: p.district, rooms: p.rooms, score: m.score, reasons: m.reasons, differences: m.differences, canSend: offerSendReason(p) === null }));
+    return { items, kind: ranked.kind };
   });
 
 export const addSocialRequestLead = createServerFn({ method: "POST" })
