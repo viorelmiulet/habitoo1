@@ -449,6 +449,8 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
   // imo24.ro: regulile vin integral din mapper-ul imo24 (`src/lib/portals/imo24/mapper.ts`).
   // Imopedia.ro: regulile vin integral din `imopediaBlockingReasons` (`src/lib/portals/imopedia/publish.ts`).
   imopedia: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.imopediaReasons ?? [] },
+  // ZonaTa: cerințele vin la pasul de publicare; până atunci bifa e „În curând”.
+  zonata: { required: [], allowed: COMMON_ALLOWED },
   imo24: {
     required: [],
     allowed: COMMON_ALLOWED,

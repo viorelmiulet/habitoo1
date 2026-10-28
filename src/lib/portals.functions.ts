@@ -60,6 +60,8 @@ export type PortalHubItem = {
     hasPortalCredential: boolean;
     /** Doar existența secretului de webhook (VDI.ro), niciodată valoarea. */
     hasWebhookSecret: boolean;
+    /** ZonaTa: modul cheii salvate (din prefix), niciodată cheia. */
+    keyMode?: "live" | "test" | null;
     endpointUrl: string | null;
     allowLiveRequests: boolean;
     /** Superadmin a activat explicit portalul pentru această agenție. */
@@ -605,6 +607,10 @@ export const getPortalHub = createServerFn({ method: "POST" })
           externalAccountId: row?.external_account_id ?? null,
           hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
           hasWebhookSecret: typeof settings["webhook_secret_encrypted"] === "string",
+          keyMode:
+            settings["key_mode"] === "live" || settings["key_mode"] === "test"
+              ? (settings["key_mode"] as "live" | "test")
+              : null,
           endpointUrl:
             typeof settings["endpoint_url"] === "string"
               ? String(settings["endpoint_url"])
@@ -880,6 +886,11 @@ export const savePortalConnection = createServerFn({ method: "POST" })
     }
     if (data.credential) {
       patch["portal_credentials_encrypted"] = encryptPortalCredential(data.credential);
+      if (definition.id === "zonata") {
+        // Doar modul (din prefixul public), nu cheia: afișat lângă cheie în SuperAdmin.
+        const { zonataKeyMode } = await import("@/lib/portals/zonata/key");
+        settings["key_mode"] = zonataKeyMode(data.credential);
+      }
     }
     // Orice modificare de configurare invalidează un test reușit anterior.
     patch["status"] = "ready";
@@ -1906,7 +1917,7 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
         p.status === "available" &&
         !isPortalCovered(p.id) &&
         // Portalurile doar cu test de conexiune (ex. Imopedia, etapa 1) nu apar în Publicare.
-        (p.capabilities.includes("publish_listing") || p.capabilities.includes("feed_pull")) &&
+        (p.capabilities.includes("publish_listing") || p.capabilities.includes("feed_pull") || p.publish_coming_soon === true) &&
         (visiblePortals === null || visiblePortals.has(p.id)),
     );
 
