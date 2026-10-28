@@ -953,7 +953,8 @@ export const PropertyPortalsCard = forwardRef<
                         >
                           {detail}
                         </p>
-                        {cell.portalId === "imobiliare_ro" && (cell.lastError || latestOperationFailed) ? <p role="alert" className="mt-2 break-words text-xs text-destructive">{cell.lastError ?? latestOperation?.errorMessage}</p> : null}
+                        {(cell.portalId === "imobiliare_ro" || cell.portalId === "imo24") && (cell.lastError || latestOperationFailed) ? <p role="alert" className="mt-2 break-words text-xs text-destructive">{cell.lastError ?? latestOperation?.errorMessage}</p> : null}
+                        {cell.portalId === "imo24" && !cell.lastError && latestOperation?.success === true && latestOperation.errorMessage ? <p className="mt-2 break-words text-xs text-muted-foreground">{latestOperation.errorMessage}</p> : null}
                         {cell.portalId === "imobiliare_ro" && cell.configured ? (
                           <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                             <p>{imobiliareMedia.data ? `${imobiliareMedia.data.sent ?? "?"}/${imobiliareMedia.data.total} poze trimise` : imobiliareMedia.isError ? "Numărul pozelor nu a putut fi verificat." : "Se verifică pozele…"}</p>
