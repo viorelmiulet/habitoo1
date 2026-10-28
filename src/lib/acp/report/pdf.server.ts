@@ -516,10 +516,9 @@ export async function buildAcpReportPdf(
       text(page, chart.recommended.display, plotX + plotW + 12, t + 1, 8.5, { font: bold, color: NAVY });
     }
     // Legendă.
-    let lt = top + boxH - 28;
+    const lt = top + boxH - 28;
     rect(page, M + 30, lt + 2, 14, 8, GOLD, 0.3);
     text(page, chart.band ? `Interval valoare estimată: ${chart.band.display}` : "Interval estimat indisponibil", M + 50, lt + 1, 8, { color: MUTED });
-    lt += 0;
     top += boxH + 16;
     paragraph(
       `Barele arată prețurile ajustate ale celor ${model.used.length} comparabile folosite în calcul. Linia punctată marchează prețul recomandat de listare, iar banda aurie intervalul dintre valoarea minimă și cea maximă estimată.`,
