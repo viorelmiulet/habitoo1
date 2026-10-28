@@ -64,6 +64,8 @@ export type PortalRequirementSubject = {
   contactPhone: string | null;
   /** imo24.ro: motivele blocante calculate de mapper-ul imo24 (`imo24BlockingReasons`). */
   imo24Reasons?: string[];
+  /** Imopedia.ro: motivele blocante (mapper + localizare + agent + ID_LOCAL), `imopediaBlockingReasons`. */
+  imopediaReasons?: string[];
 };
 
 export type PortalRequirementRule = {
@@ -445,8 +447,8 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     allowed: COMMON_ALLOWED,
   },
   // imo24.ro: regulile vin integral din mapper-ul imo24 (`src/lib/portals/imo24/mapper.ts`).
-  // Imopedia: cerințele se declară odată cu maparea ofertei (etapele următoare); publicarea nu e încă disponibilă.
-  imopedia: { required: [], allowed: COMMON_ALLOWED },
+  // Imopedia.ro: regulile vin integral din `imopediaBlockingReasons` (`src/lib/portals/imopedia/publish.ts`).
+  imopedia: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.imopediaReasons ?? [] },
   imo24: {
     required: [],
     allowed: COMMON_ALLOWED,
