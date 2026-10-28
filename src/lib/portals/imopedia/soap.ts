@@ -192,10 +192,32 @@ export function normalizeBool(value: unknown): boolean {
   return value === true || value === 1 || value === "1" || (typeof value === "string" && value.toLowerCase() === "true");
 }
 
-function messages(value: unknown): string[] {
+/**
+ * Mesaj unic pentru un element de tip `{ field, errorMessage, errorCode }`
+ * (forma reală a lui `_errors` / `_warnings`). `field` lipsește din mesaj când
+ * e gol sau este ghidul generic `soap`; `errorCode` apare doar când e completat.
+ */
+function issueMessage(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const rec = value as Record<string, unknown>;
+  if (!("errorMessage" in rec)) return null;
+  const text = String(rec["errorMessage"] ?? "").trim();
+  const field = String(rec["field"] ?? "").trim();
+  const code = String(rec["errorCode"] ?? "").trim();
+  const base = field && field.toLowerCase() !== "soap" ? (text ? `${field}: ${text}` : field) : text;
+  return code ? (base ? `${base} (${code})` : code) : base;
+}
+
+function messages(value: unknown, issues = false): string[] {
   if (value === null || value === undefined || value === "") return [];
-  if (Array.isArray(value)) return value.flatMap(messages);
-  if (typeof value === "object") return Object.values(value as Record<string, unknown>).flatMap(messages);
+  if (Array.isArray(value)) return value.flatMap((v) => messages(v, issues));
+  if (typeof value === "object") {
+    if (issues) {
+      const single = issueMessage(value);
+      if (single !== null) return single === "" ? [] : [single];
+    }
+    return Object.values(value as Record<string, unknown>).flatMap((v) => messages(v, issues));
+  }
   return [String(value)];
 }
 
@@ -204,8 +226,8 @@ export function readImopediaResult(value: unknown): ImopediaResult {
   const raw = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
   return {
     isValid: normalizeBool(raw["_isValid"]),
-    errors: messages(raw["_errors"]),
-    warnings: messages(raw["_warnings"]),
+    errors: messages(raw["_errors"], true),
+    warnings: messages(raw["_warnings"], true),
     success: messages(raw["_success"]),
     raw,
   };
