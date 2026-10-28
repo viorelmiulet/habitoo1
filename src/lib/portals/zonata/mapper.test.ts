@@ -155,7 +155,7 @@ describe("limite", () => {
 describe("câmpuri obligatorii", () => {
   it("lipsa camerelor blochează apartamentul", () => {
     const r = map({ ...base, rooms: null });
-    expect(!r.ok && r.reasons).toContain("Câmpul obligatoriu ZonaTa „Număr camere” (Apartamente de vânzare) lipsește sau nu are o valoare acceptată.");
+    expect(!r.ok && r.reasons).toContain("Număr camere lipsește: completează numărul de camere în fișa proprietății (Apartamente de vânzare).");
   });
   it("nomenclator lipsă → blocat", () => {
     const r = mapPropertyToZonata(base, { nomenclature: [], images: IMAGES });
