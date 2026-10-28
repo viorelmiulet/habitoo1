@@ -111,7 +111,7 @@ export const Route = createFileRoute("/_authenticated/app/anunturi-particulari")
 });
 
 /** MAP Habitoo is the default tab, so `lista=habitoo` and no `lista` are the same list state. */
-export function canonicalMapSearch(search: Record<string, unknown>) {
+function canonicalMapSearch(search: Record<string, unknown>) {
   if (search.lista !== "habitoo") return search;
   const { lista: _omit, ...rest } = search;
   return rest;
