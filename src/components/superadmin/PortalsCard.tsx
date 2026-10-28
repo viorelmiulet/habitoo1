@@ -50,6 +50,7 @@ import {
   revokeStoriaAuthorization,
   startStoriaAuthorization,
 } from "@/lib/portals/storia.functions";
+import { getZonataNomenclatureStatus, syncZonataNomenclature } from "@/lib/portals/zonata/nomenclature.functions";
 import {
   getImopediaNomenclatureStatus,
   syncImopediaNomenclature,
@@ -1051,6 +1052,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                         </Button>
                       ) : null}
                       {item.portal.id === "imopedia" ? <ImopediaNomenclaturePanel /> : null}
+                      {item.portal.id === "zonata" ? <ZonataNomenclaturePanel organizationId={organizationId} /> : null}
                       {item.supportsFeedPreview ? (
                         <Button
                           type="button"
@@ -1220,6 +1222,46 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
           setConfirmRevoke(null);
         }}
       />
+    </div>
+  );
+}
+
+function ZonataNomenclaturePanel({ organizationId }: { organizationId: string }) {
+  const qc = useQueryClient();
+  const loadStatus = useServerFn(getZonataNomenclatureStatus);
+  const runSync = useServerFn(syncZonataNomenclature);
+  const status = useQuery({ queryKey: ["zonata-nomenclature"], queryFn: () => loadStatus() });
+  const sync = useMutation({
+    mutationFn: () => runSync({ data: { organizationId } }),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["zonata-nomenclature"] });
+      toast.success(
+        `Importate: ${r.counts.subcategories} subcategorii imobiliare, ${r.counts.fields} câmpuri. Față de sincronizarea anterioară: ${r.changes.added.length} noi, ${r.changes.removed.length} eliminate, ${r.changes.fieldsChanged.length} cu câmpuri modificate.`,
+        { duration: 10_000 },
+      );
+    },
+    onError: (e: Error) => toastError(e),
+  });
+  const c = status.data?.changes;
+  const changed = c ? [...c.added.map((x) => `nou: ${x}`), ...c.removed.map((x) => `eliminat: ${x}`), ...c.fieldsChanged.map((x) => `câmpuri modificate: ${x}`)] : [];
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+          <RefreshCw className={cn("mr-2 size-4", sync.isPending && "animate-spin")} />
+          Sincronizează nomenclatorul
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          {status.data?.syncedAt
+            ? `Ultima sincronizare: ${formatDateTime(status.data.syncedAt)} · ${status.data.counts?.subcategories ?? 0} subcategorii, ${status.data.counts?.fields ?? 0} câmpuri`
+            : "Nomenclatorul nu a fost sincronizat încă."}
+        </span>
+      </div>
+      {changed.length ? (
+        <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+          {changed.slice(0, 20).map((x) => <li key={x}>{x}</li>)}
+        </ul>
+      ) : null}
     </div>
   );
 }
