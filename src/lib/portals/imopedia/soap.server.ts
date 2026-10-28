@@ -72,6 +72,11 @@ export async function imopediaViewAgency(sessionId: string, agencyId: number, de
   return readImopediaResult(await call("viewAgency", buildViewAgencyEnvelope(sessionId, agencyId), deps));
 }
 
+/** Operație cu plic gata construit (saveAgent, saveProperty, deleteProperty). */
+export async function imopediaCall(operation: string, envelope: string, deps: ImopediaClientDeps = {}): Promise<ImopediaResult> {
+  return readImopediaResult(await call(operation, envelope, deps));
+}
+
 export async function imopediaLogout(sessionId: string, deps: ImopediaClientDeps = {}): Promise<void> {
   await call("logout", buildLogoutEnvelope(sessionId), deps);
 }

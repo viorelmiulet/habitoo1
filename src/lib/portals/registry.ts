@@ -482,13 +482,15 @@ export const PORTALS: PortalDefinition[] = [
     activation: "approval",
     display_name: "Imopedia.ro",
     description:
-      "Integrare directă prin API-ul SOAP Imopedia.ro, cu credențialele emise de Imopedia pentru agenție. Deocamdată este disponibil doar testul conexiunii.",
+      "Integrare directă prin API-ul SOAP Imopedia.ro, cu credențialele emise de Imopedia pentru agenție. Habitoo publică, actualizează și retrage oferta.",
     logo: "IP",
     status: "available",
     directions: ["habitoo_to_portal"],
     // Credențialele (user, parolă, ID agenție) le EMITE IMOPEDIA; le introduce SuperAdminul.
     authentication: ["username_password"],
-    capabilities: ["test_connection"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "manage_media"],
+    // Bifa „Promovat” = Gold Imopedia (GOLD=1/0 trimis explicit la fiecare salvare).
+    supports_promoted_flag: true,
     configuration_schema: {
       fields: [
         { key: "username", label: "Utilizator API Imopedia", target: "external_account_id" },
@@ -506,7 +508,7 @@ export const PORTALS: PortalDefinition[] = [
     website: "https://www.imopedia.ro",
     docs: "https://docs.imopedia.ro/",
     notes:
-      "API SOAP 1.1 RPC/encoded, WSDL https://www.imopedia.ro/soap.wsdl. Credențialele (user, parolă, ID agenție) se obțin de la support@imopedia.ro. Publicarea și media vor fi adăugate în etapele următoare.",
+      "API SOAP 1.1 RPC/encoded, WSDL https://www.imopedia.ro/soap.wsdl. Credențialele (user, parolă, ID agenție) se obțin de la support@imopedia.ro. Publicare/actualizare prin saveProperty (ID_LOCAL = numărul din referința proprietății, fix după prima publicare; agentul prin saveAgent), retragere prin deleteProperty. Imaginile se trimit după saveProperty ca FILE_URL (existsFile/addFile/syncFiles, deleteFile când nu mai rămâne niciuna); Imopedia nu documentează reordonarea, deci o schimbare de ordine se aplică doar imaginilor nou adăugate. „Promovat” = Gold; boost-ul se cere din cardul proprietății.",
   },
   {
     id: "primulanunt",

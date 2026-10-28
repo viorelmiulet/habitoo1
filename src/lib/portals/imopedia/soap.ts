@@ -61,6 +61,11 @@ export function buildOptionsEnvelope(operation: string, sessionId: string, optio
   );
 }
 
+/** Ca `buildOptionsEnvelope`, cu conținut `options` deja construit (tipuri imbricate, ex. `tns:FileType`). */
+export function buildRawOptionsEnvelope(operation: string, sessionId: string, optionsType: string, innerXml: string): string {
+  return envelope(operation, scalar("session_id", "xsd:string", sessionId) + `<options xsi:type="tns:${optionsType}">${innerXml}</options>`);
+}
+
 export function buildViewAgencyEnvelope(sessionId: string, agencyId: number): string {
   return buildOptionsEnvelope("viewAgency", sessionId, "ViewAgencyType", [{ name: "AGENTIA", type: "xsd:int", value: agencyId }]);
 }

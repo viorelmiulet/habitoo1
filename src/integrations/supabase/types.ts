@@ -3442,6 +3442,41 @@ export type Database = {
         }
         Relationships: []
       }
+      imopedia_listing_files: {
+        Row: {
+          file_id: string
+          id: string
+          order: number
+          photo_id: string | null
+          portal_listing_id: string
+          sent_at: string
+        }
+        Insert: {
+          file_id: string
+          id?: string
+          order?: number
+          photo_id?: string | null
+          portal_listing_id: string
+          sent_at?: string
+        }
+        Update: {
+          file_id?: string
+          id?: string
+          order?: number
+          photo_id?: string | null
+          portal_listing_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imopedia_listing_files_portal_listing_id_fkey"
+            columns: ["portal_listing_id"]
+            isOneToOne: false
+            referencedRelation: "portal_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imopedia_regions: {
         Row: {
           id: number

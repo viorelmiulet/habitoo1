@@ -94,6 +94,11 @@ export type ListingOutcome = {
   /** Corpul răspunsului portalului la succes (sanitizat la jurnalizare). */
   portalResponse?: unknown;
   promotionErrors?: { promotionId: string; message: string }[];
+  /**
+   * Portaluri cu `supports_promoted_flag`: `false` = portalul a salvat anunțul,
+   * dar a refuzat promovarea (ex. limită Gold Imopedia); bifa se debifează.
+   */
+  promotedConfirmed?: boolean;
   imobiliareMode?: import("./imobiliare/card-promotions").ImobiliarePublicationMode;
 };
 

@@ -47,6 +47,8 @@ export type ImopediaMapContext = {
   agencyId: number;
   location: ImopediaLocationResult;
   collaboration: { active: boolean; commissionPercent: number | null };
+  /** Bifa „Promovat” → GOLD=1; altfel GOLD=0, trimis explicit la fiecare salvare. */
+  gold?: boolean;
   currentYear?: number;
 };
 
@@ -196,7 +198,7 @@ export function mapPropertyToImopedia(p: Row, ctx: ImopediaMapContext): Imopedia
 
   put("AGENTIA", ctx.agencyId);
   put("IMOPEDIA", 1);
-  put("GOLD", 0);
+  put("GOLD", ctx.gold === true ? 1 : 0);
 
   const typeKey = (p.property_type ?? "").trim().toLowerCase();
   const typeId = IMOPEDIA_PROPERTY_TYPE[typeKey] ?? null;
