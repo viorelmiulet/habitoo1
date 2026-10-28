@@ -285,9 +285,7 @@ export const PORTALS: PortalDefinition[] = [
     directions: ["habitoo_to_portal"],
     // Cheia (i24_<8 hex>_<40 hex>) este GENERATĂ DE AGENȚIE în panoul imo24.ro.
     authentication: ["portal_api_key"],
-    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "manage_media"],
-    // Bifa „Promovat” = Gold Imopedia (GOLD=1/0 trimis explicit la fiecare salvare).
-    supports_promoted_flag: true,
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing"],
     configuration_schema: {
       fields: [
         {
@@ -412,9 +410,7 @@ export const PORTALS: PortalDefinition[] = [
     status: "available",
     directions: ["habitoo_to_portal"],
     authentication: ["oauth"],
-    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "manage_media"],
-    // Bifa „Promovat” = Gold Imopedia (GOLD=1/0 trimis explicit la fiecare salvare).
-    supports_promoted_flag: true,
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing"],
     configuration_schema: { fields: [] },
     website: "https://www.olx.ro",
     docs: "https://www.olx.ro/api/partner",
@@ -492,7 +488,9 @@ export const PORTALS: PortalDefinition[] = [
     directions: ["habitoo_to_portal"],
     // Credențialele (user, parolă, ID agenție) le EMITE IMOPEDIA; le introduce SuperAdminul.
     authentication: ["username_password"],
-    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "manage_media"],
+    // Bifa „Promovat” = Gold Imopedia (GOLD=1/0 trimis explicit la fiecare salvare).
+    supports_promoted_flag: true,
     configuration_schema: {
       fields: [
         { key: "username", label: "Utilizator API Imopedia", target: "external_account_id" },
