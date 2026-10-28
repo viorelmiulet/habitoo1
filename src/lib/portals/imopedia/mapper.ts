@@ -52,7 +52,8 @@ export type ImopediaMapContext = {
 
 export type ImopediaMapResult =
   | { ok: true; fields: SoapField[]; warnings: string[] }
-  | { ok: false; reasons: string[]; warnings: string[] };
+  /** `fields` = ce s-ar trimite, doar pentru previzualizare; oferta nu se publică. */
+  | { ok: false; reasons: string[]; warnings: string[]; fields: SoapField[] };
 
 export const IMOPEDIA_PROPERTY_TYPE: Record<string, number> = {
   apartment: 1, studio: 1, office: 2, house: 3, villa: 4, commercial: 5, industrial: 6, land: 7,
@@ -297,12 +298,12 @@ export function mapPropertyToImopedia(p: Row, ctx: ImopediaMapContext): Imopedia
   put("DATA_APARITIE", isoDate(p.created_at));
   put("DATA_MODIFICARE", isoDate(p.updated_at));
 
-  if (reasons.length) return { ok: false, reasons, warnings };
   const fields: SoapField[] = [];
   for (const [name, value] of values) {
     const type = IMOPEDIA_FIELD_TYPES[name];
     if (!type || (IMOPEDIA_FORBIDDEN_FIELDS as readonly string[]).includes(name)) continue;
     fields.push({ name, type, value });
   }
+  if (reasons.length) return { ok: false, reasons, warnings, fields };
   return { ok: true, fields, warnings };
 }
