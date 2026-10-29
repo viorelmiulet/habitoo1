@@ -12,15 +12,12 @@ import { QueryError } from "@/components/app/QueryError";
 import { useCurrentUser } from "@/hooks/use-session";
 import {
   getAgencyPortalCatalog,
-  requestPortalActivation,
   selfActivatePortal,
 } from "@/lib/portal-activation.functions";
 import { startStoriaAuthorization } from "@/lib/portals/storia.functions";
 import { startOlxAuthorization } from "@/lib/portals/olx.functions";
 import { startZupAuthorization, revokeZupAuthorization, testZupAuthorization } from "@/lib/portals/zup.functions";
 import { ZUP_MISSING_MESSAGE } from "@/lib/portals/zup/config";
-import { LaCheieActivationPanel } from "@/components/app/LaCheieActivationPanel";
-import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
 import { agencyGridItems, agencyPortalCardState } from "@/lib/portals/grid-state";
 
 export function AgencyPortalCatalogCard() {
@@ -31,7 +28,6 @@ export function AgencyPortalCatalogCard() {
   }, []);
   const queryClient = useQueryClient();
   const loadCatalog = useServerFn(getAgencyPortalCatalog);
-  const sendRequest = useServerFn(requestPortalActivation);
   const runActivate = useServerFn(selfActivatePortal);
   const runStoria = useServerFn(startStoriaAuthorization);
   const runOlx = useServerFn(startOlxAuthorization);
@@ -44,37 +40,6 @@ export function AgencyPortalCatalogCard() {
   const catalog = useQuery({
     queryKey: ["agency-portal-catalog"],
     queryFn: () => loadCatalog({}),
-  });
-
-  const request = useMutation({
-    mutationFn: async (portalId: string) => ({ portalId, ...(await sendRequest({ data: { portalId } })) }),
-    onSuccess: (result) => {
-      toast.success(
-        isKeyRequestPortal(result.portalId)
-          ? `Cererea a fost trimisă către ${keyRequestLabel(result.portalId)}. Vei primi cheia pe email.`
-          : result.alreadyPending
-          ? "Cererea era deja trimisă și așteaptă aprobare."
-          : "Cererea de activare a fost trimisă.",
-      );
-      void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] });
-    },
-    onError: () => toast.error("Cererea nu a fost trimisă. Încearcă din nou."),
-  });
-
-  const activate = useMutation({
-    mutationFn: async (portalId: string) => {
-      const result = await runActivate({ data: { portalId } });
-      if (!result.ok) throw new Error("activation_failed");
-      return result;
-    },
-    onSuccess: () => {
-      toast.success("Portalul a fost activat.");
-      void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] });
-    },
-    onError: () => {
-      toast.error("Activarea nu a reușit acum. Încearcă din nou sau scrie-ne.");
-      void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] });
-    },
   });
 
   const connect = useMutation({
@@ -91,7 +56,7 @@ export function AgencyPortalCatalogCard() {
     onError: (e: Error) => toast.error(e.message || "Conectarea nu a pornit. Încearcă din nou sau scrie-ne."),
   });
 
-  const busy = request.isPending || activate.isPending || connect.isPending;
+  const busy = connect.isPending;
   const zupAction = useMutation({
     mutationFn: async (action: "test" | "disconnect") => {
       if (!organizationId) throw new Error("Agenția nu a fost găsită.");
@@ -128,7 +93,6 @@ export function AgencyPortalCatalogCard() {
         <ul className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 lg:grid-cols-3">
           {agencyGridItems(catalog.data ?? []).map((item) => {
             const state = agencyPortalCardState(item);
-            const isLaCheie = item.id === LACHEIE_PORTAL_KEY;
             if (item.id === "facebook_catalog") {
               return (
                 <li
