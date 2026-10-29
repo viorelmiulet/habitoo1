@@ -6,7 +6,7 @@ import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
 describe("public integrations overview", () => {
   it("lists each integration and covered portal exactly once", () => {
-    expect(INTEGRATION_OVERVIEW).toHaveLength(19);
+    expect(INTEGRATION_OVERVIEW).toHaveLength(20);
     const ids = INTEGRATION_OVERVIEW.flatMap((p) => p.logoIds);
     expect(new Set(ids).size).toBe(ids.length);
     expect(INTEGRATION_OVERVIEW.find((p) => p.id === "storia")?.logoIds).toEqual(["storia", "olx"]);
@@ -30,7 +30,7 @@ describe("public integrations overview", () => {
     expect(integrationBadges({ ...minimal, capabilities: ["feed_pull"], withdraws_via_feed: true })).toEqual(["Preluare automată", "Retragere automată"]);
   });
   it("feed portals are not presented as direct publication", () => {
-    for (const id of ["clickimob", "imove", "homepitch", "properstar", "facebook_catalog"]) {
+    for (const id of ["clickimob", "imobli", "imove", "homepitch", "properstar", "facebook_catalog"]) {
       const item = INTEGRATION_OVERVIEW.find((p) => p.id === id);
       expect(item?.badges).toContain("Preluare automată");
       expect(item?.badges).not.toContain("Publicare directă");
@@ -42,9 +42,9 @@ describe("public integrations overview", () => {
   });
   it("ItemList uses every existing detail URL once", () => {
     const list = integrationItemListJsonLd();
-    expect(list.numberOfItems).toBe(19);
+    expect(list.numberOfItems).toBe(20);
     expect(list.itemListElement.map((p) => p.url)).toEqual(INTEGRATION_OVERVIEW.map((p) => `https://www.habitoo.ro/integrari/${p.slug}`));
-    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 19 }, (_, i) => i + 1));
+    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
 
   });
   it("sitemap dates only the updated overview", () => {

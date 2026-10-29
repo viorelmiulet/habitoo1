@@ -22,6 +22,27 @@ type Content = {
 };
 
 const CONTENT: Record<string, Content> = {
+  imobli: {
+    slug: "imobli",
+    name: "Imobli.ro",
+    description: "Ofertele agenției ajung pe Imobli.ro din Habitoo CRM: activezi singur portalul, bifezi anunțurile, iar cele debifate se retrag automat, fără cheie.",
+    intro: [
+      "Imobli.ro preia automat ofertele agenției din Habitoo. Administratorul activează portalul, apoi agenții bifează ofertele pe care vor să le afișeze. Nu trebuie să copiezi separat anunțurile pe portal și nu ai nevoie de nicio cheie pentru această integrare.",
+      "Tu alegi ce proprietăți ajung pe Imobli.ro. Portalul preia periodic ofertele selectate în Habitoo, împreună cu modificările lor. Când schimbi prețul, descrierea sau pozele unei oferte bifate, varianta nouă devine disponibilă pentru următoarea preluare făcută de Imobli.",
+      "Dacă nu mai vrei să afișezi o ofertă pe Imobli.ro, o debifezi în Habitoo. Oferta nu mai este inclusă în lista pentru portal și se retrage la următoarea preluare. Integrarea nu promite afișare sau retragere instantanee: acestea depind de preluarea făcută de Imobli.",
+    ],
+    activation: "Administratorul agenției activează singur Imobli.ro din Setări → Portaluri, fără intervenția echipei Habitoo și fără aprobare. Nu completează chei sau parole. După activare, agenții pot bifa Imobli.ro la ofertele pe care vor să le publice.",
+    notes: [
+      "Nu ai nevoie de nicio cheie pentru activarea Imobli.ro în Habitoo.",
+      "Portalul preia doar ofertele selectate pentru Imobli.ro, nu întregul portofoliu al agenției.",
+      "Ofertele noi, modificările și retragerile apar la următoarea preluare făcută de portal.",
+    ],
+    faq: [
+      { q: "Cum activez Imobli.ro?", a: "Administratorul agenției intră în Setări → Portaluri și activează singur Imobli.ro. Nu trebuie să aștepte aprobarea echipei Habitoo și nu are de introdus nicio cheie. După activare, alegi ofertele prin bifarea portalului în fișa proprietății." },
+      { q: "Când apare o ofertă pe Imobli.ro?", a: "După ce activezi portalul și bifezi oferta, Imobli.ro o preia automat la următoarea citire a ofertelor selectate. La fel sunt preluate modificările din Habitoo. Integrarea nu stabilește un termen de afișare instantanee." },
+      { q: "Cum retrag o ofertă de pe Imobli.ro?", a: "Debifezi Imobli.ro pentru oferta respectivă în Habitoo. Aceasta nu mai este disponibilă pentru preluare și se retrage de pe portal la următoarea citire. Nu trebuie să ștergi proprietatea din portofoliul agenției pentru a o scoate de pe Imobli." },
+    ],
+  },
   imo24: {
     slug: "imo24",
     name: "imo24.ro",
