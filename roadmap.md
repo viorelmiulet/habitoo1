@@ -3,7 +3,7 @@
 ## ZUP — etapa 2
 - [x] Nomenclator imobiliar, caracteristici și locații cu sincronizare atomică și diferențe în SuperAdmin
 - [x] Mapper pur, validări și previzualizare fără tokenuri; publicare în continuare blocată
-- [x] Redirect /login cu refresh unic; 46 teste ZUP și 1.560 teste portaluri trec, card Setări verificat desktop/mobil
+- [x] Redirect /login cu refresh unic; 48 teste ZUP finale și suita de 1.560 teste portaluri trec, card Setări verificat desktop/mobil
 - [ ] Sincronizare reală și ecranele SuperAdmin/previzualizare: nicio agenție ZUP conectată; sesiunea disponibilă nu este SuperAdmin. Opțiunile condiționale/range nu sunt documentate complet și sunt omise până la verificarea nomenclatorului real.
 
 ## ZUP — etapa 1
