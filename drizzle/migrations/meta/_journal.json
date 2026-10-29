@@ -1513,6 +1513,13 @@
       "when": 1793276033298,
       "tag": "0215_ofera_partner_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 216,
+      "version": "7",
+      "when": 1793276886640,
+      "tag": "0216_ofera_nomenclature",
+      "breakpoints": true
     }
   ]
 }

@@ -5524,6 +5524,138 @@ export type Database = {
         }
         Relationships: []
       }
+      ofera_categories: {
+        Row: {
+          active: boolean
+          code: string
+          depth: number
+          id: number
+          name: string
+          parameters: Json
+          parent_id: number | null
+          path_url: string
+          synced_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          depth: number
+          id: number
+          name: string
+          parameters: Json
+          parent_id?: number | null
+          path_url: string
+          synced_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          depth?: number
+          id?: number
+          name?: string
+          parameters?: Json
+          parent_id?: number | null
+          path_url?: string
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      ofera_cities: {
+        Row: {
+          active: boolean
+          county_id: number
+          id: number
+          name: string
+          name_normalized: string
+          synced_at: string
+        }
+        Insert: {
+          active?: boolean
+          county_id: number
+          id: number
+          name: string
+          name_normalized: string
+          synced_at?: string
+        }
+        Update: {
+          active?: boolean
+          county_id?: number
+          id?: number
+          name?: string
+          name_normalized?: string
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      ofera_counties: {
+        Row: {
+          active: boolean
+          id: number
+          name: string
+          name_normalized: string
+          synced_at: string
+        }
+        Insert: {
+          active?: boolean
+          id: number
+          name: string
+          name_normalized: string
+          synced_at?: string
+        }
+        Update: {
+          active?: boolean
+          id?: number
+          name?: string
+          name_normalized?: string
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      ofera_nomenclature_syncs: {
+        Row: {
+          changes: Json | null
+          cities_count: number | null
+          cities_hash: string | null
+          counts: Json | null
+          error_message: string | null
+          id: string
+          raw_categories: Json | null
+          raw_counties: Json | null
+          raw_zones: Json | null
+          success: boolean
+          synced_at: string
+          synced_by: string | null
+        }
+        Insert: {
+          changes?: Json | null
+          cities_count?: number | null
+          cities_hash?: string | null
+          counts?: Json | null
+          error_message?: string | null
+          id?: string
+          raw_categories?: Json | null
+          raw_counties?: Json | null
+          raw_zones?: Json | null
+          success: boolean
+          synced_at?: string
+          synced_by?: string | null
+        }
+        Update: {
+          changes?: Json | null
+          cities_count?: number | null
+          cities_hash?: string | null
+          counts?: Json | null
+          error_message?: string | null
+          id?: string
+          raw_categories?: Json | null
+          raw_counties?: Json | null
+          raw_zones?: Json | null
+          success?: boolean
+          synced_at?: string
+          synced_by?: string | null
+        }
+        Relationships: []
+      }
       ofera_partner_auth: {
         Row: {
           expires_at: string | null
@@ -5551,6 +5683,33 @@ export type Database = {
           scope?: string | null
           singleton?: boolean
           token_encrypted?: string | null
+        }
+        Relationships: []
+      }
+      ofera_zones: {
+        Row: {
+          active: boolean
+          city_id: number
+          id: number
+          name: string
+          name_normalized: string
+          synced_at: string
+        }
+        Insert: {
+          active?: boolean
+          city_id: number
+          id: number
+          name: string
+          name_normalized: string
+          synced_at?: string
+        }
+        Update: {
+          active?: boolean
+          city_id?: number
+          id?: number
+          name?: string
+          name_normalized?: string
+          synced_at?: string
         }
         Relationships: []
       }
@@ -11045,6 +11204,10 @@ export type Database = {
           neighborhood: string
           zone: string
         }[]
+      }
+      ofera_nomenclature_apply: {
+        Args: { p_actor?: string; p_payload: Json }
+        Returns: Json
       }
       ofera_token_claim: {
         Args: { p_owner: string; p_rejected_revision?: string }
