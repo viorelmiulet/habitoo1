@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Storia — prelungire automată per anunț
+- [ ] Payload explicit cu prioritate proprietate și aceeași valoare pentru ambele tranzacții
+- [ ] Bifă, revenire la implicit, coadă PUT doar pentru active/în procesare și rezultat; setări descriu și comportamentul existent la expirare
+- [ ] Teste fără rețea și verificare vizuală fără trimiteri reale
+
 ## Integrări publice — patru portaluri
 - [x] Pagini imo24/zonata/homedirect/imopedia, rezumate și data sitemap 2026-10-29
 - [x] Homepage, FAQ/JSON-LD și logourile oficiale existente; registrul și publicarea neschimbate

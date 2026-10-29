@@ -997,6 +997,9 @@ export const PropertyPortalsCard = forwardRef<
                         <AutoWithdrawLine
                           view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
                         />
+                        {cell.portalId === "storia" ? (
+                          <StoriaAutoRenewControl propertyId={propertyId} organizationId={organizationId} canManage={editing && canManage} />
+                        ) : null}
                       <div className="relative z-10 mt-3 flex min-w-0 flex-wrap items-center gap-2 [&>*]:pointer-events-auto">
                         {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo" || cell.portalId === "imo24") &&
                         cell.offerLinks.length > 0 &&
@@ -1245,6 +1248,18 @@ function StoriaAutoRenewControl({
   const load = useServerFn(getPropertyStoriaAutoRenew);
   const save = useServerFn(setPropertyStoriaAutoRenew);
   const queryKey = ["property-storia-auto-renew", organizationId, propertyId] as const;
+  const [sent, setSent] = useState<boolean | null>(null);
+  const loadJobs = useServerFn(getPropertyPublishJobs);
+  const jobsKey = ["property-publish-jobs", organizationId, propertyId] as const;
+  const jobs = useQuery({
+    queryKey: jobsKey,
+    queryFn: () => loadJobs({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
+    enabled: sent === true,
+    refetchInterval: q => q.state.data?.some(job => job.portalId === "storia" && (job.status === "queued" || job.status === "running")) ? 3000 : false,
+  });
+  const storiaJobs = jobs.data?.filter(job => job.portalId === "storia") ?? [];
+  const sending = sent === true && (jobs.isFetching || storiaJobs.length === 0 || storiaJobs.some(job => job.status === "queued" || job.status === "running"));
+  const result = storiaJobs[0];
 
   const state = useQuery({
     queryKey,
@@ -1254,9 +1269,11 @@ function StoriaAutoRenewControl({
   const mutate = useMutation({
     mutationFn: (override: boolean | null) =>
       save({ data: { ...(organizationId ? { organizationId } : {}), propertyId, override } }),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      setSent(result.queued);
+      void queryClient.invalidateQueries({ queryKey: jobsKey });
       void queryClient.invalidateQueries({ queryKey });
-      toast.success("Auto-prelungirea Storia a fost salvată.");
+      toast.success("Prelungirea automată Storia a fost salvată.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -1264,51 +1281,17 @@ function StoriaAutoRenewControl({
   if (!state.data) return null;
   const { override, agencyDefault, effective } = state.data;
 
-  const options: { value: boolean | null; label: string }[] = [
-    { value: null, label: "Setarea agenției" },
-    { value: true, label: "Activat" },
-    { value: false, label: "Dezactivat" },
-  ];
-
-  const summary =
-    override === null
-      ? `Moștenește setarea agenției (${agencyDefault ? "activată" : "dezactivată"}).`
-      : `Suprascriere: ${override ? "activată" : "dezactivată"} pentru acest anunț.`;
-
   return (
-    <div className="mt-3 pl-9">
-      <p className="text-xs font-medium">Auto-prelungire la expirare</p>
-      <div
-        role="group"
-        aria-label="Auto-prelungire Storia pentru acest anunț"
-        className="mt-1.5 inline-flex rounded-lg bg-secondary p-0.5"
-      >
-        {options.map((option) => {
-          const active = override === option.value;
-          return (
-            <button
-              key={String(option.value)}
-              type="button"
-              aria-pressed={active}
-              disabled={!canManage || mutate.isPending}
-              onClick={() => mutate.mutate(option.value)}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-60",
-                active
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {option.label}
-            </button>
-          );
-        })}
+    <div className="relative z-10 mt-3 space-y-1.5 pointer-events-auto">
+      <div className="flex items-center gap-2">
+        <Checkbox id={`storia-auto-renew-${propertyId}`} checked={effective} disabled={!canManage || mutate.isPending || sending}
+          onCheckedChange={value => mutate.mutate(value === true)} />
+        <Label htmlFor={`storia-auto-renew-${propertyId}`} className="text-xs">Prelungire automată</Label>
       </div>
-      <p className="mt-1.5 text-xs text-muted-foreground">
-        {summary}
-        {effective
-          ? " Anunțul expirat va fi republicat automat."
-          : " Anunțul expirat rămâne marcat expirat, fără republicare."}
+      <p className="text-xs text-muted-foreground">Implicit: setarea agenției ({agencyDefault ? "activată" : "dezactivată"})</p>
+      {override !== null ? <Button type="button" variant="link" size="compact" className="h-auto p-0 text-xs" disabled={!canManage || mutate.isPending || sending} onClick={() => mutate.mutate(null)}>Revino la setarea agenției</Button> : null}
+      <p role="status" className={cn("break-words text-xs", result?.ok === false && sent ? "text-destructive" : "text-muted-foreground")}>
+        {mutate.isPending ? "Se salvează…" : sending ? "Se trimite la Storia…" : sent === false ? "Salvat. Se aplică la următoarea publicare făcută de agent." : sent === true ? result?.message ?? "Opțiunea a fost trimisă la Storia." : null}
       </p>
     </div>
   );
