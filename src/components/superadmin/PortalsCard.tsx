@@ -52,6 +52,7 @@ import {
 } from "@/lib/portals/storia.functions";
 import { getZonataNomenclatureStatus, syncZonataNomenclature } from "@/lib/portals/zonata/nomenclature.functions";
 import { OferaNomenclaturePanel } from "./OferaNomenclaturePanel";
+import { ZupNomenclaturePanel } from "./ZupNomenclaturePanel";
 import {
   getImopediaNomenclatureStatus,
   syncImopediaNomenclature,
@@ -1061,6 +1062,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                       {item.portal.id === "imopedia" ? <ImopediaNomenclaturePanel /> : null}
                       {item.portal.id === "zonata" ? <ZonataNomenclaturePanel organizationId={organizationId} /> : null}
                       {item.portal.id === "ofera" ? <OferaNomenclaturePanel /> : null}
+                      {item.portal.id === "zup" ? <ZupNomenclaturePanel organizationId={organizationId} /> : null}
                       {item.supportsFeedPreview ? (
                         <Button
                           type="button"

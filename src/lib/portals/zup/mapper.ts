@@ -73,7 +73,7 @@ export function mapPropertyToZup(p: ZupRow, o: { catalogue: ZupCatalogue; images
   const cleanPlace = (s: string | null | undefined) => zupName(s).replace(/^(municipiul|municipiu|judetul|judet) /, "");
   const countyKey = cleanPlace(p.county); const cityKey = cleanPlace(p.city);
   const bucharest = countyKey === "bucuresti" || cityKey === "bucuresti" || /^sector(?:ul)? [1-6]$/.test(cityKey);
-  const sector = [p.city,p.zone,p.address].map(zupName).map(s => /\bsector(?:ul)? ([1-6])\b/.exec(s)?.[1]).find(Boolean);
+  const sector = [p.city,p.district].map(zupName).map(s => /\bsector(?:ul)? ([1-6])\b/.exec(s)?.[1]).find(Boolean);
   const countyRows = o.catalogue.locations.filter(l => cleanPlace(l.county) === (bucharest ? "bucuresti" : countyKey));
   const sectorRows = sector ? countyRows.filter(l => /^sector(?:ul)? [1-6]$/.test(cleanPlace(l.locality)) && cleanPlace(l.locality).endsWith(` ${sector}`)) : [];
   const matches = sectorRows.length === 1 ? sectorRows : countyRows.filter(l => cleanPlace(l.locality) === (bucharest ? "bucuresti" : cityKey));
@@ -87,7 +87,7 @@ export function mapPropertyToZup(p: ZupRow, o: { catalogue: ZupCatalogue; images
     const price = tx === "vanzare" ? p.sale_price ?? p.price : p.rent_price ?? p.price;
     const currency = (tx === "vanzare" ? p.sale_currency ?? p.currency : p.rent_currency ?? p.currency)?.toUpperCase();
     if (typeof price !== "number" || !Number.isFinite(price) || price <= 0) reasons.push(`Completează prețul pozitiv de ${tx}.`);
-    const values: Record<string,unknown> = { price, currency, usable: p.usable_surface ?? p.surface, built: p.built_surface, land: p.land_surface, rooms: p.property_type === "studio" ? 1 : p.rooms, floor: p.floor_label?.trim() || imo24Floor(p), year: p.build_year, layout: p.layout, comfort: p.comfort, condition: p.finish_condition, furnishing: p.furnishing, features: p.features, commission: p.commission_buyer };
+    const values: Record<string,unknown> = { price, currency, usable: p.usable_surface ?? p.surface, built: p.built_surface, land: p.land_surface, rooms: p.property_type === "studio" ? 1 : p.rooms, floor: p.floor_label?.trim() || imo24Floor(p), year: p.build_year, layout: p.layout, comfort: p.comfort, condition: p.finish_state, furnishing: p.furnishing, features: p.features, commission: p.commission };
     const characteristics: ZupBody["characteristics"] = {};
     for (const f of category.characteristics) {
       const key = sourceKey(f); let value = key ? values[key] : undefined;

@@ -71,6 +71,7 @@ export type PortalRequirementSubject = {
   /** HomeDirect.ro: mapper + locație + emailuri + cheie (`homedirectReasonsFor`). */
   homedirectReasons?: string[];
   oferaReasons?: string[];
+  zupReasons?: string[];
 };
 
 export type PortalRequirementRule = {
@@ -305,7 +306,7 @@ const BASE_REQUIRED = [
 ];
 
 export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
-  zup: { required: [{ key: "stage", label: "Publicare ZUP", requirement: "În curând", ok: () => false }], allowed: [] },
+  zup: { required: [{ key: "stage", label: "Publicare ZUP", requirement: "În curând", ok: () => false }], allowed: [], mapperReasons: (s) => s.zupReasons ?? [] },
   ofera: { required: [], allowed: COMMON_ALLOWED, mapperReasons: s => s.oferaReasons ?? [] },
   // OLX.ro direct: doar conectarea contului; cerințele de publicare vin la pasul de publicare.
   olx_direct: {

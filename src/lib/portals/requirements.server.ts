@@ -101,6 +101,14 @@ async function oferaReasonsLoader(admin: Admin, organizationId: string) {
   return (row: Record<string, any>) => oferaReasonsFor({ organizationId, propertyId: row.id }).catch(() => ["Verificarea Ofera a eșuat; reîncearcă."]);
 }
 
+async function zupReasonsLoader(admin: Admin, organizationId: string) {
+  const { data: conn, error } = await admin.from("portal_connections").select("id").eq("organization_id",organizationId).eq("portal","zup").maybeSingle();
+  if (error) return async () => ["La ZUP, verificarea conexiunii a eșuat; reîncearcă."];
+  if (!conn) return null;
+  const {loadZupPreview} = await import("./zup/preview.server");
+  return (row: Record<string,any>) => loadZupPreview(row.id,organizationId).then(r => r.reasons).catch(() => ["La ZUP, verificarea ofertei a eșuat; reîncearcă."]);
+}
+
 export async function loadRequirementSubject(
   admin: Admin,
   organizationId: string,
@@ -133,6 +141,7 @@ export async function loadRequirementSubject(
   const homedirect = await homedirectReasonsLoader(admin, organizationId);
   const homedirectReasons = homedirect ? await homedirect(row) : null;
   const ofera = await oferaReasonsLoader(admin, organizationId);
+  const zup = await zupReasonsLoader(admin, organizationId);
   let agentProfile: any = null;
   let agentName: string | null = null;
   let agentEmail: string | null = null;
@@ -194,6 +203,7 @@ export async function loadRequirementSubject(
     ...(zonata ? { zonataReasons: zonata(row) } : {}),
     ...(homedirectReasons ? { homedirectReasons } : {}),
     ...(ofera ? { oferaReasons: await ofera(row) } : {}),
+    ...(zup ? { zupReasons: await zup(row) } : {}),
   };
 }
 
@@ -252,6 +262,7 @@ export async function loadRequirementSubjects(
   const homedirect = await homedirectReasonsLoader(admin, organizationId);
   const profileById = new Map((profiles ?? []).map((p: any) => [p.id as string, p]));
   const ofera = await oferaReasonsLoader(admin, organizationId);
+  const zup = await zupReasonsLoader(admin, organizationId);
 
   for (const property of properties ?? []) {
     const row = property as Record<string, any>;
@@ -299,6 +310,7 @@ export async function loadRequirementSubjects(
       ...(zonata ? { zonataReasons: zonata(row) } : {}),
       ...(homedirect ? { homedirectReasons: await homedirect(row) } : {}),
       ...(ofera ? { oferaReasons: await ofera(row) } : {}),
+      ...(zup ? { zupReasons: await zup(row) } : {}),
     });
   }
   return result;
