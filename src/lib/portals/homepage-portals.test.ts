@@ -8,18 +8,19 @@ const ids = homepagePortals().map((p) => p.portal.id);
 describe("homepage portals", () => {
   it("lists exactly the portals with a public integration page, in registry order", () => {
     expect(labels).toEqual([
-      "ClickImob", "iMove.ro", "Properstar", "La Cheie", "Imospot.ro", "HomePitch.ro",
-      "Imobiliare.ro", "Storia.ro + OLX.ro", "Publi24.ro + Romimo.ro", "PrimulAnunț.ro", "VDI.ro",
+      "ClickImob", "iMove.ro", "Properstar", "La Cheie", "Imospot.ro", "imo24.ro", "ZonaTa.ro", "HomeDirect.ro", "HomePitch.ro",
+      "Imobiliare.ro", "Storia.ro + OLX.ro", "Publi24.ro + Romimo.ro", "Imopedia.ro", "PrimulAnunț.ro", "VDI.ro",
     ]);
   });
   it("hides unverified, covered and catalog integrations", () => {
-    for (const id of ["imo24", "imopedia", "zonata", "olx_direct", "olx", "publi24", "facebook_catalog"]) {
+    for (const id of ["olx_direct", "olx", "publi24", "facebook_catalog"]) {
       expect(ids).not.toContain(id);
     }
   });
   it("homepage FAQ mentions every portal in the grid", () => {
     const src = readFileSync("src/routes/index.tsx", "utf8");
-    const answer = src.match(/Pe ce portaluri imobiliare pot publica[^\n]*\n\s*a: "([^"]+)"/)![1];
+    const answer = src.match(/Pe ce portaluri imobiliare pot publica[^\n]*\n\s*a: "([^"]+)"/)?.[1];
+    if (!answer) throw new Error("Homepage portal FAQ is missing");
     const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f\s]/g, "").toLowerCase();
     const faq = norm(answer);
     for (const label of labels) {

@@ -5,7 +5,7 @@
 import { isPortalCovered, PORTAL_GROUPS, PORTALS, PROMOTION_CATALOGS, portalIntegrationOwner, type PortalDefinition } from "./registry";
 import { isKeyRequestPortal } from "./imospot-key-request";
 
-export const INTEGRATION_PAGES_LASTMOD = "2026-10-10";
+export const INTEGRATION_PAGES_LASTMOD = "2026-10-29";
 
 /** Portaluri unde Habitoo preia efectiv mesajele ca lead-uri (webhook/parser în cod). */
 const LEAD_PORTALS = new Set(["storia", "vdi", "properstar"]);
@@ -22,6 +22,90 @@ type Content = {
 };
 
 const CONTENT: Record<string, Content> = {
+  imo24: {
+    slug: "imo24",
+    name: "imo24.ro",
+    description: "Publici, actualizezi și retragi anunțurile pe imo24.ro din Habitoo CRM, cu poze și agent responsabil trimise automat, fără credite sau promovări.",
+    intro: [
+      "Prin integrarea imo24.ro, publici anunțurile agenției din Habitoo și trimiți modificările fără să introduci din nou oferta pe portal. Publicarea, actualizarea și retragerea rămân legate de proprietatea cu care lucrezi în CRM.",
+      "Pozele proprietății și agentul responsabil se trimit automat împreună cu anunțul. Astfel, pentru oferta publicată pe imo24.ro se folosește agentul care se ocupă de proprietate în Habitoo, fără să completezi separat aceste informații la fiecare trimitere.",
+      "Dacă aceeași proprietate este oferită atât la vânzare, cât și la închiriere, pe imo24.ro se trimit două anunțuri: unul pentru fiecare tranzacție. Integrarea nu folosește creditele și nici promovările imo24 din Habitoo.",
+    ],
+    activation: "Administratorul agenției cere activarea din Setări → Portaluri, iar echipa Habitoo o aprobă. Agenția generează cheia în panoul imo24.ro, cu drept de scriere, iar echipa Habitoo o introduce pentru conectare.",
+    notes: [
+      "Cheia trebuie generată în panoul imo24.ro cu drept de scriere, pentru a putea trimite anunțurile.",
+      "Pozele și agentul responsabil se trimit automat la publicarea ofertei.",
+      "Creditele și promovările imo24 nu se folosesc din Habitoo.",
+    ],
+    faq: [
+      { q: "Cine introduce cheia imo24.ro?", a: "Agenția o generează în panoul imo24.ro, cu drept de scriere, iar echipa Habitoo o introduce. Activarea este cerută de administratorul agenției din Setări → Portaluri și aprobată de echipa Habitoo." },
+      { q: "Cum apare o proprietate oferită și la vânzare, și la închiriere?", a: "Se trimit două anunțuri pe imo24.ro, unul pentru vânzare și unul pentru închiriere. Pozele și agentul responsabil sunt trimise automat împreună cu oferta." },
+      { q: "Pot folosi creditele sau promovările imo24 din Habitoo?", a: "Nu. Integrarea acoperă publicarea, actualizarea și retragerea anunțurilor, dar nu folosește creditele și promovările imo24 din Habitoo." },
+    ],
+  },
+  zonata: {
+    slug: "zonata",
+    name: "ZonaTa.ro",
+    description: "Publici anunțurile pe ZonaTa.ro din Habitoo CRM, cu până la 10 poze, vezi rezultatul verificării și poți retrage sau republica oferta din același loc.",
+    intro: [
+      "Integrarea ZonaTa.ro îți permite să trimiți anunțurile din Habitoo și să urmărești rezultatul în fișa proprietății. Pentru publicarea reală, agenția are nevoie de pachetul Enterprise ZonaTa cu acces pentru conectarea programelor, plătit de agenție direct la ZonaTa.",
+      "Anunțul trimis trece prin verificarea automată ZonaTa. În Habitoo vezi dacă este În verificare, Publicat sau Respins, iar în cazul respingerii vezi și motivul. La fiecare anunț se trimit cel mult 10 poze.",
+      "Retragerea lasă anunțul inactiv în contul ZonaTa al agenției și permite republicarea lui. Dacă proprietatea este oferită și la vânzare, și la închiriere, se trimit două anunțuri separate, câte unul pentru fiecare tranzacție.",
+    ],
+    activation: "Administratorul agenției cere activarea din Setări → Portaluri, iar echipa Habitoo o aprobă. Agenția creează cheia în contul ZonaTa, din Contul meu, în secțiunea cheilor de conectare, iar echipa Habitoo o introduce.",
+    notes: [
+      "Publicarea reală cere pachetul Enterprise cu acces pentru conectare, plătit de agenție la ZonaTa.",
+      "ZonaTa verifică automat anunțul; rezultatul și motivul unei respingeri se văd în Habitoo.",
+      "Se trimit maximum 10 poze; o proprietate oferită la vânzare și închiriere devine două anunțuri.",
+    ],
+    faq: [
+      { q: "De unde iau cheia ZonaTa?", a: "Agenția creează cheia în contul ZonaTa, din Contul meu, în secțiunea cheilor de conectare. Echipa Habitoo o introduce după cererea de activare făcută de administrator din Setări → Portaluri." },
+      { q: "De ce anunțul apare În verificare sau Respins?", a: "ZonaTa verifică automat anunțul înainte de publicare. Habitoo afișează rezultatul primit: În verificare, Publicat sau Respins. Dacă anunțul este respins, vezi și motivul transmis de ZonaTa." },
+      { q: "Pot republica un anunț retras?", a: "Da. Retragerea îl lasă inactiv în contul ZonaTa, fără să-l elimine definitiv. Îl poți republica; pentru publicarea reală agenția trebuie să aibă pachetul Enterprise cu acces pentru conectare." },
+    ],
+  },
+  homedirect: {
+    slug: "homedirect",
+    name: "HomeDirect.ro",
+    description: "Publici pe HomeDirect.ro din Habitoo CRM fără o cheie de introdus; conturile se creează la primul anunț, iar retragerea ofertei rămâne reversibilă.",
+    intro: [
+      "HomeDirect.ro se conectează cu Habitoo fără ca agenția să introducă o cheie. Administratorul cere activarea din Setări → Portaluri, iar echipa Habitoo o aprobă, astfel încât agenții să poată folosi integrarea pentru ofertele lor.",
+      "La primul anunț, HomeDirect creează automat contul agenției și contul agentului și trimite email de activare. Dacă agenția are deja un cont HomeDirect creat pe același email, legarea acestuia la Habitoo nu se poate face automat.",
+      "Retragerea unui anunț este reversibilă. Când proprietatea este marcată Vândut sau Închiriat în Habitoo, anunțul primește marcajul corespunzător pe HomeDirect. Prețurile introduse în lei se trimit în euro, folosind cursul BNR al zilei.",
+    ],
+    activation: "Administratorul agenției cere activarea din Setări → Portaluri, iar echipa Habitoo o aprobă. Agenția nu introduce nicio cheie. HomeDirect creează conturile agenției și agentului la primul anunț și trimite emailurile de activare.",
+    notes: [
+      "Contul agenției și cel al agentului se creează la primul anunț, cu email de activare trimis de HomeDirect.",
+      "Un cont HomeDirect existent pe același email al agenției nu se poate lega automat la Habitoo.",
+      "Retragerea este reversibilă; prețurile în lei sunt trimise în euro la cursul BNR al zilei.",
+    ],
+    faq: [
+      { q: "Trebuie să introduc o cheie HomeDirect?", a: "Nu. Agenția nu introduce nicio cheie. Administratorul solicită activarea din Setări → Portaluri, echipa Habitoo aprobă, iar HomeDirect creează conturile agenției și agentului la primul anunț." },
+      { q: "Ce se întâmplă dacă agenția are deja cont HomeDirect?", a: "Dacă acel cont folosește același email al agenției, legarea lui la Habitoo nu se poate face automat. Crearea automată a contului la primul anunț nu înlocuiește această legare." },
+      { q: "Cum sunt trimise prețurile în lei?", a: "Prețul în lei este convertit și trimis în euro, la cursul BNR al zilei. Când marchezi proprietatea Vândut sau Închiriat, anunțul HomeDirect este marcat corespunzător; retragerea obișnuită rămâne reversibilă." },
+    ],
+  },
+  imopedia: {
+    slug: "imopedia",
+    name: "Imopedia.ro",
+    description: "Publici, actualizezi și retragi anunțurile pe Imopedia.ro din Habitoo CRM, cu poze încărcate automat și opțiunea Gold prin bifa Promovat a ofertei.",
+    intro: [
+      "Integrarea Imopedia.ro îți permite să publici anunțurile din Habitoo, să trimiți actualizările și să retragi ofertele de pe portal. Lucrezi cu proprietatea din CRM, iar aceste acțiuni se fac din același loc, fără să rescrii anunțul separat.",
+      "Pozele proprietății se încarcă automat pe Imopedia odată cu trimiterea anunțului. Când actualizezi oferta, folosești integrarea pentru a trimite modificările, iar când nu mai vrei anunțul pe portal îl poți retrage din Habitoo.",
+      "Dacă bifezi Promovat pentru ofertă, Habitoo trimite anunțul ca Gold pe Imopedia. Datele de acces pentru conectare sunt emise de Imopedia, iar echipa Habitoo le introduce după aprobarea cererii de activare a agenției.",
+    ],
+    activation: "Administratorul agenției cere activarea din Setări → Portaluri, iar echipa Habitoo o aprobă. Imopedia emite utilizatorul, parola și ID-ul agenției; le soliciți la support@imopedia.ro, iar echipa Habitoo le introduce pentru conectare.",
+    notes: [
+      "Utilizatorul, parola și ID-ul agenției sunt emise de Imopedia și introduse de echipa Habitoo.",
+      "Integrarea acoperă publicarea, actualizarea și retragerea; pozele se încarcă automat pe portal.",
+      "Bifa Promovat trimite anunțul ca Gold pe Imopedia.",
+    ],
+    faq: [
+      { q: "De unde primesc datele de acces Imopedia?", a: "Imopedia le emite pentru agenție: utilizator, parolă și ID agenție. Le soliciți la support@imopedia.ro, iar echipa Habitoo le introduce după aprobarea activării cerute din Setări → Portaluri." },
+      { q: "Pozele se încarcă separat pe Imopedia?", a: "Nu trebuie să le încarci separat pentru anunțul trimis prin integrare. Habitoo încarcă automat pozele proprietății pe Imopedia, împreună cu publicarea ofertei din CRM." },
+      { q: "Cum trimit un anunț ca Gold?", a: "Bifezi Promovat pentru ofertă în Habitoo. La trimitere, anunțul este trimis ca Gold pe Imopedia. Publicarea, actualizarea și retragerea rămân disponibile din fișa proprietății." },
+    ],
+  },
   storia: {
     slug: "storia-olx",
     name: "Storia.ro + OLX.ro",
@@ -316,7 +400,7 @@ function canDo(def: PortalDefinition, name: string): string[] {
   if (c.has("update_listing") || c.has("feed_pull")) {
     out.push(direct ? "Trimiți modificările de preț, text sau poze cu un singur click pe Publică." : "Modificările din Habitoo ajung pe portal automat, la următoarea preluare.");
   }
-  if (c.has("withdraw_listing")) out.push("Retragi anunțul dintr-un click; la Vândut, Închiriat sau Arhivat se retrage automat.");
+  if (c.has("withdraw_listing")) out.push(def.id === "homedirect" ? "Retragi anunțul reversibil; la Vândut sau Închiriat, HomeDirect îl marchează corespunzător." : "Retragi anunțul dintr-un click; la Vândut, Închiriat sau Arhivat se retrage automat.");
   else if (c.has("feed_pull")) out.push("Dacă debifezi oferta, aceasta iese de pe portal la următoarea preluare.");
   if (c.has("manage_media")) out.push("Pozele se încarcă automat odată cu anunțul.");
   if (c.has("fetch_agents") || def.id === "vdi") out.push("Agentul responsabil se sincronizează automat cu portalul.");
@@ -334,7 +418,7 @@ function dailyWork(def: PortalDefinition, name: string): string[] {
     return [
       start,
       `În fila Publicare a proprietății bifezi ${name}, alături de celelalte portaluri pe care vrei să apară anunțul, și apeși Publică. Trimiterea continuă și dacă închizi pagina. Rezultatul îl vezi pe cardul portalului, iar dacă ceva nu merge primești o notificare cu motivul exact. Când schimbi prețul sau pozele, apeși din nou Publică.`,
-      ...(c.has("withdraw_listing") ? ["Când proprietatea se vinde sau se închiriază, schimbi doar statusul în Habitoo, iar anunțul se retrage singur."] : []),
+      ...(c.has("withdraw_listing") ? [def.id === "homedirect" ? "Când proprietatea se vinde sau se închiriază, schimbi statusul în Habitoo, iar HomeDirect marchează anunțul Vândut sau Închiriat." : "Când proprietatea se vinde sau se închiriază, schimbi doar statusul în Habitoo, iar anunțul se retrage singur."] : []),
     ];
   }
   return [
