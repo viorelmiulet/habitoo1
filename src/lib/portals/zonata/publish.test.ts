@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createZonataAdapter } from "../adapters/zonata.server";
 import { resetZonataClientState } from "./client";
 import { readZonataListing, ZONATA_PORTAL_STATUS, ZONATA_STATUS_LABEL, zonataStatusCheckDue, aggregateZonataStatus } from "./publish";
@@ -42,6 +42,24 @@ const stored = (id: string, status: any): ZonataStoredListing => ({ external_id:
 beforeEach(() => resetZonataClientState());
 
 describe("ZonaTa publicare", () => {
+  for (const [key, found, expectedMethods] of [[LIVE, true, ["POST", "GET"]], [LIVE, false, ["POST", "GET"]], [TEST, false, ["POST"]]] as const) {
+    it(`POST timeout recovery ${key === LIVE ? "live" : "test"}, found=${found}`, async () => {
+      const fetch = vi.fn(async (_url: string, init: RequestInit) => {
+        if (init.method === "POST") throw new DOMException("aborted", "AbortError");
+        return new Response(JSON.stringify(found ? { data: { id: 9, external_id: "HB-1-v", status: "active", url: "https://zonata.ro/anunt/9" } } : { error: "not_found" }), { status: found ? 200 : 404 });
+      });
+      const save = vi.fn(async () => {});
+      const adapter = createZonataAdapter({ fetch: fetch as never, build: async () => ({ ok: true, bodies: [body("HB-1-v")], warnings: [] }), loadStored: async () => [], save });
+      const result = await adapter.publishListing(ctx(key), ref);
+      expect(fetch.mock.calls.map(call => call[1].method)).toEqual(expectedMethods);
+      expect(result.ok).toBe(found);
+      if (result.ok) {
+        expect(result.data).toMatchObject({ externalId: "HB-1-v", portalStatus: "published", publicUrl: "https://zonata.ro/anunt/9" });
+        expect(save).toHaveBeenCalledWith(expect.anything(), expect.arrayContaining([expect.objectContaining({ state: expect.objectContaining({ status: "active", zonataId: "9" }) })]), true);
+      } else expect(result.code).toBe("TIMEOUT");
+      if (key === LIVE) expect(fetch.mock.calls[1]?.[0]).toBe("https://zonata.ro/api/v1/listings/ext:HB-1-v");
+    });
+  }
   it("publicarea și actualizarea trimit POST /listings cu același corp și external_id", async () => {
     const h = harness([[201, { data: { id: 9, status: "in_review" } }], [200, { data: { id: 9, status: "active", url: "https://zonata.ro/anunt/9", expires_at: "2026-11-27T00:00:00Z" } }]]);
     const pub = await h.adapter.publishListing(ctx(LIVE), ref);

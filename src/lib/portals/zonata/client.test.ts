@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ZONATA_WINDOW_LIMIT,
   describeZonataAccount,
   getZonataAccount,
   resetZonataClientState,
   zonataLimiterWaitMs,
+  zonataRequest,
 } from "./client";
 import { isValidZonataKey, zonataKeyMode } from "./key";
 import { validatePortalConfigValues, portalCanPublish, getPortalDefinition } from "../registry";
@@ -18,6 +19,7 @@ function json(status: number, body: unknown, headers: Record<string, string> = {
 }
 
 const noSleep = vi.fn(async () => undefined);
+afterEach(() => vi.useRealTimers());
 
 beforeEach(() => {
   resetZonataClientState();
@@ -44,6 +46,32 @@ describe("cheia ZonaTa", () => {
   it("publicarea este activă de la pasul 3", () => {
     expect(portalCanPublish("zonata")).toBe(true);
     expect(getPortalDefinition("zonata")?.publish_coming_soon).toBeUndefined();
+  });
+});
+
+describe("ZonaTa request deadlines", () => {
+  for (const [method, path, duration] of [["POST", "/listings", 90000], ["GET", "/listings/ext:HB-1-v", 30000], ["PATCH", "/listings/ext:HB-1-v", 30000], ["DELETE", "/listings/ext:HB-1-v", 30000]] as const) {
+    it(`${method} aborts at ${duration}ms, not before`, async () => {
+      vi.useFakeTimers();
+      let signal: AbortSignal | null = null;
+      const f = vi.fn((_url, init: RequestInit) => new Promise<Response>((_resolve, reject) => {
+        signal = init.signal ?? null;
+        signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+      }));
+      const pending = zonataRequest(TEST, method, path, undefined, { fetch: f as never });
+      await vi.advanceTimersByTimeAsync(duration - 1);
+      expect((signal as AbortSignal | null)?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      const result = await pending;
+      expect(result).toMatchObject({ ok: false, kind: "timeout", message: `ZonaTa nu a răspuns în ${duration / 1000} de secunde.` });
+    });
+  }
+  it("keeps the timeout active while reading the response body", async () => {
+    vi.useFakeTimers();
+    const f = vi.fn(async (_url, init: RequestInit) => ({ status: 200, text: () => new Promise((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))) }));
+    const pending = zonataRequest(TEST, "GET", "/me", undefined, { fetch: f as never });
+    await vi.advanceTimersByTimeAsync(30000);
+    expect(await pending).toMatchObject({ ok: false, kind: "timeout" });
   });
 });
 
