@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## ZUP — etapa 2
+- [ ] Nomenclator imobiliar, caracteristici și locații cu sincronizare atomică și diferențe în SuperAdmin
+- [ ] Mapper pur, validări și previzualizare fără tokenuri; publicare în continuare blocată
+- [ ] Redirect /login cu refresh unic și teste fără rețea; verificarea ecranelor disponibile
+
 ## ZUP — etapa 1
 - [x] Documentație verificată: endpointurile form din /zapi/v1, durata din expires_in, /anunturi ca array fără paginare documentată; logo oficial din antet; publicare blocată și fără pagini publice
 - [x] OAuth per agenție cu state unic, tokenuri criptate, refresh cu lock durabil/CAS și deconectare; GET /anunturi returnează doar număr
