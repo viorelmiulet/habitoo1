@@ -3,11 +3,20 @@ import { hasPortalLogo } from "@/components/app/PortalLogo";
 import { BLOG_SITE_URL, buildStaticSitemapXml } from "@/lib/blog-discovery";
 import { homepagePortals, integrationPageBySlug, integrationSlugFor } from "./integration-pages";
 import { INTEGRATION_OVERVIEW } from "./integration-overview";
-import { PORTALS, PROMOTION_CATALOGS } from "./registry";
+import { PORTALS, PORTAL_GROUPS, PROMOTION_CATALOGS } from "./registry";
 
 // Start from the registry, not the public lists: missing portals must remain test cases.
 // Covered brands may share a detail page/card, but each needs its own homepage logo.
-const available = [...PORTALS, ...PROMOTION_CATALOGS].filter((portal) => portal.status === "available");
+const availableIds = new Set([...PORTALS, ...PROMOTION_CATALOGS]
+  .filter((portal) => portal.status === "available")
+  .map((portal) => portal.id));
+// OLX and Publi24 currently carry legacy coming_soon rows, but their available
+// primary integration covers them; explicitly include those brands as requested.
+const coveredIds = new Set(PORTAL_GROUPS
+  .filter((group) => availableIds.has(group.primary))
+  .flatMap((group) => group.covers));
+const available = [...PORTALS, ...PROMOTION_CATALOGS]
+  .filter((portal) => availableIds.has(portal.id) || coveredIds.has(portal.id));
 const homepageIds = new Set(homepagePortals().map(({ portal }) => portal.id));
 const sitemap = buildStaticSitemapXml();
 
