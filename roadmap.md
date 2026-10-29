@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Ofera — etapa 1
+- [ ] Registru, ID furnizor SuperAdmin, stare fără secrete și test conexiune
+- [ ] Client cu răspunsuri din corp, jurnal privat redactat și token criptat cu lock global
+- [ ] Teste fără rețea și verificare interfață fără apeluri Ofera
+
 ## Storia — prelungire automată per anunț
 - [x] Payload explicit cu prioritate proprietate și aceeași valoare pentru ambele tranzacții
 - [x] Bifă, revenire la implicit, coadă PUT doar pentru active/în procesare și rezultat; setări descriu și republicarea existentă la expirare, neschimbată
