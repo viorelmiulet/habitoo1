@@ -3,7 +3,7 @@
 ## Ofera — etapa 1
 - [x] Registru, ID furnizor SuperAdmin, stare fără secrete și test conexiune; fără publicare sau conținut public
 - [x] Client cu răspunsuri din corp, jurnal privat redactat și token criptat cu lock global; migrație aplicată
-- [x] 26 teste Ofera fără rețea, 1.432 teste portaluri înaintea celor 2 teste finale; Ofera cu OF verificat în Setări → Portaluri în cont, fără mutații și erori runtime
+- [x] 26 teste Ofera fără rețea și toate cele 1.434 teste portaluri trec, build OK; Ofera cu OF verificat în Setări → Portaluri în cont, fără mutații și erori runtime
 - [ ] Test live și verificare formular SuperAdmin: lipsesc cele patru secrete OFERA; sesiunea disponibilă este administrator de agenție, redirect SuperAdmin verificat
 
 ## Storia — prelungire automată per anunț
