@@ -44,7 +44,7 @@ export function promotionFilterLabel(value: string, groups: PromotionFilterGroup
   const labels = values.map((v) => {
     for (const group of groups) {
       const option = group.options.find((o) => o.value === v);
-      if (option) return `${group.portalName} · ${option.label}`;
+      if (option) return `${group.chipName ?? group.portalName} · ${option.label}`;
     }
     return v;
   });
