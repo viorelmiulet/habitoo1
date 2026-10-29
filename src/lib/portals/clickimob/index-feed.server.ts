@@ -19,7 +19,8 @@ import {
 } from "@/lib/portals/properstar/index-feed";
 import {
   CLICKIMOB_INDEX_HEADERS,
-  CLICKIMOB_INDEX_VERSION,
+  INDEX_PORTALS,
+  type IndexPortal,
   clickimobAgencyContact,
   clickimobFeedToken,
   verifyClickimobIndexKey,
@@ -30,7 +31,6 @@ import {
 
 export const CLICKIMOB_PORTAL = "clickimob";
 export const CLICKIMOB_INDEX_LOG_PREFIX = "clickimob_index";
-const ENDPOINT = "portal.clickimob.index";
 
 export type ClickimobIndexedAgency = Omit<ClickimobIndexAgency, "feed">;
 
@@ -92,6 +92,10 @@ export function selectClickimobAgencies(
 }
 
 export async function listClickimobIndexedAgencies(now: Date): Promise<ClickimobIndexedAgency[]> {
+  return listPortalIndexedAgencies(now, "clickimob");
+}
+
+export async function listPortalIndexedAgencies(now: Date, portal: IndexPortal): Promise<ClickimobIndexedAgency[]> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const [orgs, connections, pubs, states] = await Promise.all([
     supabaseAdmin
@@ -102,16 +106,16 @@ export async function listClickimobIndexedAgencies(now: Date): Promise<Clickimob
     supabaseAdmin
       .from("portal_connections")
       .select("organization_id, activated, updated_at")
-      .eq("portal", CLICKIMOB_PORTAL),
+      .eq("portal", portal),
     supabaseAdmin
       .from("portal_publications")
       .select("organization_id")
-      .eq("portal_key", CLICKIMOB_PORTAL)
+      .eq("portal_key", portal)
       .eq("enabled", true),
     supabaseAdmin
       .from("portal_index_state")
       .select("organization_id, active, last_active_at, inactive_since")
-      .eq("portal", CLICKIMOB_PORTAL),
+      .eq("portal", portal),
   ]);
   const firstError = [orgs, connections, pubs, states].find((r) => r.error)?.error;
   if (firstError) throw new Error(firstError.message);
@@ -132,10 +136,10 @@ export async function listClickimobIndexedAgencies(now: Date): Promise<Clickimob
   );
   if (changes.length) {
     const { error } = await supabaseAdmin.from("portal_index_state").upsert(
-      changes.map((c) => ({ ...c, portal: CLICKIMOB_PORTAL, updated_at: now.toISOString() })),
+      changes.map((c) => ({ ...c, portal, updated_at: now.toISOString() })),
       { onConflict: "portal,organization_id" },
     );
-    if (error) console.error("[clickimob-index] state upsert failed", error.message);
+    if (error) console.error(`[${portal}-index] state upsert failed`, error.message);
   }
   return agencies;
 }
@@ -153,7 +157,22 @@ export async function handleClickimobIndex(
   deps: ClickimobIndexDeps = defaultClickimobIndexDeps,
   now: Date = new Date(),
 ): Promise<Response> {
-  const base = { tokenPrefix: CLICKIMOB_INDEX_LOG_PREFIX, endpoint: ENDPOINT, method: request.method };
+  return handlePortalIndex(request, rawKey, "clickimob", deps, now);
+}
+
+export async function handlePortalIndex(
+  request: Request,
+  rawKey: string,
+  portal: IndexPortal,
+  deps: ClickimobIndexDeps = {
+    indexKey: () => process.env[INDEX_PORTALS[portal].secret],
+    listAgencies: (now) => listPortalIndexedAgencies(now, portal),
+    log: logFeedAccess,
+    rateLimited: (request) => feedRequestRateLimited(`${portal}_index`, request),
+  },
+  now: Date = new Date(),
+): Promise<Response> {
+  const base = { tokenPrefix: `${portal}_index`, endpoint: `portal.${portal}.index`, method: request.method };
   if (deps.rateLimited(request)) {
     await deps.log({ ...base, organizationId: null, status: 429, detail: "rate_limited" });
     return new Response(null, { status: 429 });
@@ -168,17 +187,17 @@ export async function handleClickimobIndex(
     const { baseUrl } = feedUrlsForRequest(new URL(request.url));
     const agencies = await deps.listAgencies(now);
     const body: ClickimobIndex = {
-      version: CLICKIMOB_INDEX_VERSION,
+      version: INDEX_PORTALS[portal].version,
       generated_at: now.toISOString(),
       agencies: agencies.map((a) => ({
         ...a,
-        feed: { base_url: `${baseUrl}/api/public/sites/v1`, token: clickimobFeedToken(a.id, secret) },
+        feed: { base_url: `${baseUrl}/api/public/sites/v1`, token: clickimobFeedToken(a.id, secret, portal) },
       })),
     };
     await deps.log({ ...base, organizationId: null, status: 200, items: body.agencies.length });
     return new Response(JSON.stringify(body), { status: 200, headers: { ...CLICKIMOB_INDEX_HEADERS } });
   } catch (error) {
-    console.error("[clickimob-index] failed", error);
+    console.error(`[${portal}-index] failed`, error);
     await deps.log({ ...base, organizationId: null, status: 500, detail: "internal_error" });
     return new Response(null, { status: 500 });
   }

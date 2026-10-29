@@ -4,7 +4,7 @@
  * Agenția se găsește EXCLUSIV prin OfficeId-ul exact (`properstarEntityId("hb", org.id)`)
  * și trebuie să fie acum în indexul ClickImob (`active` sau `grace`).
  */
-import { verifyClickimobFeedToken, CLICKIMOB_TOKEN_PREFIX } from "@/lib/portals/clickimob/index-feed";
+import { verifyClickimobFeedToken, CLICKIMOB_TOKEN_PREFIX, INDEX_PORTALS, type IndexPortal } from "@/lib/portals/clickimob/index-feed";
 import { properstarEntityId } from "@/lib/portals/properstar/mapper";
 
 export type ClickimobTokenMatch = {
@@ -27,13 +27,24 @@ export async function resolveClickimobFeedToken(
   token: string,
   now: Date = new Date(),
 ): Promise<ClickimobTokenMatch | null> {
-  const officeId = verifyClickimobFeedToken(token, process.env["CLICKIMOB_INDEX_KEY"]);
+  return resolvePortalIndexToken(token, "clickimob", now);
+}
+
+export async function resolvePortalIndexToken(
+  token: string,
+  portal: IndexPortal,
+  now: Date = new Date(),
+): Promise<ClickimobTokenMatch | null> {
+  const officeId = verifyClickimobFeedToken(token, process.env[INDEX_PORTALS[portal].secret], portal);
   if (!officeId) return null;
 
-  const { listClickimobIndexedAgencies } = await import(
+  const { listClickimobIndexedAgencies, listPortalIndexedAgencies } = await import(
     "@/lib/portals/clickimob/index-feed.server"
   );
-  const agency = (await listClickimobIndexedAgencies(now)).find((a) => a.id === officeId);
+  const agencies = portal === "clickimob"
+    ? await listClickimobIndexedAgencies(now)
+    : await listPortalIndexedAgencies(now, portal);
+  const agency = agencies.find((a) => a.id === officeId);
   if (!agency || (agency.status !== "active" && agency.status !== "grace")) return null;
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -41,5 +52,7 @@ export async function resolveClickimobFeedToken(
   if (error) throw new Error(error.message);
   const matches = (data ?? []).filter((o) => properstarEntityId("hb", o.id) === officeId);
   if (matches.length !== 1) return null;
-  return { organizationId: matches[0]!.id, officeId, status: agency.status };
+  const match = matches[0];
+  if (!match) return null;
+  return { organizationId: match.id, officeId, status: agency.status };
 }

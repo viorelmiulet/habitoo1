@@ -18,11 +18,12 @@ import {
 } from "../adapter";
 import { toPortalError } from "../errors";
 
+export function createIndexFeedAdapter(portal: "clickimob" | "imobli", name: string): PortalAdapter {
 /** Diagnoza feedului pentru o ofertă: ce va citi portalul, în realitate. */
 async function diagnose(ctx: PortalContext, ref: ListingRef): Promise<ListingDiagnostics> {
   const { inspectFeedMedia, inspectFeedProperty } = await import("../feed-inspect.server");
   const [property, media] = await Promise.all([
-    inspectFeedProperty(ctx.organizationId, ref.propertyId, "clickimob"),
+    inspectFeedProperty(ctx.organizationId, ref.propertyId, portal),
     inspectFeedMedia(ctx.organizationId, ref.propertyId),
   ]);
 
@@ -70,13 +71,13 @@ async function notify(
       ok: false,
       code: "VALIDATION_ERROR",
       message:
-        "Oferta nu este vizibilă în feedul citit de ClickImob. " + diagnostics.notes.join(" "),
+        `Oferta nu este vizibilă în feedul citit de ${name}. ` + diagnostics.notes.join(" "),
       detail: `${operation} feed_not_visible`,
     };
   }
   const withdrawWarning =
     options.expect === "absent" && diagnostics.feedVisible
-      ? " Atenție: oferta este încă publicată în feed, deci ClickImob o poate reimporta. Oprește publicarea pe site pentru retragere definitivă."
+      ? ` Atenție: oferta este încă publicată în feed, deci ${name} o poate reimporta. Oprește publicarea pe site pentru retragere definitivă.`
       : "";
   return {
     ok: true,
@@ -86,7 +87,9 @@ async function notify(
       feedVisible: diagnostics.feedVisible,
       processed: null,
       detail: `index ${operation}`,
-      message: `ClickImob preia modificarea din feed în cel mult 15 minute.${withdrawWarning}`,
+      message: portal === "clickimob"
+        ? `ClickImob preia modificarea din feed în cel mult 15 minute.${withdrawWarning}`
+        : `${name} preia modificarea la următoarea citire a feedului.${withdrawWarning}`,
     },
   };
 }
@@ -98,7 +101,7 @@ async function status(ctx: PortalContext): Promise<PortalResult<ConnectionStatus
   try {
     const { inspectFeedAgents, inspectFeedProperties } = await import("../feed-inspect.server");
     const [properties, agents] = await Promise.all([
-      inspectFeedProperties(ctx.organizationId, 1, "clickimob"),
+      inspectFeedProperties(ctx.organizationId, 1, portal),
       inspectFeedAgents(ctx.organizationId),
     ]);
 
@@ -108,7 +111,7 @@ async function status(ctx: PortalContext): Promise<PortalResult<ConnectionStatus
       data: {
         configured: true,
         live: false,
-        detail: "index ClickImob",
+        detail: `index ${name}`,
         feed: {
           ok: feedOk,
           apiVersion: properties.apiVersion,
@@ -130,8 +133,8 @@ async function status(ctx: PortalContext): Promise<PortalResult<ConnectionStatus
   }
 }
 
-export const clickimobAdapter: PortalAdapter = {
-  id: "clickimob",
+const adapter: PortalAdapter = {
+  id: portal,
 
   async testConnection(ctx) {
     const result = await status(ctx);
@@ -175,7 +178,7 @@ export const clickimobAdapter: PortalAdapter = {
   async fetchListings(ctx) {
     try {
       const { inspectFeedProperties } = await import("../feed-inspect.server");
-      const snapshot = await inspectFeedProperties(ctx.organizationId, 50, "clickimob");
+      const snapshot = await inspectFeedProperties(ctx.organizationId, 50, portal);
       if (snapshot.status !== 200) {
         return {
           ok: false,
@@ -252,3 +255,9 @@ export const clickimobAdapter: PortalAdapter = {
   },
 };
 
+
+return adapter;
+}
+
+export const clickimobAdapter = createIndexFeedAdapter("clickimob", "ClickImob");
+export const imobliAdapter = createIndexFeedAdapter("imobli", "Imobli");

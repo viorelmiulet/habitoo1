@@ -1,3 +1,9 @@
+## Imobli — index separat
+- [x] Înainte de modificări: curl ClickImob cheie greșită 401; portal properties fără token 401
+- [ ] Registry, adaptor/index comun parametrizat, tokenuri izolate și logo oficial
+- [ ] Teste de regresie și curl după modificări
+- [ ] Verificare index/token real: așteaptă IMOBLI_INDEX_KEY și oferte Imobli selectate explicit de utilizator
+
 # SEO public — pasul 1a
 
 ## ZUP — etapa 3
