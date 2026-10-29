@@ -1,7 +1,7 @@
 ## Imobli — index separat
 - [x] Înainte de modificări: curl ClickImob cheie greșită 401; portal properties fără token 401
-- [ ] Registry, adaptor/index comun parametrizat, tokenuri izolate și logo oficial
-- [ ] Teste de regresie și curl după modificări
+- [x] Registry, adaptor/index comun parametrizat, tokenuri izolate și logo oficial; card verificat desktop/mobil fără activări
+- [x] 1.641 teste portaluri/feed trec, build OK; curl Imobli cheie greșită 401, ClickImob cheie greșită 401, portal fără token 401; ClickImob cheie corectă 200 cu aceleași 2 agenții și date ca versiunea publicată
 - [ ] Verificare index/token real: așteaptă IMOBLI_INDEX_KEY și oferte Imobli selectate explicit de utilizator
 
 # SEO public — pasul 1a
