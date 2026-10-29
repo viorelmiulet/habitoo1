@@ -41,6 +41,21 @@ function setup(responses: { status: number; body: unknown }[] = []) {
   return { d, calls, states, seed, connection: () => connection, advance: (ms: number) => { time += ms; } };
 }
 describe("ZUP OAuth stage 1", () => {
+  it("refreshes once on 302 /login without following the redirect", async () => {
+    const t = setup(); await t.seed(); let reads = 0;
+    t.d.fetch = (async (_url: unknown, init?: RequestInit) => {
+      expect(init?.redirect).toBe("manual");
+      if (init?.method === "POST") return new Response(JSON.stringify(tokenBody("NEW")));
+      reads++;
+      return reads === 1 ? new Response("<html>login</html>",{status:302,headers:{location:"/login"}}) : new Response("[]");
+    }) as typeof fetch;
+    expect((await testZupConnection("org",t.d)).count).toBe(0); expect(reads).toBe(2);
+  });
+  it("second login redirect requires reconnection and does not loop", async () => {
+    const t=setup(); await t.seed();let calls=0;
+    t.d.fetch=(async (_url:unknown,init?:RequestInit)=>{calls++;return init?.method==="POST"?new Response(JSON.stringify(tokenBody("NEW"))):new Response("login",{status:302,headers:{location:"https://zup.ro/login"}});}) as typeof fetch;
+    await expect(testZupConnection("org",t.d)).rejects.toThrow("Reconectează contul ZUP");expect(calls).toBe(3);
+  });
   it("uses documented authorization endpoint and exact callback", () => {
     const url = new URL(zupAuthorizationUrl("test-state", ENV));
     expect(url.origin + url.pathname).toBe("https://zup.ro/oauth/authorize");
