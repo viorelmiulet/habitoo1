@@ -1,5 +1,7 @@
 # Portal rules
 
+- Ofera partner authentication uses only global project secrets and a server-only encrypted text token, fenced database renewal lease and per-call redacted diagnostics; the body envelope is authoritative, with a validated plain OAuth token-response exception. The stage-one adapter only tests token/categories and stores agency provider IDs through the SuperAdmin connection flow. Why: concurrent Workers must share one partner token without leaking credentials or implying publishing support.
+
 - Storia renewal overrides are resolved in the pure mapper; renewal saves reuse the atomic content-update queue with pending eligibility, worker checks, and per-advert remote revalidation. Update mode never creates or activates adverts; agency expiry republication remains separate. Why: renewal choices must not reactivate inactive adverts or lose changes on busy jobs.
 
 - Contact refresh after reassignment uses `portal_publish_jobs.operation=update`, only already-active pairs, with worker state revalidation and journal `update`; pending contact requests on busy jobs drain transactionally through queue claim. Why: no new publication, withdrawal, promotion or lost contact update during concurrent publishing.

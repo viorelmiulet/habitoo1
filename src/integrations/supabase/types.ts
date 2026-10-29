@@ -5485,6 +5485,75 @@ export type Database = {
           },
         ]
       }
+      ofera_api_logs: {
+        Row: {
+          body_status: number | null
+          created_at: string
+          http_status: number | null
+          id: string
+          log_track_id: string | null
+          message: string
+          organization_id: string | null
+          path: string
+          raw_response: string | null
+          success: boolean
+        }
+        Insert: {
+          body_status?: number | null
+          created_at?: string
+          http_status?: number | null
+          id?: string
+          log_track_id?: string | null
+          message: string
+          organization_id?: string | null
+          path: string
+          raw_response?: string | null
+          success: boolean
+        }
+        Update: {
+          body_status?: number | null
+          created_at?: string
+          http_status?: number | null
+          id?: string
+          log_track_id?: string | null
+          message?: string
+          organization_id?: string | null
+          path?: string
+          raw_response?: string | null
+          success?: boolean
+        }
+        Relationships: []
+      }
+      ofera_partner_auth: {
+        Row: {
+          expires_at: string | null
+          lock_owner: string | null
+          lock_until: string | null
+          revision: string | null
+          scope: string | null
+          singleton: boolean
+          token_encrypted: string | null
+        }
+        Insert: {
+          expires_at?: string | null
+          lock_owner?: string | null
+          lock_until?: string | null
+          revision?: string | null
+          scope?: string | null
+          singleton?: boolean
+          token_encrypted?: string | null
+        }
+        Update: {
+          expires_at?: string | null
+          lock_owner?: string | null
+          lock_until?: string | null
+          revision?: string | null
+          scope?: string | null
+          singleton?: boolean
+          token_encrypted?: string | null
+        }
+        Relationships: []
+      }
       offer_client_deliveries: {
         Row: {
           activity_id: string | null
@@ -10976,6 +11045,10 @@ export type Database = {
           neighborhood: string
           zone: string
         }[]
+      }
+      ofera_token_claim: {
+        Args: { p_owner: string; p_rejected_revision?: string }
+        Returns: boolean
       }
       olx_direct_refresh_arm: { Args: never; Returns: undefined }
       olx_direct_refresh_tick: { Args: never; Returns: undefined }

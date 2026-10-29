@@ -13,6 +13,7 @@ import { CRM_URL } from "@/lib/host";
 import { IMO24_KEY_FORMAT_MESSAGE, isValidImo24Key } from "./imo24/key";
 import { ZONATA_KEY_FORMAT_MESSAGE, isValidZonataKey } from "./zonata/key";
 import { IMOPEDIA_AGENCY_ID_MESSAGE, parseImopediaAgencyId } from "./imopedia/config";
+import { oferaProviderId } from "./ofera/config";
 
 export type PortalId = string;
 
@@ -356,6 +357,21 @@ export const PORTALS: PortalDefinition[] = [
     docs: "https://www.homedirect.ro/api/docs/",
     notes:
       "Integrare prin cheia CRM Habitoo (una pentru toate agențiile). La primul anunț, HomeDirect creează automat contul agenției și al agentului și le trimite email de activare. Dacă agenția are deja cont HomeDirect pe același email, legarea e refuzată de HomeDirect. Un anunț per tranzacție (-v / -i), idempotent pe externalIds.post. Retragerea = status inactive (reversibil); vândut → sold, închiriat → rented; ștergerea definitivă (DELETE) doar la ștergerea proprietății în Habitoo. Prețurile în lei se convertesc în EUR la cursul BNR al zilei.",
+  },
+  {
+    id: "ofera",
+    display_name: "Ofera.ro",
+    description: "Conectarea contului partener Habitoo la Ofera și verificarea accesului agenției. Publicarea vine în etapele următoare.",
+    logo: "OF",
+    status: "available",
+    activation: "approval",
+    directions: ["habitoo_to_portal"],
+    authentication: ["username_password"],
+    capabilities: ["test_connection"],
+    configuration_schema: { fields: [{ key: "id_furnizor", label: "ID furnizor Ofera", help: "ID-ul agenției la Ofera, sub contul de partener Habitoo (primit de la Ofera).", validate: "positive_int", target: "settings" }] },
+    website: "https://www.ofera.ro",
+    docs: "https://www.ofera.ro/documentatie-api/v2.1",
+    notes: "API v2.1 pentru parteneri: un cont Habitoo, câte un ID furnizor per agenție. Erorile vin cu HTTP 200 și starea reală în corpul răspunsului. Publicarea vine în etapele următoare.",
   },
   {
     id: "homepitch",
@@ -727,7 +743,7 @@ export function validatePortalConfigValues(
     // Câmpul necompletat nu e validat aici: lipsa lui e semnalată la conectare.
     if (value.length === 0) continue;
     if (field.validate === "positive_int") {
-      if (parseImopediaAgencyId(value) === null) {
+      if ((definition.id === "ofera" ? oferaProviderId(value) : parseImopediaAgencyId(value)) === null) {
         return definition.id === "imopedia" ? IMOPEDIA_AGENCY_ID_MESSAGE : `„${field.label}" trebuie să fie un număr întreg ≥ 1.`;
       }
       continue;
