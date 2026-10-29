@@ -13,7 +13,7 @@ export interface ZupStore {
   acquire(org: string, owner: string): Promise<boolean>;
   release(org: string, owner: string): Promise<void>;
 }
-export type ZupDeps = { store: ZupStore; encrypt(value: string): string; decrypt(value: string): string | null; env: Record<string, string | undefined>; fetch?: typeof fetch; now?: () => number; pause?: (ms: number) => Promise<void> };
+export type ZupDeps = { store: ZupStore; encrypt(value: string): string; decrypt(value: string): string | null; env: Record<string, string | undefined>; fetch?: typeof fetch; now?: () => number; pause?: (ms: number) => Promise<void>; reserve?: (org:string) => Promise<number>; beforeRequest?: () => Promise<void> };
 const now = (d: ZupDeps) => d.now?.() ?? Date.now();
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 function app(env: Record<string, string | undefined>) {
@@ -48,12 +48,15 @@ export function zupHttpError(status: number, body: unknown): PortalError {
     const errors = (body as { errors: unknown }).errors;
     if (errors && typeof errors === "object" && !Array.isArray(errors)) {
       const fields = Object.keys(errors).filter(k => /^[a-zA-Z][a-zA-Z0-9_.]{0,60}$/.test(k) && !/token|secret|password|authorization|client_id/i.test(k)).slice(0, 20);
-      if (fields.length) message += ` Câmpuri de verificat: ${fields.join(", ")}.`;
+      const labels: Record<string,string> = {name:"titlu",description:"descriere",county:"județ",locality:"localitate",phone:"telefon",nume:"nume",prenume:"prenume",category_id:"categorie",photos_urls:"fotografii","characteristics.pret":"preț","characteristics.moneda":"monedă"};
+      if (fields.includes("type")) message += " ZUP cere câmpul «type», al cărui sens nu este documentat. Publicarea este blocată; nu alegem o valoare.";
+      if (fields.length) message += ` Câmpuri de verificat: ${fields.map(f=>labels[f] ? `${labels[f]} (${f})` : f).join(", ")}.`;
     }
   }
   return new PortalError(codeFromHttpStatus(status), `zup_http_${status}`, message);
 }
 async function request(path: string, init: RequestInit, d: ZupDeps): Promise<{ status: number; body: unknown }> {
+  await d.beforeRequest?.();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ZUP_TIMEOUT_MS);
   try {
@@ -65,6 +68,7 @@ async function request(path: string, init: RequestInit, d: ZupDeps): Promise<{ s
       throw new PortalError("PORTAL_ERROR", "zup_redirect_blocked", "ZUP a returnat o redirecționare neașteptată; aceasta nu a fost urmată.");
     }
     const raw = await response.text();
+    if (!raw.trim() && response.ok) return { status: response.status, body: {} };
     let body: unknown;
     try { body = JSON.parse(raw); } catch {
       if (!response.ok) throw zupHttpError(response.status, null);
@@ -137,17 +141,21 @@ export async function getZupAccessToken(org: string, d: ZupDeps, rejected?: stri
     return refreshed.access_token;
   } finally { await d.store.release(org, owner); }
 }
-export async function zupGet(org: string, path: string, d: ZupDeps): Promise<unknown> {
-  if (!/^(anunturi|categories(?:\/\d+(?:\/characteristics(?:\/required)?)?)?|locations)(?:\?[^#]*)?$/.test(path)) throw new PortalError("NOT_SUPPORTED", "zup_get_path");
-  let token = await getZupAccessToken(org, d);
-  let response = await request(path, { method: "GET", headers: { authorization: `Bearer ${token}`, accept: "application/json" } }, d);
-  if (response.status === 401) {
-    token = await getZupAccessToken(org, d, token);
-    response = await request(path, { method: "GET", headers: { authorization: `Bearer ${token}`, accept: "application/json" } }, d);
+export async function zupCall(org:string,path:string,method:"GET"|"POST"|"PUT"|"DELETE",body:unknown,d:ZupDeps):Promise<unknown> {
+  const read = /^(anunturi(?:\/\d+)?|categories(?:\/\d+(?:\/characteristics(?:\/required)?)?)?|locations)(?:\?[^#]*)?$/.test(path);
+  const write = method==="POST" ? /^anunturi(?:\/\d+\/command)?$/.test(path) : method==="PUT" ? /^anunturi\/\d+$/.test(path) : method==="DELETE" && /^anunturi\/\d+\/photos\/[A-Za-z0-9_-]+$/.test(path);
+  if (!(method==="GET"?read:write)) throw new PortalError("NOT_SUPPORTED","zup_path");
+  const scoped = {...d,beforeRequest:async()=>{const wait=await d.reserve?.(org) ?? 0;if(wait>0) await (d.pause ?? (ms=>new Promise(r=>setTimeout(r,ms))))(wait);}};
+  let token=await getZupAccessToken(org,scoped); let refreshed=false;let retried=false;
+  for (;;) {
+    const r=await request(path,{method,headers:{authorization:`Bearer ${token}`,accept:"application/json",...(method!=="GET"?{"content-type":"application/json"}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})},scoped);
+    if(r.status===401&&!refreshed){refreshed=true;token=await getZupAccessToken(org,scoped,token);continue;}
+    if(r.status===429&&!retried){retried=true;await (d.pause ?? (ms=>new Promise(resolve=>setTimeout(resolve,ms))))(1000);continue;}
+    if(r.status<200||r.status>=300)throw zupHttpError(r.status,r.body);
+    return r.body;
   }
-  if (response.status < 200 || response.status >= 300) throw zupHttpError(response.status, response.body);
-  return response.body;
 }
+export const zupGet=(org:string,path:string,d:ZupDeps)=>zupCall(org,path,"GET",undefined,d);
 export async function testZupConnection(org: string, d: ZupDeps): Promise<{ count: number; message: string }> {
   const body = await zupGet(org, "anunturi", d);
   if (!Array.isArray(body) || body.some(r => !r || typeof r !== "object" || Array.isArray(r))) throw new PortalError("PORTAL_ERROR", "zup_invalid_list", "ZUP nu a returnat lista de anunțuri în formatul așteptat.");
