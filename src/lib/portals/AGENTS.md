@@ -1,5 +1,7 @@
 # Portal rules
 
+- Ofera mapping and location resolution are pure and consume only the active synchronized catalogue; a SuperAdmin-only read preview loads agency/assigned-agent/public-media data and platform currency without importing Ofera transport or token code. Preview stays separate from publication capabilities and never enables publishing. Why: unknown categories/options must be omitted or blocked, and stage-three preview must not trigger external writes.
+
 - Ofera partner authentication uses only global project secrets and a server-only encrypted text token, fenced database renewal lease and per-call redacted diagnostics; the body envelope is authoritative, with a validated plain OAuth token-response exception. The stage-one adapter only tests token/categories and stores agency provider IDs through the SuperAdmin connection flow. Why: concurrent Workers must share one partner token without leaking credentials or implying publishing support.
 - Ofera nomenclature uses unauthenticated GETs, strict whole-download validation and one advisory-locked transactional apply RPC; unchanged rows retain timestamps, missing IDs deactivate, detailed real-estate parameters drive atomic SuperAdmin alerts, and cities retain only count/hash in audit. Weekly managed callbacks skip unless an agency has activated Ofera. Zones preserve original parent IDs even when absent from the public cities list. Why: retain source fidelity, prevent partial catalogues and avoid invented geography or publishing behavior.
 

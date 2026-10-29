@@ -6,10 +6,17 @@ import { toast } from "@/components/ui/sonner";
 import { formatDateTime } from "@/lib/format";
 import { toastError } from "@/lib/errors";
 import { getOferaNomenclatureStatus, syncOferaNomenclature } from "@/lib/portals/ofera/nomenclature.functions";
+import { getOferaPriceCurrency, saveOferaPriceCurrency } from "@/lib/portals/ofera/preview.functions";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 export function OferaNomenclaturePanel() {
   const qc = useQueryClient();
   const get = useServerFn(getOferaNomenclatureStatus);
   const run = useServerFn(syncOferaNomenclature);
+  const readCurrency = useServerFn(getOferaPriceCurrency);
+  const saveCurrency = useServerFn(saveOferaPriceCurrency);
+  const currency = useQuery({ queryKey: ["ofera-currency"], queryFn: () => readCurrency() });
+  const currencySave = useMutation({ mutationFn: (value: "EUR" | "RON") => saveCurrency({ data: { currency: value } }), onSuccess: () => { qc.invalidateQueries({ queryKey: ["ofera-currency"] }); toast.success("Moneda Ofera a fost salvată."); }, onError: (error: Error) => toastError(error) });
   const status = useQuery({ queryKey: ["ofera-nomenclature"], queryFn: () => get() });
   const sync = useMutation({ mutationFn: () => run(), onSuccess: (r) => {
     qc.invalidateQueries({ queryKey: ["ofera-nomenclature"] });
@@ -18,6 +25,7 @@ export function OferaNomenclaturePanel() {
   const data = status.data;
   const changes = data?.changes;
   return <div className="w-full space-y-2">
+    <div className="space-y-2"><p className="text-sm font-medium">Moneda prețului la Ofera</p><RadioGroup aria-label="Moneda prețului la Ofera" className="flex gap-4" value={currency.data ?? "EUR"} disabled={currency.isPending || currencySave.isPending || !!currency.error} onValueChange={value => { if (value === "EUR" || value === "RON") currencySave.mutate(value); }}>{(["EUR", "RON"] as const).map(value => <Label key={value} className="flex items-center gap-2" htmlFor={`ofera-currency-${value}`}><RadioGroupItem value={value} id={`ofera-currency-${value}`} />{value}</Label>)}</RadioGroup>{currency.error ? <p role="alert" className="text-xs text-destructive">Moneda Ofera nu a putut fi citită.</p> : null}</div>
     <Button type="button" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
       <RefreshCw className={sync.isPending ? "mr-2 size-4 animate-spin" : "mr-2 size-4"} />
       Actualizează nomenclatorul Ofera

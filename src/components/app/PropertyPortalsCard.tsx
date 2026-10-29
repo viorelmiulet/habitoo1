@@ -34,6 +34,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ImopediaBoostButton } from "@/components/app/ImopediaBoostButton";
 import { ZonataPreviewButton } from "@/components/app/ZonataPreviewButton";
 import { HomedirectPreviewButton } from "@/components/app/HomedirectPreviewButton";
+import { OferaPreviewButton } from "@/components/app/OferaPreviewButton";
 import { ZonataStatusPanel } from "@/components/app/ZonataStatusPanel";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
@@ -643,6 +644,7 @@ export const PropertyPortalsCard = forwardRef<
               </p>
             </div>
             <div className="flex flex-col items-end gap-1 max-sm:w-full max-sm:items-stretch">
+              {isSuperadmin ? <OferaPreviewButton propertyId={propertyId} /> : null}
               {pendingCount > 0 ? (
                 <span className="text-xs text-muted-foreground">
                   {pendingCount} {pendingCount === 1 ? "modificare" : "modificări"} de aplicat

@@ -1,5 +1,11 @@
 # SEO public — pasul 1a
 
+## Ofera — etapa 3
+- [x] Localizare și mapper pur numai din nomenclator; drafturi incomplete omit ID-urile nerezolvate, fără publicare
+- [x] Monedă SuperAdmin EUR/RON și previzualizare fără token/apel Ofera; protecție server testată
+- [x] 42 teste noi fără rețea, 1.482 teste portaluri trec și build OK; HB-1265/HB-1129/HB-1121 previzualizate real și anonimizate, toate blocate doar de ID furnizor lipsă, fără avertismente
+- [ ] Verificare vizuală dialog și salvare monedă: contul disponibil nu este SuperAdmin; proprietatea reală deschisă, butonul privilegiat absent. Fără modificări de date sau publicare.
+
 ## Ofera — etapa 2
 - [x] Nomenclator public complet, validare și salvare atomică idempotentă cu diferențe; migrația 0216 aplicată
 - [x] Panou SuperAdmin, program săptămânal luni 03:17 UTC cu skip fără agenții active și notificări atomice ale parametrilor
