@@ -94,6 +94,13 @@ async function homedirectReasonsLoader(admin: Admin, organizationId: string) {
   return (row: Record<string, any>) => homedirectReasonsFor(admin, row as never).catch(() => ["Verificarea HomeDirect a eșuat; reîncearcă."]);
 }
 
+async function oferaReasonsLoader(admin: Admin, organizationId: string) {
+  const { data: conn } = await admin.from("portal_connections").select("id").eq("organization_id", organizationId).eq("portal", "ofera").maybeSingle();
+  if (!conn) return null;
+  const { oferaReasonsFor } = await import("./ofera/listings.server");
+  return (row: Record<string, any>) => oferaReasonsFor({ organizationId, propertyId: row.id }).catch(() => ["Verificarea Ofera a eșuat; reîncearcă."]);
+}
+
 export async function loadRequirementSubject(
   admin: Admin,
   organizationId: string,
@@ -125,6 +132,7 @@ export async function loadRequirementSubject(
   const zonata = await zonataReasonsLoader(admin, organizationId, [propertyId]);
   const homedirect = await homedirectReasonsLoader(admin, organizationId);
   const homedirectReasons = homedirect ? await homedirect(row) : null;
+  const ofera = await oferaReasonsLoader(admin, organizationId);
   let agentProfile: any = null;
   let agentName: string | null = null;
   let agentEmail: string | null = null;
@@ -185,6 +193,7 @@ export async function loadRequirementSubject(
     ...(imopedia ? { imopediaReasons: imopedia(row, agentProfile) } : {}),
     ...(zonata ? { zonataReasons: zonata(row) } : {}),
     ...(homedirectReasons ? { homedirectReasons } : {}),
+    ...(ofera ? { oferaReasons: await ofera(row) } : {}),
   };
 }
 
@@ -242,6 +251,7 @@ export async function loadRequirementSubjects(
   const zonata = await zonataReasonsLoader(admin, organizationId, propertyIds);
   const homedirect = await homedirectReasonsLoader(admin, organizationId);
   const profileById = new Map((profiles ?? []).map((p: any) => [p.id as string, p]));
+  const ofera = await oferaReasonsLoader(admin, organizationId);
 
   for (const property of properties ?? []) {
     const row = property as Record<string, any>;
@@ -288,6 +298,7 @@ export async function loadRequirementSubjects(
       ...(imopedia ? { imopediaReasons: imopedia(row, profile) } : {}),
       ...(zonata ? { zonataReasons: zonata(row) } : {}),
       ...(homedirect ? { homedirectReasons: await homedirect(row) } : {}),
+      ...(ofera ? { oferaReasons: await ofera(row) } : {}),
     });
   }
   return result;

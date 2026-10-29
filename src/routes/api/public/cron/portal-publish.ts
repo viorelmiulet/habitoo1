@@ -53,6 +53,7 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
                 {
                   portalId: job.portal_key,
                   enabled: job.enabled,
+                  ...(job.portal_key === "ofera" && job.ofera_intent ? { oferaIntent: job.ofera_intent } : {}),
                   ...(job.promoted !== null ? { promoted: job.promoted } : {}),
                   ...(job.imobiliare_promotions ? { imobiliarePromotions: job.imobiliare_promotions } : {}),
                   ...(job.imobiliare_mode ? { imobiliareMode: job.imobiliare_mode } : {}),

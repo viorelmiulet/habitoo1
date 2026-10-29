@@ -32,6 +32,7 @@ export type PublishJobRow = {
   superadmin: boolean;
   attempts: number;
   operation?: string;
+  ofera_intent?: "activate" | "resend" | null;
   republish_batch_id?: string | null;
 };
 

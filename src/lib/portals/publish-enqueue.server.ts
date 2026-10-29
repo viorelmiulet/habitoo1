@@ -15,7 +15,7 @@ export type EnqueueInput = {
   actorId: string;
   data: {
     propertyId: string;
-    selections: { portalId: string; enabled: boolean; promoted?: boolean; imobiliarePromotions?: import("./imobiliare/card-promotions").ImobiliarePromotionChanges; imobiliareMode?: ImobiliarePublicationMode }[];
+    selections: { portalId: string; enabled: boolean; promoted?: boolean; oferaIntent?: "activate" | "resend"; imobiliarePromotions?: import("./imobiliare/card-promotions").ImobiliarePromotionChanges; imobiliareMode?: ImobiliarePublicationMode }[];
     syncExisting: boolean;
   };
   loadAdmin: () => Promise<Admin>;
@@ -91,6 +91,7 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
         portal_key: definition.id,
         enabled: wanted.enabled,
         promoted: wanted.promoted ?? null,
+        ...(definition.id === "ofera" ? { ofera_intent: wanted.oferaIntent ?? null } : {}),
         imobiliare_promotions: definition.id === "imobiliare_ro" ? wanted.imobiliarePromotions ?? null : null,
         imobiliare_mode: definition.id === "imobiliare_ro" ? mode ?? null : null,
       },
