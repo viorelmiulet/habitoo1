@@ -3,12 +3,12 @@ import { INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD, integrationPageText, inte
 import { integrationJsonLd } from "./integration-jsonld";
 import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
-const SLUGS = ["storia-olx", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook", "imo24", "zonata", "homedirect", "imopedia"];
+const SLUGS = ["storia", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook", "imo24", "zonata", "homedirect", "imopedia"];
 
 describe("pagini integrări", () => {
   it("câte o pagină pentru fiecare slug cerut", () => {
     expect(INTEGRATION_PAGES.map((p) => p.slug).sort()).toEqual([...SLUGS].sort());
-    expect(integrationSlugFor("olx")).toBe("storia-olx");
+    expect(integrationSlugFor("olx")).toBe("storia");
     expect(integrationSlugFor("publi24")).toBe("publi24-romimo");
   });
   it.each(INTEGRATION_PAGES.map((p) => [p.slug, p] as const))("%s: titlu, descriere, cuvinte, FAQ", (_s, p) => {
