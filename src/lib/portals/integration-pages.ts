@@ -149,7 +149,7 @@ const CONTENT: Record<string, Content> = {
       { q: "Pot promova un anunț pe ZUP.ro?", a: "Habitoo nu cumpără promovări și nu face plăți către ZUP. Dacă dorești promovare, o gestionezi din contul agenției pe portal." },
     ],
   },
-  historia: {
+  storia: {
 
     slug: "storia",
     name: "Storia.ro + OLX.ro",
