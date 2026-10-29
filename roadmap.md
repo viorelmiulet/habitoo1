@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## ZonaTa — timeout publicare HB-1264
+- [ ] Fotografii semnate în lot 24h, aceleași filtre/ordine, previzualizare fără tokenuri
+- [ ] POST 90s, celelalte metode 30s, recuperare după timeout doar live
+- [ ] Diagnostic și jurnalizare pentru încercări întrerupte; teste fără rețea, fără publicare reală
+
 ## Republicare în fundal
 - [x] Închidere la pornire, progres/redeschidere raport și notificare atomică persistentă cu link la lot
 - [x] 9 teste trec (inclusiv notificare SQL atomică/idempotentă); browser: simulare 2 anunțuri, închidere/toast, 0/2 → 1/2, redeschidere, final după navigare, click notificare simulată și raport după reload. Fără joburi, notificări de test sau apeluri reale la portaluri. Build OK.
