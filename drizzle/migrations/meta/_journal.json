@@ -1541,6 +1541,13 @@
       "when": 1793280368999,
       "tag": "0219_zup_nomenclature",
       "breakpoints": true
+    },
+    {
+      "idx": 220,
+      "version": "7",
+      "when": 1793280766073,
+      "tag": "0220_zup_catalog_write_grants",
+      "breakpoints": true
     }
   ]
 }
