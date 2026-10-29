@@ -13,7 +13,7 @@ describe("homepage portals", () => {
     ]);
   });
   it("hides unverified, covered and catalog integrations", () => {
-    for (const id of ["olx_direct", "olx", "publi24", "facebook_catalog"]) {
+    for (const id of ["ofera", "olx_direct", "olx", "publi24", "facebook_catalog"]) {
       expect(ids).not.toContain(id);
     }
   });
