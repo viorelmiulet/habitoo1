@@ -6,6 +6,7 @@
  */
 import { zonataRequest, type ZonataCallFail, type ZonataDeps } from "./client";
 import type { ZonataListingBody, ZonataTransaction } from "./mapper";
+import { zonataKeyMode } from "./key";
 
 export type ZonataStatus = "test" | "in_review" | "active" | "rejected" | "withdrawn" | "sold" | "expired";
 export const ZONATA_STATUSES: readonly ZonataStatus[] = ["test", "in_review", "active", "rejected", "withdrawn", "sold", "expired"];
@@ -100,7 +101,14 @@ export async function upsertZonataBodies(
       if (!patch.ok && patch.kind !== "not_found") return { ok: false, fail: patch, done };
       reactivated = patch.ok;
     }
-    const res = await zonataRequest<unknown>(apiKey, "POST", "/listings", body, deps);
+    let res = await zonataRequest<unknown>(apiKey, "POST", "/listings", body, deps);
+    if (!res.ok && res.kind === "timeout" && zonataKeyMode(apiKey) === "live") {
+      const found = await getZonataListing(apiKey, body.external_id, deps);
+      if (found.ok) {
+        const state = readZonataListing(found.data);
+        if (state.zonataId && state.status && state.status !== "test" && (!state.externalId || state.externalId === body.external_id)) res = found;
+      }
+    }
     if (!res.ok) return { ok: false, fail: res, done };
     const state = readZonataListing(res.data);
     done.push({ body, transaction: txOf(body), state: { ...state, externalId: state.externalId ?? body.external_id }, httpStatus: res.status, reactivated });

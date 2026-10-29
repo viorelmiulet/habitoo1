@@ -145,7 +145,12 @@ export async function runPortalPublishWorker(
       let outcome: PublishOutcome | null = null;
       let thrown: unknown = undefined;
       try {
-        outcome = await apply(job);
+        if (job.portal_key === "zonata") {
+          const { runZonataLoggedJob } = await import("./zonata/job-log.server");
+          outcome = await runZonataLoggedJob(admin, job, apply);
+        } else {
+          outcome = await apply(job);
+        }
       } catch (e) {
         thrown = e;
       }

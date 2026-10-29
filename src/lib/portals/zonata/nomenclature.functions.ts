@@ -8,6 +8,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { diffZonataNomenclature, parseZonataCategories, parseZonataFields, type ZonataSubcategory } from "./nomenclature";
 import { mapPropertyToZonata } from "./mapper";
+import { zonataPreviewBodies } from "./preview";
 
 async function assertSuperadmin(supabase: any) {
   const { data } = await supabase.rpc("is_superadmin");
@@ -100,8 +101,8 @@ export const previewZonataPayload = createServerFn({ method: "POST" })
     const result = mapPropertyToZonata(p, { nomenclature, images: images.get(p.id) ?? [] });
     return {
       ok: result.ok,
-      /** Corpul exact, ca JSON formatat (fără cheie). */
-      bodiesJson: result.ok ? JSON.stringify(result.bodies, null, 2) : null,
+      /** Fotografiile sunt reprezentate doar prin cale, fără tokenuri. */
+      bodiesJson: result.ok ? JSON.stringify(zonataPreviewBodies(result.bodies, images.get(p.id) ?? []), null, 2) : null,
       reasons: result.ok ? ([] as string[]) : result.reasons,
       warnings: result.warnings,
     };
