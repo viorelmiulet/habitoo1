@@ -21,7 +21,7 @@ type Validate = (s: Record<string, unknown>) => { org?: string };
 
 describe("Setări portaluri", () => {
   it("ruta stă sub layoutul SuperAdmin, accesibil doar SuperAdmin", () => {
-    expect(SettingsRoute.id).toBe("/_authenticated/superadmin/setari-portaluri");
+    expect(settingsSource).toContain('createFileRoute("/_authenticated/superadmin/setari-portaluri")');
     expect(layoutSource).toContain('if (!canAccessSuperadmin(user)) return <Navigate to="/app" />');
     expect(canAccessSuperadmin({ isSuperadmin: true })).toBe(true);
     expect(canAccessSuperadmin({ isSuperadmin: false })).toBe(false);
