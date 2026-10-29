@@ -17,10 +17,11 @@ export const CLICKIMOB_INDEX_HEADERS: Record<string, string> = {
   "cache-control": "no-cache, must-revalidate",
 };
 
-export type IndexPortal = "clickimob" | "imobli";
+export type IndexPortal = "clickimob" | "imobli" | "locuit";
 export const INDEX_PORTALS = {
   clickimob: { prefix: CLICKIMOB_TOKEN_PREFIX, secret: "CLICKIMOB_INDEX_KEY", version: CLICKIMOB_INDEX_VERSION },
   imobli: { prefix: "hbim_", secret: "IMOBLI_INDEX_KEY", version: "habitoo-imobli-index/1.0" },
+  locuit: { prefix: "hblo_", secret: "LOCUIT_INDEX_KEY", version: "habitoo-locuit-index/1.0" },
 } as const;
 
 export function signClickimobAgency(id: string, key: string, portal: IndexPortal = "clickimob"): string {

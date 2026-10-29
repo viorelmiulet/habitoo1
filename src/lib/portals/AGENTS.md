@@ -1,6 +1,6 @@
 # Portal rules
 
-- ClickImob and Imobli share a portal-parameterized index, signed-token resolver and feed-only adapter; each keeps its own secret, signing namespace, token prefix, publication filter and index-state key. Why: reuse identical grace/selection behavior without cross-portal access or changing ClickImob contracts.
+- ClickImob, Imobli and Locuit share a portal-parameterized index, signed-token resolver and feed-only adapter; each keeps its own secret, signing namespace, token prefix, publication filter and index-state key. Why: reuse identical grace/selection behavior without cross-portal access or changing ClickImob contracts.
 
 - ZUP uses documented form OAuth, encrypted agency credentials, atomic state and refresh lock/CAS; login redirects/401 refresh once, 429 retries once and durable request reservations cap account traffic. Its atomic global catalogue feeds pure mapping and token-free SuperAdmin preview. Listing writes use the shared queue plus property lock and saved transaction IDs; pre-send creation fences reconcile only a unique recent title/price match, never auto-retry uncertain creates. Photos retain exact returned source→ID links, omit unchanged galleries and block unconfirmed deltas; status claims cap GETs to once/minute. Withdrawal always deactivates, never deletes; no type, featured or paid actions. Why: prevent duplicates, guessed links, secret leaks and undocumented gallery assumptions.
 

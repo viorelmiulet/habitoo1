@@ -4,5 +4,5 @@ export function portalConnectionReady(
   connection: { status?: string | null; activated?: boolean | null } | null | undefined,
 ): boolean {
   if (connection?.status === "connected" || connection?.status === "ready") return true;
-  return (portalId === "clickimob" || portalId === "imobli") && connection?.activated === true;
+  return (portalId === "clickimob" || portalId === "imobli" || portalId === "locuit") && connection?.activated === true;
 }
