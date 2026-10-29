@@ -2,6 +2,7 @@ import { imobiliarePromotionChangesSchema, imobiliarePublicationModeSchema, imob
 import { HOMEDIRECT_KEY_MISSING_MESSAGE, homedirectKeyMissing } from "@/lib/portals/homedirect/config";
 import { OFERA_MISSING_MESSAGE, oferaConfigured, oferaProviderId } from "@/lib/portals/ofera/config";
 import { visibleOlxLinks } from "@/lib/portals/storia/vas";
+import { zupConfigured, ZUP_MISSING_MESSAGE } from "@/lib/portals/zup/config";
 import { portalCanPublish, publishUnavailableMessage } from "@/lib/portals/registry";
 import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/offer-links";
 /**
@@ -576,6 +577,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
     return configurablePortals().map((portal) => {
       const serverMissingMessage = portal.id === "ofera" && !oferaConfigured(process.env)
         ? OFERA_MISSING_MESSAGE
+        : portal.id === "zup" && !zupConfigured(process.env) ? ZUP_MISSING_MESSAGE
         : homedirectKeyMissing(portal.id) ? HOMEDIRECT_KEY_MISSING_MESSAGE : null;
       const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
       const storedSettings = (row?.settings ?? {}) as Record<string, unknown>;
@@ -591,7 +593,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
       const oauthMeta = portal.authentication.includes("oauth")
         ? readStoriaOAuthMeta(settings)
         : null;
-      const oauthExpiresAt = oauthMeta?.expires_at ?? storiaTokens?.expires_at ?? null;
+      const oauthExpiresAt = oauthMeta?.expires_at ?? (portal.id === "storia" ? storiaTokens?.expires_at : null) ?? null;
 
       return {
         portal,
@@ -683,11 +685,11 @@ export const getPortalHub = createServerFn({ method: "POST" })
               },
         oauth: portal.authentication.includes("oauth")
           ? {
-              appConfigured: portal.id === "olx_direct" ? olxAppReady : storiaAppReady,
+              appConfigured: portal.id === "zup" ? zupConfigured(process.env) : portal.id === "olx_direct" ? olxAppReady : storiaAppReady,
               connected: Boolean(row?.portal_credentials_encrypted),
               expiresAt: oauthExpiresAt,
               expired: oauthExpiresAt ? new Date(oauthExpiresAt).getTime() <= Date.now() : false,
-              canRefresh: oauthMeta?.has_refresh_token ?? Boolean(storiaTokens?.refresh_token),
+              canRefresh: oauthMeta?.has_refresh_token ?? (portal.id === "storia" && Boolean(storiaTokens?.refresh_token)),
               reconnectRequired:
                 ((row?.settings ?? {}) as Record<string, unknown>)["reconnect_required"] === true,
               connectedAt: oauthMeta?.connected_at ?? null,
@@ -1428,6 +1430,9 @@ export async function executeListingAction(input: {
 
   const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
   const adapter = getPortalAdapter(definition.id);
+  if (definition.publish_coming_soon === true) {
+    return { ok: false as const, code: "NOT_SUPPORTED", message: "Publicarea pe acest portal este în curând disponibilă." };
+  }
   /**
    * Portalurile care primesc datele DOAR prin feed (ex. Properstar) nu au
    * operații de scriere: retragerea reală înseamnă scoaterea ofertei din feed.

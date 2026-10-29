@@ -471,6 +471,23 @@ export const PORTALS: PortalDefinition[] = [
   },
 
   {
+    id: "zup",
+    activation: "oauth",
+    display_name: "ZUP.ro",
+    description: "Conectează contul ZUP al agenției și verifică anunțurile contului. Publicarea va fi disponibilă într-o etapă următoare.",
+    logo: "ZUP",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    authentication: ["oauth"],
+    capabilities: ["test_connection"],
+    publish_coming_soon: true,
+    configuration_schema: { fields: [] },
+    website: "https://zup.ro",
+    docs: "https://zup.ro/docs-api",
+    notes: "OAuth2 per agenție, tokenuri criptate și reîmprospătate înainte de expirare sau o singură dată după 401. Test conexiune prin citirea anunțurilor contului. Publicarea, actualizarea și retragerea nu sunt disponibile în etapa 1.",
+  },
+
+  {
     id: "olx_direct",
     activation: "oauth",
     display_name: "OLX.ro (cont prepaid)",

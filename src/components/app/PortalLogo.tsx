@@ -19,6 +19,7 @@ import lacheieLogo from "@/assets/portals/lacheie.png";
 import olxLogo from "@/assets/portals/olx.png";
 import olxDirectLogo from "@/assets/portals/olx_direct.png";
 import oferaLogo from "@/assets/portals/ofera.png.asset.json";
+import zupLogo from "@/assets/portals/zup.svg.asset.json";
 import primulanuntLogo from "@/assets/portals/primulanunt.png";
 import publi24Logo from "@/assets/portals/publi24.png";
 import properstarLogo from "@/assets/portals/properstar.png.asset.json";
@@ -44,6 +45,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   olx: olxLogo,
   olx_direct: olxDirectLogo,
   ofera: oferaLogo.url,
+  zup: zupLogo.url,
   publi24: publi24Logo,
   properstar: properstarLogo.url,
   romimo: romimoLogo,

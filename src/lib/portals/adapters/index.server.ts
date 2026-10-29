@@ -16,6 +16,7 @@ import { olxDirectAdapter } from "./olx-direct.server";
 import { zonataAdapter } from "./zonata.server";
 import { homedirectAdapter } from "./homedirect.server";
 import { oferaAdapter } from "./ofera.server";
+import { zupAdapter } from "./zup.server";
 
 const ADAPTERS: Record<string, PortalAdapter> = {
   clickimob: clickimobAdapter,
@@ -34,6 +35,7 @@ const ADAPTERS: Record<string, PortalAdapter> = {
   zonata: zonataAdapter,
   homedirect: homedirectAdapter,
   ofera: oferaAdapter,
+  zup: zupAdapter,
 };
 
 export function getPortalAdapter(portalId: string): PortalAdapter | null {

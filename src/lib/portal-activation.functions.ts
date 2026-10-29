@@ -12,6 +12,7 @@
  */
 import { homedirectKeyMissing } from "@/lib/portals/homedirect/config";
 import { oferaConfigured } from "@/lib/portals/ofera/config";
+import { zupConfigured } from "@/lib/portals/zup/config";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -98,6 +99,8 @@ export type AgencyPortalCatalogItem = {
   } | null;
   /** Doar la portalurile cu cerere de cheie (Imospot, VDI.ro): câmpurile firmei lipsă. */
   companyDataMissing: string[];
+  zupConfigured?: boolean;
+  zupConnected?: boolean;
 };
 
 /** Catalogul platformei, cu statusul agenției din sesiune. READ-ONLY. */
@@ -179,6 +182,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
           })
         : null;
       return {
+        ...(p.id === "zup" ? { zupConfigured: zupConfigured(process.env), zupConnected: Boolean(row?.portal_credentials_encrypted) } : {}),
         companyDataMissing: keyMissing.get(p.id) ?? [],
         activation: portalActivationMode(p.id),
         connectionStatus: catalogStatus ?? derivePortalConnectionStatus({
@@ -187,7 +191,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
           externalAccountId: row?.external_account_id ?? null,
           hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
           hasOAuthTokens: Boolean(row?.portal_credentials_encrypted),
-          serverKeyMissing: homedirectKeyMissing(p.id) || (p.id === "ofera" && !oferaConfigured(process.env)),
+          serverKeyMissing: homedirectKeyMissing(p.id) || (p.id === "ofera" && !oferaConfigured(process.env)) || (p.id === "zup" && !zupConfigured(process.env)),
           lastError: row?.last_sync_error ?? null,
           lastSyncStatus: row?.last_sync_status ?? null,
         }),
