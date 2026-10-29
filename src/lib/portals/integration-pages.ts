@@ -150,7 +150,6 @@ const CONTENT: Record<string, Content> = {
     ],
   },
   storia: {
-
     slug: "storia",
     name: "Storia.ro + OLX.ro",
     description: "Publici anunțurile pe Storia.ro și OLX.ro din Habitoo CRM: conectezi contul agenției, alegi prelungirea automată și retragi oferta dintr-un click.",
