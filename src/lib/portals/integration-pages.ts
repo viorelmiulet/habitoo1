@@ -132,9 +132,9 @@ const CONTENT: Record<string, Content> = {
     name: "OLX.ro",
     description: "Publici anunțurile pe OLX.ro din pachetul agenției, direct din Habitoo CRM: conectezi contul OLX, actualizezi anunțul și îl retragi dintr-un click.",
     intro: [
-      "Integrarea OLX.ro este pentru agențiile care publică din propriul pachet OLX, cu contul OLX al agenției. Habitoo trimite anunțul în contul tău, iar costul îl acoperă pachetul pe care îl ai deja.",
+      "Integrarea OLX.ro este pentru agențiile care publică din propriul pachet OLX, cu contul OLX al agenției. Habitoo trimite anunțul în contul tău, iar costul îl acoperă pachetul pe care îl ai deja; Habitoo nu cumpără pachete și nici promovări.",
       "Anunțul îl scrii o singură dată în fișa proprietății. Când modifici prețul, descrierea sau pozele, apeși Publică și OLX primește varianta nouă. Anunțul apare ca publicat în Habitoo abia după ce OLX confirmă că este activ.",
-      "Dacă folosești deja integrarea Storia.ro + OLX.ro, nu ai nevoie și de aceasta; o poți folosi însă alături de ea, dacă ai un pachet OLX separat.",
+      "Înainte de fiecare publicare, Habitoo verifică dacă anunțul există deja în contul tău și îl refolosește, ca să nu apară dubluri. Dacă folosești deja integrarea Storia.ro + OLX.ro, nu ai nevoie și de aceasta; o poți folosi însă alături de ea, dacă ai un pachet OLX separat.",
     ],
     activation: "Administratorul agenției intră în Setări → Portaluri, apasă butonul de conectare la OLX.ro și se autentifică în contul OLX al agenției. Conexiunea se reînnoiește singură.",
     notes: [
