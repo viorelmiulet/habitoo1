@@ -71,11 +71,18 @@ function PortalSettingsPage() {
         title="Setări portaluri"
         description="Setări globale ale portalurilor și publicarea ofertelor pentru agenția aleasă."
         actions={
+          <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" className="h-11">
+            <Link to="/superadmin/portals" search={organizationId ? { org: organizationId } : {}}>
+              Portaluri
+            </Link>
+          </Button>
           <Button asChild variant="outline" className="h-11">
             <Link to="/superadmin/portal-logs" search={organizationId ? { org: organizationId } : {}}>
               Jurnal portaluri
             </Link>
           </Button>
+          </div>
         }
       />
 
