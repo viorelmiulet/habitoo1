@@ -7,6 +7,7 @@ export type OferaCatalog = { categories: OferaCategory[]; counties: OferaPlace[]
 export type OferaSyncCount = { read: number; added: number; modified: number; deactivated: number };
 export type OferaSyncCounts = Record<keyof OferaCatalog, OferaSyncCount>;
 export type OferaChanges = { categoriesAdded: number[]; categoriesRemoved: number[]; categoriesChanged: number[]; parameters: { categoryId: number; code: string; kind: "added" | "removed" | "modified" | "options" }[] };
+export function oferaWeeklySyncEnabled(activeAgencyCount: number | null): boolean { return activeAgencyCount !== null && activeAgencyCount > 0; }
 function fail(message: string): never { throw new Error(`Nomenclator Ofera invalid: ${message}. Datele existente rămân neschimbate.`); }
 const id = (v: unknown): number => typeof v === "number" && Number.isSafeInteger(v) && v > 0 ? v : fail("identificator");
 const name = (v: unknown): string => typeof v === "string" && v.trim() ? v : fail("denumire");

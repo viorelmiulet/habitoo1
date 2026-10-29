@@ -2,11 +2,17 @@ import { describe, it, expect, vi } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { downloadOferaNomenclature, runOferaNomenclatureSync, type OferaNomenclaturePayload } from "./nomenclature.server";
-import { parseOferaPlaces, type OferaParameter } from "./nomenclature";
+import { oferaWeeklySyncEnabled, parseOferaPlaces, type OferaParameter } from "./nomenclature";
 const parameter: OferaParameter = { code: "c_etaj", type: "dropdown", label: "Etaj", required: false, options: { "101": "Parter" } };
 const category = (id: number, parent_id: number | null, path_url: string) => ({ id, parent_id, path_url, name: "Categorie", code: String(id), depth: parent_id ? 2 : 1, parameters: [parameter] });
 const payload = (): OferaNomenclaturePayload => ({ categories: [category(81,null,"imobiliare"),category(94,81,"imobiliare/apartamente"),category(102,81,"imobiliare/case")], counties: [{ id:40,name:"București",name_normalized:"bucuresti" }], cities:[{id:179132,name:"București",name_normalized:"bucuresti",county_id:40},{id:2,name:"Altă localitate",name_normalized:"alta localitate",county_id:40}],zones:[{id:11,name:"Sectorul 6",name_normalized:"sectorul 6",city_id:179132},{id:11138,name:"Militari",name_normalized:"militari",city_id:179132}], raw:{categories:{index:[],details:{}},counties:[],zones:[],cities:{count:2,hash:"fixture-hash"}} });
 describe("Ofera nomenclature validation", () => {
+  it("weekly sync only runs with at least one activated agency", () => {
+    expect(oferaWeeklySyncEnabled(null)).toBe(false);
+    expect(oferaWeeklySyncEnabled(0)).toBe(false);
+    expect(oferaWeeklySyncEnabled(1)).toBe(true);
+    expect(oferaWeeklySyncEnabled(2)).toBe(true);
+  });
   it("downloads every real-estate detail without token and saves dropdown dictionaries", async () => {
     const p = payload();
     const cats = p.categories.map((c) => ({...c,children:c.id===81?[94,102]:[]}));
