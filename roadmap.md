@@ -1,9 +1,10 @@
 # SEO public — pasul 1a
 
 ## ZonaTa — timeout publicare HB-1264
-- [ ] Fotografii semnate în lot 24h, aceleași filtre/ordine, previzualizare fără tokenuri
-- [ ] POST 90s, celelalte metode 30s, recuperare după timeout doar live
-- [ ] Diagnostic și jurnalizare pentru încercări întrerupte; teste fără rețea, fără publicare reală
+- [x] Fotografii semnate în lot 24h, aceleași filtre/ordine; previzualizare transmite doar căi, verificată prin teste
+- [x] POST 90s, celelalte metode 30s, mesaj real și recuperare după timeout doar live, inclusiv statusul primit
+- [x] Jurnal înainte de preflight, finalizare succes/eșec/excepție și marcarea încercării abandonate la reluare; 75 teste țintite și 1.350 teste portaluri trec, build OK; fără publicare reală
+- [ ] Verificarea vizuală a dialogului SuperAdmin: contul disponibil este administrator de agenție, fără acces la buton; pagina HB-1264 și fila Publicare deschise fără mutații. Întreruperea exactă din producție nu poate fi stabilită doar din jurnalul absent; lipsa dovezii de început este reparată.
 
 ## Republicare în fundal
 - [x] Închidere la pornire, progres/redeschidere raport și notificare atomică persistentă cu link la lot
