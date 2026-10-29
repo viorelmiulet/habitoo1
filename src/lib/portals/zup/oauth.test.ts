@@ -154,10 +154,11 @@ describe("ZUP OAuth stage 1", () => {
   it("rejects unexpected list envelopes", async () => {
     const t = setup([{ status: 200, body: { data: [] } }]); await t.seed(); await expect(testZupConnection("org", t.d)).rejects.toMatchObject({ detail: "zup_invalid_list" });
   });
-  it("registry permits stage-three publishing while public pages remain absent", async () => {
+  it("registry permits stage-three publishing and the public page is present", async () => {
     const portal = getPortalDefinition("zup"); expect(portal?.activation).toBe("oauth"); expect(portal?.publish_coming_soon).not.toBe(true); expect(portal?.capabilities).toEqual(["test_connection","publish_listing","update_listing","withdraw_listing","sync"]);
     expect(portalRequirementSpec("zup")?.required.map(r => r.key)).not.toContain("stage");
-    expect(integrationSlugFor("zup")).toBeNull(); expect(homepagePortals().some(p => p.portal.id === "zup")).toBe(false);
+    expect(integrationSlugFor("zup")).toBe("zup"); expect(homepagePortals().some(p => p.portal.id === "zup")).toBe(true);
+
     if (!portal) throw new Error("ZUP missing");
     expect(typeof zupAdapter.publishListing).toBe("function");expect(typeof zupAdapter.updateListing).toBe("function");
   });

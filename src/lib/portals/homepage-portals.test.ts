@@ -9,11 +9,12 @@ describe("homepage portals", () => {
   it("lists exactly the portals with a public integration page, in registry order", () => {
     expect(labels).toEqual([
       "ClickImob", "iMove.ro", "Properstar", "La Cheie", "Imospot.ro", "imo24.ro", "ZonaTa.ro", "HomeDirect.ro", "Ofera.ro", "HomePitch.ro",
-      "Imobiliare.ro", "Storia.ro + OLX.ro", "Publi24.ro + Romimo.ro", "Imopedia.ro", "PrimulAnunț.ro", "VDI.ro",
+      "Imobiliare.ro", "Storia.ro + OLX.ro", "ZUP.ro", "Publi24.ro + Romimo.ro", "Imopedia.ro", "PrimulAnunț.ro", "VDI.ro",
+
     ]);
   });
   it("hides unverified, covered and catalog integrations", () => {
-    for (const id of ["zup", "olx_direct", "olx", "publi24", "facebook_catalog"]) {
+    for (const id of ["olx_direct", "olx", "publi24", "facebook_catalog"]) {
       expect(ids).not.toContain(id);
     }
   });

@@ -127,6 +127,28 @@ const CONTENT: Record<string, Content> = {
       { q: "Pot promova un anunț pe Ofera.ro?", a: "Da. Bifa Promovat este disponibilă pentru oferte și se transmite odată cu anunțul." },
     ],
   },
+  zup: {
+    slug: "zup",
+    name: "ZUP.ro",
+    description: "Publici, actualizezi și retragi anunțurile pe ZUP.ro din Habitoo CRM: conectezi contul agenției, iar retragerea dezactivează anunțul fără să-l șteargă.",
+    intro: [
+      "Integrarea ZUP.ro îți permite să publici anunțurile agenției direct din Habitoo, să trimiți modificările și să retragi ofertele de pe portal. Lucrezi cu proprietatea din CRM, iar aceste acțiuni se fac din fișa ei, fără să rescrii anunțul separat pe ZUP.",
+      "Contul agenției de pe ZUP.ro se conectează o singură dată, din Setări → Portaluri, fără chei sau parole de introdus în Habitoo. La trimitere, anunțul este încadrat în categoria potrivită din lista ZUP, primește locația aleasă din lista portalului și cel puțin o fotografie, iar datele de contact ale agentului responsabil pleacă odată cu el.",
+      "Retragerea dezactivează anunțul pe ZUP, nu îl șterge, deci îl poți republica. Dacă proprietatea este oferită și la vânzare, și la închiriere, se trimite câte un anunț pentru fiecare tranzacție. Habitoo nu cumpără promovări și nu face nicio plată către ZUP.",
+    ],
+    activation: "Administratorul agenției intră în Setări → Portaluri și își conectează singur contul agenției de pe ZUP.ro. Nu este nevoie de aprobare și nu ai chei de introdus.",
+    notes: [
+      "Anunțul se publică în contul agenției de pe ZUP.ro, după conectarea lui din Habitoo.",
+      "Retragerea dezactivează anunțul; îl poți republica din Habitoo.",
+      "O proprietate scoasă și la vânzare, și la închiriere devine două anunțuri separate.",
+      "Habitoo nu cumpără promovări și nu face plăți către ZUP.",
+    ],
+    faq: [
+      { q: "Cum conectez ZUP.ro?", a: "Administratorul agenției intră în Setări → Portaluri și își conectează contul agenției de pe ZUP.ro. Nu ai chei sau parole de completat în Habitoo." },
+      { q: "Ce se întâmplă când retrag un anunț?", a: "Anunțul este dezactivat pe ZUP.ro, nu șters. Îl poți republica din Habitoo; publicarea, actualizarea și retragerea se fac din fișa proprietății." },
+      { q: "Pot promova un anunț pe ZUP.ro?", a: "Habitoo nu cumpără promovări și nu face plăți către ZUP. Dacă dorești promovare, o gestionezi din contul agenției pe portal." },
+    ],
+  },
   storia: {
     slug: "storia",
     name: "Storia.ro + OLX.ro",
