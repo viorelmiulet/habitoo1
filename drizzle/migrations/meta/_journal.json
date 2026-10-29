@@ -1506,6 +1506,13 @@
       "when": 1793218270306,
       "tag": "0214_homedirect_listings",
       "breakpoints": true
+    },
+    {
+      "idx": 215,
+      "version": "7",
+      "when": 1793276033298,
+      "tag": "0215_ofera_partner_auth",
+      "breakpoints": true
     }
   ]
 }
