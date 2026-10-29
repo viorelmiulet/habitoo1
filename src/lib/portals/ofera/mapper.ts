@@ -6,7 +6,8 @@ import type { OferaLocation } from "./location";
 
 export type OferaRow = Partial<PropertyRow> & Pick<PropertyRow, "id">;
 export type OferaContact = { tip: "business"; name: string; email: string; phone: string; photo?: string };
-export type OferaBody = { category_id: number; id_furnizor: number; title: string; description: string; city_id: number; params: Record<string, string | number>; images: { url: string; order: number }[]; contact: OferaContact; external_id: string; promoted: 0 };
+/** Incomplete preview drafts omit unresolved required fields; only ok=true bodies are valid requests. */
+export type OferaBody = { category_id: number; id_furnizor?: number; title: string; description: string; city_id?: number; params: Record<string, string | number>; images: { url: string; order: number }[]; contact?: OferaContact; external_id: string; promoted: 0 };
 export type OferaMapOptions = { categories: (OferaCategory & { active?: boolean })[]; location: OferaLocation; providerId?: number | null; images: string[]; contact?: OferaContact | null; currency?: "EUR" | "RON"; eurRonRate?: number | null; currentYear?: number };
 export type OferaMapResult = { ok: boolean; bodies: OferaBody[]; reasons: string[]; warnings: string[] };
 export function oferaCurrency(value: unknown): "EUR" | "RON" { return value === "RON" ? "RON" : "EUR"; }
@@ -86,7 +87,7 @@ export function mapPropertyToOfera(p: OferaRow, options: OferaMapOptions): Ofera
     if (coords) { params.latitude = coords.lat; params.longitude = coords.lng; }
     if (options.location.regionId !== undefined) params.region_id = options.location.regionId;
     for (const definition of category.parameters) if (definition.required && params[definition.code] === undefined) reasons.push(`Completează parametrul obligatoriu Ofera: ${definition.label}.`);
-    if (options.location.cityId && options.contact && options.providerId) bodies.push({ category_id: category.id, id_furnizor: options.providerId, title, description, city_id: options.location.cityId, params, images: options.images.map((url, order) => ({ url, order })), contact: options.contact, external_id: `${p.reference?.trim() || p.id}-${tx === "vanzare" ? "v" : "i"}`, promoted: 0 });
+    bodies.push({ category_id: category.id, ...(Number.isSafeInteger(options.providerId) && Number(options.providerId) > 0 ? { id_furnizor: Number(options.providerId) } : {}), title, description, ...(options.location.cityId ? { city_id: options.location.cityId } : {}), params, images: options.images.map((url, order) => ({ url, order })), ...(options.contact ? { contact: options.contact } : {}), external_id: `${p.reference?.trim() || p.id}-${tx === "vanzare" ? "v" : "i"}`, promoted: 0 });
   }
   const uniqueReasons = [...new Set(reasons)];
   return { ok: uniqueReasons.length === 0, bodies, reasons: uniqueReasons, warnings: [...new Set(warnings)] };

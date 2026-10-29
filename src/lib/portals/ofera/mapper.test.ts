@@ -46,7 +46,7 @@ describe("Ofera mapper pur", () => {
   it("categorie goală sau inactivă blochează", () => { expect(map({}, { categories: [] }).reasons).toContain("Nomenclatorul Ofera nu e sincronizat."); expect(map({}, { categories: categories.map(c => ({ ...c, active: false })) }).ok).toBe(false); });
   it.each([1799, 2030])("an %s omis", build_year => expect(map({ build_year }).bodies[0]?.params).not.toHaveProperty("c_an_constructie"));
   it("fără coordonate avertizează fără blocare", () => { const r = map({ lat: null, lng: null }); expect(r.ok).toBe(true); expect(r.warnings.length).toBe(1); expect(r.bodies[0]?.params).not.toHaveProperty("latitude"); });
-  it("id furnizor lipsă blochează", () => expect(map({}, { providerId: null }).reasons.some(r => r.includes("ID-ul furnizor"))).toBe(true));
+  it("id furnizor lipsă blochează sans valeur inventée dans la prévisualisation", () => { const r = map({}, { providerId: null }); expect(r.ok).toBe(false); expect(r.reasons.some(r => r.includes("ID-ul furnizor"))).toBe(true); expect(r.bodies[0]).not.toHaveProperty("id_furnizor"); });
   it("imagini lipsă blochează", () => expect(map({}, { images: [] }).ok).toBe(false));
   it("telefon lipsă blochează", () => expect(map({}, { contact: { ...options.contact, tip: "business", name: "", email: "", phone: "" } }).ok).toBe(false));
 });
