@@ -1,5 +1,11 @@
 # SEO public — pasul 1a
 
+## ZUP — etapa 1
+- [x] Documentație verificată: endpointurile form din /zapi/v1, durata din expires_in, /anunturi ca array fără paginare documentată; logo oficial din antet; publicare blocată și fără pagini publice
+- [x] OAuth per agenție cu state unic, tokenuri criptate, refresh cu lock durabil/CAS și deconectare; GET /anunturi returnează doar număr
+- [x] Card neconfigurat și logo verificate în cont pe calculator/telefon; callback cu state invalid respins; teste simulate fără rețea sau publicare reală
+- [ ] Conectare/test live ZUP și card SuperAdmin: lipsesc credențialele aplicației și sesiunea disponibilă nu este SuperAdmin; fluxul de token este verificat numai prin simulări
+
 ## Ofera — etapa 4
 - [x] Stări per tranzacție și intenție Ofera în coada existentă; migrații 0217/0218 aplicate; DELETE numai înainte de hard-delete, soft-delete și realocarea dezactivează
 - [x] Card Ofera cu activare separată, retrimitere confirmată de unică folosință, promovare 406 și valabilitate fără reînnoire automată

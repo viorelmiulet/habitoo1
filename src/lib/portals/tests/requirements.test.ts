@@ -7,7 +7,7 @@ import {
   validatePortalRequirements,
   type PortalRequirementSubject,
 } from "../requirements";
-import { PORTALS } from "../registry";
+import { PORTALS, getPortalDefinition as getPortalDefinitionForTest } from "../registry";
 
 const complete: PortalRequirementSubject = {
   title: "Apartament 3 camere Militari, bloc nou",
@@ -44,7 +44,7 @@ describe("validare pre-publicare portaluri", () => {
   it("acceptă o ofertă completă pe toate portalurile cu reguli declarate", () => {
     for (const portalId of Object.keys(PORTAL_REQUIREMENTS)) {
       const report = validatePortalRequirements(portalId, complete);
-      expect(report.ok, `${portalId}: ${JSON.stringify(report.missing)}`).toBe(true);
+      expect(report.ok, `${portalId}: ${JSON.stringify(report.missing)}`).toBe(getPortalDefinitionForTest(portalId)?.publish_coming_soon !== true);
     }
   });
 

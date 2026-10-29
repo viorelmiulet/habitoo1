@@ -145,11 +145,12 @@ export const Route = createFileRoute("/_authenticated/app/settings")({
   },
   validateSearch: (
     search: Record<string, unknown>,
-  ): { tab?: SettingsTab; request?: string } => {
+  ): { tab?: SettingsTab; request?: string; zup?: string } => {
     const tab = SETTINGS_TABS.find((value) => value === search.tab);
     return {
       ...(tab ? { tab } : {}),
       ...(typeof search.request === "string" ? { request: search.request } : {}),
+      ...(typeof search.zup === "string" ? { zup: search.zup } : {}),
     };
   },
   component: SettingsPage,

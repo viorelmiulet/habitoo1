@@ -176,6 +176,7 @@ import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
 import { Route as ApiPublicPortalV1OlxOauthCallbackRouteImport } from './routes/api/public/portal/v1/olx.oauth.callback'
 import { Route as ApiPublicPortalV1StoriaOauthCallbackRouteImport } from './routes/api/public/portal/v1/storia.oauth.callback'
+import { Route as ApiPublicPortalV1ZupOauthCallbackRouteImport } from './routes/api/public/portal/v1/zup.oauth.callback'
 import { Route as ApiPublicSitesV1MediaAgencyIdRouteImport } from './routes/api/public/sites/v1/media.agency.$id'
 import { Route as ApiPublicSitesV1MediaAgentIdRouteImport } from './routes/api/public/sites/v1/media.agent.$id'
 
@@ -1107,6 +1108,12 @@ const ApiPublicPortalV1StoriaOauthCallbackRoute =
     path: '/api/public/portal/v1/storia/oauth/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPortalV1ZupOauthCallbackRoute =
+  ApiPublicPortalV1ZupOauthCallbackRouteImport.update({
+    id: '/api/public/portal/v1/zup/oauth/callback',
+    path: '/api/public/portal/v1/zup/oauth/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSitesV1MediaAgencyIdRoute =
   ApiPublicSitesV1MediaAgencyIdRouteImport.update({
     id: '/api/public/sites/v1/media/agency/$id',
@@ -1287,6 +1294,7 @@ export interface FileRoutesByFullPath {
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
+  '/api/public/portal/v1/zup/oauth/callback': typeof ApiPublicPortalV1ZupOauthCallbackRoute
   '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
   '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
 }
@@ -1453,6 +1461,7 @@ export interface FileRoutesByTo {
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
+  '/api/public/portal/v1/zup/oauth/callback': typeof ApiPublicPortalV1ZupOauthCallbackRoute
   '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
   '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
 }
@@ -1625,6 +1634,7 @@ export interface FileRoutesById {
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
+  '/api/public/portal/v1/zup/oauth/callback': typeof ApiPublicPortalV1ZupOauthCallbackRoute
   '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
   '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
 }
@@ -1797,6 +1807,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
+    | '/api/public/portal/v1/zup/oauth/callback'
     | '/api/public/sites/v1/media/agency/$id'
     | '/api/public/sites/v1/media/agent/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -1963,6 +1974,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
+    | '/api/public/portal/v1/zup/oauth/callback'
     | '/api/public/sites/v1/media/agency/$id'
     | '/api/public/sites/v1/media/agent/$id'
   id:
@@ -2134,6 +2146,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
+    | '/api/public/portal/v1/zup/oauth/callback'
     | '/api/public/sites/v1/media/agency/$id'
     | '/api/public/sites/v1/media/agent/$id'
   fileRoutesById: FileRoutesById
@@ -2241,6 +2254,7 @@ export interface RootRouteChildren {
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
   ApiPublicPortalV1OlxOauthCallbackRoute: typeof ApiPublicPortalV1OlxOauthCallbackRoute
   ApiPublicPortalV1StoriaOauthCallbackRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRoute
+  ApiPublicPortalV1ZupOauthCallbackRoute: typeof ApiPublicPortalV1ZupOauthCallbackRoute
   ApiPublicSitesV1MediaAgencyIdRoute: typeof ApiPublicSitesV1MediaAgencyIdRoute
   ApiPublicSitesV1MediaAgentIdRoute: typeof ApiPublicSitesV1MediaAgentIdRoute
 }
@@ -3416,6 +3430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal/v1/zup/oauth/callback': {
+      id: '/api/public/portal/v1/zup/oauth/callback'
+      path: '/api/public/portal/v1/zup/oauth/callback'
+      fullPath: '/api/public/portal/v1/zup/oauth/callback'
+      preLoaderRoute: typeof ApiPublicPortalV1ZupOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sites/v1/media/agency/$id': {
       id: '/api/public/sites/v1/media/agency/$id'
       path: '/api/public/sites/v1/media/agency/$id'
@@ -3788,6 +3809,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicPortalV1OlxOauthCallbackRoute,
   ApiPublicPortalV1StoriaOauthCallbackRoute:
     ApiPublicPortalV1StoriaOauthCallbackRoute,
+  ApiPublicPortalV1ZupOauthCallbackRoute:
+    ApiPublicPortalV1ZupOauthCallbackRoute,
   ApiPublicSitesV1MediaAgencyIdRoute: ApiPublicSitesV1MediaAgencyIdRoute,
   ApiPublicSitesV1MediaAgentIdRoute: ApiPublicSitesV1MediaAgentIdRoute,
 }
