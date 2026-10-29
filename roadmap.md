@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## ZUP — etapa 3
+- [ ] Publicare/actualizare pe tranzacții în coada existentă, recuperare timeout fără retry orb și rate limit per cont
+- [ ] Fotografii urmărite după ID, retragere/reactivare și status pe card cu limită 1/min
+- [ ] Teste simulate și verificare ecrane; comportamentul real photos_urls la PUT așteaptă conexiune ZUP și acord pentru verificare live
+
 ## ZUP — etapa 2
 - [x] Nomenclator imobiliar, caracteristici și locații cu sincronizare atomică și diferențe în SuperAdmin
 - [x] Mapper pur, validări și previzualizare fără tokenuri; publicare în continuare blocată
