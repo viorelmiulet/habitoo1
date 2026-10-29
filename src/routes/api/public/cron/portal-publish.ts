@@ -43,6 +43,12 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
             const { runImoradarBackfillJob } = await import("@/lib/portals/imobiliare/imoradar-auto.server");
             return runImoradarBackfillJob(supabaseAdmin, job);
           }
+          // A confirmed Ofera resend is single-use, including after a lost Worker lease.
+          // Consume durable intent before any non-idempotent remote create.
+          if (job.portal_key === "ofera" && job.ofera_intent === "resend") {
+            const { error } = await supabaseAdmin.from("portal_publish_jobs").update({ ofera_intent: null }).eq("id", job.id).eq("status", "running");
+            if (error) return { portalId: "ofera", ok: false, message: "Confirmarea retrimiterii Ofera nu a putut fi înregistrată.", code: "INVALID_REQUEST" };
+          }
           const out = await applyPortalSelectionForOrg({
             organizationId: job.organization_id,
             superadmin: job.superadmin,
@@ -53,6 +59,7 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
                 {
                   portalId: job.portal_key,
                   enabled: job.enabled,
+                  ...(job.portal_key === "ofera" && job.ofera_intent ? { oferaIntent: job.ofera_intent } : {}),
                   ...(job.promoted !== null ? { promoted: job.promoted } : {}),
                   ...(job.imobiliare_promotions ? { imobiliarePromotions: job.imobiliare_promotions } : {}),
                   ...(job.imobiliare_mode ? { imobiliareMode: job.imobiliare_mode } : {}),

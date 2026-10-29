@@ -49,6 +49,9 @@ export type PortalContext = {
 };
 
 export type ListingRef = {
+  /** Ofera-only durable manual intent; activation never resends the product. */
+  oferaIntent?: "activate" | "resend";
+  withdrawReason?: string;
   propertyId: string;
   externalId: string | null;
   /**

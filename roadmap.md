@@ -1,5 +1,11 @@
 # SEO public — pasul 1a
 
+## Ofera — etapa 4
+- [x] Stări per tranzacție și intenție Ofera în coada existentă; migrații 0217/0218 aplicate; DELETE numai înainte de hard-delete, soft-delete și realocarea dezactivează
+- [x] Card Ofera cu activare separată, retrimitere confirmată de unică folosință, promovare 406 și valabilitate fără reînnoire automată
+- [x] 1.511 teste portaluri + 6 teste ștergere cont trec, build OK; corp real HB-1265 generat fără publicare și fără completarea ID-ului furnizor lipsă
+- [ ] Verificare vizuală card și acțiuni: pagina reală nu expune fila Publicare în sesiunea disponibilă; acțiunile și persistarea verificate cu răspunsuri simulate, nu pe portalul real
+
 ## Ofera — etapa 3
 - [x] Localizare și mapper pur numai din nomenclator; drafturi incomplete omit ID-urile nerezolvate, fără publicare
 - [x] Monedă SuperAdmin EUR/RON și previzualizare fără token/apel Ofera; protecție server testată

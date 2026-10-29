@@ -35,8 +35,8 @@ export function readOferaResponse(body: unknown): OferaResponse {
   let message = text(root["message"]) || (ok ? "Operația Ofera a reușit." : "Ofera a refuzat operația.");
   if (!ok) {
     if (status === 404) message = "Anunțul nu există la Ofera.";
-    if (status === 409) message = `Ofera semnalează un posibil duplicat (ID ${text(fields?.["id_duplicat"] ?? root["id_duplicat"]) || "necunoscut"}).`;
-    if (status === 406) message = "Nu mai sunt sloturi de promovare la Ofera.";
+    if (status === 409) message = `Ofera semnalează un posibil duplicat (ID ${text(fields?.["id_duplicat"] ?? root["id_duplicat"]) || "necunoscut"}). ${message}`;
+    if (status === 406) message = `Nu mai sunt sloturi de promovare la Ofera. ${message}`;
     if (status === 412) message = "Anunțul nu e activ la Ofera.";
     if (status === 500) message = `Ofera a refuzat operația: ${message}`;
   }

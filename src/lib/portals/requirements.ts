@@ -70,6 +70,7 @@ export type PortalRequirementSubject = {
   zonataReasons?: string[];
   /** HomeDirect.ro: mapper + locație + emailuri + cheie (`homedirectReasonsFor`). */
   homedirectReasons?: string[];
+  oferaReasons?: string[];
 };
 
 export type PortalRequirementRule = {
@@ -304,8 +305,7 @@ const BASE_REQUIRED = [
 ];
 
 export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
-  // Stage one is connection-only; no offer fields or mapping are supported yet.
-  ofera: { required: [], allowed: [] },
+  ofera: { required: [], allowed: COMMON_ALLOWED, mapperReasons: s => s.oferaReasons ?? [] },
   // OLX.ro direct: doar conectarea contului; cerințele de publicare vin la pasul de publicare.
   olx_direct: {
     required: BASE_REQUIRED,

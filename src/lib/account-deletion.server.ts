@@ -86,7 +86,7 @@ export interface DeletionStorage {
 export type DeletionDeps = {
   store: DeletionStore;
   storage: DeletionStorage;
-  withdraw: (input: { organizationId: string; actorId: string; portalId: string; propertyId: string; externalId: string | null }) => Promise<WithdrawResult>;
+  withdraw: (input: { organizationId: string; actorId: string; portalId: string; propertyId: string; externalId: string | null; oferaHardDelete?: boolean }) => Promise<WithdrawResult>;
   deleteAuthUser: (userId: string) => Promise<{ error: string | null }>;
   now?: () => number;
 };
@@ -232,6 +232,7 @@ async function withdrawProperty(deps: DeletionDeps, job: DeletionJob, property: 
       portalId: target.portal,
       propertyId: property.id,
       externalId: target.external_id,
+      ...(target.portal === "ofera" ? { oferaHardDelete: job.mode === "delete" } : {}),
     });
     if (res.manual) {
       report.manual.push({ propertyId: property.id, reference: property.reference, portal: target.portal, url: target.public_url });
@@ -428,11 +429,13 @@ export function supabaseDeletionStore(admin: Admin): DeletionStore {
       return must(await query) ?? [];
     },
     listPortalTargets: async (propertyId) => {
-      const [listings, publications] = await Promise.all([
+      const [listings, publications, ofera] = await Promise.all([
         admin.from("portal_listings").select("portal,external_id,public_url").eq("property_id", propertyId).not("external_id", "is", null),
         admin.from("portal_publications").select("portal_key").neq("portal_key", "facebook_catalog").eq("property_id", propertyId).eq("enabled", true),
+        admin.from("ofera_listings").select("external_id,public_url").eq("property_id", propertyId).neq("status", "deleted"),
       ]);
       const rows: PortalTarget[] = [...(must(listings) ?? [])];
+      for (const s of must(ofera) ?? []) if (!rows.some(r => r.portal === "ofera")) rows.push({ portal: "ofera", external_id: s.external_id, public_url: s.public_url });
       for (const p of must(publications) ?? []) {
         if (!rows.some((r) => r.portal === p.portal_key)) rows.push({ portal: p.portal_key, external_id: null, public_url: null });
       }
@@ -507,7 +510,7 @@ export async function realDeletionDeps(admin: Admin): Promise<DeletionDeps> {
   return {
     store: supabaseDeletionStore(admin),
     storage: supabaseDeletionStorage(admin),
-    withdraw: (input) => performPortalWithdraw({ ...input, withdrawReason: "account_deleted" }),
+    withdraw: (input) => performPortalWithdraw({ ...input, withdrawReason: input.portalId === "ofera" && input.oferaHardDelete ? "hard_deleted" : "account_deleted" }),
     deleteAuthUser: async (id) => {
       const { error } = await admin.auth.admin.deleteUser(id);
       return { error: error?.message ?? null };
