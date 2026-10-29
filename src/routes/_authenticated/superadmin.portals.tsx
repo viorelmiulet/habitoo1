@@ -46,7 +46,8 @@ export const Route = createFileRoute("/_authenticated/superadmin/portals")({
   // `?storia=` / `?storia_error=` vin de la returnarea autorizării OAuth Storia.
   validateSearch: (
     search: Record<string, unknown>,
-  ): { org?: string; storia?: string; storia_error?: string } => ({
+  ): { org?: string; storia?: string; storia_error?: string; zup?: string } => ({
+    ...(typeof search.zup === "string" ? { zup: search.zup } : {}),
     ...(typeof search.org === "string" ? { org: search.org } : {}),
     ...(typeof search.storia === "string" ? { storia: search.storia } : {}),
     ...(typeof search.storia_error === "string" ? { storia_error: search.storia_error } : {}),
@@ -57,11 +58,15 @@ export const Route = createFileRoute("/_authenticated/superadmin/portals")({
 function SuperadminPortalsPage() {
   const loadOrgs = useServerFn(listPortalOrganizations);
   const loadProperties = useServerFn(listOrgPropertiesForPortals);
-  const { org: orgFromLink, storia, storia_error: storiaError } = Route.useSearch();
+  const { org: orgFromLink, storia, storia_error: storiaError, zup } = Route.useSearch();
 
   const [organizationId, setOrganizationId] = useState<string>(orgFromLink ?? "");
   const [search, setSearch] = useState("");
   const [propertyId, setPropertyId] = useState<string>("");
+  useEffect(() => {
+    if (zup === "connected") toast.success("Contul ZUP al agenției a fost conectat.");
+    else if (zup) toast.error("Conectarea ZUP nu s-a finalizat. Pornește conectarea din nou.");
+  }, [zup]);
 
   const orgs = useQuery({ queryKey: ["portal-organizations"], queryFn: () => loadOrgs({}) });
 
