@@ -83,6 +83,7 @@ import { Route as AuthenticatedSuperadminNomenclatorRouteImport } from './routes
 import { Route as AuthenticatedSuperadminPortalLogsRouteImport } from './routes/_authenticated/superadmin.portal-logs'
 import { Route as AuthenticatedSuperadminPortalsRouteImport } from './routes/_authenticated/superadmin.portals'
 import { Route as AuthenticatedSuperadminQaRouteImport } from './routes/_authenticated/superadmin.qa'
+import { Route as AuthenticatedSuperadminSetariPortaluriRouteImport } from './routes/_authenticated/superadmin.setari-portaluri'
 import { Route as AuthenticatedSuperadminStareAgentiiRouteImport } from './routes/_authenticated/superadmin.stare-agentii'
 import { Route as AuthenticatedSuperadminSupportRouteImport } from './routes/_authenticated/superadmin.support'
 import { Route as AuthenticatedAppAcpIndexRouteImport } from './routes/_authenticated/app.acp.index'
@@ -574,6 +575,12 @@ const AuthenticatedSuperadminQaRoute =
   AuthenticatedSuperadminQaRouteImport.update({
     id: '/qa',
     path: '/qa',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminSetariPortaluriRoute =
+  AuthenticatedSuperadminSetariPortaluriRouteImport.update({
+    id: '/setari-portaluri',
+    path: '/setari-portaluri',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
 const AuthenticatedSuperadminStareAgentiiRoute =
@@ -1206,6 +1213,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
+  '/superadmin/setari-portaluri': typeof AuthenticatedSuperadminSetariPortaluriRoute
   '/superadmin/stare-agentii': typeof AuthenticatedSuperadminStareAgentiiRoute
   '/superadmin/support': typeof AuthenticatedSuperadminSupportRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -1374,6 +1382,7 @@ export interface FileRoutesByTo {
   '/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
+  '/superadmin/setari-portaluri': typeof AuthenticatedSuperadminSetariPortaluriRoute
   '/superadmin/stare-agentii': typeof AuthenticatedSuperadminStareAgentiiRoute
   '/superadmin/support': typeof AuthenticatedSuperadminSupportRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -1548,6 +1557,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/_authenticated/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/_authenticated/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
+  '/_authenticated/superadmin/setari-portaluri': typeof AuthenticatedSuperadminSetariPortaluriRoute
   '/_authenticated/superadmin/stare-agentii': typeof AuthenticatedSuperadminStareAgentiiRoute
   '/_authenticated/superadmin/support': typeof AuthenticatedSuperadminSupportRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -1722,6 +1732,7 @@ export interface FileRouteTypes {
     | '/superadmin/portal-logs'
     | '/superadmin/portals'
     | '/superadmin/qa'
+    | '/superadmin/setari-portaluri'
     | '/superadmin/stare-agentii'
     | '/superadmin/support'
     | '/app/'
@@ -1890,6 +1901,7 @@ export interface FileRouteTypes {
     | '/superadmin/portal-logs'
     | '/superadmin/portals'
     | '/superadmin/qa'
+    | '/superadmin/setari-portaluri'
     | '/superadmin/stare-agentii'
     | '/superadmin/support'
     | '/app'
@@ -2063,6 +2075,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/portal-logs'
     | '/_authenticated/superadmin/portals'
     | '/_authenticated/superadmin/qa'
+    | '/_authenticated/superadmin/setari-portaluri'
     | '/_authenticated/superadmin/stare-agentii'
     | '/_authenticated/superadmin/support'
     | '/_authenticated/app/'
@@ -2791,6 +2804,13 @@ declare module '@tanstack/react-router' {
       path: '/qa'
       fullPath: '/superadmin/qa'
       preLoaderRoute: typeof AuthenticatedSuperadminQaRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/setari-portaluri': {
+      id: '/_authenticated/superadmin/setari-portaluri'
+      path: '/setari-portaluri'
+      fullPath: '/superadmin/setari-portaluri'
+      preLoaderRoute: typeof AuthenticatedSuperadminSetariPortaluriRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
     '/_authenticated/superadmin/stare-agentii': {
@@ -3593,6 +3613,7 @@ interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminPortalLogsRoute: typeof AuthenticatedSuperadminPortalLogsRoute
   AuthenticatedSuperadminPortalsRoute: typeof AuthenticatedSuperadminPortalsRoute
   AuthenticatedSuperadminQaRoute: typeof AuthenticatedSuperadminQaRoute
+  AuthenticatedSuperadminSetariPortaluriRoute: typeof AuthenticatedSuperadminSetariPortaluriRoute
   AuthenticatedSuperadminStareAgentiiRoute: typeof AuthenticatedSuperadminStareAgentiiRoute
   AuthenticatedSuperadminSupportRoute: typeof AuthenticatedSuperadminSupportRoute
   AuthenticatedSuperadminIndexRoute: typeof AuthenticatedSuperadminIndexRoute
@@ -3620,6 +3641,8 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
       AuthenticatedSuperadminPortalLogsRoute,
     AuthenticatedSuperadminPortalsRoute: AuthenticatedSuperadminPortalsRoute,
     AuthenticatedSuperadminQaRoute: AuthenticatedSuperadminQaRoute,
+    AuthenticatedSuperadminSetariPortaluriRoute:
+      AuthenticatedSuperadminSetariPortaluriRoute,
     AuthenticatedSuperadminStareAgentiiRoute:
       AuthenticatedSuperadminStareAgentiiRoute,
     AuthenticatedSuperadminSupportRoute: AuthenticatedSuperadminSupportRoute,

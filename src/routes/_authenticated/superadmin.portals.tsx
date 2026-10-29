@@ -4,36 +4,18 @@
  * selecția ofertelor). Agențiile nu au acces la această zonă.
  */
 import { useEffect, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Search } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
-import { InlineLoading } from "@/components/app/LoadingState";
-import { QueryError } from "@/components/app/QueryError";
-import { EmptyState } from "@/components/app/EmptyState";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { PortalOrgSelector } from "@/components/superadmin/PortalOrgSelector";
 import { appHead } from "@/components/app/app-head";
 import { PortalsCard } from "@/components/superadmin/PortalsCard";
-import { StoriaUnmatchedCard } from "@/components/superadmin/StoriaUnmatchedCard";
-import { ImospotSettingsCard } from "@/components/superadmin/ImospotSettingsCard";
-import { PortalRelayCard } from "@/components/superadmin/PortalRelayCard";
-import { LaCheieCard } from "@/components/superadmin/LaCheieCard";
 import { PortalActivationRequestsCard } from "@/components/superadmin/PortalActivationRequestsCard";
-import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
-import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
-import { listOrgPropertiesForPortals, listPortalOrganizations } from "@/lib/portals.functions";
+import { listPortalOrganizations } from "@/lib/portals.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/portals")({
   head: () => {
@@ -57,12 +39,10 @@ export const Route = createFileRoute("/_authenticated/superadmin/portals")({
 
 function SuperadminPortalsPage() {
   const loadOrgs = useServerFn(listPortalOrganizations);
-  const loadProperties = useServerFn(listOrgPropertiesForPortals);
+  const navigate = useNavigate({ from: "/superadmin/portals" });
   const { org: orgFromLink, storia, storia_error: storiaError, zup } = Route.useSearch();
 
   const [organizationId, setOrganizationId] = useState<string>(orgFromLink ?? "");
-  const [search, setSearch] = useState("");
-  const [propertyId, setPropertyId] = useState<string>("");
   useEffect(() => {
     if (zup === "connected") toast.success("Contul ZUP al agenției a fost conectat.");
     else if (zup) toast.error("Conectarea ZUP nu s-a finalizat. Pornește conectarea din nou.");
@@ -95,12 +75,6 @@ function SuperadminPortalsPage() {
     }
   }, [orgs.data, organizationId]);
 
-  const properties = useQuery({
-    queryKey: ["portal-org-properties", organizationId, search],
-    enabled: organizationId !== "",
-    queryFn: () =>
-      loadProperties({ data: { organizationId, search: search || undefined, limit: 25 } }),
-  });
 
   return (
     <>
@@ -116,43 +90,21 @@ function SuperadminPortalsPage() {
         }
       />
 
-      {/* Selectorul de agenție rămâne vizibil la derulare. */}
-      <div className="sticky top-0 z-20 -mx-1 bg-background/95 px-1 py-2 backdrop-blur">
-        <div className="panel space-y-3 p-5">
-          <Label htmlFor="portal-org">Agenție</Label>
-          {orgs.isLoading ? (
-            <InlineLoading label="Se încarcă agențiile…" />
-          ) : orgs.isError ? (
-            <QueryError error={orgs.error} onRetry={() => orgs.refetch()} />
-          ) : (
-            <Select
-              value={organizationId}
-              onValueChange={(v) => {
-                setOrganizationId(v);
-                setPropertyId("");
-              }}
-            >
-              <SelectTrigger id="portal-org" className="max-w-md">
-                <SelectValue placeholder="Alege agenția" />
-              </SelectTrigger>
-              <SelectContent>
-                {(orgs.data ?? []).map((o) => (
-                  <SelectItem key={o.id} value={o.id}>
-                    {o.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-      </div>
+      <PortalOrgSelector
+        value={organizationId}
+        orgs={orgs}
+        onChange={(v) => {
+          setOrganizationId(v);
+          void navigate({ search: (prev) => ({ ...prev, org: v }), replace: true });
+        }}
+      />
 
       <div className="mt-6">
-        <PortalRelayCard />
-      </div>
-
-      <div className="mt-6">
-        <StoriaUnmatchedCard />
+        <Button asChild variant="outline" className="h-11">
+          <Link to="/superadmin/setari-portaluri" search={organizationId ? { org: organizationId } : {}}>
+            Setări portaluri
+          </Link>
+        </Button>
       </div>
 
       {organizationId ? (
@@ -160,73 +112,10 @@ function SuperadminPortalsPage() {
           <PortalActivationRequestsCard
             onOpenOrganization={(orgId) => {
               setOrganizationId(orgId);
-              setPropertyId("");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
-          <ImospotSettingsCard portal="imospot" />
-          <ImospotSettingsCard portal="vdi" />
           <PortalsCard organizationId={organizationId} />
-          <LaCheieCard organizationId={organizationId} />
-          <PortalSlotsCard organizationId={organizationId} />
-
-          <section className="panel">
-            <header className="space-y-3 border-b border-border px-5 py-4">
-              <div>
-                <h2 className="text-sm font-semibold tracking-wide uppercase">
-                  Publicarea ofertelor pe portaluri
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Alege o ofertă a agenției și bifează portalurile pe care trebuie publicată.
-                </p>
-              </div>
-              <div className="relative max-w-md">
-                <Search className="absolute top-2.5 left-3 size-4 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  placeholder="Caută ofertă după titlu"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-            </header>
-
-            {properties.isLoading ? (
-              <div className="p-5">
-                <InlineLoading label="Se încarcă ofertele…" />
-              </div>
-            ) : properties.isError ? (
-              <div className="p-5">
-                <QueryError error={properties.error} onRetry={() => properties.refetch()} />
-              </div>
-            ) : (properties.data ?? []).length === 0 ? (
-              <EmptyState icon={Search} title="Nicio ofertă găsită" />
-            ) : (
-              <ul className="divide-y divide-border">
-                {(properties.data ?? []).map((p) => (
-                  <li key={p.id} className="px-5 py-3 text-sm">
-                    <button
-                      type="button"
-                      className="w-full text-left"
-                      onClick={() => setPropertyId((cur) => (cur === p.id ? "" : p.id))}
-                    >
-                      <span className="font-medium">{p.title}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">{p.city ?? "—"}</span>
-                    </button>
-                    {propertyId === p.id ? (
-                      <div className="mt-3">
-                        <PropertyPortalsCard
-                          organizationId={organizationId}
-                          propertyId={p.id}
-                          showPortalJournal
-                        />
-                      </div>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
         </div>
       ) : null}
     </>
