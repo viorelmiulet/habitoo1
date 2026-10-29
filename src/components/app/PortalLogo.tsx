@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 const PORTAL_LOGOS: Record<string, string> = {
   clickimob: clickimobLogo.url,
   imobli: imobliLogo.url,
-  locuit: locuitLogo.url,
+  locuit: (locuitLogo as { url: string }).url,
   facebook_catalog: facebookLogo,
   imove: imoveLogo,
   lacheie: lacheieLogo,
