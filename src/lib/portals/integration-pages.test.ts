@@ -11,6 +11,11 @@ describe("pagini integrări", () => {
     expect(integrationSlugFor("olx")).toBe("storia");
     expect(integrationSlugFor("publi24")).toBe("publi24-romimo");
   });
+  it("Ofera rămâne ascuns din integrările publice până la verificarea live", () => {
+    expect(integrationSlugFor("ofera")).toBeNull();
+    expect(INTEGRATION_PAGES.some((page) => page.portalId === "ofera")).toBe(false);
+    expect(buildStaticSitemapXml()).not.toContain("/integrari/ofera</loc>");
+  });
   it.each(INTEGRATION_PAGES.map((p) => [p.slug, p] as const))("%s: titlu, descriere, cuvinte, FAQ", (_s, p) => {
     expect(p.title.length).toBeLessThanOrEqual(60);
     expect(p.description.length).toBeGreaterThanOrEqual(140);
