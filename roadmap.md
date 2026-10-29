@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Ofera — etapa 2
+- [ ] Nomenclator public complet, validare și salvare atomică idempotentă cu diferențe
+- [ ] Panou SuperAdmin, actualizare săptămânală condiționată și notificări parametri
+- [ ] Teste fără rețea, sincronizare reală și raport categorii 94/102/515/389
+
 ## Ofera — etapa 1
 - [x] Registru, ID furnizor SuperAdmin, stare fără secrete și test conexiune; fără publicare sau conținut public
 - [x] Client cu răspunsuri din corp, jurnal privat redactat și token criptat cu lock global; migrație aplicată
