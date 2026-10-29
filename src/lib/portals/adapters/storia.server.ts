@@ -214,9 +214,9 @@ async function pushListing(
           continue;
         }
         const before = await readAdvertMeta(ctx.organizationId, uuid);
-        if (!storiaAdvertContentUpdateEligible(before.code)) {
-          statuses.push(storiaListingStatus(before.code));
-          if (before.url) publicUrls[listing.transaction] = before.url;
+        if (!before || !storiaAdvertContentUpdateEligible(before.code)) {
+          statuses.push(storiaListingStatus(before?.code ?? null));
+          if (before?.url) publicUrls[listing.transaction] = before.url;
           notes.push(`Anunțul de ${label} nu este activ sau în procesare; nu a fost reactivat. Opțiunea se aplică la următoarea publicare.`);
           continue;
         }
@@ -226,7 +226,7 @@ async function pushListing(
           notes.push(`Anunțul de ${label} nu mai există; nu a fost recreat.`);
           continue;
         }
-        const after = await readAdvertMeta(ctx.organizationId, uuid).catch(() => before);
+        const after = await readAdvertMeta(ctx.organizationId, uuid).catch(() => null) ?? before;
         statuses.push(storiaListingStatus(after.code));
         if (after.url) publicUrls[listing.transaction] = after.url;
         notes.push(`Anunțul de ${label}: datele și opțiunea de prelungire au fost trimise la Storia.`);

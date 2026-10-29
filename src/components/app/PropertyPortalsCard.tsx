@@ -998,7 +998,7 @@ export const PropertyPortalsCard = forwardRef<
                           view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
                         />
                         {cell.portalId === "storia" ? (
-                          <StoriaAutoRenewControl propertyId={propertyId} organizationId={organizationId} canManage={editing && canManage} />
+                          <StoriaAutoRenewControl propertyId={propertyId} organizationId={organizationId} canManage={editing === true && canManage} />
                         ) : null}
                       <div className="relative z-10 mt-3 flex min-w-0 flex-wrap items-center gap-2 [&>*]:pointer-events-auto">
                         {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo" || cell.portalId === "imo24") &&

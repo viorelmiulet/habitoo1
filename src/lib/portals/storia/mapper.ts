@@ -30,6 +30,7 @@ import {
   type StoriaTransaction,
 } from "./taxonomy";
 import { STORIA_SITE_URN } from "./config";
+import { effectiveStoriaAutoRenew } from "./auto-renew";
 
 export const STORIA_MIN_TITLE = 5;
 export const STORIA_MAX_TITLE = 70;
@@ -294,7 +295,7 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
         ...(reference ? { reference_id: reference } : {}),
       },
       market,
-      auto_extend: p.storia_auto_renew ?? (options.autoExtend === true),
+      auto_extend: effectiveStoriaAutoRenew(p.storia_auto_renew, options.autoExtend),
     };
     advert.contact = {
       name: agentName,

@@ -3644,7 +3644,7 @@ export const setPropertyStoriaAutoRenew = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }): Promise<{ ok: true; queued: boolean }> => {
-    const { organizationId, agentOnly } = await resolvePublishingOrg(
+    const { organizationId, agentOnly, superadmin } = await resolvePublishingOrg(
       context as unknown as AuthContext,
       data.organizationId,
     );
@@ -3664,7 +3664,7 @@ export const setPropertyStoriaAutoRenew = createServerFn({ method: "POST" })
     const { enqueueStoriaAutoRenewUpdate } = await import("@/lib/portals/storia/auto-renew.server");
     const queued = await enqueueStoriaAutoRenewUpdate(admin, {
       organizationId, propertyId: data.propertyId, actorId: context.userId,
-      superadmin: await isSuperadmin(context as unknown as AuthContext),
+      superadmin,
     });
     return { ok: true, queued };
   });
