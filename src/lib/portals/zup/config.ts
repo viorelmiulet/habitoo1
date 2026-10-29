@@ -6,4 +6,3 @@ export const ZUP_MISSING_MESSAGE = "Integrarea ZUP nu este configurată la nivel
 export function zupConfigured(env: Record<string, string | undefined>): boolean {
   return Boolean(env["ZUP_CLIENT_ID"]?.trim() && env["ZUP_CLIENT_SECRET"]?.trim());
 }
-export function zupPublicationBlocked(): true { return true; }

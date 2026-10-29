@@ -60,7 +60,10 @@ async function request(path: string, init: RequestInit, d: ZupDeps): Promise<{ s
     const response = await (d.fetch ?? ((input, options) => fetch(input, options)))(new URL(path, ZUP_BASE), { ...init, redirect: "manual", signal: controller.signal });
     const raw = await response.text();
     let body: unknown;
-    try { body = JSON.parse(raw); } catch { throw new PortalError("PORTAL_ERROR", "zup_invalid_json", "ZUP a trimis un răspuns care nu poate fi citit."); }
+    try { body = JSON.parse(raw); } catch {
+      if (!response.ok) throw zupHttpError(response.status, null);
+      throw new PortalError("PORTAL_ERROR", "zup_invalid_json", "ZUP a trimis un răspuns care nu poate fi citit.");
+    }
     return { status: response.status, body };
   } catch (error) {
     if (error instanceof PortalError) throw error;

@@ -790,7 +790,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                               ? `Reconectează contul ${portalDisplayName(item.portal.id)}`
                               : item.oauth.connected
                               ? "Reconectează contul"
-                              : `Conectează contul ${portalDisplayName(item.portal.id)}`}
+                              : item.portal.id === "zup" && !item.oauth.appConfigured ? ZUP_MISSING_MESSAGE : `Conectează contul ${item.portal.id === "zup" ? "ZUP" : portalDisplayName(item.portal.id)}`}
                           </Button>
                           {item.portal.id === "olx_direct" && olxAccount ? (
                             <OlxAccountPanel account={olxAccount} />

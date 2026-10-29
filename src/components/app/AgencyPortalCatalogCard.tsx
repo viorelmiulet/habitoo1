@@ -1,4 +1,5 @@
 import { isKeyRequestPortal, keyRequestLabel } from "@/lib/portals/imospot-key-request";
+import { useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -23,6 +24,11 @@ import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
 import { agencyGridItems, agencyPortalCardState } from "@/lib/portals/grid-state";
 
 export function AgencyPortalCatalogCard() {
+  useEffect(() => {
+    const result = new URLSearchParams(window.location.search).get("zup");
+    if (result === "connected") toast.success("Contul ZUP al agenției a fost conectat.");
+    else if (result) toast.error("Conectarea ZUP nu s-a finalizat. Pornește conectarea din nou.");
+  }, []);
   const queryClient = useQueryClient();
   const loadCatalog = useServerFn(getAgencyPortalCatalog);
   const sendRequest = useServerFn(requestPortalActivation);

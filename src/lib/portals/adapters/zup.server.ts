@@ -15,4 +15,5 @@ export const zupAdapter: PortalAdapter = {
   async publishListing() { return notSupported("ZUP: publicarea vine în etapa 3"); },
   async updateListing() { return notSupported("ZUP: publicarea vine în etapa 3"); },
   async withdrawListing() { return notSupported("ZUP: publicarea vine în etapa 3"); },
+  async sync() { return notSupported("ZUP: sincronizarea nu este disponibilă în etapa 1"); },
 };
