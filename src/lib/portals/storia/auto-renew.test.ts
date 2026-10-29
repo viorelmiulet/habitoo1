@@ -46,7 +46,7 @@ describe("Storia auto-renew content queue", () => {
     const { admin } = db("pending");
     const execute = vi.fn(async () => ({ ok: true, message: "Accepted" }));
     expect((await runStoriaContentUpdateJob(admin, job, execute)).action).toBe("updated");
-    expect(execute).toHaveBeenCalledExactlyOnceWith({ ...input, portalId: "storia", action: "update", operationLabel: "update", skipSlotCheck: true, superadmin: undefined });
+    expect(execute).toHaveBeenCalledExactlyOnceWith({ organizationId: "org", propertyId: "property", actorId: "agent", portalId: "storia", action: "update", operationLabel: "update", skipSlotCheck: true });
   });
   it.each(["expired", "withdrawn", "error"])("worker skips adverts that become %s after enqueue", async status => {
     const { admin } = db(status);
