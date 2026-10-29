@@ -12,7 +12,7 @@ describe("pagini integrări", () => {
     expect(integrationSlugFor("publi24")).toBe("publi24-romimo");
   });
   it("Ofera rămâne ascuns din integrările publice până la verificarea live", () => {
-    expect(integrationSlugFor("ofera")).toBeUndefined();
+    expect(integrationSlugFor("ofera")).toBeNull();
     expect(INTEGRATION_PAGES.some((page) => page.portalId === "ofera")).toBe(false);
     expect(buildStaticSitemapXml()).not.toContain("/integrari/ofera</loc>");
   });
