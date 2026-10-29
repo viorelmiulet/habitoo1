@@ -14,6 +14,8 @@ const summaries: Record<string, string> = {
   zonata: "Trimiți până la 10 poze și vezi rezultatul verificării ZonaTa.",
   homedirect: "Fără cheie de introdus; conturile se creează la primul anunț.",
   imopedia: "Publici cu poze automate și trimiți Gold prin bifa Promovat.",
+  zup: "Conectezi contul agenției și publici direct, cu retragere reversibilă.",
+
   vdi: "Publici direct, iar mesajele clienților devin lead-uri.",
   lacheie: "Activezi singur și publici anunțurile direct din Habitoo.",
   primulanunt: "Publici anunțul cu poze și îl retragi dintr-un click.",
