@@ -1534,6 +1534,13 @@
       "when": 1793278218014,
       "tag": "0218_ofera_queue_intent",
       "breakpoints": true
+    },
+    {
+      "idx": 219,
+      "version": "7",
+      "when": 1793280368999,
+      "tag": "0219_zup_nomenclature",
+      "breakpoints": true
     }
   ]
 }

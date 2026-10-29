@@ -10517,6 +10517,60 @@ export type Database = {
         }
         Relationships: []
       }
+      zup_nomenclature: {
+        Row: {
+          id: number
+          snapshot: Json
+          synced_at: string
+        }
+        Insert: {
+          id?: number
+          snapshot?: Json
+          synced_at?: string
+        }
+        Update: {
+          id?: number
+          snapshot?: Json
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      zup_nomenclature_syncs: {
+        Row: {
+          changes: Json
+          counts: Json
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          organization_id: string | null
+          raw_responses: Json
+          success: boolean
+        }
+        Insert: {
+          changes?: Json
+          counts?: Json
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id?: string | null
+          raw_responses?: Json
+          success: boolean
+        }
+        Update: {
+          changes?: Json
+          counts?: Json
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id?: string | null
+          raw_responses?: Json
+          success?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -11786,6 +11840,15 @@ export type Database = {
       team_remove_agent: { Args: { _user_id: string }; Returns: Json }
       vdi_leads_arm: { Args: never; Returns: undefined }
       vdi_leads_tick: { Args: never; Returns: undefined }
+      zup_nomenclature_apply: {
+        Args: {
+          _actor: string
+          _organization: string
+          _raw: Json
+          _snapshot: Json
+        }
+        Returns: Json
+      }
     }
     Enums: {
       activity_kind:
