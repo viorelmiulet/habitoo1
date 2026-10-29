@@ -56,3 +56,24 @@ describe("Storia auto-renew content queue", () => {
     expect(execute).not.toHaveBeenCalled();
   });
 });
+
+describe("Storia auto-renew block visibility on the publication card", () => {
+  const cell = (over: Partial<Parameters<typeof storiaAutoRenewVisible>[0]> = {}) => ({
+    selected: false, listingStatus: "not_published", externalId: null, ...over,
+  });
+  it("is shown when Storia is checked, even with no advert yet", () => {
+    expect(storiaAutoRenewVisible(cell({ selected: true }))).toBe(true);
+  });
+  it.each(["published", "updated", "pending"])("is shown with a %s advert, even when Storia is not checked", status => {
+    expect(storiaAutoRenewVisible(cell({ listingStatus: status, externalId: "SALE:uuid" }))).toBe(true);
+  });
+  it("is hidden without a selection and without any advert", () => {
+    expect(storiaAutoRenewVisible(cell())).toBe(false);
+  });
+  it.each(["expired", "withdrawn", "error", "outdated", "moderated", "removed_by_user", "removed_by_moderator"])("is hidden when not checked and the %s advert cannot be updated", status => {
+    expect(storiaAutoRenewVisible(cell({ listingStatus: status, externalId: "SALE:uuid" }))).toBe(false);
+  });
+  it("is hidden when the advert has no external id", () => {
+    expect(storiaAutoRenewVisible(cell({ listingStatus: "published", externalId: null }))).toBe(false);
+  });
+});
