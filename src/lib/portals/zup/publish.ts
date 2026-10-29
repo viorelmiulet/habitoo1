@@ -56,7 +56,7 @@ export async function publishZup(drafts:ZupDraft[],stored:ZupState[],d:ZupPublis
     if(!state.zup_id&&state.attempted_at){
       const recovered=await recoverZupCreate(state,d);
       if(recovered){state=recovered;await d.save(state);}
-      else if(state.status==="creating")throw new PortalError("INVALID_REQUEST","zup_interrupted_create","Crearea ZUP a fost întreruptă. Verifică în contul ZUP și reîncearcă manual; nu retrimitem automat.");
+      else if(state.status==="creating"){state={...state,status:"unconfirmed",last_error:"Crearea ZUP a fost întreruptă. Verifică în contul ZUP și reîncearcă manual; nu retrimitem automat."};await d.save(state);throw new PortalError("INVALID_REQUEST","zup_interrupted_create",state.last_error??undefined);}
     }
     if(!state.zup_id){
       // Persist before sending: an interrupted queue lease cannot blindly create again.
@@ -65,7 +65,7 @@ export async function publishZup(drafts:ZupDraft[],stored:ZupState[],d:ZupPublis
       try{response=await d.call("anunturi","POST",draft.body);}catch(error){
         if(error instanceof PortalError&&["TIMEOUT","NETWORK_ERROR","PORTAL_ERROR"].includes(error.code)){
           let recovered:ZupState|null=null;try{recovered=await recoverZupCreate(state,d);}catch{}
-          if(recovered){state=reconcilePhotos(recovered,await d.call(`anunturi/${recovered.zup_id}`,"GET"));await d.save(state);result.push(state);continue;}
+          if(recovered){state=recovered;await d.save(state);try{state=reconcilePhotos(state,await d.call(`anunturi/${recovered.zup_id}`,"GET"));await d.save(state);}catch{}result.push(state);continue;}
           state={...state,status:"unconfirmed",last_error:"Nu am putut confirma crearea la ZUP. Verifică anunțurile contului înainte să reîncerci."};await d.save(state);
           throw new PortalError("INVALID_REQUEST","zup_unconfirmed_create",state.last_error??undefined);
         }

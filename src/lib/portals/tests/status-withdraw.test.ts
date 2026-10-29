@@ -97,6 +97,12 @@ async function drain(admin: never, p: ReturnType<typeof processDeps>, tables: Re
 }
 
 describe("retragerea automată la schimbarea statusului", () => {
+  it("ZUP vândut folosește coada de retragere, nu ștergere",async()=>{
+    const {admin,tables}=fakeDb({properties:[prop("zup-property","sold")],portal_publications:[pub("zup-property","zup")]});
+    const out=await enqueueStatusWithdrawals(admin as never,{organizationId:ORG,propertyIds:["zup-property"],reason:"status_sold",actorId:"u1"},enqueueDeps);
+    expect(out.queued.map(q=>q.portalId)).toEqual(["zup"]);expect(out.manual).toEqual([]);
+    const p=processDeps();await drain(admin as never,p,tables);expect(p.calls).toEqual([{propertyId:"zup-property",portalId:"zup",reason:"status_sold"}]);
+  });
   it("motivele corespund statusurilor", () => {
     expect(withdrawReasonForStatus("sold")).toBe("status_sold");
     expect(withdrawReasonForStatus("rented")).toBe("status_rented");

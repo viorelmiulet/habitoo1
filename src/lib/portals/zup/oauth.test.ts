@@ -133,7 +133,7 @@ describe("ZUP OAuth stage 1", () => {
   });
   it("422 names only errors fields and does not echo sensitive messages", () => {
     const message = zupHttpError(422, { errors: { price: ["private input"], locality: ["invalid"], access_token: ["private"] } }).message;
-    expect(message).toContain("price, locality"); expect(message).not.toContain("private"); expect(message).not.toContain("access_token");
+    expect(message).toContain("price"); expect(message).toContain("localitate (locality)"); expect(message).not.toContain("private"); expect(message).not.toContain("access_token");
   });
   it("missing platform secrets are unconfigured without requests", async () => {
     expect(zupConfigured({})).toBe(false); expect(zupConfigured({ ZUP_CLIENT_ID: "test" })).toBe(false);
