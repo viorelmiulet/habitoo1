@@ -1,7 +1,7 @@
 ## Imobli — site public
 - [x] Curl înainte: pagina 404, Imobli.ro absent din integrări și homepage
-- [ ] Pagină, card, logo și sitemap prin conținutul public existent
-- [ ] Teste și curl după: pagină 200, SEO, liste și sitemap
+- [x] Pagină, card, logo și sitemap prin conținutul public existent
+- [x] Teste și curl după: pagină 200, SEO, liste și sitemap
 
 ## Imobli — index separat
 - [x] Înainte de modificări: curl ClickImob cheie greșită 401; portal properties fără token 401

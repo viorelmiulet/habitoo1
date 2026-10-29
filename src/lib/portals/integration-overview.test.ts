@@ -17,6 +17,17 @@ describe("public integrations overview", () => {
     for (const item of INTEGRATION_OVERVIEW) expect(integrationPageBySlug(item.slug)?.portalId).toBe(item.id);
     expect(new Set(INTEGRATION_OVERVIEW.map((p) => p.slug)).size).toBe(INTEGRATION_PAGES.length);
   });
+  it("Imobli uses automatic intake and withdrawal, not direct publishing", () => {
+    const def = getPortalDefinition("imobli");
+    if (!def) throw new Error("missing Imobli registry entry");
+    expect(integrationBadges(def)).toEqual(["Preluare automată", "Retragere automată", "Activezi singur"]);
+  });
+  it("Imobli agency activation is self-service without credentials", () => {
+    const def = getPortalDefinition("imobli");
+    expect(def?.activation).toBe("self_service");
+    expect(def?.authentication).toEqual(["none"]);
+    expect(def?.configuration_schema.fields).toEqual([]);
+  });
   it("only implemented lead integrations advertise lead intake", () => {
     expect(INTEGRATION_OVERVIEW.filter((p) => p.badges.includes("Lead-uri în CRM")).map((p) => p.id).sort()).toEqual(["properstar", "storia", "vdi"]);
   });
