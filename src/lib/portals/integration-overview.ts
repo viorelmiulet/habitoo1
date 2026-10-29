@@ -5,6 +5,7 @@ import { SITE_URL } from "@/components/marketing/public-head";
 export const INTEGRATION_SECTIONS = ["Portaluri din România", "Portaluri internaționale", "Reclame"] as const;
 
 const summaries: Record<string, string> = {
+  imobli: "Activezi singur, alegi ofertele, iar portalul le preia automat.",
   storia: "Publici pe ambele portaluri. Lead-urile intră în CRM.",
   olx_direct: "Publici pe OLX folosind pachetul existent al agenției.",
   romimo: "O singură publicare, anunțul apare pe ambele portaluri.",

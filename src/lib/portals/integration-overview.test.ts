@@ -6,7 +6,7 @@ import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
 describe("public integrations overview", () => {
   it("lists each integration and covered portal exactly once", () => {
-    expect(INTEGRATION_OVERVIEW).toHaveLength(19);
+    expect(INTEGRATION_OVERVIEW).toHaveLength(20);
     const ids = INTEGRATION_OVERVIEW.flatMap((p) => p.logoIds);
     expect(new Set(ids).size).toBe(ids.length);
     expect(INTEGRATION_OVERVIEW.find((p) => p.id === "storia")?.logoIds).toEqual(["storia", "olx"]);
@@ -16,6 +16,17 @@ describe("public integrations overview", () => {
   it("every card resolves to an existing detail page", () => {
     for (const item of INTEGRATION_OVERVIEW) expect(integrationPageBySlug(item.slug)?.portalId).toBe(item.id);
     expect(new Set(INTEGRATION_OVERVIEW.map((p) => p.slug)).size).toBe(INTEGRATION_PAGES.length);
+  });
+  it("Imobli uses automatic intake and withdrawal, not direct publishing", () => {
+    const def = getPortalDefinition("imobli");
+    if (!def) throw new Error("missing Imobli registry entry");
+    expect(integrationBadges(def)).toEqual(["Preluare automată", "Retragere automată", "Activezi singur"]);
+  });
+  it("Imobli agency activation is self-service without credentials", () => {
+    const def = getPortalDefinition("imobli");
+    expect(def?.activation).toBe("self_service");
+    expect(def?.authentication).toEqual(["none"]);
+    expect(def?.configuration_schema.fields).toEqual([]);
   });
   it("only implemented lead integrations advertise lead intake", () => {
     expect(INTEGRATION_OVERVIEW.filter((p) => p.badges.includes("Lead-uri în CRM")).map((p) => p.id).sort()).toEqual(["properstar", "storia", "vdi"]);
@@ -30,7 +41,7 @@ describe("public integrations overview", () => {
     expect(integrationBadges({ ...minimal, capabilities: ["feed_pull"], withdraws_via_feed: true })).toEqual(["Preluare automată", "Retragere automată"]);
   });
   it("feed portals are not presented as direct publication", () => {
-    for (const id of ["clickimob", "imove", "homepitch", "properstar", "facebook_catalog"]) {
+    for (const id of ["clickimob", "imobli", "imove", "homepitch", "properstar", "facebook_catalog"]) {
       const item = INTEGRATION_OVERVIEW.find((p) => p.id === id);
       expect(item?.badges).toContain("Preluare automată");
       expect(item?.badges).not.toContain("Publicare directă");
@@ -42,9 +53,9 @@ describe("public integrations overview", () => {
   });
   it("ItemList uses every existing detail URL once", () => {
     const list = integrationItemListJsonLd();
-    expect(list.numberOfItems).toBe(19);
+    expect(list.numberOfItems).toBe(20);
     expect(list.itemListElement.map((p) => p.url)).toEqual(INTEGRATION_OVERVIEW.map((p) => `https://www.habitoo.ro/integrari/${p.slug}`));
-    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 19 }, (_, i) => i + 1));
+    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
 
   });
   it("sitemap dates only the updated overview", () => {
