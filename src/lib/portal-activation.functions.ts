@@ -11,6 +11,7 @@
  * Totul este verificat server-side și jurnalizat în `audit_logs`.
  */
 import { homedirectKeyMissing } from "@/lib/portals/homedirect/config";
+import { oferaConfigured } from "@/lib/portals/ofera/config";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -186,7 +187,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
           externalAccountId: row?.external_account_id ?? null,
           hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
           hasOAuthTokens: Boolean(row?.portal_credentials_encrypted),
-          serverKeyMissing: homedirectKeyMissing(p.id),
+          serverKeyMissing: homedirectKeyMissing(p.id) || (p.id === "ofera" && !oferaConfigured(process.env)),
           lastError: row?.last_sync_error ?? null,
           lastSyncStatus: row?.last_sync_status ?? null,
         }),

@@ -1,5 +1,5 @@
 import { OFERA_MISSING_MESSAGE, OFERA_SECRET_NAMES, oferaConfigured } from "./config";
-import { object, type OferaResponse } from "./response";
+import { object, oferaRedact, type OferaResponse } from "./response";
 import { oferaTransport, type OferaTransportDeps } from "./transport.server";
 export type OferaToken = { token: string; expiresAt: number; scope: string; revision: string };
 export interface OferaTokenStore {
@@ -32,7 +32,9 @@ export async function getOferaToken(deps: OferaAuthDeps, rejectedRevision?: stri
       const token = fields?.["access_token"];
       const seconds = Number(fields?.["expires_in"]);
       if (typeof token !== "string" || !token || String(fields?.["token_type"]).toLowerCase() !== "bearer" || !Number.isFinite(seconds) || seconds <= 300) throw new OferaAuthError(failed("Răspuns Ofera neașteptat"));
-      const issued = { token, expiresAt: now() + seconds * 1000, scope: typeof fields?.["scope"] === "string" ? fields["scope"] : "", revision: crypto.randomUUID() };
+      const scope = typeof fields?.["scope"] === "string" ? fields["scope"] : "";
+      const safeScope: string = JSON.parse(oferaRedact(JSON.stringify(scope), [...OFERA_SECRET_NAMES.map((name) => deps.env[name] ?? ""), token]));
+      const issued = { token, expiresAt: now() + seconds * 1000, scope: safeScope, revision: crypto.randomUUID() };
       if (await deps.store.save(owner, issued)) return issued;
       // A lost lease may never overwrite the next owner's token.
     } finally { await deps.store.release(owner); }

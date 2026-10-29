@@ -27,7 +27,7 @@ export async function oferaTransport(path: string, init: RequestInit, deps: Ofer
     let safeBody: unknown = null;
     try { safeBody = JSON.parse(safeText); } catch { /* unexpected response */ }
     // OAuth's documented token response has no operation envelope; validate its complete shape.
-    const oauth = path === "/get-token" && !root?.["code"] && typeof tokenData?.["access_token"] === "string" && String(tokenData?.["token_type"]).toLowerCase() === "bearer" && Number(tokenData?.["expires_in"]) > 0;
+    const oauth = path === "/get-token" && !root?.["code"] && typeof tokenData?.["access_token"] === "string" && Boolean(tokenData["access_token"]) && String(tokenData?.["token_type"]).toLowerCase() === "bearer" && Number.isFinite(Number(tokenData?.["expires_in"])) && Number(tokenData?.["expires_in"]) > 300;
     result = oauth ? { ok: true, status: 200, message: "Autorizare Ofera reușită.", data: null, logTrackId: null } : readOferaResponse(safeBody);
   } catch {
     result = { ok: false, status: null, message: controller.signal.aborted ? "Ofera nu a răspuns în 30 de secunde." : "Ofera nu a putut fi contactat.", data: null, logTrackId: null };
