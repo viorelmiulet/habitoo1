@@ -86,7 +86,7 @@ describe("Ofera body-authoritative responses and secrecy", () => {
     expect(logs[0]?.httpStatus).toBe(200);
     expect(readOferaResponse({ code: "SUCCESS", status: 500 }).ok).toBe(false);
   });
-  it.each([[404, "Anunțul nu există la Ofera."], [409, "Ofera semnalează un posibil duplicat (ID 77)."], [406, "Nu mai sunt sloturi de promovare la Ofera."], [412, "Anunțul nu e activ la Ofera."], [500, "Ofera a refuzat operația: Motiv"]])("status %s has localized message and tracking", (status, message) => {
+  it.each([[404, "Anunțul nu există la Ofera."], [409, "Ofera semnalează un posibil duplicat (ID 77). Motiv"], [406, "Nu mai sunt sloturi de promovare la Ofera. Motiv"], [412, "Anunțul nu e activ la Ofera."], [500, "Ofera a refuzat operația: Motiv"]])("status %s has localized message and tracking", (status, message) => {
     const result = readOferaResponse({ code: "ERROR", status, message: "Motiv", data: { id_duplicat: 77, log_track_id: "track-safe" } });
     expect(result.message).toBe(`${message} Referință Ofera: track-safe.`);
   });

@@ -43,7 +43,7 @@ export function createOferaAdapter(injected?: OferaAdapterDeps): PortalAdapter {
     let confirmed = true;
     for (const draft of built.bodies) {
       const old = stored.find(s => s.transaction === (draft.external_id.endsWith("-i") ? "rent" : "sale"));
-      const r = await writeOferaBody({ ...draft, promoted: ref.promoted === true ? 1 : 0 }, old, d, ref.oferaIntent);
+      const r = await writeOferaBody({ ...draft, promoted: ref.promoted === true ? 1 : 0 }, old, { ...d, imagesFingerprint: built.imagesFingerprint }, ref.oferaIntent);
       if (!r.ok) {
         if (!r.unconfirmed && !r.states.length) {
           if (injected?.clear) await injected.clear(input, draft.external_id); else await (await loader()).clearRejectedOferaCreate(input, draft.external_id);

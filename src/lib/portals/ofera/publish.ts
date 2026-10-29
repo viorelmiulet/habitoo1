@@ -4,7 +4,7 @@ import { object, type OferaResponse } from "./response";
 export const OFERA_UNCONFIRMED = "Nu știm dacă Ofera a creat anunțul. Verifică pe Ofera.ro înainte de a retrimite.";
 export type OferaState = { transaction: "sale" | "rent"; external_id: string; ofera_id: number | null; public_url: string | null; valid_until: string | null; status: "pending_activation" | "active" | "inactive" | "deleted" | "unconfirmed"; images_fingerprint: string | null; last_log_track_id: string | null; last_message: string | null };
 export type OferaCall = (method: "POST" | "PUT" | "DELETE", path: string, body?: unknown) => Promise<OferaResponse>;
-export type OferaWriteDeps = { call: OferaCall; save: (state: OferaState) => Promise<void>; now?: () => Date };
+export type OferaWriteDeps = { call: OferaCall; save: (state: OferaState) => Promise<void>; now?: () => Date; imagesFingerprint?: string };
 export type OferaWriteResult = { ok: boolean; states: OferaState[]; message: string; response?: OferaResponse; promotedConfirmed?: boolean; unconfirmed?: boolean };
 export function oferaValidUntil(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -38,8 +38,9 @@ export async function writeOferaBody(body: OferaBody, previous: OferaState | und
   if (previous?.status === "pending_activation") return activateOfera(previous, deps);
   if (previous?.status === "unconfirmed" && !previous.ofera_id && intent !== "resend") return { ok: false, states: [previous], message: OFERA_UNCONFIRMED, unconfirmed: true };
   let state = previous && previous.status !== "deleted" ? { ...previous, external_id: body.external_id } : stateFor(body);
-  const fingerprint = await oferaImagesFingerprint(body.images);
+  const fingerprint = deps.imagesFingerprint ?? await oferaImagesFingerprint(body.images);
   let creating = !state.ofera_id;
+  let wasCreated = creating;
   let promotionRefused = false;
   let promotionMessage = "";
   const request = async (promoted: 0 | 1) => {
@@ -51,7 +52,7 @@ export async function writeOferaBody(body: OferaBody, previous: OferaState | und
   const armCreate = async () => { state = { ...state, ofera_id: null, status: "unconfirmed", last_message: OFERA_UNCONFIRMED }; await deps.save(state); };
   if (creating) await armCreate();
   let response = await request(body.promoted);
-  if (!response.ok && response.status === 404 && !creating) { creating = true; await armCreate(); response = await request(body.promoted); }
+  if (!response.ok && response.status === 404 && !creating) { creating = true; wasCreated = true; await armCreate(); response = await request(body.promoted); }
   if (!response.ok && response.status === 406 && body.promoted === 1) {
     promotionRefused = true; promotionMessage = response.message;
     // Some responses identify an already-saved advert. Never create it a second time.
@@ -73,7 +74,7 @@ export async function writeOferaBody(body: OferaBody, previous: OferaState | und
     if (!id) { await deps.save({ ...state, status: "unconfirmed", last_message: OFERA_UNCONFIRMED }); return { ok: false, states: [state], message: OFERA_UNCONFIRMED, unconfirmed: true, response }; }
     state.ofera_id = id;
   }
-  const shouldActivate = creating || previous?.status === "inactive" || previous?.status === "deleted" || oferaExpired(state, deps.now?.());
+  const shouldActivate = wasCreated || previous?.status === "inactive" || previous?.status === "deleted" || oferaExpired(state, deps.now?.());
   state = { ...responsePatch(state, response), images_fingerprint: fingerprint, status: shouldActivate ? "pending_activation" : "active" };
   await deps.save(state);
   const activated = shouldActivate ? await activateOfera(state, deps) : { ok: true, states: [state], message: response.message, response };
