@@ -10517,6 +10517,75 @@ export type Database = {
         }
         Relationships: []
       }
+      zup_account_rate: {
+        Row: {
+          next_at: string
+          organization_id: string
+        }
+        Insert: {
+          next_at?: string
+          organization_id: string
+        }
+        Update: {
+          next_at?: string
+          organization_id?: string
+        }
+        Relationships: []
+      }
+      zup_listings: {
+        Row: {
+          attempted_at: string | null
+          attempted_price: number | null
+          attempted_title: string | null
+          last_checked_at: string | null
+          last_error: string | null
+          organization_id: string
+          pending_images: Json
+          photos: Json
+          property_id: string
+          public_url: string | null
+          slug: string | null
+          status: string
+          transaction: string
+          updated_at: string
+          zup_id: string | null
+        }
+        Insert: {
+          attempted_at?: string | null
+          attempted_price?: number | null
+          attempted_title?: string | null
+          last_checked_at?: string | null
+          last_error?: string | null
+          organization_id: string
+          pending_images?: Json
+          photos?: Json
+          property_id: string
+          public_url?: string | null
+          slug?: string | null
+          status?: string
+          transaction: string
+          updated_at?: string
+          zup_id?: string | null
+        }
+        Update: {
+          attempted_at?: string | null
+          attempted_price?: number | null
+          attempted_title?: string | null
+          last_checked_at?: string | null
+          last_error?: string | null
+          organization_id?: string
+          pending_images?: Json
+          photos?: Json
+          property_id?: string
+          public_url?: string | null
+          slug?: string | null
+          status?: string
+          transaction?: string
+          updated_at?: string
+          zup_id?: string | null
+        }
+        Relationships: []
+      }
       zup_nomenclature: {
         Row: {
           id: number
@@ -11840,6 +11909,10 @@ export type Database = {
       team_remove_agent: { Args: { _user_id: string }; Returns: Json }
       vdi_leads_arm: { Args: never; Returns: undefined }
       vdi_leads_tick: { Args: never; Returns: undefined }
+      zup_claim_status: {
+        Args: { _organization: string; _property: string; _transaction: string }
+        Returns: boolean
+      }
       zup_nomenclature_apply: {
         Args: {
           _actor: string
@@ -11849,6 +11922,7 @@ export type Database = {
         }
         Returns: Json
       }
+      zup_reserve_request: { Args: { _organization: string }; Returns: number }
     }
     Enums: {
       activity_kind:
