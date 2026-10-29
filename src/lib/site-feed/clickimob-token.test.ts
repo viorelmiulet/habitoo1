@@ -140,10 +140,10 @@ describe("token ClickImob din index în /sites/v1", () => {
       expect(body.data).toHaveLength(1);
       expect(JSON.stringify(body.data)).toContain(visible.toUpperCase());
       expect(JSON.stringify(body.data)).not.toContain(hidden.toUpperCase());
-      expect((await handlePropertyDetail(req(token), auth, visible)).response.status).toBe(200);
-      expect((await handlePropertyDetail(req(token), auth, hidden)).response.status).toBe(404);
-      expect((await handlePropertyDetail(req(token), auth, "p-disabled")).response.status).toBe(404);
-      expect((await handlePropertyDetail(req(token), auth, "p-b")).response.status).toBe(404);
+      expect((await handlePropertyDetail(req(token), auth, visible.toUpperCase())).response.status).toBe(200);
+      expect((await handlePropertyDetail(req(token), auth, hidden.toUpperCase())).response.status).toBe(404);
+      expect((await handlePropertyDetail(req(token), auth, "P-DISABLED")).response.status).toBe(404);
+      expect((await handlePropertyDetail(req(token), auth, "P-B")).response.status).toBe(404);
     }
   });
 
