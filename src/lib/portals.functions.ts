@@ -3100,7 +3100,7 @@ export async function applyPortalSelectionForOrg(input: {
           continue;
         }
 
-        if (wanted.enabled && !listingContact.ok) {
+        if (wanted.enabled && !listingContact.ok && !(definition.id === "ofera" && wanted.oferaIntent === "activate")) {
           results.push({
             portalId: definition.id,
             portalName: name,
