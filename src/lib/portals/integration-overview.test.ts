@@ -6,7 +6,7 @@ import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
 describe("public integrations overview", () => {
   it("lists each integration and covered portal exactly once", () => {
-    expect(INTEGRATION_OVERVIEW).toHaveLength(20);
+    expect(INTEGRATION_OVERVIEW).toHaveLength(21);
     const ids = INTEGRATION_OVERVIEW.flatMap((p) => p.logoIds);
     expect(new Set(ids).size).toBe(ids.length);
     expect(INTEGRATION_OVERVIEW.find((p) => p.id === "storia")?.logoIds).toEqual(["storia", "olx"]);
@@ -28,6 +28,17 @@ describe("public integrations overview", () => {
     expect(def?.authentication).toEqual(["none"]);
     expect(def?.configuration_schema.fields).toEqual([]);
   });
+  it("Locuit uses automatic intake and withdrawal, not direct publishing", () => {
+    const def = getPortalDefinition("locuit");
+    if (!def) throw new Error("missing Locuit registry entry");
+    expect(integrationBadges(def)).toEqual(["Preluare automată", "Retragere automată", "Activezi singur"]);
+  });
+  it("Locuit agency activation is self-service without credentials", () => {
+    const def = getPortalDefinition("locuit");
+    expect(def?.activation).toBe("self_service");
+    expect(def?.authentication).toEqual(["none"]);
+    expect(def?.configuration_schema.fields).toEqual([]);
+  });
   it("only implemented lead integrations advertise lead intake", () => {
     expect(INTEGRATION_OVERVIEW.filter((p) => p.badges.includes("Lead-uri în CRM")).map((p) => p.id).sort()).toEqual(["properstar", "storia", "vdi"]);
   });
@@ -41,7 +52,7 @@ describe("public integrations overview", () => {
     expect(integrationBadges({ ...minimal, capabilities: ["feed_pull"], withdraws_via_feed: true })).toEqual(["Preluare automată", "Retragere automată"]);
   });
   it("feed portals are not presented as direct publication", () => {
-    for (const id of ["clickimob", "imobli", "imove", "homepitch", "properstar", "facebook_catalog"]) {
+    for (const id of ["clickimob", "imobli", "locuit", "imove", "homepitch", "properstar", "facebook_catalog"]) {
       const item = INTEGRATION_OVERVIEW.find((p) => p.id === id);
       expect(item?.badges).toContain("Preluare automată");
       expect(item?.badges).not.toContain("Publicare directă");
@@ -53,9 +64,9 @@ describe("public integrations overview", () => {
   });
   it("ItemList uses every existing detail URL once", () => {
     const list = integrationItemListJsonLd();
-    expect(list.numberOfItems).toBe(20);
+    expect(list.numberOfItems).toBe(21);
     expect(list.itemListElement.map((p) => p.url)).toEqual(INTEGRATION_OVERVIEW.map((p) => `https://www.habitoo.ro/integrari/${p.slug}`));
-    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
+    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 21 }, (_, i) => i + 1));
 
   });
   it("sitemap dates only the updated overview", () => {
