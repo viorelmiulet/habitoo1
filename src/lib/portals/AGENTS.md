@@ -1,5 +1,7 @@
 # Portal rules
 
+- Storia renewal overrides are resolved in the pure mapper; renewal saves reuse the atomic content-update queue with pending eligibility, worker checks, and per-advert remote revalidation. Update mode never creates or activates adverts; agency expiry republication remains separate. Why: renewal choices must not reactivate inactive adverts or lose changes on busy jobs.
+
 - Contact refresh after reassignment uses `portal_publish_jobs.operation=update`, only already-active pairs, with worker state revalidation and journal `update`; pending contact requests on busy jobs drain transactionally through queue claim. Why: no new publication, withdrawal, promotion or lost contact update during concurrent publishing.
 
 - Pre-publish requirements live only in `src/lib/portals/requirements.ts` (`PORTAL_REQUIREMENTS` + `validatePortalRequirements`), loaded by `requirements.server.ts` (single + batch); `executeListingAction` blocks publish/update/republish with VALIDATION_ERROR before any portal call, withdraw is never blocked; the Publicare tab and the bulk grid disable enabling a portal with missing fields. Why: one rule set for UI, grid and server; published listings are never auto-withdrawn over a newly required field.

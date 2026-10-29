@@ -45,6 +45,7 @@ import {
 } from "../storia/adverts.server";
 
 import type { StoriaTransaction } from "../storia/taxonomy";
+import { storiaAdvertContentUpdateEligible } from "../storia/auto-renew";
 
 /** Endpoint documentat de OLX, folosit doar ca să confirmăm că tokenul este acceptat. */
 export const PROBE_PATH = "/advert/v1/meta";
@@ -146,9 +147,7 @@ async function probe(ctx: PortalContext): Promise<PortalResult<ConnectionStatusO
 }
 
 /**
- * Creează sau actualizează anunțurile ofertei. `mode` decide doar mesajele:
- * pentru un anunț deja existent trimitem PUT în ambele cazuri, iar dacă
- * portalul nu îl mai găsește îl recreăm.
+ * Publish may create/reactivate; update only sends full PUT for eligible adverts.
  */
 async function pushListing(
   ctx: PortalContext,
@@ -208,6 +207,31 @@ async function pushListing(
       let created = false;
       let reactivated = false;
       let recreated = false;
+
+      if (mode === "update") {
+        if (!uuid) {
+          notes.push(`Anunțul de ${label} nu există; opțiunea se aplică la următoarea publicare.`);
+          continue;
+        }
+        const before = await readAdvertMeta(ctx.organizationId, uuid);
+        if (!before || !storiaAdvertContentUpdateEligible(before.code)) {
+          statuses.push(storiaListingStatus(before?.code ?? null));
+          if (before?.url) publicUrls[listing.transaction] = before.url;
+          notes.push(`Anunțul de ${label} nu este activ sau în procesare; nu a fost reactivat. Opțiunea se aplică la următoarea publicare.`);
+          continue;
+        }
+        const outcome = await updateAdvert(ctx.organizationId, uuid, listing.advert);
+        if (outcome === "missing") {
+          statuses.push("withdrawn");
+          notes.push(`Anunțul de ${label} nu mai există; nu a fost recreat.`);
+          continue;
+        }
+        const after = await readAdvertMeta(ctx.organizationId, uuid).catch(() => null) ?? before;
+        statuses.push(storiaListingStatus(after.code));
+        if (after.url) publicUrls[listing.transaction] = after.url;
+        notes.push(`Anunțul de ${label}: datele și opțiunea de prelungire au fost trimise la Storia.`);
+        continue;
+      }
 
       // Un PUT actualizează datele, dar NU readuce online un anunț dezactivat:
       // portalul cere explicit `activate`, iar dacă starea nu mai permite

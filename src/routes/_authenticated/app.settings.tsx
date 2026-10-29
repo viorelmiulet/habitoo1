@@ -543,12 +543,16 @@ function SettingsPage() {
                     <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4">
                       <div className="min-w-0 space-y-1">
                         <Label htmlFor="storia_auto_republish" className="text-sm">
-                          Republică automat anunțurile expirate pe Storia
+                          Prelungire automată Storia (implicit pentru anunțurile fără alegere proprie)
                         </Label>
                         <p className="text-xs text-muted-foreground">
-                          Când un anunț expiră pe Storia, îl retrimitem automat, dacă oferta este încă
-                          activă și publicabilă. Dezactivat, primești doar notificarea de expirare și
-                          republici manual din fila Publicare.
+                          La expirare, Storia prelungește automat anunțul, din pachetul agenției.
+                          Schimbarea implicitului se aplică la următoarea trimitere a fiecărui anunț.
+                          Separat, când această setare a agenției este activată, Habitoo republică
+                          anunțurile pentru care Storia anunță expirarea, dacă oferta rămâne activă și
+                          publicabilă și publicarea nu a fost oprită. Dacă setarea este dezactivată,
+                          Habitoo notifică expirarea, fără republicare automată.
+                          Nu se aplică promovări și nu se cumpără nimic.
                         </p>
                       </div>
                       <Switch

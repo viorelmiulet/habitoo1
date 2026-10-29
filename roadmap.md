@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Storia — prelungire automată per anunț
+- [x] Payload explicit cu prioritate proprietate și aceeași valoare pentru ambele tranzacții
+- [x] Bifă, revenire la implicit, coadă PUT doar pentru active/în procesare și rezultat; setări descriu și republicarea existentă la expirare, neschimbată
+- [x] 135 teste țintite și 1.393 teste portaluri trec, build OK; card verificat în cont pe calculator/telefon, bifă editabilă după Editează, fără depășiri sau erori. Salvarea și trimiterea validate prin teste simulate, nu prin modificări sau cereri reale către Storia.
+
 ## Integrări publice — patru portaluri
 - [x] Pagini imo24/zonata/homedirect/imopedia, rezumate și data sitemap 2026-10-29
 - [x] Homepage, FAQ/JSON-LD și logourile oficiale existente; registrul și publicarea neschimbate

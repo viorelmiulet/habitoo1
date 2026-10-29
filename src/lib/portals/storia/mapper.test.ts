@@ -180,13 +180,27 @@ describe("helpers Storia", () => {
   });
 });
 
-describe("auto_extend urmează setarea agenției", () => {
+describe("auto_extend urmează alegerea proprietății sau implicitul agenției", () => {
+  it.each([
+    [true, true, true], [true, false, true],
+    [false, true, false], [false, false, false],
+    [null, true, true], [null, false, false],
+  ] as const)("proprietate %s, agenție %s → %s pe ambele tranzacții", (override, agencyDefault, expected) => {
+    const result = mapPropertyToStoria(baseProperty({ storia_auto_renew: override, for_rent: true, rent_price: 700, rent_currency: "EUR" }), { ...options, autoExtend: agencyDefault });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.listings.map(listing => listing.transaction)).toEqual(["sale", "rent"]);
+    for (const { advert } of result.listings) {
+      expect(Object.hasOwn(advert, "auto_extend")).toBe(true);
+      expect(advert.auto_extend).toBe(expected);
+    }
+  });
   it("trimite true doar când auto-prelungirea e activă", () => {
     const on = mapPropertyToStoria(baseProperty(), { ...options, autoExtend: true });
     const off = mapPropertyToStoria(baseProperty(), { ...options, autoExtend: false });
     const missing = mapPropertyToStoria(baseProperty(), options);
-    expect(on.ok && on.listings[0]!.advert.auto_extend).toBe(true);
-    expect(off.ok && off.listings[0]!.advert.auto_extend).toBe(false);
-    expect(missing.ok && missing.listings[0]!.advert.auto_extend).toBe(false);
+    expect(on.ok && on.listings[0]?.advert.auto_extend).toBe(true);
+    expect(off.ok && off.listings[0]?.advert.auto_extend).toBe(false);
+    expect(missing.ok && missing.listings[0]?.advert.auto_extend).toBe(false);
   });
 });

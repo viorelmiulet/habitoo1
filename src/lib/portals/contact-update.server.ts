@@ -32,6 +32,10 @@ export async function runContactUpdateJob(
     action: "update"; operationLabel: string; skipSlotCheck: true;
   }) => ReturnType<Parameters<typeof runRepublishJob>[2]>,
 ) {
+  if (job.portal_key === "storia") {
+    const { runStoriaContentUpdateJob } = await import("./storia/auto-renew.server");
+    return runStoriaContentUpdateJob(admin, job, execute);
+  }
   const { data: connection } = await admin.from("portal_connections").select("activated")
     .eq("organization_id", job.organization_id).eq("portal", job.portal_key).maybeSingle();
   if (!connection?.activated) return { portalId: job.portal_key, ok: true, action: "skipped", message: "Sărit: portalul nu mai este activat." };

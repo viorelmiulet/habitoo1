@@ -3643,8 +3643,8 @@ export const setPropertyStoriaAutoRenew = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data, context }): Promise<{ ok: true }> => {
-    const { organizationId, agentOnly } = await resolvePublishingOrg(
+  .handler(async ({ data, context }): Promise<{ ok: true; queued: boolean }> => {
+    const { organizationId, agentOnly, superadmin } = await resolvePublishingOrg(
       context as unknown as AuthContext,
       data.organizationId,
     );
@@ -3661,7 +3661,12 @@ export const setPropertyStoriaAutoRenew = createServerFn({ method: "POST" })
       .eq("id", data.propertyId)
       .eq("organization_id", organizationId);
     if (error) throw new Error(error.message);
-    return { ok: true };
+    const { enqueueStoriaAutoRenewUpdate } = await import("@/lib/portals/storia/auto-renew.server");
+    const queued = await enqueueStoriaAutoRenewUpdate(admin, {
+      organizationId, propertyId: data.propertyId, actorId: context.userId,
+      superadmin,
+    });
+    return { ok: true, queued };
   });
 
 /* ------------------- coada durabilă de publicare (portal_publish_jobs) ------------------- */
