@@ -66,6 +66,7 @@ import {
   setPropertyStoriaAutoRenew,
   type PropertyPortalCell,
 } from "@/lib/portals.functions";
+import { storiaAutoRenewVisible } from "@/lib/portals/storia/auto-renew";
 import { PortalScheduleControl } from "@/components/app/PortalScheduleControl";
 import { listPropertyPortalSchedules } from "@/lib/portals/publish-schedule.functions";
 import { getPropertyCollaboration, setPropertyCollaboration } from "@/lib/collaboration.functions";
@@ -998,7 +999,8 @@ export const PropertyPortalsCard = forwardRef<
                           view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
                         />
                         {cell.portalId === "storia" ? (
-                          <StoriaAutoRenewControl propertyId={propertyId} organizationId={organizationId} canManage={editing === true && canManage} />
+                          <StoriaAutoRenewControl propertyId={propertyId} organizationId={organizationId} canManage={editing === true && canManage}
+                            visible={value === true || storiaAutoRenewVisible({ selected: cell.selected, listingStatus: cell.listingStatus, externalId: cell.externalId })} />
                         ) : null}
                       <div className="relative z-10 mt-3 flex min-w-0 flex-wrap items-center gap-2 [&>*]:pointer-events-auto">
                         {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo" || cell.portalId === "imo24") &&
@@ -1231,18 +1233,23 @@ function portalDisplayLabel(cells: PropertyPortalCell[], portalId: string): stri
 }
 
 /**
- * Auto-prelungire Storia la nivel de proprietate: comutator segmentat cu trei
- * poziții — „Setarea agenției” (implicit, moștenire), „Activat”, „Dezactivat”.
- * Eticheta de dedesubt spune explicit dacă anunțul moștenește sau suprascrie.
+ * Auto-prelungire Storia la nivel de proprietate: o bifă simplă care arată
+ * valoarea efectivă (alegerea proprietății sau implicitul agenției). Blocul se
+ * afișează doar cât timp agentul poate acționa asupra anunțului — Storia bifat
+ * sau anunț publicat / în procesare — iar rezultatul trimiterii apare ca
+ * notificare temporară, nu permanent pe card.
  */
 function StoriaAutoRenewControl({
   propertyId,
   organizationId,
   canManage,
+  visible,
 }: {
   propertyId: string;
   organizationId?: string;
   canManage: boolean;
+  /** Storia bifat ori anunț Storia publicat / în procesare. */
+  visible: boolean;
 }) {
   const queryClient = useQueryClient();
   const load = useServerFn(getPropertyStoriaAutoRenew);
@@ -1259,11 +1266,25 @@ function StoriaAutoRenewControl({
   });
   const storiaJobs = jobs.data?.filter(job => job.portalId === "storia") ?? [];
   const sending = sent === true && (jobs.isFetching || storiaJobs.length === 0 || storiaJobs.some(job => job.status === "queued" || job.status === "running"));
-  const result = storiaJobs[0];
+
+  // Rezultatul real al trimiterii: notificare temporară, o singură dată per job.
+  const announced = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (sent !== true) return;
+    for (const job of (jobs.data ?? []).filter(job => job.portalId === "storia")) {
+      if (job.status !== "done" && job.status !== "error") continue;
+      if (announced.current.has(job.id)) continue;
+      announced.current.add(job.id);
+      const message = job.message ?? (job.ok === false ? "Trimiterea la Storia a eșuat." : "Opțiunea a fost trimisă la Storia.");
+      if (job.ok === false) toast.error(message);
+      else toast.success(message);
+    }
+  }, [sent, jobs.data]);
 
   const state = useQuery({
     queryKey,
     queryFn: () => load({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
+    enabled: visible,
   });
 
   const mutate = useMutation({
@@ -1273,12 +1294,13 @@ function StoriaAutoRenewControl({
       setSent(result.queued);
       void queryClient.invalidateQueries({ queryKey: jobsKey });
       void queryClient.invalidateQueries({ queryKey });
-      toast.success("Prelungirea automată Storia a fost salvată.");
+      if (result.queued) toast.success("Prelungirea automată Storia a fost salvată.");
+      else toast.info("Salvat. Se aplică la următoarea publicare făcută de agent.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (!state.data) return null;
+  if (!visible || !state.data) return null;
   const { override, agencyDefault, effective } = state.data;
 
   return (
@@ -1290,9 +1312,6 @@ function StoriaAutoRenewControl({
       </div>
       <p className="text-xs text-muted-foreground">Implicit: setarea agenției ({agencyDefault ? "activată" : "dezactivată"})</p>
       {override !== null ? <Button type="button" variant="link" size="compact" className="h-auto p-0 text-xs" disabled={!canManage || mutate.isPending || sending} onClick={() => mutate.mutate(null)}>Revino la setarea agenției</Button> : null}
-      <p role="status" className={cn("break-words text-xs", result?.ok === false && sent ? "text-destructive" : "text-muted-foreground")}>
-        {mutate.isPending ? "Se salvează…" : sending ? "Se trimite la Storia…" : sent === false ? "Salvat. Se aplică la următoarea publicare făcută de agent." : sent === true ? result?.message ?? "Opțiunea a fost trimisă la Storia." : null}
-      </p>
     </div>
   );
 }
