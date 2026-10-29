@@ -7,7 +7,7 @@ import type { OferaLocation } from "./location";
 export type OferaRow = Partial<PropertyRow> & Pick<PropertyRow, "id">;
 export type OferaContact = { tip: "business"; name: string; email: string; phone: string; photo?: string };
 /** Incomplete preview drafts omit unresolved required fields; only ok=true bodies are valid requests. */
-export type OferaBody = { category_id: number; id_furnizor?: number; title: string; description: string; city_id?: number; params: Record<string, string | number>; images: { url: string; order: number }[]; contact?: OferaContact; external_id: string; promoted: 0 };
+export type OferaBody = { category_id: number; id_furnizor?: number; title: string; description: string; city_id?: number; params: Record<string, string | number>; images: { url: string; order: number }[]; contact?: OferaContact; external_id: string; promoted: 0 | 1 };
 export type OferaMapOptions = { categories: (OferaCategory & { active?: boolean })[]; location: OferaLocation; providerId?: number | null; images: string[]; contact?: OferaContact | null; currency?: "EUR" | "RON"; eurRonRate?: number | null; currentYear?: number };
 export type OferaMapResult = { ok: boolean; bodies: OferaBody[]; reasons: string[]; warnings: string[] };
 export function oferaCurrency(value: unknown): "EUR" | "RON" { return value === "RON" ? "RON" : "EUR"; }
