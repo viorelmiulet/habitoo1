@@ -4,6 +4,7 @@ import { ZUP_CALLBACK, ZUP_TIMEOUT_MS, ZUP_MISSING_MESSAGE, zupConfigured } from
 import { getPortalDefinition } from "../registry";
 import { integrationSlugFor, homepagePortals } from "../integration-pages";
 import { zupAdapter } from "../adapters/zup.server";
+import { portalRequirementSpec } from "../requirements";
 const ENV = { ZUP_CLIENT_ID: "test-client", ZUP_CLIENT_SECRET: "test-secret" };
 const tokenBody = (access = "A", refresh: string | null = "R", seconds = 120) => ({ access_token: access, refresh_token: refresh, token_type: "bearer", expires_in: seconds });
 function setup(responses: { status: number; body: unknown }[] = []) {
@@ -137,10 +138,22 @@ describe("ZUP OAuth stage 1", () => {
   });
   it("registry and adapter block stage-one publishing, public pages absent", async () => {
     const portal = getPortalDefinition("zup"); expect(portal?.activation).toBe("oauth"); expect(portal?.publish_coming_soon).toBe(true); expect(portal?.capabilities).toEqual(["test_connection"]);
+    expect(portalRequirementSpec("zup")?.required.map(r => r.key)).toEqual(["stage"]);
     expect(integrationSlugFor("zup")).toBeNull(); expect(homepagePortals().some(p => p.portal.id === "zup")).toBe(false);
     if (!portal) throw new Error("ZUP missing");
     const ctx = { organizationId: "org", definition: portal, direction: "habitoo_to_portal" as const, authenticationMode: "oauth" as const, externalAccountId: null, portalCredential: null, settings: {}, allowLiveRequests: true };
     expect(await zupAdapter.publishListing?.(ctx, { propertyId: "p", externalId: null })).toMatchObject({ ok: false, code: "NOT_SUPPORTED" });
     expect(await zupAdapter.updateListing?.(ctx, { propertyId: "p", externalId: null })).toMatchObject({ ok: false, code: "NOT_SUPPORTED" });
+  });
+  it("rejects malformed token responses instead of inventing expiry", async () => {
+    const t = setup([{ status: 200, body: { access_token: "A", token_type: "bearer" } }]);
+    await expect(exchangeZupCode("CODE", t.d)).rejects.toMatchObject({ detail: "zup_invalid_token" });
+  });
+  it("disconnect and absent refresh require reconnection without network writes", async () => {
+    const t = setup(); await t.seed("A", null, true);
+    await expect(getZupAccessToken("org", t.d)).rejects.toMatchObject({ detail: "zup_no_refresh" });
+    await clearZupTokens("org", "actor", t.d);
+    await expect(getZupAccessToken("org", t.d)).rejects.toMatchObject({ detail: "zup_disconnected" });
+    expect(t.calls).toHaveLength(0);
   });
 });

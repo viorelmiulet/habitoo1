@@ -593,7 +593,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
       const oauthMeta = portal.authentication.includes("oauth")
         ? readStoriaOAuthMeta(settings)
         : null;
-      const oauthExpiresAt = oauthMeta?.expires_at ?? (portal.id === "storia" ? storiaTokens?.expires_at : null) ?? null;
+      const oauthExpiresAt = oauthMeta?.expires_at ?? (portal.id === "zup" ? null : storiaTokens?.expires_at) ?? null;
 
       return {
         portal,
@@ -689,7 +689,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
               connected: Boolean(row?.portal_credentials_encrypted),
               expiresAt: oauthExpiresAt,
               expired: oauthExpiresAt ? new Date(oauthExpiresAt).getTime() <= Date.now() : false,
-              canRefresh: oauthMeta?.has_refresh_token ?? (portal.id === "storia" && Boolean(storiaTokens?.refresh_token)),
+              canRefresh: oauthMeta?.has_refresh_token ?? (portal.id !== "zup" && Boolean(storiaTokens?.refresh_token)),
               reconnectRequired:
                 ((row?.settings ?? {}) as Record<string, unknown>)["reconnect_required"] === true,
               connectedAt: oauthMeta?.connected_at ?? null,
