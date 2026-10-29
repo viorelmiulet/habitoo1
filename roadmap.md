@@ -1,5 +1,11 @@
 # SEO public — pasul 1a
 
+## Ofera — etapa 2
+- [x] Nomenclator public complet, validare și salvare atomică idempotentă cu diferențe; migrația 0216 aplicată
+- [x] Panou SuperAdmin, program săptămânal luni 03:17 UTC cu skip fără agenții active și notificări atomice ale parametrilor
+- [x] 32 teste Ofera și 1.440 teste portaluri trec, build OK; sincronizare reală: 32 categorii, 42 județe, 13.933 localități, 1.203 zone; a doua rulare fără modificări; categorii 94/102/515/389 recitite
+- [ ] Verificare vizuală panou: sesiunea disponibilă e administrator de agenție, fără acces SuperAdmin. Execuția programată pe site așteaptă publicarea explicită a noului endpoint; programul este creat, fără publicare automată.
+
 ## Ofera — etapa 1
 - [x] Registru, ID furnizor SuperAdmin, stare fără secrete și test conexiune; fără publicare sau conținut public
 - [x] Client cu răspunsuri din corp, jurnal privat redactat și token criptat cu lock global; migrație aplicată
