@@ -466,7 +466,7 @@ export function integrationPageBySlug(slug: string): IntegrationPage | null {
   return INTEGRATION_PAGES.find((p) => p.slug === slug) ?? null;
 }
 
-/** Slug-ul paginii pentru un portal (inclusiv portaluri acoperite de un grup, ex. olx → storia-olx). */
+/** Slug-ul paginii pentru un portal (inclusiv portaluri acoperite de un grup, ex. olx → storia). */
 export function integrationSlugFor(portalId: string): string | null {
   return CONTENT[portalIntegrationOwner(portalId)]?.slug ?? CONTENT[portalId]?.slug ?? null;
 }
