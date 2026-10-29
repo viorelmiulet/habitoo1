@@ -107,25 +107,24 @@ const CONTENT: Record<string, Content> = {
     ],
   },
   storia: {
-    slug: "storia-olx",
+    slug: "storia",
     name: "Storia.ro + OLX.ro",
-    description: "Publici anunțurile pe Storia.ro și OLX.ro direct din Habitoo CRM: actualizezi, retragi dintr-un click și primești mesajele clienților ca lead-uri în CRM.",
+    description: "Publici anunțurile pe Storia.ro și OLX.ro din Habitoo CRM: conectezi contul agenției, alegi prelungirea automată și retragi oferta dintr-un click.",
     intro: [
-      "Storia.ro și OLX.ro sunt printre cele mai vizitate locuri unde românii caută locuințe. Prin integrarea cu Habitoo, anunțul pe care îl introduci o singură dată în CRM ajunge pe Storia, iar de acolo apare și pe OLX.ro.",
-      "Nu mai copiezi texte și poze dintr-un cont în altul. Lucrezi în fișa proprietății din Habitoo, bifezi portalul și apeși Publică. Starea reală a anunțului, de exemplu în verificare, publicat sau respins, se vede în Habitoo.",
-      "Mesajele primite de la clienți pe portal intră în CRM ca lead-uri, la agentul care se ocupă de proprietate, ca să poți răspunde repede.",
+      "Storia.ro și OLX.ro sunt printre cele mai vizitate locuri unde românii caută locuințe. Prin integrarea cu Habitoo, anunțul pe care îl introduci o singură dată în CRM ajunge pe Storia, iar de acolo apare și pe OLX.ro, fără o a doua publicare.",
+      "Lucrezi în fișa proprietății din Habitoo: bifezi portalul și apeși Publică. Anunțul trece prin verificarea Storia, iar starea reală — în validare, publicat sau respins de moderare — se vede în Habitoo. Se publică doar categoriile rezidențiale și comerciale acceptate de Storia, iar mesajele primite de la clienți pe portal intră în CRM ca lead-uri, la agentul care se ocupă de proprietate.",
+      "Pentru fiecare anunț alegi dacă se prelungește automat la expirare, cu bifa „Prelungire automată”; dacă nu alegi, se folosește setarea agenției. Habitoo doar transmite opțiunea către Storia: nu aplică promovări și nu cumpără nimic. Când marchezi proprietatea Vândut, Închiriat sau Arhivat, anunțul se retrage automat.",
     ],
     activation: "Administratorul agenției intră în Setări → Portaluri, apasă „Conectează contul Storia” și se autentifică în contul agenției de pe Storia.ro. După aprobare, conexiunea rămâne activă și se reînnoiește singură.",
     notes: [
-      "Anunțul trece prin verificarea portalului înainte să apară public; statusul îl vezi în Habitoo.",
-      "Se publică doar categoriile rezidențiale și comerciale acceptate de Storia.",
+      "Anunțul trece prin verificarea Storia înainte să apară public; statusul îl vezi în Habitoo.",
+      "Bifa „Prelungire automată” se alege pe fiecare anunț; implicit se folosește setarea agenției.",
       "Promovările plătite se fac din contul tău de pe portal, nu din Habitoo.",
     ],
     faq: [
       { q: "Anunțul apare și pe OLX.ro?", a: "Da. Ce publici pe Storia prin Habitoo apare automat și pe OLX.ro, fără o a doua publicare." },
-      { q: "Unde văd mesajele clienților?", a: "În Habitoo, ca lead-uri atribuite agentului proprietății. Agentul primește și o notificare." },
+      { q: "Cum funcționează prelungirea automată?", a: "Pentru fiecare anunț bifezi dacă Storia îl prelungește automat la expirare; dacă nu alegi, se folosește setarea agenției. Habitoo transmite opțiunea, dar nu cumpără promovări." },
       { q: "Ce se întâmplă când vând proprietatea?", a: "Când marchezi proprietatea Vândut, Închiriat sau Arhivat, anunțul este retras automat de pe portal." },
-      { q: "Pot folosi contul meu existent de Storia?", a: "Da. Conectezi contul agenției pe care îl ai deja; nu ai nevoie de un cont nou." },
     ],
   },
   olx_direct: {
