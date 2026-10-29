@@ -36,7 +36,12 @@ import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { listOrgPropertiesForPortals, listPortalOrganizations } from "@/lib/portals.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/portals")({
-  head: () => appHead("Habitoo CRM — portaluri imobiliare"),
+  head: () => {
+    const title = "Habitoo CRM — portaluri imobiliare";
+    const description = "Administrarea conexiunilor, activărilor și testelor portalurilor imobiliare pentru agențiile Habitoo.";
+    const base = appHead(title);
+    return { ...base, meta: [...base.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] };
+  },
   // Deep-link din dashboard: `?org=<id>` preselectează agenția vizată.
   // `?storia=` / `?storia_error=` vin de la returnarea autorizării OAuth Storia.
   validateSearch: (

@@ -1,9 +1,10 @@
 # SEO public — pasul 1a
 
 ## Ofera — etapa 1
-- [ ] Registru, ID furnizor SuperAdmin, stare fără secrete și test conexiune
-- [ ] Client cu răspunsuri din corp, jurnal privat redactat și token criptat cu lock global
-- [ ] Teste fără rețea și verificare interfață fără apeluri Ofera
+- [x] Registru, ID furnizor SuperAdmin, stare fără secrete și test conexiune; fără publicare sau conținut public
+- [x] Client cu răspunsuri din corp, jurnal privat redactat și token criptat cu lock global; migrație aplicată
+- [x] 26 teste Ofera fără rețea, 1.432 teste portaluri înaintea celor 2 teste finale; Ofera cu OF verificat în Setări → Portaluri în cont, fără mutații și erori runtime
+- [ ] Test live și verificare formular SuperAdmin: lipsesc cele patru secrete OFERA; sesiunea disponibilă este administrator de agenție, redirect SuperAdmin verificat
 
 ## Storia — prelungire automată per anunț
 - [x] Payload explicit cu prioritate proprietate și aceeași valoare pentru ambele tranzacții
