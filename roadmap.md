@@ -1,7 +1,7 @@
 ## Locuit — site public
 - [x] Curl înainte: pagina 404, Locuit.ro absent din integrări și homepage
-- [ ] Pagină, card, logo și sitemap prin conținutul public existent
-- [ ] Teste și curl după: pagină 200, SEO, liste și sitemap
+- [x] Pagină, card, logo și sitemap prin conținutul public existent
+- [x] 40 teste; curl după: pagină 200, SEO, liste și sitemap; logo și navigare verificate desktop/telefon
 
 ## Imobli — site public
 - [x] Curl înainte: pagina 404, Imobli.ro absent din integrări și homepage
