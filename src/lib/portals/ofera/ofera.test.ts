@@ -3,7 +3,7 @@ import { createOferaAdapter } from "../adapters/ofera.server";
 import { getOferaToken, type OferaAuthDeps, type OferaToken, type OferaTokenStore } from "./auth.server";
 import { oferaRequest } from "./client.server";
 import { oferaTransport, type OferaLog } from "./transport.server";
-import { oferaRedact, readOferaResponse } from "./response";
+import { oferaInvalidToken, oferaRedact, readOferaResponse } from "./response";
 import { getPortalDefinition, derivePortalConnectionStatus, validatePortalConfigValues, portalCanPublish } from "../registry";
 import type { PortalContext } from "../adapter";
 const env = { OFERA_CLIENT_ID: "fixture-client-id", OFERA_CLIENT_SECRET: "fixture-secret", OFERA_USERNAME: "fixture@example.invalid", OFERA_PASSWORD: "fixture-password" };
@@ -73,6 +73,11 @@ describe("Ofera registry and connection", () => {
   });
 });
 describe("Ofera body-authoritative responses and secrecy", () => {
+  it("retains token rejection despite localized status messages", () => {
+    expect(oferaInvalidToken(readOferaResponse({ code: "ERROR", status: 500, message: "Token expired" }))).toBe(true);
+    expect(oferaInvalidToken(readOferaResponse({ code: "ERROR", status: 404, message: "Invalid token" }))).toBe(true);
+    expect(oferaInvalidToken(readOferaResponse({ code: "ERROR", status: 404, message: "Missing listing" }))).toBe(false);
+  });
   it("HTTP 200 ERROR is never success", async () => {
     const logs: OferaLog[] = [];
     const call = await oferaTransport("/categories", { method: "GET" }, { fetch: async () => new Response('{"code":"ERROR","status":404}'), journal: async (log) => { logs.push(log); } });

@@ -1,4 +1,4 @@
-export type OferaResponse = { ok: boolean; status: number | null; message: string; data: unknown; logTrackId: string | null };
+export type OferaResponse = { ok: boolean; status: number | null; message: string; data: unknown; logTrackId: string | null; invalidToken?: boolean };
 export const object = (v: unknown): Record<string, unknown> | null => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
 const text = (v: unknown) => typeof v === "string" || typeof v === "number" ? String(v) : "";
 const privateKey = /^(password|client_secret|client_id|username|access_token|refresh_token|authorization|token|token_encrypted)$/i;
@@ -31,6 +31,7 @@ export function readOferaResponse(body: unknown): OferaResponse {
   const status = typeof root?.["status"] === "number" ? root["status"] : null;
   if (!root || !["SUCCESS", "ERROR"].includes(text(root["code"]))) return { ok: false, status, message: "Răspuns Ofera neașteptat", data: null, logTrackId };
   const ok = root["code"] === "SUCCESS" && status !== null && status >= 200 && status < 300;
+  const invalidToken = !ok && (status === 401 || /(?:token.*(?:invalid|expirat|expired)|(?:invalid|expirat|expired).*token)/i.test(text(root["message"])));
   let message = text(root["message"]) || (ok ? "Operația Ofera a reușit." : "Ofera a refuzat operația.");
   if (!ok) {
     if (status === 404) message = "Anunțul nu există la Ofera.";
@@ -39,8 +40,8 @@ export function readOferaResponse(body: unknown): OferaResponse {
     if (status === 412) message = "Anunțul nu e activ la Ofera.";
     if (status === 500) message = `Ofera a refuzat operația: ${message}`;
   }
-  return { ok, status, message: `${message}${logTrackId ? ` Referință Ofera: ${logTrackId}.` : ""}`, data, logTrackId };
+  return { ok, status, message: `${message}${logTrackId ? ` Referință Ofera: ${logTrackId}.` : ""}`, data, logTrackId, ...(invalidToken ? { invalidToken: true } : {}) };
 }
 export function oferaInvalidToken(result: OferaResponse): boolean {
-  return !result.ok && (result.status === 401 || /(?:token.*(?:invalid|expirat|expired)|(?:invalid|expirat|expired).*token)/i.test(result.message));
+  return !result.ok && (result.invalidToken === true || result.status === 401 || /(?:token.*(?:invalid|expirat|expired)|(?:invalid|expirat|expired).*token)/i.test(result.message));
 }
