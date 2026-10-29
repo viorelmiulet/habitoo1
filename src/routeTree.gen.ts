@@ -115,6 +115,7 @@ import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/
 import { Route as ApiPublicCronListingImagesRouteImport } from './routes/api/public/cron/listing-images'
 import { Route as ApiPublicCronListingsRetentionRouteImport } from './routes/api/public/cron/listings-retention'
 import { Route as ApiPublicCronMarketPriceIndicesRouteImport } from './routes/api/public/cron/market-price-indices'
+import { Route as ApiPublicCronOferaNomenclatureRouteImport } from './routes/api/public/cron/ofera-nomenclature'
 import { Route as ApiPublicCronOlxStatusRouteImport } from './routes/api/public/cron/olx-status'
 import { Route as ApiPublicCronOlxTokenRefreshRouteImport } from './routes/api/public/cron/olx-token-refresh'
 import { Route as ApiPublicCronPortalBulkRouteImport } from './routes/api/public/cron/portal-bulk'
@@ -758,6 +759,12 @@ const ApiPublicCronMarketPriceIndicesRoute =
     path: '/api/public/cron/market-price-indices',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronOferaNomenclatureRoute =
+  ApiPublicCronOferaNomenclatureRouteImport.update({
+    id: '/api/public/cron/ofera-nomenclature',
+    path: '/api/public/cron/ofera-nomenclature',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronOlxStatusRoute = ApiPublicCronOlxStatusRouteImport.update({
   id: '/api/public/cron/olx-status',
   path: '/api/public/cron/olx-status',
@@ -1211,6 +1218,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
+  '/api/public/cron/ofera-nomenclature': typeof ApiPublicCronOferaNomenclatureRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
@@ -1376,6 +1384,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
+  '/api/public/cron/ofera-nomenclature': typeof ApiPublicCronOferaNomenclatureRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
@@ -1547,6 +1556,7 @@ export interface FileRoutesById {
   '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
+  '/api/public/cron/ofera-nomenclature': typeof ApiPublicCronOferaNomenclatureRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
@@ -1718,6 +1728,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/listing-images'
     | '/api/public/cron/listings-retention'
     | '/api/public/cron/market-price-indices'
+    | '/api/public/cron/ofera-nomenclature'
     | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
@@ -1883,6 +1894,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/listing-images'
     | '/api/public/cron/listings-retention'
     | '/api/public/cron/market-price-indices'
+    | '/api/public/cron/ofera-nomenclature'
     | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
@@ -2053,6 +2065,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/listing-images'
     | '/api/public/cron/listings-retention'
     | '/api/public/cron/market-price-indices'
+    | '/api/public/cron/ofera-nomenclature'
     | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
@@ -2173,6 +2186,7 @@ export interface RootRouteChildren {
   ApiPublicCronListingImagesRoute: typeof ApiPublicCronListingImagesRoute
   ApiPublicCronListingsRetentionRoute: typeof ApiPublicCronListingsRetentionRoute
   ApiPublicCronMarketPriceIndicesRoute: typeof ApiPublicCronMarketPriceIndicesRoute
+  ApiPublicCronOferaNomenclatureRoute: typeof ApiPublicCronOferaNomenclatureRoute
   ApiPublicCronOlxStatusRoute: typeof ApiPublicCronOlxStatusRoute
   ApiPublicCronOlxTokenRefreshRoute: typeof ApiPublicCronOlxTokenRefreshRoute
   ApiPublicCronPortalBulkRoute: typeof ApiPublicCronPortalBulkRoute
@@ -2975,6 +2989,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronMarketPriceIndicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/ofera-nomenclature': {
+      id: '/api/public/cron/ofera-nomenclature'
+      path: '/api/public/cron/ofera-nomenclature'
+      fullPath: '/api/public/cron/ofera-nomenclature'
+      preLoaderRoute: typeof ApiPublicCronOferaNomenclatureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/olx-status': {
       id: '/api/public/cron/olx-status'
       path: '/api/public/cron/olx-status'
@@ -3700,6 +3721,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronListingImagesRoute: ApiPublicCronListingImagesRoute,
   ApiPublicCronListingsRetentionRoute: ApiPublicCronListingsRetentionRoute,
   ApiPublicCronMarketPriceIndicesRoute: ApiPublicCronMarketPriceIndicesRoute,
+  ApiPublicCronOferaNomenclatureRoute: ApiPublicCronOferaNomenclatureRoute,
   ApiPublicCronOlxStatusRoute: ApiPublicCronOlxStatusRoute,
   ApiPublicCronOlxTokenRefreshRoute: ApiPublicCronOlxTokenRefreshRoute,
   ApiPublicCronPortalBulkRoute: ApiPublicCronPortalBulkRoute,
