@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## ZUP — etapa 1
+- [ ] Documentație verificată, registru și logo oficial; publicare blocată și fără pagini publice
+- [ ] OAuth per agenție cu state unic, tokenuri criptate, refresh și deconectare; test GET /anunturi
+- [ ] Teste fără rețea și verificare interfață; nicio publicare reală
+
 ## Ofera — etapa 4
 - [x] Stări per tranzacție și intenție Ofera în coada existentă; migrații 0217/0218 aplicate; DELETE numai înainte de hard-delete, soft-delete și realocarea dezactivează
 - [x] Card Ofera cu activare separată, retrimitere confirmată de unică folosință, promovare 406 și valabilitate fără reînnoire automată
