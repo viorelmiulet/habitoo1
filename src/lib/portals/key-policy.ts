@@ -18,6 +18,11 @@ export function assertPortalKeyAllowed(
       "ClickImob nu folosește chei pe agenție. Agenția intră automat în indexul ClickImob după activarea portalului.",
     );
   }
+  if (definition.id === "imobli") {
+    throw new Error(
+      "Imobli nu folosește chei pe agenție. Agenția intră în indexul Imobli după activarea portalului.",
+    );
+  }
   if (!definition.authentication.includes("habitoo_api_key")) {
     throw new Error(
       `${definition.display_name} folosește o cheie API emisă de portal. Salvează cheia primită de la ei în configurarea integrării.`,
