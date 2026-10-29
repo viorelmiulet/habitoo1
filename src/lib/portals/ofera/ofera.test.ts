@@ -52,10 +52,10 @@ describe("Ofera registry and connection", () => {
   it.each(["0", "-1", "1.2", "abc", "9007199254740992"])("rejects invalid provider %s", (value) => {
     expect(validatePortalConfigValues("ofera", { endpointUrl: value })).toContain("număr întreg");
   });
-  it("only supports tests and a positive agency provider", () => {
+  it("supports push publication and a positive agency provider", () => {
     expect(validatePortalConfigValues("ofera", { endpointUrl: "123" })).toBeNull();
-    expect(context().definition.capabilities).toEqual(["test_connection"]);
-    expect(portalCanPublish("ofera")).toBe(false);
+    expect(context().definition.capabilities).toEqual(["test_connection", "publish_listing", "update_listing", "withdraw_listing"]);
+    expect(portalCanPublish("ofera")).toBe(true);
   });
   it.each([undefined, 123])("tests token and categories with provider %s", async (provider) => {
     const fetcher = vi.fn<typeof fetch>(async (url) => String(url).endsWith("/get-token") ? tokenReply() : success());

@@ -35,6 +35,7 @@ import { ImopediaBoostButton } from "@/components/app/ImopediaBoostButton";
 import { ZonataPreviewButton } from "@/components/app/ZonataPreviewButton";
 import { HomedirectPreviewButton } from "@/components/app/HomedirectPreviewButton";
 import { OferaPreviewButton } from "@/components/app/OferaPreviewButton";
+import { OferaStatusPanel } from "@/components/app/OferaStatusPanel";
 import { ZonataStatusPanel } from "@/components/app/ZonataStatusPanel";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
@@ -1061,7 +1062,7 @@ export const PropertyPortalsCard = forwardRef<
                             Cere activarea
                           </span>
                         ) : null}
-                        {(problem || (unconfirmed && !busy)) &&
+                        {cell.portalId !== "ofera" && (problem || (unconfirmed && !busy)) &&
                         canManage &&
                         cell.availability === "available" &&
                         cell.configured ? (
@@ -1133,6 +1134,7 @@ export const PropertyPortalsCard = forwardRef<
                         {cell.portalId === "zonata" && cell.selected ? <ZonataStatusPanel organizationId={organizationId} propertyId={propertyId} /> : null}
                         {cell.portalId === "zonata" && isSuperadmin ? <ZonataPreviewButton propertyId={propertyId} /> : null}
                         {cell.portalId === "homedirect" && isSuperadmin ? <HomedirectPreviewButton propertyId={propertyId} /> : null}
+                        {cell.portalId === "ofera" ? <OferaStatusPanel propertyId={propertyId} organizationId={organizationId} canManage={canManage} busy={busy} promoted={promotedValue(cell)} /> : null}
                         {cell.portalId === "imopedia" && cell.selected ? (
                           <ImopediaBoostButton organizationId={organizationId} propertyId={propertyId} />
                         ) : null}
