@@ -1,5 +1,6 @@
 import { imobiliarePromotionChangesSchema, imobiliarePublicationModeSchema, imobiliarePortalDecidesSlots, type ImobiliarePublicationMode, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
 import { HOMEDIRECT_KEY_MISSING_MESSAGE, homedirectKeyMissing } from "@/lib/portals/homedirect/config";
+import { OFERA_MISSING_MESSAGE, oferaConfigured, oferaProviderId } from "@/lib/portals/ofera/config";
 import { visibleOlxLinks } from "@/lib/portals/storia/vas";
 import { portalCanPublish, publishUnavailableMessage } from "@/lib/portals/registry";
 import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/offer-links";
@@ -573,6 +574,9 @@ export const getPortalHub = createServerFn({ method: "POST" })
     };
 
     return configurablePortals().map((portal) => {
+      const serverMissingMessage = portal.id === "ofera" && !oferaConfigured(process.env)
+        ? OFERA_MISSING_MESSAGE
+        : homedirectKeyMissing(portal.id) ? HOMEDIRECT_KEY_MISSING_MESSAGE : null;
       const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
       const storedSettings = (row?.settings ?? {}) as Record<string, unknown>;
       const settings =
@@ -601,7 +605,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
             lastError,
             lastSyncStatus: lastError ? (row?.last_sync_status ?? null) : null,
             hasOAuthTokens: Boolean(row?.portal_credentials_encrypted),
-            serverKeyMissing: homedirectKeyMissing(portal.id),
+            serverKeyMissing: Boolean(serverMissingMessage),
           }),
 
           direction: row?.direction ?? portal.directions[0] ?? "habitoo_to_portal",
@@ -616,6 +620,8 @@ export const getPortalHub = createServerFn({ method: "POST" })
           endpointUrl:
             typeof settings["endpoint_url"] === "string"
               ? String(settings["endpoint_url"])
+              : portal.id === "ofera" && oferaProviderId(settings["id_furnizor"]) !== null
+                ? String(settings["id_furnizor"])
               : portal.id === "imopedia" && typeof settings["agency_id"] === "number"
                 ? String(settings["agency_id"])
                 : null,
@@ -623,7 +629,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
           activated: row?.activated === true,
           lastSyncAt: row?.last_sync_at ?? null,
           lastSyncStatus: row?.last_sync_status ?? null,
-          lastSyncError: homedirectKeyMissing(portal.id) ? HOMEDIRECT_KEY_MISSING_MESSAGE : lastError,
+          lastSyncError: serverMissingMessage ?? lastError,
         },
         keys: portalKeys.map((k) => ({
           id: k.id,
@@ -857,7 +863,11 @@ export const savePortalConnection = createServerFn({ method: "POST" })
     const { encryptPortalCredential } = await import("@/lib/portals/crypto.server");
     const { row } = await buildContext(organizationId, definition);
     const settings = { ...((row?.settings ?? {}) as Record<string, unknown>) };
-    if (data.endpointUrl !== undefined && definition.id === "imopedia") {
+    if (data.endpointUrl !== undefined && definition.id === "ofera") {
+      const providerId = oferaProviderId(data.endpointUrl);
+      if (providerId !== null) settings["id_furnizor"] = providerId;
+      else delete settings["id_furnizor"];
+    } else if (data.endpointUrl !== undefined && definition.id === "imopedia") {
       // Imopedia: câmpul „settings” este ID-ul numeric al agenției (AGENTIA).
       const { parseImopediaAgencyId } = await import("@/lib/portals/imopedia/config");
       const agencyId = parseImopediaAgencyId(data.endpointUrl);
@@ -887,6 +897,7 @@ export const savePortalConnection = createServerFn({ method: "POST" })
       patch["external_account_id"] = data.externalAccountId || null;
     }
     if (data.credential) {
+      if (definition.id === "ofera") throw new Error("Credențialele Ofera se configurează doar în secretele serverului.");
       patch["portal_credentials_encrypted"] = encryptPortalCredential(data.credential);
       if (definition.id === "zonata") {
         // Doar modul (din prefixul public), nu cheia: afișat lângă cheie în SuperAdmin.

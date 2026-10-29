@@ -272,7 +272,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
           return;
         }
         const feed = res.feed;
-        if (res.live && res.detail && (portalId === "imo24" || portalId === "imopedia" || portalId === "zonata")) {
+        if (res.live && res.detail && (portalId === "imo24" || portalId === "imopedia" || portalId === "zonata" || portalId === "ofera")) {
           // imo24.ro: agenția, starea pachetului, sloturile și scopurile cheii.
           toast.success(res.detail, { duration: 10_000 });
           return;
