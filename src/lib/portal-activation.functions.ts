@@ -67,7 +67,7 @@ async function requireSuperadmin(context: AuthContext): Promise<void> {
 }
 
 /** Agenția vine din sesiune, niciodată din input, și doar pentru agency_admin. */
-async function requireOrgAdminOrg(context: AuthContext): Promise<string> {
+export async function requireOrgAdminOrg(context: AuthContext): Promise<string> {
   const { data: isOrgAdmin } = await context.supabase.rpc("is_org_admin");
   if (isOrgAdmin !== true) {
     throw new Error(

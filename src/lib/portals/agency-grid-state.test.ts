@@ -56,13 +56,13 @@ describe("grila portalurilor pentru administratorul agenției", () => {
   it("afișează doar portalurile, fără Colaborare Habitoo", () => {
     const src = readFileSync("src/components/app/AgencyPortalCatalogCard.tsx", "utf8");
     expect(src).not.toContain("Colaborare Habitoo");
-    expect(src).toContain("Cere activarea portalurilor de care ai nevoie. Le activează echipa Habitoo.");
+    expect(src).toContain("Cere activarea portalurilor de care ai nevoie: pe pagina fiecărui portal introduci datele de acces și îl activezi singur.");
   });
 
   it("La Cheie folosește același card și nu afișează panoul de retrimitere", () => {
     const catalog = readFileSync("src/components/app/AgencyPortalCatalogCard.tsx", "utf8");
     const laCheie = readFileSync("src/components/app/LaCheieActivationPanel.tsx", "utf8");
-    expect(catalog).toMatch(/<li[\s\S]*isLaCheie[\s\S]*<LaCheieActivationPanel/);
+    expect(readFileSync("src/components/app/AgencyPortalSetupPage.tsx", "utf8")).toMatch(/isLaCheie[\s\S]*<LaCheieActivationPanel/);
     expect(laCheie).toContain("\"Activează\"");
     expect(laCheie).not.toContain("LaCheieResendPanel");
   });
@@ -72,7 +72,7 @@ describe("grila portalurilor pentru administratorul agenției", () => {
     const laCheie = readFileSync("src/components/app/LaCheieActivationPanel.tsx", "utf8");
     expect(laCheie).toContain("Completează datele agenției în");
     expect(laCheie).toContain("Activarea nu a reușit acum. Încearcă din nou sau scrie-ne.");
-    expect(catalog).toContain("Cererea nu a fost trimisă. Încearcă din nou.");
+    expect(readFileSync("src/components/app/AgencyPortalSetupPage.tsx", "utf8")).toContain("Cererea nu a fost trimisă. Încearcă din nou.");
   });
 
   it("nu afișează termeni tehnici", () => {

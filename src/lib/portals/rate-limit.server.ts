@@ -8,6 +8,8 @@ const buckets = new Map<string, { count: number; resetAt: number }>();
 
 export const PORTAL_RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
   test: { max: 10, windowMs: 60_000 },
+  // Adminul agenției: un test la 10 secunde pe portal și agenție.
+  agency_test: { max: 1, windowMs: 10_000 },
   publish: { max: 60, windowMs: 60_000 },
   update: { max: 60, windowMs: 60_000 },
   withdraw: { max: 60, windowMs: 60_000 },

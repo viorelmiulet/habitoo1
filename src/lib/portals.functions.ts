@@ -847,6 +847,17 @@ export const savePortalConnection = createServerFn({ method: "POST" })
       context as unknown as AuthContext,
       data.organizationId,
     );
+    return savePortalConnectionCore({ organizationId, actorId: context.userId, data });
+  });
+
+/** Salvarea conexiunii, după autorizare (Superadmin sau adminul agenției din sesiune). */
+export async function savePortalConnectionCore(input: {
+  organizationId: string;
+  actorId: string;
+  data: Omit<z.infer<typeof saveSchema>, "organizationId">;
+}) {
+    const { organizationId, data } = input;
+    const context = { userId: input.actorId };
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     if (definition.status !== "available")
@@ -937,7 +948,7 @@ export const savePortalConnection = createServerFn({ method: "POST" })
       actorId: context.userId,
     });
     return { ok: true as const };
-  });
+}
 
 export const disconnectPortal = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -998,6 +1009,14 @@ export const testPortalConnection = createServerFn({ method: "POST" })
       context as unknown as AuthContext,
       data.organizationId,
     );
+    return testPortalConnectionCore({ organizationId, actorId: context.userId, portalId: data.portalId });
+  });
+
+/** Testul de conexiune prin adaptor, după autorizare. */
+export async function testPortalConnectionCore(input: { organizationId: string; actorId: string; portalId: string }) {
+    const { organizationId } = input;
+    const data = { portalId: input.portalId };
+    const context = { userId: input.actorId };
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
 
@@ -1074,7 +1093,7 @@ export const testPortalConnection = createServerFn({ method: "POST" })
           feed: result.data.feed ?? null,
         }
       : { ok: false as const, code: result.code, message: result.message };
-  });
+}
 
 export const issuePortalApiKey = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -1096,7 +1115,21 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
       context as unknown as AuthContext,
       data.organizationId,
     );
-    const definition = getPortalDefinition(data.portalId);
+    return issuePortalApiKeyCore({ organizationId, actorId: context.userId, portalId: data.portalId, label: data.label, ...(data.scopes ? { scopes: data.scopes } : {}) });
+  });
+
+/** Emiterea unei chei Habitoo, după autorizare. Cheia în clar se întoarce o singură dată. */
+export async function issuePortalApiKeyCore(input: {
+  organizationId: string;
+  actorId: string;
+  portalId: string;
+  label: string;
+  scopes?: ("feed:read" | "agents:read" | "leads:write")[];
+}) {
+    const { organizationId } = input;
+    const data = { label: input.label, scopes: input.scopes };
+    const context = { userId: input.actorId };
+    const definition = getPortalDefinition(input.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     assertPortalKeyAllowed(definition);
     // Habitoo emite chei DOAR pentru portalurile care declară acest model.
@@ -1144,7 +1177,7 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
       prefix: generated.prefix,
       feedUrl: portalPublicFeedUrl(definition.id, generated.key),
     };
-  });
+}
 
 export const revokePortalApiKey = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -1156,6 +1189,14 @@ export const revokePortalApiKey = createServerFn({ method: "POST" })
       context as unknown as AuthContext,
       data.organizationId,
     );
+    return revokePortalApiKeyCore({ organizationId, actorId: context.userId, keyId: data.keyId });
+  });
+
+/** Revocarea unei chei, limitată la agenția dată. */
+export async function revokePortalApiKeyCore(input: { organizationId: string; actorId: string; keyId: string }) {
+    const { organizationId } = input;
+    const data = { keyId: input.keyId };
+    const context = { userId: input.actorId };
     const admin = await loadAdmin();
     const { data: row } = await admin
       .from("portal_api_keys")
@@ -1182,7 +1223,7 @@ export const revokePortalApiKey = createServerFn({ method: "POST" })
       actorId: context.userId,
     });
     return { ok: true as const };
-  });
+}
 
 /** Operațiile pe o ofertă: publicare, actualizare, retragere. */
 const listingSchema = z.object({
