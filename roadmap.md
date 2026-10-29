@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Ofera — etapa 4
+- [ ] Stări per tranzacție și publicare/actualizare/activare/retragere/ștergere prin coada existentă
+- [ ] Card Ofera, promovare, valabilitate și reîncercări explicite fără duplicare
+- [ ] Teste simulate, corp real mascat și inventar fișiere; fără publicare reală
+
 ## Ofera — etapa 3
 - [x] Localizare și mapper pur numai din nomenclator; drafturi incomplete omit ID-urile nerezolvate, fără publicare
 - [x] Monedă SuperAdmin EUR/RON și previzualizare fără token/apel Ofera; protecție server testată

@@ -5611,6 +5611,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ofera_listings: {
+        Row: {
+          external_id: string
+          id: string
+          images_fingerprint: string | null
+          last_log_track_id: string | null
+          last_message: string | null
+          ofera_id: number | null
+          organization_id: string
+          property_id: string
+          public_url: string | null
+          status: string
+          transaction: string
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          external_id: string
+          id?: string
+          images_fingerprint?: string | null
+          last_log_track_id?: string | null
+          last_message?: string | null
+          ofera_id?: number | null
+          organization_id: string
+          property_id: string
+          public_url?: string | null
+          status?: string
+          transaction: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          external_id?: string
+          id?: string
+          images_fingerprint?: string | null
+          last_log_track_id?: string | null
+          last_message?: string | null
+          ofera_id?: number | null
+          organization_id?: string
+          property_id?: string
+          public_url?: string | null
+          status?: string
+          transaction?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       ofera_nomenclature_syncs: {
         Row: {
           changes: Json | null
