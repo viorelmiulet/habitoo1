@@ -44,7 +44,7 @@ describe("public integrations overview", () => {
     const list = integrationItemListJsonLd();
     expect(list.numberOfItems).toBe(18);
     expect(list.itemListElement.map((p) => p.url)).toEqual(INTEGRATION_OVERVIEW.map((p) => `https://www.habitoo.ro/integrari/${p.slug}`));
-    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 17 }, (_, i) => i + 1));
+    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 18 }, (_, i) => i + 1));
   });
   it("sitemap dates only the updated overview", () => {
     expect(buildStaticSitemapXml()).toContain("<loc>https://www.habitoo.ro/integrari</loc>\n    <lastmod>2026-10-18</lastmod>");
