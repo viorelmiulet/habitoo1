@@ -1268,6 +1268,7 @@ export async function persistListingFailure(
  * permisiuni: apelantul trebuie să valideze deja agenția și rolul.
  */
 export async function executeListingAction(input: {
+  oferaIntent?: "activate" | "resend";
   organizationId: string;
   /** `null` pentru acțiuni automate (fără actor uman), ex. republicarea la expirare. */
   actorId: string | null;
@@ -1341,7 +1342,7 @@ export async function executeListingAction(input: {
    * portalul ar răspunde oricum cu eroare de validare, iar agentul nu ar ști
    * ce lipsește.
    */
-  if (action !== "withdraw") {
+  if (action !== "withdraw" && !(definition.id === "ofera" && input.oferaIntent === "activate")) {
     const { portalRequirementReport } = await import("@/lib/portals/requirements.server");
     const { requirementBlockMessage } = await import("@/lib/portals/requirements");
     const report = await portalRequirementReport(admin, organizationId, propertyId, definition.id);
@@ -1516,6 +1517,7 @@ export async function executeListingAction(input: {
         actorId,
       } : {}),
       ...(definition.id === "imo24" ? { actorId } : {}),
+      ...(definition.id === "ofera" ? { oferaIntent: input.oferaIntent, withdrawReason: input.withdrawReason } : {}),
     };
     result =
       action === "publish"
@@ -2915,6 +2917,7 @@ const applySelectionSchema = z.object({
         enabled: z.boolean(),
         /** Doar portalurile cu promovare prin flag (ex. Romimo); lipsă = neschimbat. */
         promoted: z.boolean().optional(),
+        oferaIntent: z.enum(["activate", "resend"]).optional(),
         imobiliarePromotions: imobiliarePromotionChangesSchema.optional(),
         imobiliareMode: imobiliarePublicationModeSchema.optional(),
       }),
@@ -3305,6 +3308,7 @@ export async function applyPortalSelectionForOrg(input: {
           portalId: definition.id,
           propertyId: data.propertyId,
           action,
+          ...(definition.id === "ofera" ? { oferaIntent: wanted.oferaIntent } : {}),
           ...(promotionFlag ? { promoted: plan.promoted } : {}),
           ...(definition.id === "imobiliare_ro" && wanted.imobiliarePromotions ? { imobiliarePromotions: wanted.imobiliarePromotions } : {}),
           ...(definition.id === "imobiliare_ro" ? { imobiliareMode, imobiliareModeChanged } : {}),
