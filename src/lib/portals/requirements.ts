@@ -317,6 +317,10 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     required: BASE_REQUIRED,
     allowed: COMMON_ALLOWED,
   },
+  imobli: {
+    required: BASE_REQUIRED,
+    allowed: COMMON_ALLOWED,
+  },
   imove: {
     required: BASE_REQUIRED,
     allowed: COMMON_ALLOWED,

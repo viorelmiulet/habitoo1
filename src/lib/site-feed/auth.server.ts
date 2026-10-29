@@ -12,7 +12,7 @@ export type FeedAuthOk = {
   tokenId: string;
   tokenPrefix: string;
   /** Din ce credențial a venit cererea: tokenul de site sau o cheie de portal. */
-  source: "site_token" | "portal_key" | "clickimob_index";
+  source: "site_token" | "portal_key" | "clickimob_index" | "imobli_index";
   /**
    * Portalul care citește feedul, când cererea vine cu o cheie de portal.
    * `null` = token de site (feedul propriu al agenției, fără filtrare pe portal).
@@ -82,6 +82,7 @@ function tokenPrefixOf(token: string | null): string | null {
   if (prefix.startsWith("hbt_")) return prefix;
   // Token din indexul ClickImob: doar `hbci_<id>`, niciodată semnătura.
   if (prefix.startsWith("hbci_")) return /^hbci_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
+  if (prefix.startsWith("hbim_")) return /^hbim_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
   // Cheile emise pentru portaluri: <portal>_portal_<8 hex>
   return /_portal_[0-9a-f]{8}$/.test(prefix) ? prefix : null;
 }
@@ -177,19 +178,22 @@ export async function authenticateFeedRequest(
     return { ok: false, status: 429, message: "Too many requests.", tokenPrefix: prefix };
   }
 
-  if (token.startsWith("hbci_")) {
-    const { resolveClickimobFeedToken } = await import("@/lib/site-feed/clickimob-token.server");
-    const match = await resolveClickimobFeedToken(token);
+  if (token.startsWith("hbci_") || token.startsWith("hbim_")) {
+    const portal = token.startsWith("hbci_") ? "clickimob" : "imobli";
+    const { resolveClickimobFeedToken, resolvePortalIndexToken } = await import("@/lib/site-feed/clickimob-token.server");
+    const match = portal === "clickimob"
+      ? await resolveClickimobFeedToken(token)
+      : await resolvePortalIndexToken(token, portal);
     if (!match) {
       return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
     }
     return {
       ok: true,
       organizationId: match.organizationId,
-      tokenId: `clickimob_index:${match.officeId}`,
-      tokenPrefix: prefix ?? "hbci_",
-      source: "clickimob_index",
-      portal: "clickimob",
+      tokenId: `${portal}_index:${match.officeId}`,
+      tokenPrefix: prefix ?? (portal === "clickimob" ? "hbci_" : "hbim_"),
+      source: portal === "clickimob" ? "clickimob_index" : "imobli_index",
+      portal,
       scopes: ["feed:read", "agents:read", "leads:write"],
       indexStatus: match.status,
     };

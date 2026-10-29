@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const KEY = "test-clickimob-index-key-0123456789abcdef";
 process.env["CLICKIMOB_INDEX_KEY"] = KEY;
+const IMOBLI_KEY = "test-imobli-index-key-independent";
+process.env["IMOBLI_INDEX_KEY"] = IMOBLI_KEY;
 
 const ORG_A = "04041622-b3d2-4cbe-a2aa-000000000001"; // hb04041622b3d24cbea2
 const ORG_B = "0b0b0b0b-0b00-004a-00a8-000000000002";
@@ -15,6 +17,7 @@ type Row = Record<string, unknown>;
 const db: Record<string, Row[]> = {};
 const inserts: { table: string; row: Row }[] = [];
 const indexed = new Map<string, "active" | "grace">();
+const imobliIndexed = new Map<string, "active" | "grace">();
 
 function query(table: string) {
   const filters: [string, string, unknown][] = [];
@@ -61,6 +64,8 @@ vi.mock("@/lib/portals/clickimob/index-feed.server", async () => {
   return {
     listClickimobIndexedAgencies: async () =>
       [...indexed.entries()].map(([org, status]) => ({ id: properstarEntityId("hb", org), status })),
+    listPortalIndexedAgencies: async (_now: Date, portal: string) =>
+      [...(portal === "imobli" ? imobliIndexed : indexed).entries()].map(([org, status]) => ({ id: properstarEntityId("hb", org), status })),
   };
 });
 
@@ -75,6 +80,7 @@ const { handlePropertiesList, handlePropertyDetail } = await import(
 const { Route: ContactsRoute } = await import("@/routes/api/public/sites/v1/contacts");
 
 const tokenFor = (org: string) => clickimobFeedToken(properstarEntityId("hb", org), KEY);
+const imobliTokenFor = (org: string) => clickimobFeedToken(properstarEntityId("hb", org), IMOBLI_KEY, "imobli");
 const req = (token: string, path = "properties", init?: RequestInit) =>
   new Request(`https://crm.habitoo.ro/api/public/sites/v1/${path}`, {
     ...init,
@@ -100,6 +106,7 @@ beforeEach(() => {
   for (const k of Object.keys(db)) delete db[k];
   inserts.length = 0;
   indexed.clear();
+  imobliIndexed.clear();
   db["organizations"] = [{ id: ORG_A }, { id: ORG_B }, { id: ORG_OUT }];
   db["profiles"] = [{ id: "agent-1", full_name: "Ana Pop", email: "ana@example.ro", phone: "0722123456" }];
   db["properties"] = [property("p-sel", ORG_A), property("p-other", ORG_A), property("p-b", ORG_B)];
@@ -112,6 +119,48 @@ beforeEach(() => {
 });
 
 describe("token ClickImob din index în /sites/v1", () => {
+  it("Imobli și ClickImob: liste și detalii izolate pe bifa enabled a fiecărui portal", async () => {
+    imobliIndexed.set(ORG_A, "active");
+    db["properties"].push(property("p-disabled", ORG_A));
+    db["portal_publications"].push(
+      { organization_id: ORG_A, property_id: "p-other", portal_key: "imobli", enabled: true },
+      { organization_id: ORG_A, property_id: "p-disabled", portal_key: "imobli", enabled: false },
+    );
+    for (const [token, portal, visible, hidden] of [
+      [imobliTokenFor(ORG_A), "imobli", "p-other", "p-sel"],
+      [tokenFor(ORG_A), "clickimob", "p-sel", "p-other"],
+    ]) {
+      const auth = await authenticateFeedRequest(req(token));
+      expect(auth.ok).toBe(true);
+      if (!auth.ok) throw new Error("Expected authenticated index token");
+      expect(auth.portal).toBe(portal);
+      const response = await withFeedAuth(req(token), "properties", (a) => handlePropertiesList(req(token), a));
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.data).toHaveLength(1);
+      expect(JSON.stringify(body.data)).toContain(visible.toUpperCase());
+      expect(JSON.stringify(body.data)).not.toContain(hidden.toUpperCase());
+      expect((await handlePropertyDetail(req(token), auth, visible.toUpperCase())).response.status).toBe(200);
+      expect((await handlePropertyDetail(req(token), auth, hidden.toUpperCase())).response.status).toBe(404);
+      expect((await handlePropertyDetail(req(token), auth, "P-DISABLED")).response.status).toBe(404);
+      expect((await handlePropertyDetail(req(token), auth, "P-B")).response.status).toBe(404);
+    }
+  });
+
+  it("Imobli: apartenența și grația sunt verificate în propriul index", async () => {
+    expect((await authenticateFeedRequest(req(imobliTokenFor(ORG_A)))).ok).toBe(false);
+    imobliIndexed.set(ORG_A, "grace");
+    const auth = await authenticateFeedRequest(req(imobliTokenFor(ORG_A)));
+    expect(auth.ok).toBe(true);
+    if (!auth.ok) throw new Error("Expected grace token");
+    expect(auth.indexStatus).toBe("grace");
+    expect((await (await handlePropertiesList(req(imobliTokenFor(ORG_A)), auth)).response.json()).data).toEqual([]);
+    const bad = imobliTokenFor(ORG_A).replace("hbim_", "hbci_");
+    const rejected = await authenticateFeedRequest(req(bad));
+    expect(rejected.ok).toBe(false);
+    if (!rejected.ok) expect(rejected.status).toBe(401);
+  });
+
   it("token valid → cheie de portal ClickImob a agenției, doar ofertele bifate", async () => {
     const auth = await authenticateFeedRequest(req(tokenFor(ORG_A)));
     expect(auth.ok).toBe(true);

@@ -17,26 +17,33 @@ export const CLICKIMOB_INDEX_HEADERS: Record<string, string> = {
   "cache-control": "no-cache, must-revalidate",
 };
 
-export function signClickimobAgency(id: string, key: string): string {
-  return createHmac("sha256", key).update(`clickimob:${id}`).digest("hex");
+export type IndexPortal = "clickimob" | "imobli";
+export const INDEX_PORTALS = {
+  clickimob: { prefix: CLICKIMOB_TOKEN_PREFIX, secret: "CLICKIMOB_INDEX_KEY", version: CLICKIMOB_INDEX_VERSION },
+  imobli: { prefix: "hbim_", secret: "IMOBLI_INDEX_KEY", version: "habitoo-imobli-index/1.0" },
+} as const;
+
+export function signClickimobAgency(id: string, key: string, portal: IndexPortal = "clickimob"): string {
+  return createHmac("sha256", key).update(`${portal}:${id}`).digest("hex");
 }
 
-export function clickimobFeedToken(id: string, key: string): string {
-  return `${CLICKIMOB_TOKEN_PREFIX}${id}.${signClickimobAgency(id, key)}`;
+export function clickimobFeedToken(id: string, key: string, portal: IndexPortal = "clickimob"): string {
+  return `${INDEX_PORTALS[portal].prefix}${id}.${signClickimobAgency(id, key, portal)}`;
 }
 
 /** Întoarce id-ul agenției dacă tokenul e valid, altfel null (timing-safe). */
 export function verifyClickimobFeedToken(
   token: string | null | undefined,
   key: string | null | undefined,
+  portal: IndexPortal = "clickimob",
 ): string | null {
-  if (!key || !token || !token.startsWith(CLICKIMOB_TOKEN_PREFIX)) return null;
-  const body = token.slice(CLICKIMOB_TOKEN_PREFIX.length);
+  if (!key || !token || !token.startsWith(INDEX_PORTALS[portal].prefix)) return null;
+  const body = token.slice(INDEX_PORTALS[portal].prefix.length);
   const dot = body.lastIndexOf(".");
   if (dot <= 0) return null;
   const id = body.slice(0, dot);
   const sig = body.slice(dot + 1).trim().toLowerCase();
-  const expected = Buffer.from(signClickimobAgency(id, key));
+  const expected = Buffer.from(signClickimobAgency(id, key, portal));
   const given = Buffer.from(sig);
   if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
   return id;

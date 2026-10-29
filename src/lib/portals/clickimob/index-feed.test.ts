@@ -4,6 +4,7 @@ vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {} }));
 
 import {
   handleClickimobIndex,
+  handlePortalIndex,
   selectClickimobAgencies,
   type ClickimobIndexDeps,
   type ClickimobSourceData,
@@ -59,6 +60,33 @@ function deps(from: ClickimobSourceData, now = NOW): ClickimobIndexDeps {
 }
 
 describe("indexul ClickImob", () => {
+  it("Imobli: cheie separată, același format și tokenuri izolate chiar cu aceeași cheie", async () => {
+    const d = deps(src());
+    expect((await handlePortalIndex(req("/x/bad.json"), "bad.json", "imobli", d, NOW)).status).toBe(401);
+    const response = await handlePortalIndex(req("/x/index.json"), `${KEY}.json`, "imobli", d, NOW);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.agencies).toHaveLength(1);
+    const agency = body.agencies[0];
+    expect(verifyClickimobFeedToken(agency.feed.token, KEY, "imobli")).toBe(agency.id);
+    expect(verifyClickimobFeedToken(agency.feed.token, KEY)).toBeNull();
+    expect(verifyClickimobFeedToken(clickimobFeedToken(agency.id, KEY), KEY, "imobli")).toBeNull();
+    expect(d.log).toHaveBeenCalledWith(expect.objectContaining({ endpoint: "portal.imobli.index", status: 200 }));
+  });
+
+  it("Imobli reutilizează aceeași grație de șapte zile", async () => {
+    const since = new Date(NOW.getTime() - 6 * DAY).toISOString();
+    const source = src({
+      connections: [{ organization_id: ORG_A, activated: false, updated_at: since }],
+      states: [{ organization_id: ORG_A, active: false, last_active_at: since, inactive_since: since }],
+    });
+    const grace = await handlePortalIndex(req("/x/index.json"), KEY, "imobli", deps(source), NOW);
+    expect((await grace.json()).agencies[0]?.status).toBe("grace");
+    const later = new Date(NOW.getTime() + 2 * DAY);
+    const gone = await handlePortalIndex(req("/x/index.json"), KEY, "imobli", deps(source, later), later);
+    expect((await gone.json()).agencies).toEqual([]);
+  });
+
   it("cheie greșită → 401 fără conținut", async () => {
     const d = deps(src());
     const res = await handleClickimobIndex(req("/x/bad.json"), "bad.json", d, NOW);
