@@ -57,6 +57,8 @@ import {
   syncImopediaNomenclature,
 } from "@/lib/portals/imopedia/nomenclature.functions";
 import { revokeOlxAuthorization, startOlxAuthorization } from "@/lib/portals/olx.functions";
+import { startZupAuthorization, revokeZupAuthorization } from "@/lib/portals/zup.functions";
+import { ZUP_MISSING_MESSAGE } from "@/lib/portals/zup/config";
 import {
   getStoriaTaxonomyState,
   refreshStoriaTaxonomy,
@@ -118,6 +120,8 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const runRevokeOAuth = useServerFn(revokeStoriaAuthorization);
   const runStartOlx = useServerFn(startOlxAuthorization);
   const runRevokeOlx = useServerFn(revokeOlxAuthorization);
+  const runStartZup = useServerFn(startZupAuthorization);
+  const runRevokeZup = useServerFn(revokeZupAuthorization);
   const [olxAccount, setOlxAccount] = useState<OlxAccountView | null>(null);
   const loadTaxonomy = useServerFn(getStoriaTaxonomyState);
   const runRefreshTaxonomy = useServerFn(refreshStoriaTaxonomy);
@@ -222,6 +226,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
     mutationFn: (portalId: string) =>
       portalId === "olx_direct"
         ? runStartOlx({ data: { organizationId } })
+        : portalId === "zup" ? runStartZup({ data: { organizationId } })
         : runStartOAuth({ data: { organizationId } }),
     onSuccess: (res) => {
       window.location.href = res.url;
@@ -254,6 +259,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
     mutationFn: (portalId: string) =>
       portalId === "olx_direct"
         ? runRevokeOlx({ data: { organizationId } })
+        : portalId === "zup" ? runRevokeZup({ data: { organizationId } })
         : runRevokeOAuth({ data: { organizationId } }),
     onSuccess: () => {
       invalidate();
@@ -730,8 +736,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
 
                         {item.oauth.appConfigured ? null : (
                           <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
-                            Credențialele de aplicație pentru {portalDisplayName(item.portal.id)} nu sunt
-                            încă configurate în platformă. Conectarea nu poate porni.
+                            {item.portal.id === "zup" ? ZUP_MISSING_MESSAGE : <>Credențialele de aplicație pentru {portalDisplayName(item.portal.id)} nu sunt încă configurate în platformă. Conectarea nu poate porni.</>}
                           </p>
                         )}
 
@@ -782,7 +787,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                           >
                             <ExternalLink className="mr-2 size-4" />
                             {item.oauth.reconnectRequired
-                              ? `Reconectează contul ${item.portal.id === "olx_direct" ? "OLX" : "Storia"}`
+                              ? `Reconectează contul ${portalDisplayName(item.portal.id)}`
                               : item.oauth.connected
                               ? "Reconectează contul"
                               : `Conectează contul ${portalDisplayName(item.portal.id)}`}
@@ -798,7 +803,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                               disabled={revokeOAuth.isPending}
                             >
                               <Unplug className="mr-2 size-4" />
-                              Desface autorizarea
+                              {item.portal.id === "zup" ? "Deconectează" : "Desface autorizarea"}
                             </Button>
                           ) : null}
                         </div>

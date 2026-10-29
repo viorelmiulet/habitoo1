@@ -16,6 +16,8 @@ import {
 } from "@/lib/portal-activation.functions";
 import { startStoriaAuthorization } from "@/lib/portals/storia.functions";
 import { startOlxAuthorization } from "@/lib/portals/olx.functions";
+import { startZupAuthorization, revokeZupAuthorization, testZupAuthorization } from "@/lib/portals/zup.functions";
+import { ZUP_MISSING_MESSAGE } from "@/lib/portals/zup/config";
 import { LaCheieActivationPanel } from "@/components/app/LaCheieActivationPanel";
 import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
 import { agencyGridItems, agencyPortalCardState } from "@/lib/portals/grid-state";
@@ -27,6 +29,9 @@ export function AgencyPortalCatalogCard() {
   const runActivate = useServerFn(selfActivatePortal);
   const runStoria = useServerFn(startStoriaAuthorization);
   const runOlx = useServerFn(startOlxAuthorization);
+  const runZup = useServerFn(startZupAuthorization);
+  const revokeZup = useServerFn(revokeZupAuthorization);
+  const testZup = useServerFn(testZupAuthorization);
   const { data: currentUser } = useCurrentUser();
   const organizationId = currentUser?.organization?.id ?? null;
 
@@ -69,10 +74,11 @@ export function AgencyPortalCatalogCard() {
   const connect = useMutation({
     mutationFn: async (portalId: string) => {
       if (!organizationId) throw new Error("no_org");
-      if (portalId !== "olx_direct") await runActivate({ data: { portalId } });
+      if (portalId !== "olx_direct" && portalId !== "zup") await runActivate({ data: { portalId } });
       const { url } =
         portalId === "olx_direct"
           ? await runOlx({ data: { organizationId } })
+          : portalId === "zup" ? await runZup({ data: { organizationId } })
           : await runStoria({ data: { organizationId } });
       window.location.assign(url);
     },
@@ -80,6 +86,17 @@ export function AgencyPortalCatalogCard() {
   });
 
   const busy = request.isPending || activate.isPending || connect.isPending;
+  const zupAction = useMutation({
+    mutationFn: async (action: "test" | "disconnect") => {
+      if (!organizationId) throw new Error("Agenția nu a fost găsită.");
+      if (action === "disconnect") { await revokeZup({ data: { organizationId } }); return "Contul ZUP a fost deconectat."; }
+      const result = await testZup({ data: { organizationId } });
+      if (!result.ok) throw new Error(result.message);
+      return result.message;
+    },
+    onSuccess: message => { toast.success(message); void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
     <section className="panel">
@@ -160,7 +177,15 @@ export function AgencyPortalCatalogCard() {
                   </div>
                 ) : null}
                 <div data-portal-statuses className="mt-auto flex flex-wrap items-center gap-2 pt-1">
-                    {state.key === "connected" ? (
+                    {item.id === "zup" ? (
+                      <>
+                        <span className="text-sm">{item.connectionStatus === "connected" ? "Conectat" : item.connectionStatus === "error" ? "Eroare" : "Deconectat"}</span>
+                        <Button disabled={busy || zupAction.isPending || item.zupConfigured !== true} onClick={() => connect.mutate("zup")}>
+                          {item.zupConfigured !== true ? ZUP_MISSING_MESSAGE : item.zupConnected ? "Reconectează contul ZUP" : "Conectează contul ZUP"}
+                        </Button>
+                        {item.zupConnected ? <><Button variant="outline" disabled={zupAction.isPending} onClick={() => zupAction.mutate("test")}>Testează conexiunea</Button><Button variant="outline" disabled={zupAction.isPending} onClick={() => zupAction.mutate("disconnect")}>Deconectează</Button></> : null}
+                      </>
+                    ) : state.key === "connected" ? (
                       <span className="inline-flex items-center gap-2 text-sm font-medium">
                         <span
                           aria-hidden
