@@ -20,10 +20,7 @@ export async function downloadOferaNomenclature(fetcher: typeof fetch = (url, in
   const details: Record<string, unknown> = {};
   const categories = [] as OferaCatalog["categories"];
   // Bounded parallelism; every detail must validate before apply.
-  const entries = await Promise.all(index.categories.map(async (c) => {
-    if (!index.realEstateIds.has(c.id)) return c;
-    return c;
-  }));
+  const entries = index.categories;
   for (let start = 0; start < entries.length; start += 6) {
     const batch = await Promise.all(entries.slice(start, start + 6).map(async (c) => {
       if (!index.realEstateIds.has(c.id)) return c;
@@ -50,7 +47,7 @@ export async function syncOferaNomenclatureServer(actorId: string | null = null)
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   return runOferaNomenclatureSync({
     async apply(payload) {
-      const { data, error } = await db.rpc("ofera_nomenclature_apply", { p_payload: payload as never, p_actor: actorId });
+      const { data, error } = await db.rpc("ofera_nomenclature_apply", { p_payload: payload as never, ...(actorId ? { p_actor: actorId } : {}) });
       if (error) throw new Error("Nomenclatorul Ofera nu a putut fi salvat. Datele existente rămân neschimbate.");
       return data as unknown as OferaNomenclatureResult;
     },
