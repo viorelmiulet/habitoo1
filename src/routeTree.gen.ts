@@ -94,6 +94,7 @@ import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
 import { Route as AuthenticatedAppContractsIndexRouteImport } from './routes/_authenticated/app.contracts.index'
 import { Route as AuthenticatedAppContractsIdRouteImport } from './routes/_authenticated/app.contracts.$id'
+import { Route as AuthenticatedAppPortaluriPortalIdRouteImport } from './routes/_authenticated/app.portaluri.$portalId'
 import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_authenticated/app.properties.index'
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
@@ -639,6 +640,12 @@ const AuthenticatedAppContractsIdRoute =
   AuthenticatedAppContractsIdRouteImport.update({
     id: '/contracts/$id',
     path: '/contracts/$id',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppPortaluriPortalIdRoute =
+  AuthenticatedAppPortaluriPortalIdRouteImport.update({
+    id: '/portaluri/$portalId',
+    path: '/portaluri/$portalId',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppPropertiesIndexRoute =
@@ -1223,6 +1230,7 @@ export interface FileRoutesByFullPath {
   '/app/anunturi-particulari/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/app/portaluri/$portalId': typeof AuthenticatedAppPortaluriPortalIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
@@ -1392,6 +1400,7 @@ export interface FileRoutesByTo {
   '/app/anunturi-particulari/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/app/portaluri/$portalId': typeof AuthenticatedAppPortaluriPortalIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
@@ -1567,6 +1576,7 @@ export interface FileRoutesById {
   '/_authenticated/app/anunturi-particulari_/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/_authenticated/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/_authenticated/app/portaluri/$portalId': typeof AuthenticatedAppPortaluriPortalIdRoute
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
@@ -1742,6 +1752,7 @@ export interface FileRouteTypes {
     | '/app/anunturi-particulari/$id'
     | '/app/contacts/$id'
     | '/app/contracts/$id'
+    | '/app/portaluri/$portalId'
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
@@ -1911,6 +1922,7 @@ export interface FileRouteTypes {
     | '/app/anunturi-particulari/$id'
     | '/app/contacts/$id'
     | '/app/contracts/$id'
+    | '/app/portaluri/$portalId'
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
@@ -2085,6 +2097,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/anunturi-particulari_/$id'
     | '/_authenticated/app/contacts/$id'
     | '/_authenticated/app/contracts/$id'
+    | '/_authenticated/app/portaluri/$portalId'
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
     | '/_authenticated/app/requests/$id'
@@ -2883,6 +2896,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppContractsIdRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/portaluri/$portalId': {
+      id: '/_authenticated/app/portaluri/$portalId'
+      path: '/portaluri/$portalId'
+      fullPath: '/app/portaluri/$portalId'
+      preLoaderRoute: typeof AuthenticatedAppPortaluriPortalIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/properties/': {
       id: '/_authenticated/app/properties/'
       path: '/properties'
@@ -3549,6 +3569,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAnunturiParticulariIdRoute: typeof AuthenticatedAppAnunturiParticulariIdRoute
   AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
   AuthenticatedAppContractsIdRoute: typeof AuthenticatedAppContractsIdRoute
+  AuthenticatedAppPortaluriPortalIdRoute: typeof AuthenticatedAppPortaluriPortalIdRoute
   AuthenticatedAppPropertiesIdRoute: typeof AuthenticatedAppPropertiesIdRoute
   AuthenticatedAppPropertiesNewRoute: typeof AuthenticatedAppPropertiesNewRoute
   AuthenticatedAppAcpIndexRoute: typeof AuthenticatedAppAcpIndexRoute
@@ -3588,6 +3609,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
     AuthenticatedAppAnunturiParticulariIdRoute,
   AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,
   AuthenticatedAppContractsIdRoute: AuthenticatedAppContractsIdRoute,
+  AuthenticatedAppPortaluriPortalIdRoute:
+    AuthenticatedAppPortaluriPortalIdRoute,
   AuthenticatedAppPropertiesIdRoute: AuthenticatedAppPropertiesIdRoute,
   AuthenticatedAppPropertiesNewRoute: AuthenticatedAppPropertiesNewRoute,
   AuthenticatedAppAcpIndexRoute: AuthenticatedAppAcpIndexRoute,

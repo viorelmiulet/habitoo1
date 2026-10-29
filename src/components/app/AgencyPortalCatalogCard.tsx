@@ -109,7 +109,7 @@ export function AgencyPortalCatalogCard() {
       <header className="border-b border-border px-5 py-4">
         <h2 className="text-sm font-semibold tracking-wide uppercase">Portaluri imobiliare</h2>
         <p className="text-xs text-muted-foreground">
-          Cere activarea portalurilor de care ai nevoie. Le activează echipa Habitoo. Unele le poți activa direct.
+          Cere activarea portalurilor de care ai nevoie: pe pagina fiecărui portal introduci datele de acces și îl activezi singur.
         </p>
       </header>
 
@@ -192,35 +192,35 @@ export function AgencyPortalCatalogCard() {
                         {item.zupConnected ? <><Button variant="outline" disabled={zupAction.isPending} onClick={() => zupAction.mutate("test")}>Testează conexiunea</Button><Button variant="outline" disabled={zupAction.isPending} onClick={() => zupAction.mutate("disconnect")}>Deconectează</Button></> : null}
                       </>
                     ) : state.key === "connected" ? (
-                      <span className="inline-flex items-center gap-2 text-sm font-medium">
-                        <span
-                          aria-hidden
-                          className={
-                            state.tone === "success"
-                              ? "size-2 rounded-full bg-success"
-                              : state.tone === "danger"
-                                ? "size-2 rounded-full bg-destructive"
-                                : "size-2 rounded-full bg-muted-foreground"
-                          }
-                        />
-                        {state.label}
-                      </span>
-                    ) : isKeyRequestPortal(item.id) && item.request?.status === "approved" ? null : isLaCheie && organizationId ? (
-                      <LaCheieActivationPanel organizationId={organizationId} />
-                    ) : (
-                      <Button
-                        className="h-11 w-full sm:w-auto"
-                        variant={state.disabled ? "outline" : "default"}
-                        disabled={state.disabled || busy}
-                        onClick={() =>
-                          state.key === "activate"
-                            ? activate.mutate(item.id)
-                            : state.key === "oauth"
-                              ? connect.mutate(item.id)
-                              : request.mutate(item.id)
-                        }
-                      >
+                      <>
+                        <span className="inline-flex items-center gap-2 text-sm font-medium">
+                          <span
+                            aria-hidden
+                            className={
+                              state.tone === "success"
+                                ? "size-2 rounded-full bg-success"
+                                : state.tone === "danger"
+                                  ? "size-2 rounded-full bg-destructive"
+                                  : "size-2 rounded-full bg-muted-foreground"
+                            }
+                          />
+                          {state.label}
+                        </span>
+                        <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+                          <Link to="/app/portaluri/$portalId" params={{ portalId: item.id }} data-portal-settings>
+                            Setări portal
+                          </Link>
+                        </Button>
+                      </>
+                    ) : state.key === "oauth" ? (
+                      <Button className="h-11 w-full sm:w-auto" disabled={busy} onClick={() => connect.mutate(item.id)}>
                         {state.buttonLabel}
+                      </Button>
+                    ) : (
+                      <Button asChild className="h-11 w-full sm:w-auto" variant="default">
+                        <Link to="/app/portaluri/$portalId" params={{ portalId: item.id }} data-portal-activate>
+                          {state.buttonLabel}
+                        </Link>
                       </Button>
                     )}
                 </div>
