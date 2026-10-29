@@ -66,6 +66,7 @@ import {
   setPropertyStoriaAutoRenew,
   type PropertyPortalCell,
 } from "@/lib/portals.functions";
+import { storiaAutoRenewVisible } from "@/lib/portals/storia/auto-renew";
 import { PortalScheduleControl } from "@/components/app/PortalScheduleControl";
 import { listPropertyPortalSchedules } from "@/lib/portals/publish-schedule.functions";
 import { getPropertyCollaboration, setPropertyCollaboration } from "@/lib/collaboration.functions";
@@ -998,7 +999,8 @@ export const PropertyPortalsCard = forwardRef<
                           view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
                         />
                         {cell.portalId === "storia" ? (
-                          <StoriaAutoRenewControl propertyId={propertyId} organizationId={organizationId} canManage={editing === true && canManage} />
+                          <StoriaAutoRenewControl propertyId={propertyId} organizationId={organizationId} canManage={editing === true && canManage}
+                            visible={value === true || storiaAutoRenewVisible({ selected: cell.selected, listingStatus: cell.listingStatus, externalId: cell.externalId })} />
                         ) : null}
                       <div className="relative z-10 mt-3 flex min-w-0 flex-wrap items-center gap-2 [&>*]:pointer-events-auto">
                         {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo" || cell.portalId === "imo24") &&
