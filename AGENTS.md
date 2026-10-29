@@ -33,11 +33,11 @@
 - Completed property video generations store caller-owned metadata and server-resolved music snapshots in generated_video_clips, not media files; history uses caller RLS and does not publish. Why: include unpublished clips and retain soundtrack identity after library edits without storing large videos.
 - Video narration uses a direct MiniMax TTS server boundary with validated hex decoding, atomic organization-locked reservations and character usage, caller-RLS private audio signing, and one offline audio mix for both encoders. Why: preserve quotas and privacy without provider prediction polling.
 - No global `entities` aliases/version overrides: consumers need different majors/exports.
-- Integrations overview derives from registry; details unchanged. Why: no false claims.
+- PortalLogo shares asset pointers; overview uses registry. Why: logos don't change public access.
 - Property-list portal and promotion selections share PortalFilterSelect while retaining independent URL fields and existing server filters. Why: unified presentation without changing OR semantics, access controls or legacy links.
 - Imobiliare.ro destination and promotion drafts use the existing durable publication queue; requested mode lives on publications/jobs and confirmed mode on listings, with no new portal. Destination changes send both statuses in one POST; unchanged published promotions remain partial; Bonus and imoradar-only bypass local capacity reads/checks. Why: keep destination switching recoverable and let the portal decide capacity.
 - Private listing geography is canonicalized by a database trigger using the locality/county nomenclature; generated normalized keys drive caller-RLS filtering and complete paged facets, with legacy city/zone URL compatibility. Why: imports, existing rows, counts and diacritic-insensitive filters must agree without changing CRM geography.
-- MAP tabs use a reusable Habitoo SVG and local brand assets. Why: consistent brand.
+- MAP tabs share Habitoo SVG/brand assets. Why: consistent brand.
 - hbsync market lock expiry and bounded retry are scoped to its importer via explicit claim arguments; other importers retain the RPC default. Why: recover interrupted partial pushes without altering manual or scheduled sync semantics.
 - ACP observed-age filters share whole-day timestamp bounds on first_seen_at across listing counts and intelligence aggregates; source choices come from the canonical market registry. Why: re-imports must not reset age and observed duration must never imply traffic or confirmed time-to-sale.
 
