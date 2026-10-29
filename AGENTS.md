@@ -27,13 +27,13 @@
 - Chat emails use `renderHabitooEmail`, read after claim, sign private images and resolve recipient-visible conversations; retain unsubscribe. Why: consistent delivery and privacy.
 - Property features share taxonomy metadata and module-level edit/read groups; view preferences hydrate after mount. Why: preserve values, focus and SSR consistency.
 - Property PDFs share privacy-filtered fragments and measured pagination in a lazy browser renderer; hydrate overrides, use agency defaults and mobile ready-file clicks. Why: consistent privacy and delivery.
-- Read nested `AGENTS.md` before editing its directory (e.g. `src/lib`, `src/lib/meta`).
+- Read nested `AGENTS.md` before edits; Storia renewal and content-only PUT rules live in `src/lib/portals`. Why: preserve scoped contracts.
 - ZonaTa uses a scoped durable attempt journal. Why: interrupted jobs must leave evidence.
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
 - Completed property video generations store caller-owned metadata and server-resolved music snapshots in generated_video_clips, not media files; history uses caller RLS and does not publish. Why: include unpublished clips and retain soundtrack identity after library edits without storing large videos.
 - Video narration uses a direct MiniMax TTS server boundary with validated hex decoding, atomic organization-locked reservations and character usage, caller-RLS private audio signing, and one offline audio mix for both encoders. Why: preserve quotas and privacy without provider prediction polling.
 - No global `entities` aliases/version overrides: consumers need different majors/exports.
-- Integrations overview uses separate registry-derived presentation; details unchanged. Why: no duplicates/false claims.
+- Integrations overview derives from registry; details unchanged. Why: no false claims.
 - Property-list portal and promotion selections share PortalFilterSelect while retaining independent URL fields and existing server filters. Why: unified presentation without changing OR semantics, access controls or legacy links.
 - Imobiliare.ro destination and promotion drafts use the existing durable publication queue; requested mode lives on publications/jobs and confirmed mode on listings, with no new portal. Destination changes send both statuses in one POST; unchanged published promotions remain partial; Bonus and imoradar-only bypass local capacity reads/checks. Why: keep destination switching recoverable and let the portal decide capacity.
 - Private listing geography is canonicalized by a database trigger using the locality/county nomenclature; generated normalized keys drive caller-RLS filtering and complete paged facets, with legacy city/zone URL compatibility. Why: imports, existing rows, counts and diacritic-insensitive filters must agree without changing CRM geography.
