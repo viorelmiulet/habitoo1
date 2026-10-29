@@ -22,6 +22,27 @@ type Content = {
 };
 
 const CONTENT: Record<string, Content> = {
+  locuit: {
+    slug: "locuit",
+    name: "Locuit.ro",
+    description: "Ofertele agenției ajung pe Locuit.ro din Habitoo CRM: activezi singur portalul, bifezi anunțurile, iar cele debifate se retrag automat, fără cheie.",
+    intro: [
+      "Locuit.ro preia automat ofertele agenției din Habitoo. Administratorul activează integrarea, iar agenții aleg proprietățile pe care vor să le afișeze prin bifarea portalului. Datele anunțului rămân în Habitoo, fără să copiezi separat textele și pozele pentru această publicare.",
+      "Activarea nu cere nicio cheie și nu depinde de aprobarea echipei Habitoo. După activare, Locuit.ro poate prelua ofertele pe care le-ai selectat. Agenția decide ce proprietăți include: simpla activare a portalului nu înseamnă publicarea întregului portofoliu.",
+      "Când modifici o ofertă bifată, Locuit.ro preia varianta actualizată la următoarea citire. Dacă debifezi oferta, aceasta nu mai este disponibilă pentru portal și se retrage la următoarea preluare. Afișarea, actualizarea și retragerea nu sunt instantanee și nu au un termen numeric promis prin integrare.",
+    ],
+    activation: "Administratorul agenției intră în Setări → Portaluri și activează singur Locuit.ro, fără intervenția echipei Habitoo. Nu trebuie să aștepte aprobare și nu completează nicio cheie sau parolă. După activare, agenții bifează Locuit.ro la ofertele pe care vor să le afișeze.",
+    notes: [
+      "Nu ai nevoie de nicio cheie pentru activarea Locuit.ro în Habitoo.",
+      "Locuit.ro preia doar ofertele selectate pentru el, nu toate proprietățile agenției.",
+      "Ofertele noi, modificările și retragerile apar la următoarea preluare făcută de portal.",
+    ],
+    faq: [
+      { q: "Cine poate activa Locuit.ro?", a: "Administratorul agenției activează singur portalul din Setări → Portaluri. Nu trebuie să solicite aprobarea echipei Habitoo și nu are nevoie de nicio cheie. După activare, agenții aleg ofertele prin bifarea Locuit.ro în fișa proprietății." },
+      { q: "Cum ajung ofertele pe Locuit.ro?", a: "Locuit.ro preia automat ofertele bifate pentru acest portal în Habitoo. Ofertele noi și modificările de preț, descriere sau poze sunt disponibile la următoarea preluare. Nu trebuie să copiezi din nou anunțul, iar integrarea nu promite afișare instantanee." },
+      { q: "Cum scot o ofertă de pe Locuit.ro?", a: "Debifezi Locuit.ro pentru oferta respectivă în Habitoo. Aceasta nu mai este inclusă în lista disponibilă portalului și se retrage la următoarea citire. Proprietatea poate rămâne în portofoliul agenției; nu trebuie să o ștergi pentru a opri afișarea pe Locuit.ro." },
+    ],
+  },
   imobli: {
     slug: "imobli",
     name: "Imobli.ro",
