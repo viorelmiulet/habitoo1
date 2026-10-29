@@ -61,7 +61,9 @@ export function parseOferaPlaces(body: unknown, kind: "counties" | "cities" | "z
     if (!row.name_normalized) fail("denumire normalizată goală");
     if (kind !== "counties") {
       const parent = id(p[kind === "cities" ? "judet_id" : "city_id"]);
-      if (!parentIds?.has(parent)) fail(`părinte lipsă (${kind})`);
+      // Ofera publishes 17 zones for city 65531, absent from /cities.
+      // Preserve source IDs rather than inventing cities or silently losing zones.
+      if (kind === "cities" && !parentIds?.has(parent)) fail(`părinte lipsă (${kind})`);
       if (kind === "cities") row.county_id = parent; else row.city_id = parent;
     }
     return row;

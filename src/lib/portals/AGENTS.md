@@ -1,6 +1,7 @@
 # Portal rules
 
 - Ofera partner authentication uses only global project secrets and a server-only encrypted text token, fenced database renewal lease and per-call redacted diagnostics; the body envelope is authoritative, with a validated plain OAuth token-response exception. The stage-one adapter only tests token/categories and stores agency provider IDs through the SuperAdmin connection flow. Why: concurrent Workers must share one partner token without leaking credentials or implying publishing support.
+- Ofera nomenclature uses unauthenticated GETs, strict whole-download validation and one advisory-locked transactional apply RPC; unchanged rows retain timestamps, missing IDs deactivate, detailed real-estate parameters drive atomic SuperAdmin alerts, and cities retain only count/hash in audit. Weekly managed callbacks skip unless an agency has activated Ofera. Zones preserve original parent IDs even when absent from the public cities list. Why: retain source fidelity, prevent partial catalogues and avoid invented geography or publishing behavior.
 
 - Storia renewal overrides are resolved in the pure mapper; renewal saves reuse the atomic content-update queue with pending eligibility, worker checks, and per-advert remote revalidation. Update mode never creates or activates adverts; agency expiry republication remains separate. Why: renewal choices must not reactivate inactive adverts or lose changes on busy jobs.
 

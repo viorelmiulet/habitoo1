@@ -19,7 +19,8 @@ describe("Ofera nomenclature validation", () => {
     expect(places).toHaveLength(2);
   });
   it("rejects missing geographic parents and duplicate IDs", () => {
-    expect(()=>parseOferaPlaces([{id:1,nume:"X",city_id:9}],"zones",new Set([10]))).toThrow("părinte lipsă");
+    expect(()=>parseOferaPlaces([{id:1,nume:"X",judet_id:9}],"cities",new Set([10]))).toThrow("părinte lipsă");
+    expect(parseOferaPlaces([{id:1,nume:"X",city_id:65531}],"zones",new Set([10]))[0]?.city_id).toBe(65531);
     expect(()=>parseOferaPlaces([{id:1,nume:"X"},{id:1,nume:"Y"}],"counties")).toThrow("duplicați");
   });
 });
