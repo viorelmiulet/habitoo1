@@ -4,7 +4,7 @@
  *
  * Reguli:
  *  - doar HTTPS pe zonata.ro, redirecturile nu se urmează;
- *  - timeout 30 s; cheia nu ajunge în mesaje, detalii sau loguri;
+ *  - POST /listings: 90 s; celelalte cereri: 30 s; cheia nu ajunge în loguri;
  *  - mesaje în română pentru 401/402/403/404/422/429 (la 422 cu câmpurile din `details`);
  *  - 429: o pauză și o singură reîncercare;
  *  - limitator local pe cheie, sub limita portalului (300 cereri / 10 minute).
@@ -14,6 +14,7 @@ import { isValidZonataKey, normalizeZonataKey } from "./key";
 export const ZONATA_BASE_URL = "https://zonata.ro/api/v1";
 const ZONATA_HOST = "zonata.ro";
 export const ZONATA_TIMEOUT_MS = 30_000;
+export const ZONATA_LISTING_POST_TIMEOUT_MS = 90_000;
 export const ZONATA_WINDOW_MS = 10 * 60_000;
 /** Plafon local, sub cele 300 de cereri / 10 minute ale portalului. */
 export const ZONATA_WINDOW_LIMIT = 280;
@@ -189,7 +190,7 @@ export async function zonataRequest<T>(
   const doFetch = deps.fetch ?? fetch;
   const sleep = deps.sleep ?? defaultSleep;
   const now = deps.now ?? Date.now;
-  const timeoutMs = deps.timeoutMs ?? ZONATA_TIMEOUT_MS;
+  const timeoutMs = deps.timeoutMs ?? (method === "POST" && path.replace(/\/$/, "") === "/listings" ? ZONATA_LISTING_POST_TIMEOUT_MS : ZONATA_TIMEOUT_MS);
   const url = buildUrl(path);
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -201,6 +202,7 @@ export async function zonataRequest<T>(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     let response: Response;
+    let text: string;
     try {
       response = await doFetch(url, {
         method,
@@ -213,9 +215,12 @@ export async function zonataRequest<T>(
         },
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       });
+      // Include body download in the deadline: headers alone are not a complete response.
+      text = await response.text();
     } catch (error) {
       clearTimeout(timer);
-      return fail(error instanceof Error && error.name === "AbortError" ? "timeout" : "network_error");
+      const timedOut = controller.signal.aborted || (error instanceof Error && error.name === "AbortError");
+      return fail(timedOut ? "timeout" : "network_error", timedOut ? { message: `ZonaTa nu a răspuns în ${timeoutMs / 1000} de secunde.` } : {});
     }
     clearTimeout(timer);
 
@@ -223,7 +228,6 @@ export async function zonataRequest<T>(
       return fail("blocked_redirect", { status: response.status });
     }
     let parsed: unknown = null;
-    const text = await response.text().catch(() => "");
     if (text) {
       try {
         parsed = JSON.parse(text);
