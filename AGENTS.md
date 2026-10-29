@@ -28,6 +28,7 @@
 - Property features share taxonomy metadata and module-level edit/read groups; view preferences hydrate after mount. Why: preserve values, focus and SSR consistency.
 - Property PDFs share privacy-filtered fragments and measured pagination in a lazy browser renderer; hydrate overrides, use agency defaults and mobile ready-file clicks. Why: consistent privacy and delivery.
 - Read nested `AGENTS.md` before editing its directory (e.g. `src/lib`, `src/lib/meta`).
+- ZonaTa uses a scoped durable attempt journal. Why: interrupted jobs must leave evidence.
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
 - Completed property video generations store caller-owned metadata and server-resolved music snapshots in generated_video_clips, not media files; history uses caller RLS and does not publish. Why: include unpublished clips and retain soundtrack identity after library edits without storing large videos.
 - Video narration uses a direct MiniMax TTS server boundary with validated hex decoding, atomic organization-locked reservations and character usage, caller-RLS private audio signing, and one offline audio mix for both encoders. Why: preserve quotas and privacy without provider prediction polling.
