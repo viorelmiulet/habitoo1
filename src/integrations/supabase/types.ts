@@ -7119,6 +7119,7 @@ export type Database = {
           imobiliare_promotions: Json | null
           locked_at: string | null
           next_attempt_at: string
+          ofera_intent: string | null
           operation: string
           organization_id: string
           portal_key: string
@@ -7145,6 +7146,7 @@ export type Database = {
           imobiliare_promotions?: Json | null
           locked_at?: string | null
           next_attempt_at?: string
+          ofera_intent?: string | null
           operation?: string
           organization_id: string
           portal_key: string
@@ -7171,6 +7173,7 @@ export type Database = {
           imobiliare_promotions?: Json | null
           locked_at?: string | null
           next_attempt_at?: string
+          ofera_intent?: string | null
           operation?: string
           organization_id?: string
           portal_key?: string
@@ -10858,6 +10861,7 @@ export type Database = {
           imobiliare_promotions: Json | null
           locked_at: string | null
           next_attempt_at: string
+          ofera_intent: string | null
           operation: string
           organization_id: string
           portal_key: string

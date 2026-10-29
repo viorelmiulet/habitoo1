@@ -1527,6 +1527,13 @@
       "when": 1793278009706,
       "tag": "0217_ofera_listings",
       "breakpoints": true
+    },
+    {
+      "idx": 218,
+      "version": "7",
+      "when": 1793278218014,
+      "tag": "0218_ofera_queue_intent",
+      "breakpoints": true
     }
   ]
 }
