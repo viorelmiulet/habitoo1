@@ -4,7 +4,7 @@
  */
 
 /** Portalurile care își preiau singure ofertele: nu primesc trimiteri. */
-export const AUTO_PULL_PORTALS = new Set(["imove", "properstar", "clickimob", "imobli", "facebook_catalog"]);
+export const AUTO_PULL_PORTALS = new Set(["imove", "properstar", "clickimob", "imobli", "locuit", "facebook_catalog"]);
 export const AUTO_PULL_MESSAGE = "Se actualizează automat la următoarea preluare.";
 export const EXCLUDED_PROPERTY_STATUSES = new Set(["sold", "rented", "archived"]);
 /** Pauza dintre două trimiteri pe același portal. */
