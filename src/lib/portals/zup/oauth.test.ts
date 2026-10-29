@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createZupState, consumeZupState, exchangeZupCode, refreshZupTokens, saveZupTokens, clearZupTokens, getZupAccessToken, testZupConnection, zupAuthorizationUrl, zupHttpError, type ZupDeps, type ZupStore, type ZupConnection, type ZupTokens } from "./oauth.server";
+import { zupCall, createZupState, consumeZupState, exchangeZupCode, refreshZupTokens, saveZupTokens, clearZupTokens, getZupAccessToken, testZupConnection, zupAuthorizationUrl, zupHttpError, type ZupDeps, type ZupStore, type ZupConnection, type ZupTokens } from "./oauth.server";
 import { ZUP_CALLBACK, ZUP_TIMEOUT_MS, ZUP_MISSING_MESSAGE, zupConfigured } from "./config";
 import { getPortalDefinition } from "../registry";
 import { integrationSlugFor, homepagePortals } from "../integration-pages";
@@ -41,6 +41,9 @@ function setup(responses: { status: number; body: unknown }[] = []) {
   return { d, calls, states, seed, connection: () => connection, advance: (ms: number) => { time += ms; } };
 }
 describe("ZUP OAuth stage 1", () => {
+  it("422 type required blocks without choosing paid",async()=>{const t=setup([{status:422,body:{errors:{type:["required"],phone:["invalid"]}}}]);await t.seed();await expect(zupCall("org","anunturi","POST",{name:"test"},t.d)).rejects.toThrow("al cărui sens nu este documentat");expect(JSON.parse(String(t.calls[0]?.init.body))).not.toHaveProperty("type");});
+  it("429 waits and retries once with a per-account rate reservation on each call",async()=>{const t=setup([{status:429,body:{}},{status:200,body:{data:{id:1}}}]);await t.seed();let reservations=0;const pauses:number[]=[];t.d.reserve=async org=>{expect(org).toBe("org");reservations++;return 510;};t.d.pause=async ms=>{pauses.push(ms);};await zupCall("org","anunturi","POST",{name:"test"},t.d);expect(reservations).toBe(2);expect(pauses).toEqual([510,1000,510]);expect(t.calls).toHaveLength(2);});
+  it("second 429 stops after one retry",async()=>{const t=setup([{status:429,body:{}},{status:429,body:{}}]);await t.seed();t.d.pause=async()=>{};await expect(zupCall("org","anunturi","POST",{},t.d)).rejects.toMatchObject({code:"RATE_LIMIT"});expect(t.calls).toHaveLength(2);});
   it("refreshes once on 302 /login without following the redirect", async () => {
     const t = setup(); await t.seed(); let reads = 0;
     t.d.fetch = (async (_url: unknown, init?: RequestInit) => {
