@@ -58,6 +58,12 @@ async function request(path: string, init: RequestInit, d: ZupDeps): Promise<{ s
   const timer = setTimeout(() => controller.abort(), ZUP_TIMEOUT_MS);
   try {
     const response = await (d.fetch ?? ((input, options) => fetch(input, options)))(new URL(path, ZUP_BASE), { ...init, redirect: "manual", signal: controller.signal });
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      const login = location ? new URL(location, ZUP_BASE).pathname.replace(/\/$/, "") === "/login" : false;
+      if (login) return { status: 401, body: null };
+      throw new PortalError("PORTAL_ERROR", "zup_redirect_blocked", "ZUP a returnat o redirecționare neașteptată; aceasta nu a fost urmată.");
+    }
     const raw = await response.text();
     let body: unknown;
     try { body = JSON.parse(raw); } catch {
@@ -131,14 +137,19 @@ export async function getZupAccessToken(org: string, d: ZupDeps, rejected?: stri
     return refreshed.access_token;
   } finally { await d.store.release(org, owner); }
 }
-export async function testZupConnection(org: string, d: ZupDeps): Promise<{ count: number; message: string }> {
+export async function zupGet(org: string, path: string, d: ZupDeps): Promise<unknown> {
+  if (!/^(anunturi|categories(?:\/\d+(?:\/characteristics(?:\/required)?)?)?|locations)(?:\?[^#]*)?$/.test(path)) throw new PortalError("NOT_SUPPORTED", "zup_get_path");
   let token = await getZupAccessToken(org, d);
-  let response = await request("anunturi", { method: "GET", headers: { authorization: `Bearer ${token}`, accept: "application/json" } }, d);
+  let response = await request(path, { method: "GET", headers: { authorization: `Bearer ${token}`, accept: "application/json" } }, d);
   if (response.status === 401) {
     token = await getZupAccessToken(org, d, token);
-    response = await request("anunturi", { method: "GET", headers: { authorization: `Bearer ${token}`, accept: "application/json" } }, d);
+    response = await request(path, { method: "GET", headers: { authorization: `Bearer ${token}`, accept: "application/json" } }, d);
   }
   if (response.status < 200 || response.status >= 300) throw zupHttpError(response.status, response.body);
-  if (!Array.isArray(response.body) || response.body.some(r => !r || typeof r !== "object" || Array.isArray(r))) throw new PortalError("PORTAL_ERROR", "zup_invalid_list", "ZUP nu a returnat lista de anunțuri în formatul așteptat.");
-  return { count: response.body.length, message: `Token valid · Contul ZUP are ${response.body.length} anunțuri.` };
+  return response.body;
+}
+export async function testZupConnection(org: string, d: ZupDeps): Promise<{ count: number; message: string }> {
+  const body = await zupGet(org, "anunturi", d);
+  if (!Array.isArray(body) || body.some(r => !r || typeof r !== "object" || Array.isArray(r))) throw new PortalError("PORTAL_ERROR", "zup_invalid_list", "ZUP nu a returnat lista de anunțuri în formatul așteptat.");
+  return { count: body.length, message: `Token valid · Contul ZUP are ${body.length} anunțuri.` };
 }

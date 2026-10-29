@@ -1,6 +1,6 @@
 # Portal rules
 
-- ZUP stage-one OAuth uses its documented form token/refresh endpoints, per-agency encrypted credentials, atomic single-use state and the existing durable operation lock plus credential compare-and-swap for refresh; only GET announcement counts cross into the UI. Registry coming-soon and adapter deny all writes. Why: rotating short-lived tokens must survive concurrency without enabling publication or returning private adverts.
+- ZUP uses its documented form token/refresh endpoints, per-agency encrypted credentials, atomic single-use state and durable refresh lock/CAS; 401 and login redirects get one refresh without following redirects. Its global validated real-estate catalogue is atomically replaced/audited through a service-only RPC; pure mapping and SuperAdmin preview read it without tokens, omitting undocumented conditional/range options. Coming-soon and adapter deny all listing writes. Why: preserve credential privacy and source fidelity while stage-two inspection cannot publish.
 
 - Ofera mapping and location resolution are pure and consume only the active synchronized catalogue; a SuperAdmin-only read preview loads agency/assigned-agent/public-media data and platform currency without importing Ofera transport or token code. Preview itself never enables publishing. Why: unknown categories/options must be omitted or blocked, and inspecting a payload must not trigger external writes.
 
