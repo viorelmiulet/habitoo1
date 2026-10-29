@@ -84,6 +84,7 @@ export async function publishZup(drafts:ZupDraft[],stored:ZupState[],d:ZupPublis
       const fresh=urls.filter(url=>!state.photos.some(p=>p.source===url)&&!state.pending_images.includes(url));
       // photos_urls at PUT is undocumented: only permit a delta after exact source→ID confirmation.
       if(fresh.length&&(state.pending_images.length||state.photos.length===0))throw new PortalError("VALIDATION_ERROR","zup_photo_semantics_unverified","ZUP nu a confirmat corespondența fotografiilor. Adăugarea este blocată până la verificarea galeriei în ZUP.");
+      if(fresh.length&&state.photos.some(p=>urls.includes(p.source)))throw new PortalError("VALIDATION_ERROR","zup_photo_put_unverified","Comportamentul photos_urls la actualizarea ZUP nu a fost verificat. Adăugarea fotografiilor este blocată pentru a nu înlocui galeria existentă.");
       for(const photo of removed){await d.call(`anunturi/${state.zup_id}/photos/${photo.id}`,"DELETE");state={...state,photos:state.photos.filter(p=>p.source!==photo.source)};await d.save(state);}
       if(state.status.toLowerCase()==="inactive"){await d.call(`anunturi/${state.zup_id}/command`,"POST",{command:"activate"});state={...state,status:"pending"};await d.save(state);}
       const {photos_urls:_,...content}=draft.body;
