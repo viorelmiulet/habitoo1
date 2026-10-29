@@ -106,7 +106,7 @@ const GRID_DOT_CLASS: Record<PortalGridTone, string> = {
   muted: "bg-muted-foreground/50",
 };
 
-export function PortalsCard({ organizationId }: { organizationId: string }) {
+export function PortalsCard({ organizationId, onSelectedChange }: { organizationId: string; onSelectedChange?: (portalId: string) => void }) {
   const hubKey = ["portal-hub", organizationId] as const;
   const queryClient = useQueryClient();
   const loadHub = useServerFn(getPortalHub);
@@ -167,6 +167,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
       /* sesiunea nu poate fi scrisă — starea rămâne doar în pagină */
     }
   };
+  useEffect(() => {
+    onSelectedChange?.(selected);
+  }, [selected, onSelectedChange]);
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
   const [feedPreview, setFeedPreview] = useState<Awaited<
     ReturnType<typeof previewPortalFeed>
@@ -1147,23 +1150,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
           </pre>
         </div>
       ) : null}
-
-      <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
-        <div className="min-w-0">
-          <h3 className="font-medium">Jurnal operațiuni portaluri</h3>
-          <p className="text-sm text-muted-foreground">
-            Operațiile se văd pe pagina separată, filtrate pe agenție{selected ? " și portal" : ""}.
-          </p>
-        </div>
-        <Button asChild variant="outline" className="h-11 shrink-0">
-          <Link
-            to="/superadmin/portal-logs"
-            search={{ org: organizationId, ...(selected ? { portal: selected } : {}) }}
-          >
-            Vezi jurnalul
-          </Link>
-        </Button>
-      </div>
 
       <ConfirmDialog
         open={confirmDisconnect !== null}

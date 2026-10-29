@@ -43,6 +43,7 @@ function SuperadminPortalsPage() {
   const { org: orgFromLink, storia, storia_error: storiaError, zup } = Route.useSearch();
 
   const [organizationId, setOrganizationId] = useState<string>(orgFromLink ?? "");
+  const [selectedPortal, setSelectedPortal] = useState<string>("");
   useEffect(() => {
     if (zup === "connected") toast.success("Contul ZUP al agenției a fost conectat.");
     else if (zup) toast.error("Conectarea ZUP nu s-a finalizat. Pornește conectarea din nou.");
@@ -83,7 +84,7 @@ function SuperadminPortalsPage() {
         description="Integrările cu portalurile se configurează exclusiv de aici, separat pentru fiecare agenție."
         actions={
           <Button asChild variant="outline" className="h-11">
-            <Link to="/superadmin/portal-logs" search={organizationId ? { org: organizationId } : {}}>
+            <Link to="/superadmin/portal-logs" search={organizationId ? { org: organizationId, ...(selectedPortal ? { portal: selectedPortal } : {}) } : {}}>
               Jurnal portaluri
             </Link>
           </Button>
@@ -115,7 +116,7 @@ function SuperadminPortalsPage() {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
-          <PortalsCard organizationId={organizationId} />
+          <PortalsCard organizationId={organizationId} onSelectedChange={setSelectedPortal} />
         </div>
       ) : null}
     </>
