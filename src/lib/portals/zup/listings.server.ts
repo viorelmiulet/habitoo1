@@ -11,7 +11,7 @@ export async function loadZupStored(i:ZupInput):Promise<ZupState[]> {
 }
 export async function saveZupState(i:ZupInput,s:ZupState) {
   const {supabaseAdmin:db}=await import("@/integrations/supabase/client.server");
-  const {error}=await db.from("zup_listings").upsert({...i,organization_id:i.organizationId,property_id:i.propertyId,transaction:s.transaction,zup_id:s.zup_id,slug:s.slug,public_url:s.public_url,status:s.status,photos:s.photos as never,pending_images:s.pending_images as never,attempted_at:s.attempted_at,attempted_title:s.attempted_title,attempted_price:s.attempted_price,last_error:s.last_error,updated_at:new Date().toISOString()}, {onConflict:"organization_id,property_id,transaction"});
+  const {error}=await db.from("zup_listings").upsert({organization_id:i.organizationId,property_id:i.propertyId,transaction:s.transaction,zup_id:s.zup_id,slug:s.slug,public_url:s.public_url,status:s.status,photos:s.photos as never,pending_images:s.pending_images as never,attempted_at:s.attempted_at,attempted_title:s.attempted_title,attempted_price:s.attempted_price,last_error:s.last_error,updated_at:new Date().toISOString()}, {onConflict:"organization_id,property_id,transaction"});
   if(error)throw new PortalError("CONFIG_ERROR","zup_listing_save","Starea anunțului ZUP nu a putut fi salvată. Nu retrimite înainte să verifici pe ZUP.");
 }
 export async function withZupListingLock<T>(i:ZupInput,fn:()=>Promise<T>):Promise<T> {

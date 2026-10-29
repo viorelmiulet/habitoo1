@@ -151,14 +151,12 @@ describe("ZUP OAuth stage 1", () => {
   it("rejects unexpected list envelopes", async () => {
     const t = setup([{ status: 200, body: { data: [] } }]); await t.seed(); await expect(testZupConnection("org", t.d)).rejects.toMatchObject({ detail: "zup_invalid_list" });
   });
-  it("registry and adapter block stage-one publishing, public pages absent", async () => {
-    const portal = getPortalDefinition("zup"); expect(portal?.activation).toBe("oauth"); expect(portal?.publish_coming_soon).toBe(true); expect(portal?.capabilities).toEqual(["test_connection"]);
-    expect(portalRequirementSpec("zup")?.required.map(r => r.key)).toEqual(["stage"]);
+  it("registry permits stage-three publishing while public pages remain absent", async () => {
+    const portal = getPortalDefinition("zup"); expect(portal?.activation).toBe("oauth"); expect(portal?.publish_coming_soon).not.toBe(true); expect(portal?.capabilities).toEqual(["test_connection","publish_listing","update_listing","withdraw_listing","sync"]);
+    expect(portalRequirementSpec("zup")?.required.map(r => r.key)).not.toContain("stage");
     expect(integrationSlugFor("zup")).toBeNull(); expect(homepagePortals().some(p => p.portal.id === "zup")).toBe(false);
     if (!portal) throw new Error("ZUP missing");
-    const ctx = { organizationId: "org", definition: portal, direction: "habitoo_to_portal" as const, authenticationMode: "oauth" as const, externalAccountId: null, portalCredential: null, settings: {}, allowLiveRequests: true };
-    expect(await zupAdapter.publishListing?.(ctx, { propertyId: "p", externalId: null })).toMatchObject({ ok: false, code: "NOT_SUPPORTED" });
-    expect(await zupAdapter.updateListing?.(ctx, { propertyId: "p", externalId: null })).toMatchObject({ ok: false, code: "NOT_SUPPORTED" });
+    expect(typeof zupAdapter.publishListing).toBe("function");expect(typeof zupAdapter.updateListing).toBe("function");
   });
   it("rejects malformed token responses instead of inventing expiry", async () => {
     const t = setup([{ status: 200, body: { access_token: "A", token_type: "bearer" } }]);

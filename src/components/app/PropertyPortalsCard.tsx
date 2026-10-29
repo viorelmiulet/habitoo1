@@ -38,6 +38,7 @@ import { OferaPreviewButton } from "@/components/app/OferaPreviewButton";
 import { ZupPreviewButton } from "@/components/app/ZupPreviewButton";
 import { OferaStatusPanel } from "@/components/app/OferaStatusPanel";
 import { ZonataStatusPanel } from "@/components/app/ZonataStatusPanel";
+import { ZupStatusPanel } from "@/components/app/ZupStatusPanel";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
 import { getImobiliareMediaStatus } from "@/lib/portals/imobiliare-media.functions";
@@ -1134,6 +1135,7 @@ export const PropertyPortalsCard = forwardRef<
                           </label>
                         ) : null}
                         {cell.portalId === "zonata" && cell.selected ? <ZonataStatusPanel organizationId={organizationId} propertyId={propertyId} /> : null}
+                        {cell.portalId === "zup" && (cell.selected || cell.externalId) ? <ZupStatusPanel organizationId={organizationId} propertyId={propertyId} /> : null}
                         {cell.portalId === "zonata" && isSuperadmin ? <ZonataPreviewButton propertyId={propertyId} /> : null}
                         {cell.portalId === "homedirect" && isSuperadmin ? <HomedirectPreviewButton propertyId={propertyId} /> : null}
                         {cell.portalId === "ofera" ? <OferaStatusPanel propertyId={propertyId} organizationId={organizationId} canManage={canManage} busy={busy} promoted={promotedValue(cell)} /> : null}
