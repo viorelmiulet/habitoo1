@@ -3,7 +3,7 @@ import { INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD, integrationPageText, inte
 import { integrationJsonLd } from "./integration-jsonld";
 import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
-const SLUGS = ["storia", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook", "imo24", "zonata", "homedirect", "imopedia"];
+const SLUGS = ["storia", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook", "imo24", "zonata", "homedirect", "imopedia", "ofera"];
 
 describe("pagini integrări", () => {
   it("câte o pagină pentru fiecare slug cerut", () => {
@@ -11,10 +11,9 @@ describe("pagini integrări", () => {
     expect(integrationSlugFor("olx")).toBe("storia");
     expect(integrationSlugFor("publi24")).toBe("publi24-romimo");
   });
-  it("Ofera rămâne ascuns din integrările publice până la verificarea live", () => {
-    expect(integrationSlugFor("ofera")).toBeNull();
-    expect(INTEGRATION_PAGES.some((page) => page.portalId === "ofera")).toBe(false);
-    expect(buildStaticSitemapXml()).not.toContain("/integrari/ofera</loc>");
+  it("Ofera are pagină publică și apare în sitemap", () => {
+    expect(integrationSlugFor("ofera")).toBe("ofera");
+    expect(buildStaticSitemapXml()).toContain("/integrari/ofera</loc>");
   });
   it.each(INTEGRATION_PAGES.map((p) => [p.slug, p] as const))("%s: titlu, descriere, cuvinte, FAQ", (_s, p) => {
     expect(p.title.length).toBeLessThanOrEqual(60);
