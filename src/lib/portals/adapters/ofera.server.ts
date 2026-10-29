@@ -83,7 +83,7 @@ export function createOferaAdapter(injected?: OferaAdapterDeps): PortalAdapter {
       if (!ctx.allowLiveRequests) return { ok: true, data: { externalId: ref.externalId, live: false, detail: "ofera_withdraw_dry_run" } };
       const deps = await dependencies(ctx);
       // Soft deletion still only deactivates; account-deletion pipeline supplies hard-delete intent before removing the row.
-      const r = await withdrawOfera(states, ref.withdrawReason === "account_deleted" || ref.withdrawReason === "hard_deleted", { call: (method, path, body) => oferaRequest(method, path, deps, body), save: s => save(input, s) });
+      const r = await withdrawOfera(states, ref.withdrawReason === "hard_deleted", { call: (method, path, body) => oferaRequest(method, path, deps, body), save: s => save(input, s) });
       const out = result(r, r.states);
       return out.ok ? { ...out, data: { ...out.data, portalStatus: "withdrawn" } } : out;
     },
