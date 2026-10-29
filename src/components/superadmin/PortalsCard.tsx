@@ -783,6 +783,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                           <Button
                             type="button"
                             onClick={() => startOAuth.mutate(item.portal.id)}
+                            className={item.portal.id === "zup" ? "h-auto min-h-11 whitespace-normal text-center" : undefined}
                             disabled={startOAuth.isPending || item.oauth?.appConfigured !== true}
                           >
                             <ExternalLink className="mr-2 size-4" />

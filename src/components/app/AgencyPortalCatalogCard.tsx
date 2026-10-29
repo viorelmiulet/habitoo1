@@ -186,7 +186,7 @@ export function AgencyPortalCatalogCard() {
                     {item.id === "zup" ? (
                       <>
                         <span className="text-sm">{item.connectionStatus === "connected" ? "Conectat" : item.connectionStatus === "error" ? "Eroare" : "Deconectat"}</span>
-                        <Button disabled={busy || zupAction.isPending || item.zupConfigured !== true} onClick={() => connect.mutate("zup")}>
+                        <Button className="h-auto min-h-11 w-full whitespace-normal text-center" disabled={busy || zupAction.isPending || item.zupConfigured !== true} onClick={() => connect.mutate("zup")}>
                           {item.zupConfigured !== true ? ZUP_MISSING_MESSAGE : item.zupConnected ? "Reconectează contul ZUP" : "Conectează contul ZUP"}
                         </Button>
                         {item.zupConnected ? <><Button variant="outline" disabled={zupAction.isPending} onClick={() => zupAction.mutate("test")}>Testează conexiunea</Button><Button variant="outline" disabled={zupAction.isPending} onClick={() => zupAction.mutate("disconnect")}>Deconectează</Button></> : null}
