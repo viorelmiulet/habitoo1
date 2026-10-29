@@ -161,6 +161,7 @@ import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/pub
 import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
 import { Route as ApiPublicYoutubeOauthCallbackRouteImport } from './routes/api/public/youtube/oauth.callback'
 import { Route as ApiPublicFeedClickimobChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/clickimob/[index]/$indexKey'
+import { Route as ApiPublicFeedImobliChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/imobli/[index]/$indexKey'
 import { Route as ApiPublicFeedProperstarAgencyOfficeIdRouteImport } from './routes/api/public/feed/properstar/agency/$officeId'
 import { Route as ApiPublicFeedProperstarChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/properstar/[index]/$indexKey'
 import { Route as ApiPublicHomepitchV1AgentsMeRouteImport } from './routes/api/public/homepitch/v1/agents.me'
@@ -1019,6 +1020,12 @@ const ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute =
     path: '/api/public/feed/clickimob/index/$indexKey',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicFeedImobliChar91indexChar93IndexKeyRoute =
+  ApiPublicFeedImobliChar91indexChar93IndexKeyRouteImport.update({
+    id: '/api/public/feed/imobli/index/$indexKey',
+    path: '/api/public/feed/imobli/index/$indexKey',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicFeedProperstarAgencyOfficeIdRoute =
   ApiPublicFeedProperstarAgencyOfficeIdRouteImport.update({
     id: '/api/public/feed/properstar/agency/$officeId',
@@ -1279,6 +1286,7 @@ export interface FileRoutesByFullPath {
   '/api/public/youtube/oauth/callback': typeof ApiPublicYoutubeOauthCallbackRoute
   '/app/acp/date-piata/': typeof AuthenticatedAppAcpDatePiataIndexRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
+  '/api/public/feed/imobli/index/$indexKey': typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
   '/api/public/feed/properstar/agency/$officeId': typeof ApiPublicFeedProperstarAgencyOfficeIdRoute
   '/api/public/feed/properstar/index/$indexKey': typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
   '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
@@ -1446,6 +1454,7 @@ export interface FileRoutesByTo {
   '/api/public/youtube/oauth/callback': typeof ApiPublicYoutubeOauthCallbackRoute
   '/app/acp/date-piata': typeof AuthenticatedAppAcpDatePiataIndexRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
+  '/api/public/feed/imobli/index/$indexKey': typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
   '/api/public/feed/properstar/agency/$officeId': typeof ApiPublicFeedProperstarAgencyOfficeIdRoute
   '/api/public/feed/properstar/index/$indexKey': typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
   '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
@@ -1619,6 +1628,7 @@ export interface FileRoutesById {
   '/api/public/youtube/oauth/callback': typeof ApiPublicYoutubeOauthCallbackRoute
   '/_authenticated/app/acp/date-piata/': typeof AuthenticatedAppAcpDatePiataIndexRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
+  '/api/public/feed/imobli/index/$indexKey': typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
   '/api/public/feed/properstar/agency/$officeId': typeof ApiPublicFeedProperstarAgencyOfficeIdRoute
   '/api/public/feed/properstar/index/$indexKey': typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
   '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
@@ -1792,6 +1802,7 @@ export interface FileRouteTypes {
     | '/api/public/youtube/oauth/callback'
     | '/app/acp/date-piata/'
     | '/api/public/feed/clickimob/index/$indexKey'
+    | '/api/public/feed/imobli/index/$indexKey'
     | '/api/public/feed/properstar/agency/$officeId'
     | '/api/public/feed/properstar/index/$indexKey'
     | '/api/public/homepitch/v1/agents/me'
@@ -1959,6 +1970,7 @@ export interface FileRouteTypes {
     | '/api/public/youtube/oauth/callback'
     | '/app/acp/date-piata'
     | '/api/public/feed/clickimob/index/$indexKey'
+    | '/api/public/feed/imobli/index/$indexKey'
     | '/api/public/feed/properstar/agency/$officeId'
     | '/api/public/feed/properstar/index/$indexKey'
     | '/api/public/homepitch/v1/agents/me'
@@ -2131,6 +2143,7 @@ export interface FileRouteTypes {
     | '/api/public/youtube/oauth/callback'
     | '/_authenticated/app/acp/date-piata/'
     | '/api/public/feed/clickimob/index/$indexKey'
+    | '/api/public/feed/imobli/index/$indexKey'
     | '/api/public/feed/properstar/agency/$officeId'
     | '/api/public/feed/properstar/index/$indexKey'
     | '/api/public/homepitch/v1/agents/me'
@@ -2242,6 +2255,7 @@ export interface RootRouteChildren {
   ApiPublicSitesV1VisitsRoute: typeof ApiPublicSitesV1VisitsRoute
   ApiPublicYoutubeOauthCallbackRoute: typeof ApiPublicYoutubeOauthCallbackRoute
   ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
+  ApiPublicFeedImobliChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
   ApiPublicFeedProperstarAgencyOfficeIdRoute: typeof ApiPublicFeedProperstarAgencyOfficeIdRoute
   ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
   ApiPublicHomepitchV1AgentsMeRoute: typeof ApiPublicHomepitchV1AgentsMeRoute
@@ -3325,6 +3339,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/feed/imobli/index/$indexKey': {
+      id: '/api/public/feed/imobli/index/$indexKey'
+      path: '/api/public/feed/imobli/index/$indexKey'
+      fullPath: '/api/public/feed/imobli/index/$indexKey'
+      preLoaderRoute: typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/feed/properstar/agency/$officeId': {
       id: '/api/public/feed/properstar/agency/$officeId'
       path: '/api/public/feed/properstar/agency/$officeId'
@@ -3791,6 +3812,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicYoutubeOauthCallbackRoute: ApiPublicYoutubeOauthCallbackRoute,
   ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute:
     ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute,
+  ApiPublicFeedImobliChar91indexChar93IndexKeyRoute:
+    ApiPublicFeedImobliChar91indexChar93IndexKeyRoute,
   ApiPublicFeedProperstarAgencyOfficeIdRoute:
     ApiPublicFeedProperstarAgencyOfficeIdRoute,
   ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute:
