@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { enqueueStoriaAutoRenewUpdate, runStoriaContentUpdateJob } from "./auto-renew.server";
+import { storiaAutoRenewVisible } from "./auto-renew";
 
 const input = { organizationId: "org", propertyId: "property", actorId: "agent", superadmin: false };
 const job = { organization_id: "org", property_id: "property", requested_by: "agent" };
