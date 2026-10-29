@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Integrări publice — patru portaluri
+- [ ] Pagini imo24/zonata/homedirect/imopedia, rezumate și data sitemap 2026-10-29
+- [ ] Homepage, FAQ/JSON-LD și logouri oficiale; fără modificări în registru/publicare
+- [ ] Teste de conținut/listă/FAQ și verificare pagini publice
+
 ## ZonaTa — timeout publicare HB-1264
 - [x] Fotografii semnate în lot 24h, aceleași filtre/ordine; previzualizare transmite doar căi, verificată prin teste
 - [x] POST 90s, celelalte metode 30s, mesaj real și recuperare după timeout doar live, inclusiv statusul primit
