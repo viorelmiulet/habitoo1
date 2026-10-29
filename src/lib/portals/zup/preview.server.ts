@@ -2,6 +2,7 @@ import { CRM_URL } from "@/lib/host";
 import { feedImageUrl } from "@/lib/site-feed/mapper";
 import { mapPropertyToZup, type ZupRow } from "./mapper";
 import type { ZupCatalogue } from "./nomenclature";
+import { imo24Transactions } from "../imo24/mapper";
 export async function loadZupPreview(propertyId: string, organizationId?: string) {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   let query = db.from("properties").select("*").eq("id",propertyId).is("deleted_at",null);
@@ -16,5 +17,5 @@ export async function loadZupPreview(propertyId: string, organizationId?: string
   if (ce || ie || profile.error) throw new Error("Datele pentru previzualizarea ZUP nu au putut fi citite.");
   const catalogue = (catalog?.snapshot ?? { categories: [], locations: [] }) as unknown as ZupCatalogue;
   const result = mapPropertyToZup(p as ZupRow,{ catalogue, images: (images ?? []).map(i => ({url:feedImageUrl(CRM_URL,i.id),path:i.storage_path})), contact: profile.data ? {fullName:profile.data.full_name ?? "",phone:profile.data.phone ?? ""} : null });
-  return {...result,bodiesJson:result.bodies.length ? JSON.stringify(result.bodies,null,2) : null};
+  return {...result,transactions:imo24Transactions(p),bodiesJson:result.bodies.length ? JSON.stringify(result.bodies,null,2) : null};
 }

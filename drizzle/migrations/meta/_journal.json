@@ -1548,6 +1548,13 @@
       "when": 1793280766073,
       "tag": "0220_zup_catalog_write_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 221,
+      "version": "7",
+      "when": 1793280876118,
+      "tag": "0221_zup_listings",
+      "breakpoints": true
     }
   ]
 }

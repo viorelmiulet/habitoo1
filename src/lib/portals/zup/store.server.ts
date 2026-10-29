@@ -34,5 +34,5 @@ export async function zupDependencies(): Promise<ZupDeps> {
       const { error } = await db.rpc("release_portal_operation_lock", { _organization_id: org, _portal: "zup", _lock_key: "oauth_refresh", _owner_token: owner }); checked(error);
     },
   };
-  return { store, encrypt: encryptPortalCredential, decrypt: decryptPortalCredential, env: process.env };
+  return { store, encrypt: encryptPortalCredential, decrypt: decryptPortalCredential, env: process.env, reserve:async(org)=>{const {data,error}=await db.rpc("zup_reserve_request",{_organization:org});checked(error);return Number(data);} };
 }

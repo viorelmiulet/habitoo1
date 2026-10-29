@@ -38,6 +38,7 @@ const complete: PortalRequirementSubject = {
   agentName: "MVA Perfect Business",
   agentEmail: "mvaperfectbusiness@gmail.com",
   contactPhone: "0700000001",
+  zupReasons: [],
 };
 
 describe("validare pre-publicare portaluri", () => {

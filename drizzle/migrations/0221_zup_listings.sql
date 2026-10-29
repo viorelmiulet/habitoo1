@@ -1,0 +1,16 @@
+CREATE TABLE public.zup_listings (organization_id uuid NOT NULL, property_id uuid NOT NULL, transaction text NOT NULL CHECK(transaction IN ('sale','rent')), zup_id text, slug text, public_url text, status text NOT NULL DEFAULT 'unconfirmed', photos jsonb NOT NULL DEFAULT '[]'::jsonb, pending_images jsonb NOT NULL DEFAULT '[]'::jsonb, attempted_at timestamptz, attempted_title text, attempted_price numeric, last_checked_at timestamptz, last_error text, updated_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(organization_id,property_id,transaction));
+GRANT SELECT ON public.zup_listings TO authenticated;
+GRANT ALL ON public.zup_listings TO service_role;
+REVOKE INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER ON public.zup_listings FROM anon,authenticated;
+ALTER TABLE public.zup_listings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY zup_listing_read ON public.zup_listings FOR SELECT TO authenticated USING (public.is_superadmin() OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id=auth.uid() AND p.organization_id=zup_listings.organization_id));
+CREATE TABLE public.zup_account_rate (organization_id uuid PRIMARY KEY, next_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.zup_account_rate TO service_role;
+REVOKE ALL ON public.zup_account_rate FROM anon,authenticated;
+ALTER TABLE public.zup_account_rate ENABLE ROW LEVEL SECURITY;
+CREATE FUNCTION public.zup_reserve_request(_organization uuid) RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE slot timestamptz; BEGIN INSERT INTO public.zup_account_rate(organization_id) VALUES(_organization) ON CONFLICT DO NOTHING; SELECT greatest(next_at,clock_timestamp()) INTO slot FROM public.zup_account_rate WHERE organization_id=_organization FOR UPDATE; UPDATE public.zup_account_rate SET next_at=slot+interval '510 milliseconds' WHERE organization_id=_organization; RETURN greatest(0,ceil(extract(epoch FROM (slot-clock_timestamp()))*1000)::integer); END $$;
+REVOKE ALL ON FUNCTION public.zup_reserve_request(uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.zup_reserve_request(uuid) TO service_role;
+CREATE FUNCTION public.zup_claim_status(_organization uuid,_property uuid,_transaction text) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN UPDATE public.zup_listings SET last_checked_at=clock_timestamp() WHERE organization_id=_organization AND property_id=_property AND transaction=_transaction AND (last_checked_at IS NULL OR last_checked_at<=clock_timestamp()-interval '1 minute'); RETURN FOUND; END $$;
+REVOKE ALL ON FUNCTION public.zup_claim_status(uuid,uuid,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.zup_claim_status(uuid,uuid,text) TO service_role;

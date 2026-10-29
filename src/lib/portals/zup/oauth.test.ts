@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createZupState, consumeZupState, exchangeZupCode, refreshZupTokens, saveZupTokens, clearZupTokens, getZupAccessToken, testZupConnection, zupAuthorizationUrl, zupHttpError, type ZupDeps, type ZupStore, type ZupConnection, type ZupTokens } from "./oauth.server";
+import { zupCall, createZupState, consumeZupState, exchangeZupCode, refreshZupTokens, saveZupTokens, clearZupTokens, getZupAccessToken, testZupConnection, zupAuthorizationUrl, zupHttpError, type ZupDeps, type ZupStore, type ZupConnection, type ZupTokens } from "./oauth.server";
 import { ZUP_CALLBACK, ZUP_TIMEOUT_MS, ZUP_MISSING_MESSAGE, zupConfigured } from "./config";
 import { getPortalDefinition } from "../registry";
 import { integrationSlugFor, homepagePortals } from "../integration-pages";
@@ -41,6 +41,9 @@ function setup(responses: { status: number; body: unknown }[] = []) {
   return { d, calls, states, seed, connection: () => connection, advance: (ms: number) => { time += ms; } };
 }
 describe("ZUP OAuth stage 1", () => {
+  it("422 type required blocks without choosing paid",async()=>{const t=setup([{status:422,body:{errors:{type:["required"],phone:["invalid"]}}}]);await t.seed();await expect(zupCall("org","anunturi","POST",{name:"test"},t.d)).rejects.toThrow("al cărui sens nu este documentat");expect(JSON.parse(String(t.calls[0]?.init.body))).not.toHaveProperty("type");});
+  it("429 waits and retries once with a per-account rate reservation on each call",async()=>{const t=setup([{status:429,body:{}},{status:200,body:{data:{id:1}}}]);await t.seed();let reservations=0;const pauses:number[]=[];t.d.reserve=async org=>{expect(org).toBe("org");reservations++;return 510;};t.d.pause=async ms=>{pauses.push(ms);};await zupCall("org","anunturi","POST",{name:"test"},t.d);expect(reservations).toBe(2);expect(pauses).toEqual([510,1000,510]);expect(t.calls).toHaveLength(2);});
+  it("second 429 stops after one retry",async()=>{const t=setup([{status:429,body:{}},{status:429,body:{}}]);await t.seed();t.d.pause=async()=>{};await expect(zupCall("org","anunturi","POST",{},t.d)).rejects.toMatchObject({code:"RATE_LIMIT"});expect(t.calls).toHaveLength(2);});
   it("refreshes once on 302 /login without following the redirect", async () => {
     const t = setup(); await t.seed(); let reads = 0;
     t.d.fetch = (async (_url: unknown, init?: RequestInit) => {
@@ -130,7 +133,7 @@ describe("ZUP OAuth stage 1", () => {
   });
   it("422 names only errors fields and does not echo sensitive messages", () => {
     const message = zupHttpError(422, { errors: { price: ["private input"], locality: ["invalid"], access_token: ["private"] } }).message;
-    expect(message).toContain("price, locality"); expect(message).not.toContain("private"); expect(message).not.toContain("access_token");
+    expect(message).toContain("price"); expect(message).toContain("localitate (locality)"); expect(message).not.toContain("private"); expect(message).not.toContain("access_token");
   });
   it("missing platform secrets are unconfigured without requests", async () => {
     expect(zupConfigured({})).toBe(false); expect(zupConfigured({ ZUP_CLIENT_ID: "test" })).toBe(false);
@@ -151,14 +154,12 @@ describe("ZUP OAuth stage 1", () => {
   it("rejects unexpected list envelopes", async () => {
     const t = setup([{ status: 200, body: { data: [] } }]); await t.seed(); await expect(testZupConnection("org", t.d)).rejects.toMatchObject({ detail: "zup_invalid_list" });
   });
-  it("registry and adapter block stage-one publishing, public pages absent", async () => {
-    const portal = getPortalDefinition("zup"); expect(portal?.activation).toBe("oauth"); expect(portal?.publish_coming_soon).toBe(true); expect(portal?.capabilities).toEqual(["test_connection"]);
-    expect(portalRequirementSpec("zup")?.required.map(r => r.key)).toEqual(["stage"]);
+  it("registry permits stage-three publishing while public pages remain absent", async () => {
+    const portal = getPortalDefinition("zup"); expect(portal?.activation).toBe("oauth"); expect(portal?.publish_coming_soon).not.toBe(true); expect(portal?.capabilities).toEqual(["test_connection","publish_listing","update_listing","withdraw_listing","sync"]);
+    expect(portalRequirementSpec("zup")?.required.map(r => r.key)).not.toContain("stage");
     expect(integrationSlugFor("zup")).toBeNull(); expect(homepagePortals().some(p => p.portal.id === "zup")).toBe(false);
     if (!portal) throw new Error("ZUP missing");
-    const ctx = { organizationId: "org", definition: portal, direction: "habitoo_to_portal" as const, authenticationMode: "oauth" as const, externalAccountId: null, portalCredential: null, settings: {}, allowLiveRequests: true };
-    expect(await zupAdapter.publishListing?.(ctx, { propertyId: "p", externalId: null })).toMatchObject({ ok: false, code: "NOT_SUPPORTED" });
-    expect(await zupAdapter.updateListing?.(ctx, { propertyId: "p", externalId: null })).toMatchObject({ ok: false, code: "NOT_SUPPORTED" });
+    expect(typeof zupAdapter.publishListing).toBe("function");expect(typeof zupAdapter.updateListing).toBe("function");
   });
   it("rejects malformed token responses instead of inventing expiry", async () => {
     const t = setup([{ status: 200, body: { access_token: "A", token_type: "bearer" } }]);
