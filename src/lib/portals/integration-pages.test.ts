@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { INTEGRATION_PAGES, integrationPageText, integrationSlugFor, wordCount } from "./integration-pages";
+import { INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD, integrationPageText, integrationSlugFor, wordCount } from "./integration-pages";
 import { integrationJsonLd } from "./integration-jsonld";
 import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
-const SLUGS = ["storia-olx", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook"];
+const SLUGS = ["storia-olx", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook", "imo24", "zonata", "homedirect", "imopedia"];
 
 describe("pagini integrări", () => {
   it("câte o pagină pentru fiecare slug cerut", () => {
@@ -29,6 +29,7 @@ describe("pagini integrări", () => {
     expect(withLeads).toEqual(["properstar", "storia", "vdi"]);
   });
   it("sitemap conține paginile cu lastmod", () => {
+    expect(INTEGRATION_PAGES_LASTMOD).toBe("2026-10-29");
     const xml = buildStaticSitemapXml();
     for (const s of SLUGS) expect(xml).toContain(`<loc>https://www.habitoo.ro/integrari/${s}</loc>\n    <lastmod>`);
   });
