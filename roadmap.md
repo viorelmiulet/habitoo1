@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Ofera — etapa 3
+- [ ] Localizare și mapper pur numai din nomenclator, fără publicare
+- [ ] Monedă SuperAdmin și previzualizare fără token/apel Ofera
+- [ ] Teste fără rețea și trei exemple reale anonimizate
+
 ## Ofera — etapa 2
 - [x] Nomenclator public complet, validare și salvare atomică idempotentă cu diferențe; migrația 0216 aplicată
 - [x] Panou SuperAdmin, program săptămânal luni 03:17 UTC cu skip fără agenții active și notificări atomice ale parametrilor
