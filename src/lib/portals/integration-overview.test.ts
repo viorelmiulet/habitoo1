@@ -6,7 +6,7 @@ import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
 describe("public integrations overview", () => {
   it("lists each integration and covered portal exactly once", () => {
-    expect(INTEGRATION_OVERVIEW).toHaveLength(17);
+    expect(INTEGRATION_OVERVIEW).toHaveLength(18);
     const ids = INTEGRATION_OVERVIEW.flatMap((p) => p.logoIds);
     expect(new Set(ids).size).toBe(ids.length);
     expect(INTEGRATION_OVERVIEW.find((p) => p.id === "storia")?.logoIds).toEqual(["storia", "olx"]);
@@ -42,9 +42,9 @@ describe("public integrations overview", () => {
   });
   it("ItemList uses every existing detail URL once", () => {
     const list = integrationItemListJsonLd();
-    expect(list.numberOfItems).toBe(17);
+    expect(list.numberOfItems).toBe(18);
     expect(list.itemListElement.map((p) => p.url)).toEqual(INTEGRATION_OVERVIEW.map((p) => `https://www.habitoo.ro/integrari/${p.slug}`));
-    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 17 }, (_, i) => i + 1));
+    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 18 }, (_, i) => i + 1));
   });
   it("sitemap dates only the updated overview", () => {
     expect(buildStaticSitemapXml()).toContain("<loc>https://www.habitoo.ro/integrari</loc>\n    <lastmod>2026-10-18</lastmod>");

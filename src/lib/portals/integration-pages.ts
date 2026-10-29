@@ -106,6 +106,27 @@ const CONTENT: Record<string, Content> = {
       { q: "Cum trimit un anunț ca Gold?", a: "Bifezi Promovat pentru ofertă în Habitoo. La trimitere, anunțul este trimis ca Gold pe Imopedia. Publicarea, actualizarea și retragerea rămân disponibile din fișa proprietății." },
     ],
   },
+  ofera: {
+    slug: "ofera",
+    name: "Ofera.ro",
+    description: "Publici anunțurile pe Ofera.ro direct din Habitoo CRM: anunțul se activează după creare, retragerea îl dezactivează, iar bifa Promovat e disponibilă.",
+    intro: [
+      "Integrarea Ofera.ro îți permite să publici anunțurile agenției direct din Habitoo, să trimiți actualizările și să retragi ofertele de pe portal. Lucrezi cu proprietatea din CRM, iar aceste acțiuni se fac din fișa ei, fără să rescrii anunțul separat pe Ofera.",
+      "După ce anunțul este creat pe Ofera.ro, Habitoo îl activează, astfel încât să poată apărea pe portal. Când retragi oferta, anunțul este dezactivat pe Ofera, nu șters. Dacă proprietatea este oferită și la vânzare, și la închiriere, se trimite câte un anunț pentru fiecare tranzacție.",
+      "Pentru ofertele pe care vrei să le scoți în evidență poți folosi bifa Promovat, care se transmite odată cu anunțul. Activarea integrării o face echipa Habitoo, pe baza ID-ului de furnizor pe care agenția îl primește de la Ofera.",
+    ],
+    activation: "Activarea o face SuperAdminul Habitoo, cu ID-ul de furnizor pe care agenția îl primește de la Ofera.ro. Agenția nu introduce chei sau parole.",
+    notes: [
+      "Activarea cere ID-ul de furnizor primit de la Ofera; îl introduce SuperAdminul Habitoo.",
+      "Anunțul se activează după creare, iar retragerea îl dezactivează pe Ofera.",
+      "Bifa Promovat este disponibilă pentru oferte.",
+    ],
+    faq: [
+      { q: "Cum activez Ofera.ro?", a: "Soliciți ID-ul de furnizor de la Ofera.ro și îl transmiți echipei Habitoo. SuperAdminul îl introduce și activează integrarea pentru agenția ta; nu ai chei sau parole de completat." },
+      { q: "Ce se întâmplă când retrag un anunț?", a: "Anunțul este dezactivat pe Ofera.ro, nu șters. Publicarea, actualizarea și retragerea se fac din fișa proprietății în Habitoo." },
+      { q: "Pot promova un anunț pe Ofera.ro?", a: "Da. Bifa Promovat este disponibilă pentru oferte și se transmite odată cu anunțul." },
+    ],
+  },
   storia: {
     slug: "storia",
     name: "Storia.ro + OLX.ro",
