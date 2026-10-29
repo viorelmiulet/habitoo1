@@ -26,7 +26,7 @@ export function OferaStatusPanel({ propertyId, organizationId, canManage, busy, 
     try {
       const out = await enqueue({ data: { propertyId, ...(organizationId ? { organizationId } : {}), selections: [{ portalId: "ofera", enabled: true, promoted, ...(intent ? { oferaIntent: intent } : {}) }], syncExisting: true } });
       const r = out.results.find(r => r.portalId === "ofera");
-      if (r?.queued) { toast.success("Ofera: acțiunea a fost pusă în coadă."); await qc.invalidateQueries({ queryKey: ["portal-publish-jobs"] }); } else toast.error(r?.message ?? "Acțiunea Ofera nu a putut fi pornită.");
+      if (r?.queued) { toast.success("Ofera: acțiunea a fost pusă în coadă."); await qc.invalidateQueries({ queryKey: ["property-publish-jobs"] }); } else toast.error(r?.message ?? "Acțiunea Ofera nu a putut fi pornită.");
       await qc.invalidateQueries({ queryKey: key });
     } catch (e) { toast.error(e instanceof Error ? e.message : "Acțiunea Ofera nu a reușit."); } finally { setSending(false); }
   };

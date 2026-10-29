@@ -57,7 +57,7 @@ export async function writeOferaBody(body: OferaBody, previous: OferaState | und
     promotionRefused = true; promotionMessage = response.message;
     // Some responses identify an already-saved advert. Never create it a second time.
     const returnedId = positiveId(object(response.data)?.id);
-    if (creating && returnedId) { state.ofera_id = returnedId; creating = false; }
+    if (creating && returnedId) { state = { ...responsePatch(state, response), ofera_id: returnedId, status: "pending_activation" }; creating = false; await deps.save(state); }
     response = await request(0);
   }
   if (!response.ok) {
