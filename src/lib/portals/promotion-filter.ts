@@ -12,16 +12,22 @@
  */
 import { PORTALS, portalDisplayName } from "@/lib/portals/registry";
 import { manageableImobiliarePromotions } from "@/lib/portals/imobiliare/promotions";
+import { effectiveStoriaAutoRenew, storiaAutoRenewVisible } from "@/lib/portals/storia/auto-renew";
 
 /** Valori speciale ale filtrului (nu aparțin unui portal). */
 export const PROMOTION_FILTER_ANY = "any";
 export const PROMOTION_FILTER_NONE = "none";
+/** Prelungirea automată Storia: NU e promovare (nu intră în „Orice”/„Fără”). */
+export const STORIA_AUTO_RENEW_ON = "storia:auto_renew_on";
+export const STORIA_AUTO_RENEW_OFF = "storia:auto_renew_off";
 
 export type PromotionFilterOption = { value: string; label: string };
 export type PromotionFilterGroup = {
   portalId: string;
   portalName: string;
   options: PromotionFilterOption[];
+  /** Prefixul din chip, dacă diferă de portalName (ex. „Storia”). */
+  chipName?: string;
 };
 
 /**
@@ -51,6 +57,17 @@ export function promotionFilterGroups(
       });
     }
   }
+  if (connectedPortalIds.has("storia")) {
+    groups.push({
+      portalId: "storia",
+      portalName: "Storia + OLX",
+      chipName: "Storia",
+      options: [
+        { value: STORIA_AUTO_RENEW_ON, label: "Prelungire automată activată" },
+        { value: STORIA_AUTO_RENEW_OFF, label: "Prelungire automată dezactivată" },
+      ],
+    });
+  }
   return groups;
 }
 
@@ -61,23 +78,27 @@ export type PromotionSelection = {
   imobiliareServices: string[];
   /** Portaluri cu flag „Promovat” selectate (ex. "romimo"). */
   flagPortals: string[];
-};
-
-const EMPTY_SELECTION: PromotionSelection = {
-  any: false,
-  none: false,
-  imobiliareServices: [],
-  flagPortals: [],
+  /** Valori efective ale prelungirii automate Storia căutate. */
+  storiaAutoRenew: boolean[];
 };
 
 /** Valorile din URL (separate prin virgulă) → selecție structurată. */
 export function parsePromotionSelection(raw: string): PromotionSelection {
   const values = raw.split(",").map((v) => v.trim()).filter(Boolean);
-  const selection: PromotionSelection = { ...EMPTY_SELECTION, imobiliareServices: [], flagPortals: [] };
+  const selection: PromotionSelection = {
+    any: false,
+    none: false,
+    imobiliareServices: [],
+    flagPortals: [],
+    storiaAutoRenew: [],
+  };
   for (const value of values) {
     if (value === PROMOTION_FILTER_ANY) selection.any = true;
     else if (value === PROMOTION_FILTER_NONE) selection.none = true;
-    else if (value.startsWith("imobiliare_ro:")) {
+    else if (value === STORIA_AUTO_RENEW_ON || value === STORIA_AUTO_RENEW_OFF) {
+      const wanted = value === STORIA_AUTO_RENEW_ON;
+      if (!selection.storiaAutoRenew.includes(wanted)) selection.storiaAutoRenew.push(wanted);
+    } else if (value.startsWith("imobiliare_ro:")) {
       const service = value.slice("imobiliare_ro:".length);
       if (service && !selection.imobiliareServices.includes(service)) {
         selection.imobiliareServices.push(service);
@@ -95,7 +116,8 @@ export function promotionSelectionIsEmpty(selection: PromotionSelection): boolea
     !selection.any &&
     !selection.none &&
     selection.imobiliareServices.length === 0 &&
-    selection.flagPortals.length === 0
+    selection.flagPortals.length === 0 &&
+    selection.storiaAutoRenew.length === 0
   );
 }
 
@@ -138,7 +160,8 @@ export function propertyMatchesPromotion(
     selection.none &&
     !selection.any &&
     selection.imobiliareServices.length === 0 &&
-    selection.flagPortals.length === 0
+    selection.flagPortals.length === 0 &&
+    selection.storiaAutoRenew.length === 0
   ) {
     return !propertyHasAnyPromotion(info);
   }
@@ -247,4 +270,39 @@ export function promotionBadgesFor(info: PropertyPromotionInfo): PropertyPromoti
     }
   }
   return badges;
+}
+
+/** Rândurile pentru „Prelungire automată” Storia (bifa vizibilă pe card). */
+export type StoriaAutoRenewRows = {
+  properties: { id: string; storia_auto_renew: boolean | null }[];
+  /** portal_publications Storia cu enabled = true. */
+  selectedPropertyIds: string[];
+  listings: { property_id: string; status: string; external_id: string | null }[];
+  agencyDefault: boolean;
+};
+
+/**
+ * Valoarea efectivă a prelungirii automate per proprietate, doar pentru
+ * proprietățile la care bifa e vizibilă (Storia selectat sau anunț publicat /
+ * în procesare). Celelalte lipsesc din mapă.
+ */
+export function storiaAutoRenewValues(rows: StoriaAutoRenewRows): Map<string, boolean> {
+  const selected = new Set(rows.selectedPropertyIds);
+  const listingsByProperty = new Map<string, StoriaAutoRenewRows["listings"]>();
+  for (const listing of rows.listings) {
+    const list = listingsByProperty.get(listing.property_id) ?? [];
+    list.push(listing);
+    listingsByProperty.set(listing.property_id, list);
+  }
+  const out = new Map<string, boolean>();
+  for (const property of rows.properties) {
+    const visible =
+      selected.has(property.id) ||
+      (listingsByProperty.get(property.id) ?? []).some((l) =>
+        storiaAutoRenewVisible({ selected: false, listingStatus: l.status, externalId: l.external_id }),
+      );
+    if (!visible) continue;
+    out.set(property.id, effectiveStoriaAutoRenew(property.storia_auto_renew, rows.agencyDefault));
+  }
+  return out;
 }

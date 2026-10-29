@@ -23,6 +23,7 @@ import {
   propertyHasAnyPromotion,
   propertyMatchesPromotion,
   promotionBadgesFor,
+  storiaAutoRenewValues,
   type PromotionFilterGroup,
   type PromotionRows,
   type PropertyPromotionBadge,
@@ -80,6 +81,49 @@ async function fetchPromotionRows(organizationId: string): Promise<PromotionRows
   return { listings, states, publications };
 }
 
+async function fetchStoriaAutoRenewValues(organizationId: string) {
+  const admin = await loadAdmin();
+  const [org, properties, publications, listings] = await Promise.all([
+    admin.from("organizations").select("storia_auto_republish").eq("id", organizationId).maybeSingle(),
+    fetchAllRows((a, b) =>
+      admin
+        .from("properties")
+        .select("id, storia_auto_renew")
+        .eq("organization_id", organizationId)
+        .is("deleted_at", null)
+        .order("id")
+        .range(a, b),
+    ),
+    fetchAllRows((a, b) =>
+      admin
+        .from("portal_publications")
+        .select("property_id")
+        .eq("organization_id", organizationId)
+        .eq("portal_key", "storia")
+        .eq("enabled", true)
+        .order("id")
+        .range(a, b),
+    ),
+    fetchAllRows((a, b) =>
+      admin
+        .from("portal_listings")
+        .select("property_id, status, external_id")
+        .eq("organization_id", organizationId)
+        .eq("portal", "storia")
+        .in("status", ["published", "updated", "pending"])
+        .order("id")
+        .range(a, b),
+    ),
+  ]);
+  if (org.error) throw new Error("Nu am putut citi setarea agenției.");
+  return storiaAutoRenewValues({
+    properties: properties as { id: string; storia_auto_renew: boolean | null }[],
+    selectedPropertyIds: (publications as { property_id: string }[]).map((r) => r.property_id),
+    listings: listings as { property_id: string; status: string; external_id: string | null }[],
+    agencyDefault: org.data?.storia_auto_republish === true,
+  });
+}
+
 /** Opțiunile filtrului, doar pentru portalurile conectate ale agenției. */
 export const getPromotionFilterOptions = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -96,7 +140,7 @@ export const getPromotionFilterOptions = createServerFn({ method: "POST" })
   });
 
 const promotionValuesSchema = z
-  .array(z.string().regex(/^(any|none|imobiliare_ro:[a-z0-9_]+|[a-z0-9_]+:promoted)$/))
+  .array(z.string().regex(/^(any|none|imobiliare_ro:[a-z0-9_]+|[a-z0-9_]+:promoted|storia:auto_renew_(on|off))$/))
   .max(40);
 
 /**
@@ -123,8 +167,21 @@ export const getPropertyIdsByPromotion = createServerFn({ method: "POST" })
     const rows = await fetchPromotionRows(organizationId);
     const infos = buildPromotionInfos(rows);
     const matched: string[] = [];
+    if (selection.storiaAutoRenew.length > 0) {
+      // SAU cu celelalte selecții; nu e promovare.
+      const values = await fetchStoriaAutoRenewValues(organizationId);
+      for (const [propertyId, value] of values) {
+        if (selection.storiaAutoRenew.includes(value)) matched.push(propertyId);
+      }
+    }
     for (const [propertyId, info] of infos) {
-      if (propertyMatchesPromotion(info, selection)) matched.push(propertyId);
+      if (
+        (selection.any || selection.imobiliareServices.length > 0 || selection.flagPortals.length > 0) &&
+        propertyMatchesPromotion(info, selection) &&
+        !matched.includes(propertyId)
+      ) {
+        matched.push(propertyId);
+      }
     }
     if (selection.none) {
       // „Fără promovare”: toate proprietățile agenției, mai puțin cele promovate.
