@@ -16,13 +16,11 @@ export async function buildOferaPreview(propertyId: string) {
     if (r.error) throw new Error("Datele pentru previzualizarea Ofera nu au putut fi citite.");
     return r.data;
   };
-  const [categories, counties, cities, zones, connection, images, profile, setting] = await Promise.all([
+  const [categories, counties, connection, images, profile, setting] = await Promise.all([
     checked(db.from("ofera_categories").select("*").order("id")),
     checked(db.from("ofera_counties").select("*").eq("active", true)),
-    // Resolve counties first in memory, then read only their cities below (avoids API page limits).
-    Promise.resolve(null), Promise.resolve(null),
     checked(db.from("portal_connections").select("settings").eq("organization_id", row.organization_id).eq("portal", "ofera").maybeSingle()),
-    checked(db.from("property_images").select("id,is_primary,position").eq("property_id", propertyId).eq("organization_id", row.organization_id).eq("include_in_publish", true).eq("is_confidential", false).order("is_primary", { ascending: false }).order("position")),
+    checked(db.from("property_images").select("id,is_primary,position").eq("property_id", propertyId).eq("organization_id", row.organization_id).eq("include_in_publish", true).or("is_confidential.eq.false,is_confidential.is.null").order("is_primary", { ascending: false, nullsFirst: false }).order("position")),
     row.assigned_to ? checked(db.from("profiles").select("id,full_name,email,phone,avatar_url").eq("id", row.assigned_to).eq("organization_id", row.organization_id).maybeSingle()) : Promise.resolve(null),
     checked(db.from("platform_settings").select("value").eq("key", OFERA_CURRENCY_KEY).maybeSingle()),
   ]);
