@@ -23,7 +23,8 @@ function fakeAdmin(rows: Row[], download: (path: string) => Promise<{ data: Blob
   } as never;
 }
 
-const blob = () => new Blob([new Uint8Array([1, 2, 3])]);
+let seq = 0;
+const blob = () => new Blob([new Uint8Array([1, 2, seq++])]);
 const sleep = vi.fn(async () => {});
 
 describe("encodeImobiliareImages — reîncercarea descărcărilor", () => {
