@@ -15,12 +15,12 @@ import {
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
-import { FormSection, RequiredMark } from "@/components/app/FormSection";
+import { FormSection } from "@/components/app/FormSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PropertyDescriptionTextarea } from "@/components/app/PropertyDescriptionTextarea";
+import { PropertyFormLayout, PropertyTitleDescriptionPanel } from "@/components/app/PropertyFormLayout";
 import {
   Select,
   SelectContent,
@@ -177,38 +177,15 @@ function NewPropertyPage() {
       />
 
       <form
-        className="space-y-8"
+        className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
           create.mutate();
         }}
       >
-        <FormSection title="Titlu și descriere">
-          <div className="space-y-2">
-            <Label htmlFor="title">
-              Titlu anunț
-              <RequiredMark />
-            </Label>
-            <Input
-              id="title"
-              required
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              placeholder="Apartament 3 camere, Aviatorilor"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Descriere publică</Label>
-            <PropertyDescriptionTextarea
-              id="description"
-              value={form.description}
-              onChange={(e) => set("description", e.target.value)}
-            />
-          </div>
-        </FormSection>
-
-        <div data-tour="new-general"><FormSection title="Informații generale">
-          <div className="grid gap-4 md:grid-cols-2">
+        <PropertyFormLayout
+          aside={<div data-tour="new-general"><FormSection title="Informații generale">
+          <div className="grid gap-4">
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => set("status", v)}>
@@ -242,9 +219,23 @@ function NewPropertyPage() {
               </Select>
             </div>
           </div>
-        </FormSection>
+        </FormSection></div>}
+          details={<PropertyDetailsFields
+            idPrefix="new"
+            value={details}
+            onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+          />}
+        >
+        <PropertyTitleDescriptionPanel
+          titleRequired
+          title={form.title}
+          description={form.description}
+          onTitle={(v) => set("title", v)}
+          onDescription={(v) => set("description", v)}
+          titlePlaceholder="Apartament 3 camere, Aviatorilor"
+        />
 
-        </div><div data-tour="new-location"><FormSection title="Locație">
+        <div data-tour="new-location"><FormSection title="Localizare">
           <div className="grid gap-4 md:grid-cols-2">
             <LocationPicker idPrefix="new" value={location} onChange={setLocation} />
             <div className="space-y-2">
@@ -293,17 +284,6 @@ function NewPropertyPage() {
         </FormSection>
 
         <FormSection
-          title="Detalii complete"
-          description="Tip, camere, băi, etaj, suprafețe, an construcție și facilități."
-        >
-          <PropertyDetailsFields
-            idPrefix="new"
-            value={details}
-            onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
-          />
-        </FormSection>
-
-        <FormSection
           title="Note interne"
           description="Nu se publică pe site sau pe portaluri."
         >
@@ -317,6 +297,7 @@ function NewPropertyPage() {
             />
           </div>
         </FormSection>
+        </PropertyFormLayout>
 
         <div className="flex justify-end gap-2">
           <Button

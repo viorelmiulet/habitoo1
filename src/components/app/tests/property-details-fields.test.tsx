@@ -36,14 +36,6 @@ async function mount() {
   await act(async () => {
     root.render(<Host />);
   });
-  // Secțiunile sunt un acordeon: îl deschidem ca un utilizator real.
-  const trigger = Array.from(container.querySelectorAll("button")).find(
-    (b) => b.textContent?.trim() === "Detalii",
-  );
-  if (!trigger) throw new Error("Missing details trigger");
-  await act(async () => {
-    trigger.click();
-  });
   return { container, root };
 }
 
@@ -163,5 +155,20 @@ describe("property feature selections", () => {
     expect(results.flatMap((section) => section.groups.map((group) => [group.field, group.options]))).toEqual([
       ["floor_finishes", ["Parchet"]], ["furnishing", ["Complet"]],
     ]);
+  });
+});
+
+describe("formularul fără acordeon", () => {
+  it("afișează direct un control pentru fiecare câmp salvat din detalii", async () => {
+    const { PROPERTY_DETAIL_FIELDS } = await import("@/lib/property-detail-fields");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => root.render(<PropertyDetailsFields value={{ floor_label: "Etaj intermediar" }} onChange={() => {}} />));
+    const ids = Array.from(container.querySelectorAll("[id]")).map((n) => n.id);
+    const missing = PROPERTY_DETAIL_FIELDS.filter((f) => f !== "floor" && !ids.some((id) => id === `det-${f}` || id.startsWith(`det-${f}-`)));
+    expect(missing).toEqual([]);
+    expect(container.querySelector("[data-orientation=vertical][data-state=closed]:not([role=combobox])")).toBeNull();
+    await act(async () => root.unmount());
   });
 });

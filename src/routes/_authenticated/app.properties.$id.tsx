@@ -32,7 +32,7 @@ import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
 import { unarchiveProperty } from "@/lib/property-archive.functions";
 import { toastError } from "@/lib/errors";
-import { FormSection, RequiredMark } from "@/components/app/FormSection";
+import { FormRow, FormSection } from "@/components/app/FormSection";
 import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -66,7 +66,9 @@ import { DocumentsPanel } from "@/components/app/DocumentsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PropertyDescriptionTextarea } from "@/components/app/PropertyDescriptionTextarea";
+import { PropertyFormLayout, PropertyTitleDescriptionPanel } from "@/components/app/PropertyFormLayout";
+import { PropertyMainPhoto } from "@/components/app/PropertyMainPhoto";
+import { propertyTabFromSearch } from "@/lib/property-tabs";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -196,7 +198,7 @@ function PropertyDetailContent() {
 
   const [editing, setEditing] = useState(false);
   /** Fila activă; butonul din antet duce direct la fluxul ACP. */
-  const [tab, setTab] = useState(() => search.tab === "publishing" ? "publishing" : "overview");
+  const [tab, setTab] = useState(() => propertyTabFromSearch(search.tab));
   // Motorul de ghiduri află ce filă s-a deschis și când pornește editarea.
   useEffect(() => { announceGuideContext(`property-tab:${tab}`); }, [tab]);
   useEffect(() => { if (editing) announceGuideContext("property:editing"); }, [editing]);
@@ -904,8 +906,7 @@ function PropertyDetailContent() {
             ["agent", "Agent"],
             ["overview", "Prezentare"],
             ["media", `Poze (${data?.imageCount ?? 0})`],
-            ["publishing", `Publicare (${publishedPortals}/${portalCells.length})`],
-            ["promotion", "Promovare"],
+            ["publishing", `Promovare (${publishedPortals}/${portalCells.length})`],
             ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
             ["matching", `Cereri compatibile (${matches.length})`],
             ["activities", `Activități (${activities.length})`],
@@ -918,7 +919,7 @@ function PropertyDetailContent() {
               key={value}
               value={value as string}
               data-tour={`property-tab-${value}`}
-              className="rounded-none border-b-[3px] border-transparent bg-transparent px-3 py-2.5 font-normal shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none"
+              className="rounded-[4px] border border-transparent bg-transparent px-3 py-2 text-[15px] font-normal text-primary shadow-none data-[state=active]:border-primary data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
               {label}
             </TabsTrigger>
@@ -957,7 +958,7 @@ function PropertyDetailContent() {
           {editing ? (
             <form
               id="property-details-form"
-              className="space-y-8"
+              className="space-y-4"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!hasTransactionSelection(tx)) {
@@ -967,29 +968,41 @@ function PropertyDetailContent() {
                 save.mutate(buildEditPatch());
               }}
             >
-              <FormSection title="Titlu și descriere">
-                <div className="space-y-2">
-                  <Label htmlFor="title">
-                    Titlu
-                    <RequiredMark />
-                  </Label>
-                  <Input
-                    id="title"
-                    value={draft.title ?? ""}
-                    onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+              <PropertyFormLayout
+                aside={<>
+                  <PropertyMainPhoto propertyId={id} title={property.title} />
+                  <div className="space-y-1.5 text-[15px]">
+                    <FormRow htmlFor="edit-status" label="Status">
+                      <Select value={property.status} onValueChange={(key) => isWithdrawStatus(key) ? setPendingStatus(key as "sold" | "rented" | "archived") : changeStatus.mutate(key)}>
+                        <SelectTrigger id="edit-status" className="h-9 text-[15px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>{Object.entries(propertyStatusLabels).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </FormRow>
+                    <PropertyResponsibleAgentField canEdit={canReassign} value={draftAgent}
+                      name={responsibleAgent?.full_name} candidates={orgMembers} onChange={setDraftAgent} />
+                  </div>
+                  <dl className="space-y-1.5 border-t border-border pt-3 text-[15px]">
+                    {salePrice ? <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Preț vânzare</dt><dd>{formatMoney(salePrice, property.sale_currency ?? property.currency ?? "EUR")}{pricePerSqm ? ` sau ${formatNumber(pricePerSqm)} €/m²` : ""}</dd></div> : null}
+                    {rentPrice ? <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Preț închiriere</dt><dd>{formatMoney(rentPrice, property.rent_currency ?? property.currency ?? "EUR")}</dd></div> : null}
+                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Adăugată la</dt><dd>{formatDateTime(property.created_at)}</dd></div>
+                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Modificată la</dt><dd>{formatDateTime(property.updated_at)}</dd></div>
+                  </dl>
+                </>}
+                details={<div data-tour="edit-details">
+                  <PropertyDetailsFields
+                    idPrefix="edit"
+                    value={details}
+                    onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descriere</Label>
-                  <PropertyDescriptionTextarea
-                    id="description"
-                    value={draft.description ?? ""}
-                    onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-                  />
-                </div>
-              </FormSection>
-
-              <FormSection title="Locație">
+                </div>}
+              >
+              <PropertyTitleDescriptionPanel
+                title={draft.title ?? ""}
+                description={draft.description ?? ""}
+                onTitle={(v) => setDraft((d) => ({ ...d, title: v }))}
+                onDescription={(v) => setDraft((d) => ({ ...d, description: v }))}
+              />
+              <FormSection title="Localizare">
                 <div className="grid gap-5 md:grid-cols-2">
                   <LocationPicker
                     idPrefix="edit"
@@ -1055,22 +1068,6 @@ function PropertyDetailContent() {
               </FormSection>
               </div>
 
-              <div data-tour="edit-details">
-              <FormSection
-                title="Detalii complete"
-                description="Tip, camere, băi, etaj, suprafețe, an construcție și facilități."
-              >
-                <PropertyDetailsFields
-                  idPrefix="edit"
-                  value={details}
-                  onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
-                />
-              </FormSection>
-              </div>
-
-              <PropertyResponsibleAgentField canEdit={canReassign} value={draftAgent}
-                name={responsibleAgent?.full_name} candidates={orgMembers} onChange={setDraftAgent} />
-
               <FormSection
                 title="Note interne"
                 description="Nu se publică pe site sau pe portaluri."
@@ -1085,6 +1082,7 @@ function PropertyDetailContent() {
                   />
                 </div>
               </FormSection>
+              </PropertyFormLayout>
 
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
@@ -1303,12 +1301,10 @@ function PropertyDetailContent() {
               );
             }}
           />
-        </TabsContent>
-
-        <TabsContent value="promotion" data-tour="property-promotion">
+          {tab === "publishing" ? <div className="pt-4" data-tour="property-promotion">
           <PropertyPromotionTab
             propertyId={id}
-            onOpenPublishing={() => setTab("publishing")}
+            onOpenPublishing={() => document.querySelector('[data-tour="property-publishing"]')?.scrollIntoView({ behavior: "smooth" })}
             onOpenPoster={() => setSocialPosterOpen(true)}
             video={{
               title: property.title ?? "",
@@ -1324,6 +1320,7 @@ function PropertyDetailContent() {
               logoUrl: agencyLogoUrl ?? null,
             }}
           />
+          </div> : null}
         </TabsContent>
 
         <TabsContent value="history">
