@@ -55,6 +55,7 @@ export async function encodeImobiliareImages(input: {
 }): Promise<{ images: EncodedImage[]; warnings: string[]; expected: number; transient?: boolean }> {
   const sleep = input.sleep ?? defaultSleep;
   let transient = false;
+  let dataError = false;
   const warnings: string[] = [];
   const [{ data: rows, error: rowsError }, { data: org }] = await Promise.all([
     input.admin
@@ -84,6 +85,7 @@ export async function encodeImobiliareImages(input: {
   for (const row of eligible) {
     if (!row.storage_path) {
       warnings.push(`Poza ${eligible.indexOf(row) + 1} nu are fișier disponibil.`);
+      dataError = true;
       continue;
     }
     const watermarked = await ensureWatermarkedPath(input.admin, row.storage_path, cfg);
@@ -119,7 +121,7 @@ export async function encodeImobiliareImages(input: {
   if (images.length === 0) {
     warnings.push("Nicio imagine publicabilă nu a putut fi pregătită pentru Imobiliare.ro.");
   }
-  if (images.length !== expected) return { images, warnings, expected, transient };
+  if (images.length !== expected) return { images, warnings, expected, transient: transient && !dataError };
   try {
     return { images: fitImobiliareGallery(images), warnings, expected };
   } catch (error) {
