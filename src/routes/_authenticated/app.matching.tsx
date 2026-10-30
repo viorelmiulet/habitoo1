@@ -47,8 +47,9 @@ import { matchLabel, matchTone, scoreMatch, type MatchScore } from "@/lib/matchi
 import { downloadCsv, notifyOnce } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
 import { appHead } from "@/components/app/app-head";
-import { useActiveLeadSources } from "@/components/app/LeadMatches";
-import { buildLeadMatchRows, filterLeadRows, type LeadMatchRow } from "@/lib/lead-matching";
+import { LeadMatchesPanel, useActiveLeadSources } from "@/components/app/LeadMatches";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { buildLeadMatchRows, computeLeadMatches, filterLeadRows, type LeadMatchRow } from "@/lib/lead-matching";
 
 export const Route = createFileRoute("/_authenticated/app/matching")({
   head: () => { const title = "Habitoo CRM — potriviri"; const description = "Potrivirile dintre cererile clienților și proprietățile agenției."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -568,6 +569,20 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
         </div>
       </div>
 
+      <Tabs defaultValue="matches" className="mt-4">
+        <TabsList>
+          <TabsTrigger value="matches">Potriviri</TabsTrigger>
+          <TabsTrigger value="leads">Lead-uri active ({activeLeads.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="leads" className="mt-3">
+          <ActiveLeadsMatches
+            leads={activeLeads}
+            sourceById={leadSources?.sourceById}
+            properties={properties}
+            organization={me?.organization}
+          />
+        </TabsContent>
+        <TabsContent value="matches" className="mt-3">
       {isLoading ? (
         <div className="panel p-6">
           <p className="text-sm text-muted-foreground">Se calculează potrivirile…</p>
@@ -757,6 +772,9 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
         </div>
       )}
 
+        </TabsContent>
+      </Tabs>
+
       <ActivityDialog
         open={Boolean(activityFor)}
         onOpenChange={(open) => !open && setActivityFor(null)}
@@ -886,5 +904,53 @@ function LeadMatchCard({
         </Button>
       </div>
     </article>
+  );
+}
+
+function ActiveLeadsMatches({
+  leads,
+  sourceById,
+  properties,
+  organization,
+}: {
+  leads: Tables<"leads">[];
+  sourceById: Map<string, PropertyRow> | undefined;
+  properties: PropertyRow[];
+  organization: Parameters<typeof LeadMatchesPanel>[0]["organization"];
+}) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  if (leads.length === 0)
+    return <div className="panel p-6 text-sm text-muted-foreground">Niciun lead activ cu proprietate asociată.</div>;
+  return (
+    <ul className="panel divide-y divide-border">
+      {leads.map((lead) => {
+        const source = sourceById?.get(lead.property_id as string) ?? null;
+        const matches = source ? computeLeadMatches(source, properties) : [];
+        const open = openId === lead.id;
+        return (
+          <li key={lead.id} className="p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{lead.name}</p>
+                <p className="text-xs text-muted-foreground">din {source?.reference ?? "—"}</p>
+              </div>
+              <Button size="sm" variant={open ? "default" : "outline"} aria-expanded={open} onClick={() => setOpenId(open ? null : lead.id)}>
+                Potriviri ({matches.length})
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <Link to="/app/leads" search={{ lead: lead.id } as never}>
+                  <ExternalLink className="mr-1 size-3.5" /> Deschide lead
+                </Link>
+              </Button>
+            </div>
+            {open ? (
+              <div className="mt-3">
+                <LeadMatchesPanel lead={lead} data={{ source, matches }} isLoading={false} organization={organization} />
+              </div>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
