@@ -116,3 +116,30 @@ ${signature}`;
     </ul>
   );
 }
+
+/** Lead-urile active ale agenției și proprietățile lor sursă (orice status). */
+export function useActiveLeadSources(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ["lead-match-sources", orgId],
+    enabled: Boolean(orgId),
+    queryFn: async () => {
+      const { data: leads, error } = await supabase
+        .from("leads").select("*")
+        .eq("organization_id", orgId as string)
+        .not("property_id", "is", null)
+        .is("deleted_at", null)
+        .not("stage", "in", "(won,lost)")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      const ids = [...new Set((leads ?? []).map((l) => l.property_id as string))];
+      const sourceById = new Map<string, Tables<"properties">>();
+      for (let i = 0; i < ids.length; i += 100) {
+        const { data, error: e2 } = await supabase.from("properties").select("*").in("id", ids.slice(i, i + 100));
+        if (e2) throw e2;
+        for (const p of data ?? []) sourceById.set(p.id, p);
+      }
+      return { leads: leads ?? [], sourceById };
+    },
+  });
+}

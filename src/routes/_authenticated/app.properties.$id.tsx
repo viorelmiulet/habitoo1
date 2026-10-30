@@ -133,6 +133,8 @@ import {
 } from "@/lib/labels";
 import { activityStatusLabels, activityStatusTone, logAudit } from "@/lib/crm";
 import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
+import { useActiveLeadSources } from "@/components/app/LeadMatches";
+import { buildLeadMatchRows } from "@/lib/lead-matching";
 import { appHead } from "@/components/app/app-head";
 import { announceGuideContext } from "@/lib/onboarding-tour";
 
@@ -306,6 +308,7 @@ function PropertyDetailContent() {
   });
   const reassignFn = useServerFn(reassignProperties);
   const [draftAgent, setDraftAgent] = useState("");
+  const { data: leadSources } = useActiveLeadSources(orgId);
   const { data: responsibleAgent } = useQuery({
     queryKey: ["property-responsible-agent", property?.assigned_to],
     enabled: Boolean(property?.assigned_to),
@@ -659,6 +662,13 @@ function PropertyDetailContent() {
     .map((r) => ({ request: r, match: scoreMatch(r, property) }))
     .filter((m) => m.match.score >= 55)
     .sort((a, b) => b.match.score - a.match.score);
+  const leadMatches = leadSources
+    ? buildLeadMatchRows(
+        leadSources.leads.filter((l) => l.property_id !== property.id),
+        leadSources.sourceById,
+        [property],
+      )
+    : [];
 
   const activities = data?.activities ?? [];
   const upcoming = activities
@@ -912,7 +922,7 @@ function PropertyDetailContent() {
             ["overview", "Caracteristici"],
             ["media", `Fotografii (${data?.imageCount ?? 0})`],
             ["publishing", `Promovare (${publishedPortals}/${portalCells.length})`],
-            ["matching", `Matching (${matches.length})`],
+            ["matching", `Matching (${matches.length + leadMatches.length})`],
             ["documents", "Documente"],
             ["acp", "ACP"],
             ["history", "Istoric"],
@@ -1314,6 +1324,31 @@ function PropertyDetailContent() {
                     </StatusBadge>
                     <Button variant="outline" size="sm" asChild>
                       <Link to="/app/requests">Vezi cererea</Link>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="panel mt-4 overflow-hidden">
+            <p className="border-b border-border px-5 py-3 text-sm font-semibold">Lead-uri compatibile ({leadMatches.length})</p>
+            {leadMatches.length === 0 ? (
+              <p className="px-5 py-4 text-sm text-muted-foreground">Niciun lead de pe alte proprietăți nu se potrivește.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {leadMatches.map(({ key, lead, source, match }) => (
+                  <li key={key} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">Lead: {lead.name} · din {source.reference}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {match.reasons.join(" · ") || "Potrivire parțială"}
+                      </p>
+                    </div>
+                    <StatusBadge tone={matchTone(match.score)}>
+                      {match.score}% · {matchLabel(match.score)}
+                    </StatusBadge>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/app/leads" search={{ lead: lead.id } as never}>Deschide lead</Link>
                     </Button>
                   </li>
                 ))}

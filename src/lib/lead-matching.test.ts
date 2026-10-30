@@ -36,3 +36,37 @@ describe("lead matching", () => {
       .map((r) => r.property.id)).toEqual(["a"]);
   });
 });
+
+import { buildLeadMatchRows, filterLeadRows } from "./lead-matching";
+const lead = (o: Partial<Tables<"leads">>) =>
+  ({ id: "l", name: "Ana", phone: null, email: null, property_id: "s", deleted_at: null, stage: "new", assigned_to: "u1", ...o }) as Tables<"leads">;
+
+describe("lead rows pe pagina Matching", () => {
+  const s1 = prop({ id: "s" });
+  const s2 = prop({ id: "s2", price: 130000 });
+  const a = prop({ id: "a", price: 100000, assigned_to: "u9", city: "Cluj" } as never);
+  const src = new Map([["s", s1], ["s2", s2]]);
+  it("aceeași persoană apare o singură dată pe proprietate, cu scorul maxim", () => {
+    const rows = buildLeadMatchRows(
+      [lead({ id: "l1", phone: "+40 731 111 222" }), lead({ id: "l2", phone: "0731111222", property_id: "s2" })],
+      src, [a]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.lead.id).toBe("l1");
+  });
+  it("exclude proprietatea-sursă și lead-urile won/lost/șterse", () => {
+    const rows = buildLeadMatchRows(
+      [lead({ id: "l1" }), lead({ id: "l3", stage: "won", phone: "1234567" }), lead({ id: "l4", deleted_at: "x", email: "z@z" })],
+      src, [s1, a]);
+    expect(rows.map((r) => `${r.lead.id}:${r.property.id}`)).toEqual(["l1:a"]);
+  });
+  it("filtrele (agent = assigned_to lead, oraș, căutare, doar ale mele)", () => {
+    const rows = buildLeadMatchRows([lead({ id: "l1" })], src, [a]);
+    const base = { minScore: 60, agent: "all", city: "all", type: "all", onlyMineUserId: null, search: "" };
+    expect(filterLeadRows(rows, { ...base, agent: "u1" })).toHaveLength(1);
+    expect(filterLeadRows(rows, { ...base, agent: "u2" })).toHaveLength(0);
+    expect(filterLeadRows(rows, { ...base, city: "Iași" })).toHaveLength(0);
+    expect(filterLeadRows(rows, { ...base, search: "ana" })).toHaveLength(1);
+    expect(filterLeadRows(rows, { ...base, onlyMineUserId: "u2" })).toHaveLength(0);
+    expect(filterLeadRows(rows, { ...base, minScore: 101 })).toHaveLength(0);
+  });
+});

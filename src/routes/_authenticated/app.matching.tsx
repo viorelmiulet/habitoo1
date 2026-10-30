@@ -30,6 +30,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
@@ -45,6 +47,8 @@ import { matchLabel, matchTone, scoreMatch, type MatchScore } from "@/lib/matchi
 import { downloadCsv, notifyOnce } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
 import { appHead } from "@/components/app/app-head";
+import { useActiveLeadSources } from "@/components/app/LeadMatches";
+import { buildLeadMatchRows, filterLeadRows, type LeadMatchRow } from "@/lib/lead-matching";
 
 export const Route = createFileRoute("/_authenticated/app/matching")({
   head: () => { const title = "Habitoo CRM — potriviri"; const description = "Potrivirile dintre cererile clienților și proprietățile agenției."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -102,6 +106,7 @@ function MatchingPage() {
     propertyId?: string;
     requestId?: string;
     contactId?: string;
+    leadId?: string;
     title: string;
   } | null>(null);
 
@@ -163,6 +168,9 @@ function MatchingPage() {
       return data as ProfileRow[];
     },
   });
+
+  const { data: leadSources, isLoading: loadingLeads } = useActiveLeadSources(orgId);
+  const activeLeads = useMemo(() => leadSources?.leads ?? [], [leadSources]);
 
   const requestIds = useMemo(() => requests.map((r) => r.id), [requests]);
   const propertyIds = useMemo(() => properties.map((p) => p.id), [properties]);
@@ -254,10 +262,14 @@ function MatchingPage() {
     saved: boolean;
   };
 
+  const selectedLeadId = selectedRequestId?.startsWith("lead:") ? selectedRequestId.slice(5) : null;
+
   const allRows: Row[] = useMemo(() => {
     const rows: Row[] = [];
     if (mode === "request-to-property") {
-      const reqList = selectedRequestId
+      const reqList = selectedLeadId
+        ? []
+        : selectedRequestId
         ? requests.filter((r) => r.id === selectedRequestId)
         : requests;
       for (const request of reqList) {
@@ -288,7 +300,32 @@ function MatchingPage() {
       }
     }
     return rows;
-  }, [mode, requests, properties, selectedRequestId, selectedPropertyId, leadExists]);
+  }, [mode, requests, properties, selectedRequestId, selectedLeadId, selectedPropertyId, leadExists]);
+
+  const leadRows: LeadMatchRow[] = useMemo(() => {
+    if (!leadSources) return [];
+    if (mode === "request-to-property") {
+      if (selectedRequestId && !selectedLeadId) return [];
+      const list = selectedLeadId ? activeLeads.filter((l) => l.id === selectedLeadId) : activeLeads;
+      return buildLeadMatchRows(list, leadSources.sourceById, properties);
+    }
+    const props = selectedPropertyId ? properties.filter((p) => p.id === selectedPropertyId) : properties;
+    return buildLeadMatchRows(activeLeads, leadSources.sourceById, props);
+  }, [leadSources, activeLeads, mode, selectedRequestId, selectedLeadId, selectedPropertyId, properties]);
+
+  const filteredLeadRows = useMemo(
+    () =>
+      filterLeadRows(leadRows, {
+        minScore,
+        agent: agentFilter,
+        city: cityFilter,
+        type: typeFilter,
+        onlyMineUserId: onlyMine ? (userId ?? null) : null,
+        search,
+        ignored,
+      }),
+    [leadRows, minScore, agentFilter, cityFilter, typeFilter, onlyMine, userId, search, ignored],
+  );
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -314,7 +351,7 @@ function MatchingPage() {
       .slice(0, 200);
   }, [allRows, minScore, ignored, agentFilter, cityFilter, typeFilter, onlyMine, userId, search]);
 
-  function shareText(request: RequestRow, property: PropertyRow) {
+  function shareText(_request: RequestRow | null, property: PropertyRow) {
     return `Bună! Am o proprietate care s-ar putea potrivi: ${property.title}, preț ${formatMoney(
       property.price,
       property.currency,
@@ -339,7 +376,14 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
     );
   }
 
-  const isLoading = loadingRequests || loadingProperties;
+  const isLoading = loadingRequests || loadingProperties || loadingLeads;
+  type Item = { t: "request"; row: Row } | { t: "lead"; row: LeadMatchRow };
+  const items: Item[] = [
+    ...filteredRows.map((row) => ({ t: "request" as const, row })),
+    ...filteredLeadRows.map((row) => ({ t: "lead" as const, row })),
+  ]
+    .sort((a, b) => b.row.match.score - a.row.match.score)
+    .slice(0, 200);
 
   return (
     <>
@@ -350,10 +394,10 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
           !isLoading ? (
             <>
               <StatusBadge tone="primary" dot>
-                {filteredRows.length} potriviri afișate
+                {items.length} potriviri afișate
               </StatusBadge>
               <StatusBadge tone="neutral">
-                {requests.length} cereri · {properties.length} proprietăți
+                {requests.length} cereri · {activeLeads.length} lead-uri · {properties.length} proprietăți
               </StatusBadge>
             </>
           ) : undefined
@@ -403,11 +447,24 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toate cererile</SelectItem>
-                  {requests.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.title}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    <SelectLabel>Cereri</SelectLabel>
+                    {requests.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.title}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  {activeLeads.length > 0 ? (
+                    <SelectGroup>
+                      <SelectLabel>Lead-uri</SelectLabel>
+                      {activeLeads.map((l) => (
+                        <SelectItem key={l.id} value={`lead:${l.id}`}>
+                          {l.name} — din {leadSources?.sourceById.get(l.property_id as string)?.reference ?? "—"}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ) : null}
                 </SelectContent>
               </Select>
             </div>
@@ -515,7 +572,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
         <div className="panel p-6">
           <p className="text-sm text-muted-foreground">Se calculează potrivirile…</p>
         </div>
-      ) : filteredRows.length === 0 ? (
+      ) : items.length === 0 ? (
         <div className="panel">
           <EmptyState
             icon={Sparkles}
@@ -525,7 +582,22 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
         </div>
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
-          {filteredRows.map((row) => {
+          {items.map((item) => {
+            if (item.t === "lead") {
+              const lr = item.row;
+              return (
+                <LeadMatchCard
+                  key={lr.key}
+                  row={lr}
+                  text={shareText(null, lr.property)}
+                  onActivity={() =>
+                    setActivityFor({ propertyId: lr.property.id, leadId: lr.lead.id, title: `Vizionare: ${lr.property.title}` })
+                  }
+                  onIgnore={() => ignore(lr.key)}
+                />
+              );
+            }
+            const row = item.row;
             const contact = row.request.contact_id ? contactById.get(row.request.contact_id) : null;
             const text = shareText(row.request, row.property);
             const tone = matchTone(row.match.score);
@@ -698,10 +770,121 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                 propertyId: activityFor.propertyId,
                 requestId: activityFor.requestId,
                 contactId: activityFor.contactId,
+                leadId: activityFor.leadId,
               }
             : undefined
         }
       />
     </>
+  );
+}
+
+function LeadMatchCard({
+  row,
+  text,
+  onActivity,
+  onIgnore,
+}: {
+  row: LeadMatchRow;
+  text: string;
+  onActivity: () => void;
+  onIgnore: () => void;
+}) {
+  const tone = matchTone(row.match.score);
+  const phone = (row.lead.phone ?? "").replace(/[^0-9]/g, "");
+  return (
+    <article data-tour="matching-result" className="panel flex flex-col gap-4 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1 space-y-1">
+          <Link
+            to="/app/leads"
+            search={{ lead: row.lead.id } as never}
+            className="block truncate text-sm font-semibold hover:text-primary"
+          >
+            Lead: {row.lead.name} · din {row.source.reference}
+          </Link>
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ArrowRight className="size-3.5 shrink-0" aria-hidden />
+            <Link
+              to="/app/properties/$id"
+              params={{ id: row.property.id }}
+              className="truncate font-medium text-foreground hover:text-primary"
+            >
+              {row.property.title}
+            </Link>
+          </p>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <StatusBadge tone={propertyStatusTone[row.property.status]}>
+              {propertyStatusLabels[row.property.status]}
+            </StatusBadge>
+            <span className="text-xs text-muted-foreground">
+              {row.property.city ?? "—"} · {formatMoney(row.property.price, row.property.currency)}
+            </span>
+          </div>
+        </div>
+        <div
+          className={`grid size-16 shrink-0 place-items-center rounded-2xl text-center ${
+            tone === "success"
+              ? "bg-success/12 text-success"
+              : tone === "warning"
+                ? "bg-warning/18 text-warning-foreground"
+                : tone === "info"
+                  ? "bg-info/12 text-info"
+                  : "bg-muted text-muted-foreground"
+          }`}
+        >
+          <div>
+            <p className="text-lg leading-none font-semibold tabular-nums">{row.match.score}%</p>
+            <p className="mt-1 text-[10px] leading-none opacity-80">{matchLabel(row.match.score)}</p>
+          </div>
+        </div>
+      </div>
+      {row.match.reasons.length > 0 || row.match.misses.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {row.match.reasons.map((r) => (
+            <span key={`ok-${r}`} className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
+              <Check className="size-3" aria-hidden /> {r}
+            </span>
+          ))}
+          {row.match.misses.map((m) => (
+            <span key={`no-${m}`} className="inline-flex items-center gap-1 rounded-md bg-destructive/8 px-2 py-0.5 text-[11px] font-medium text-destructive">
+              <X className="size-3" aria-hidden /> {m}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
+        <Button size="sm" asChild>
+          <Link to="/app/leads" search={{ lead: row.lead.id } as never}>
+            <ExternalLink className="mr-1 size-3.5" /> Deschide lead
+          </Link>
+        </Button>
+        <Button size="sm" variant="outline" asChild>
+          <Link to="/app/properties/$id" params={{ id: row.property.id }}>
+            <ExternalLink className="mr-1 size-3.5" /> Deschide
+          </Link>
+        </Button>
+        {phone ? (
+          <Button size="sm" variant="outline" title="Trimite pe WhatsApp" aria-label="Trimite pe WhatsApp" asChild>
+            <a href={`https://wa.me/${phone}?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer">
+              <MessageCircle className="size-3.5" />
+            </a>
+          </Button>
+        ) : null}
+        {row.lead.email ? (
+          <Button size="sm" variant="outline" title="Trimite pe email" aria-label="Trimite pe email" asChild>
+            <a href={`mailto:${row.lead.email}?subject=${encodeURIComponent(`Proprietate potrivită: ${row.property.title}`)}&body=${encodeURIComponent(text)}`}>
+              <Mail className="size-3.5" />
+            </a>
+          </Button>
+        ) : null}
+        <Button size="sm" variant="outline" title="Programează vizionare" aria-label="Programează vizionare" onClick={onActivity}>
+          <CalendarPlus className="size-3.5" />
+        </Button>
+        <Button size="sm" variant="ghost" className="ml-auto text-muted-foreground" title="Ascunde potrivirea" aria-label="Ascunde potrivirea" onClick={onIgnore}>
+          <X className="size-3.5" />
+        </Button>
+      </div>
+    </article>
   );
 }

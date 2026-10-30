@@ -60,3 +60,72 @@ export function computeLeadMatches(source: Property, candidates: Property[]): Le
     .filter((r) => r.match.score >= LEAD_MATCH_MIN_SCORE)
     .sort((a, b) => b.match.score - a.match.score);
 }
+
+type Lead = Tables<"leads">;
+
+export type LeadMatchRow = { key: string; lead: Lead; source: Property; property: Property; match: MatchScore };
+
+/** Cheia persoanei: telefon (doar cifre, ultimele 9) sau email; altfel id-ul lead-ului. */
+export function leadPersonKey(lead: Pick<Lead, "id" | "phone" | "email">): string {
+  const digits = (lead.phone ?? "").replace(/\D/g, "");
+  if (digits.length >= 6) return `p:${digits.slice(-9)}`;
+  const email = (lead.email ?? "").trim().toLowerCase();
+  if (email) return `e:${email}`;
+  return `id:${lead.id}`;
+}
+
+/** Lead-uri active: cu proprietate, neșterse, etapa diferită de won/lost. */
+export function isActiveLead(l: Pick<Lead, "property_id" | "deleted_at" | "stage">) {
+  return Boolean(l.property_id) && !l.deleted_at && l.stage !== "won" && l.stage !== "lost";
+}
+
+/**
+ * Potrivirile tuturor lead-urilor active cu proprietățile candidate,
+ * deduplicate pe persoană și proprietate (rămâne scorul cel mai mare).
+ */
+export function buildLeadMatchRows(
+  leads: Lead[],
+  sourceById: Map<string, Property>,
+  candidates: Property[],
+): LeadMatchRow[] {
+  const best = new Map<string, LeadMatchRow>();
+  for (const lead of leads) {
+    if (!isActiveLead(lead)) continue;
+    const source = sourceById.get(lead.property_id as string);
+    if (!source) continue;
+    for (const { property, match } of computeLeadMatches(source, candidates)) {
+      const k = `${leadPersonKey(lead)}|${property.id}`;
+      const prev = best.get(k);
+      if (!prev || match.score > prev.match.score) {
+        best.set(k, { key: `lead:${lead.id}:${property.id}`, lead, source, property, match });
+      }
+    }
+  }
+  return [...best.values()].sort((a, b) => b.match.score - a.match.score);
+}
+
+export type LeadRowFilters = {
+  minScore: number;
+  agent: string;
+  city: string;
+  type: string;
+  onlyMineUserId: string | null;
+  search: string;
+  ignored?: Set<string>;
+};
+
+export function filterLeadRows(rows: LeadMatchRow[], f: LeadRowFilters): LeadMatchRow[] {
+  const q = f.search.trim().toLowerCase();
+  return rows.filter(
+    (r) =>
+      r.match.score >= f.minScore &&
+      !f.ignored?.has(r.key) &&
+      (f.agent === "all" || r.property.assigned_to === f.agent || r.lead.assigned_to === f.agent) &&
+      (f.city === "all" || r.property.city === f.city) &&
+      (f.type === "all" || r.property.property_type === f.type) &&
+      (!f.onlyMineUserId ||
+        r.lead.assigned_to === f.onlyMineUserId ||
+        r.property.assigned_to === f.onlyMineUserId) &&
+      (!q || r.lead.name.toLowerCase().includes(q) || r.property.title.toLowerCase().includes(q)),
+  );
+}
