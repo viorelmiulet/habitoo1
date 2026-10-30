@@ -587,17 +587,16 @@ export function wordCount(text: string): number {
 
 /**
  * Portalurile prezentate pe homepage: doar cele cu pagină publică în /integrari,
- * în ordinea din registru. OLX direct și portalurile acoperite de un grup nu apar separat;
- * cataloagele de promovare (Facebook) nu intră în grilă.
+ * în ordinea din registru, inclusiv brandurile acoperite și cataloagele disponibile.
  */
 export function homepagePortals(): { portal: PortalDefinition; label: string }[] {
-  const withPage = new Set(INTEGRATION_PAGES.map((p) => p.portalId));
-  return PORTALS.filter(
+  const coveredIds = new Set(PORTAL_GROUPS
+    .filter((group) => PORTALS.some((portal) => portal.id === group.primary && portal.status === "available"))
+    .flatMap((group) => group.covers));
+  return [...PORTALS, ...PROMOTION_CATALOGS].filter(
     (portal) =>
-      portal.status === "available" &&
-      !isPortalCovered(portal.id) &&
-      portal.id !== "olx_direct" &&
-      withPage.has(portal.id),
+      (portal.status === "available" || coveredIds.has(portal.id)) &&
+      integrationSlugFor(portal.id) !== null,
   ).map((portal) => ({
     portal,
     label: PORTAL_GROUPS.find((g) => g.primary === portal.id)?.label ?? portal.display_name,
