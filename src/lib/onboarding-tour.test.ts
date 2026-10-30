@@ -17,7 +17,7 @@ describe("potrivirea căilor și a contextelor", () => {
   });
   it("ghidurile contextuale se găsesc pe filă, în ordinea declarată", () => {
     expect(guidesForContext("/app/properties/abc", "property-tab:media").map((g) => g.id)).toEqual(["property-media"]);
-    expect(guidesForContext("/app/properties/abc", "property-tab:publishing").map((g) => g.id)).toEqual(["property-publishing", "property-promotions"]);
+    expect(guidesForContext("/app/properties/abc", "property-tab:publishing").map((g) => g.id)).toEqual(["property-publishing", "property-promotions", "property-video-social"]);
     expect(guidesForContext("/app/properties/abc", "property-tab:leads").map((g) => g.id)).toEqual(["property-leads"]);
     expect(guidesForContext("/app/properties/abc", "property:editing").map((g) => g.id)).toEqual(["property-edit"]);
     expect(guidesForContext("/app/collaboration", "property-tab:media")).toEqual([]);
