@@ -32,7 +32,7 @@ import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
 import { unarchiveProperty } from "@/lib/property-archive.functions";
 import { toastError } from "@/lib/errors";
-import { FormSection, RequiredMark } from "@/components/app/FormSection";
+import { FormRow, FormSection } from "@/components/app/FormSection";
 import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -1304,7 +1304,7 @@ function PropertyDetailContent() {
           {tab === "publishing" ? <div className="pt-4" data-tour="property-promotion">
           <PropertyPromotionTab
             propertyId={id}
-            onOpenPublishing={() => portalsRef.current?.scrollIntoView?.({ behavior: "smooth" })}
+            onOpenPublishing={() => document.querySelector('[data-tour="property-publishing"]')?.scrollIntoView({ behavior: "smooth" })}
             onOpenPoster={() => setSocialPosterOpen(true)}
             video={{
               title: property.title ?? "",

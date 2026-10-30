@@ -130,7 +130,7 @@ const guideDefinitions: GuideDefinition[] = [
     { id: "promoted", title: "Bifa Promovat", text: "Portalurile cu promovare simplă au bifa Promovat pe card, tot aplicată la publicare." },
     { id: "stop", title: "Tu confirmi promovarea", text: "Ghidul se oprește aici, înainte de orice confirmare. Promovarea se cumpără doar prin publicarea făcută de tine." },
   ]},
-  { id: "property-video-social", title: "Video și social", group: "Portofoliu", path: PROPERTY, roles: agencyRoles, context: "property-tab:promotion", steps: [
+  { id: "property-video-social", title: "Video și social", group: "Portofoliu", path: PROPERTY, roles: agencyRoles, context: "property-tab:publishing", steps: [
     { id: "welcome", title: "Video și social", text: "De aici promovezi anunțul pe rețele sociale. Nu postăm și nu publicăm nimic." },
     { id: "cards", title: "Ce poți crea", text: "Poster pentru feed sau story, video de prezentare și postări directe pe rețelele conectate.", selector: '[data-tour="social-cards"]' },
     { id: "video", title: "Video-ul proprietății", text: "Video-ul se generează din fotografii, cu animații. La generare alegi și muzica clipului din bibliotecă." },
