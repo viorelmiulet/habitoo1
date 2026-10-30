@@ -63,7 +63,11 @@ import { leadFormForProperty, leadMatchesPropertyFilter } from "@/lib/lead-prope
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
   head: () => { const title = "Habitoo CRM — lead-uri"; const description = "Pipeline de lead-uri al agenției, cu filtre pe agent, sursă, campanie și etapă."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
-  validateSearch: (search: Record<string, unknown>) => ({ ...validateListSearch(leadListDefaults, search), proprietate: typeof search.proprietate === "string" && search.proprietate ? search.proprietate : undefined }),
+  validateSearch: (search: Record<string, unknown>): ReturnType<typeof validateListSearch<typeof leadListDefaults>> & { proprietate?: string } => {
+    const result: ReturnType<typeof validateListSearch<typeof leadListDefaults>> & { proprietate?: string } = validateListSearch(leadListDefaults, search);
+    if (typeof search.proprietate === "string" && search.proprietate) result.proprietate = search.proprietate;
+    return result;
+  },
   component: LeadsPage,
 });
 
