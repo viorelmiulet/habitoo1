@@ -1,6 +1,6 @@
 ## Promovare — încadrare social și carduri compacte
-- [ ] Editor + previzualizare 360px, miniaturi fără depășire, portaluri 3/4 coloane cu toate controalele păstrate
-- [ ] Capturi autentificate 1440/1920/390 și comparație controale înainte/după
+- [x] Editor + previzualizare 360px, miniaturi fără depășire, portaluri 3/4 coloane cu toate controalele păstrate
+- [x] Capturi autentificate HB-1271 la 1440/1920/390: fără depășire, 3/4/1 coloane; inventarul butoanelor și opțiunilor identic înainte/după; 40 teste trec, build OK. Fără publicări sau modificări de date.
 
 ## Caracteristici — panouri echilibrate și numai Carduri
 - [x] Detalii lângă Suprafețe/Clădire suprapuse; eliminare căutare, mod În linie și preferința veche, aceeași componentă la creare
