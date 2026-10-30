@@ -276,7 +276,7 @@ export function PropertyPromotionTab({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 max-w-full space-y-6">
       <section className="space-y-4" data-tour="social-cards">
         <h2 className="font-sans text-lg font-bold">Promovează proprietatea pe rețelele sociale</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="promotion-cards">
@@ -389,7 +389,7 @@ export function PropertyPromotionTab({
         </DialogContent>
       </Dialog>
 
-      <div className="panel space-y-5 p-5">
+      <div className="panel min-w-0 max-w-full space-y-5 p-4 sm:p-5">
         <div>
           <h3 className="font-medium" data-tour="social-post">Postare pe rețele sociale</h3>
           <p className="text-sm text-muted-foreground">
@@ -417,8 +417,8 @@ export function PropertyPromotionTab({
           ))}
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-          <div className="space-y-4">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-5 min-[1280px]:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <Label htmlFor="social-text">Text postare</Label>
@@ -451,7 +451,7 @@ export function PropertyPromotionTab({
               {d.photos.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Anunțul nu are fotografii publicabile.</p>
               ) : (
-                <div className="flex gap-2 overflow-x-auto pb-1">
+                <div className="flex min-w-0 max-w-full flex-wrap gap-2 pb-1">
                   {d.photos.map((p) => {
                     const idx = selected.indexOf(p.id);
                     return (
@@ -476,7 +476,7 @@ export function PropertyPromotionTab({
               )}
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap [&>button]:max-w-full [&>button]:whitespace-normal">
               <Button variant="outline" onClick={copyText}><Copy className="size-4" /> Copiază textul</Button>
               <Button variant="outline" onClick={downloadZip} disabled={zipping || selected.length === 0}>
                 <Download className="size-4" /> Descarcă fotografiile (ZIP)
@@ -504,7 +504,7 @@ export function PropertyPromotionTab({
             ) : null}
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-border" aria-label="Previzualizare postare">
+          <div className="w-full min-w-0 max-w-[360px] overflow-hidden rounded-card border border-border [overflow-wrap:anywhere]" aria-label="Previzualizare postare">
             <p className="px-3 py-2 text-sm font-semibold">{d.agencyName}</p>
             {firstPhoto ? <img src={firstPhoto} alt="" className="aspect-square w-full object-cover" /> : <div className="aspect-square w-full bg-muted" />}
             <p className="max-h-64 overflow-y-auto whitespace-pre-line px-3 py-2 text-sm">{text}</p>
