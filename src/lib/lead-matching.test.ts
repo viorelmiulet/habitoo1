@@ -70,3 +70,18 @@ describe("lead rows pe pagina Matching", () => {
     expect(filterLeadRows(rows, { ...base, minScore: 101 })).toHaveLength(0);
   });
 });
+
+import { countLeadMatchesForProperty } from "./lead-matching";
+describe("notificare după salvarea proprietății", () => {
+  const target = prop({ id: "t" });
+  const src = new Map([["s", prop({ id: "s" })], ["t", target]]);
+  it("numără lead-urile compatibile de pe alte proprietăți", () => {
+    expect(countLeadMatchesForProperty(target, [lead({ id: "l1", phone: "0711111111" }), lead({ id: "l2", phone: "0722222222" })], src)).toBe(2);
+  });
+  it("exclude lead-urile intrate chiar pe proprietate", () => {
+    expect(countLeadMatchesForProperty(target, [lead({ id: "l1", property_id: "t" })], src)).toBe(0);
+  });
+  it("0 când nu se potrivește (altă tranzacție)", () => {
+    expect(countLeadMatchesForProperty(prop({ id: "t", transaction_kind: "rent" }), [lead({ id: "l1" })], src)).toBe(0);
+  });
+});

@@ -8,7 +8,8 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { formatMoney } from "@/lib/format";
 import { matchLabel, matchTone } from "@/lib/matching";
-import { computeLeadMatches, LEAD_MATCH_STATUSES, type LeadMatch } from "@/lib/lead-matching";
+import { toast } from "@/components/ui/sonner";
+import { computeLeadMatches, countLeadMatchesForProperty, LEAD_MATCH_STATUSES, type LeadMatch } from "@/lib/lead-matching";
 import { brandingFromOrg, materialSignature } from "@/lib/materials";
 
 type Lead = Tables<"leads">;
@@ -122,7 +123,29 @@ export function useActiveLeadSources(orgId: string | undefined) {
   return useQuery({
     queryKey: ["lead-match-sources", orgId],
     enabled: Boolean(orgId),
-    queryFn: async () => {
+    queryFn: () => fetchActiveLeadSources(orgId as string),
+  });
+}
+
+/** După salvare: notificare „N lead-uri se potrivesc…" cu „Vezi"; nimic dacă N = 0. */
+export async function notifyLeadMatchesForProperty(propertyId: string, orgId: string | undefined, onView: () => void) {
+  if (!orgId) return;
+  try {
+    const [{ data: property }, sources] = await Promise.all([
+      supabase.from("properties").select("*").eq("id", propertyId).maybeSingle(),
+      fetchActiveLeadSources(orgId),
+    ]);
+    if (!property) return;
+    const n = countLeadMatchesForProperty(property, sources.leads, sources.sourceById);
+    if (n > 0) toast(`${n} ${n === 1 ? "lead se potrivește" : "lead-uri se potrivesc"} cu această proprietate`, { action: { label: "Vezi", onClick: onView }, duration: 10000 });
+  } catch {
+    // Notificarea e opțională; salvarea a reușit deja.
+  }
+}
+
+async function fetchActiveLeadSources(orgId: string) {
+  {
+    {
       const { data: leads, error } = await supabase
         .from("leads").select("*")
         .eq("organization_id", orgId as string)
@@ -140,6 +163,6 @@ export function useActiveLeadSources(orgId: string | undefined) {
         for (const p of data ?? []) sourceById.set(p.id, p);
       }
       return { leads: leads ?? [], sourceById };
-    },
-  });
+    }
+  }
 }
