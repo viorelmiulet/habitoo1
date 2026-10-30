@@ -11,6 +11,15 @@ describe("fila Promovare a fișei", () => {
   it("fără tab cunoscut se deschide Prezentare", () => {
     expect(propertyTabFromSearch(undefined)).toBe("overview");
   });
+  it("Localizare este înaintea Prezentării și salvează localizarea prin aceeași funcție", () => {
+    expect(propertyTabFromSearch("location")).toBe("location");
+    expect(page.indexOf('["location", "Localizare"]')).toBeLessThan(page.indexOf('["overview", "Prezentare"]'));
+    const location = page.slice(page.indexOf('<TabsContent value="location"'), page.indexOf('<TabsContent value="overview"'));
+    for (const id of ['id="district"', 'id="address"', 'id="postal_code"', "<LocationPicker", "<PropertyLocationMap"]) expect(location).toContain(id);
+    expect(location).toContain("save.mutate(buildEditPatch())");
+    expect(page).toContain('if (tab !== "location") setTab("overview")');
+    expect(page).toContain("Locație</h2>");
+  });
   it("fila conține portalurile și instrumentele de promovare; nu mai există fila veche", () => {
     const tab = page.slice(page.indexOf('value="publishing"'), page.indexOf('<TabsContent value="history">'));
     expect(tab).toContain("<PropertyPortalsCard");

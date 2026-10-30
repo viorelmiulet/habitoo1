@@ -169,6 +169,14 @@ describe("formularul fără acordeon", () => {
     const missing = PROPERTY_DETAIL_FIELDS.filter((f) => f !== "floor" && !ids.some((id) => id === `det-${f}` || id.startsWith(`det-${f}-`)));
     expect(missing).toEqual([]);
     expect(container.querySelector("[data-orientation=vertical][data-state=closed]:not([role=combobox])")).toBeNull();
+    const headings = Array.from(container.querySelectorAll("h2")).map((n) => n.textContent);
+    expect(headings).toEqual(["Detalii", "Suprafețe", "Clădire", "Utilități", "Finisaje", "Dotări"]);
+    expect(container.textContent).toContain("Înălțime");
+    expect(container.textContent).toContain("Carduri");
+    expect(container.textContent).toContain("În linie");
+    const order = Array.from(container.querySelectorAll("[id^='det-']")).map((n) => n.id.replace(/^det-/, "").replace(/-.+$/, ""));
+    const firstSeen = [...new Set(order)].filter((field) => PROPERTY_DETAIL_FIELDS.includes(field as never));
+    expect(firstSeen).toEqual(PROPERTY_DETAIL_FIELDS.filter((f) => f !== "floor"));
     await act(async () => root.unmount());
   });
 });
