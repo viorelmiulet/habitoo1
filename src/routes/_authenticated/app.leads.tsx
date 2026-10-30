@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Flame,
   Phone,
@@ -56,6 +56,7 @@ import { PortalLogo, hasPortalLogo } from "@/components/app/PortalLogo";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { cn } from "@/lib/utils";
+import { LeadMatchesPanel, useLeadMatches } from "@/components/app/LeadMatches";
 import { useFilterList } from "@/hooks/use-list-state";
 import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
@@ -63,8 +64,9 @@ import { leadFormForProperty, leadMatchesPropertyFilter } from "@/lib/lead-prope
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
   head: () => { const title = "Habitoo CRM — lead-uri"; const description = "Pipeline de lead-uri al agenției, cu filtre pe agent, sursă, campanie și etapă."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
-  validateSearch: (search: Record<string, unknown>): ReturnType<typeof validateListSearch<typeof leadListDefaults>> & { proprietate?: string } => {
-    const result: ReturnType<typeof validateListSearch<typeof leadListDefaults>> & { proprietate?: string } = validateListSearch(leadListDefaults, search);
+  validateSearch: (search: Record<string, unknown>): ReturnType<typeof validateListSearch<typeof leadListDefaults>> & { proprietate?: string; lead?: string } => {
+    const result: ReturnType<typeof validateListSearch<typeof leadListDefaults>> & { proprietate?: string; lead?: string } = validateListSearch(leadListDefaults, search);
+    if (typeof search.lead === "string" && search.lead) result.lead = search.lead;
     if (typeof search.proprietate === "string" && search.proprietate) result.proprietate = search.proprietate;
     return result;
   },
@@ -159,7 +161,7 @@ function LeadsPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { data: user } = useCurrentUser();
   const persisted = useFilterList("leads", user?.userId, leadListDefaults, urlSearch,
-    (next) => { void navigate({ search: { ...next, proprietate: propertyFilter }, replace: true, resetScroll: false }); });
+    (next) => { void navigate({ search: { ...next, proprietate: propertyFilter, lead: urlSearch.lead }, replace: true, resetScroll: false }); });
   const stageParam = (leadStages as readonly string[]).includes(persisted.state.stage) ? persisted.state.stage : "";
   // Etapa primită din dashboard restrânge board-ul la o singură coloană.
   const columns = stageParam ? [stageParam as LeadStage] : allColumns;
@@ -201,6 +203,14 @@ function LeadsPage() {
       return data as Lead[];
     },
   });
+
+  const leadParam = urlSearch.lead;
+  useEffect(() => {
+    if (!leadParam) return;
+    const found = leads.find((l) => l.id === leadParam);
+    if (found) setDetailLead(found);
+  }, [leadParam, leads]);
+  const leadMatches = useLeadMatches(detailLead, orgId);
 
   const { data: agents = [] } = useQuery({
     queryKey: ["profiles", "org", orgId],
@@ -1017,7 +1027,11 @@ function LeadsPage() {
           setDeleteLeadId(null);
         }}
       />
-      <Sheet open={Boolean(detailLead)} onOpenChange={(v) => !v && setDetailLead(null)}>
+      <Sheet open={Boolean(detailLead)} onOpenChange={(v) => {
+        if (v) return;
+        setDetailLead(null);
+        if (leadParam) void navigate({ search: (prev) => ({ ...prev, lead: undefined }), replace: true });
+      }}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           {detailLead ? (
             <div className="space-y-5 px-1">
@@ -1182,7 +1196,19 @@ function LeadsPage() {
                       </span>
                     ) : null}
                   </TabsTrigger>
+                  <TabsTrigger value="matches">
+                    Potriviri ({leadMatches.data?.matches.length ?? 0})
+                  </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="matches" className="mt-3">
+                  <LeadMatchesPanel
+                    lead={detailLead}
+                    data={leadMatches.data}
+                    isLoading={leadMatches.isLoading}
+                    organization={user?.organization}
+                  />
+                </TabsContent>
 
                 <TabsContent value="history" className="mt-3">
                   {timelineItems.length === 0 ? (
