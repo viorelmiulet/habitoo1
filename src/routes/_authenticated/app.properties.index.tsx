@@ -747,9 +747,9 @@ function PropertiesPage() {
         ) : null}
 
         <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
-          <div data-tour="properties-views" className="inline-flex w-fit overflow-hidden rounded-[4px] border border-border bg-muted">
+          <div data-tour="properties-views" className="inline-flex w-fit max-w-full overflow-x-auto rounded-[4px] border border-border bg-muted">
             {([["list", "Afișare în Listă", List], ["grid", "Carduri", LayoutGrid], ["publish", "Publicare", Send]] as const).map(([key, label, Icon]) => (
-              <button key={key} type="button" data-tour={key === "publish" ? "properties-view-publish" : undefined} aria-pressed={view === key} onClick={() => setView(key)} className={cn("inline-flex h-10 items-center gap-2 border-r border-border px-4 text-[15px] last:border-r-0", view === key ? "bg-foreground/10 font-medium text-foreground" : "text-foreground/80 hover:bg-foreground/5")}>
+              <button key={key} type="button" data-tour={key === "publish" ? "properties-view-publish" : undefined} aria-pressed={view === key} onClick={() => setView(key)} className={cn("inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap border-r border-border px-4 text-[15px] last:border-r-0", view === key ? "bg-foreground/10 font-medium text-foreground" : "text-foreground/80 hover:bg-foreground/5")}>
                 <Icon className="size-4" aria-hidden /> {label}
               </button>
             ))}
@@ -757,7 +757,7 @@ function PropertiesPage() {
           <div className="justify-self-start rounded-full border border-border bg-surface px-8 py-2 text-[15px] text-foreground/80 md:justify-self-center">
             Pagina {Math.min(page + 1, totalPages)}/{totalPages}, {total} rezultate
           </div>
-          <div data-tour="properties-order" className="flex items-center gap-2 justify-self-start md:justify-self-end">
+          <div data-tour="properties-order" className="flex flex-wrap items-center gap-2 justify-self-start md:justify-self-end">
             <PageSizeSelect value={PAGE_SIZE} onChange={changePageSize} />
             <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
               <SelectTrigger aria-label="Sortare" className="h-10 w-auto gap-2 rounded-[4px] border-border bg-surface px-4 text-[15px] shadow-none"><SelectValue /></SelectTrigger>

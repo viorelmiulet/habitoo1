@@ -57,8 +57,8 @@ const triggerBase = cn(fieldBase, "relative justify-center pr-7 text-center font
 
 function Row({ label, htmlFor, children, advanced, expanded }: { label: string; htmlFor?: string; children: ReactNode; advanced?: boolean; expanded?: boolean }) {
   return (
-    <div data-filter-row={label} className={cn("grid grid-cols-1 gap-1 md:grid-cols-[minmax(84px,140px)_minmax(0,220px)] md:items-center md:gap-3", advanced && !expanded && "hidden md:grid")}>
-      <label htmlFor={htmlFor} className="text-[15px] font-normal text-foreground/80 md:text-right">{label}</label>
+    <div data-filter-row={label} className={cn("grid grid-cols-1 gap-1 md:grid-cols-[minmax(0,140px)_minmax(150px,220px)] md:items-center md:gap-3 xl:gap-2", advanced && !expanded && "hidden md:grid")}>
+      <label htmlFor={htmlFor} className="text-[15px] font-normal text-foreground/80 md:truncate md:text-right">{label}</label>
       <div className="min-w-0">{children}</div>
     </div>
   );
@@ -67,10 +67,10 @@ function Row({ label, htmlFor, children, advanced, expanded }: { label: string; 
 function Range({ idPrefix, label, min, max, onMin, onMax, type = "text", format }: { idPrefix: string; label: string; min: string; max: string; onMin: (v: string) => void; onMax: (v: string) => void; type?: "text" | "date"; format?: (v: string) => string }) {
   const show = format ?? ((v: string) => v);
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5">
-      <input id={idPrefix} aria-label={`${label} de la`} type={type} inputMode={type === "text" ? "numeric" : undefined} value={show(min)} onChange={(e) => onMin(e.target.value)} className={cn(fieldBase, "px-1.5", min && valued)} />
+    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
+      <input id={idPrefix} aria-label={`${label} de la`} type={type} inputMode={type === "text" ? "numeric" : undefined} value={show(min)} onChange={(e) => onMin(e.target.value)} className={cn(fieldBase, "px-1 text-[13px] [&::-webkit-calendar-picker-indicator]:hidden", min && valued)} />
       <span className="text-foreground/70">-</span>
-      <input aria-label={`${label} până la`} type={type} inputMode={type === "text" ? "numeric" : undefined} value={show(max)} onChange={(e) => onMax(e.target.value)} className={cn(fieldBase, "px-1.5", max && valued)} />
+      <input aria-label={`${label} până la`} type={type} inputMode={type === "text" ? "numeric" : undefined} value={show(max)} onChange={(e) => onMax(e.target.value)} className={cn(fieldBase, "px-1 text-[13px] [&::-webkit-calendar-picker-indicator]:hidden", max && valued)} />
     </div>
   );
 }
@@ -177,7 +177,7 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
               <Popover>
                 <PopoverTrigger asChild>
                   <button type="button" id="pf-statuses" className={cn(fieldBase, "relative flex items-center justify-center pr-7", draft.statuses && valued)}>
-                    <span>{statuses.length} selectate</span>
+                    <span className="whitespace-nowrap">{statuses.length} selectate</span>
                     <ChevronDown aria-hidden className="absolute right-2 size-3.5 opacity-80" />
                   </button>
                 </PopoverTrigger>
@@ -251,7 +251,7 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
             {props.savedLinks}
             <button type="button" onClick={onReset} className="text-[15px] text-primary hover:underline">Resetează toate filtrele</button>
           </div>
-          <div className="grid grid-cols-1 md:w-[220px] xl:w-auto xl:grid-cols-[minmax(84px,140px)_minmax(0,220px)] xl:gap-3">
+          <div className="grid grid-cols-1 md:w-[220px] xl:w-auto xl:grid-cols-[minmax(0,140px)_minmax(150px,220px)] xl:gap-2">
             <span aria-hidden className="hidden xl:block" />
             <button type="submit" className="h-[38px] w-full rounded-[4px] bg-primary text-[15px] font-medium text-primary-foreground hover:bg-primary/90">Caută</button>
           </div>
