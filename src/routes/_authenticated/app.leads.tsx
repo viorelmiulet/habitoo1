@@ -59,10 +59,11 @@ import { cn } from "@/lib/utils";
 import { useFilterList } from "@/hooks/use-list-state";
 import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
+import { leadFormForProperty, leadMatchesPropertyFilter } from "@/lib/lead-property-filter";
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
   head: () => { const title = "Habitoo CRM — lead-uri"; const description = "Pipeline de lead-uri al agenției, cu filtre pe agent, sursă, campanie și etapă."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
-  validateSearch: (search: Record<string, unknown>) => validateListSearch(leadListDefaults, search),
+  validateSearch: (search: Record<string, unknown>) => ({ ...validateListSearch(leadListDefaults, search), proprietate: typeof search.proprietate === "string" && search.proprietate ? search.proprietate : undefined }),
   component: LeadsPage,
 });
 
@@ -150,11 +151,11 @@ const leadListDefaults = { stage: "", onlyMine: false, q: "", agent: "all", sour
 
 function LeadsPage() {
   const urlSearch = Route.useSearch();
-  const { new: openNew } = urlSearch;
+  const { new: openNew, proprietate: propertyFilter } = urlSearch;
   const navigate = useNavigate({ from: Route.fullPath });
   const { data: user } = useCurrentUser();
   const persisted = useFilterList("leads", user?.userId, leadListDefaults, urlSearch,
-    (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
+    (next) => { void navigate({ search: { ...next, proprietate: propertyFilter }, replace: true, resetScroll: false }); });
   const stageParam = (leadStages as readonly string[]).includes(persisted.state.stage) ? persisted.state.stage : "";
   // Etapa primită din dashboard restrânge board-ul la o singură coloană.
   const columns = stageParam ? [stageParam as LeadStage] : allColumns;
@@ -212,8 +213,8 @@ function LeadsPage() {
   });
 
   const propertyIds = useMemo(
-    () => Array.from(new Set(leads.map((l) => l.property_id).filter(Boolean))) as string[],
-    [leads],
+    () => Array.from(new Set([...leads.map((l) => l.property_id), propertyFilter].filter(Boolean))) as string[],
+    [leads, propertyFilter],
   );
   const { data: properties = [] } = useQuery({
     queryKey: ["properties", "for-leads", propertyIds],
@@ -221,7 +222,7 @@ function LeadsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("properties")
-        .select("id,title")
+        .select("id,title,reference")
         .in("id", propertyIds);
       if (error) throw error;
       return data;
@@ -319,7 +320,7 @@ function LeadsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm(emptyForm());
+    setForm(leadFormForProperty(emptyForm(), propertyFilter));
     setOpen(true);
   };
 
@@ -494,6 +495,7 @@ function LeadsPage() {
   );
 
   const visible = leads.filter((l) => {
+    if (!leadMatchesPropertyFilter(l, propertyFilter)) return false;
     if (onlyMine && l.assigned_to !== user?.userId) return false;
     if (agentFilter !== "all" && l.assigned_to !== agentFilter) return false;
     if (sourceFilter !== "all" && l.source !== sourceFilter) return false;
@@ -545,6 +547,11 @@ function LeadsPage() {
       />
 
       <div data-tour="leads-filters" className="panel flex flex-wrap items-center gap-2 p-3">
+        {propertyFilter ? (
+          <Button variant="secondary" size="sm" aria-label="Scoate filtrul de proprietate" onClick={() => void navigate({ search: (prev) => ({ ...prev, proprietate: undefined }) })}>
+            Proprietate: {properties.find((p) => p.id === propertyFilter)?.reference ?? "…"} ×
+          </Button>
+        ) : null}
         <Input
           data-tour="leads-search"
           placeholder="Caută nume, telefon, email…"
