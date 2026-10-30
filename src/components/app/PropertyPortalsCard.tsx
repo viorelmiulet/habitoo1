@@ -682,7 +682,7 @@ export const PropertyPortalsCard = forwardRef<
               className="mb-3 rounded-2xl border border-destructive bg-destructive/5 p-3 text-sm"
             />
           ) : null}
-          <ul data-tour="publishing-portals" className="grid min-w-0 grid-cols-1 items-start gap-3 md:grid-cols-2 min-[1280px]:grid-cols-3 min-[1536px]:grid-cols-4 [&_button]:max-w-full [&_button]:whitespace-normal [&_button]:text-xs [&_button:not([role=checkbox]):not([role=radio])]:h-auto [&_button:not([role=checkbox]):not([role=radio])]:min-h-7 [&_button:not([role=checkbox]):not([role=radio])]:px-2 [&_button:not([role=checkbox]):not([role=radio])]:py-1 [&_input]:h-8">
+          <ul data-tour="publishing-portals" className="grid min-w-0 grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 [&_button]:max-w-full [&_button]:whitespace-normal [&_button]:text-xs [&_button:not([role=checkbox]):not([role=radio])]:h-auto [&_button:not([role=checkbox]):not([role=radio])]:min-h-7 [&_button:not([role=checkbox]):not([role=radio])]:px-2 [&_button:not([role=checkbox]):not([role=radio])]:py-1 [&_input]:h-8">
             <li className="min-w-0">
               <Card className={cn("relative min-w-0 gap-3 bg-surface p-3 text-sm", fbValue && "border-gold ring-1 ring-gold/40", fbState.key === "excluded" && "bg-warning/10")}>
                 <label htmlFor="portal-facebook-catalog" aria-label="Catalog Facebook" className={cn("absolute inset-0 z-0", editing && canManage && canEditFacebookCatalog && !fb.isLoading ? "cursor-pointer" : "cursor-default")} />
