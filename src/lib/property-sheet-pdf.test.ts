@@ -8,7 +8,7 @@ describe("imagini fișă PDF", () => {
   it("convertește în data URL redimensionat la max 1600 px", async () => {
     let seenMax = 0;
     const url = await imageToDataUrl("https://x/a.jpg", {
-      fetchImpl: (async () => new Response(new Blob(["x"], { type: "image/jpeg" }))) as typeof fetch,
+      fetchImpl: (async () => ({ ok: true, blob: async () => new Blob(["x"], { type: "image/jpeg" }) })) as unknown as typeof fetch,
       rasterize: async (_b, max) => { seenMax = max; return "data:image/jpeg;base64,AAA"; },
     });
     expect(url).toBe("data:image/jpeg;base64,AAA");
