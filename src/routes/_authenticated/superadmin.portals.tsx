@@ -110,13 +110,13 @@ function SuperadminPortalsPage() {
 
       {organizationId ? (
         <div className="mt-6 space-y-6">
+          <PortalsCard organizationId={organizationId} onSelectedChange={setSelectedPortal} />
           <PortalActivationRequestsCard
             onOpenOrganization={(orgId) => {
               setOrganizationId(orgId);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
-          <PortalsCard organizationId={organizationId} onSelectedChange={setSelectedPortal} />
         </div>
       ) : null}
     </>
