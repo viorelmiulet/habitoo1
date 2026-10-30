@@ -262,6 +262,8 @@ function MatchingPage() {
     saved: boolean;
   };
 
+  const selectedLeadId = selectedRequestId?.startsWith("lead:") ? selectedRequestId.slice(5) : null;
+
   const allRows: Row[] = useMemo(() => {
     const rows: Row[] = [];
     if (mode === "request-to-property") {
@@ -299,8 +301,6 @@ function MatchingPage() {
     }
     return rows;
   }, [mode, requests, properties, selectedRequestId, selectedLeadId, selectedPropertyId, leadExists]);
-
-  const selectedLeadId = selectedRequestId?.startsWith("lead:") ? selectedRequestId.slice(5) : null;
 
   const leadRows: LeadMatchRow[] = useMemo(() => {
     if (!leadSources) return [];
