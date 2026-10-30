@@ -115,7 +115,7 @@ function ComparisonBody({ comparison }: { comparison: AcpVersionComparison }) {
         </table>
       </div>
 
-      <div>
+      {comparison.sources.length > 0 ? <div>
         <h4 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
           Surse și oferte (găsite / folosite / excluse)
         </h4>
@@ -132,11 +132,8 @@ function ComparisonBody({ comparison }: { comparison: AcpVersionComparison }) {
               </span>
             </li>
           ))}
-          {comparison.sources.length === 0 ? (
-            <li className="text-muted-foreground">Nicio sursă înregistrată.</li>
-          ) : null}
         </ul>
-      </div>
+      </div> : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div>

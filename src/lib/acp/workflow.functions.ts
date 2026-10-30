@@ -209,7 +209,9 @@ export const getPropertyAcpWorkflow = createServerFn({ method: "POST" })
       .limit(1);
     const report = (reportRows ?? [])[0] ?? null;
 
-    const sources = Object.entries((latest.sources as Record<string, boolean> | null) ?? {})
+    const { canReadAcpSourceDiagnostics } = await import("./source-visibility");
+    const showSources = await canReadAcpSourceDiagnostics(context as never);
+    const sources = !showSources ? [] : Object.entries((latest.sources as Record<string, boolean> | null) ?? {})
       .filter(([, enabled]) => enabled)
       .map(([key]) => key);
 

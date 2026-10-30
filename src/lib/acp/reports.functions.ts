@@ -529,7 +529,7 @@ async function insertReportRow(
 export async function generateAcpReportForVersion(
   actor: Actor,
   analysisId: string,
-  options: { includeAppendix?: boolean } = {},
+  options: { includeAppendix?: boolean; showSourceDiagnostics?: boolean } = {},
 ): Promise<{ report: AcpReportListItem | null; ok: boolean; errorMessage: string | null }> {
   {
     {
@@ -608,6 +608,10 @@ export async function generateAcpReportForVersion(
           }
         }
         const { buildAcpReportPdf } = await import("./report/pdf.server");
+        if (options.showSourceDiagnostics !== true) {
+          const { agencyAcpReport } = await import("./source-visibility");
+          model = agencyAcpReport(model);
+        }
         const bytes = await buildAcpReportPdf(model, { logo });
         const path = `${actor.organizationId}/${input.analysisId}/raport-v${input.version}-${row.reportNumber}.pdf`;
         const { error: uploadError } = await admin.storage
@@ -705,8 +709,10 @@ export const generateAcpReport = createServerFn({ method: "POST" })
       data,
     }): Promise<{ report: AcpReportListItem | null; ok: boolean; errorMessage: string | null }> => {
       const actor = await loadActor(context as AuthContext);
+      const { canReadAcpSourceDiagnostics } = await import("./source-visibility");
       return await generateAcpReportForVersion(actor, data.analysisId, {
         includeAppendix: data.includeAppendix === true,
+        showSourceDiagnostics: await canReadAcpSourceDiagnostics(context as never),
       });
     },
   );
@@ -721,7 +727,7 @@ export const acpReportUrl = createServerFn({ method: "POST" })
     const admin = await loadAdmin();
     const { data: report, error } = await admin
       .from("acp_reports")
-      .select("id,analysis_id,organization_id,pdf_path,status")
+      .select("id,analysis_id,organization_id,pdf_path,status,report_data")
       .eq("id", data.reportId)
       .maybeSingle();
     if (error) throw acpDbError("load report", error);
@@ -734,9 +740,35 @@ export const acpReportUrl = createServerFn({ method: "POST" })
       throw acpError("Raport invalid.");
     }
 
+    const { canReadAcpSourceDiagnostics, agencyAcpReport } = await import("./source-visibility");
+    let pdfPath = report.pdf_path;
+    if (!(await canReadAcpSourceDiagnostics(context as never)) && report.report_data) {
+      // Rapoartele mai vechi: agenția primește o copie fără diagnosticele de colectare.
+      pdfPath = report.pdf_path.replace(/\.pdf$/i, "") + "-agentie-v1.pdf";
+      const folder = pdfPath.slice(0, pdfPath.lastIndexOf("/"));
+      const name = pdfPath.slice(pdfPath.lastIndexOf("/") + 1);
+      const { data: existing } = await admin.storage.from(ACP_REPORTS_BUCKET).list(folder, { search: name });
+      if (!(existing ?? []).some((file) => file.name === name)) {
+        const model = agencyAcpReport(report.report_data as unknown as AcpReportModel);
+        const { data: org } = await admin.from("organizations").select("logo_path").eq("id", actor.organizationId).maybeSingle();
+        let logo: Uint8Array | null = null;
+        if (org?.logo_path && /\.(png|jpe?g)$/i.test(org.logo_path)) {
+          const { data: file } = await admin.storage.from("agency-logos").download(org.logo_path);
+          if (file) logo = new Uint8Array(await file.arrayBuffer());
+        }
+        const { buildAcpReportPdf } = await import("./report/pdf.server");
+        const bytes = await buildAcpReportPdf(model, { logo });
+        const { error: uploadError } = await admin.storage.from(ACP_REPORTS_BUCKET).upload(
+          pdfPath,
+          new Blob([bytes as unknown as BlobPart], { type: "application/pdf" }),
+          { contentType: "application/pdf", upsert: true },
+        );
+        if (uploadError) throw acpDbError("upload agency report pdf", uploadError, "Raportul nu a putut fi pregătit.");
+      }
+    }
     const { data: signed } = await admin.storage
       .from(ACP_REPORTS_BUCKET)
-      .createSignedUrl(report.pdf_path, 600);
+      .createSignedUrl(pdfPath, 600);
 
     await logAcpAudit({
       organizationId: actor.organizationId,

@@ -46,14 +46,9 @@ async function loadOrganizationId(context: AuthContext): Promise<string> {
 }
 
 /** Rolul se verifică pe server; doar SuperAdmin primește detaliile surselor. */
-async function isSuperadmin(userId: string): Promise<boolean> {
-  const admin = await loadAdmin();
-  const { data } = await admin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "superadmin");
-  return (data ?? []).length > 0;
+async function isSuperadmin(context: unknown): Promise<boolean> {
+  const { canReadAcpSourceDiagnostics } = await import("@/lib/acp/source-visibility");
+  return canReadAcpSourceDiagnostics(context as never);
 }
 
 async function enforceRateLimit(userId: string) {
@@ -113,7 +108,7 @@ export const getMarketIntelligence = createServerFn({ method: "POST" })
     const result = await computeMarketIntelligence(admin, filters, {
       includeTrend: data.includeTrend !== false,
     });
-    return (await isSuperadmin((context as AuthContext).userId))
+    return (await isSuperadmin(context))
       ? result
       : redactMarketIntelligenceForAgency(result);
   });
@@ -203,7 +198,7 @@ export const getAcpMarketIntelligence = createServerFn({ method: "POST" })
     });
 
     const snapshot = analysisData.marketIntelligence ?? null;
-    if (await isSuperadmin((context as AuthContext).userId)) {
+    if (await isSuperadmin(context)) {
       return { analysisId: analysis.id, analysisVersion: analysis.version ?? 1, filters, live, insights, snapshot };
     }
     return {

@@ -619,9 +619,9 @@ function AcpDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <SectionCard title="Baza de dovezi" icon={Layers}>
-          {analysis.sourceStats.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nicio sursă înregistrată.</p>
-          ) : (
+          {analysis.sourceStats.length === 0 ? (analysis.marketQueryContexts.length > 0 ? null :
+            <p className="text-sm text-muted-foreground">Comparabilele folosite apar mai sus.</p>
+          )) : (
             <ul className="space-y-3 text-sm">
               {analysis.sourceStats.map((s2) => (
                 <li key={`${s2.sourceType}-${s2.sourceName}`} className="space-y-1">

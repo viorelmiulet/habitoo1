@@ -1378,6 +1378,8 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
         insight?: unknown;
       } | null;
     };
+    const { canReadAcpSourceDiagnostics } = await import("./source-visibility");
+    const showSourceDiagnostics = await canReadAcpSourceDiagnostics(context as never);
     // Interpretările generate înainte de Stage 5 sunt aduse la schema actuală.
     const storedInsight = readStoredAcpAiInsight(analysisData.ai?.insight ?? null);
     const targetData = (analysis.target_data ?? {}) as {
@@ -1408,7 +1410,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
           (targetData.subject ? targetPricePerSqm(targetData.subject) : null),
       },
       sources: (analysis.sources as Record<string, boolean> | null) ?? {},
-      sourceStats: (sourceRows ?? []).map((s) => ({
+      sourceStats: (showSourceDiagnostics ? (sourceRows ?? []) : []).map((s) => ({
         sourceType: s.source_type,
         sourceName: s.source_name,
         itemsFound: s.items_found ?? 0,
@@ -1789,6 +1791,10 @@ export const compareAcpVersions = createServerFn({ method: "POST" })
       details: { versionA: snapshotA.version, versionB: snapshotB.version },
     });
 
+    const { canReadAcpSourceDiagnostics } = await import("./source-visibility");
+    if (!(await canReadAcpSourceDiagnostics(context as never))) {
+      return compareAcpVersionSnapshots({ ...snapshotA, sources: [] }, { ...snapshotB, sources: [] });
+    }
     return compareAcpVersionSnapshots(snapshotA, snapshotB);
   });
 
