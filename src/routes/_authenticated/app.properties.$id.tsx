@@ -966,8 +966,10 @@ function PropertyDetailContent() {
             save.mutate(buildEditPatch());
           }}>
               <FormSection title="Localizare">
-                <div className="space-y-1.5 [&>div]:grid [&>div]:gap-x-3 sm:[&>div]:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] [&_label]:self-center sm:[&_label]:text-right [&_input]:h-9 [&_select]:h-9">
+                <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,552px)_minmax(0,1fr)]">
+                <div className="min-w-0 space-y-3 [&>div]:grid [&>div]:min-w-0 [&>div]:gap-x-3 [&>div]:gap-y-1 [&>div]:space-y-0 sm:[&>div]:grid-cols-[120px_minmax(0,420px)] [&_label]:self-center [&_label]:text-left [&_input]:h-9 [&_select]:h-9 [&>div>p]:min-w-0 sm:[&>div>p]:col-start-2 [&>div>div]:min-w-0">
                   <LocationPicker
+                    showDistrictHint={false}
                     idPrefix="edit"
                     value={location}
                     onChange={setLocation}
@@ -980,6 +982,7 @@ function PropertyDetailContent() {
                       value={draft.district ?? ""}
                       onChange={(e) => setDraft((d) => ({ ...d, district: e.target.value }))}
                     />
+                    <p className="text-xs leading-5 text-muted-foreground">Cartierele și ansamblurile (ex. Militari Residence) se trec în câmpul „Zonă / cartier”.</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="address">Adresă</Label>
@@ -1006,6 +1009,7 @@ function PropertyDetailContent() {
                   </div>
                 </div>
                 <PropertyLocationMap
+                  layout="side"
                   idPrefix="edit"
                   seed={property.id}
                   lat={coords?.lat ?? null}
@@ -1020,6 +1024,7 @@ function PropertyDetailContent() {
                   onCoordsChange={setCoords}
                   onPreciseChange={setLocationPrecise}
                 />
+                </div>
               </FormSection>
 
             <div className="flex justify-end gap-2">
@@ -1027,7 +1032,8 @@ function PropertyDetailContent() {
               <Button type="submit" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
           </form> : <FormSection title="Localizare">
-            <dl className="space-y-1.5">
+            <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,552px)_minmax(0,1fr)]">
+            <dl className="min-w-0 space-y-3">
               {[
                 ["Județ", property.county],
                 ["Localitate", property.city],
@@ -1035,10 +1041,14 @@ function PropertyDetailContent() {
                 ["Stradă / adresă", property.street || property.address],
                 ["Număr", property.street_number],
                 ["Cod poștal", property.postal_code],
-              ].map(([label, value]) => <div key={label} className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3 text-[15px]"><dt className="text-right">{label}</dt><dd className="min-w-0 break-words">{value || "—"}</dd></div>)}
+              ].map(([label, value]) => <div key={label} className="grid min-w-0 grid-cols-1 gap-x-3 gap-y-1 text-[15px] sm:grid-cols-[120px_minmax(0,420px)]"><dt className="text-muted-foreground">{label}</dt><dd className="min-w-0 break-words">{value || "—"}</dd></div>)}
             </dl>
+            <div className="min-w-0 space-y-3">
+            <p className="text-sm font-medium">Poziția pe hartă</p>
             {mapCoords ? <PropertyMapClient lat={mapCoords.lat} lng={mapCoords.lng} precise={mapCoords.precise} seed={property.id} className="h-[420px] w-full overflow-hidden rounded-[4px] border border-border" /> : <div className="flex h-[420px] items-center justify-center rounded-[4px] border border-border bg-muted text-sm text-muted-foreground">Nu există coordonate GPS pentru această proprietate.</div>}
             {mapCoords && !mapCoords.precise ? <p className="text-xs text-muted-foreground">Hartă estimativă — zonă de aproximativ {APPROX_RADIUS_M} m.</p> : null}
+            </div>
+            </div>
           </FormSection>}
         </TabsContent>
 
@@ -1052,6 +1062,7 @@ function PropertyDetailContent() {
             save.mutate(buildEditPatch());
           }}>
             <PropertyTitleDescriptionPanel
+                stacked
                 title={draft.title ?? ""}
                 description={draft.description ?? ""}
                 onTitle={(v) => setDraft((d) => ({ ...d, title: v }))}
@@ -1064,7 +1075,7 @@ function PropertyDetailContent() {
             </div>
           </form> : <FormSection title="Descriere și Titlu">
             <h2 className="font-sans text-lg font-bold">{property.title || "—"}</h2>
-            <p className="whitespace-pre-line text-[15px]">{property.description || "Fără descriere."}</p>
+            <p className="min-w-0 whitespace-pre-wrap break-words text-[15px] leading-6">{property.description || "Fără descriere."}</p>
           </FormSection>}
         </TabsContent>
 

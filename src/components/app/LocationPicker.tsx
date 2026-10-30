@@ -60,6 +60,7 @@ export function LocationPicker({
   idPrefix = "loc",
   required = false,
   onPostalCode,
+  showDistrictHint = true,
 }: {
   /** Codul poștal al localității alese (6 cifre) sau `null` la golire/schimbarea județului. */
   onPostalCode?: (code: string | null) => void;
@@ -67,6 +68,7 @@ export function LocationPicker({
   onChange: (next: LocationValue) => void;
   idPrefix?: string;
   required?: boolean;
+  showDistrictHint?: boolean;
 }) {
   const counties = useCounties();
   const [term, setTerm] = useState("");
@@ -306,9 +308,9 @@ export function LocationPicker({
             )}
           </div>
         )}
-        <p className="text-xs text-muted-foreground">
+        {showDistrictHint ? <p className="text-xs text-muted-foreground">
           Cartierele și ansamblurile (ex. Militari Residence) se trec în câmpul „Zonă / cartier”.
-        </p>
+        </p> : null}
       </div>
     </>
   );
