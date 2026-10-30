@@ -9,13 +9,13 @@ describe("homepage portals", () => {
   it("lists exactly the portals with a public integration page, in registry order", () => {
     expect(labels).toEqual([
       "ClickImob", "Imobli.ro", "Locuit.ro", "iMove.ro", "Properstar", "La Cheie", "Imospot.ro", "imo24.ro", "ZonaTa.ro", "HomeDirect.ro", "Ofera.ro", "HomePitch.ro",
-      "Imobiliare.ro", "Storia.ro + OLX.ro", "ZUP.ro", "Publi24.ro + Romimo.ro", "Imopedia.ro", "PrimulAnunț.ro", "VDI.ro",
+      "Imobiliare.ro", "Storia.ro + OLX.ro", "ZUP.ro", "OLX.ro (cont prepaid)", "OLX", "Publi24", "Publi24.ro + Romimo.ro", "Imopedia.ro", "PrimulAnunț.ro", "VDI.ro", "Catalog Facebook",
 
     ]);
   });
-  it("hides unverified, covered and catalog integrations", () => {
+  it("includes the requested covered and catalog logos", () => {
     for (const id of ["olx_direct", "olx", "publi24", "facebook_catalog"]) {
-      expect(ids).not.toContain(id);
+      expect(ids).toContain(id);
     }
   });
   it("homepage FAQ mentions every portal in the grid", () => {
@@ -25,7 +25,8 @@ describe("homepage portals", () => {
     const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f\s]/g, "").toLowerCase();
     const faq = norm(answer);
     for (const label of labels) {
-      for (const part of label.split(" + ")) expect(faq, label).toContain(norm(part.replace(/\.ro$/, "")));
+      const faqLabel = label === "Catalog Facebook" ? "Catalogul Facebook" : label.replace(/ \(cont prepaid\)$/, "");
+      for (const part of faqLabel.split(" + ")) expect(faq, label).toContain(norm(part.replace(/\.ro$/, "")));
     }
   });
 });
