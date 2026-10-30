@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { imobiliareAdapter } from "../../adapters/imobiliare.server";
 import type { PortalContext, ListingRef } from "../../adapter";
 import { mergePortalOffers, type PortalOffer } from "../offer-links";
@@ -39,11 +39,12 @@ describe("Imobiliare transaction replacement without network", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", vi.fn(() => { throw new Error("Real network forbidden"); }));
-    mocks.request.mockResolvedValue({ ok: true, status: 200, body: { data: { id: 2, path: "https://www.imobiliare.ro/oferta/2" } } });
+    mocks.request.mockResolvedValue({ ok: true, status: 200, body: { data: { id: 2, state: "online", path: "/oferta/2" } } });
     mocks.gallery.mockResolvedValue({ ok: true, sent: 1, body: {} });
     mocks.online.mockResolvedValue({ ok: true, status: 200, body: { data: { id: 2 } }, promotionErrors: [] });
     mocks.log.mockResolvedValue(undefined);
   });
+  afterEach(() => vi.unstubAllGlobals());
 
   it.each([
     ["sale", "rent", "-C"], ["rent", "sale", "-V"],
@@ -75,6 +76,27 @@ describe("Imobiliare transaction replacement without network", () => {
     expect(result.ok).toBe(true);
     expect(mocks.request.mock.calls[0]?.[1]).toMatchObject({ method: "PUT", path: "/api/v3/listings/HB-1260" });
     expect(mocks.log).not.toHaveBeenCalled(); expect(mocks.online).not.toHaveBeenCalled();
+  });
+
+  it("failed withdrawal never creates or updates the replacement", async () => {
+    mocks.offers = [offer("sale", "HB-1260")]; mocks.plans = [plan("rent")];
+    mocks.request.mockResolvedValueOnce({ ok: false, status: 500, body: {}, classification: { code: "PORTAL_ERROR", message: "Retragere refuzată" } });
+    const result = await run("HB-1260");
+    expect(result.ok).toBe(false);
+    expect(mocks.request).toHaveBeenCalledTimes(1);
+    expect(mocks.gallery).not.toHaveBeenCalled(); expect(mocks.online).not.toHaveBeenCalled();
+    expect(mocks.log).toHaveBeenCalledWith(expect.objectContaining({ operation: "withdraw", success: false }));
+  });
+
+  it("retry after a partial create reuses the new reference, never the old one", async () => {
+    mocks.offers = [offer("sale", "HB-1260")]; mocks.plans = [plan("rent")];
+    mocks.request.mockImplementation(async (_session, request) => request.method === "POST" && request.path === "/api/v3/listings"
+      ? { ok: false, status: 422, body: { errors: { custom_reference: ["unique"] } } }
+      : { ok: true, status: 200, body: { data: { id: 2, state: "online", path: "/oferta/2" } } });
+    const result = await run("HB-1260");
+    expect(result.ok).toBe(true);
+    expect(mocks.request.mock.calls.filter((call) => call[1].method === "PUT").map((call) => call[1].path)).toEqual(["/api/v3/listings/HB-1260-C"]);
+    if (result.ok) expect(result.data.externalId).toBe("HB-1260-C");
   });
 
   it("sale + rent retains both references and PUTs", async () => {
