@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
-import { AirVent, Blinds, Blocks, Building2, Check, CircleCheck, DoorClosed, DoorOpen, Flame, Gauge, Grid2X2, Info, List, Mountain, PaintRoller, PanelsTopLeft, Plug, Refrigerator, Route, Search, Shield, Sofa, SquareStack, Utensils, Wallpaper, type LucideIcon } from "lucide-react";
+import { useEffect } from "react";
+import { AirVent, Blinds, Blocks, Building2, Check, CircleCheck, DoorClosed, DoorOpen, Flame, Gauge, Grid2X2, Info, Mountain, PaintRoller, PanelsTopLeft, Plug, Refrigerator, Route, Shield, Sofa, SquareStack, Utensils, Wallpaper, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import * as taxonomy from "@/lib/property-taxonomy";
 import { FormSection } from "@/components/app/FormSection";
 import { cn } from "@/lib/utils";
@@ -13,7 +11,8 @@ import { cn } from "@/lib/utils";
 type Value = Record<string, unknown>;
 type FeatureGroup = { field: string; title: string; icon: LucideIcon; options: readonly string[]; single?: boolean };
 type FeatureSection = { title: string; subtitle: string; icon: LucideIcon; groups: FeatureGroup[] };
-const VIEW_KEY = "habitoo-property-feature-view";
+/** Fosta preferință Carduri/În linie; se șterge din browser, afișarea e doar Carduri. */
+const LEGACY_VIEW_KEY = "habitoo-property-feature-view";
 
 // Presentation metadata only: stored keys and options come from the existing taxonomy.
 export const propertyFeatureSections: FeatureSection[] = [
@@ -46,35 +45,31 @@ export const propertyFeatureSections: FeatureSection[] = [
   ] },
 ];
 
-export function normalizeFeatureSearch(text: string) {
-  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("ro").trim();
-}
-
 function selectedOptions(value: Value, group: FeatureGroup): string[] {
   const current = value[group.field];
   return group.single ? (typeof current === "string" && current ? [current] : [])
     : Array.isArray(current) ? current.filter((v): v is string => typeof v === "string") : [];
 }
 
-export function filterFeatureSections(query: string, value?: Value) {
-  const search = normalizeFeatureSearch(query);
+/** Fără valoare: toate opțiunile (editare). Cu valoare: doar opțiunile salvate (citire). */
+export function filterFeatureSections(value?: Value) {
   return propertyFeatureSections.map((section) => ({ ...section, groups: section.groups.map((group) => ({
     ...group,
-    options: (value ? selectedOptions(value, group) : group.options).filter((option) => normalizeFeatureSearch(option).includes(search)),
+    options: value ? selectedOptions(value, group) : [...group.options],
   })).filter((group) => group.options.length > 0) })).filter((section) => section.groups.length > 0);
 }
 
-function FeatureGroupFields({ group, value, onChange, idPrefix, inline }: {
-  group: FeatureGroup; value: Value; onChange?: (patch: Value) => void; idPrefix: string; inline: boolean;
+function FeatureGroupFields({ group, value, onChange, idPrefix }: {
+  group: FeatureGroup; value: Value; onChange?: (patch: Value) => void; idPrefix: string;
 }) {
   const selected = selectedOptions(value, group);
   const Icon = group.icon;
   const headingId = `${idPrefix}-${group.field}-heading`;
-  const optionsClass = inline ? "flex flex-wrap items-start gap-1" : "grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] items-start gap-1";
+  const optionsClass = "grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] items-start gap-1";
   const optionClass = "flex min-h-9 min-w-0 items-center gap-2 rounded-control px-2 py-1.5 text-sm font-normal leading-5 [overflow-wrap:normal] [word-break:normal] hyphens-none";
   return (
-    <div data-feature-group={group.field} className={cn("min-w-0", inline ? "grid gap-3 border-b border-border py-4 sm:grid-cols-[180px_minmax(0,1fr)]" : "h-full rounded-card border border-border bg-card p-3")}>
-      <div className={cn("flex min-w-0 items-center gap-2", inline ? "self-start pt-2" : "mb-3 border-b border-primary/25 pb-3")}>
+    <div data-feature-group={group.field} className="h-full min-w-0 rounded-card border border-border bg-card p-3">
+      <div className="mb-3 flex min-w-0 items-center gap-2 border-b border-primary/25 pb-3">
         <span className="grid size-8 shrink-0 place-items-center rounded-control bg-accent text-accent-foreground"><Icon className="size-4" aria-hidden="true" /></span>
         <h4 id={headingId} className="min-w-0 font-sans text-sm font-bold text-accent-foreground">{group.title}</h4>
       </div>
@@ -99,26 +94,15 @@ function FeatureGroupFields({ group, value, onChange, idPrefix, inline }: {
 }
 
 export function PropertyFeatureSections({ value, onChange, idPrefix = "features" }: { value: Value; onChange?: (patch: Value) => void; idPrefix?: string }) {
-  const [query, setQuery] = useState("");
-  const [view, setView] = useState("cards");
   useEffect(() => {
-    try { if (localStorage.getItem(VIEW_KEY) === "inline") setView("inline"); } catch { /* Browser storage may be disabled. */ }
+    try { localStorage.removeItem(LEGACY_VIEW_KEY); } catch { /* Browser storage may be disabled. */ }
   }, []);
-  const sections = filterFeatureSections(query, onChange ? undefined : value);
-  const inline = !!onChange && view === "inline";
+  const sections = filterFeatureSections(onChange ? undefined : value);
   return <div className="property-feature-sections min-w-0 space-y-4 bg-background text-foreground">
-    {onChange ? <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-      <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" /><Input type="search" aria-label="Caută o opțiune (utilitate, finisaj, dotare)" placeholder="Caută o opțiune (utilitate, finisaj, dotare)…" className="h-11 bg-card pl-9 text-foreground" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
-      <ToggleGroup type="single" aria-label="Afișarea opțiunilor" value={view} className="shrink-0 justify-start rounded-control border border-border bg-muted p-1" onValueChange={(next) => { if (!next) return; setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* Session-only preference fallback. */ } }}>
-        <ToggleGroupItem value="cards" className="h-9 gap-2 px-3 text-foreground data-[state=on]:bg-surface data-[state=on]:text-accent-foreground"><Grid2X2 className="size-4" />Carduri</ToggleGroupItem>
-        <ToggleGroupItem value="inline" className="h-9 gap-2 px-3 text-foreground data-[state=on]:bg-surface data-[state=on]:text-accent-foreground"><List className="size-4" />În linie</ToggleGroupItem>
-      </ToggleGroup>
-    </div> : null}
     {sections.map((section) => <FormSection key={section.title} title={section.title}>
-      <div className={inline ? "min-w-0" : "grid min-w-0 grid-cols-1 items-stretch gap-4 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]"}>
-        {section.groups.map((group) => <FeatureGroupFields key={group.field} group={group} value={value} onChange={onChange} idPrefix={idPrefix} inline={inline} />)}
+      <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
+        {section.groups.map((group) => <FeatureGroupFields key={group.field} group={group} value={value} onChange={onChange} idPrefix={idPrefix} />)}
       </div>
     </FormSection>)}
-    {onChange && sections.length === 0 ? <p role="status" className="py-6 text-center text-sm text-muted-foreground">Nicio opțiune găsită.</p> : null}
   </div>;
 }

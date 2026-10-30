@@ -1,3 +1,7 @@
+## Caracteristici — panouri echilibrate și numai Carduri
+- [x] Detalii lângă Suprafețe/Clădire suprapuse; eliminare căutare, mod În linie și preferința veche, aceeași componentă la creare
+- [x] 12 capturi autentificate fișă/creare la 1440/1920 sus/mijloc/jos: două coloane cu diferență de înălțime ~50px, fără depășiri; căutarea/comutatorul absente. Aceleași 85 chei de salvare ca verificarea anterioară, cerere interceptată fără scrieri reale; 34 teste trec, build OK.
+
 ## Fișa proprietății — aspect Localizare și Descriere
 - [x] Localizare compactă cu hartă laterală; Descriere cu etichete deasupra, fără schimbarea câmpurilor/salvării
 - [x] HB-1271: 8 capturi autentificate 1440/390, citire/editare, fără depășire; ambele cereri de salvare identice înainte/după, interceptate fără scrieri reale; 46 teste trec, build OK

@@ -115,11 +115,17 @@ function control(container: HTMLElement, id: string) {
 }
 
 describe("property feature selections", () => {
-  it("parchet retains only the floor options, ignoring case and diacritics", () => {
-    const results = filterFeatureSections("PARCHET");
-    expect(results.flatMap((section) => section.groups.map((group) => group.field))).toEqual(["floor_finishes"]);
-    expect(results[0]?.groups[0]?.options).toEqual(["Parchet"]);
-    expect(filterFeatureSections("incalzire")[0]?.groups[0]?.options).toEqual(["Încălzire pardoseală"]);
+  it("editing shows only cards, without option search or view toggle", async () => {
+    localStorage.setItem("habitoo-property-feature-view", "inline");
+    const { container, root } = await mountFeatures();
+    expect(container.querySelector("input[type=search]")).toBeNull();
+    expect(container.textContent).not.toContain("În linie");
+    expect(container.querySelector("[aria-label='Afișarea opțiunilor']")).toBeNull();
+    expect(container.querySelectorAll("[data-feature-group]").length).toBe(
+      filterFeatureSections().flatMap((s) => s.groups).length,
+    );
+    expect(localStorage.getItem("habitoo-property-feature-view")).toBeNull();
+    await act(async () => root.unmount());
   });
 
   it("checkboxes preserve existing field keys and exact taxonomy values without remounting", async () => {
@@ -151,7 +157,7 @@ describe("property feature selections", () => {
   });
 
   it("read-only groups contain only saved options and omit empty fields", () => {
-    const results = filterFeatureSections("", { floor_finishes: ["Parchet"], furnishing: "Complet", utilities: [] });
+    const results = filterFeatureSections({ floor_finishes: ["Parchet"], furnishing: "Complet", utilities: [] });
     expect(results.flatMap((section) => section.groups.map((group) => [group.field, group.options]))).toEqual([
       ["floor_finishes", ["Parchet"]], ["furnishing", ["Complet"]],
     ]);
@@ -172,8 +178,9 @@ describe("formularul fără acordeon", () => {
     const headings = Array.from(container.querySelectorAll("h2")).map((n) => n.textContent);
     expect(headings).toEqual(["Detalii", "Suprafețe", "Clădire", "Utilități", "Finisaje", "Dotări"]);
     expect(container.textContent).toContain("Înălțime");
-    expect(container.textContent).toContain("Carduri");
-    expect(container.textContent).toContain("În linie");
+    expect(container.textContent).not.toContain("În linie");
+    const secondary = container.querySelector("[data-details-column=secondary]");
+    expect(Array.from(secondary?.querySelectorAll("h2") ?? []).map((n) => n.textContent)).toEqual(["Suprafețe", "Clădire"]);
     const order = Array.from(container.querySelectorAll("[id^='det-']")).map((n) => n.id.replace(/^det-/, "").replace(/-.+$/, ""));
     const firstSeen = [...new Set(order)].filter((field) => PROPERTY_DETAIL_FIELDS.includes(field as never));
     expect(firstSeen).toEqual(PROPERTY_DETAIL_FIELDS.filter((f) => f !== "floor"));
