@@ -112,7 +112,10 @@ describe("așezarea formularului de proprietate", () => {
 
   it("salvarea trimite exact aceleași câmpuri ca înainte", () => {
     // Identificatoarele de câmpuri nu s-au schimbat, doar ordinea secțiunilor.
-    for (const id of ["title", "description", "district", "address", "internal_notes"]) {
+    const layout = readFileSync("src/components/app/PropertyFormLayout.tsx", "utf8");
+    for (const id of ["title", "description"]) expect(layout).toContain(`id="${id}"`);
+    for (const screen of [editScreen, newScreen]) expect(screen).toContain("<PropertyTitleDescriptionPanel");
+    for (const id of ["district", "address", "internal_notes"]) {
       expect(editScreen).toContain(`id="${id}"`);
       expect(newScreen).toContain(`id="${id}"`);
     }
