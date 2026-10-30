@@ -42,6 +42,17 @@ export function criteriaFromProperty(p: Property): LeadCriteria {
 const typeGroup = (t: string | null | undefined) =>
   t === "studio" || t === "apartment" ? "apartment" : (t ?? "");
 
+/** Camere identice și preț în buget (+10% toleranță peste maxim); criteriile lipsă nu se aplică. */
+function withinLeadHardLimits(c: LeadCriteria, p: Property) {
+  if (c.rooms_min != null && p.rooms !== c.rooms_min) return false;
+  if (c.budget_min != null && c.budget_max != null) {
+    const price = p.price != null ? Number(p.price) : null;
+    if (price === null) return false;
+    if (price < Number(c.budget_min) || price > Number(c.budget_max) * 1.1) return false;
+  }
+  return true;
+}
+
 export type LeadMatch = { property: Property; match: MatchScore };
 
 /** Potrivirile unui lead: aceeași agenție, status activ, aceeași tranzacție și tip, scor ≥ 60. */
@@ -54,7 +65,8 @@ export function computeLeadMatches(source: Property, candidates: Property[]): Le
         p.organization_id === source.organization_id &&
         (LEAD_MATCH_STATUSES as readonly string[]).includes(p.status) &&
         p.transaction_kind === source.transaction_kind &&
-        typeGroup(p.property_type) === typeGroup(source.property_type),
+        typeGroup(p.property_type) === typeGroup(source.property_type) &&
+        withinLeadHardLimits(criteria, p),
     )
     .map((property) => ({ property, match: scoreMatch(criteria, property) }))
     .filter((r) => r.match.score >= LEAD_MATCH_MIN_SCORE)
