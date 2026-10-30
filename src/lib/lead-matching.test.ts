@@ -85,3 +85,15 @@ describe("notificare după salvarea proprietății", () => {
     expect(countLeadMatchesForProperty(prop({ id: "t", transaction_kind: "rent" }), [lead({ id: "l1" })], src)).toBe(0);
   });
 });
+
+describe("limite obligatorii pentru lead-uri", () => {
+  const s = prop({ id: "s", property_type: "studio", rooms: 1, price: 45500, surface: 30 });
+  const ids = (c: Tables<"properties">[]) => computeLeadMatches(s, c).map((r) => r.property.id);
+  it("nu apare 3 camere la 118.000 €", () => expect(ids([prop({ id: "a", rooms: 3, price: 118000 })])).toEqual([]));
+  it("nu apare 2 camere la 60.000 €", () => expect(ids([prop({ id: "b", rooms: 2, price: 60000 })])).toEqual([]));
+  it("apare garsoniera de 56.000 € (aproape de limită)", () => {
+    const r = computeLeadMatches(s, [prop({ id: "c", property_type: "studio", rooms: 1, price: 56000, surface: 30 })]);
+    expect(r.map((x) => x.property.id)).toEqual(["c"]);
+    expect(r[0]!.match.reasons).toContain("Buget aproape de limită");
+  });
+});
