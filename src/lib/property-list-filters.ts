@@ -27,6 +27,14 @@ export type PropertyListFilters = {
   portal: string;
   /** Filtrul „Promovare”: valori separate prin virgulă (any, none, imobiliare_ro:<serviciu>, <portal>:promoted). */
   promotion: string;
+  /** Tab-ul de categorie (all, apartments, houses, land, office, commercial, industrial). */
+  tab: string;
+  street: string;
+  /** Valabilitate: statusuri separate prin virgulă; gol = toate fără Arhivat. */
+  statuses: string;
+  updatedAfter: string;
+  updatedBefore: string;
+  destination: string;
 };
 
 export const emptyPropertyListFilters: PropertyListFilters = {
@@ -54,6 +62,12 @@ export const emptyPropertyListFilters: PropertyListFilters = {
   addedBefore: "",
   portal: "all",
   promotion: "",
+  tab: "all",
+  street: "",
+  statuses: "",
+  updatedAfter: "",
+  updatedBefore: "",
+  destination: "all",
 };
 
 export const PROPERTY_LIST_DEFAULT_SORT = "created_desc" as const;
@@ -101,6 +115,12 @@ export const propertyListSearchSchema = z.object({
   addedBefore: optionalSearchString,
   portal: optionalSearchString,
   promotion: optionalSearchString,
+  tab: optionalSearchString,
+  street: optionalSearchString,
+  statuses: optionalSearchString,
+  updatedAfter: optionalSearchString,
+  updatedBefore: optionalSearchString,
+  destination: optionalSearchString,
   sort: optionalSearchString,
   page: optionalSearchPage,
   perPagina: z.preprocess(
@@ -131,7 +151,7 @@ export function propertyListStateFromSearch(search: PropertyListSearch): {
     if (typeof value === typeof filters[key]) (filters as Record<string, unknown>)[key] = value;
   }
   return {
-    filters,
+    filters: migrateLegacyStatusFilters(filters),
     sort: propertyListSorts.has(search.sort as PropertyListSort)
       ? search.sort as PropertyListSort
       : PROPERTY_LIST_DEFAULT_SORT,
@@ -159,15 +179,32 @@ export function propertyListSearchFromState(
 }
 
 export const PROPERTY_TYPE_TABS = [
-  { value: "all", label: "Toate" },
-  { value: "apartment", label: "Apartamente" },
-  { value: "studio", label: "Garsoniere" },
-  { value: "house", label: "Case / vile" },
-  { value: "land", label: "Terenuri" },
-  { value: "commercial", label: "Spații comerciale" },
-  { value: "office", label: "Birouri" },
-  { value: "industrial", label: "Industrial" },
+  { value: "all", label: "Toate", types: ["apartment", "studio", "house", "land", "office", "commercial", "industrial"] },
+  { value: "apartments", label: "Apartamente", types: ["apartment", "studio"] },
+  { value: "houses", label: "Case / Vile", types: ["house"] },
+  { value: "land", label: "Terenuri", types: ["land"] },
+  { value: "office", label: "Spații birouri", types: ["office"] },
+  { value: "commercial", label: "Spații comerciale", types: ["commercial"] },
+  { value: "industrial", label: "Spații industriale", types: ["industrial"] },
 ] as const;
+
+/** Tab-ul afișat: cel ales sau, pentru linkurile vechi cu `type`, tab-ul tipului. */
+export function activePropertyTab(filters: Pick<PropertyListFilters, "tab" | "type">): string {
+  if (filters.tab !== "all" && PROPERTY_TYPE_TABS.some((t) => t.value === filters.tab)) return filters.tab;
+  if (filters.type === "all") return "all";
+  return PROPERTY_TYPE_TABS.find((t) => t.value !== "all" && (t.types as readonly string[]).includes(filters.type))?.value ?? "all";
+}
+
+export function propertyTabTypes(tab: string): string[] {
+  return [...(PROPERTY_TYPE_TABS.find((t) => t.value === tab)?.types ?? PROPERTY_TYPE_TABS[0].types)];
+}
+
+/** Tipurile cerute în interogare: tipul ales sau toate tipurile tab-ului. */
+export function propertyTypeClause(filters: Pick<PropertyListFilters, "tab" | "type">): { kind: "none" } | { kind: "eq"; value: string } | { kind: "in"; values: string[] } {
+  if (filters.type !== "all") return { kind: "eq", value: filters.type };
+  const tab = activePropertyTab(filters);
+  return tab === "all" ? { kind: "none" } : { kind: "in", values: propertyTabTypes(tab) };
+}
 
 export function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
@@ -183,14 +220,44 @@ export function normalizeSavedPropertyFilters(
   config: Record<string, unknown>,
 ): PropertyListFilters {
   const legacyFloor = typeof config.floor === "string" ? config.floor : "";
-  return {
+  return migrateLegacyStatusFilters({
     ...emptyPropertyListFilters,
     ...(config as Partial<PropertyListFilters>),
     floorMin:
       typeof config.floorMin === "string" ? config.floorMin : legacyFloor,
     floorMax:
       typeof config.floorMax === "string" ? config.floorMax : legacyFloor,
-  };
+  });
+}
+
+/** Ordinea statusurilor în „Valabilitate”. */
+export const PROPERTY_STATUSES = ["draft", "active", "reserved", "negotiation", "sold", "rented", "expired", "archived"] as const;
+export const DEFAULT_PROPERTY_STATUSES: string[] = PROPERTY_STATUSES.filter((s) => s !== "archived");
+
+/**
+ * Filtrele vechi `status` și `showArchived` devin „Valabilitate”:
+ * `status=x` → doar x (plus Arhivat cu `showArchived`); `showArchived` singur → toate.
+ */
+export function migrateLegacyStatusFilters(filters: PropertyListFilters): PropertyListFilters {
+  if (filters.status === "all" && !filters.showArchived) return filters;
+  const base = filters.statuses ? filters.statuses.split(",") : filters.status !== "all" ? [filters.status] : [...DEFAULT_PROPERTY_STATUSES];
+  if (filters.showArchived) base.push("archived");
+  return { ...filters, status: "all", showArchived: false, statuses: serializeStatuses(base) };
+}
+
+/** Statusurile selectate; implicit toate fără Arhivat. */
+export function selectedStatuses(filters: Pick<PropertyListFilters, "statuses">): string[] {
+  if (!filters.statuses) return [...DEFAULT_PROPERTY_STATUSES];
+  const chosen = new Set(filters.statuses.split(",").map((s) => s.trim()));
+  return PROPERTY_STATUSES.filter((s) => chosen.has(s));
+}
+
+/** Gol când alegerea e cea implicită, ca URL-ul să rămână curat. */
+export function serializeStatuses(values: string[]): string {
+  const chosen = new Set(values);
+  const ordered = PROPERTY_STATUSES.filter((s) => chosen.has(s));
+  if (ordered.length === DEFAULT_PROPERTY_STATUSES.length && !chosen.has("archived")) return "";
+  return ordered.join(",");
 }
 
 export function isAtLeastFilter(value: string): boolean {
