@@ -105,7 +105,7 @@ describe("așezarea formularului de proprietate", () => {
   };
 
   it("editarea și adăugarea folosesc aceeași așezare, fără acordeon", () => {
-    sectionOrder(editScreen, order);
+    sectionOrder(editScreen, order.filter((marker) => marker !== 'title="Localizare"'));
     sectionOrder(newScreen, order);
     for (const screen of [editScreen, newScreen, detailsFields]) expect(screen).not.toMatch(/Accordion/);
   });

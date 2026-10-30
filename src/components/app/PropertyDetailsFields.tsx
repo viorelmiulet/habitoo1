@@ -226,12 +226,11 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
 
   const setField = ctx.setField;
 
-  const typeLabel = propertyTypeLabels[ctx.str("property_type")] ?? "";
 
   return (
-    <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+    <div className="min-w-0 space-y-4">
       <div data-tour={idPrefix === "new" ? "new-details" : undefined} className="min-w-0">
-      <FormSection title={`Caracteristici${typeLabel ? ` ${typeLabel}` : ""}`}>
+      <FormSection title="Detalii">
         <div className="space-y-1.5">
           <FormRow htmlFor={`${idPrefix}-property_type`} label="Tip apartament / imobil">
             <Select value={ctx.str("property_type")} onValueChange={(v) => setField("property_type", v)}>
@@ -261,19 +260,6 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           <NumberField ctx={ctx} field="parking_spaces" label="Parcări" />
           <NumberField ctx={ctx} field="garages" label="Garaje" />
           <SelectField ctx={ctx} field="parking" label="Tip parcare" options={parkingOptions} />
-          <NumberField ctx={ctx} field="usable_surface" label="Suprafață utilă (m²)" />
-          <NumberField ctx={ctx} field="built_surface" label="Construită (m²)" />
-          <NumberField ctx={ctx} field="total_usable_surface" label="Utilă totală (m²)" />
-          <NumberField ctx={ctx} field="balcony_surface" label="Balcoane (m²)" />
-          <NumberField ctx={ctx} field="terrace_surface" label="Terase (m²)" />
-          <NumberField ctx={ctx} field="garden_surface" label="Suprafață grădină (m²)" />
-          <NumberField ctx={ctx} field="land_surface" label="Teren (m²)" />
-          <SelectField ctx={ctx} field="construction_stage" label="Stadiu construcție" options={constructionStageOptions} />
-          <SelectField ctx={ctx} field="building_type" label="Tip" options={buildingTypeOptions} />
-          <SelectField ctx={ctx} field="building_structure" label="Structură" options={buildingStructureOptions} />
-          <SelectField ctx={ctx} field="seismic_risk" label="Risc seismic" options={seismicRiskOptions} />
-          <NumberField ctx={ctx} field="building_floors" label="Etaje" />
-          <NumberField ctx={ctx} field="recessed_floors" label="Etaje retrase" />
         </div>
         <div className="grid items-start gap-x-6 gap-y-2.5 border-t border-border pt-4 sm:grid-cols-2">
           <BoolField ctx={ctx} field="bathroom_window" label="Geam la baie" />
@@ -281,17 +267,41 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           <BoolField ctx={ctx} field="pet_friendly" label="Pet friendly" />
           <BoolField ctx={ctx} field="key_in_agency" label="Cheia în agenție" />
           <BoolField ctx={ctx} field="balcony" label="Balcon" />
+        </div>
+      </FormSection>
+      </div>
+      <FormSection title="Suprafețe">
+        <div className="space-y-1.5">
+          <NumberField ctx={ctx} field="usable_surface" label="Suprafață utilă (m²)" />
+          <NumberField ctx={ctx} field="built_surface" label="Construită (m²)" />
+          <NumberField ctx={ctx} field="total_usable_surface" label="Utilă totală (m²)" />
+          <NumberField ctx={ctx} field="balcony_surface" label="Balcoane (m²)" />
+          <NumberField ctx={ctx} field="terrace_surface" label="Terase (m²)" />
+          <NumberField ctx={ctx} field="garden_surface" label="Suprafață grădină (m²)" />
+          <NumberField ctx={ctx} field="land_surface" label="Teren (m²)" />
+        </div>
+      </FormSection>
+      <FormSection title="Clădire">
+        <div className="space-y-1.5">
+          <SelectField ctx={ctx} field="construction_stage" label="Stadiu construcție" options={constructionStageOptions} />
+          <SelectField ctx={ctx} field="building_type" label="Tip" options={buildingTypeOptions} />
+          <SelectField ctx={ctx} field="building_structure" label="Structură" options={buildingStructureOptions} />
+          <SelectField ctx={ctx} field="seismic_risk" label="Risc seismic" options={seismicRiskOptions} />
+          <NumberField ctx={ctx} field="building_floors" label="Etaje" />
+          <NumberField ctx={ctx} field="recessed_floors" label="Etaje retrase" />
+        </div>
+        <fieldset className="space-y-2 border-t border-border pt-3">
+          <legend className="text-sm font-medium">Înălțime</legend>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           <BoolField ctx={ctx} field="has_basement" label="S+ (subsol)" />
           <BoolField ctx={ctx} field="has_semi_basement" label="D+ (demisol)" />
           <BoolField ctx={ctx} field="has_ground_floor" label="P+ (parter)" />
           <BoolField ctx={ctx} field="has_attic" label="M (mansardă)" />
           <BoolField ctx={ctx} field="has_loft" label="Pod" />
-        </div>
+          </div>
+        </fieldset>
       </FormSection>
-      </div>
-      <FormSection title="Dotări și utilități">
-        <PropertyFeatureSections idPrefix={idPrefix} value={value} onChange={onChange} layout="compact" />
-      </FormSection>
+      <PropertyFeatureSections idPrefix={idPrefix} value={value} onChange={onChange} />
     </div>
   );
 }
