@@ -105,7 +105,8 @@ describe("așezarea formularului de proprietate", () => {
   };
 
   it("editarea și adăugarea folosesc aceeași așezare, fără acordeon", () => {
-    sectionOrder(editScreen, order.filter((marker) => marker !== 'title="Localizare"'));
+    // În editare, titlul/descrierea și prețul au file proprii (Descriere, Preț).
+    sectionOrder(editScreen, ["PropertyFormLayout", "details={", 'title="Note interne"']);
     sectionOrder(newScreen, order);
     for (const screen of [editScreen, newScreen, detailsFields]) expect(screen).not.toMatch(/Accordion/);
   });
