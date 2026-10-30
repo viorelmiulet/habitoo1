@@ -1,3 +1,8 @@
+## Fișa proprietății — corecturi grupare și Localizare
+- [ ] Restabilire Detalii/Suprafețe/Clădire/Utilități/Finisaje/Dotări și Carduri/În linie, fără acordeoane
+- [ ] Filă Localizare înainte de Prezentare, aceeași stare și salvare, păstrarea panoului Locație
+- [ ] Teste câmpuri/salvare și verificare desktop/mobil fără modificarea datelor reale
+
 ## Imobiliare.ro — tranzacție schimbată
 - [x] Retragere în draft cu motiv jurnalizat, referință distinctă și păstrarea exclusivă a anunțului nou
 - [x] 176 teste Imobiliare.ro fără rețea trec: ambele schimbări, aceeași tranzacție, ofertă dublă, retragere refuzată și reluare după creare parțială; build OK; fără apeluri reale
