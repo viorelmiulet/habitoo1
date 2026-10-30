@@ -24,6 +24,7 @@ type Props = {
   addressParts: (string | null | undefined)[];
   onCoordsChange: (coords: { lat: number; lng: number }) => void;
   onPreciseChange: (precise: boolean) => void;
+  layout?: "default" | "side";
 };
 
 export function PropertyLocationMap({
@@ -35,6 +36,7 @@ export function PropertyLocationMap({
   addressParts,
   onCoordsChange,
   onPreciseChange,
+  layout = "default",
 }: Props) {
   const geocode = useServerFn(geocodeAddress);
   const [pending, setPending] = useState(false);
@@ -68,9 +70,9 @@ export function PropertyLocationMap({
   };
 
   return (
-    <div className="space-y-3 rounded-lg border p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="space-y-1">
+    <div className={layout === "side" ? "min-w-0 space-y-3" : "space-y-3 rounded-lg border p-4"}>
+      <div className="grid min-w-0 grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="min-w-0 space-y-1">
           <p className="text-sm font-medium">Poziția pe hartă</p>
           <p className="text-xs text-muted-foreground">
             Trage pinul sau dă click pe hartă pentru poziționare exactă.
@@ -91,6 +93,7 @@ export function PropertyLocationMap({
         precise={precise}
         seed={seed}
         onChange={onCoordsChange}
+        className={layout === "side" ? "h-[420px] w-full overflow-hidden rounded-[4px] border border-border" : undefined}
       />
 
       <div className="flex items-start justify-between gap-4">
