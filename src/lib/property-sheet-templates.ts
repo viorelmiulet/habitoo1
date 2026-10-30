@@ -12,8 +12,32 @@ export function preferredSheetTemplate(saved: unknown, agency: unknown) {
 }
 
 /** Reuse the privacy-filtered fragments from the classic sheet, never raw property data. */
-export function restylePropertySheet(html: string, template: PropertySheetTemplate, photos: string[], escape: (value: unknown) => string) {
-  if (template === "classic") return html;
+export const GALLERY_PHOTOS_PER_PAGE = 8;
+/** Pagini „Galerie" pentru toate fotografiile; poza principală nu se numără. */
+export function galleryPageCount(photoCount: number) {
+  return Math.ceil(Math.max(0, photoCount - 1) / GALLERY_PHOTOS_PER_PAGE);
+}
+
+function allPhotoPages(html: string, photos: string[], escape: (value: unknown) => string) {
+  const header = html.match(/<header class="brand-header">[\s\S]*?<\/header>/)?.[0] ?? "";
+  const footer = html.match(/<footer>[\s\S]*?<\/footer>/)?.[0] ?? "";
+  const pages: string[] = [];
+  for (let start = 1; start < photos.length; start += GALLERY_PHOTOS_PER_PAGE) {
+    const imgs = photos.slice(start, start + GALLERY_PHOTOS_PER_PAGE)
+      .map((src, i) => `<img src="${escape(src)}" alt="Fotografie proprietate ${start + i + 1}" />`).join("");
+    pages.push(`<section class="page photo-page">${header}<h2 class="description-title">Galerie</h2><div class="photo-grid">${imgs}</div>${footer}</section>`);
+  }
+  return pages.join("");
+}
+
+const ALL_PHOTOS_CSS = ".photo-grid{display:grid;height:220mm;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:3mm}.photo-grid img{width:100%;height:100%;object-fit:cover}";
+
+export function restylePropertySheet(html: string, template: PropertySheetTemplate, photos: string[], escape: (value: unknown) => string, options: { allPhotos?: boolean } = {}) {
+  if (template === "classic") {
+    if (!options.allPhotos || photos.length < 2) return html;
+    const i = html.indexOf("</section>") + "</section>".length;
+    return (html.slice(0, i) + allPhotoPages(html, photos, escape) + html.slice(i)).replace("</style>", `${ALL_PHOTOS_CSS}</style>`);
+  }
   const fragment = (pattern: RegExp) => html.match(pattern)?.[0] ?? "";
   const header = fragment(/<header class="brand-header">[\s\S]*?<\/header>/);
   const heading = fragment(/<div class="property-heading">[\s\S]*?<p class="price">[\s\S]*?<\/p><\/div>/);
@@ -30,7 +54,9 @@ export function restylePropertySheet(html: string, template: PropertySheetTempla
   if (template === "split") first = `<div class="split-sidebar">${header}${heading}${features}${contact}</div><div class="split-photos">${cover}<div class="small-photos">${smallPhotos(2)}</div></div>`;
   if (template === "gallery") first = `${header}${cover}${heading}${details}`;
   if (template === "minimal") first = `${header}${heading}<div class="minimal-mosaic">${cover}<div class="small-photos">${smallPhotos(2)}</div></div>${details}`;
-  const galleryPage = template === "gallery" && photos.length > 1
+  const galleryPage = options.allPhotos
+    ? allPhotoPages(html, photos, escape)
+    : template === "gallery" && photos.length > 1
     ? `<section class="page photo-page">${header}<h2 class="description-title">Galerie</h2><div class="photo-grid">${smallPhotos(8, 1)}</div>${footer}</section>` : "";
   const descriptionPage = description ? `<section class="page text-page" data-sheet-description-page>${header}<h2 class="description-title">Descriere</h2>${description}${contact}${footer}</section>` : "";
   const css = `

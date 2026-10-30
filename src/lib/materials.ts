@@ -90,6 +90,8 @@ export type PresentationData = {
   description: string | null;
   /** URL-uri de fotografii (deja semnate) — prima este imaginea mare. */
   photos?: string[];
+  /** Toate fotografiile publicabile pe pagini „Galerie" după prima pagină. */
+  allPhotos?: boolean;
   /** Destinația fișei controlează exclusiv afișarea numerelor de telefon. */
   audience?: "client" | "agent";
   /** Agentul care generează fișa; este afișat cu telefon doar în varianta pentru client. */
@@ -251,5 +253,5 @@ ${hasDescription ? `<section class="page page-two" data-sheet-description-page>
   ${footer}
 </section>` : ""}
 </body></html>`;
-  return restylePropertySheet(html, sheetTemplate(template), (data.photos ?? []).filter(Boolean), escapeHtml);
+  return restylePropertySheet(html, sheetTemplate(template), (data.photos ?? []).filter(Boolean), escapeHtml, { allPhotos: data.allPhotos });
 }
