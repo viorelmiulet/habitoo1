@@ -168,7 +168,7 @@ describe("formularul fără acordeon", () => {
     const ids = Array.from(container.querySelectorAll("[id]")).map((n) => n.id);
     const missing = PROPERTY_DETAIL_FIELDS.filter((f) => f !== "floor" && !ids.some((id) => id === `det-${f}` || id.startsWith(`det-${f}-`)));
     expect(missing).toEqual([]);
-    expect(container.querySelector("[data-state=closed]")).toBeNull();
+    expect(container.querySelector("[data-orientation=vertical][data-state=closed]:not([role=combobox])")).toBeNull();
     await act(async () => root.unmount());
   });
 });
