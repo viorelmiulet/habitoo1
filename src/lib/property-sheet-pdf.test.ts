@@ -22,7 +22,7 @@ describe("imagini fișă PDF", () => {
     const root = document.createElement("div");
     const img = document.createElement("img");
     Object.defineProperty(img, "complete", { value: true });
-    Object.defineProperty(img, "naturalWidth", { value: 0 });
+    Object.defineProperty(img, "naturalWidth", { value: 0, configurable: true });
     root.append(img);
     expect(() => assertImagesLoaded(root)).toThrow(IMAGE_LOAD_ERROR);
     Object.defineProperty(img, "naturalWidth", { value: 100 });
