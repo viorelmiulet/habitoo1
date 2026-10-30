@@ -161,6 +161,8 @@ function postalNotice(report: { status: string; reasonLabel: string } | null): v
   }
 }
 
+const INLINE_EDIT_TABS = new Set(["location", "description", "price"]);
+
 export const Route = createFileRoute("/_authenticated/app/properties/$id")({
   validateSearch: (search: Record<string, unknown>): { edit?: boolean; tab?: string } => ({ edit: search.edit === true || search.edit === "true" ? true : undefined, tab: typeof search.tab === "string" ? search.tab : undefined }),
   head: () => {
@@ -849,7 +851,7 @@ function PropertyDetailContent() {
           </div>
         </div>
         <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5" data-tour="property-actions">
-          {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" data-tour="property-edit-button" onClick={() => { startEdit(); if (tab !== "location") setTab("overview"); }}><Pencil /> Editează</Button>}
+          {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" data-tour="property-edit-button" onClick={() => { startEdit(); if (!INLINE_EDIT_TABS.has(tab)) setTab("overview"); }}><Pencil /> Editează</Button>}
           <span title={offerSendReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(offerSendReason(property))} onClick={() => setSendOfferOpen(true)}><Share2 /> Trimite oferta</Button></span>
           <span title={neutralOfferReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(neutralOfferReason(property))} onClick={() => setCollaboratorOfferOpen(true)}><Share2 /> Trimite unui colaborator</Button></span>
           {offerSendReason(property) ? <span className="text-xs text-muted-foreground">{offerSendReason(property)}</span> : null}
@@ -905,15 +907,14 @@ function PropertyDetailContent() {
           {[
             ["agent", "Agent"],
             ["location", "Localizare"],
-            ["overview", "Prezentare"],
-            ["media", `Poze (${data?.imageCount ?? 0})`],
+            ["description", "Descriere"],
+            ["price", "Preț"],
+            ["overview", "Caracteristici"],
+            ["media", `Fotografii (${data?.imageCount ?? 0})`],
             ["publishing", `Promovare (${publishedPortals}/${portalCells.length})`],
-            ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
-            ["matching", `Cereri compatibile (${matches.length})`],
-            ["activities", `Activități (${activities.length})`],
+            ["matching", `Matching (${matches.length})`],
             ["documents", "Documente"],
             ["acp", "ACP"],
-            ["marketing", "Marketing AI"],
             ["history", "Istoric"],
           ].map(([value, label]) => (
             <TabsTrigger
@@ -1041,6 +1042,68 @@ function PropertyDetailContent() {
           </FormSection>}
         </TabsContent>
 
+        <TabsContent value="description" className="space-y-4">
+          {editing ? <form id="property-description-form" className="space-y-4" onSubmit={(e) => {
+            e.preventDefault();
+            if (!hasTransactionSelection(tx)) {
+              toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
+              return;
+            }
+            save.mutate(buildEditPatch());
+          }}>
+            <PropertyTitleDescriptionPanel
+                title={draft.title ?? ""}
+                description={draft.description ?? ""}
+                onTitle={(v) => setDraft((d) => ({ ...d, title: v }))}
+                onDescription={(v) => setDraft((d) => ({ ...d, description: v }))}
+              />
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Anulează</Button>
+              <Button type="submit" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
+            </div>
+          </form> : <FormSection title="Descriere și Titlu">
+            <h2 className="font-sans text-lg font-bold">{property.title || "—"}</h2>
+            <p className="whitespace-pre-line text-[15px]">{property.description || "Fără descriere."}</p>
+          </FormSection>}
+        </TabsContent>
+
+        <TabsContent value="price" className="space-y-4">
+          {editing ? <form id="property-price-form" className="space-y-4" onSubmit={(e) => {
+            e.preventDefault();
+            if (!hasTransactionSelection(tx)) {
+              toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
+              return;
+            }
+            save.mutate(buildEditPatch());
+          }}>
+              <div data-tour="edit-transaction">
+              <FormSection
+                title="Tranzacție și preț"
+                description="Alege vânzare, închiriere sau ambele."
+              >
+                <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
+              </FormSection>
+              </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Anulează</Button>
+              <Button type="submit" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
+            </div>
+          </form> : <FormSection title="Tranzacție și preț">
+            <dl className="space-y-1.5">
+              {[
+                ["Preț vânzare", salePrice ? formatMoney(salePrice, property.sale_currency ?? property.currency ?? "EUR") : ""],
+                ["Preț / m²", pricePerSqm ? `${formatNumber(pricePerSqm)} €/m²` : ""],
+                ["Preț închiriere", rentPrice ? formatMoney(rentPrice, property.rent_currency ?? property.currency ?? "EUR") : ""],
+                ["Negociabil", property.negotiable ? "Da" : "Nu"],
+                ["Comision", property.commission ?? ""],
+                ["Colaborare", property.collaboration ? (property.collab_commission_percent ? `Da · ${property.collab_commission_percent}%` : "Da") : "Nu"],
+              ].map(([label, value]) => <div key={label} className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3 text-[15px]"><dt className="text-right">{label}</dt><dd className="min-w-0 break-words">{value || "—"}</dd></div>)}
+            </dl>
+          </FormSection>}
+        </TabsContent>
+
         <TabsContent value="overview" className="space-y-6" data-tour="property-overview">
           {editing ? (
             <form
@@ -1083,21 +1146,7 @@ function PropertyDetailContent() {
                   />
                 </div>}
               >
-              <PropertyTitleDescriptionPanel
-                title={draft.title ?? ""}
-                description={draft.description ?? ""}
-                onTitle={(v) => setDraft((d) => ({ ...d, title: v }))}
-                onDescription={(v) => setDraft((d) => ({ ...d, description: v }))}
-              />
 
-              <div data-tour="edit-transaction">
-              <FormSection
-                title="Tranzacție și preț"
-                description="Alege vânzare, închiriere sau ambele."
-              >
-                <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
-              </FormSection>
-              </div>
 
               <FormSection
                 title="Note interne"
@@ -1201,7 +1250,7 @@ function PropertyDetailContent() {
                 <section className="panel px-5 py-[18px]">
                   <h2 className="font-sans text-base font-bold">Interes</h2>
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <Button type="button" variant="outline" onClick={() => setTab("leads")} className="h-auto items-start p-3 text-left"><span><span className="block text-[22px] font-bold">{activeLeads.length}</span><span className="text-xs font-normal text-muted-foreground">Lead-uri active</span></span></Button>
+                    <Button type="button" variant="outline" onClick={() => navigate({ href: `/app/leads?proprietate=${id}` })} className="h-auto items-start p-3 text-left"><span><span className="block text-[22px] font-bold">{activeLeads.length}</span><span className="text-xs font-normal text-muted-foreground">Lead-uri active</span></span></Button>
                     <Button type="button" variant="outline" onClick={() => setTab("matching")} className="h-auto items-start p-3 text-left"><span><span className="block text-[22px] font-bold">{matches.length}</span><span className="text-xs font-normal text-muted-foreground">Cereri compatibile</span></span></Button>
                   </div>
                   {matches.length > 0 ? <div className="mt-4"><p className="text-sm font-bold">Top potriviri</p><ul className="mt-2 space-y-2">{matches.slice(0, 3).map(({ request, match }) => <li key={request.id} className="flex items-center justify-between gap-2 text-sm"><span className="truncate">{request.title}</span><StatusBadge tone={matchTone(match.score)}>{match.score}%</StatusBadge></li>)}</ul></div> : null}
@@ -1226,27 +1275,7 @@ function PropertyDetailContent() {
           <PropertyAcpCard propertyId={id} />
         </TabsContent>
 
-        <TabsContent value="marketing" data-tour="property-marketing">
-          <MarketingAgentPanel propertyId={id} />
-        </TabsContent>
 
-        <TabsContent value="leads">
-          <div className="panel overflow-hidden">
-            {(data?.leads.length ?? 0) === 0 ? (
-              <EmptyState title="Niciun lead pe această proprietate" />
-            ) : (
-              <ul className="divide-y divide-border">
-                {data?.leads.map((l) => (
-                  <li key={l.id} className="flex items-center gap-3 px-5 py-3 text-sm">
-                    <span className="min-w-0 flex-1 truncate font-medium">{l.name}</span>
-                    <StatusBadge tone="info">{leadStageLabels[l.stage]}</StatusBadge>
-                    <span className="text-xs text-muted-foreground">Scor {l.score}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </TabsContent>
 
         <TabsContent value="matching">
           <div className="panel overflow-hidden">
@@ -1282,27 +1311,6 @@ function PropertyDetailContent() {
           </div>
         </TabsContent>
 
-        <TabsContent value="activities">
-          <div className="panel overflow-hidden">
-            {activities.length === 0 ? (
-              <EmptyState title="Nicio activitate înregistrată" />
-            ) : (
-              <ul className="divide-y divide-border">
-                {activities.map((a) => (
-                  <li key={a.id} className="flex items-center gap-3 px-5 py-3 text-sm">
-                    <StatusBadge tone={activityStatusTone[a.status]}>
-                      {activityKindLabels[a.kind]}
-                    </StatusBadge>
-                    <span className="min-w-0 flex-1 truncate">{a.title}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDateTime(a.starts_at)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </TabsContent>
 
         <TabsContent value="documents">
           <DocumentsPanel entityType="property" entityId={id} orgId={orgId} />
