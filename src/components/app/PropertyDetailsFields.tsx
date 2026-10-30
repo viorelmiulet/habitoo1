@@ -72,7 +72,7 @@ function SelectField({
   options: readonly string[];
 }) {
   return (
-    <FormRow htmlFor={`${ctx.idPrefix}-${field}`} label={label}>
+    <FormRow compact htmlFor={`${ctx.idPrefix}-${field}`} label={label}>
       <Select
         value={ctx.str(field) || NONE}
         onValueChange={(v) => ctx.setField(field, v === NONE ? null : v)}
@@ -106,7 +106,7 @@ function NumberField({
   min?: number;
 }) {
   return (
-    <FormRow htmlFor={`${ctx.idPrefix}-${field}`} label={label}>
+    <FormRow compact htmlFor={`${ctx.idPrefix}-${field}`} label={label}>
       <Input
         id={`${ctx.idPrefix}-${field}`}
         className={CONTROL}
@@ -129,7 +129,7 @@ function FloorField({ ctx }: { ctx: FieldCtx }) {
   const needsNumber = floorNumberRequired(label || null);
   return (
     <>
-    <FormRow htmlFor={`${ctx.idPrefix}-floor_label`} label="Etaj">
+    <FormRow compact htmlFor={`${ctx.idPrefix}-floor_label`} label="Etaj">
       <Select
         value={label || NONE}
         onValueChange={(v) => {
@@ -153,7 +153,7 @@ function FloorField({ ctx }: { ctx: FieldCtx }) {
       </Select>
     </FormRow>
       {needsNumber ? (
-        <FormRow htmlFor={`${ctx.idPrefix}-floor`} label="Număr etaj">
+        <FormRow compact htmlFor={`${ctx.idPrefix}-floor`} label="Număr etaj">
           <Input
             id={`${ctx.idPrefix}-floor`}
             className={CONTROL}
@@ -229,10 +229,11 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
 
   return (
     <div className="min-w-0 space-y-4">
+      <div className="grid min-w-0 items-start gap-4 min-[1280px]:grid-cols-2 min-[1536px]:grid-cols-3">
       <div data-tour={idPrefix === "new" ? "new-details" : undefined} className="min-w-0">
       <FormSection title="Detalii">
-        <div className="space-y-1.5">
-          <FormRow htmlFor={`${idPrefix}-property_type`} label="Tip apartament / imobil">
+        <div className="space-y-1">
+          <FormRow compact htmlFor={`${idPrefix}-property_type`} label="Tip apartament / imobil">
             <Select value={ctx.str("property_type")} onValueChange={(v) => setField("property_type", v)}>
               <SelectTrigger id={`${idPrefix}-property_type`} className={CONTROL}>
                 <SelectValue placeholder="Selectează" />
@@ -261,7 +262,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           <NumberField ctx={ctx} field="garages" label="Garaje" />
           <SelectField ctx={ctx} field="parking" label="Tip parcare" options={parkingOptions} />
         </div>
-        <div className="grid items-start gap-x-6 gap-y-2.5 border-t border-border pt-4 sm:grid-cols-2">
+        <div className="grid items-start gap-x-4 gap-y-2.5 border-t border-border pt-4 grid-cols-[repeat(auto-fill,minmax(150px,1fr))]">
           <BoolField ctx={ctx} field="bathroom_window" label="Geam la baie" />
           <BoolField ctx={ctx} field="open_kitchen" label="Bucătărie deschisă" />
           <BoolField ctx={ctx} field="pet_friendly" label="Pet friendly" />
@@ -271,7 +272,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       </FormSection>
       </div>
       <FormSection title="Suprafețe">
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <NumberField ctx={ctx} field="usable_surface" label="Suprafață utilă (m²)" />
           <NumberField ctx={ctx} field="built_surface" label="Construită (m²)" />
           <NumberField ctx={ctx} field="total_usable_surface" label="Utilă totală (m²)" />
@@ -282,7 +283,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         </div>
       </FormSection>
       <FormSection title="Clădire">
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <SelectField ctx={ctx} field="construction_stage" label="Stadiu construcție" options={constructionStageOptions} />
           <SelectField ctx={ctx} field="building_type" label="Tip" options={buildingTypeOptions} />
           <SelectField ctx={ctx} field="building_structure" label="Structură" options={buildingStructureOptions} />
@@ -292,7 +293,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         </div>
         <fieldset className="space-y-2 border-t border-border pt-3">
           <legend className="text-sm font-medium">Înălțime</legend>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(130px,1fr))]">
           <BoolField ctx={ctx} field="has_basement" label="S+ (subsol)" />
           <BoolField ctx={ctx} field="has_semi_basement" label="D+ (demisol)" />
           <BoolField ctx={ctx} field="has_ground_floor" label="P+ (parter)" />
@@ -301,6 +302,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           </div>
         </fieldset>
       </FormSection>
+      </div>
       <PropertyFeatureSections idPrefix={idPrefix} value={value} onChange={onChange} />
     </div>
   );
