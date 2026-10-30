@@ -57,7 +57,7 @@ const triggerBase = cn(fieldBase, "relative justify-center pr-7 text-center font
 
 function Row({ label, htmlFor, children, advanced, expanded }: { label: string; htmlFor?: string; children: ReactNode; advanced?: boolean; expanded?: boolean }) {
   return (
-    <div data-filter-row={label} className={cn("grid grid-cols-1 gap-1 md:grid-cols-[minmax(0,140px)_minmax(150px,220px)] md:items-center md:gap-3 xl:gap-2", advanced && !expanded && "hidden md:grid")}>
+    <div data-filter-row={label} className={cn("grid grid-cols-1 gap-1 md:grid-cols-[minmax(104px,140px)_minmax(140px,220px)] md:items-center md:gap-3 xl:gap-2", advanced && !expanded && "hidden md:grid")}>
       <label htmlFor={htmlFor} className="text-[15px] font-normal text-foreground/80 md:truncate md:text-right">{label}</label>
       <div className="min-w-0">{children}</div>
     </div>
@@ -251,7 +251,7 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
             {props.savedLinks}
             <button type="button" onClick={onReset} className="text-[15px] text-primary hover:underline">Resetează toate filtrele</button>
           </div>
-          <div className="grid grid-cols-1 md:w-[220px] xl:w-auto xl:grid-cols-[minmax(0,140px)_minmax(150px,220px)] xl:gap-2">
+          <div className="grid grid-cols-1 md:w-[220px] xl:w-auto xl:grid-cols-[minmax(104px,140px)_minmax(140px,220px)] xl:gap-2">
             <span aria-hidden className="hidden xl:block" />
             <button type="submit" className="h-[38px] w-full rounded-[4px] bg-primary text-[15px] font-medium text-primary-foreground hover:bg-primary/90">Caută</button>
           </div>
