@@ -109,6 +109,7 @@ import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/Delete
 import { brandingFromOrg, buildPresentationHtml } from "@/lib/materials";
 import { PropertySheetTemplatePicker } from "@/components/app/PropertySheetTemplatePicker";
 import { preferredSheetTemplate, type PropertySheetTemplate } from "@/lib/property-sheet-templates";
+import { Checkbox } from "@/components/ui/checkbox";
 import { generatePropertySheetPdf, downloadPropertySheet } from "@/lib/property-sheet-pdf";
 import { AVATAR_BUCKET, MEDIA_BUCKET, signedUrl, signedUrls } from "@/lib/storage";
 
@@ -212,6 +213,7 @@ function PropertyDetailContent() {
   const [generatingPdf, setGeneratingPdf] = useState<"client" | "agent" | null>(null);
   const [readyPdf, setReadyPdf] = useState<Blob | null>(null);
   const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
+  const [includeAllPhotos, setIncludeAllPhotos] = useState(true);
   const [selectedSheetTemplate, setSelectedSheetTemplate] = useState<PropertySheetTemplate>("classic");
   useEffect(() => {
     if (!user?.userId) return;
