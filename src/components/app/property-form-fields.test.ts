@@ -85,7 +85,7 @@ describe("caracteristicile proprietății", () => {
 
   it("păstrează titlul ca singur câmp obligatoriu al formularului", () => {
     // Nicio regulă de validare nu era atașată câmpurilor mutate.
-    expect(newScreen.match(/required/gi) ?? []).toHaveLength(2); // `titleRequired` + RequiredMark import
+    expect(newScreen.match(/required/gi) ?? []).toHaveLength(1); // doar `titleRequired`
     expect(newScreen).toContain("titleRequired");
   });
 

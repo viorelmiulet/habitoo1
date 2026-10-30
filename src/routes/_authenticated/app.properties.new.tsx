@@ -15,7 +15,7 @@ import {
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
-import { FormSection, RequiredMark } from "@/components/app/FormSection";
+import { FormSection } from "@/components/app/FormSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

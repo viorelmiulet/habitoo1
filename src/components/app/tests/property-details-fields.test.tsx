@@ -157,3 +157,18 @@ describe("property feature selections", () => {
     ]);
   });
 });
+
+describe("formularul fără acordeon", () => {
+  it("afișează direct un control pentru fiecare câmp salvat din detalii", async () => {
+    const { PROPERTY_DETAIL_FIELDS } = await import("@/lib/property-detail-fields");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => root.render(<PropertyDetailsFields value={{ floor_label: "Etaj intermediar" }} onChange={() => {}} />));
+    const ids = Array.from(container.querySelectorAll("[id]")).map((n) => n.id);
+    const missing = PROPERTY_DETAIL_FIELDS.filter((f) => f !== "floor" && !ids.some((id) => id === `det-${f}` || id.startsWith(`det-${f}-`)));
+    expect(missing).toEqual([]);
+    expect(container.querySelector("[data-state=closed]")).toBeNull();
+    await act(async () => root.unmount());
+  });
+});
