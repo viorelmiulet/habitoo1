@@ -82,6 +82,8 @@ export async function encodeImobiliareImages(input: {
   const cfg = watermarkFromOrg(org ?? null);
 
   const images: EncodedImage[] = [];
+  const seenHashes = new Map<string, number>();
+  let duplicates = 0;
   for (const row of eligible) {
     if (!row.storage_path) {
       warnings.push(`Poza ${eligible.indexOf(row) + 1} nu are fișier disponibil.`);
@@ -110,6 +112,17 @@ export async function encodeImobiliareImages(input: {
       continue;
     }
     const bytes = new Uint8Array(await data.arrayBuffer());
+    const position = eligible.indexOf(row) + 1;
+    const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)))
+      .map((b) => b.toString(16).padStart(2, "0")).join("");
+    const firstPosition = seenHashes.get(hash);
+    if (firstPosition !== undefined) {
+      // Conținut identic: Imobiliare.ro păstrează o singură copie; o trimitem o dată.
+      warnings.push(`Poza ${position} e identică cu poza ${firstPosition} și a fost trimisă o singură dată.`);
+      duplicates += 1;
+      continue;
+    }
+    seenHashes.set(hash, position);
     const mime = watermarked ? "image/jpeg" : mimeFromPath(row.storage_path);
     images.push({
       imageId: row.id,
@@ -118,13 +131,14 @@ export async function encodeImobiliareImages(input: {
     });
   }
 
+  const expectedUnique = expected - duplicates;
   if (images.length === 0) {
     warnings.push("Nicio imagine publicabilă nu a putut fi pregătită pentru Imobiliare.ro.");
   }
-  if (images.length !== expected) return { images, warnings, expected, transient: transient && !dataError };
+  if (images.length !== expectedUnique) return { images, warnings, expected, transient: transient && !dataError };
   try {
-    return { images: fitImobiliareGallery(images), warnings, expected };
+    return { images: fitImobiliareGallery(images), warnings, expected: expectedUnique };
   } catch (error) {
-    return { images: [], expected, warnings: [...warnings, error instanceof Error ? error.message : "Comprimarea galeriei a eșuat."] };
+    return { images: [], expected: expectedUnique, warnings: [...warnings, error instanceof Error ? error.message : "Comprimarea galeriei a eșuat."] };
   }
 }
