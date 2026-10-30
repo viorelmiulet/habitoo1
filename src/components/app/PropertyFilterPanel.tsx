@@ -186,7 +186,7 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
                     const checked = statuses.includes(s);
                     return (
                       <label key={s} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent">
-                        <Checkbox checked={checked} onCheckedChange={() => set("statuses", serializeStatuses(checked ? statuses.filter((x) => x !== s) : [...statuses, s]) || (checked && statuses.length === 1 ? s : ""))} />
+                        <Checkbox checked={checked} disabled={checked && statuses.length === 1} onCheckedChange={() => set("statuses", serializeStatuses(checked ? statuses.filter((x) => x !== s) : [...statuses, s]))} />
                         {propertyStatusLabels[s]}
                       </label>
                     );
