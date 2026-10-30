@@ -1,3 +1,7 @@
+## Fișa proprietății — aspect Localizare și Descriere
+- [ ] Localizare compactă cu hartă laterală; Descriere cu etichete deasupra, fără schimbarea câmpurilor/salvării
+- [ ] Capturi autentificate 1440/390, citire/editare, fără depășire și comparație salvare înainte/după fără scrieri reale
+
 ## ACP — detalii tehnice doar SuperAdmin
 - [x] Filtrare pe server și în toate ecranele ACP, inclusiv PDF-uri existente
 - [x] Teste pe roluri și rezultat identic
