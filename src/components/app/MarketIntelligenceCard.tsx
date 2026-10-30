@@ -50,7 +50,7 @@ import type {
   MarketTrend,
 } from "@/lib/market/intelligence";
 import { MARKET_SOURCES } from "@/lib/market/sources";
-import { useSession } from "@/hooks/use-session";
+import { useCurrentUser } from "@/hooks/use-session";
 
 type FilterState = {
   city: string;
@@ -395,7 +395,8 @@ export function MarketIntelligenceCard({
   analysisId?: string;
   className?: string;
 }) {
-  const { isSuperadmin } = useSession();
+  const { data: currentUser } = useCurrentUser();
+  const isSuperadmin = currentUser?.isSuperadmin === true;
   const globalFn = useServerFn(getMarketIntelligence);
   const acpFn = useServerFn(getAcpMarketIntelligence);
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
