@@ -70,10 +70,10 @@ function FeatureGroupFields({ group, value, onChange, idPrefix, inline }: {
   const selected = selectedOptions(value, group);
   const Icon = group.icon;
   const headingId = `${idPrefix}-${group.field}-heading`;
-  const optionsClass = inline ? "flex flex-wrap items-start gap-1" : "grid grid-cols-2 items-start gap-1";
-  const optionClass = "flex min-h-11 min-w-0 items-center gap-2 rounded-control px-2 py-2 text-sm font-normal leading-5 break-words";
+  const optionsClass = inline ? "flex flex-wrap items-start gap-1" : "grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] items-start gap-1";
+  const optionClass = "flex min-h-9 min-w-0 items-center gap-2 rounded-control px-2 py-1.5 text-sm font-normal leading-5 [overflow-wrap:normal] [word-break:normal] hyphens-none";
   return (
-    <div data-feature-group={group.field} className={cn("min-w-0", inline ? "grid gap-3 border-b border-border py-4 sm:grid-cols-[180px_minmax(0,1fr)]" : "rounded-card border border-border bg-card p-3 sm:p-4")}>
+    <div data-feature-group={group.field} className={cn("min-w-0", inline ? "grid gap-3 border-b border-border py-4 sm:grid-cols-[180px_minmax(0,1fr)]" : "h-full rounded-card border border-border bg-card p-3")}>
       <div className={cn("flex min-w-0 items-center gap-2", inline ? "self-start pt-2" : "mb-3 border-b border-primary/25 pb-3")}>
         <span className="grid size-8 shrink-0 place-items-center rounded-control bg-accent text-accent-foreground"><Icon className="size-4" aria-hidden="true" /></span>
         <h4 id={headingId} className="min-w-0 font-sans text-sm font-bold text-accent-foreground">{group.title}</h4>
@@ -106,7 +106,7 @@ export function PropertyFeatureSections({ value, onChange, idPrefix = "features"
   }, []);
   const sections = filterFeatureSections(query, onChange ? undefined : value);
   const inline = !!onChange && view === "inline";
-  return <div className="property-feature-sections min-w-0 space-y-6 bg-background text-foreground">
+  return <div className="property-feature-sections min-w-0 space-y-4 bg-background text-foreground">
     {onChange ? <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
       <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" /><Input type="search" aria-label="Caută o opțiune (utilitate, finisaj, dotare)" placeholder="Caută o opțiune (utilitate, finisaj, dotare)…" className="h-11 bg-card pl-9 text-foreground" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
       <ToggleGroup type="single" aria-label="Afișarea opțiunilor" value={view} className="shrink-0 justify-start rounded-control border border-border bg-muted p-1" onValueChange={(next) => { if (!next) return; setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* Session-only preference fallback. */ } }}>
@@ -115,7 +115,7 @@ export function PropertyFeatureSections({ value, onChange, idPrefix = "features"
       </ToggleGroup>
     </div> : null}
     {sections.map((section) => <FormSection key={section.title} title={section.title}>
-      <div className={inline ? "min-w-0" : "grid min-w-0 grid-cols-1 items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3"}>
+      <div className={inline ? "min-w-0" : "grid min-w-0 grid-cols-1 items-stretch gap-4 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]"}>
         {section.groups.map((group) => <FeatureGroupFields key={group.field} group={group} value={value} onChange={onChange} idPrefix={idPrefix} inline={inline} />)}
       </div>
     </FormSection>)}

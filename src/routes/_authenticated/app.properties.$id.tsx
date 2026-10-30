@@ -902,7 +902,7 @@ function PropertyDetailContent() {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <div className="sticky top-0 z-40 -mx-1 overflow-x-auto bg-background px-1">
+        <div className="sticky top-16 z-20 -mx-1 overflow-x-auto bg-background px-1">
         <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății" data-tour="property-tabs">
           {[
             ["agent", "Agent"],

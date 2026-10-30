@@ -14,7 +14,7 @@ export const DESCRIPTION_COUNTER_MAX = 3000;
 export function PropertyFormLayout({ aside, details, children }: { aside?: ReactNode; details: ReactNode; children: ReactNode }) {
   return (
     <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-      {aside ? <aside className="min-w-0 space-y-4">{aside}</aside> : null}
+      {aside ? <aside className="min-w-0 space-y-4 lg:sticky lg:top-[7.5rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto">{aside}</aside> : null}
       <div className={aside ? "min-w-0 space-y-4" : "min-w-0 space-y-4 lg:col-span-2"}>
         {details}
         {children}
