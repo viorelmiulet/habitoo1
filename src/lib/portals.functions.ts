@@ -1648,9 +1648,9 @@ export async function executeListingAction(input: {
     ...(result.ok && definition.id === "imobiliare_ro" ? { imobiliare_mode: action === "withdraw" ? null : result.data.imobiliareMode ?? listing?.imobiliare_mode ?? null } : {}),
     ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
     // Linkul public al anunțului, când portalul îl întoarce (generic, nu doar Storia).
-    ...(result.ok && result.data.publicUrl ? { public_url: result.data.publicUrl } : {}),
-    ...(result.ok && result.data.offers && result.data.offers.length > 0
-      ? { portal_offers: mergePortalOffers(listing?.portal_offers ?? [], result.data.offers) }
+    ...(result.ok && result.data.replacedReferences?.length ? { public_url: result.data.publicUrl ?? null } : result.ok && result.data.publicUrl ? { public_url: result.data.publicUrl } : {}),
+    ...(result.ok && result.data.offers && (result.data.offers.length > 0 || result.data.replacedReferences?.length)
+      ? { portal_offers: mergePortalOffers(listing?.portal_offers ?? [], result.data.offers, result.data.replacedReferences) }
       : {}),
 
     ...(result.ok && action === "publish" ? { published_at: now } : {}),

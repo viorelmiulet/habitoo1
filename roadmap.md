@@ -1,3 +1,7 @@
+## Imobiliare.ro — tranzacție schimbată
+- [x] Retragere în draft cu motiv jurnalizat, referință distinctă și păstrarea exclusivă a anunțului nou
+- [x] 176 teste Imobiliare.ro fără rețea trec: ambele schimbări, aceeași tranzacție, ofertă dublă, retragere refuzată și reluare după creare parțială; build OK; fără apeluri reale
+
 ## Locuit — site public
 - [x] Curl înainte: pagina 404, Locuit.ro absent din integrări și homepage
 - [x] Pagină, card, logo și sitemap prin conținutul public existent

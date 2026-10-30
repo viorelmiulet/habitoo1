@@ -42,10 +42,10 @@ export function buildImobiliareOffer(
 }
 
 /** Păstrează ID-urile vechi pentru referințele la care răspunsul nou nu are ID. */
-export function mergePortalOffers(previous: unknown, next: PortalOffer[]): PortalOffer[] {
+export function mergePortalOffers(previous: unknown, next: PortalOffer[], replacedReferences: readonly string[] = []): PortalOffer[] {
   const prev = Array.isArray(previous) ? (previous as PortalOffer[]) : [];
   const byRef = new Map<string, PortalOffer>();
-  for (const o of prev) if (o && typeof o.reference === "string" && o.id) byRef.set(o.reference, o);
+  for (const o of prev) if (o && typeof o.reference === "string" && o.id && !replacedReferences.includes(o.reference)) byRef.set(o.reference, o);
   for (const o of next) byRef.set(o.reference, o);
   return [...byRef.values()];
 }

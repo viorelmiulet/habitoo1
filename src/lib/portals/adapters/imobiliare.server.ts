@@ -67,7 +67,7 @@ import {
   referenceForTransaction,
   serializeImobiliareReferences,
 } from "../imobiliare/references";
-import { buildImobiliareOffer, type PortalOffer } from "../imobiliare/offer-links";
+import { buildImobiliareOffer, parsePortalOffers, type PortalOffer } from "../imobiliare/offer-links";
 import { imobiliareFloorReasons } from "../imobiliare/mapper";
 import { publishImobiliareOnline, withdrawImobiliareDestinations } from "../imobiliare/online-promotions.server";
 
@@ -408,12 +408,21 @@ async function write(
     }
 
     const storedReferences = parseImobiliareReferences(ref.externalId);
+    const { data: storedListing, error: storedListingError } = await db.from("portal_listings")
+      .select("portal_offers")
+      .eq("organization_id", ctx.organizationId)
+      .eq("property_id", ref.propertyId)
+      .eq("portal", "imobiliare_ro")
+      .maybeSingle();
+    if (storedListingError) throw storedListingError;
+    const storedOffers = parsePortalOffers(storedListing?.portal_offers);
     const resolvedPlans = payload.plans.map((plan) => {
       const customReference = referenceForTransaction(
         storedReferences,
         plan.transaction,
         plan.customReference,
         payload.plans.length,
+        storedOffers,
       );
       return {
         ...plan,
@@ -427,8 +436,28 @@ async function write(
     const promotionErrors: { promotionId: string; message: string }[] = [];
     let lastHttpStatus: number | null = null;
     let lastPortalResponse: unknown = null;
+    const replacedReferences = payload.plans.length === 1 && storedReferences.length === 1
+      && resolvedPlans[0]?.customReference !== storedReferences[0]
+      && storedOffers.some((offer) => offer.reference === storedReferences[0]
+        && (offer.transaction === "sale" || offer.transaction === "rent")
+        && offer.transaction !== payload.plans[0]?.transaction)
+      ? storedReferences : [];
+    if (replacedReferences.length) {
+      const startedAt = Date.now();
+      const withdrawn = await withdraw(ctx, { ...ref, externalId: serializeImobiliareReferences(replacedReferences) });
+      const { logOperation } = await import("@/lib/portals.functions");
+      await logOperation({ organizationId: ctx.organizationId, portal: "imobiliare_ro", operation: "withdraw",
+        propertyId: ref.propertyId, actorId: ref.actorId, externalId: serializeImobiliareReferences(replacedReferences),
+        success: withdrawn.ok, errorCode: withdrawn.ok ? null : withdrawn.code,
+        errorMessage: withdrawn.ok ? "tranzacție schimbată" : `tranzacție schimbată: ${withdrawn.message}`,
+        httpStatus: withdrawn.ok ? withdrawn.data.httpStatus : withdrawn.httpStatus,
+        portalResponse: withdrawn.ok ? withdrawn.data.portalResponse : withdrawn.portalResponse,
+        durationMs: Date.now() - startedAt });
+      if (!withdrawn.ok) return withdrawn;
+      steps.push("Anunțul vechi trecut în draft: tranzacție schimbată");
+    }
     for (const plan of resolvedPlans) {
-      const planMode: WriteMode = storedReferences.includes(plan.customReference) ? "update" : mode;
+      const planMode: WriteMode = replacedReferences.length ? "create" : storedReferences.includes(plan.customReference) ? "update" : mode;
       const result = await withDurableImobiliareLock({
         admin: db,
         organizationId: ctx.organizationId,
@@ -441,8 +470,8 @@ async function write(
               plan,
               images: media.images,
               mode: planMode,
-              activateOnline: mode === "create",
-              ref: { ...ref, ...(mode === "update" && !ref.imobiliareModeChanged ? { imobiliarePromotions: undefined } : {}) },
+              activateOnline: replacedReferences.length > 0 || mode === "create",
+              ref: { ...ref, ...(mode === "update" && !replacedReferences.length && !ref.imobiliareModeChanged ? { imobiliarePromotions: undefined } : {}) },
             }),
           ),
       });
@@ -467,6 +496,7 @@ async function write(
         processed: payload.plans.length,
         publicUrl: publicUrls[0] ?? null,
         offers,
+        ...(replacedReferences.length ? { replacedReferences } : {}),
         httpStatus: lastHttpStatus,
         portalResponse: lastPortalResponse,
         promotionErrors,
