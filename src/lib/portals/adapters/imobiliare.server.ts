@@ -373,6 +373,10 @@ async function write(
     });
     // Never replace an existing gallery with a silently truncated preparation.
     if (media.images.length !== media.expected) {
+      if (media.transient) {
+        // Descărcare din storage eșuată după reîncercări: temporar → coada reprogramează.
+        return { ok: false, code: "PORTAL_ERROR", message: `Eroare temporară: 0/${media.expected} poze trimise — ${media.warnings.join(" ")}`, detail: "medias_prepare" };
+      }
       return { ok: false, code: "VALIDATION_ERROR", message: `0/${media.expected} poze trimise — ${media.warnings.join(" ")}`, detail: "medias_prepare" };
     }
 

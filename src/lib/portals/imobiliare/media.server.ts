@@ -33,11 +33,28 @@ function toBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+/** Pauzele dintre reîncercările unei descărcări din storage (3 reîncercări). */
+export const IMOBILIARE_DOWNLOAD_RETRY_DELAYS_MS: readonly number[] = [500, 1_500, 3_000];
+
+const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+function describeStorageError(error: unknown): string {
+  if (!error) return "fișier gol";
+  const e = error as { statusCode?: unknown; status?: unknown; name?: unknown; message?: unknown };
+  const code = e.statusCode ?? e.status ?? (typeof e.name === "string" && e.name !== "Error" ? e.name : null);
+  const message = typeof e.message === "string" && e.message ? e.message : String(error);
+  return (code ? `${String(code)} ${message}` : message).slice(0, 200);
+}
+
 export async function encodeImobiliareImages(input: {
   admin: Admin;
   organizationId: string;
   propertyId: string;
-}): Promise<{ images: EncodedImage[]; warnings: string[]; expected: number }> {
+  /** Doar pentru teste. */
+  sleep?: (ms: number) => Promise<void>;
+}): Promise<{ images: EncodedImage[]; warnings: string[]; expected: number; transient?: boolean }> {
+  const sleep = input.sleep ?? defaultSleep;
+  let transient = false;
   const warnings: string[] = [];
   const [{ data: rows, error: rowsError }, { data: org }] = await Promise.all([
     input.admin
@@ -71,9 +88,23 @@ export async function encodeImobiliareImages(input: {
     }
     const watermarked = await ensureWatermarkedPath(input.admin, row.storage_path, cfg);
     const path = watermarked ?? row.storage_path;
-    const { data, error } = await input.admin.storage.from(MEDIA_BUCKET).download(path);
-    if (error || !data) {
-      warnings.push(`Poza ${eligible.indexOf(row) + 1} nu a putut fi descărcată.`);
+    let data: Blob | null = null;
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt <= IMOBILIARE_DOWNLOAD_RETRY_DELAYS_MS.length; attempt += 1) {
+      if (attempt > 0) await sleep(IMOBILIARE_DOWNLOAD_RETRY_DELAYS_MS[attempt - 1]!);
+      try {
+        const result = await input.admin.storage.from(MEDIA_BUCKET).download(path);
+        if (!result.error && result.data) { data = result.data; break; }
+        lastError = result.error;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (!data) {
+      const detail = describeStorageError(lastError);
+      console.error("[imobiliare-media] descărcare eșuată", { propertyId: input.propertyId, path, detail });
+      warnings.push(`Poza ${eligible.indexOf(row) + 1} nu a putut fi descărcată (storage: ${detail}).`);
+      transient = true;
       continue;
     }
     const bytes = new Uint8Array(await data.arrayBuffer());
@@ -88,7 +119,7 @@ export async function encodeImobiliareImages(input: {
   if (images.length === 0) {
     warnings.push("Nicio imagine publicabilă nu a putut fi pregătită pentru Imobiliare.ro.");
   }
-  if (images.length !== expected) return { images, warnings, expected };
+  if (images.length !== expected) return { images, warnings, expected, transient };
   try {
     return { images: fitImobiliareGallery(images), warnings, expected };
   } catch (error) {
