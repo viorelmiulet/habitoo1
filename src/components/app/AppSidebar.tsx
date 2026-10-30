@@ -90,9 +90,11 @@ export const agencyNav: NavGroup[] = [
     items: [
       { label: "Contacte", to: "/app/contacts", icon: UserRound },
       { label: "Cereri", to: "/app/requests", icon: Target },
-      { label: "Lead-uri", to: "/app/leads", icon: Flame },
       { label: "Contracte", to: "/app/contracts", icon: FileSignature },
     ],
+  },
+  {
+    items: [{ label: "Lead-uri", to: "/app/leads", icon: Flame }],
   },
   {
     items: [{ label: "Comisioane", to: "/app/comisioane", icon: Coins }],

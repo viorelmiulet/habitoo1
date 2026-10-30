@@ -68,16 +68,18 @@ describe("meniul cu Comisioane ca element separat", () => {
       ["laterală desfășurată", false],
       ["meniul restrâns", true],
     ] as const) {
-      it(`${name} vede Clienți (4 elemente) urmat de Comisioane fără titlu, în ${layout}`, () => {
+      it(`${name} vede Clienți (3 elemente), apoi Lead-uri și Comisioane fără titlu, în ${layout}`, () => {
         renderSidebar(agencyNavFor(isAdmin), collapsed);
         const groups = lists();
         const clientsIndex = groups.findIndex(
           (items) =>
             items.join("|") ===
-            "nav:/app/contacts|nav:/app/requests|nav:/app/leads|nav:/app/contracts",
+            "nav:/app/contacts|nav:/app/requests|nav:/app/contracts",
         );
         expect(clientsIndex).toBeGreaterThanOrEqual(0);
-        expect(groups[clientsIndex + 1]).toEqual(["nav:/app/comisioane"]);
+        expect(groups[clientsIndex + 1]).toEqual(["nav:/app/leads"]);
+        expect(groups[clientsIndex + 2]).toEqual(["nav:/app/comisioane"]);
+        expect(groups.flat().filter((h) => h === "nav:/app/leads")).toHaveLength(1);
         const commissionsList = [...document.querySelectorAll("nav ul")].find(
           (ul) =>
             ul.querySelectorAll("a").length === 1 &&
