@@ -1,6 +1,6 @@
 ## Fișa proprietății — aspect Localizare și Descriere
-- [ ] Localizare compactă cu hartă laterală; Descriere cu etichete deasupra, fără schimbarea câmpurilor/salvării
-- [ ] Capturi autentificate 1440/390, citire/editare, fără depășire și comparație salvare înainte/după fără scrieri reale
+- [x] Localizare compactă cu hartă laterală; Descriere cu etichete deasupra, fără schimbarea câmpurilor/salvării
+- [x] HB-1271: 8 capturi autentificate 1440/390, citire/editare, fără depășire; ambele cereri de salvare identice înainte/după, interceptate fără scrieri reale; 46 teste trec, build OK
 
 ## ACP — detalii tehnice doar SuperAdmin
 - [x] Filtrare pe server și în toate ecranele ACP, inclusiv PDF-uri existente
