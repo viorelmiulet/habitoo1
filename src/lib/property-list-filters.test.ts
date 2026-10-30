@@ -39,12 +39,11 @@ describe("filtrele listei de proprietăți", () => {
     expect(PROPERTY_TYPE_TABS.map((tab) => tab.label)).toEqual([
       "Toate",
       "Apartamente",
-      "Garsoniere",
-      "Case / vile",
+      "Case / Vile",
       "Terenuri",
+      "Spații birouri",
       "Spații comerciale",
-      "Birouri",
-      "Industrial",
+      "Spații industriale",
     ]);
   });
 
