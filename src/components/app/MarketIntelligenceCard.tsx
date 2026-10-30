@@ -50,6 +50,7 @@ import type {
   MarketTrend,
 } from "@/lib/market/intelligence";
 import { MARKET_SOURCES } from "@/lib/market/sources";
+import { useSession } from "@/hooks/use-session";
 
 type FilterState = {
   city: string;
@@ -394,6 +395,7 @@ export function MarketIntelligenceCard({
   analysisId?: string;
   className?: string;
 }) {
+  const { isSuperadmin } = useSession();
   const globalFn = useServerFn(getMarketIntelligence);
   const acpFn = useServerFn(getAcpMarketIntelligence);
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
@@ -764,6 +766,7 @@ export function MarketIntelligenceCard({
                         : "Fără date observate"
                     }
                   />
+                  {isSuperadmin ? (
                   <Metric
                     label="Ultima sincronizare"
                     value={
@@ -777,6 +780,7 @@ export function MarketIntelligenceCard({
                         : undefined
                     }
                   />
+                  ) : null}
                   <Metric
                     label="Calitatea datelor"
                     value={COVERAGE_LABEL[aggregate.coverage.level]}
@@ -792,7 +796,7 @@ export function MarketIntelligenceCard({
                       value={`${formatNumber(insights.comparables.used)} / ${formatNumber(insights.comparables.total)}`}
                       hint={`${formatNumber(insights.comparables.excluded)} excluse · ${formatNumber(insights.comparables.outliers)} outlieri`}
                     />
-                  ) : (
+                  ) : !isSuperadmin ? null : (
                     <Metric
                       label="Surse în selecție"
                       value={formatNumber(aggregate.sourceMix.length)}
@@ -865,6 +869,7 @@ export function MarketIntelligenceCard({
               </>
             )}
 
+            {isSuperadmin ? (
             <div className="rounded-xl border border-border p-4">
               <div className="flex items-center gap-2">
                 <Gauge className="size-4 text-muted-foreground" />
@@ -874,10 +879,11 @@ export function MarketIntelligenceCard({
                 <SourceQualityTable sources={result.sources} names={result.sourceNames} />
               </div>
             </div>
+            ) : null}
 
             <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <CalendarClock className="size-3.5" />
-              Calculat la {formatDateTime(result.computedAt)} din datele importate în Habitoo.
+              Calculat la {formatDateTime(result.computedAt)} {isSuperadmin ? "din datele importate în Habitoo." : "din datele de piață Habitoo."}
               <Activity className="ml-2 size-3.5" />
               Toate cifrele sunt deterministe, fără interpretare automată.
             </p>

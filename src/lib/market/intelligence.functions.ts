@@ -12,6 +12,8 @@ import type { AcpSubject } from "@/lib/acp/scoring";
 import {
   buildAcpMarketInsights,
   marketFiltersFromSubject,
+  redactMarketAggregateForAgency,
+  redactMarketIntelligenceForAgency,
   type AcpMarketInsights,
   type MarketIntelligenceFilters,
   type MarketIntelligenceResult,
@@ -41,6 +43,17 @@ async function loadOrganizationId(context: AuthContext): Promise<string> {
     throw new Error("Datele de piață sunt disponibile doar utilizatorilor unei agenții.");
   }
   return data.organization_id;
+}
+
+/** Rolul se verifică pe server; doar SuperAdmin primește detaliile surselor. */
+async function isSuperadmin(userId: string): Promise<boolean> {
+  const admin = await loadAdmin();
+  const { data } = await admin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "superadmin");
+  return (data ?? []).length > 0;
 }
 
 async function enforceRateLimit(userId: string) {
@@ -97,7 +110,12 @@ export const getMarketIntelligence = createServerFn({ method: "POST" })
     const admin = await loadAdmin();
     const { computeMarketIntelligence } = await import("./intelligence.server");
     const filters = (data.filters ?? { status: "active" }) as MarketIntelligenceFilters;
-    return computeMarketIntelligence(admin, filters, { includeTrend: data.includeTrend !== false });
+    const result = await computeMarketIntelligence(admin, filters, {
+      includeTrend: data.includeTrend !== false,
+    });
+    return (await isSuperadmin((context as AuthContext).userId))
+      ? result
+      : redactMarketIntelligenceForAgency(result);
   });
 
 export type AcpMarketIntelligence = {
@@ -184,12 +202,21 @@ export const getAcpMarketIntelligence = createServerFn({ method: "POST" })
       })),
     });
 
+    const snapshot = analysisData.marketIntelligence ?? null;
+    if (await isSuperadmin((context as AuthContext).userId)) {
+      return { analysisId: analysis.id, analysisVersion: analysis.version ?? 1, filters, live, insights, snapshot };
+    }
     return {
       analysisId: analysis.id,
       analysisVersion: analysis.version ?? 1,
       filters,
-      live,
+      live: redactMarketIntelligenceForAgency(live),
       insights,
-      snapshot: analysisData.marketIntelligence ?? null,
+      snapshot: snapshot
+        ? {
+            ...snapshot,
+            aggregate: snapshot.aggregate ? redactMarketAggregateForAgency(snapshot.aggregate) : null,
+          }
+        : null,
     };
   });
