@@ -6,6 +6,14 @@
 
 .sheet-thumbnail { aspect-ratio: 210 / 297; }
 
+/* Property publication cards: viewport-based density, independent of text width. */
+@media (min-width: 1280px) {
+  [data-tour="publishing-portals"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1536px) {
+  [data-tour="publishing-portals"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
 /* Public integration illustration: CSS connectors; no continuous movement. */
 .integration-map-content { position: relative; height: 410px; }
 .integration-map-listing { position: absolute; width: 300px; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; }
