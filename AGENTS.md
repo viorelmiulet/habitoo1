@@ -26,7 +26,7 @@
 - Agent chat lives only in `chat_*` tables (1-to-1 ordered pair, RLS by participant, contacts via `chat_directory`, block = recipient's `blocked_at`); unread emails via armed cron `chat_email_claim` (15 min, max 1/conversation/hour); never in `notifications`. Why: separate from collaboration messages and the portal-error bell.
 - Chat emails use `renderHabitooEmail`, read after claim, sign private images and resolve recipient-visible conversations; retain unsubscribe. Why: consistent delivery and privacy.
 - Property features share taxonomy metadata and module-level edit/read groups; view preferences hydrate after mount. Why: preserve values, focus and SSR consistency.
-- Location and overview edits share the page draft, ownership guard and buildEditPatch/save. Why: keep tab switches presentation-only and prevent divergent writes.
+- Location/overview edits share the page draft, guard and buildEditPatch; detail layouts use opt-in props. Why: presentation-only tabs without divergent writes.
 - Property PDFs share privacy-filtered fragments and measured pagination in a lazy browser renderer; hydrate overrides, use agency defaults and mobile ready-file clicks. Why: consistent privacy and delivery.
 - Read nested `AGENTS.md` before edits; portal rules include ZUP atomic catalogue/preview isolation. Why: preserve scoped contracts.
 - ZonaTa uses a scoped durable attempt journal. Why: interrupted jobs must leave evidence.
