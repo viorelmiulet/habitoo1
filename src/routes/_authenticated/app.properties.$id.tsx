@@ -785,6 +785,7 @@ function PropertyDetailContent() {
           specs: presentationSpecs,
           description: property.description,
           photos,
+          allPhotos: includeAllPhotos,
           audience,
           template: selectedSheetTemplate,
           agent: {
@@ -794,6 +795,7 @@ function PropertyDetailContent() {
             photoUrl: agentPhotoUrl,
           },
         }),
+        { allPhotos: includeAllPhotos },
       );
       setReadyPdf(pdf);
       if (!matchMedia("(pointer: coarse)").matches) {
@@ -873,7 +875,7 @@ function PropertyDetailContent() {
             <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni" data-tour="property-more"><MoreHorizontal /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>Clonează</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setReadyPdf(null); setPresentationDialogOpen(true); }}><Download /> Generează fișa de proprietate</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setReadyPdf(null); setIncludeAllPhotos(true); setPresentationDialogOpen(true); }}><Download /> Generează fișa de proprietate</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setAddClientOpen(true)}><UserPlus /> Adaugă client</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>
@@ -1451,6 +1453,10 @@ function PropertyDetailContent() {
               specs: presentationSpecs, description: property.description, photos: sheetPhotos,
               agent: { name: responsibleAgent?.full_name ?? user?.profile?.full_name ?? null, phone: responsibleAgent?.phone ?? user?.profile?.phone ?? null, email: responsibleAgent?.email ?? user?.email ?? null } }}
             value={selectedSheetTemplate} onChange={selectSheetTemplate} disabled={generatingPdf !== null} />
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={includeAllPhotos} onCheckedChange={(v) => setIncludeAllPhotos(v === true)} disabled={generatingPdf !== null} />
+            Include toate fotografiile
+          </label>
           <div className="grid gap-3 sm:grid-cols-2">
             <Button
               variant="outline"
