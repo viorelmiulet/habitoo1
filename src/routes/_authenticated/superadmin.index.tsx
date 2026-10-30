@@ -87,20 +87,20 @@ function SuperadminDashboard() {
             actionLabel="Vezi cererile în așteptare"
           />
           <QueueCard
-            label="Cereri de activare portal"
-            count={queue?.pendingPortalActivations}
-            loading={isLoading}
-            icon={PlugZap}
-            to="/superadmin/portals"
-            actionLabel="Deschide portalurile"
-          />
-          <QueueCard
             label="Tichete de suport nerezolvate"
             count={queue?.unresolvedTickets}
             loading={isLoading}
             icon={LifeBuoy}
             to="/superadmin/support"
             actionLabel="Deschide suportul"
+          />
+          <QueueCard
+            label="Cereri de activare portal"
+            count={queue?.pendingPortalActivations}
+            loading={isLoading}
+            icon={PlugZap}
+            to="/superadmin/portals"
+            actionLabel="Deschide portalurile"
           />
         </div>
       </section>
