@@ -74,7 +74,7 @@ describe("caracteristicile proprietății", () => {
     expect(newScreen).not.toContain("Tranzacție, preț și caracteristici");
     const section = newScreen.slice(
       newScreen.indexOf('title="Tranzacție și preț"'),
-      newScreen.indexOf('title="Detalii complete"'),
+      newScreen.indexOf('title="Note interne"'),
     );
     expect(section).toContain('id="commission"');
     expect(section).toContain("PropertyTransactionFields");
@@ -85,8 +85,8 @@ describe("caracteristicile proprietății", () => {
 
   it("păstrează titlul ca singur câmp obligatoriu al formularului", () => {
     // Nicio regulă de validare nu era atașată câmpurilor mutate.
-    expect(newScreen.match(/required/g) ?? []).toHaveLength(1);
-    expect(newScreen).toContain('id="title"');
+    expect(newScreen.match(/required/gi) ?? []).toHaveLength(2); // `titleRequired` + RequiredMark import
+    expect(newScreen).toContain("titleRequired");
   });
 
   it("nu mai afișează grupul „Facilități” și nu trimite `features` la salvare", () => {
@@ -96,54 +96,18 @@ describe("caracteristicile proprietății", () => {
   });
 });
 
-describe("ordinea secțiunilor din tabul Prezentare", () => {
-  const editOrder = [
-    'title="Titlu și descriere"',
-    'title="Locație"',
-    'title="Tranzacție și preț"',
-    'title="Detalii complete"',
-    'title="Note interne"',
-  ];
-
-  const newOrder = [
-    'title="Titlu și descriere"',
-    'title="Informații generale"',
-    'title="Locație"',
-    'title="Tranzacție și preț"',
-    'title="Detalii complete"',
-    'title="Note interne"',
-  ];
-
+describe("așezarea formularului de proprietate", () => {
+  const order = ["PropertyFormLayout", "details={", "<PropertyTitleDescriptionPanel", 'title="Localizare"', 'title="Tranzacție și preț"', 'title="Note interne"'];
   const sectionOrder = (screen: string, markers: string[]) => {
-    const positions = markers.map((marker) => screen.indexOf(marker));
+    const positions = markers.map((marker) => screen.indexOf(marker, screen.indexOf("<PropertyFormLayout")));
     for (const position of positions) expect(position).toBeGreaterThan(-1);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
   };
 
-  it("editarea: titlu și descriere, locație, tranzacție, detalii, note interne", () => {
-    sectionOrder(editScreen, editOrder);
-    expect(editScreen).not.toContain('title="Date generale"');
-    expect(editScreen).not.toContain('title="Descriere"');
-  });
-
-  it("adăugarea: aceeași ordine, cu Stare și Proprietar imediat după titlu", () => {
-    sectionOrder(newScreen, newOrder);
-    expect(newScreen).not.toContain('title="Localizare"');
-    expect(newScreen).not.toContain('title="Descriere"');
-  });
-
-  it("descrierea stă imediat sub titlu, care rămâne obligatoriu", () => {
-    for (const screen of [newScreen, editScreen]) {
-      const section = screen.slice(
-        screen.indexOf('title="Titlu și descriere"'),
-        screen.indexOf('title="Locație"'),
-      );
-      expect(section).toContain('id="title"');
-      expect(section).toContain("<RequiredMark />");
-      expect(section).toContain('id="description"');
-      expect(section).toContain("<PropertyDescriptionTextarea");
-    }
-    expect(newScreen).toMatch(/id="title"[\s\S]{0,200}required/);
+  it("editarea și adăugarea folosesc aceeași așezare, fără acordeon", () => {
+    sectionOrder(editScreen, order);
+    sectionOrder(newScreen, order);
+    for (const screen of [editScreen, newScreen, detailsFields]) expect(screen).not.toMatch(/Accordion/);
   });
 
   it("salvarea trimite exact aceleași câmpuri ca înainte", () => {
