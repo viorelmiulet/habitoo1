@@ -1,3 +1,8 @@
+## ACP — detalii tehnice doar SuperAdmin
+- [x] Filtrare pe server și în toate ecranele ACP, inclusiv PDF-uri existente
+- [x] Teste pe roluri și rezultat identic
+- [ ] Verificare vizuală în cont
+
 ## Fișa proprietății — corecturi grupare și Localizare
 - [x] Restabilire Detalii/Suprafețe/Clădire/Utilități/Finisaje/Dotări și Carduri/În linie, fără acordeoane
 - [x] Filă Localizare înainte de Prezentare, aceeași stare și salvare, păstrarea panoului Locație

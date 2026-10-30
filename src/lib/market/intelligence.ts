@@ -864,3 +864,29 @@ export type MarketIntelligenceResult = {
   sourceNames: Record<string, string>;
   computedAt: string;
 };
+
+/**
+ * Agențiile (admin agenție și agenți) nu primesc detalii tehnice de colectare:
+ * starea surselor, sincronizări și numărători pe surse. Statisticile de piață
+ * (prețuri, distribuții, trend, poziționare) rămân identice.
+ */
+export function redactMarketIntelligenceForAgency(
+  result: MarketIntelligenceResult,
+): MarketIntelligenceResult {
+  return {
+    ...result,
+    sources: [],
+    sourceNames: {},
+    aggregate: redactMarketAggregateForAgency(result.aggregate),
+  };
+}
+
+export function redactMarketAggregateForAgency(
+  aggregate: MarketIntelligenceAggregate,
+): MarketIntelligenceAggregate {
+  return {
+    ...aggregate,
+    sourceMix: [],
+    freshness: { ...aggregate.freshness, lastSyncAt: null },
+  };
+}
