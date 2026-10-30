@@ -97,7 +97,29 @@ function FeatureGroupFields({ group, value, onChange, idPrefix, inline }: {
   );
 }
 
-export function PropertyFeatureSections({ value, onChange, idPrefix = "features" }: { value: Value; onChange?: (patch: Value) => void; idPrefix?: string }) {
+/** Editare compactă: grupurile ca liste de bife pe până la 4 coloane, cu titlul grupului deasupra. */
+function CompactFeatureGroup({ group, value, onChange, idPrefix }: { group: FeatureGroup; value: Value; onChange: (patch: Value) => void; idPrefix: string }) {
+  const selected = selectedOptions(value, group);
+  const headingId = `${idPrefix}-${group.field}-heading`;
+  const row = "flex min-h-9 min-w-0 cursor-pointer items-center gap-2 px-1 text-[15px] font-normal leading-5 hover:bg-muted";
+  return <div data-feature-group={group.field} className="mb-5 min-w-0 break-inside-avoid">
+    <h4 id={headingId} className="mb-1 font-sans text-sm font-normal text-muted-foreground">{group.title}</h4>
+    {group.single ? <>
+      <RadioGroup aria-labelledby={headingId} value={selected[0] ?? ""} onValueChange={(option) => onChange({ [group.field]: option || null })} className="gap-0">
+        {group.options.map((option) => <Label key={option} htmlFor={`${idPrefix}-${group.field}-${option}`} className={row}>
+          <RadioGroupItem className="shrink-0" id={`${idPrefix}-${group.field}-${option}`} value={option} /><span className="min-w-0">{option}</span>
+        </Label>)}
+      </RadioGroup>
+      {selected.length > 0 ? <Button type="button" variant="link" className="h-8 px-1 text-xs font-normal underline" onClick={() => onChange({ [group.field]: null })} aria-label={`Șterge selecția ${group.title}`}>Șterge selecția</Button> : null}
+    </> : <div role="group" aria-labelledby={headingId}>
+      {group.options.map((option) => <Label key={option} htmlFor={`${idPrefix}-${group.field}-${option}`} className={row}>
+        <Checkbox id={`${idPrefix}-${group.field}-${option}`} checked={selected.includes(option)} onCheckedChange={(checked) => onChange({ [group.field]: checked === true ? [...new Set([...selected, option])] : selected.filter((item) => item !== option) })} /><span className="min-w-0">{option}</span>
+      </Label>)}
+    </div>}
+  </div>;
+}
+
+export function PropertyFeatureSections({ value, onChange, idPrefix = "features", layout }: { value: Value; onChange?: (patch: Value) => void; idPrefix?: string; layout?: "compact" }) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState("cards");
   useEffect(() => {
@@ -105,6 +127,15 @@ export function PropertyFeatureSections({ value, onChange, idPrefix = "features"
   }, []);
   const sections = filterFeatureSections(query, onChange ? undefined : value);
   const inline = !!onChange && view === "inline";
+  if (onChange && layout === "compact") {
+    return <div className="property-feature-sections min-w-0 space-y-4 text-foreground">
+      <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" aria-hidden="true" /><Input type="search" aria-label="Caută o opțiune (utilitate, finisaj, dotare)" placeholder="Caută o opțiune (utilitate, finisaj, dotare)…" className="h-9 pl-9 text-[15px]" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
+      <div className="min-w-0 [column-gap:1.5rem] [columns:4_10rem]">
+        {sections.flatMap((section) => section.groups).map((group) => <CompactFeatureGroup key={group.field} group={group} value={value} onChange={onChange} idPrefix={idPrefix} />)}
+      </div>
+      {sections.length === 0 ? <p role="status" className="py-6 text-center text-sm text-muted-foreground">Nicio opțiune găsită.</p> : null}
+    </div>;
+  }
   return <div className="property-feature-sections min-w-0 space-y-6 bg-background text-foreground">
     {onChange ? <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
       <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" /><Input type="search" aria-label="Caută o opțiune (utilitate, finisaj, dotare)" placeholder="Caută o opțiune (utilitate, finisaj, dotare)…" className="h-11 bg-card pl-9 text-foreground" value={query} onChange={(event) => setQuery(event.target.value)} /></div>

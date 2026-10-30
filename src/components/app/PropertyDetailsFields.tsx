@@ -269,7 +269,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           <NumberField ctx={ctx} field="garden_surface" label="Suprafață grădină (m²)" />
           <NumberField ctx={ctx} field="land_surface" label="Teren (m²)" />
           <SelectField ctx={ctx} field="construction_stage" label="Stadiu construcție" options={constructionStageOptions} />
-          <SelectField ctx={ctx} field="building_type" label="Tip clădire" options={buildingTypeOptions} />
+          <SelectField ctx={ctx} field="building_type" label="Tip" options={buildingTypeOptions} />
           <SelectField ctx={ctx} field="building_structure" label="Structură" options={buildingStructureOptions} />
           <SelectField ctx={ctx} field="seismic_risk" label="Risc seismic" options={seismicRiskOptions} />
           <NumberField ctx={ctx} field="building_floors" label="Etaje" />
