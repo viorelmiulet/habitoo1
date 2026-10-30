@@ -633,7 +633,7 @@ export const PropertyPortalsCard = forwardRef<
   }
 
   return (
-    <div className={cn("grid items-start gap-6", showPortalJournal && "min-[1100px]:grid-cols-[minmax(0,1fr)_340px]")}>
+    <div className={cn("grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-6", showPortalJournal && "min-[1100px]:grid-cols-[minmax(0,1fr)_340px]")}>
       <div className="min-w-0 space-y-6">
         <section aria-labelledby="portal-publication-title">
           <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -682,15 +682,15 @@ export const PropertyPortalsCard = forwardRef<
               className="mb-3 rounded-2xl border border-destructive bg-destructive/5 p-3 text-sm"
             />
           ) : null}
-          <ul data-tour="publishing-portals" className="grid min-w-0 grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <ul data-tour="publishing-portals" className="grid min-w-0 grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 [&_button]:max-w-full [&_button]:whitespace-normal [&_button]:text-xs [&_button:not([role=checkbox]):not([role=radio])]:h-auto [&_button:not([role=checkbox]):not([role=radio])]:min-h-7 [&_button:not([role=checkbox]):not([role=radio])]:px-2 [&_button:not([role=checkbox]):not([role=radio])]:py-1 [&_input]:h-8">
             <li className="min-w-0">
-              <Card className={cn("relative min-w-0 bg-surface p-4 text-sm", fbValue && "border-gold ring-1 ring-gold/40", fbState.key === "excluded" && "bg-warning/10")}>
+              <Card className={cn("relative min-w-0 gap-3 bg-surface p-3 text-sm", fbValue && "border-gold ring-1 ring-gold/40", fbState.key === "excluded" && "bg-warning/10")}>
                 <label htmlFor="portal-facebook-catalog" aria-label="Catalog Facebook" className={cn("absolute inset-0 z-0", editing && canManage && canEditFacebookCatalog && !fb.isLoading ? "cursor-pointer" : "cursor-default")} />
                 <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
                   <div className="flex min-w-0 items-start gap-3">
-                    <PortalLogo portalId="facebook_catalog" name="Catalog Facebook" fallback="FB" size={40} />
+                    <PortalLogo portalId="facebook_catalog" name="Catalog Facebook" fallback="FB" size={32} />
                     <div className="min-w-0 flex-1">
-                      <p className="break-words text-[17px] font-bold leading-6">Catalog Facebook</p>
+                      <p className="break-words text-sm font-bold leading-5">Catalog Facebook</p>
                       <StatusPill
                         state={fbState.key === "in_catalog" ? "published" : fbState.key === "excluded" ? "pending" : "inactive"}
                         dot
@@ -745,7 +745,7 @@ export const PropertyPortalsCard = forwardRef<
               <li className="min-w-0">
                 <Card
                   className={cn(
-                    "relative min-w-0 bg-surface p-4 text-sm",
+                    "relative min-w-0 gap-3 bg-surface p-3 text-sm",
                     collabValue && "border-gold ring-1 ring-gold/40",
                     collabValue &&
                       collabPercent.trim() === "" &&
@@ -757,11 +757,11 @@ export const PropertyPortalsCard = forwardRef<
                   <label htmlFor="portal-habitoo-collaboration" aria-label="Colaborare Habitoo" className={cn("absolute inset-0 z-0", editing && canManage ? "cursor-pointer" : "cursor-default")} />
                   <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
                     <div className="flex min-w-0 items-start gap-3">
-                      <span className="inline-flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-control border border-border bg-surface">
+                      <span className="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-control border border-border bg-surface">
                         <BrandLogo markOnly className="size-5" />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="break-words text-[17px] font-bold leading-6">Colaborare Habitoo</p>
+                        <p className="break-words text-sm font-bold leading-5">Colaborare Habitoo</p>
                         <StatusPill state={collabValue ? "published" : "inactive"} dot>
                           {collabValue ? "Activ" : "Inactiv"}
                         </StatusPill>
@@ -937,13 +937,13 @@ export const PropertyPortalsCard = forwardRef<
 
               return (
                 <li key={cell.portalId} className="min-w-0">
-                  <Card aria-busy={busy} data-tour={`portal-card-${cell.portalId}`} className={cn("relative min-w-0 bg-surface p-4 text-sm", value && "border-gold ring-1 ring-gold/40", !cell.configured && "opacity-55", busy && "opacity-70")}>
+                  <Card aria-busy={busy} data-tour={`portal-card-${cell.portalId}`} className={cn("relative min-w-0 gap-3 bg-surface p-3 text-sm", value && "border-gold ring-1 ring-gold/40", !cell.configured && "opacity-55", busy && "opacity-70")}>
                     {cell.configured ? <label htmlFor={`portal-${cell.portalId}`} aria-label={cell.portalName} className={cn("absolute inset-0 z-0", !disabled ? "cursor-pointer" : "cursor-default")} /> : null}
                     <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
                       <div className="flex min-w-0 items-start gap-3">
-                        <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={40} />
+                        <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={32} />
                         <div className="min-w-0">
-                          <p className="break-words text-[17px] font-bold leading-6">{cell.portalName}</p>
+                          <p className="break-words text-sm font-bold leading-5">{cell.portalName}</p>
                           <StatusPill state={stateView.pill} dot>{stateView.label}</StatusPill>
                         </div>
                       </div>
