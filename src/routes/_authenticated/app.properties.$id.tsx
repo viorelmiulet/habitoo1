@@ -1,3 +1,4 @@
+import { assertFormBelongsToProperty } from "@/lib/property-form-guard";
 import { SendOfferDialog } from "@/components/app/SendOfferDialog";
 import { SendCollaboratorOfferDialog } from "@/components/app/SendCollaboratorOfferDialog";
 import { neutralOfferReason } from "@/lib/neutral-offer";
@@ -177,6 +178,12 @@ export const Route = createFileRoute("/_authenticated/app/properties/$id")({
 
 function PropertyDetailPage() {
   const { id } = Route.useParams();
+  // Fișa se remontează la fiecare proprietate: nicio stare de editare nu trece de la una la alta.
+  return <PropertyDetailContent key={id} />;
+}
+
+function PropertyDetailContent() {
+  const { id } = Route.useParams();
   const search = useSearch({ strict: false }) as { tab?: string; edit?: boolean };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -341,8 +348,11 @@ function PropertyDetailPage() {
   // Poziția pe hartă (Leaflet/OpenStreetMap) și precizia locației, în modul editare.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationPrecise, setLocationPrecise] = useState(false);
+  /** Id-ul proprietății pentru care a fost încărcat formularul de editare. */
+  const formPropertyIdRef = useRef<string | null>(null);
   const startEdit = () => {
-    if (!property) return;
+    if (!property || property.id !== id) return;
+    formPropertyIdRef.current = property.id;
     setDraftAgent(property.assigned_to ?? "");
     setDraft({
       title: property.title,
@@ -381,7 +391,7 @@ function PropertyDetailPage() {
 
   const openedEditRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!search.edit || !property || openedEditRef.current === id) return;
+    if (!search.edit || !property || property.id !== id || openedEditRef.current === id) return;
     openedEditRef.current = id;
     startEdit();
   }, [search.edit, property, id]);
@@ -390,6 +400,7 @@ function PropertyDetailPage() {
     mutationFn: async (patch: Record<string, unknown>) => {
       const assignmentWarnings = await savePropertyEdits({
         saveDetails: async () => {
+          assertFormBelongsToProperty(formPropertyIdRef.current, id, property?.id);
           const { error } = await supabase.from("properties")
             .update({ ...patch, updated_by: user?.userId ?? null } as never).eq("id", id);
           if (error) throw error;
@@ -496,11 +507,13 @@ function PropertyDetailPage() {
   const publish = useMutation({
     mutationFn: async () => {
       if (editing) {
+        assertFormBelongsToProperty(formPropertyIdRef.current, id, property?.id);
         if (!hasTransactionSelection(tx)) {
           throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
         }
         const warnings = await savePropertyEdits({
           saveDetails: async () => {
+            assertFormBelongsToProperty(formPropertyIdRef.current, id, property?.id);
             const { error: saveError } = await supabase.from("properties")
               .update({ ...buildEditPatch(), updated_by: user?.userId ?? null } as never).eq("id", id);
             if (saveError) throw saveError;
@@ -1281,7 +1294,7 @@ function PropertyDetailPage() {
             onPublish={() => publish.mutate()}
             onOpenMedia={() => setTab("media")}
             onCompleteMissing={() => {
-              setEditing(true);
+              startEdit();
               setTab("overview");
               requestAnimationFrame(() =>
                 document
