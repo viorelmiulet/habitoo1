@@ -92,6 +92,8 @@ export type ListingOutcome = {
   publicUrl?: string | null;
   /** Anunțurile reale la portal, per tranzacție (ID + link public). */
   offers?: import("./imobiliare/offer-links").PortalOffer[];
+  /** Confirmed old Imobiliare references replaced after a transaction change. */
+  replacedReferences?: string[];
   /** Statusul HTTP al ultimului răspuns al portalului, pentru jurnalizare. */
   httpStatus?: number | null;
   /** Corpul răspunsului portalului la succes (sanitizat la jurnalizare). */
