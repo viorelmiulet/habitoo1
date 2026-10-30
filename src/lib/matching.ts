@@ -69,10 +69,10 @@ export function scoreMatch(
   }
 
   total += 20;
-  const cities = (request.cities ?? []).map((c) => c.toLowerCase());
-  const areas = (request.areas ?? []).map((a) => a.toLowerCase());
-  const propCity = (property.city ?? "").toLowerCase();
-  const propArea = `${property.district ?? ""} ${property.address ?? ""}`.toLowerCase();
+  const cities = (request.cities ?? []).map(normalizePlace);
+  const areas = (request.areas ?? []).map(normalizePlace);
+  const propCity = normalizePlace(property.city ?? "");
+  const propArea = normalizePlace(`${property.district ?? ""} ${property.address ?? ""}`);
   const cityOk = cities.length === 0 || cities.some((c) => propCity.includes(c));
   const areaOk = areas.length === 0 || areas.some((a) => propArea.includes(a));
   if (cityOk && areaOk) {
@@ -122,6 +122,22 @@ export function scoreMatch(
 
   const score = Math.max(0, Math.min(100, Math.round((earned / total) * 100)));
   return { score, reasons, misses };
+}
+
+/**
+ * Normalizează un nume de loc pentru comparare: fără diacritice (ş/ș, ţ/ț, ă, â, î),
+ * „Sectorul N" → „sector N", iar „București Sector N" → „sector N".
+ */
+export function normalizePlace(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\bsectorul\b/g, "sector")
+    .replace(/\bbucuresti[\s,-]+(?=sector\s*\d)/g, "")
+    .replace(/\bsector\s*(\d+)/g, "sector $1")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function matchTone(score: number): "success" | "info" | "warning" | "neutral" {
