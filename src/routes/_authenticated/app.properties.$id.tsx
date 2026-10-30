@@ -134,7 +134,7 @@ import {
 } from "@/lib/labels";
 import { activityStatusLabels, activityStatusTone, logAudit } from "@/lib/crm";
 import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
-import { useActiveLeadSources } from "@/components/app/LeadMatches";
+import { notifyLeadMatchesForProperty, useActiveLeadSources } from "@/components/app/LeadMatches";
 import { buildLeadMatchRows } from "@/lib/lead-matching";
 import { appHead } from "@/components/app/app-head";
 import { announceGuideContext } from "@/lib/onboarding-tour";
@@ -441,6 +441,8 @@ function PropertyDetailContent() {
       setEditing(false);
       if (assignmentWarnings.length) toast.warning(`Modificările au fost salvate. ${assignmentWarnings.join(" · ")}`);
       else toast.success("Modificările au fost salvate.");
+      queryClient.invalidateQueries({ queryKey: ["lead-match-sources"] });
+      void notifyLeadMatchesForProperty(id, orgId, () => setTab("matching"));
     },
     onError: (e: Error) => toastError(e),
   });

@@ -129,3 +129,8 @@ export function filterLeadRows(rows: LeadMatchRow[], f: LeadRowFilters): LeadMat
       (!q || r.lead.name.toLowerCase().includes(q) || r.property.title.toLowerCase().includes(q)),
   );
 }
+
+/** Lead-uri compatibile cu o proprietate (≥60%), fără cele intrate chiar pe ea. */
+export function countLeadMatchesForProperty(property: Property, leads: Lead[], sourceById: Map<string, Property>) {
+  return buildLeadMatchRows(leads.filter((l) => l.property_id !== property.id), sourceById, [property]).length;
+}

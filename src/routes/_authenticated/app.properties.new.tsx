@@ -1,3 +1,4 @@
+import { notifyLeadMatchesForProperty } from "@/components/app/LeadMatches";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -171,6 +172,9 @@ function NewPropertyPage() {
       toast.success("Proprietatea a fost adăugată.");
       postalNotice(data.postal);
       navigate({ to: "/app/properties/$id", params: { id: data.id } });
+      void notifyLeadMatchesForProperty(data.id, data.organization_id, () =>
+        navigate({ to: "/app/properties/$id", params: { id: data.id }, search: { tab: "matching" } }),
+      );
     },
     onError: (e: Error) => toastError(e),
   });
