@@ -45,6 +45,8 @@ import {
 import { parsePortalFilter } from "@/lib/portals/portal-state";
 import { portalListingLink } from "@/lib/portals/listing-links";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
+import { PropertyFilterPanel } from "@/components/app/PropertyFilterPanel";
+import { applyPropertyFilterClauses } from "@/lib/property-filter-query";
 import { useServerFn } from "@tanstack/react-start";
 import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";
 import { ReassignPropertiesDialog } from "@/components/app/ReassignPropertiesDialog";
@@ -117,8 +119,7 @@ import {
   propertyListSearchFromState,
   propertyListSearchSchema,
   propertyListStateFromSearch,
-  romaniaDateBoundary,
-  shouldShowAdvancedFilters,
+  selectedStatuses,
   type PropertyListFilters,
   type PropertyListSort,
   type PropertyListView,
@@ -137,19 +138,14 @@ const emptyFilters = emptyPropertyListFilters;
 type SortKey = PropertyListSort;
 
 const sortOptions: Record<SortKey, string> = {
-  created_desc: "Dată adăugare (nou→vechi)",
-  updated_desc: "Dată modificare (recent)",
-  price_asc: "Preț crescător",
-  price_desc: "Preț descrescător",
-  surface_asc: "Suprafață crescătoare",
-  surface_desc: "Suprafață descrescătoare",
+  created_desc: "Data introducerii (desc.)",
+  updated_desc: "Data modificării (desc.)",
+  price_asc: "Preț (cresc.)",
+  price_desc: "Preț (desc.)",
+  surface_asc: "Suprafață (cresc.)",
+  surface_desc: "Suprafață (desc.)",
 };
 
-const FILTERS_EXPANDED_KEY = "habitoo.propertyFiltersExpanded.v1";
-
-const fieldLabelClass =
-  "mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground";
-const valuedControlClass = "border-primary bg-primary/5";
 
 
 function PropertiesPage() {
@@ -166,13 +162,11 @@ function PropertiesPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
-  const [searchInput, setSearchInput] = useState(filters.q);
   const [selected, setSelected] = useState<string[]>([]);
   // Ghidul „Unelte din listă” pornește o singură dată: la prima vedere schimbată sau prima selecție.
   const toolsAnnounced = useRef(false);
   const announceTools = () => { if (!toolsAnnounced.current) { toolsAnnounced.current = true; announceGuideContext("properties:tools"); } };
   useEffect(() => { if (selected.length > 0) announceTools(); }, [selected.length]);
-  const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [sendOfferTarget, setSendOfferTarget] = useState<string | null>(null);
   const [collaboratorOfferTarget, setCollaboratorOfferTarget] = useState<string | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
@@ -185,9 +179,6 @@ function PropertiesPage() {
 
   const savedViews = useSavedViews("properties", orgId, user?.userId);
 
-  useEffect(() => {
-    setSearchInput(filters.q);
-  }, [filters.q]);
 
   const writeUrlState = (
     nextFilters: Filters,
@@ -242,7 +233,7 @@ function PropertiesPage() {
   });
   const resetFilters = () => {
     if (!confirmDiscardDrafts()) return;
-    clearListState(); setSelected([]); setSearchInput("");
+    clearListState(); setSelected([]);
     void navigate({ search: {}, replace: true });
   };
   const changePageSize = (size: ListPageSize) => {
@@ -250,15 +241,6 @@ function PropertiesPage() {
     setSelected([]);
     applyPageSize(size);
   };
-
-  useEffect(() => {
-    if (searchInput.trim() === filters.q) return;
-    const t = setTimeout(() => {
-      const latest = urlStateRef.current;
-      void writeUrlState({ ...latest.filters, q: searchInput.trim() }, latest.sort, 1, latest.view, true);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [searchInput, filters.q, sort, view]);
 
   useBlocker({
     disabled: Object.keys(portalDrafts).length === 0,
@@ -268,27 +250,6 @@ function PropertiesPage() {
       return !window.confirm(`Renunți la ${Object.keys(portalDrafts).length} modificări?`);
     },
   });
-
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(FILTERS_EXPANDED_KEY);
-      setFiltersExpanded(saved === null ? window.innerWidth >= 768 : saved === "true");
-    } catch {
-      setFiltersExpanded(window.innerWidth >= 768);
-    }
-  }, []);
-
-  const toggleFiltersExpanded = () => {
-    setFiltersExpanded((current) => {
-      const next = !current;
-      try {
-        window.localStorage.setItem(FILTERS_EXPANDED_KEY, String(next));
-      } catch {
-        /* Browsers may deny localStorage access. */
-      }
-      return next;
-    });
-  };
 
   const { data: agents = [] } = useQuery({
     queryKey: ["profiles", "org", orgId],
@@ -343,9 +304,9 @@ function PropertiesPage() {
     queryKey: ["properties-meta", orgId],
     enabled: Boolean(orgId),
     queryFn: async () => {
-      const data: { city: string | null; county: string | null; district: string | null; source: string | null }[] = [];
+      const data: { city: string | null; county: string | null; district: string | null; source: string | null; destination: string | null }[] = [];
       for (let offset = 0; ; offset += 1000) {
-        const { data: batch, error } = await supabase.from("properties").select("city,county,district,source").eq("organization_id", orgId as string).is("deleted_at", null).order("id").range(offset, offset + 999);
+        const { data: batch, error } = await supabase.from("properties").select("city,county,district,source,destination").eq("organization_id", orgId as string).is("deleted_at", null).order("id").range(offset, offset + 999);
         if (error) throw error;
         data.push(...(batch ?? []));
         if ((batch?.length ?? 0) < 1000) break;
@@ -353,6 +314,7 @@ function PropertiesPage() {
       return {
         rows: data,
         sources: [...new Set(data.map((p) => p.source).filter(Boolean) as string[])].sort(),
+        destinations: [...new Set(data.map((p) => p.destination?.trim()).filter(Boolean) as string[])].sort((x, y) => x.localeCompare(y, "ro")),
       };
     },
   });
@@ -446,34 +408,10 @@ function PropertiesPage() {
         .eq("organization_id", orgId as string)
         .is("deleted_at", null);
 
-      if (filters.status !== "all") query = query.eq("status", filters.status as never);
-      // Arhivele nu apar în lista implicită; revin la vedere cu "Arată și arhivate"
-      // sau când se filtrează explicit după statusul "Arhivat".
-      else if (!filters.showArchived) query = query.neq("status", "archived" as never);
-      if (filters.transaction !== "all")
-        query = query.eq("transaction_kind", filters.transaction as never);
-      if (filters.type !== "all") query = query.eq("property_type", filters.type);
-      if (filters.source !== "all") query = query.eq("source", filters.source);
-      const agentClause = mainAgentFilter ? agentFilterClause(filters.agent) : ({ kind: "none" } as const);
-      if (agentClause.kind === "unassigned") query = query.is("assigned_to", null);
-      else if (agentClause.kind === "agent") query = query.eq("assigned_to", agentClause.id);
-      if (filters.mine && user?.userId) query = query.eq("assigned_to", user.userId);
-      if (filters.priceMin) query = query.gte("price", Number(filters.priceMin));
-      if (filters.priceMax) query = query.lte("price", Number(filters.priceMax));
-      if (filters.surfaceMin) query = query.gte("surface", Number(filters.surfaceMin));
-      if (filters.surfaceMax) query = query.lte("surface", Number(filters.surfaceMax));
-      if (filters.rooms)
-        query = isAtLeastFilter(filters.rooms)
-          ? query.gte("rooms", numericFilterValue(filters.rooms))
-          : query.eq("rooms", numericFilterValue(filters.rooms));
-      if (filters.bathrooms)
-        query = isAtLeastFilter(filters.bathrooms)
-          ? query.gte("bathrooms", numericFilterValue(filters.bathrooms))
-          : query.eq("bathrooms", numericFilterValue(filters.bathrooms));
-      if (filters.floorMin) query = query.gte("floor", Number(filters.floorMin));
-      if (filters.floorMax) query = query.lte("floor", Number(filters.floorMax));
-      if (filters.addedAfter) query = query.gte("created_at", romaniaDateBoundary(filters.addedAfter, "start"));
-      if (filters.addedBefore) query = query.lte("created_at", romaniaDateBoundary(filters.addedBefore, "end"));
+      query = applyPropertyFilterClauses(query as never, filters, {
+        agentClause: mainAgentFilter ? agentFilterClause(filters.agent) : { kind: "none" },
+        userId: user?.userId,
+      }) as typeof query;
       if (filters.favoritesOnly) {
         if (favoriteIds.length === 0) return { rows: [], count: 0 };
         query = query.in("id", favoriteIds);
@@ -486,13 +424,6 @@ function PropertiesPage() {
         if (!promotionIds || promotionIds.length === 0) return { rows: [], count: 0 };
         query = query.in("id", promotionIds);
       }
-      if (filters.q) {
-        const q = filters.q.replace(/[%,()"\\]/g, " ").trim();
-        query = query.or(
-          `title.ilike.%${q}%,reference.ilike.%${q}%,address.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%`,
-        );
-      }
-
       const { col, asc } = sortColumn[sort];
       query = query.order(col, { ascending: asc, nullsFirst: false }).order("id");
       query = query.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
@@ -670,14 +601,12 @@ function PropertiesPage() {
    */
   const activePills: { key: keyof Filters; label: string }[] = [
     filters.q ? { key: "q" as const, label: `„${filters.q}”` } : null,
-    filters.status !== "all"
-      ? {
-          key: "status" as const,
-          label:
-            propertyStatusLabels[filters.status as keyof typeof propertyStatusLabels] ??
-            filters.status,
-        }
-      : null,
+    filters.statuses ? { key: "statuses" as const, label: `Valabilitate: ${selectedStatuses(filters).length} selectate` } : null,
+    filters.tab !== "all" ? { key: "tab" as const, label: PROPERTY_TYPE_TABS.find((t) => t.value === filters.tab)?.label ?? filters.tab } : null,
+    filters.street ? { key: "street" as const, label: `Stradă: ${filters.street}` } : null,
+    filters.destination !== "all" ? { key: "destination" as const, label: `Destinație: ${filters.destination}` } : null,
+    filters.updatedAfter ? { key: "updatedAfter" as const, label: `Modificat după ${filters.updatedAfter}` } : null,
+    filters.updatedBefore ? { key: "updatedBefore" as const, label: `Modificat înainte de ${filters.updatedBefore}` } : null,
     filters.transaction !== "all"
       ? {
           key: "transaction" as const,
@@ -695,7 +624,6 @@ function PropertiesPage() {
       : null,
     filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
     filters.favoritesOnly ? { key: "favoritesOnly" as const, label: "Doar favorite" } : null,
-    filters.showArchived ? { key: "showArchived" as const, label: "Include arhivate" } : null,
     portalFilter
       ? { key: "portal" as const, label: portalFilterLabel(filters.portal, portalOptions) }
       : null,
@@ -727,11 +655,6 @@ function PropertiesPage() {
     setFilters((f) => ({ ...f, [key]: emptyFilters[key] }) as Filters);
 
   const filtersActive = activePills.length > 0 || Boolean(filters.locuri);
-  const hiddenFilterKeys: (keyof Filters)[] = [
-    "city", "district", "priceMin", "priceMax", "surfaceMin", "surfaceMax", "rooms",
-    "bathrooms", "floorMin", "floorMax", "addedAfter", "addedBefore", "agent", "source",
-  ];
-  const hiddenPills = activePills.filter((pill) => hiddenFilterKeys.includes(pill.key));
 
   /** Stare goală utilă: fără portofoliu vs. fără rezultate la filtrare. */
   const emptyBlock = filtersActive ? (
@@ -773,8 +696,6 @@ function PropertiesPage() {
     });
   };
 
-  const setDigits = (key: "priceMin" | "priceMax" | "surfaceMin" | "surfaceMax" | "floorMin" | "floorMax", value: string) =>
-    setFilters((current) => ({ ...current, [key]: value.replace(/\D/g, "") }));
 
   return (
     <>
@@ -794,136 +715,54 @@ function PropertiesPage() {
         }
       />
 
-      <div className="panel space-y-5 p-4 sm:p-5">
-        <div className="flex flex-col gap-2 border-b border-border md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:gap-4">
-          <div role="tablist" aria-label="Tip proprietate" className="flex min-w-0 overflow-x-auto">
-            {PROPERTY_TYPE_TABS.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                role="tab"
-                aria-selected={filters.type === tab.value}
-                onClick={() => setFilters((current) => ({ ...current, type: tab.value }))}
-                className={cn(
-                  "relative min-h-11 shrink-0 px-3 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground",
-                  filters.type === tab.value && "text-foreground after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-primary",
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex shrink-0 items-center gap-1 pb-1">
-            <Button data-tour="properties-filters-toggle" variant="ghost" size="sm" onClick={toggleFiltersExpanded} aria-expanded={filtersExpanded}>
-              <span className="hidden md:inline">{filtersExpanded ? "Mai puține filtre" : "Mai multe filtre"}</span>
-              <span className="md:hidden">{filtersExpanded ? "Mai puține filtre" : `Mai multe filtre${hiddenPills.length ? ` (${hiddenPills.length})` : ""}`}</span>
-              {filtersExpanded ? <ChevronUp aria-hidden /> : <ChevronDown aria-hidden />}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={resetFilters}>
-              <X aria-hidden /> Resetează filtrele
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2 xl:grid-cols-4">
-          <div>
-            <label htmlFor="property-keywords" className={fieldLabelClass}>Cuvinte cheie / ID</label>
-            <div className="relative">
-              <Search className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground" />
-              <Input id="property-keywords" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Titlu, HB-…, adresă" className={cn("pl-9", searchInput && valuedControlClass)} />
-            </div>
-          </div>
-          <fieldset>
-            <legend className={fieldLabelClass}>Tranzacție</legend>
-            <div className="grid grid-cols-3 overflow-hidden rounded-control border border-input bg-surface">
-              {[["all", "Toate"], ["sale", "Vânzare"], ["rent", "Închiriere"]].map(([value, label]) => (
-                <Button key={value} type="button" variant="ghost" aria-pressed={filters.transaction === value} onClick={() => setFilters((f) => ({ ...f, transaction: value }))} className={cn("rounded-none border-0 px-2", filters.transaction === value && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>
-              ))}
-            </div>
-          </fieldset>
-          <div>
-            <label htmlFor="property-status" className={fieldLabelClass}>Status</label>
-            <Select value={filters.status} onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}>
-              <SelectTrigger id="property-status" className={cn("w-full", filters.status !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Toate statusurile</SelectItem>{Object.entries(propertyStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          {portalOptions.length > 0 ? (
-            <div>
-              <label htmlFor="property-portal" className={fieldLabelClass}>Publicare pe portaluri</label>
-              <PortalFilterSelect id="property-portal" value={filters.portal} options={portalOptions} promotionValue={filters.promotion} promotionGroups={promotionGroups} onChange={(v) => setFilters((f) => ({ ...f, portal: v }))} onPromotionChange={(v) => setFilters((f) => ({ ...f, promotion: v }))} onReset={() => setFilters((f) => ({ ...f, portal: "all", promotion: "" }))} className={cn("w-full", (filters.portal !== "all" || filters.promotion) && valuedControlClass)} />
-            </div>
-          ) : <div aria-hidden />}
-          {mainAgentFilter ? (
-            <div>
-              <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>
-              <Select value={filters.agent} onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}>
-                <SelectTrigger id="property-agent" className={cn("w-full", filters.agent !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toți agenții</SelectItem>
-                  {agentOptions.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label} ({o.count})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : null}
-
-          {shouldShowAdvancedFilters(filtersExpanded) ? <>
-            <div className="md:col-span-2"><label className={fieldLabelClass}>Localități și zone</label><SearchPlacesPicker options={placeOptions} value={placeValue} onApply={locuri => { if (!locuri && Object.keys(search).every(k => ["locuri", "city", "district"].includes(k) || search[k as keyof typeof search] === undefined)) clearListState(); setFilters(f => ({ ...f, locuri, city: "all", district: "all" })); }}/></div>
-            <fieldset>
-              <legend className={fieldLabelClass}>Preț (EUR)</legend>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"><Input aria-label="Preț minim" inputMode="numeric" placeholder="Min" value={formatThousands(filters.priceMin)} onChange={(e) => setDigits("priceMin", e.target.value)} className={cn(filters.priceMin && valuedControlClass)} /><span className="text-muted-foreground">–</span><Input aria-label="Preț maxim" inputMode="numeric" placeholder="Max" value={formatThousands(filters.priceMax)} onChange={(e) => setDigits("priceMax", e.target.value)} className={cn(filters.priceMax && valuedControlClass)} /></div>
-            </fieldset>
-            <fieldset>
-              <legend className={fieldLabelClass}>Suprafață utilă (m²)</legend>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"><Input aria-label="Suprafață minimă" inputMode="numeric" placeholder="Min" value={formatThousands(filters.surfaceMin)} onChange={(e) => setDigits("surfaceMin", e.target.value)} className={cn(filters.surfaceMin && valuedControlClass)} /><span className="text-muted-foreground">–</span><Input aria-label="Suprafață maximă" inputMode="numeric" placeholder="Max" value={formatThousands(filters.surfaceMax)} onChange={(e) => setDigits("surfaceMax", e.target.value)} className={cn(filters.surfaceMax && valuedControlClass)} /></div>
-            </fieldset>
-            <fieldset>
-              <legend className={fieldLabelClass}>Camere</legend>
-              <div className="grid grid-cols-2 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5+", "5+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.rooms === value} onClick={() => setFilters((f) => ({ ...f, rooms: value }))} className={cn("px-2", filters.rooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
-            </fieldset>
-            <fieldset>
-              <legend className={fieldLabelClass}>Etaj</legend>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"><Input aria-label="Etaj minim" inputMode="numeric" placeholder="Min" value={filters.floorMin} onChange={(e) => setDigits("floorMin", e.target.value)} className={cn(filters.floorMin && valuedControlClass)} /><span className="text-muted-foreground">–</span><Input aria-label="Etaj maxim" inputMode="numeric" placeholder="Max" value={filters.floorMax} onChange={(e) => setDigits("floorMax", e.target.value)} className={cn(filters.floorMax && valuedControlClass)} /></div>
-            </fieldset>
-            <fieldset className="md:col-span-2">
-              <legend className={fieldLabelClass}>Adăugată între</legend>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"><Input aria-label="Adăugată de la" type="date" value={filters.addedAfter} onChange={(e) => setFilters((f) => ({ ...f, addedAfter: e.target.value }))} className={cn(filters.addedAfter && valuedControlClass)} /><span className="text-muted-foreground">–</span><Input aria-label="Adăugată până la" type="date" value={filters.addedBefore} onChange={(e) => setFilters((f) => ({ ...f, addedBefore: e.target.value }))} className={cn(filters.addedBefore && valuedControlClass)} /></div>
-            </fieldset>
-            <fieldset>
-              <legend className={fieldLabelClass}>Băi</legend>
-              <div className="grid grid-cols-4 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3+", "3+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.bathrooms === value} onClick={() => setFilters((f) => ({ ...f, bathrooms: value }))} className={cn("px-1", filters.bathrooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
-            </fieldset>
-            {(meta?.sources.length ?? 0) >= 2 ? <div>
-              <label htmlFor="property-source" className={fieldLabelClass}>Sursă</label>
-              <Select value={filters.source} onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}><SelectTrigger id="property-source" className={cn("w-full", filters.source !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate sursele</SelectItem>{(meta?.sources ?? []).map((s) => <SelectItem key={s} value={s}>{formatPropertySourceLabel(s)}</SelectItem>)}</SelectContent></Select>
-            </div> : null}
-          </> : null}
-        </div>
-
-        {!filtersExpanded && hiddenPills.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {hiddenPills.map((pill) => <Button key={String(pill.key)} type="button" variant="ghost" size="sm" onClick={() => clearPill(pill.key)} aria-label={`Renunță la filtrul ${pill.label}`} className="rounded-full bg-sidebar text-surface hover:bg-sidebar hover:text-surface">{pill.label}<X aria-hidden /></Button>)}
-          </div>
-        ) : null}
-
-        <div className="flex flex-col justify-between gap-4 border-t border-border pt-4 lg:flex-row lg:items-center">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={fieldLabelClass.replace("mb-2 block", "mb-0 inline")}>Afișează</span>
-            {[["mine", "Doar ale mele"], ["favoritesOnly", "Doar favorite"], ["showArchived", "Include arhivate"]].map(([key, label]) => {
-              const pressed = Boolean(filters[key as "mine" | "favoritesOnly" | "showArchived"]);
-              return <Button key={key} type="button" variant="outline" aria-pressed={pressed} onClick={() => setFilters((f) => ({ ...f, [key]: !pressed }))} className={cn("rounded-full", pressed && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{key === "favoritesOnly" ? <Star aria-hidden /> : key === "showArchived" ? <ArchiveRestore aria-hidden /> : null}{label}</Button>;
-            })}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="space-y-4">
+        <PropertyFilterPanel
+          applied={filters}
+          placeValue={placeValue}
+          onApply={(next) => { if (!confirmDiscardDrafts()) return; setSelected([]); void writeUrlState(next); }}
+          onTab={(tab) => setFilters((current) => ({ ...current, tab, type: "all" }))}
+          onReset={resetFilters}
+          placeOptions={placeOptions}
+          showAgent={mainAgentFilter}
+          agentOptions={agentOptions}
+          portalOptions={portalOptions}
+          promotionGroups={promotionGroups}
+          sources={meta?.sources ?? []}
+          destinations={meta?.destinations ?? []}
+          savedLinks={<>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="outline" data-tour="properties-saved-views">Filtre salvate <ChevronDown aria-hidden /></Button></DropdownMenuTrigger>
+              <DropdownMenuTrigger asChild><button type="button" data-tour="properties-saved-views" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">Filtre salvate <ChevronDown className="size-3.5" aria-hidden /></button></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-56">
                 {savedViews.views.length > 0 ? savedViews.views.map((saved) => <DropdownMenuItem key={saved.id} onSelect={() => setFilters(normalizeSavedPropertyFilters(saved.config))}>{saved.name}</DropdownMenuItem>) : <DropdownMenuItem disabled>Niciun filtru salvat</DropdownMenuItem>}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" onClick={saveFilter}>Salvează filtrul</Button>
+            <button type="button" onClick={saveFilter} className="text-sm text-muted-foreground hover:text-foreground">Salvează filtrul</button>
+          </>}
+        />
+
+        {activePills.length > 0 ? (
+          <div className="flex flex-wrap gap-2 md:hidden">
+            {activePills.map((pill) => <Button key={String(pill.key)} type="button" variant="ghost" size="sm" onClick={() => clearPill(pill.key)} aria-label={`Renunță la filtrul ${pill.label}`} className="rounded-full bg-sidebar text-surface hover:bg-sidebar hover:text-surface">{pill.label}<X aria-hidden /></Button>)}
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
+          <div data-tour="properties-views" className="inline-flex w-fit overflow-hidden rounded-[4px] border border-border bg-muted">
+            {([["list", "Afișare în Listă", List], ["grid", "Carduri", LayoutGrid], ["publish", "Publicare", Send]] as const).map(([key, label, Icon]) => (
+              <button key={key} type="button" data-tour={key === "publish" ? "properties-view-publish" : undefined} aria-pressed={view === key} onClick={() => setView(key)} className={cn("inline-flex h-10 items-center gap-2 border-r border-border px-4 text-[15px] last:border-r-0", view === key ? "bg-foreground/10 font-medium text-foreground" : "text-foreground/80 hover:bg-foreground/5")}>
+                <Icon className="size-4" aria-hidden /> {label}
+              </button>
+            ))}
+          </div>
+          <div className="justify-self-start rounded-full border border-border bg-surface px-8 py-2 text-[15px] text-foreground/80 md:justify-self-center">
+            Pagina {Math.min(page + 1, totalPages)}/{totalPages}, {total} rezultate
+          </div>
+          <div data-tour="properties-order" className="flex items-center gap-2 justify-self-start md:justify-self-end">
+            <PageSizeSelect value={PAGE_SIZE} onChange={changePageSize} />
+            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+              <SelectTrigger aria-label="Sortare" className="h-10 w-auto gap-2 rounded-[4px] border-border bg-surface px-4 text-[15px] shadow-none"><SelectValue /></SelectTrigger>
+              <SelectContent>{Object.entries(sortOptions).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -1007,18 +846,6 @@ function PropertiesPage() {
             <span className="whitespace-nowrap font-semibold">{total} {total === 1 ? "proprietate" : "proprietăți"}</span>
             <span className="whitespace-nowrap text-sm text-muted-foreground"><PageRange page={page + 1} pageSize={PAGE_SIZE} total={total} /></span>
             {filtersActive ? <span className="text-sm text-muted-foreground">din {portfolioTotal} în portofoliu</span> : null}
-          </div>
-          <div data-tour="properties-order" className="flex flex-wrap items-center gap-2">
-            <PageSizeSelect value={PAGE_SIZE} onChange={changePageSize} />
-            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-              <SelectTrigger className="w-64"><span className="shrink-0 text-muted-foreground">Sortare:</span><SelectValue /></SelectTrigger>
-              <SelectContent>{Object.entries(sortOptions).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-            </Select>
-            <div data-tour="properties-views" className="grid grid-cols-3 overflow-hidden rounded-control border border-input bg-surface">
-              <Button variant="ghost" aria-pressed={view === "list"} onClick={() => setView("list")} className={cn("rounded-none border-0 px-3", view === "list" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><List aria-hidden /> Listă</Button>
-              <Button variant="ghost" aria-pressed={view === "grid"} onClick={() => setView("grid")} className={cn("rounded-none border-0 px-3", view === "grid" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><LayoutGrid aria-hidden /> Carduri</Button>
-              <Button data-tour="properties-view-publish" variant="ghost" aria-pressed={view === "publish"} onClick={() => setView("publish")} className={cn("rounded-none border-0 px-3", view === "publish" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><Send aria-hidden /> Publicare</Button>
-            </div>
           </div>
         </div>
         {totalPages > 1 ? (
