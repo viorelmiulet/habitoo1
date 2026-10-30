@@ -705,7 +705,7 @@ function PropertyDetailContent() {
   ].filter((item) => item.value);
 
   const legacyFeatures = property.features ?? [];
-  const hasFeatureSections = filterFeatureSections("", property).length > 0;
+  const hasFeatureSections = filterFeatureSections(property).length > 0;
 
   const isHouse = property.property_type === "house";
   const primaryFacts = [

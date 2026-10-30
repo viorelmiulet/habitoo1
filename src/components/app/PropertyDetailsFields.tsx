@@ -229,7 +229,8 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
 
   return (
     <div className="min-w-0 space-y-4">
-      <div className="grid min-w-0 items-start gap-4 min-[1280px]:grid-cols-2 min-[1536px]:grid-cols-3">
+      {/* Două coloane echilibrate: Detalii | Suprafețe + Clădire una sub alta. */}
+      <div data-details-layout className="grid min-w-0 items-start gap-4 min-[1280px]:grid-cols-2">
       <div data-tour={idPrefix === "new" ? "new-details" : undefined} className="min-w-0">
       <FormSection title="Detalii">
         <div className="space-y-1">
@@ -271,6 +272,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         </div>
       </FormSection>
       </div>
+      <div data-details-column="secondary" className="flex min-w-0 flex-col gap-4">
       <FormSection title="Suprafețe">
         <div className="space-y-1">
           <NumberField ctx={ctx} field="usable_surface" label="Suprafață utilă (m²)" />
@@ -302,6 +304,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           </div>
         </fieldset>
       </FormSection>
+      </div>
       </div>
       <PropertyFeatureSections idPrefix={idPrefix} value={value} onChange={onChange} />
     </div>
