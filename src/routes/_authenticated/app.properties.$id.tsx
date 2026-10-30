@@ -849,7 +849,7 @@ function PropertyDetailContent() {
           </div>
         </div>
         <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5" data-tour="property-actions">
-          {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" data-tour="property-edit-button" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
+          {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" data-tour="property-edit-button" onClick={() => { startEdit(); if (tab !== "location") setTab("overview"); }}><Pencil /> Editează</Button>}
           <span title={offerSendReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(offerSendReason(property))} onClick={() => setSendOfferOpen(true)}><Share2 /> Trimite oferta</Button></span>
           <span title={neutralOfferReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(neutralOfferReason(property))} onClick={() => setCollaboratorOfferOpen(true)}><Share2 /> Trimite unui colaborator</Button></span>
           {offerSendReason(property) ? <span className="text-xs text-muted-foreground">{offerSendReason(property)}</span> : null}
@@ -904,6 +904,7 @@ function PropertyDetailContent() {
         <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății" data-tour="property-tabs">
           {[
             ["agent", "Agent"],
+            ["location", "Localizare"],
             ["overview", "Prezentare"],
             ["media", `Poze (${data?.imageCount ?? 0})`],
             ["publishing", `Promovare (${publishedPortals}/${portalCells.length})`],
@@ -954,56 +955,17 @@ function PropertyDetailContent() {
           ) : null}
         </TabsContent>
 
-        <TabsContent value="overview" className="space-y-6" data-tour="property-overview">
-          {editing ? (
-            <form
-              id="property-details-form"
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!hasTransactionSelection(tx)) {
-                  toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
-                  return;
-                }
-                save.mutate(buildEditPatch());
-              }}
-            >
-              <PropertyFormLayout
-                aside={<>
-                  <PropertyMainPhoto propertyId={id} title={property.title} />
-                  <div className="space-y-1.5 text-[15px]">
-                    <FormRow htmlFor="edit-status" label="Status">
-                      <Select value={property.status} onValueChange={(key) => isWithdrawStatus(key) ? setPendingStatus(key as "sold" | "rented" | "archived") : changeStatus.mutate(key)}>
-                        <SelectTrigger id="edit-status" className="h-9 text-[15px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>{Object.entries(propertyStatusLabels).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </FormRow>
-                    <PropertyResponsibleAgentField canEdit={canReassign} value={draftAgent}
-                      name={responsibleAgent?.full_name} candidates={orgMembers} onChange={setDraftAgent} />
-                  </div>
-                  <dl className="space-y-1.5 border-t border-border pt-3 text-[15px]">
-                    {salePrice ? <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Preț vânzare</dt><dd>{formatMoney(salePrice, property.sale_currency ?? property.currency ?? "EUR")}{pricePerSqm ? ` sau ${formatNumber(pricePerSqm)} €/m²` : ""}</dd></div> : null}
-                    {rentPrice ? <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Preț închiriere</dt><dd>{formatMoney(rentPrice, property.rent_currency ?? property.currency ?? "EUR")}</dd></div> : null}
-                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Adăugată la</dt><dd>{formatDateTime(property.created_at)}</dd></div>
-                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Modificată la</dt><dd>{formatDateTime(property.updated_at)}</dd></div>
-                  </dl>
-                </>}
-                details={<div data-tour="edit-details">
-                  <PropertyDetailsFields
-                    idPrefix="edit"
-                    value={details}
-                    onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
-                  />
-                </div>}
-              >
-              <PropertyTitleDescriptionPanel
-                title={draft.title ?? ""}
-                description={draft.description ?? ""}
-                onTitle={(v) => setDraft((d) => ({ ...d, title: v }))}
-                onDescription={(v) => setDraft((d) => ({ ...d, description: v }))}
-              />
+        <TabsContent value="location" className="space-y-4">
+          {editing ? <form id="property-location-form" className="space-y-4" onSubmit={(e) => {
+            e.preventDefault();
+            if (!hasTransactionSelection(tx)) {
+              toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
+              return;
+            }
+            save.mutate(buildEditPatch());
+          }}>
               <FormSection title="Localizare">
-                <div className="grid gap-5 md:grid-cols-2">
+                <div className="space-y-1.5 [&>div]:grid [&>div]:gap-x-3 sm:[&>div]:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] [&_label]:self-center sm:[&_label]:text-right [&_input]:h-9 [&_select]:h-9">
                   <LocationPicker
                     idPrefix="edit"
                     value={location}
@@ -1058,6 +1020,75 @@ function PropertyDetailContent() {
                   onPreciseChange={setLocationPrecise}
                 />
               </FormSection>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Anulează</Button>
+              <Button type="submit" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
+            </div>
+          </form> : <FormSection title="Localizare">
+            <dl className="space-y-1.5">
+              {[
+                ["Județ", property.county],
+                ["Localitate", property.city],
+                ["Zonă", property.district],
+                ["Stradă / adresă", property.street || property.address],
+                ["Număr", property.street_number],
+                ["Cod poștal", property.postal_code],
+              ].map(([label, value]) => <div key={label} className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3 text-[15px]"><dt className="text-right">{label}</dt><dd className="min-w-0 break-words">{value || "—"}</dd></div>)}
+            </dl>
+            {mapCoords ? <PropertyMapClient lat={mapCoords.lat} lng={mapCoords.lng} precise={mapCoords.precise} seed={property.id} className="h-[420px] w-full overflow-hidden rounded-[4px] border border-border" /> : <div className="flex h-[420px] items-center justify-center rounded-[4px] border border-border bg-muted text-sm text-muted-foreground">Nu există coordonate GPS pentru această proprietate.</div>}
+            {mapCoords && !mapCoords.precise ? <p className="text-xs text-muted-foreground">Hartă estimativă — zonă de aproximativ {APPROX_RADIUS_M} m.</p> : null}
+          </FormSection>}
+        </TabsContent>
+
+        <TabsContent value="overview" className="space-y-6" data-tour="property-overview">
+          {editing ? (
+            <form
+              id="property-details-form"
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!hasTransactionSelection(tx)) {
+                  toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
+                  return;
+                }
+                save.mutate(buildEditPatch());
+              }}
+            >
+              <PropertyFormLayout
+                aside={<>
+                  <PropertyMainPhoto propertyId={id} title={property.title} />
+                  <div className="space-y-1.5 text-[15px]">
+                    <FormRow htmlFor="edit-status" label="Status">
+                      <Select value={property.status} onValueChange={(key) => isWithdrawStatus(key) ? setPendingStatus(key as "sold" | "rented" | "archived") : changeStatus.mutate(key)}>
+                        <SelectTrigger id="edit-status" className="h-9 text-[15px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>{Object.entries(propertyStatusLabels).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </FormRow>
+                    <PropertyResponsibleAgentField canEdit={canReassign} value={draftAgent}
+                      name={responsibleAgent?.full_name} candidates={orgMembers} onChange={setDraftAgent} />
+                  </div>
+                  <dl className="space-y-1.5 border-t border-border pt-3 text-[15px]">
+                    {salePrice ? <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Preț vânzare</dt><dd>{formatMoney(salePrice, property.sale_currency ?? property.currency ?? "EUR")}{pricePerSqm ? ` sau ${formatNumber(pricePerSqm)} €/m²` : ""}</dd></div> : null}
+                    {rentPrice ? <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Preț închiriere</dt><dd>{formatMoney(rentPrice, property.rent_currency ?? property.currency ?? "EUR")}</dd></div> : null}
+                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Adăugată la</dt><dd>{formatDateTime(property.created_at)}</dd></div>
+                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Modificată la</dt><dd>{formatDateTime(property.updated_at)}</dd></div>
+                  </dl>
+                </>}
+                details={<div data-tour="edit-details">
+                  <PropertyDetailsFields
+                    idPrefix="edit"
+                    value={details}
+                    onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+                  />
+                </div>}
+              >
+              <PropertyTitleDescriptionPanel
+                title={draft.title ?? ""}
+                description={draft.description ?? ""}
+                onTitle={(v) => setDraft((d) => ({ ...d, title: v }))}
+                onDescription={(v) => setDraft((d) => ({ ...d, description: v }))}
+              />
 
               <div data-tour="edit-transaction">
               <FormSection
