@@ -172,7 +172,7 @@ function NewPropertyPage() {
       toast.success("Proprietatea a fost adăugată.");
       postalNotice(data.postal);
       navigate({ to: "/app/properties/$id", params: { id: data.id } });
-      void notifyLeadMatchesForProperty(data.id, data.organization_id, () =>
+      void notifyLeadMatchesForProperty(data.id, user?.organization?.id, () =>
         navigate({ to: "/app/properties/$id", params: { id: data.id }, search: { tab: "matching" } }),
       );
     },
