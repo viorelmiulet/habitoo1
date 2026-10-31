@@ -112,7 +112,7 @@ describe("poze Vumsi", () => {
   it("la actualizare se șterg doar pozele scoase și se adaugă cele noi; max. 20", async () => {
     const calls: string[] = [];
     let id = 100;
-    const call: VumsiCall = async (method, path) => { calls.push(`${method} ${path}`); return { ok: true, status: 200, data: { id: ++id } as never }; };
+    const call: VumsiCall = async (method, path) => { calls.push(`${method} ${path}`); return { ok: true, status: 200, data: (method === "POST" ? { id: ++id } : null) as never }; };
     const r = await syncVumsiImages(call, "L", [{ source: "b", url: "u" }, { source: "c", url: "u" }], [{ source: "a", id: 1 }, { source: "b", id: 2 }], async () => new Blob(["x"]));
     expect(calls).toEqual(["DELETE /listings/L/images/1/", "POST /listings/L/images/"]);
     expect(r.ok && r.images).toEqual([{ source: "b", id: 2 }, { source: "c", id: 101 }]);
