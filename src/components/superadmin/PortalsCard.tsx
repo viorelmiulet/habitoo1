@@ -50,6 +50,7 @@ import {
   startStoriaAuthorization,
 } from "@/lib/portals/storia.functions";
 import { getZonataNomenclatureStatus, syncZonataNomenclature } from "@/lib/portals/zonata/nomenclature.functions";
+import { getVumsiNomenclatureStatus, syncVumsiNomenclature } from "@/lib/portals/vumsi/nomenclature.functions";
 import { OferaNomenclaturePanel } from "./OferaNomenclaturePanel";
 import { ZupNomenclaturePanel } from "./ZupNomenclaturePanel";
 import { FeedDocDownloadButton } from "./FeedDocDownloadButton";
@@ -283,7 +284,7 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
           return;
         }
         const feed = res.feed;
-        if (res.live && res.detail && (portalId === "imo24" || portalId === "imopedia" || portalId === "zonata" || portalId === "ofera")) {
+        if (res.live && res.detail && (portalId === "imo24" || portalId === "imopedia" || portalId === "zonata" || portalId === "ofera" || portalId === "vumsi")) {
           // imo24.ro: agenția, starea pachetului, sloturile și scopurile cheii.
           toast.success(res.detail, { duration: 10_000 });
           return;
@@ -1067,6 +1068,7 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                       {item.portal.id === "imopedia" ? <ImopediaNomenclaturePanel /> : null}
                       {item.portal.id === "zonata" ? <ZonataNomenclaturePanel organizationId={organizationId} /> : null}
                       {item.portal.id === "ofera" ? <OferaNomenclaturePanel /> : null}
+                      {item.portal.id === "vumsi" ? <VumsiNomenclaturePanel /> : null}
                       {item.portal.id === "zup" ? <ZupNomenclaturePanel organizationId={organizationId} /> : null}
                       {item.supportsFeedPreview ? (
                         <Button
@@ -1260,6 +1262,35 @@ function ZonataNomenclaturePanel({ organizationId }: { organizationId: string })
           {changed.slice(0, 20).map((x) => <li key={x}>{x}</li>)}
         </ul>
       ) : null}
+    </div>
+  );
+}
+
+/** Vumsi: nomenclatoarele (doar citire de la Vumsi), salvate ca snapshot. */
+function VumsiNomenclaturePanel() {
+  const qc = useQueryClient();
+  const loadStatus = useServerFn(getVumsiNomenclatureStatus);
+  const runSync = useServerFn(syncVumsiNomenclature);
+  const status = useQuery({ queryKey: ["vumsi-nomenclature"], queryFn: () => loadStatus() });
+  const sync = useMutation({
+    mutationFn: () => runSync(),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["vumsi-nomenclature"] });
+      toast.success(`Salvate: ${r.counts.categories} categorii imobiliare, ${r.counts.attributes} câmpuri (${r.counts.required} obligatorii).`, { duration: 10_000 });
+    },
+    onError: (e: Error) => toastError(e),
+  });
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button type="button" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+        <RefreshCw className={cn("mr-2 size-4", sync.isPending && "animate-spin")} />
+        Sincronizează nomenclatoarele Vumsi
+      </Button>
+      <span className="text-xs text-muted-foreground">
+        {status.data?.syncedAt
+          ? `Ultima sincronizare: ${formatDateTime(status.data.syncedAt)} · ${status.data.counts?.categories ?? 0} categorii, ${status.data.counts?.attributes ?? 0} câmpuri`
+          : "Nomenclatoarele nu au fost sincronizate încă."}
+      </span>
     </div>
   );
 }

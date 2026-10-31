@@ -401,6 +401,24 @@ export const PORTALS: PortalDefinition[] = [
       "Integrare prin cheia CRM Habitoo (una pentru toate agențiile). La primul anunț, HomeDirect creează automat contul agenției și al agentului și le trimite email de activare. Dacă agenția are deja cont HomeDirect pe același email, legarea e refuzată de HomeDirect. Un anunț per tranzacție (-v / -i), idempotent pe externalIds.post. Retragerea = status inactive (reversibil); vândut → sold, închiriat → rented; ștergerea definitivă (DELETE) doar la ștergerea proprietății în Habitoo. Prețurile în lei se convertesc în EUR la cursul BNR al zilei.",
   },
   {
+    id: "vumsi",
+    display_name: "Vumsi.com",
+    description: "Vumsi.com expune API-ul Orion pentru parteneri: Habitoo se conectează cu o singură cheie de partener păstrată pe server.",
+    logo: "VU",
+    status: "available",
+    activation: "approval",
+    directions: ["habitoo_to_portal"],
+    // Cheia de partener Habitoo (VUMSI_API_KEY), în secretele de server, header X-Api-Key.
+    authentication: ["portal_api_key"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "sync"],
+    publish_coming_soon: true,
+    configuration_schema: { fields: [] },
+    website: "https://vumsi.com",
+    docs: "https://vumsi.com/dezvoltatori/docs/",
+    notes:
+      "API Orion pe https://vumsi.com/api/orion, cheie de partener Habitoo (una pentru toate agențiile), activat de SuperAdmin pe agenție. Habitoo rămâne sub 2 cereri/secundă; la 429 o pauză și o singură reîncercare. Fără promovări plătite și fără preluarea mesajelor ca lead-uri. Etapa 1: test conexiune (GET /me/) și nomenclatoare, fără publicare.",
+  },
+  {
     id: "ofera",
     display_name: "Ofera.ro",
     description: "Publicarea ofertelor agenției la Ofera prin contul partener Habitoo, cu activare după creare.",

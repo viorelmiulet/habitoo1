@@ -1555,6 +1555,13 @@
       "when": 1793280876118,
       "tag": "0221_zup_listings",
       "breakpoints": true
+    },
+    {
+      "idx": 222,
+      "version": "7",
+      "when": 1793458278130,
+      "tag": "0222_vumsi_nomenclature_snapshots",
+      "breakpoints": true
     }
   ]
 }

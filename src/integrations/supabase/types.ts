@@ -10359,6 +10359,36 @@ export type Database = {
           },
         ]
       }
+      vumsi_nomenclature_snapshots: {
+        Row: {
+          attributes: Json
+          categories: Json
+          counts: Json
+          id: string
+          reference: Json
+          synced_at: string
+          synced_by: string | null
+        }
+        Insert: {
+          attributes?: Json
+          categories?: Json
+          counts?: Json
+          id?: string
+          reference?: Json
+          synced_at?: string
+          synced_by?: string | null
+        }
+        Update: {
+          attributes?: Json
+          categories?: Json
+          counts?: Json
+          id?: string
+          reference?: Json
+          synced_at?: string
+          synced_by?: string | null
+        }
+        Relationships: []
+      }
       youtube_connections: {
         Row: {
           channel_id: string | null
