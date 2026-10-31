@@ -1,13 +1,26 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { CtaBand } from "@/components/marketing/CtaBand";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
-import { integrationPageBySlug, RELATED_CTA_TEXT } from "@/lib/portals/integration-pages";
+import { integrationPageAliasTarget, integrationPageBySlug, RELATED_CTA_TEXT } from "@/lib/portals/integration-pages";
 import { integrationJsonLd } from "@/lib/portals/integration-jsonld";
 
 export const Route = createFileRoute("/integrari_/$slug")({
+  // Adresele alternative (ex. /integrari/storia-olx) merg 301 spre pagina canonică,
+  // cu query string-ul păstrat. Adresele necunoscute rămân 404, în loader.
+  beforeLoad: ({ params, location }) => {
+    if (integrationPageBySlug(params.slug)) return;
+    const target = integrationPageAliasTarget(params.slug);
+    if (target) {
+      const query = location.searchStr.replace(/^\?+/, "");
+      throw redirect({
+        href: `/integrari/${target}${query ? `?${query}` : ""}`,
+        statusCode: 301,
+      });
+    }
+  },
   loader: ({ params }) => {
     const page = integrationPageBySlug(params.slug);
     if (!page) throw notFound();
