@@ -25,3 +25,39 @@ export function storiaAutoRenewVisible(input: {
 export function storiaAdvertContentUpdateEligible(code: string | null): boolean {
   return code !== null && ["active", "new", "unpaid", "blocked"].includes(code);
 }
+export type StoriaAutoRenewBulkInput = {
+  propertyIds: string[];
+  /** Rows of the caller's organization only. */
+  properties: { id: string; assigned_to: string | null; archived_at: string | null; feedEligible: boolean }[];
+  listings: { property_id: string; status: string | null; external_id: string | null }[];
+  publications: { property_id: string; enabled: boolean | null }[];
+  connectionActivated: boolean;
+  agentOnly: boolean;
+  userId: string;
+};
+
+export type StoriaAutoRenewBulkPlan = {
+  /** Active Storia advert: updated at Storia now. */
+  sendNow: string[];
+  /** Saved only; applied at the next publication. */
+  saveOnly: string[];
+  /** Missing or (for agents) assigned to someone else. */
+  forbidden: string[];
+};
+
+/** Same eligibility as the single-property update, for many properties at once. */
+export function planStoriaAutoRenewBulk(input: StoriaAutoRenewBulkInput): StoriaAutoRenewBulkPlan {
+  const props = new Map(input.properties.map((p) => [p.id, p]));
+  const listings = new Map(input.listings.map((l) => [l.property_id, l]));
+  const pubs = new Map(input.publications.map((p) => [p.property_id, p]));
+  const plan: StoriaAutoRenewBulkPlan = { sendNow: [], saveOnly: [], forbidden: [] };
+  for (const id of [...new Set(input.propertyIds)]) {
+    const p = props.get(id);
+    if (!p || (input.agentOnly && p.assigned_to !== input.userId)) { plan.forbidden.push(id); continue; }
+    const l = listings.get(id);
+    const ok = !p.archived_at && p.feedEligible && pubs.get(id)?.enabled === true && input.connectionActivated
+      && storiaContentUpdateEligible(l?.status, l?.external_id);
+    (ok ? plan.sendNow : plan.saveOnly).push(id);
+  }
+  return plan;
+}
