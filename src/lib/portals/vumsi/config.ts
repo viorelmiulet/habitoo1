@@ -1,7 +1,7 @@
 /** Vumsi.com (API Orion): URL-ul fix și cheia de partener Habitoo (doar pe server, din secrete). */
 export const VUMSI_PORTAL_KEY = "vumsi";
 export const VUMSI_BASE_URL = "https://vumsi.com/api/orion";
-export const VUMSI_KEY_MISSING_MESSAGE = "Cheia de partener Vumsi nu este configurată pe server.";
+export const VUMSI_KEY_MISSING_MESSAGE = "Cheia Vumsi lipsește de pe server";
 
 /** Cheia de partener din `VUMSI_API_KEY`; `null` dacă lipsește. Nu se loghează niciodată. */
 export function readVumsiKey(env: Record<string, string | undefined> = process.env): string | null {

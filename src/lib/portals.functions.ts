@@ -585,7 +585,8 @@ export const getPortalHub = createServerFn({ method: "POST" })
       const serverMissingMessage = portal.id === "ofera" && !oferaConfigured(process.env)
         ? OFERA_MISSING_MESSAGE
         : portal.id === "zup" && !zupConfigured(process.env) ? ZUP_MISSING_MESSAGE
-        : homedirectKeyMissing(portal.id) ? HOMEDIRECT_KEY_MISSING_MESSAGE : null;
+        : homedirectKeyMissing(portal.id) ? HOMEDIRECT_KEY_MISSING_MESSAGE
+        : portal.id === "vumsi" && !process.env["VUMSI_API_KEY"]?.trim() ? "Cheia Vumsi lipsește de pe server" : null;
       const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
       const storedSettings = (row?.settings ?? {}) as Record<string, unknown>;
       const settings =
@@ -749,6 +750,8 @@ export async function applyPortalActivationForOrg(input: {
   // ce sunt activate; nu există un pas separat de configurare.
   const credentialless =
     definition.authentication.length > 0 && definition.authentication.every((a) => a === "none");
+  const { partnerKeyConnectionStatus } = await import("@/lib/portals/partner-key-status");
+  const partner = partnerKeyConnectionStatus(definition.id, activated);
   const { error } = await admin.from("portal_connections").upsert(
     {
       organization_id: organizationId,
@@ -756,6 +759,7 @@ export async function applyPortalActivationForOrg(input: {
       activated,
       settings: settings as never,
       ...(credentialless ? { status: activated ? "ready" : "not_configured" } : {}),
+      ...(partner ? { status: partner.status, last_sync_error: partner.error } : {}),
       updated_by: actorId,
       created_by: actorId,
     } as never,
@@ -1067,7 +1071,7 @@ export async function testPortalConnectionCore(input: { organizationId: string; 
       await admin
         .from("portal_connections")
         .update({
-          status: result.ok ? "connected" : "error",
+          status: result.ok ? (definition.id === "vumsi" || definition.id === "homedirect" ? "ready" : "connected") : "error",
           last_sync_status: result.ok ? "ok" : "error",
           last_sync_error: result.ok ? null : result.message,
           last_sync_at: new Date().toISOString(),
