@@ -3,7 +3,6 @@
  * (oraș, utilizator/companie după ID-ul nostru); nu se creează nimic. Rezultatele (city_id,
  * uuid-uri găsite) se salvează în DB.
  */
-import { CRM_URL as _unused } from "@/lib/host";
 import type { PropertyRow } from "@/lib/site-feed/mapper";
 import { hasVumsiKey, VUMSI_KEY_MISSING_MESSAGE } from "./config";
 import type { VumsiAttribute, VumsiCategory } from "./nomenclature";
@@ -21,7 +20,6 @@ import {
   type VumsiMappings,
   type VumsiUserPayload,
 } from "./mapper";
-void _unused;
 
 export type VumsiPreview = {
   ok: boolean;
