@@ -22,7 +22,8 @@ function clean(text: string): string {
     .replace(/`([^`]*)`/g, "$1")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replace(/\t/g, "  ")
-    .replace(/[^\u0009\u000a\u0020-\u024f\u2013\u2014\u2018-\u201e\u2026\u2192\u2264\u2265\u00a0-\u00ff]/g, "?");
+    .replace(/→/g, "->").replace(/[≤]/g, "<=").replace(/[≥]/g, ">=").replace(/[“”„]/g, '"').replace(/[‘’]/g, "'")
+    .replace(/[^\u0009\u000a\u0020-\u024f\u2013\u2014\u2026]/g, "?");
 }
 
 function wrap(text: string, font: PDFFont, size: number, width: number): string[] {
@@ -109,7 +110,7 @@ export async function buildFeedDocPdf(input: FeedDocPdfInput): Promise<Uint8Arra
     if (line.startsWith("|")) {
       if (/^\|[\s|:-]+\|$/.test(line)) continue;
       const cells = line.split("|").slice(1, -1).map((c) => c.trim());
-      write(cells.join("  —  "), { size: 8.5, indent: 6, gap: 2, font: cells.length && /^`?[a-z_]+/.test(cells[0]) ? regular : regular });
+      write(cells.join("  —  "), { size: 8.5, indent: 6, gap: 2 });
       continue;
     }
     const bullet = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
