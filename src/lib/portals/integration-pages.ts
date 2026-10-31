@@ -72,7 +72,6 @@ const CONTENT: Record<string, Content> = {
     slug: "imobiliareplus",
     name: "Imobiliare+",
     description: "Ofertele agenției ajung pe Imobiliare+ din Habitoo CRM: activezi singur portalul, bifezi anunțurile, iar cele debifate se retrag automat, fără cheie.",
-    announcement: "Lansare în curând: Imobiliare+ finalizează preluarea anunțurilor din Habitoo.",
     website: { href: "https://www.imobiliareplus.ro", label: "www.imobiliareplus.ro" },
     intro: [
       "Imobiliare+ este un portal imobiliar din România pe care agențiile își pot prezenta ofertele de vânzare și închiriere. Prin integrarea cu Habitoo, ofertele alese de agenție sunt preluate automat de Imobiliare+, fără să le introduci din nou pe portal.",
