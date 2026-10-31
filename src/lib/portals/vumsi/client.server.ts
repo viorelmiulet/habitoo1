@@ -5,7 +5,7 @@
  *  - erorile vin ca `{ status: "error", code, data: { errors } }` → mesaj în română;
  *  - cel mult 2 cereri / secundă (global, în acest Worker);
  *  - 429: o pauză și o singură reîncercare; 401/403 nu se reîncearcă;
- *  - etapa 1: clientul acceptă DOAR GET (nicio scriere la Vumsi);
+ *  - JSON sau multipart (poze, câmpul `image`); scrierile sunt apelate doar de adaptor;
  *  - cheia nu apare în mesaje, detalii sau răspunsuri.
  */
 import { VUMSI_BASE_URL, VUMSI_KEY_MISSING_MESSAGE, readVumsiKey } from "./config";
@@ -136,12 +136,20 @@ export type VumsiDeps = {
   env?: Record<string, string | undefined>;
 };
 
-/** GET către Orion. `path` relativ (ex. `/me/`), `query` opțional. */
-export async function vumsiGet<T>(path: string, query: Record<string, string | number> = {}, deps: VumsiDeps = {}): Promise<VumsiCall<T>> {
+export type VumsiMethod = "GET" | "POST" | "PATCH" | "DELETE";
+export type VumsiBody = { json?: unknown; form?: FormData };
+
+/** Cerere către Orion. `path` relativ (ex. `/me/`), `query` opțional. */
+export async function vumsiRequest<T>(
+  method: VumsiMethod,
+  path: string,
+  opts: { query?: Record<string, string | number> } & VumsiBody = {},
+  deps: VumsiDeps = {},
+): Promise<VumsiCall<T>> {
   const env = deps.env ?? process.env;
   const key = readVumsiKey(env);
   if (!key) return fail("not_configured");
-  const qs = new URLSearchParams(Object.entries(query).map(([k, v]) => [k, String(v)])).toString();
+  const qs = new URLSearchParams(Object.entries(opts.query ?? {}).map(([k, v]) => [k, String(v)])).toString();
   const url = `${VUMSI_BASE_URL}${path.startsWith("/") ? path : `/${path}`}${qs ? `?${qs}` : ""}`;
   const doFetch = deps.fetch ?? fetch;
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
@@ -154,14 +162,13 @@ export async function vumsiGet<T>(path: string, query: Record<string, string | n
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), deps.timeoutMs ?? VUMSI_TIMEOUT_MS);
+    const headers: Record<string, string> = { "X-Api-Key": key, Accept: "application/json", "User-Agent": VUMSI_USER_AGENT };
+    let body: BodyInit | undefined;
+    if (opts.form) body = opts.form;
+    else if (opts.json !== undefined) { headers["Content-Type"] = "application/json"; body = JSON.stringify(opts.json); }
     let response: Response;
     try {
-      response = await doFetch(url, {
-        method: "GET",
-        redirect: "manual",
-        signal: controller.signal,
-        headers: { "X-Api-Key": key, Accept: "application/json", "User-Agent": VUMSI_USER_AGENT },
-      });
+      response = await doFetch(url, { method, redirect: "manual", signal: controller.signal, headers, ...(body !== undefined ? { body } : {}) });
     } catch (error) {
       clearTimeout(timer);
       return fail(error instanceof Error && error.name === "AbortError" ? "timeout" : "network_error");
@@ -183,6 +190,10 @@ export async function vumsiGet<T>(path: string, query: Record<string, string | n
     await sleep(pause);
   }
   return fail("rate_limited");
+}
+
+export function vumsiGet<T>(path: string, query: Record<string, string | number> = {}, deps: VumsiDeps = {}): Promise<VumsiCall<T>> {
+  return vumsiRequest<T>("GET", path, { query }, deps);
 }
 
 export type VumsiMe = { company_name?: string; email?: string; status?: string; mode?: string; publish_behaviour?: string };
