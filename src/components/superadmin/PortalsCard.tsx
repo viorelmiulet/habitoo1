@@ -888,7 +888,7 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
 
                     {item.indexStatus ? (
                       <div className="rounded-lg border border-border p-3 text-sm">
-                        <p className="text-muted-foreground">Stare în indexul ClickImob</p>
+                        <p className="text-muted-foreground">Stare în indexul {item.portal.display_name}</p>
                         <p className="font-medium">{item.indexStatus}</p>
                       </div>
                     ) : null}

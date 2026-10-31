@@ -12,7 +12,7 @@ export type FeedAuthOk = {
   tokenId: string;
   tokenPrefix: string;
   /** Din ce credențial a venit cererea: tokenul de site sau o cheie de portal. */
-  source: "site_token" | "portal_key" | "clickimob_index" | "imobli_index" | "locuit_index";
+  source: "site_token" | "portal_key" | "clickimob_index" | "imobli_index" | "locuit_index" | "imobiliareplus_index";
   /**
    * Portalul care citește feedul, când cererea vine cu o cheie de portal.
    * `null` = token de site (feedul propriu al agenției, fără filtrare pe portal).
@@ -76,7 +76,7 @@ export function readTokenFromRequest(request: Request): string | null {
   return alt?.trim() || null;
 }
 
-const INDEX_TOKEN_PREFIX = { clickimob: "hbci_", imobli: "hbim_", locuit: "hblo_" } as const;
+const INDEX_TOKEN_PREFIX = { clickimob: "hbci_", imobli: "hbim_", locuit: "hblo_", imobiliareplus: "hbip_" } as const;
 
 function tokenPrefixOf(token: string | null): string | null {
   if (!token) return null;
@@ -181,8 +181,8 @@ export async function authenticateFeedRequest(
     return { ok: false, status: 429, message: "Too many requests.", tokenPrefix: prefix };
   }
 
-  if (token.startsWith("hbci_") || token.startsWith("hbim_") || token.startsWith("hblo_")) {
-    const portal = token.startsWith("hbci_") ? "clickimob" : token.startsWith("hbim_") ? "imobli" : "locuit";
+  if (token.startsWith("hbci_") || token.startsWith("hbim_") || token.startsWith("hblo_") || token.startsWith("hbip_")) {
+    const portal = token.startsWith("hbci_") ? "clickimob" : token.startsWith("hbim_") ? "imobli" : token.startsWith("hbip_") ? "imobiliareplus" : "locuit";
     const { resolveClickimobFeedToken, resolvePortalIndexToken } = await import("@/lib/site-feed/clickimob-token.server");
     const match = portal === "clickimob"
       ? await resolveClickimobFeedToken(token)

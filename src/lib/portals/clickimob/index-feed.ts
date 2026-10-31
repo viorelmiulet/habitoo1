@@ -17,11 +17,12 @@ export const CLICKIMOB_INDEX_HEADERS: Record<string, string> = {
   "cache-control": "no-cache, must-revalidate",
 };
 
-export type IndexPortal = "clickimob" | "imobli" | "locuit";
+export type IndexPortal = "clickimob" | "imobli" | "locuit" | "imobiliareplus";
 export const INDEX_PORTALS = {
   clickimob: { prefix: CLICKIMOB_TOKEN_PREFIX, secret: "CLICKIMOB_INDEX_KEY", version: CLICKIMOB_INDEX_VERSION },
   imobli: { prefix: "hbim_", secret: "IMOBLI_INDEX_KEY", version: "habitoo-imobli-index/1.0" },
   locuit: { prefix: "hblo_", secret: "LOCUIT_INDEX_KEY", version: "habitoo-locuit-index/1.0" },
+  imobiliareplus: { prefix: "hbip_", secret: "IMOBILIAREPLUS_INDEX_KEY", version: "habitoo-imobiliareplus-index/1.0" },
 } as const;
 
 export function signClickimobAgency(id: string, key: string, portal: IndexPortal = "clickimob"): string {
@@ -130,7 +131,7 @@ export type ClickimobIndexStatusInput = {
 };
 
 /** Eticheta stării agenției în indexul ClickImob, pentru cardul din Superadmin. */
-export function clickimobIndexStatusLabel(input: ClickimobIndexStatusInput): string {
+export function clickimobIndexStatusLabel(input: ClickimobIndexStatusInput, portalName = "ClickImob"): string {
   if (input.entry?.status === "active") return "În index";
   if (input.entry?.status === "grace") {
     const since = input.entry.inactive_since ? new Date(input.entry.inactive_since) : null;
@@ -141,6 +142,6 @@ export function clickimobIndexStatusLabel(input: ClickimobIndexStatusInput): str
     return "În perioada de retragere";
   }
   if (!input.orgOpen) return "Agenție suspendată sau arhivată";
-  if (!input.activated) return "Nu apare: ClickImob nu este activat";
-  return "Nu apare: nicio ofertă bifată pentru ClickImob";
+  if (!input.activated) return `Nu apare: ${portalName} nu este activat`;
+  return `Nu apare: nicio ofertă bifată pentru ${portalName}`;
 }

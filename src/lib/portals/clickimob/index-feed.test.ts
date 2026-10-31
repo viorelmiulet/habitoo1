@@ -74,6 +74,20 @@ describe("indexul ClickImob", () => {
     expect(d.log).toHaveBeenCalledWith(expect.objectContaining({ endpoint: "portal.imobli.index", status: 200 }));
   });
 
+  it("Imobiliare+: fără cheie validă → 401; cu cheie → index propriu cu tokenuri hbip_", async () => {
+    const d = deps(src());
+    expect((await handlePortalIndex(req("/x/bad.json"), "bad.json", "imobiliareplus", d, NOW)).status).toBe(401);
+    expect((await handlePortalIndex(req("/x/.json"), ".json", "imobiliareplus", { ...d, indexKey: () => undefined }, NOW)).status).toBe(401);
+    const response = await handlePortalIndex(req("/x/index.json"), `${KEY}.json`, "imobiliareplus", d, NOW);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.version).toBe("habitoo-imobiliareplus-index/1.0");
+    const token = body.agencies[0].feed.token as string;
+    expect(token.startsWith("hbip_")).toBe(true);
+    expect(verifyClickimobFeedToken(token, KEY, "imobiliareplus")).toBe(body.agencies[0].id);
+    expect(verifyClickimobFeedToken(token, KEY, "imobli")).toBeNull();
+  });
+
   it("Imobli reutilizează aceeași grație de șapte zile", async () => {
     const since = new Date(NOW.getTime() - 6 * DAY).toISOString();
     const source = src({
