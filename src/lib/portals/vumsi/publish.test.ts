@@ -3,6 +3,13 @@ import { createVumsiAdapter } from "../adapters/vumsi.server";
 import { resetVumsiClientState } from "./client.server";
 import { syncVumsiImages, vumsiStatusDue, vumsiStatusInfo, type VumsiCall, type VumsiStored } from "./publish";
 import type { VumsiPreview } from "./preview.server";
+import jpegJs from "jpeg-js";
+import { encode as encodePng } from "fast-png";
+import { toVumsiJpeg, sniffImage } from "./jpeg";
+
+const rgba = (w: number, h: number) => new Uint8Array(w * h * 4).fill(200);
+const JPG = new Uint8Array(jpegJs.encode({ data: rgba(8, 8), width: 8, height: 8 }, 90).data);
+const realJpeg = () => new Blob([JPG as BlobPart], { type: "image/jpeg" });
 
 const env = { VUMSI_API_KEY: "vumsi_test_key_123456" };
 const json = (status: number, body: unknown) => new Response(JSON.stringify({ status: status < 400 ? "ok" : "error", code: status, data: body }), { status, headers: { "Content-Type": "application/json" } });
@@ -29,7 +36,7 @@ function setup(route: Route, stored: VumsiStored[] = [], extra: Record<string, u
     env, fetch: fetch as never, sleep: async () => {},
     preview: async () => preview(),
     images: async () => ({ images: [{ source: "img1", url: "https://x/1" }, { source: "img2", url: "https://x/2" }], warnings: [] }),
-    fetchImage: async () => new Blob(["x"], { type: "image/jpeg" }),
+    fetchImage: async () => realJpeg(),
     loadStored: async () => stored,
     save: async (_o, _p, s) => { saved.push(...s); },
     saveAccount: async () => {},
@@ -113,12 +120,12 @@ describe("poze Vumsi", () => {
     const calls: string[] = [];
     let id = 100;
     const call: VumsiCall = async (method, path) => { calls.push(`${method} ${path}`); return { ok: true, status: 200, data: (method === "POST" ? { id: ++id } : null) as never }; };
-    const r = await syncVumsiImages(call, "L", [{ source: "b", url: "u" }, { source: "c", url: "u" }], [{ source: "a", id: 1 }, { source: "b", id: 2 }], async () => new Blob(["x"]));
+    const r = await syncVumsiImages(call, "L", [{ source: "b", url: "u" }, { source: "c", url: "u" }], [{ source: "a", id: 1 }, { source: "b", id: 2 }], async () => realJpeg());
     expect(calls).toEqual(["DELETE /listings/L/images/1/", "POST /listings/L/images/"]);
     expect(r.ok && r.images).toEqual([{ source: "b", id: 2 }, { source: "c", id: 101 }]);
     const many = Array.from({ length: 25 }, (_, i) => ({ source: `s${i}`, url: "u" }));
     calls.length = 0;
-    const r2 = await syncVumsiImages(call, "L", many, [], async () => new Blob(["x"]));
+    const r2 = await syncVumsiImages(call, "L", many, [], async () => realJpeg());
     expect(calls.length).toBe(20);
     expect(r2.ok && r2.warnings[0]).toMatch(/cel mult 20/);
   });
@@ -161,5 +168,70 @@ describe("status Vumsi", () => {
     expect(r.ok && r.data.offerUrl).toBe("https://vumsi.com/a/1");
     expect(r.ok && r.data.portalState).toBe("online");
     expect(r.ok && r.data.notes[0]).toMatch(/Publicat, expiră 01\.12\.2026/);
+  });
+});
+
+describe("conversia JPEG pentru Vumsi", () => {
+  it("PNG/WebP cu nume .jpg devine JPEG real, max. 1600 px, sub 2 MB", () => {
+    const png = encodePng({ width: 3200, height: 1600, data: rgba(3200, 1600), channels: 4, depth: 8 });
+    const r = toVumsiJpeg(png);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.sourceKind).toBe("png");
+    expect(sniffImage(r.bytes)).toBe("jpeg");
+    expect([r.width, r.height]).toEqual([1600, 800]);
+    expect(r.bytes.byteLength).toBeLessThan(2 * 1024 * 1024);
+  });
+
+  it("încarcă image/jpeg cu numele poza-{n}.jpg", async () => {
+    const forms: FormData[] = [];
+    const call: VumsiCall = async (_m, _p, o) => { if (o?.form) forms.push(o.form); return { ok: true, status: 201, data: { id: forms.length } as never }; };
+    await syncVumsiImages(call, "L", [{ source: "a", url: "u" }, { source: "b", url: "u" }], [], async () => realJpeg());
+    const files = forms.map((f) => f.get("image") as File);
+    expect(files.map((f) => f.name)).toEqual(["poza-1.jpg", "poza-2.jpg"]);
+    expect(files.every((f) => f.type === "image/jpeg")).toBe(true);
+  });
+
+  it("un răspuns non-imagine (HTML) este omis cu avertisment, fără încărcare", async () => {
+    const calls: string[] = [];
+    const call: VumsiCall = async (m, p) => { calls.push(`${m} ${p}`); return { ok: true, status: 201, data: { id: 1 } as never }; };
+    const r = await syncVumsiImages(call, "L", [{ source: "a", url: "u" }], [], async () => new Blob(["<!DOCTYPE html><html>Error 500</html>"], { type: "image/jpeg" }));
+    expect(calls).toEqual([]);
+    expect(r.ok && r.warnings.join(" ")).toContain("nu este o imagine");
+  });
+});
+
+describe("eroare doar la poze", () => {
+  it("fără publish, fără status refuzat, mesaj de reîncercare; a doua salvare reîncearcă doar pozele", async () => {
+    let imgFail = true;
+    const store: VumsiStored[] = [];
+    const calls: string[] = [];
+    const fetch = vi.fn(async (url: string, init: RequestInit) => {
+      const p = url.replace("https://vumsi.com/api/orion", "");
+      calls.push(`${init.method} ${p}`);
+      if (p.startsWith("/listings/by-external-id/")) return store.length ? json(200, { uuid: LU, status: 0 }) : json(404, { errors: [] });
+      if (p === "/listings/" && init.method === "POST") return json(201, { uuid: LU, status: 0 });
+      if (p.endsWith("/images/")) return imgFail ? new Response("<!DOCTYPE html><title>Error 500</title>", { status: 500, headers: { "Content-Type": "text/html" } }) : json(201, { id: 7 });
+      if (p.endsWith("/publish/")) return json(200, { uuid: LU, status: 1 });
+      return json(200, { uuid: LU, status: 0 });
+    });
+    const adapter = createVumsiAdapter({
+      env, fetch: fetch as never, sleep: async () => {}, preview: async () => preview(),
+      images: async () => ({ images: [{ source: "img1", url: "https://x/1" }], warnings: [] }),
+      fetchImage: async () => realJpeg(),
+      loadStored: async () => store, save: async (_o, _p, s) => { store.splice(0, store.length, ...s); },
+      saveAccount: async () => {},
+    });
+    const r1 = await adapter.publishListing(ctx, { propertyId: "p1" } as never);
+    expect(r1.ok).toBe(true);
+    if (r1.ok) { expect(r1.data.portalStatus).toBe("pending"); expect(r1.data.message).toContain("Pozele nu au ajuns la Vumsi – se reîncearcă la următoarea salvare"); }
+    expect(calls.some((c) => c.endsWith("/publish/"))).toBe(false);
+    expect(calls.filter((c) => c === "POST /listings/")).toHaveLength(1);
+    imgFail = false; calls.length = 0;
+    const r2 = await adapter.updateListing(ctx, { propertyId: "p1" } as never);
+    expect(r2.ok).toBe(true);
+    expect(calls.includes("POST /listings/")).toBe(false);
+    expect(calls).toContain(`POST /listings/${LU}/images/`);
+    expect(calls).toContain(`POST /listings/${LU}/publish/`);
   });
 });
