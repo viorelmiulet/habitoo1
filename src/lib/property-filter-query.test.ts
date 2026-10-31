@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PROPERTY_FILTER_COLUMNS, applyPropertyFilterClauses, geographyFromPlaces, placesFromGeography, type FilterableQuery } from "./property-filter-query";
+import { PROPERTY_FILTER_COLUMNS, applyPropertyFilterClauses, geographyFromPlaces, otherFiltersCount, placesFromGeography, type FilterableQuery } from "./property-filter-query";
 import { emptyPropertyListFilters, normalizeSavedPropertyFilters, propertyListSearchSchema, propertyListStateFromSearch, selectedStatuses, type PropertyListFilters } from "./property-list-filters";
 import { parsePlaceChoices } from "./search-places";
 
@@ -20,7 +20,7 @@ describe("panoul de filtre al proprietăților", () => {
     expect(PROPERTY_FILTER_COLUMNS).toEqual([
       ["Județ", "Localități", "Zonă", "Stradă"],
       ["Tip proprietate", "Tip tranzacție", "Camere", "Suprafață utilă", "Preț"],
-      ["Valabilitate", "Adăugat între", "Modificat între"],
+      ["Valabilitate", "Adăugat între", "Modificat între", "Portaluri"],
       ["Cuvinte cheie", "Destinație", "Promovare", "Alte filtre"],
     ]);
   });
@@ -70,5 +70,11 @@ describe("panoul de filtre al proprietăților", () => {
   it("Destinație filtrează pe valoarea exactă", () => {
     expect(run({ destination: "Rezidențial" })).toContainEqual(["eq", "destination", "Rezidențial"]);
     expect(run({}).some(([, c]) => c === "destination")).toBe(false);
+  });
+
+  it("contorul „Alte filtre” nu numără portalul, ci doar opțiunile din el", () => {
+    expect(otherFiltersCount({ ...emptyPropertyListFilters, portal: "storia:unpublished" }, false)).toBe(0);
+    expect(otherFiltersCount({ ...emptyPropertyListFilters, portal: "storia:unpublished", bathrooms: "2" }, false)).toBe(1);
+    expect(otherFiltersCount({ ...emptyPropertyListFilters, portal: "all", agent: "a1", mine: true }, true)).toBe(2);
   });
 });

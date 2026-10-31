@@ -13,7 +13,7 @@ import { parsePlaceChoices, placeToken, serializePlaces, type PlaceChoice, type 
 export const PROPERTY_FILTER_COLUMNS = [
   ["Județ", "Localități", "Zonă", "Stradă"],
   ["Tip proprietate", "Tip tranzacție", "Camere", "Suprafață utilă", "Preț"],
-  ["Valabilitate", "Adăugat între", "Modificat între"],
+  ["Valabilitate", "Adăugat între", "Modificat între", "Portaluri"],
   ["Cuvinte cheie", "Destinație", "Promovare", "Alte filtre"],
 ] as const;
 
@@ -113,11 +113,13 @@ export function zoneOptions(options: SearchPlaceOption[], county: string, cities
     (picked.length === 0 || picked.some((c) => c.county === o.choice.county && c.city === o.choice.city)));
 }
 
-/** Numărul opțiunilor active din „Alte filtre”. */
+/**
+ * Numărul opțiunilor active din „Alte filtre”. Portalul nu se numără aici:
+ * are rândul său vizibil, „Portaluri”.
+ */
 export function otherFiltersCount(f: PropertyListFilters, showAgent: boolean): number {
   return [
     showAgent && f.agent !== "all",
-    f.portal !== "all",
     Boolean(f.bathrooms),
     Boolean(f.floorMin || f.floorMax),
     f.source !== "all",

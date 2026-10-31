@@ -200,6 +200,11 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
             <Row label="Modificat între" htmlFor="pf-updated" advanced expanded={expanded}>
               <Range idPrefix="pf-updated" label="Modificat" type="date" min={draft.updatedAfter} max={draft.updatedBefore} onMin={(v) => set("updatedAfter", v)} onMax={(v) => set("updatedBefore", v)} />
             </Row>
+            {props.portalOptions.length > 0 ? (
+              <Row label="Portaluri" htmlFor="pf-portal" advanced expanded={expanded}>
+                <PortalFilterSelect id="pf-portal" value={draft.portal} options={props.portalOptions} onChange={(v) => set("portal", v)} onReset={() => set("portal", "all")} className={cn(triggerBase, draft.portal !== "all" && valued)} />
+              </Row>
+            ) : null}
           </div>
           <div data-filter-column="4" className="mt-2 space-y-2 xl:mt-0">
             <Row label="Cuvinte cheie" htmlFor="pf-keywords">
@@ -223,10 +228,6 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
                   {showAgent ? (
                     <div className="space-y-1"><label htmlFor="pf-agent" className="text-sm">Agent</label>
                       <SimpleSelect id="pf-agent" value={draft.agent} active={draft.agent !== "all"} onChange={(v) => set("agent", v)} options={[["all", "Toți agenții"], ...props.agentOptions.map((o) => [o.value, `${o.label} (${o.count})`] as [string, string])]} /></div>
-                  ) : null}
-                  {props.portalOptions.length > 0 ? (
-                    <div className="space-y-1"><label htmlFor="pf-portal" className="text-sm">Publicare pe portaluri</label>
-                      <PortalFilterSelect id="pf-portal" value={draft.portal} options={props.portalOptions} onChange={(v) => set("portal", v)} onReset={() => set("portal", "all")} className={cn(triggerBase, draft.portal !== "all" && valued)} /></div>
                   ) : null}
                   <div className="space-y-1"><label htmlFor="pf-bathrooms" className="text-sm">Băi</label>
                     <SimpleSelect id="pf-bathrooms" value={draft.bathrooms || "any"} active={Boolean(draft.bathrooms)} onChange={(v) => set("bathrooms", v === "any" ? "" : v)} options={[["any", "Toate"], ["1", "1"], ["2", "2"], ["3+", "3+"]]} /></div>
