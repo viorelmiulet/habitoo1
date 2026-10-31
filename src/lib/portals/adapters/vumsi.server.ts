@@ -21,6 +21,7 @@ import {
   publishVumsiListing,
   readListing,
   syncVumsiImages,
+  VUMSI_IMAGES_PENDING_MESSAGE,
   upsertVumsiListing,
   vumsiStatusDue,
   vumsiStatusInfo,
@@ -128,7 +129,21 @@ export function createVumsiAdapter(deps: VumsiAdapterDeps = {}): PortalAdapter {
       states.push(state);
       const img = await syncVumsiImages(call, up.uuid, pics.images, up.images, d.fetchImage);
       state.images = img.images;
-      if (!img.ok) { await save(); return vumsiToPortalFail(img.fail, `${prefix}Pozele nu au putut fi trimise la Vumsi: `); }
+      if (!img.ok) {
+        // Eroare doar la poze: fără publish, fără status „refuzat”; următoarea salvare reîncearcă doar pozele
+        // (anunțul existent e găsit după external_id și actualizat, nu recreat).
+        await save();
+        return {
+          ok: true,
+          data: {
+            externalId: bodies.map((b) => b.external_id).join(","), live: true, processed: states.length,
+            detail: `vumsi_images_failed http=${img.fail.status ?? "-"} kind=${img.fail.kind}`,
+            message: `${prefix}${VUMSI_IMAGES_PENDING_MESSAGE}.`,
+            portalStatus: "pending",
+            portalResponse: { images_error: { status: img.fail.status, kind: img.fail.kind }, listings: states.map(({ images: _i, ...s }) => s) },
+          },
+        };
+      }
       for (const w of img.warnings) if (!notes.includes(w)) notes.push(w);
       const pub = await publishVumsiListing(call, up.uuid, state.status);
       if (!pub.ok) { await save(); return vumsiToPortalFail(pub.fail, prefix); }

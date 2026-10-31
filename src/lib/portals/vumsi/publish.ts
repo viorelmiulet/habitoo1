@@ -6,10 +6,12 @@
  *  - publish / unpublish; DELETE doar la ștergerea definitivă.
  */
 import type { VumsiCallFail, VumsiMethod } from "./client.server";
+import { toVumsiJpeg } from "./jpeg";
 import type { VumsiCompanyPayload, VumsiListingBody, VumsiTransaction, VumsiUserPayload } from "./mapper";
 
 export const VUMSI_MAX_IMAGES = 20;
 export const VUMSI_STATUS_TTL_MS = 60_000;
+export const VUMSI_IMAGES_PENDING_MESSAGE = "Pozele nu au ajuns la Vumsi – se reîncearcă la următoarea salvare";
 
 export type VumsiCall = <T>(method: VumsiMethod, path: string, opts?: { json?: unknown; form?: FormData; query?: Record<string, string | number> }) =>
   Promise<{ ok: true; status: number; data: T } | VumsiCallFail>;
@@ -122,8 +124,10 @@ export async function syncVumsiImages(call: VumsiCall, uuid: string, desired: Vu
     if (k) { result.push(k); continue; }
     const blob = await fetchImage(d.url);
     if (!blob) { warnings.push("O poză nu a putut fi citită și a fost omisă."); continue; }
+    const jpg = toVumsiJpeg(new Uint8Array(await blob.arrayBuffer()));
+    if (!jpg.ok) { warnings.push(`O poză a fost omisă (${jpg.reason}).`); continue; }
     const form = new FormData();
-    form.append("image", blob, `${d.source}.jpg`);
+    form.append("image", new Blob([jpg.bytes as BlobPart], { type: "image/jpeg" }), `poza-${result.length + 1}.jpg`);
     const r = await call<unknown>("POST", `/listings/${uuid}/images/`, { form });
     if (!r.ok) return { ok: false as const, fail: r, images: [...result, ...[...kept.values()].filter((x) => !result.includes(x))] };
     const id = Number(rec(r.data)["id"]);
