@@ -28,6 +28,11 @@ export function assertPortalKeyAllowed(
       "Locuit.ro nu folosește chei pe agenție. Agenția intră în indexul Locuit.ro după activarea portalului.",
     );
   }
+  if (definition.id === "imobiliareplus") {
+    throw new Error(
+      "Imobiliare+ nu folosește chei pe agenție. Agenția intră în indexul Imobiliare+ după activarea portalului.",
+    );
+  }
   if (!definition.authentication.includes("habitoo_api_key")) {
     throw new Error(
       `${definition.display_name} folosește o cheie API emisă de portal. Salvează cheia primită de la ei în configurarea integrării.`,

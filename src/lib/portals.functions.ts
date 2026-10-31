@@ -430,8 +430,9 @@ async function clickimobIndexStatusFor(
   admin: Awaited<ReturnType<typeof loadAdmin>>,
   organizationId: string,
   activated: boolean,
+  portal: "clickimob" | "imobiliareplus" = "clickimob",
 ): Promise<string> {
-  const [{ listClickimobIndexedAgencies }, { clickimobIndexStatusLabel }, ps, mapper] =
+  const [{ listPortalIndexedAgencies }, { clickimobIndexStatusLabel }, ps, mapper] =
     await Promise.all([
       import("@/lib/portals/clickimob/index-feed.server"),
       import("@/lib/portals/clickimob/index-feed"),
@@ -440,13 +441,13 @@ async function clickimobIndexStatusFor(
     ]);
   const officeId = mapper.properstarEntityId("hb", organizationId);
   const [agencies, org, selected] = await Promise.all([
-    listClickimobIndexedAgencies(new Date()),
+    listPortalIndexedAgencies(new Date(), portal),
     admin.from("organizations").select("status, archived_at").eq("id", organizationId).maybeSingle(),
     admin
       .from("portal_publications")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId)
-      .eq("portal_key", "clickimob")
+      .eq("portal_key", portal)
       .eq("enabled", true),
   ]);
   const entry = agencies.find((a) => a.id === officeId) ?? null;
@@ -456,7 +457,7 @@ async function clickimobIndexStatusFor(
     activated,
     selected: selected.count ?? 0,
     graceDays: ps.PROPERSTAR_INDEX_GRACE_DAYS,
-  });
+  }, portal === "imobiliareplus" ? "Imobiliare+" : "ClickImob");
 }
 
 /** Context complet pentru adaptor, cu credențialul decriptat. */
@@ -565,6 +566,12 @@ export const getPortalHub = createServerFn({ method: "POST" })
       organizationId,
       (connections.data ?? []).find((c) => c.portal === "clickimob")?.activated === true,
     );
+    const imobiliareplusIndexStatus = await clickimobIndexStatusFor(
+      admin,
+      organizationId,
+      (connections.data ?? []).find((c) => c.portal === "imobiliareplus")?.activated === true,
+      "imobiliareplus",
+    );
     const keysAllowed = (p: PortalDefinition) => {
       try {
         assertPortalKeyAllowed(p);
@@ -664,7 +671,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
         keysAllowed: keysAllowed(portal),
         hasConnectionFields: portal.configuration_schema.fields.length > 0,
         indexOnly: isIndexOnlyPortal(portal),
-        indexStatus: portal.id === "clickimob" ? clickimobIndexStatus : null,
+        indexStatus: portal.id === "clickimob" ? clickimobIndexStatus : portal.id === "imobiliareplus" ? imobiliareplusIndexStatus : null,
         feed:
           portal.id === "imove"
             ? {

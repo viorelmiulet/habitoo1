@@ -131,7 +131,7 @@ export type ClickimobIndexStatusInput = {
 };
 
 /** Eticheta stării agenției în indexul ClickImob, pentru cardul din Superadmin. */
-export function clickimobIndexStatusLabel(input: ClickimobIndexStatusInput): string {
+export function clickimobIndexStatusLabel(input: ClickimobIndexStatusInput, portalName = "ClickImob"): string {
   if (input.entry?.status === "active") return "În index";
   if (input.entry?.status === "grace") {
     const since = input.entry.inactive_since ? new Date(input.entry.inactive_since) : null;
@@ -142,6 +142,6 @@ export function clickimobIndexStatusLabel(input: ClickimobIndexStatusInput): str
     return "În perioada de retragere";
   }
   if (!input.orgOpen) return "Agenție suspendată sau arhivată";
-  if (!input.activated) return "Nu apare: ClickImob nu este activat";
-  return "Nu apare: nicio ofertă bifată pentru ClickImob";
+  if (!input.activated) return `Nu apare: ${portalName} nu este activat`;
+  return `Nu apare: nicio ofertă bifată pentru ${portalName}`;
 }
