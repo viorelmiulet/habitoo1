@@ -50,7 +50,7 @@ export function resolveListingContact(property: {
 }
 
 /** Portalurile de tip feed din care se exclud ofertele al căror agent nu are telefon. */
-export const FEED_PORTALS_REQUIRING_AGENT_PHONE = new Set(["clickimob", "imobli", "locuit", "imove"]);
+export const FEED_PORTALS_REQUIRING_AGENT_PHONE = new Set(["clickimob", "imobli", "locuit", "imobiliareplus", "imove"]);
 
 /** Filtrează ofertele: rămân doar cele cu agent responsabil care are telefon valid. */
 export function idsWithAgentPhone(

@@ -29,6 +29,7 @@ import vdiLogo from "@/assets/portals/vdi.png";
 import romimoLogo from "@/assets/portals/romimo.png";
 import storiaLogo from "@/assets/portals/storia.png";
 import zonataLogo from "@/assets/portals/zonata.png";
+import imobiliareplusLogo from "@/assets/portals/imobiliareplus.png";
 import { portalLogoIds } from "@/lib/portals/registry";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   primulanunt: primulanuntLogo,
   vdi: vdiLogo,
   zonata: zonataLogo,
+  imobiliareplus: imobiliareplusLogo,
 };
 
 /** Există logo local pentru portalul dat? */
