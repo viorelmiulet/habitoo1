@@ -51,6 +51,7 @@ import {
 } from "@/lib/portals/storia.functions";
 import { getZonataNomenclatureStatus, syncZonataNomenclature } from "@/lib/portals/zonata/nomenclature.functions";
 import { getVumsiNomenclatureStatus, syncVumsiNomenclature } from "@/lib/portals/vumsi/nomenclature.functions";
+import { VumsiMappingPanel } from "@/components/superadmin/VumsiMappingPanel";
 import { OferaNomenclaturePanel } from "./OferaNomenclaturePanel";
 import { ZupNomenclaturePanel } from "./ZupNomenclaturePanel";
 import { FeedDocDownloadButton } from "./FeedDocDownloadButton";
@@ -1069,6 +1070,7 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                       {item.portal.id === "zonata" ? <ZonataNomenclaturePanel organizationId={organizationId} /> : null}
                       {item.portal.id === "ofera" ? <OferaNomenclaturePanel /> : null}
                       {item.portal.id === "vumsi" ? <VumsiNomenclaturePanel /> : null}
+                      {item.portal.id === "vumsi" ? <VumsiMappingPanel /> : null}
                       {item.portal.id === "zup" ? <ZupNomenclaturePanel organizationId={organizationId} /> : null}
                       {item.supportsFeedPreview ? (
                         <Button
