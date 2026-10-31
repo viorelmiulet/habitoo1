@@ -5,14 +5,15 @@
 
 /** Termenii de căutare pentru categoriile imobiliare (vânzare și închiriere vin din aceleași căutări). */
 export const VUMSI_CATEGORY_QUERIES = [
+  // Căutarea Vumsi potrivește cuvintele din numele categoriilor (ex. „Case - Vile”), nu forme singulare.
   "apartament",
-  "garsoniera",
-  "casa",
-  "vila",
+  "garsoniere",
+  "case",
+  "vile",
   "teren",
-  "spatiu comercial",
+  "spatii",
   "birouri",
-  "spatiu industrial",
+  "industrial",
 ] as const;
 
 export type VumsiCategory = { id: number; name: string; path: string; parent: number | null; query: string };
