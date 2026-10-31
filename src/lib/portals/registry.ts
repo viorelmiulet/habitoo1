@@ -411,12 +411,11 @@ export const PORTALS: PortalDefinition[] = [
     // Cheia de partener Habitoo (VUMSI_API_KEY), în secretele de server, header X-Api-Key.
     authentication: ["portal_api_key"],
     capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "sync"],
-    publish_coming_soon: true,
     configuration_schema: { fields: [] },
     website: "https://vumsi.com",
     docs: "https://vumsi.com/dezvoltatori/docs/",
     notes:
-      "API Orion pe https://vumsi.com/api/orion, cheie de partener Habitoo (una pentru toate agențiile), activat de SuperAdmin pe agenție. Habitoo rămâne sub 2 cereri/secundă; la 429 o pauză și o singură reîncercare. Fără promovări plătite și fără preluarea mesajelor ca lead-uri. Etapa 1: test conexiune (GET /me/) și nomenclatoare, fără publicare.",
+      "API Orion pe https://vumsi.com/api/orion, cheie de partener Habitoo (una pentru toate agențiile), activat de SuperAdmin pe agenție. Habitoo rămâne sub 2 cereri/secundă; la 429 o pauză și o singură reîncercare. Fără promovări plătite și fără preluarea mesajelor ca lead-uri. Un anunț per tranzacție (HBT-{id}-V / -I), găsit după external_id (PATCH sau POST, fără dubluri), poze multipart (max. 20), apoi publish. Contul trial trimite anunțurile în moderarea Vumsi. Retragerea = unpublish (reversibil); DELETE doar la ștergerea definitivă. Statusul real se citește cel mult o dată pe minut.",
   },
   {
     id: "ofera",

@@ -70,6 +70,8 @@ export type PortalRequirementSubject = {
   zonataReasons?: string[];
   /** HomeDirect.ro: mapper + locație + emailuri + cheie (`homedirectReasonsFor`). */
   homedirectReasons?: string[];
+  /** Vumsi.com: mapper + corespondențe (`vumsiReasonsLoader`). */
+  vumsiReasons?: string[];
   oferaReasons?: string[];
   zupReasons?: string[];
 };
@@ -473,8 +475,8 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
   zonata: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.zonataReasons ?? [] },
   // HomeDirect.ro: cerințele vin odată cu maparea (etapa 2); până atunci bifa e „În curând”.
   homedirect: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.homedirectReasons ?? [] },
-  // Vumsi.com: publicarea vine în etapa 2; până atunci bifa e „În curând”.
-  vumsi: { required: [], allowed: COMMON_ALLOWED, mapperReasons: () => ["Publicarea pe Vumsi.com vine în etapa următoare."] },
+  // Vumsi.com: regulile vin din mapper (corespondențe, atribute obligatorii, preț, descriere).
+  vumsi: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.vumsiReasons ?? [] },
   imo24: {
     required: [],
     allowed: COMMON_ALLOWED,
