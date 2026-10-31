@@ -114,7 +114,7 @@ export async function buildFeedDocPdf(input: FeedDocPdfInput): Promise<Uint8Arra
       continue;
     }
     const bullet = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
-    if (bullet) { write(`${/\d/.test(bullet[2]) ? bullet[2] : "•"} ${bullet[3]}`, { indent: 10 + bullet[1].length * 4, gap: 2 }); continue; }
+    if (bullet) { write(`${/\d/.test(bullet[2]) ? bullet[2] : "–"} ${bullet[3]}`, { indent: 10 + bullet[1].length * 4, gap: 2 }); continue; }
     write(line);
   }
 
