@@ -114,7 +114,7 @@ describe("snapshot nomenclatoare Vumsi", () => {
     const get = async (path: string, q?: Record<string, string | number>) => {
       calls.push(`${path}${q?.q ? `?q=${q.q}` : ""}`);
       if (path === "/reference/") return { ok: true as const, data: { listing_types: [] } };
-      if (path === "/categories/") return { ok: true as const, data: { count: 1, results: q?.q === "apartament" ? [cat(10, "Apartamente de vânzare"), cat(11, "Apartamente de închiriat")] : q?.q === "casa" ? [cat(20, "Case de vânzare"), cat(10, "Apartamente de vânzare")] : [] } };
+      if (path === "/categories/") return { ok: true as const, data: { count: 1, results: q?.q === "apartament" ? [cat(10, "Apartamente de vânzare"), cat(11, "Apartamente de închiriat")] : q?.q === "case" ? [cat(20, "Case de vânzare"), cat(10, "Apartamente de vânzare")] : [] } };
       return { ok: true as const, data: [{ name: "surface", type: "decimal", required: true }] };
     };
     const s = await buildVumsiSnapshot(get);
@@ -122,6 +122,12 @@ describe("snapshot nomenclatoare Vumsi", () => {
     expect(Object.keys(s.attributes)).toEqual(["10", "11", "20"]);
     expect(s.counts).toEqual({ categories: 3, attributes: 3, required: 3 });
     expect(calls).toContain("/categories/10/attributes/");
+  });
+
+  it("despachetează răspunsurile reușite { status: ok, data }", async () => {
+    const fetch = vi.fn(async () => json(200, { status: "ok", code: 200, data: { mode: "trial" } }));
+    const r = await getVumsiMe({ env, fetch: fetch as never, sleep });
+    expect(r.ok && r.data.mode).toBe("trial");
   });
 
   it("o eroare oprește snapshot-ul (nu se salvează parțial)", async () => {

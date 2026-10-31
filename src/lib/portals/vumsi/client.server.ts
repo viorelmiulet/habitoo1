@@ -109,6 +109,12 @@ export function vumsiFailure(httpStatus: number, body: unknown, retryAfterMs: nu
   };
 }
 
+/** Răspunsurile reușite vin ca `{ status: "ok", code, data }`; întoarcem `data`. */
+export function unwrapVumsi(body: unknown): unknown {
+  const r = rec(body);
+  return r && r["status"] === "ok" && "data" in r ? r["data"] : body;
+}
+
 function fail(kind: VumsiFailKind, status: number | null = null): VumsiCallFail {
   return { ok: false, kind, status, message: MESSAGE[kind], transient: TRANSIENT.has(kind), retryAfterMs: null, body: null };
 }
@@ -167,7 +173,7 @@ export async function vumsiGet<T>(path: string, query: Record<string, string | n
     if (raw) {
       try { parsed = JSON.parse(raw); } catch { parsed = raw.slice(0, VUMSI_RAW_LIMIT); }
     }
-    if (response.ok) return { ok: true, status: response.status, data: parsed as T };
+    if (response.ok) return { ok: true, status: response.status, data: unwrapVumsi(parsed) as T };
     const retrySec = Number(response.headers.get("Retry-After"));
     const retryAfterMs = Number.isFinite(retrySec) && retrySec > 0 ? retrySec * 1000 : null;
     const failure = vumsiFailure(response.status, parsed, retryAfterMs);
