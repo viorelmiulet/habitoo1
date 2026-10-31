@@ -31,7 +31,9 @@ describe("Vumsi is not public yet", () => {
 describe("Imobiliare+ is public", () => {
   it("has a public page, card, homepage logo and sitemap URL", () => {
     expect(integrationSlugFor("imobiliareplus")).toBe("imobiliareplus");
-    expect(integrationPageBySlug("imobiliareplus")?.announcement).toBe("Lansare în curând: Imobiliare+ finalizează preluarea anunțurilor din Habitoo.");
+    expect(integrationPageBySlug("imobiliareplus")?.announcement).toBeUndefined();
+    expect(JSON.stringify(integrationPageBySlug("imobiliareplus"))).not.toContain("Lansare în curând");
+
     expect(INTEGRATION_OVERVIEW.some((item) => item.logoIds.includes("imobiliareplus"))).toBe(true);
     expect(homepageIds.has("imobiliareplus")).toBe(true);
     expect(sitemap).toContain(`<loc>${BLOG_SITE_URL}/integrari/imobiliareplus</loc>`);
