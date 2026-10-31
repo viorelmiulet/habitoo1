@@ -12,15 +12,25 @@ export const PUBLIC_PARTNER_AGENCIES_TITLE = "Agenții partenere | Habitoo CRM";
 export const PUBLIC_PARTNER_AGENCIES_DESCRIPTION =
   "Agențiile imobiliare care lucrează cu Habitoo CRM, ce oferă parteneriatul și cum apare o agenție în lista publică.";
 
+/** Rutele publice existente pe care le poate trimite pagina. */
+export type PartnerContentPath =
+  | "/functionalitati"
+  | "/integrari"
+  | "/colaborare-intre-agentii"
+  | "/anunturi-proprietari"
+  | "/analiza-comparativa-de-piata"
+  | "/preturi"
+  | "/contact";
+
 export type PartnerProgramSection = {
   title: string;
   text: string;
-  to?: string;
+  to?: PartnerContentPath;
   linkLabel?: string;
 };
 
 /** Ce înseamnă, concret, calitatea de agenție parteneră Habitoo. */
-export const partnerProgramSections: readonly PartnerProgramSection[] = [
+export const partnerProgramSections: PartnerProgramSection[] = [
   {
     title: "Un singur sistem pentru portofoliu și clienți",
     text: "Agențiile din listă își țin proprietățile, clienții, cererile, lead-urile și programările în Habitoo CRM. Din același loc văd comisioanele, istoricul acțiunilor și rapoartele echipei, fără să copieze datele în mai multe aplicații.",
