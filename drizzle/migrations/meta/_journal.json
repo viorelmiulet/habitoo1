@@ -1569,6 +1569,13 @@
       "when": 1793459323386,
       "tag": "0223_vumsi_mappings",
       "breakpoints": true
+    },
+    {
+      "idx": 224,
+      "version": "7",
+      "when": 1793459765992,
+      "tag": "0224_vumsi_listings",
+      "breakpoints": true
     }
   ]
 }
