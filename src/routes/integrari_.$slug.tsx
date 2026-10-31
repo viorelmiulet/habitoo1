@@ -47,8 +47,21 @@ function IntegrationPage() {
               Integrare {page.name} cu Habitoo CRM
             </h1>
           </div>
+          {page.announcement ? (
+            <p role="note" className="mt-6 max-w-3xl rounded-lg border border-border bg-muted px-4 py-3 font-medium text-foreground">
+              {page.announcement}
+            </p>
+          ) : null}
           <div className="mt-6 max-w-3xl space-y-4 text-base text-muted-foreground sm:text-lg">
             {page.intro.map((p) => <p key={p}>{p}</p>)}
+            {page.website ? (
+              <p>
+                Site oficial:{" "}
+                <a href={page.website.href} target="_blank" rel="noopener" className="font-medium text-primary underline-offset-4 hover:underline">
+                  {page.website.label}
+                </a>
+              </p>
+            ) : null}
             <p>{page.whyHabitoo}</p>
           </div>
         </Container>

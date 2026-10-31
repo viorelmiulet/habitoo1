@@ -15,8 +15,7 @@ const availableIds = new Set([...PORTALS, ...PROMOTION_CATALOGS]
 const coveredIds = new Set(PORTAL_GROUPS
   .filter((group) => availableIds.has(group.primary))
   .flatMap((group) => group.covers));
-// Imobiliare+ has not confirmed the integration yet: it must stay off the public site.
-const NOT_YET_PUBLIC = new Set(["imobiliareplus", "vumsi"]);
+const NOT_YET_PUBLIC = new Set(["vumsi"]);
 const available = [...PORTALS, ...PROMOTION_CATALOGS]
   .filter((portal) => availableIds.has(portal.id) || coveredIds.has(portal.id))
   .filter((portal) => !NOT_YET_PUBLIC.has(portal.id));
@@ -29,12 +28,13 @@ describe("Vumsi is not public yet", () => {
     expect(sitemap).not.toContain("vumsi");
   });
 });
-describe("Imobiliare+ is not public yet", () => {
-  it("has no public page, card, homepage logo or sitemap URL", () => {
-    expect(integrationSlugFor("imobiliareplus")).toBeNull();
-    expect(INTEGRATION_OVERVIEW.some((item) => item.logoIds.includes("imobiliareplus"))).toBe(false);
-    expect(homepageIds.has("imobiliareplus")).toBe(false);
-    expect(sitemap).not.toContain("imobiliareplus");
+describe("Imobiliare+ is public", () => {
+  it("has a public page, card, homepage logo and sitemap URL", () => {
+    expect(integrationSlugFor("imobiliareplus")).toBe("imobiliareplus");
+    expect(integrationPageBySlug("imobiliareplus")?.announcement).toBe("Lansare în curând: Imobiliare+ finalizează preluarea anunțurilor din Habitoo.");
+    expect(INTEGRATION_OVERVIEW.some((item) => item.logoIds.includes("imobiliareplus"))).toBe(true);
+    expect(homepageIds.has("imobiliareplus")).toBe(true);
+    expect(sitemap).toContain(`<loc>${BLOG_SITE_URL}/integrari/imobiliareplus</loc>`);
   });
 });
 const homepageIds = new Set(homepagePortals().map(({ portal }) => portal.id));

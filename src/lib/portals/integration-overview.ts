@@ -7,6 +7,7 @@ export const INTEGRATION_SECTIONS = ["Portaluri din România", "Portaluri intern
 const summaries: Record<string, string> = {
   locuit: "Activezi fără cheie, bifezi ofertele, iar portalul le preia automat.",
   imobli: "Activezi singur, alegi ofertele, iar portalul le preia automat.",
+  imobiliareplus: "Activezi fără cheie, bifezi ofertele, iar Imobiliare+ le preia automat.",
   storia: "Publici pe ambele portaluri. Lead-urile intră în CRM.",
   olx_direct: "Publici pe OLX folosind pachetul existent al agenției.",
   romimo: "O singură publicare, anunțul apare pe ambele portaluri.",
