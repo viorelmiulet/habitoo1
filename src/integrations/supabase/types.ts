@@ -10359,6 +10359,81 @@ export type Database = {
           },
         ]
       }
+      vumsi_accounts: {
+        Row: {
+          checked_at: string
+          external_id: string
+          kind: string
+          organization_id: string
+          vumsi_uuid: string | null
+        }
+        Insert: {
+          checked_at?: string
+          external_id: string
+          kind: string
+          organization_id: string
+          vumsi_uuid?: string | null
+        }
+        Update: {
+          checked_at?: string
+          external_id?: string
+          kind?: string
+          organization_id?: string
+          vumsi_uuid?: string | null
+        }
+        Relationships: []
+      }
+      vumsi_category_mappings: {
+        Row: {
+          category_id: number
+          category_name: string | null
+          confirmed_by: string | null
+          habitoo_kind: string
+          transaction: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: number
+          category_name?: string | null
+          confirmed_by?: string | null
+          habitoo_kind: string
+          transaction: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: number
+          category_name?: string | null
+          confirmed_by?: string | null
+          habitoo_kind?: string
+          transaction?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vumsi_city_cache: {
+        Row: {
+          city_id: number
+          city_name: string | null
+          locality_key: string
+          resolved_at: string
+          source: string
+        }
+        Insert: {
+          city_id: number
+          city_name?: string | null
+          locality_key: string
+          resolved_at?: string
+          source: string
+        }
+        Update: {
+          city_id?: number
+          city_name?: string | null
+          locality_key?: string
+          resolved_at?: string
+          source?: string
+        }
+        Relationships: []
+      }
       vumsi_nomenclature_snapshots: {
         Row: {
           attributes: Json
@@ -10386,6 +10461,30 @@ export type Database = {
           reference?: Json
           synced_at?: string
           synced_by?: string | null
+        }
+        Relationships: []
+      }
+      vumsi_type_mappings: {
+        Row: {
+          confirmed_by: string | null
+          transaction: string
+          type_label: string | null
+          type_value: number
+          updated_at: string
+        }
+        Insert: {
+          confirmed_by?: string | null
+          transaction: string
+          type_label?: string | null
+          type_value: number
+          updated_at?: string
+        }
+        Update: {
+          confirmed_by?: string | null
+          transaction?: string
+          type_label?: string | null
+          type_value?: number
+          updated_at?: string
         }
         Relationships: []
       }

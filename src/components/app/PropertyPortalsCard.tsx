@@ -34,6 +34,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ImopediaBoostButton } from "@/components/app/ImopediaBoostButton";
 import { ZonataPreviewButton } from "@/components/app/ZonataPreviewButton";
 import { HomedirectPreviewButton } from "@/components/app/HomedirectPreviewButton";
+import { VumsiPreviewButton } from "@/components/app/VumsiPreviewButton";
 import { OferaPreviewButton } from "@/components/app/OferaPreviewButton";
 import { ZupPreviewButton } from "@/components/app/ZupPreviewButton";
 import { OferaStatusPanel } from "@/components/app/OferaStatusPanel";
@@ -1138,6 +1139,7 @@ export const PropertyPortalsCard = forwardRef<
                         {cell.portalId === "zup" && (cell.selected || cell.externalId) ? <ZupStatusPanel organizationId={organizationId} propertyId={propertyId} /> : null}
                         {cell.portalId === "zonata" && isSuperadmin ? <ZonataPreviewButton propertyId={propertyId} /> : null}
                         {cell.portalId === "homedirect" && isSuperadmin ? <HomedirectPreviewButton propertyId={propertyId} /> : null}
+                        {cell.portalId === "vumsi" && isSuperadmin ? <VumsiPreviewButton propertyId={propertyId} /> : null}
                         {cell.portalId === "ofera" ? <OferaStatusPanel propertyId={propertyId} organizationId={organizationId} canManage={canManage} busy={busy} promoted={promotedValue(cell)} /> : null}
                         {cell.portalId === "imopedia" && cell.selected ? (
                           <ImopediaBoostButton organizationId={organizationId} propertyId={propertyId} />
