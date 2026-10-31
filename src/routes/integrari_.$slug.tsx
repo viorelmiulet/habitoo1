@@ -14,8 +14,9 @@ export const Route = createFileRoute("/integrari_/$slug")({
     if (integrationPageBySlug(params.slug)) return;
     const target = integrationPageAliasTarget(params.slug);
     if (target) {
+      const query = location.searchStr.replace(/^\?+/, "");
       throw redirect({
-        href: `/integrari/${target}${location.searchStr ? `?${location.searchStr}` : ""}`,
+        href: `/integrari/${target}${query ? `?${query}` : ""}`,
         statusCode: 301,
       });
     }
