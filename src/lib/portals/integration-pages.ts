@@ -19,6 +19,10 @@ type Content = {
   activation?: string;
   notes: string[];
   faq: { q: string; a: string }[];
+  /** Mențiune vizibilă sub titlu (ex. lansare în curând). */
+  announcement?: string;
+  /** Link vizibil către site-ul portalului. */
+  website?: { href: string; label: string };
 };
 
 const CONTENT: Record<string, Content> = {
@@ -62,6 +66,30 @@ const CONTENT: Record<string, Content> = {
       { q: "Cum activez Imobli.ro?", a: "Administratorul agenției intră în Setări → Portaluri și activează singur Imobli.ro. Nu trebuie să aștepte aprobarea echipei Habitoo și nu are de introdus nicio cheie. După activare, alegi ofertele prin bifarea portalului în fișa proprietății." },
       { q: "Când apare o ofertă pe Imobli.ro?", a: "După ce activezi portalul și bifezi oferta, Imobli.ro o preia automat la următoarea citire a ofertelor selectate. La fel sunt preluate modificările din Habitoo. Integrarea nu stabilește un termen de afișare instantanee." },
       { q: "Cum retrag o ofertă de pe Imobli.ro?", a: "Debifezi Imobli.ro pentru oferta respectivă în Habitoo. Aceasta nu mai este disponibilă pentru preluare și se retrage de pe portal la următoarea citire. Nu trebuie să ștergi proprietatea din portofoliul agenției pentru a o scoate de pe Imobli." },
+    ],
+  },
+  imobiliareplus: {
+    slug: "imobiliareplus",
+    name: "Imobiliare+",
+    description: "Ofertele agenției ajung pe Imobiliare+ din Habitoo CRM: activezi singur portalul, bifezi anunțurile, iar cele debifate se retrag automat, fără cheie.",
+    announcement: "Lansare în curând: Imobiliare+ finalizează preluarea anunțurilor din Habitoo.",
+    website: { href: "https://www.imobiliareplus.ro", label: "www.imobiliareplus.ro" },
+    intro: [
+      "Imobiliare+ este un portal imobiliar din România pe care agențiile își pot prezenta ofertele de vânzare și închiriere. Prin integrarea cu Habitoo, ofertele alese de agenție sunt preluate automat de Imobiliare+, fără să le introduci din nou pe portal.",
+      "Administratorul agenției activează Imobiliare+ din Habitoo, apoi agenții bifează ofertele pe care vor să le afișeze. Imobiliare+ preia automat ofertele bifate din Habitoo. Nu ai de introdus nicio cheie, iar Habitoo nu percepe niciun cost suplimentar pentru această integrare.",
+      "Când modifici prețul, descrierea sau pozele unei oferte bifate, Imobiliare+ preia varianta nouă la următoarea citire. Dacă debifezi oferta sau o retragi, aceasta dispare de pe portal la următoarea citire. Afișarea și retragerea nu sunt instantanee.",
+    ],
+    activation: "Administratorul agenției intră în Setări → Portaluri și activează singur Imobiliare+, fără aprobarea echipei Habitoo. Nu completează nicio cheie sau parolă. După activare, agenții bifează Imobiliare+ la ofertele pe care vor să le afișeze.",
+    notes: [
+      "Nu ai nevoie de nicio cheie pentru activarea Imobiliare+ în Habitoo.",
+      "Habitoo nu percepe niciun cost pentru integrarea cu Imobiliare+.",
+      "Imobiliare+ preia doar ofertele bifate, nu întregul portofoliu al agenției.",
+      "Ofertele noi, modificările și retragerile ajung la următoarea citire făcută de portal.",
+    ],
+    faq: [
+      { q: "Cum activez Imobiliare+?", a: "Administratorul agenției activează singur Imobiliare+ din Setări → Portaluri. Nu are de introdus nicio cheie și nu așteaptă aprobare. După activare, agenții aleg ofertele prin bifarea portalului în fișa proprietății." },
+      { q: "Când apar modificările pe Imobiliare+?", a: "Imobiliare+ preia automat ofertele bifate și modificările lor la următoarea citire. Nu trebuie să apeși nimic în plus după ce salvezi oferta în Habitoo." },
+      { q: "Cum retrag o ofertă de pe Imobiliare+?", a: "Debifezi Imobiliare+ pentru oferta respectivă sau o marchezi vândută ori închiriată. Oferta nu mai este disponibilă portalului și se retrage la următoarea citire." },
     ],
   },
   imo24: {
