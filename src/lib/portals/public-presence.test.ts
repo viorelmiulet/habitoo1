@@ -15,8 +15,20 @@ const availableIds = new Set([...PORTALS, ...PROMOTION_CATALOGS]
 const coveredIds = new Set(PORTAL_GROUPS
   .filter((group) => availableIds.has(group.primary))
   .flatMap((group) => group.covers));
+// Imobiliare+ has not confirmed the integration yet: it must stay off the public site.
+const NOT_YET_PUBLIC = new Set(["imobiliareplus"]);
 const available = [...PORTALS, ...PROMOTION_CATALOGS]
-  .filter((portal) => availableIds.has(portal.id) || coveredIds.has(portal.id));
+  .filter((portal) => availableIds.has(portal.id) || coveredIds.has(portal.id))
+  .filter((portal) => !NOT_YET_PUBLIC.has(portal.id));
+
+describe("Imobiliare+ is not public yet", () => {
+  it("has no public page, card, homepage logo or sitemap URL", () => {
+    expect(integrationSlugFor("imobiliareplus")).toBeNull();
+    expect(INTEGRATION_OVERVIEW.some((item) => item.logoIds.includes("imobiliareplus"))).toBe(false);
+    expect(homepageIds.has("imobiliareplus")).toBe(false);
+    expect(sitemap).not.toContain("imobiliareplus");
+  });
+});
 const homepageIds = new Set(homepagePortals().map(({ portal }) => portal.id));
 const sitemap = buildStaticSitemapXml();
 

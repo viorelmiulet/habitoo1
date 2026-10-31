@@ -10,6 +10,8 @@ const IMOBLI_KEY = "test-imobli-index-key-independent";
 process.env["IMOBLI_INDEX_KEY"] = IMOBLI_KEY;
 const LOCUIT_KEY = "test-locuit-index-key-independent";
 process.env["LOCUIT_INDEX_KEY"] = LOCUIT_KEY;
+const IP_KEY = "test-imobiliareplus-index-key-independent";
+process.env["IMOBILIAREPLUS_INDEX_KEY"] = IP_KEY;
 
 const ORG_A = "04041622-b3d2-4cbe-a2aa-000000000001"; // hb04041622b3d24cbea2
 const ORG_B = "0b0b0b0b-0b00-004a-00a8-000000000002";
@@ -21,6 +23,7 @@ const inserts: { table: string; row: Row }[] = [];
 const indexed = new Map<string, "active" | "grace">();
 const imobliIndexed = new Map<string, "active" | "grace">();
 const locuitIndexed = new Map<string, "active" | "grace">();
+const ipIndexed = new Map<string, "active" | "grace">();
 
 function query(table: string) {
   const filters: [string, string, unknown][] = [];
@@ -68,7 +71,7 @@ vi.mock("@/lib/portals/clickimob/index-feed.server", async () => {
     listClickimobIndexedAgencies: async () =>
       [...indexed.entries()].map(([org, status]) => ({ id: properstarEntityId("hb", org), status })),
     listPortalIndexedAgencies: async (_now: Date, portal: string) =>
-      [...(portal === "imobli" ? imobliIndexed : portal === "locuit" ? locuitIndexed : indexed).entries()].map(([org, status]) => ({ id: properstarEntityId("hb", org), status })),
+      [...(portal === "imobli" ? imobliIndexed : portal === "locuit" ? locuitIndexed : portal === "imobiliareplus" ? ipIndexed : indexed).entries()].map(([org, status]) => ({ id: properstarEntityId("hb", org), status })),
   };
 });
 
@@ -85,6 +88,7 @@ const { Route: ContactsRoute } = await import("@/routes/api/public/sites/v1/cont
 const tokenFor = (org: string) => clickimobFeedToken(properstarEntityId("hb", org), KEY);
 const imobliTokenFor = (org: string) => clickimobFeedToken(properstarEntityId("hb", org), IMOBLI_KEY, "imobli");
 const locuitTokenFor = (org: string) => clickimobFeedToken(properstarEntityId("hb", org), LOCUIT_KEY, "locuit");
+const ipTokenFor = (org: string) => clickimobFeedToken(properstarEntityId("hb", org), IP_KEY, "imobiliareplus");
 const req = (token: string, path = "properties", init?: RequestInit) =>
   new Request(`https://crm.habitoo.ro/api/public/sites/v1/${path}`, {
     ...init,
@@ -112,6 +116,7 @@ beforeEach(() => {
   indexed.clear();
   imobliIndexed.clear();
   locuitIndexed.clear();
+  ipIndexed.clear();
   db["organizations"] = [{ id: ORG_A }, { id: ORG_B }, { id: ORG_OUT }];
   db["profiles"] = [{ id: "agent-1", full_name: "Ana Pop", email: "ana@example.ro", phone: "0722123456" }];
   db["properties"] = [property("p-sel", ORG_A), property("p-other", ORG_A), property("p-b", ORG_B)];
@@ -150,6 +155,29 @@ describe("token ClickImob din index în /sites/v1", () => {
     }
     expect((await authenticateFeedRequest(req(locuitTokenFor(ORG_A).replace("hblo_", "hbim_")))).ok).toBe(false);
     expect((await authenticateFeedRequest(req(clickimobFeedToken(properstarEntityId("hb", ORG_A), IMOBLI_KEY, "locuit")))).ok).toBe(false);
+  });
+
+  it("Imobiliare+: tokenul hbip_ vede doar ofertele bifate pentru Imobiliare+, iar Imobli nu le vede", async () => {
+    ipIndexed.set(ORG_A, "active");
+    imobliIndexed.set(ORG_A, "active");
+    db["properties"].push(property("p-ip", ORG_A), property("p-ip-off", ORG_A));
+    db["portal_publications"].push(
+      { organization_id: ORG_A, property_id: "p-other", portal_key: "imobli", enabled: true },
+      { organization_id: ORG_A, property_id: "p-ip", portal_key: "imobiliareplus", enabled: true },
+      { organization_id: ORG_A, property_id: "p-ip-off", portal_key: "imobiliareplus", enabled: false },
+    );
+    const ipAuth = await authenticateFeedRequest(req(ipTokenFor(ORG_A)));
+    if (!ipAuth.ok) throw new Error("Expected Imobiliare+ token");
+    expect(ipAuth.portal).toBe("imobiliareplus");
+    const ipBody = JSON.stringify((await (await handlePropertiesList(req(ipTokenFor(ORG_A)), ipAuth)).response.json()).data);
+    expect(ipBody).toContain("P-IP\"");
+    for (const r of ["P-IP-OFF", "P-OTHER", "P-SEL"]) expect(ipBody).not.toContain(`${r}"`);
+    const imAuth = await authenticateFeedRequest(req(imobliTokenFor(ORG_A)));
+    if (!imAuth.ok) throw new Error("Expected Imobli token");
+    const imBody = JSON.stringify((await (await handlePropertiesList(req(imobliTokenFor(ORG_A)), imAuth)).response.json()).data);
+    expect(imBody).not.toContain("P-IP");
+    expect((await handlePropertyDetail(req(imobliTokenFor(ORG_A)), imAuth, "P-IP")).response.status).toBe(404);
+    expect((await authenticateFeedRequest(req(clickimobFeedToken(properstarEntityId("hb", ORG_A), IMOBLI_KEY, "imobiliareplus")))).ok).toBe(false);
   });
 
   it("Imobli și ClickImob: liste și detalii izolate pe bifa enabled a fiecărui portal", async () => {
