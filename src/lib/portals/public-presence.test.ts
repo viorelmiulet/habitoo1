@@ -16,11 +16,19 @@ const coveredIds = new Set(PORTAL_GROUPS
   .filter((group) => availableIds.has(group.primary))
   .flatMap((group) => group.covers));
 // Imobiliare+ has not confirmed the integration yet: it must stay off the public site.
-const NOT_YET_PUBLIC = new Set(["imobiliareplus"]);
+const NOT_YET_PUBLIC = new Set(["imobiliareplus", "vumsi"]);
 const available = [...PORTALS, ...PROMOTION_CATALOGS]
   .filter((portal) => availableIds.has(portal.id) || coveredIds.has(portal.id))
   .filter((portal) => !NOT_YET_PUBLIC.has(portal.id));
 
+describe("Vumsi is not public yet", () => {
+  it("has no public page, card, homepage logo or sitemap URL", () => {
+    expect(integrationSlugFor("vumsi")).toBeNull();
+    expect(INTEGRATION_OVERVIEW.some((item) => item.logoIds.includes("vumsi"))).toBe(false);
+    expect(homepageIds.has("vumsi")).toBe(false);
+    expect(sitemap).not.toContain("vumsi");
+  });
+});
 describe("Imobiliare+ is not public yet", () => {
   it("has no public page, card, homepage logo or sitemap URL", () => {
     expect(integrationSlugFor("imobiliareplus")).toBeNull();

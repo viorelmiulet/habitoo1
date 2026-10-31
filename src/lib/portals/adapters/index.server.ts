@@ -15,6 +15,7 @@ import { vdiAdapter } from "./vdi.server";
 import { olxDirectAdapter } from "./olx-direct.server";
 import { zonataAdapter } from "./zonata.server";
 import { homedirectAdapter } from "./homedirect.server";
+import { vumsiAdapter } from "./vumsi.server";
 import { oferaAdapter } from "./ofera.server";
 import { zupAdapter } from "./zup.server";
 
@@ -37,6 +38,7 @@ const ADAPTERS: Record<string, PortalAdapter> = {
   olx_direct: olxDirectAdapter,
   zonata: zonataAdapter,
   homedirect: homedirectAdapter,
+  vumsi: vumsiAdapter,
   ofera: oferaAdapter,
   zup: zupAdapter,
 };

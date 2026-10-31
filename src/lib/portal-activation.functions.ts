@@ -191,7 +191,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
           externalAccountId: row?.external_account_id ?? null,
           hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
           hasOAuthTokens: Boolean(row?.portal_credentials_encrypted),
-          serverKeyMissing: homedirectKeyMissing(p.id) || (p.id === "ofera" && !oferaConfigured(process.env)) || (p.id === "zup" && !zupConfigured(process.env)),
+          serverKeyMissing: homedirectKeyMissing(p.id) || (p.id === "ofera" && !oferaConfigured(process.env)) || (p.id === "zup" && !zupConfigured(process.env)) || (p.id === "vumsi" && !process.env["VUMSI_API_KEY"]?.trim()),
           lastError: row?.last_sync_error ?? null,
           lastSyncStatus: row?.last_sync_status ?? null,
         }),

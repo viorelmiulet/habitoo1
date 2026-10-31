@@ -151,7 +151,7 @@ export async function loadAgencyPortalSetup(organizationId: string, portalId: st
         externalAccountId: row?.external_account_id ?? null,
         hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
         hasOAuthTokens: Boolean(row?.portal_credentials_encrypted),
-        serverKeyMissing: homedirectKeyMissing(definition.id) || (definition.id === "ofera" && !oferaConfigured(process.env)) || (definition.id === "zup" && !zupConfigured(process.env)),
+        serverKeyMissing: homedirectKeyMissing(definition.id) || (definition.id === "ofera" && !oferaConfigured(process.env)) || (definition.id === "zup" && !zupConfigured(process.env)) || (definition.id === "vumsi" && !process.env["VUMSI_API_KEY"]?.trim()),
         lastError: row?.last_sync_error ?? null,
         lastSyncStatus: row?.last_sync_status ?? null,
       }),
