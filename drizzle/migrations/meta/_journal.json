@@ -1562,6 +1562,13 @@
       "when": 1793458278130,
       "tag": "0222_vumsi_nomenclature_snapshots",
       "breakpoints": true
+    },
+    {
+      "idx": 223,
+      "version": "7",
+      "when": 1793459323386,
+      "tag": "0223_vumsi_mappings",
+      "breakpoints": true
     }
   ]
 }
