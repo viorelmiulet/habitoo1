@@ -578,6 +578,47 @@ export function integrationPageBySlug(slug: string): IntegrationPage | null {
   return INTEGRATION_PAGES.find((p) => p.slug === slug) ?? null;
 }
 
+/**
+ * Adrese alternative pentru paginile de integrare: duc 301 spre pagina canonică.
+ * Aceasta e singura listă; aliasurile nu au pagini proprii și nu apar în sitemap.
+ */
+const INTEGRATION_PAGE_ALIASES: Record<string, string> = {
+  "storia-olx": "storia",
+  "storia-ro": "storia",
+  "olx-storia": "storia",
+  "storia-olx-ro": "storia",
+  imobiliare: "imobiliare-ro",
+  "imobiliare.ro": "imobiliare-ro",
+  lacheie: "la-cheie",
+  "lacheie-ro": "la-cheie",
+  publi24: "publi24-romimo",
+  romimo: "publi24-romimo",
+  "romimo-publi24": "publi24-romimo",
+  facebook: "catalog-facebook",
+  "facebook-catalog": "catalog-facebook",
+  meta: "catalog-facebook",
+  "imobiliare-plus": "imobiliareplus",
+  "imobiliareplus-ro": "imobiliareplus",
+};
+
+// „imospot-ro", „vdi-ro" etc. → pagina fără sufix, pentru fiecare portal cu pagină proprie.
+for (const page of INTEGRATION_PAGES) {
+  if (!page.slug.endsWith("-ro")) INTEGRATION_PAGE_ALIASES[`${page.slug}-ro`] ??= page.slug;
+}
+
+/** Pagina canonică pentru o adresă alternativă; null dacă adresa nu e alias cunoscut. */
+export function integrationPageAliasTarget(slug: string): string | null {
+  const key = slug.trim().toLowerCase();
+  return key && Object.prototype.hasOwnProperty.call(INTEGRATION_PAGE_ALIASES, key)
+    ? INTEGRATION_PAGE_ALIASES[key]
+    : null;
+}
+
+/** Toate adresele alternative, pentru teste și verificare sitemap. */
+export function integrationPageAliases(): { alias: string; slug: string }[] {
+  return Object.entries(INTEGRATION_PAGE_ALIASES).map(([alias, slug]) => ({ alias, slug }));
+}
+
 /** Slug-ul paginii pentru un portal (inclusiv portaluri acoperite de un grup, ex. olx → storia). */
 export function integrationSlugFor(portalId: string): string | null {
   return CONTENT[portalIntegrationOwner(portalId)]?.slug ?? CONTENT[portalId]?.slug ?? null;
