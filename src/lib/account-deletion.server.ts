@@ -232,7 +232,7 @@ async function withdrawProperty(deps: DeletionDeps, job: DeletionJob, property: 
       portalId: target.portal,
       propertyId: property.id,
       externalId: target.external_id,
-      ...(target.portal === "ofera" ? { oferaHardDelete: job.mode === "delete" } : {}),
+      ...(target.portal === "ofera" || target.portal === "vumsi" ? { oferaHardDelete: job.mode === "delete" } : {}),
     });
     if (res.manual) {
       report.manual.push({ propertyId: property.id, reference: property.reference, portal: target.portal, url: target.public_url });
@@ -510,7 +510,7 @@ export async function realDeletionDeps(admin: Admin): Promise<DeletionDeps> {
   return {
     store: supabaseDeletionStore(admin),
     storage: supabaseDeletionStorage(admin),
-    withdraw: (input) => performPortalWithdraw({ ...input, withdrawReason: input.portalId === "ofera" && input.oferaHardDelete ? "hard_deleted" : "account_deleted" }),
+    withdraw: (input) => performPortalWithdraw({ ...input, withdrawReason: (input.portalId === "ofera" || input.portalId === "vumsi") && input.oferaHardDelete ? "hard_deleted" : "account_deleted" }),
     deleteAuthUser: async (id) => {
       const { error } = await admin.auth.admin.deleteUser(id);
       return { error: error?.message ?? null };

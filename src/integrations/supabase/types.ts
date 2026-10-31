@@ -10434,6 +10434,51 @@ export type Database = {
         }
         Relationships: []
       }
+      vumsi_listings: {
+        Row: {
+          deleted_at: string | null
+          expires_at: string | null
+          external_id: string
+          images: Json
+          organization_id: string
+          property_id: string
+          public_url: string | null
+          status: number | null
+          status_checked_at: string | null
+          transaction: string
+          updated_at: string
+          vumsi_uuid: string | null
+        }
+        Insert: {
+          deleted_at?: string | null
+          expires_at?: string | null
+          external_id: string
+          images?: Json
+          organization_id: string
+          property_id: string
+          public_url?: string | null
+          status?: number | null
+          status_checked_at?: string | null
+          transaction: string
+          updated_at?: string
+          vumsi_uuid?: string | null
+        }
+        Update: {
+          deleted_at?: string | null
+          expires_at?: string | null
+          external_id?: string
+          images?: Json
+          organization_id?: string
+          property_id?: string
+          public_url?: string | null
+          status?: number | null
+          status_checked_at?: string | null
+          transaction?: string
+          updated_at?: string
+          vumsi_uuid?: string | null
+        }
+        Relationships: []
+      }
       vumsi_nomenclature_snapshots: {
         Row: {
           attributes: Json

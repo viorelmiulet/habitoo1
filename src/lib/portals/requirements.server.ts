@@ -82,6 +82,13 @@ async function zonataReasonsLoader(admin: Admin, organizationId: string, propert
 }
 
 /** HomeDirect: motivele blocante doar când agenția are conexiune HomeDirect. */
+async function vumsiReasonsLoaderFor(admin: Admin, organizationId: string) {
+  const { data: conn } = await admin.from("portal_connections").select("id").eq("organization_id", organizationId).eq("portal", "vumsi").maybeSingle();
+  if (!conn) return null;
+  const { vumsiReasonsLoader } = await import("./vumsi/load.server");
+  return vumsiReasonsLoader(admin).catch(() => null);
+}
+
 async function homedirectReasonsLoader(admin: Admin, organizationId: string) {
   const { data: conn } = await admin
     .from("portal_connections")
@@ -139,7 +146,9 @@ export async function loadRequirementSubject(
   const imopedia = await imopediaReasonsLoader(admin, organizationId, [propertyId]);
   const zonata = await zonataReasonsLoader(admin, organizationId, [propertyId]);
   const homedirect = await homedirectReasonsLoader(admin, organizationId);
+  const vumsiBatch = await vumsiReasonsLoaderFor(admin, organizationId);
   const homedirectReasons = homedirect ? await homedirect(row) : null;
+  const vumsi = await vumsiReasonsLoaderFor(admin, organizationId);
   const ofera = await oferaReasonsLoader(admin, organizationId);
   const zup = await zupReasonsLoader(admin, organizationId);
   let agentProfile: any = null;
@@ -202,6 +211,7 @@ export async function loadRequirementSubject(
     ...(imopedia ? { imopediaReasons: imopedia(row, agentProfile) } : {}),
     ...(zonata ? { zonataReasons: zonata(row) } : {}),
     ...(homedirectReasons ? { homedirectReasons } : {}),
+    ...(vumsi ? { vumsiReasons: vumsi(row as never) } : {}),
     ...(ofera ? { oferaReasons: await ofera(row) } : {}),
     ...(zup ? { zupReasons: await zup(row) } : {}),
   };
@@ -260,6 +270,7 @@ export async function loadRequirementSubjects(
   const imopedia = await imopediaReasonsLoader(admin, organizationId, propertyIds);
   const zonata = await zonataReasonsLoader(admin, organizationId, propertyIds);
   const homedirect = await homedirectReasonsLoader(admin, organizationId);
+  const vumsiBatch = await vumsiReasonsLoaderFor(admin, organizationId);
   const profileById = new Map((profiles ?? []).map((p: any) => [p.id as string, p]));
   const ofera = await oferaReasonsLoader(admin, organizationId);
   const zup = await zupReasonsLoader(admin, organizationId);
@@ -309,6 +320,7 @@ export async function loadRequirementSubjects(
       ...(imopedia ? { imopediaReasons: imopedia(row, profile) } : {}),
       ...(zonata ? { zonataReasons: zonata(row) } : {}),
       ...(homedirect ? { homedirectReasons: await homedirect(row) } : {}),
+      ...(vumsiBatch ? { vumsiReasons: vumsiBatch(row as never) } : {}),
       ...(ofera ? { oferaReasons: await ofera(row) } : {}),
       ...(zup ? { zupReasons: await zup(row) } : {}),
     });

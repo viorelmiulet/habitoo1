@@ -74,23 +74,21 @@ describe("client Vumsi", () => {
 });
 
 describe("registry Vumsi", () => {
-  it("activare cu aprobare, cheie de partener, capabilitățile cerute, publicare încă oprită", () => {
+  it("activare cu aprobare, cheie de partener, capabilitățile cerute, publicare disponibilă", () => {
     const d = getPortalDefinition("vumsi")!;
     expect(d.display_name).toBe("Vumsi.com");
     expect(d.activation).toBe("approval");
     expect(d.authentication).toEqual(["portal_api_key"]);
     expect(d.capabilities).toEqual(["test_connection", "publish_listing", "update_listing", "withdraw_listing", "sync"]);
-    expect(d.publish_coming_soon).toBe(true);
+    expect(d.publish_coming_soon).toBeUndefined();
     expect(d.notes).toMatch(/promovări plătite/);
   });
 
-  it("adaptorul afișează contul, mode și publish_behaviour; publicarea nu atinge Vumsi", async () => {
+  it("adaptorul afișează contul, mode și publish_behaviour", async () => {
     const fetch = vi.fn(async () => json(200, { company_name: "Habitoo", mode: "trial", publish_behaviour: "pending_review" }));
     const a = createVumsiAdapter({ env, fetch: fetch as never, sleep });
     const r = await a.testConnection({} as never);
     expect(r.ok && r.data.detail).toBe("Vumsi conectat: Habitoo · mod: trial · publicare: pending_review");
-    const p = await a.publishListing({} as never, { propertyId: "x", externalId: null });
-    expect(p.ok).toBe(false);
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

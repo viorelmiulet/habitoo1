@@ -289,7 +289,7 @@ export function pickVumsiCity(results: unknown, city: string, county: string | n
 
 // ------------------------------------------------------------------ agent și agenție
 
-export type VumsiUserPayload = { email: string | null; first_name: string; last_name: string; phone_number: string | null; external_user_id: string; account_type: "business" };
+export type VumsiUserPayload = { email: string | null; first_name: string; last_name: string; phone: string | null; external_user_id: string; account_type: "business" };
 export type VumsiCompanyPayload = { external_company_id: string; owner: { user_uuid: string | null; external_user_id: string | null }; name: string; company_number: string | null; city: string | null; country: "RO"; line1: string | null };
 
 export function vumsiUserPayload(profile: { id: string; full_name: string | null; email: string | null; phone: string | null }): VumsiUserPayload {
@@ -298,7 +298,7 @@ export function vumsiUserPayload(profile: { id: string; full_name: string | null
     email: profile.email?.trim() || null,
     first_name: parts[0] ?? "",
     last_name: parts.slice(1).join(" "),
-    phone_number: profile.phone?.trim() || null,
+    phone: profile.phone?.trim() || null,
     external_user_id: profile.id,
     account_type: "business",
   };
