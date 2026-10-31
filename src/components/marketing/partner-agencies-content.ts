@@ -64,7 +64,7 @@ export const partnerProgramSections: PartnerProgramSection[] = [
 ];
 
 /** Regulile concrete care decid cine apare în lista publică. */
-export const partnerListingRules: readonly { title: string; text: string }[] = [
+export const partnerListingRules: { title: string; text: string }[] = [
   {
     title: "Cont activ sau în perioada de probă",
     text: "O agenție apare în listă cât timp are cont activ în Habitoo sau este în perioada de probă. Conturile arhivate, suspendate, anulate sau în așteptarea aprobării nu mai apar.",
@@ -87,7 +87,7 @@ export const partnerListingRules: readonly { title: string; text: string }[] = [
   },
 ];
 
-export const partnerAgenciesFaq: readonly { q: string; a: string }[] = [
+export const partnerAgenciesFaq: { q: string; a: string }[] = [
   {
     q: "Cum apare agenția mea în lista aceasta?",
     a: "Automat. În momentul în care contul agenției este activ sau în perioada de probă, numele și logo-ul intra în lista „Agenții partenere”. Nu există dosar de înscriere, aprobare sau taxă de listare.",
