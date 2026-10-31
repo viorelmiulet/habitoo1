@@ -38,3 +38,40 @@ export async function runStoriaContentUpdateJob(admin: Admin, job: { organizatio
   const result = await execute({ organizationId: job.organization_id, propertyId: job.property_id, portalId: "storia", actorId: job.requested_by, action: "update", operationLabel: "update", skipSlotCheck: true });
   return { ...result, portalId: "storia", action: result.ok ? "updated" : "blocked", message: result.message ?? (result.ok ? "Opțiunea a fost trimisă la Storia." : "Trimiterea la Storia a eșuat.") };
 }
+/** Batched read of everything `planStoriaAutoRenewBulk` needs. */
+export async function loadStoriaAutoRenewBulkPlan(admin: Admin, input: {
+  organizationId: string; propertyIds: string[]; agentOnly: boolean; userId: string;
+}) {
+  const { planStoriaAutoRenewBulk } = await import("./auto-renew");
+  const ids = [...new Set(input.propertyIds)];
+  const [{ data: properties, error: e1 }, { data: listings, error: e2 }, { data: publications, error: e3 }, { data: connection, error: e4 }] = await Promise.all([
+    admin.from("properties").select("*").eq("organization_id", input.organizationId).in("id", ids),
+    admin.from("portal_listings").select("property_id,status,external_id").eq("organization_id", input.organizationId).eq("portal", "storia").in("property_id", ids),
+    admin.from("portal_publications").select("property_id,enabled").eq("organization_id", input.organizationId).eq("portal_key", "storia").in("property_id", ids),
+    admin.from("portal_connections").select("activated").eq("organization_id", input.organizationId).eq("portal", "storia").maybeSingle(),
+  ]);
+  const error = e1 ?? e2 ?? e3 ?? e4;
+  if (error) throw new Error(error.message);
+  return planStoriaAutoRenewBulk({
+    propertyIds: ids,
+    properties: (properties ?? []).map((p: any) => ({ id: p.id, assigned_to: p.assigned_to ?? null, archived_at: p.archived_at ?? null, feedEligible: isPropertyFeedEligible(p) })),
+    listings: (listings ?? []) as any,
+    publications: (publications ?? []) as any,
+    connectionActivated: connection?.activated === true,
+    agentOnly: input.agentOnly,
+    userId: input.userId,
+  });
+}
+
+/** One atomic queue start for all eligible pairs. */
+export async function enqueueStoriaAutoRenewBulk(admin: Admin, input: {
+  organizationId: string; propertyIds: string[]; actorId: string; superadmin: boolean;
+}): Promise<void> {
+  if (!input.propertyIds.length) return;
+  const now = new Date().toISOString();
+  const { error } = await admin.rpc("start_portal_contact_updates", {
+    _org: input.organizationId, _actor: input.actorId, _superadmin: input.superadmin,
+    _pairs: input.propertyIds.map((id) => ({ property_id: id, portal_key: "storia", next_attempt_at: now })),
+  });
+  if (error) throw new Error(error.message);
+}

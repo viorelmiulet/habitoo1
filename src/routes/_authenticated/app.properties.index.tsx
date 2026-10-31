@@ -54,6 +54,7 @@ import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb
 import { PropertyPublishView } from "@/components/app/PropertyPublishView";
 import { trackPortalBulkJob } from "@/components/app/PortalBulkProgress";
 import { PortalBulkSelectionDialog } from "@/components/app/PortalBulkSelectionDialog";
+import { StoriaAutoRenewBulkDialog } from "@/components/app/StoriaAutoRenewBulkDialog";
 import { PortalRepublishButton } from "@/components/app/PortalRepublishDialog";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
@@ -172,6 +173,7 @@ function PropertiesPage() {
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
+  const [storiaBulkOpen, setStoriaBulkOpen] = useState(false);
   const [portalDrafts, setPortalDrafts] = useState<Record<string, BulkDraft>>({});
   const [portalBulkMode, setPortalBulkMode] = useState<"publish" | "withdraw" | null>(null);
   const archivePropertyFn = useServerFn(archiveProperty);
@@ -824,6 +826,11 @@ function PropertiesPage() {
             <Button variant="outline" size="sm" onClick={() => setPortalBulkMode("publish")}>
               Publică pe portaluri…
             </Button>
+            {portalOptions.some((o) => o.portalId === "storia") ? (
+              <Button variant="outline" size="sm" onClick={() => setStoriaBulkOpen(true)}>
+                Prelungire automată Storia…
+              </Button>
+            ) : null}
             <Button variant="outline" size="sm" onClick={() => setPortalBulkMode("withdraw")}>
               Retrage de pe portaluri…
             </Button>
@@ -1093,6 +1100,13 @@ function PropertiesPage() {
       {sendOfferTarget ? <SendOfferDialog propertyId={sendOfferTarget} open onOpenChange={open => !open && setSendOfferTarget(null)} /> : null}
       {collaboratorOfferTarget ? <SendCollaboratorOfferDialog propertyId={collaboratorOfferTarget} open onOpenChange={open => !open && setCollaboratorOfferTarget(null)} /> : null}
       <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
+      <StoriaAutoRenewBulkDialog
+        open={storiaBulkOpen}
+        propertyIds={selected}
+        organizationId={orgId}
+        onClose={() => setStoriaBulkOpen(false)}
+        onDone={() => setSelected([])}
+      />
       <PortalBulkSelectionDialog
         mode={portalBulkMode}
         propertyIds={selected}

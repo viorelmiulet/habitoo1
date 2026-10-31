@@ -3832,3 +3832,38 @@ export const checkPortalRelayIp = createServerFn({ method: "POST" })
     const { checkRelayIp } = await import("./portals/relay.server");
     return checkRelayIp();
   });
+
+const storiaBulkSchema = z.object({
+  organizationId: z.string().uuid().optional(),
+  propertyIds: z.array(z.string().uuid()).min(1).max(1000),
+});
+
+/** Preview for the bulk dialog: nothing is written. */
+export const previewStoriaAutoRenewBulk = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => storiaBulkSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { organizationId, agentOnly } = await resolvePublishingOrg(context as unknown as AuthContext, data.organizationId);
+    const admin = await loadAdmin();
+    const { loadStoriaAutoRenewBulkPlan } = await import("@/lib/portals/storia/auto-renew.server");
+    const plan = await loadStoriaAutoRenewBulkPlan(admin, { organizationId, propertyIds: data.propertyIds, agentOnly, userId: context.userId });
+    return { sendNow: plan.sendNow.length, saveOnly: plan.saveOnly.length, forbidden: plan.forbidden.length };
+  });
+
+/** Bulk `storia_auto_renew` (null = agency default) + one queue start for active adverts. */
+export const setStoriaAutoRenewBulk = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => storiaBulkSchema.extend({ override: z.boolean().nullable() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { organizationId, agentOnly, superadmin } = await resolvePublishingOrg(context as unknown as AuthContext, data.organizationId);
+    const admin = await loadAdmin();
+    const { loadStoriaAutoRenewBulkPlan, enqueueStoriaAutoRenewBulk } = await import("@/lib/portals/storia/auto-renew.server");
+    const plan = await loadStoriaAutoRenewBulkPlan(admin, { organizationId, propertyIds: data.propertyIds, agentOnly, userId: context.userId });
+    if (plan.forbidden.length) throw new Error(PORTAL_AGENT_NOT_RESPONSIBLE);
+    const ids = [...plan.sendNow, ...plan.saveOnly];
+    const { error } = await admin.from("properties").update({ storia_auto_renew: data.override } as never)
+      .eq("organization_id", organizationId).in("id", ids);
+    if (error) throw new Error(error.message);
+    await enqueueStoriaAutoRenewBulk(admin, { organizationId, propertyIds: plan.sendNow, actorId: context.userId, superadmin });
+    return { sent: plan.sendNow.length, saved: plan.saveOnly.length };
+  });
