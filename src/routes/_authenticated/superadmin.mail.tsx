@@ -35,6 +35,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { EmptyState } from "@/components/app/EmptyState";
+import { WorkspaceGmailCard } from "@/components/superadmin/WorkspaceGmailCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -530,6 +531,8 @@ function SuperadminMailPage() {
           </div>
         </div>
       )}
+
+      <WorkspaceGmailCard />
 
       {mailboxesQuery.isLoading ? (
         <InlineLoading label="Se încarcă căsuțele de email…" />
