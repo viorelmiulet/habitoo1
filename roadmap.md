@@ -413,3 +413,9 @@
 - [x] Etapa 4: publicare/actualizare/retragere SOAP
 - [x] Etapa 5: imagini și video (existsFile/addFile/syncFiles/deleteFile, tabel imopedia_listing_files)
 - [x] Etapa 6: Gold prin bifa „Promovat” și buton boost (saveBoost)
+
+## Favicon și iconița din meniul restrâns
+- [x] public/favicon.png restaurat exact din commitul 5b5d0b6 (logo închis pe fundal transparent)
+- [x] habitoo-mark-light.png publicat ca asset separat, folosit doar de logo-ul din meniul restrâns (72px)
+- [x] Test: meniul restrâns afișează iconița nouă, nu /favicon.png; 14 teste de meniu trec; build OK
+- [x] Verificare vizuală în cont: favicon servit identic, iconița cream & aur pe bleumarin fără casetă albă
