@@ -507,7 +507,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
    Rebind tokens only on the action itself: surrounding forms keep navy primary.
    Existing local dark-theme rules are intentionally excluded. */
 :where(.bg-navy, .mk-navy-bg, .login-backdrop, .bg-sidebar)
-  :where(.bg-primary, .text-primary):not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover) *):not(:where(.dark, .dark *)) {
+  :where(.bg-primary, .text-primary):not(:where(.bg-navy, .mk-navy-bg, .login-backdrop, .bg-sidebar) :where(.bg-card, .bg-background, .bg-surface, .bg-popover) *):not(:where(.dark, .dark *)) {
   --primary: var(--gold);
   --primary-foreground: var(--gold-foreground);
 }
