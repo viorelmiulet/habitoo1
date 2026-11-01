@@ -49,7 +49,7 @@ import {
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
 import { UserAvatar } from "@/components/app/UserAvatar";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import sidebarLogo from "@/assets/habitoo-sidebar-light.png.asset.json";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,7 +64,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { CurrentUser } from "@/hooks/use-session";
 import { useTheme, type ThemePreference } from "@/hooks/use-theme";
-import { planAgentLimitLabel, planLabel } from "@/lib/plans";
+import { planLabel } from "@/lib/plans";
 import {
   activeNavigationPath,
   itemIsActive,
@@ -72,97 +72,61 @@ import {
 } from "@/components/app/sidebar-navigation";
 
 export type NavItem = { label: string; to: LinkProps["to"]; icon: typeof Gauge; exact?: boolean };
-export type NavGroup = { title?: string; items: NavItem[] };
+export type NavGroup = { title?: string; section?: string; collapsible?: boolean; items: NavItem[] };
 export type ShellVariant = "agency" | "platform";
 
 export const agencyNav: NavGroup[] = [
-  { items: [{ label: "Dashboard", to: "/app", icon: Gauge, exact: true }] },
-  {
-    title: "Portofoliu",
-    items: [
-      { label: "Proprietăți", to: "/app/properties", icon: Building2 },
-      { label: "Adaugă proprietate", to: "/app/properties/new", icon: PlusCircle },
-      { label: "Clipurile mele", to: "/app/clipurile-mele", icon: Film },
-    ],
-  },
-  {
-    title: "Clienți",
-    items: [
-      { label: "Contacte", to: "/app/contacts", icon: UserRound },
-      { label: "Cereri", to: "/app/requests", icon: Target },
-      { label: "Contracte", to: "/app/contracts", icon: FileSignature },
-    ],
-  },
-  {
-    items: [{ label: "Lead-uri", to: "/app/leads", icon: Flame }],
-  },
-  {
-    items: [{ label: "Comisioane", to: "/app/comisioane", icon: Coins }],
-  },
-  {
-    title: "Rețea",
-    items: [{ label: "Colaborare", to: "/app/collaboration", icon: Handshake }],
-  },
-  {
-    title: "Anunțuri",
-    items: [
-      { label: "Anunțuri particulari", to: "/app/anunturi-particulari", icon: Newspaper },
-    ],
-  },
-  {
-    title: "Asistent AI",
-    items: [
-      { label: "Habitoo Manager", to: "/app/ai-manager", icon: Workflow },
-      { label: "AI CRM", to: "/app/ai-crm", icon: BrainCircuit },
-      { label: "AI Marketing", to: "/app/ai-marketing", icon: Megaphone },
-      { label: "Habitoo AI", to: "/app/ai", icon: Bot },
-      { label: "Studio AI", to: "/app/ai-media", icon: Wand2 },
-    ],
-  },
-  {
-    title: "ACP",
-    items: [
-      { label: "Analiză nouă", to: "/app/acp/new", icon: Sparkles },
-      { label: "Analize salvate", to: "/app/acp", icon: BarChart3, exact: true },
-    ],
-  },
-
-  {
-    title: "Productivitate",
-    items: [
-      { label: "Activități", to: "/app/activities", icon: ListChecks },
-      { label: "Calendar", to: "/app/calendar", icon: CalendarDays },
-      { label: "Matching", to: "/app/matching", icon: Sparkles },
-    ],
-  },
-  {
-    title: "Management",
-    items: [
-      { label: "Rapoarte", to: "/app/reports", icon: ChartBar },
-      { label: "Obiective", to: "/app/goals", icon: Layers },
-      { label: "Notificări", to: "/app/notifications", icon: Bell },
-      { label: "Tichetele mele", to: "/app/support", icon: LifeBuoy },
-      { label: "Agenți", to: "/app/team", icon: Users },
-      { label: "Setări agenție", to: "/app/settings", icon: Settings },
-      { label: "Alege abonamentul", to: "/abonament", icon: CalendarDays },
-    ],
-  },
+  { items: [{ label: "Acasă", to: "/app", icon: Gauge, exact: true }] },
+  { title: "Proprietăți", collapsible: true, items: [
+    { label: "Toate proprietățile", to: "/app/properties", icon: Building2 },
+    { label: "Adaugă proprietate", to: "/app/properties/new", icon: PlusCircle },
+    { label: "Clipurile mele", to: "/app/clipurile-mele", icon: Film },
+  ] },
+  { items: [{ label: "Lead-uri", to: "/app/leads", icon: Flame }] },
+  { title: "Clienți", collapsible: true, items: [
+    { label: "Contacte", to: "/app/contacts", icon: UserRound },
+    { label: "Cereri", to: "/app/requests", icon: Target },
+    { label: "Contracte", to: "/app/contracts", icon: FileSignature },
+  ] },
+  { title: "Calendar", collapsible: true, items: [
+    { label: "Calendar", to: "/app/calendar", icon: CalendarDays },
+    { label: "Activități", to: "/app/activities", icon: ListChecks },
+  ] },
+  { items: [{ label: "Matching", to: "/app/matching", icon: Sparkles }] },
+  { section: "Creștere", items: [{ label: "Colaborare", to: "/app/collaboration", icon: Handshake }] },
+  { items: [{ label: "Anunțuri particulari", to: "/app/anunturi-particulari", icon: Newspaper }] },
+  { title: "ACP", collapsible: true, items: [
+    { label: "Analiză nouă", to: "/app/acp/new", icon: Sparkles },
+    { label: "Analize salvate", to: "/app/acp", icon: BarChart3, exact: true },
+  ] },
+  { title: "Asistent AI", collapsible: true, items: [
+    { label: "Habitoo Manager", to: "/app/ai-manager", icon: Workflow },
+    { label: "AI CRM", to: "/app/ai-crm", icon: BrainCircuit },
+    { label: "AI Marketing", to: "/app/ai-marketing", icon: Megaphone },
+    { label: "Habitoo AI", to: "/app/ai", icon: Bot },
+    { label: "Studio AI", to: "/app/ai-media", icon: Wand2 },
+  ] },
+  { section: "Agenție", items: [{ label: "Comisioane", to: "/app/comisioane", icon: Coins }] },
+  { title: "Rapoarte", collapsible: true, items: [
+    { label: "Rapoarte", to: "/app/reports", icon: ChartBar },
+    { label: "Obiective", to: "/app/goals", icon: Layers },
+  ] },
+  { title: "Setări", collapsible: true, items: [
+    { label: "Setări agenție", to: "/app/settings", icon: Settings },
+    { label: "Agenți", to: "/app/team", icon: Users },
+    { label: "Notificări", to: "/app/notifications", icon: Bell },
+    { label: "Tichetele mele", to: "/app/support", icon: LifeBuoy },
+    { label: "Alege abonamentul", to: "/abonament", icon: CalendarDays },
+  ] },
 ];
 
-/**
- * Navigația vizibilă unui agent simplu: zonele de administrare a agenției
- * (Agenți, Setări agenție) sunt ascunse complet, nu doar dezactivate.
- * Agentul păstrează accesul la propriul profil.
- */
+/** Agents retain their profile, but not agency administration or billing. */
 export const agentNav: NavGroup[] = agencyNav.map((group) =>
-  group.title === "Management"
-    ? {
-        ...group,
-        items: [
-          ...group.items.filter((i) => i.to !== "/app/team" && i.to !== "/app/settings" && i.to !== "/abonament"),
-          { label: "Profilul meu", to: "/app/settings", icon: UserRound },
-        ],
-      }
+  group.title === "Setări"
+    ? { ...group, items: [
+        { label: "Profilul meu", to: "/app/settings", icon: UserRound },
+        ...group.items.filter((i) => i.to !== "/app/team" && i.to !== "/app/settings" && i.to !== "/abonament"),
+      ] }
     : group,
 );
 
@@ -288,7 +252,7 @@ function AccountMenu({
                     {displayName}
                   </span>
                   <span className="block truncate text-[11px] font-normal text-sidebar-foreground/60">
-                    {roleLabel}
+                    {roleLabel}{isPlatform ? "" : ` · Plan ${planLabel(user.organization?.plan)}`}
                   </span>
                 </span>
                 <ChevronDown className="size-4 text-sidebar-foreground/60" aria-hidden />
@@ -387,7 +351,7 @@ export function AppSidebar({
   const homeTo: LinkProps["to"] = isPlatform ? "/superadmin" : "/app";
   const activePath = activeNavigationPath(pathname, groups);
   const expandableGroups = useMemo(
-    () => groups.filter((group) => group.title && group.items.length > 1),
+    () => groups.filter((group) => group.title && (group.collapsible || group.items.length > 1)),
     [groups],
   );
   const activeGroupTitles = useMemo(
@@ -445,7 +409,7 @@ export function AppSidebar({
               collapsed && "mx-auto size-11 justify-center px-0",
               child && !collapsed && "pl-10",
               active &&
-                "bg-sidebar-primary/20 font-bold text-surface hover:bg-sidebar-primary/25 hover:text-surface",
+                "bg-sidebar-accent font-bold text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
             )}
           >
             <item.icon className={cn(active && "text-sidebar-primary")} aria-hidden />
@@ -453,7 +417,7 @@ export function AppSidebar({
             {badge ? (
               <span
                 className={cn(
-                  "ml-auto flex h-5 min-w-5 items-center justify-center rounded-pill bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground",
+                  "ml-auto flex h-5 min-w-5 items-center justify-center rounded-pill bg-gold px-1 text-[10px] font-semibold text-gold-foreground",
                   collapsed && "absolute top-0 right-0",
                 )}
               >
@@ -483,26 +447,15 @@ export function AppSidebar({
           onClick={onNavigate}
           aria-label="Habitoo CRM — acasă"
           className={cn(
-            "flex rounded-control bg-surface transition-colors hover:bg-surface/90 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none",
-            collapsed ? "size-11 items-center justify-center" : "min-h-14 items-center gap-3 px-3",
+            "flex items-center justify-center rounded-control focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none",
+            collapsed ? "size-11" : "min-h-14 w-full",
           )}
         >
-          <BrandLogo
-            markOnly={collapsed}
-            className={cn(collapsed ? "size-8 shrink-0" : "h-7 w-auto max-w-24 shrink-0")}
-            priority
-          />
-          {collapsed ? null : (
-            <span className="min-w-0 leading-tight">
-              <span className="block font-display text-base font-semibold text-foreground">
-                Habitoo CRM
-              </span>
-              <span className="mt-0.5 block truncate text-[11px] font-medium text-muted-foreground">
-                {organizationName}
-              </span>
-            </span>
-          )}
+          <img src={collapsed ? "/favicon.png" : sidebarLogo.url} alt="Habitoo CRM"
+            className={cn("object-contain", collapsed ? "size-10" : "h-auto w-40 max-w-full")}
+            loading="eager" decoding="async" />
         </Link>
+        {collapsed ? null : <p className="mt-2 truncate text-center text-xs font-medium text-sidebar-foreground">{organizationName}</p>}
       </div>
 
       <nav
@@ -510,14 +463,9 @@ export function AppSidebar({
         aria-label="Navigare principală"
         className="scrollbar-hidden flex-1 overflow-x-hidden overflow-y-auto px-2 pb-3"
       >
-        {collapsed ? null : (
-          <p className="px-2.5 pt-1 pb-2 text-[10px] font-semibold tracking-[0.14em] text-sidebar-foreground/45 uppercase">
-            Meniu
-          </p>
-        )}
         {groups.map((group, index) => {
           const title = group.title;
-          const expandable = Boolean(title && group.items.length > 1);
+          const expandable = Boolean(title && (group.collapsible || group.items.length > 1));
           const open = title ? openGroups.has(title) : true;
           const active = group.items.some((item) => item.to === activePath);
           const GroupIcon = group.items[0]?.icon;
@@ -526,14 +474,16 @@ export function AppSidebar({
             const contentId = `sidebar-group-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
             return (
               <div key={title} className="mb-1">
+                {group.section ? <p className="px-2.5 pt-4 pb-1 text-[10px] font-semibold text-navy-muted uppercase">{group.section}</p> : null}
                 <Button
                   type="button"
                   data-tour={`group:${title}`}
+                  data-nav-targets={group.items.map((item) => `nav:${String(item.to)}`).join(" ")}
                   variant="ghost"
                   data-nav-row
                   className={cn(
                     "min-h-11 w-full justify-start gap-3 border-0 px-2.5 text-[15px] font-semibold text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&_svg]:size-5 [&_svg]:stroke-[1.75]",
-                    active && "text-surface",
+                    active && "bg-sidebar-accent text-sidebar-accent-foreground",
                   )}
                   aria-expanded={open}
                   aria-controls={contentId}
@@ -557,15 +507,18 @@ export function AppSidebar({
           }
 
           return (
-            <div key={title ?? index} className="mb-2">
-              {title && !collapsed ? (
-                <p className="px-2.5 pt-2 pb-1 text-[10px] font-semibold tracking-[0.14em] text-sidebar-foreground/45 uppercase">
+            <div key={title ?? index} className="mb-1">
+              {group.section ? (collapsed ? <div className="mx-2 my-2 h-px bg-sidebar-border" aria-hidden /> : <p className="px-2.5 pt-4 pb-1 text-[10px] font-semibold text-navy-muted uppercase">{group.section}</p>) : null}
+              {title && !collapsed && !expandable ? (
+                <p className="px-2.5 pt-2 pb-1 text-[10px] font-semibold tracking-[0.14em] text-navy-muted uppercase">
                   {title}
                 </p>
               ) : title && collapsed ? (
                 <div className="mx-2 my-2 h-px bg-sidebar-border" aria-hidden />
               ) : null}
-              <ul className="space-y-0.5">{group.items.map((item) => renderItem(item))}</ul>
+              <ul className="space-y-0.5">{collapsed && expandable && group.items[0]
+                ? renderItem({ ...group.items[0], label: title ?? group.items[0].label })
+                : group.items.map((item) => renderItem(item))}</ul>
             </div>
           );
         })}
@@ -578,16 +531,6 @@ export function AppSidebar({
       </nav>
 
       <div className="border-t border-sidebar-border p-2">
-        {user && !collapsed && !isPlatform ? (
-          <div className="mb-1 rounded-control border border-sidebar-border bg-sidebar-accent/40 px-2.5 py-2">
-            <p className="text-[10px] font-semibold tracking-[0.14em] text-sidebar-foreground/45 uppercase">
-              Plan curent
-            </p>
-            <p className="mt-0.5 truncate text-xs font-semibold text-sidebar-accent-foreground">
-              {planLabel(user.organization?.plan)} · {planAgentLimitLabel(user.organization?.plan)}
-            </p>
-          </div>
-        ) : null}
 
         {user ? (
           <AccountMenu
