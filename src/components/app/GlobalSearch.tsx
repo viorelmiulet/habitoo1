@@ -81,22 +81,36 @@ async function search(term: string): Promise<Result[]> {
   return results;
 }
 
+// Ctrl/Cmd+K is listened to once per page: only the first mounted GlobalSearch
+// instance toggles, so wide + compact variants never open two dialogs.
+type OpenSetter = (fn: (v: boolean) => boolean) => void;
+const shortcutTargets: OpenSetter[] = [];
+function onShortcutKey(e: KeyboardEvent) {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+    const target = shortcutTargets[0];
+    if (!target) return;
+    e.preventDefault();
+    target((v) => !v);
+  }
+}
+function registerShortcutTarget(setter: OpenSetter) {
+  if (shortcutTargets.length === 0) window.addEventListener("keydown", onShortcutKey);
+  shortcutTargets.push(setter);
+  return () => {
+    const i = shortcutTargets.indexOf(setter);
+    if (i >= 0) shortcutTargets.splice(i, 1);
+    if (shortcutTargets.length === 0) window.removeEventListener("keydown", onShortcutKey);
+  };
+}
+
 export function GlobalSearch({ compact = false }: { compact?: boolean } = {}) {
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState("");
   const [debounced, setDebounced] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setOpen((v) => !v);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  useEffect(() => registerShortcutTarget(setOpen), []);
+
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(term), 250);
