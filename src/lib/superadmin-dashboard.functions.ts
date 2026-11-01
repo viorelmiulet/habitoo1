@@ -13,6 +13,7 @@ import {
   type SubscriptionAlert,
   type SuperadminTodo,
 } from "@/lib/superadmin-todo";
+import { buildAgencyRowsFrom, type AgencyRow } from "@/lib/superadmin-agencies";
 import { WEEK_PORTAL_OPERATIONS, isActiveLogin, type SuperadminWeek } from "@/lib/superadmin-week";
 
 type AuthContext = {
@@ -61,6 +62,7 @@ export type SuperadminDashboard = {
   queue: WorkQueue;
   integrations: IntegrationHealthRow[];
   week: SuperadminWeek;
+  agencies: AgencyRow[];
   audit: RecentAuditEntry[];
   todo: SuperadminTodo;
 };
@@ -191,7 +193,12 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
         return a.organizationName.localeCompare(b.organizationName, "ro");
       });
 
-    const [todo, week] = await Promise.all([buildTodo(admin), buildWeek(admin)]);
+    const lastLogin = await loadLastLogins(admin);
+    const [todo, week, agencies] = await Promise.all([
+      buildTodo(admin),
+      buildWeek(admin, lastLogin),
+      buildAgencyRows(admin, lastLogin),
+    ]);
 
     return {
       todo,
@@ -202,6 +209,7 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
       },
       integrations,
       week,
+      agencies,
       audit: auditRows.map((a) => ({
         id: a.id,
         action: a.action,
@@ -313,7 +321,7 @@ async function buildTodo(admin: Admin): Promise<SuperadminTodo> {
 }
 
 /** Blocul „Ultimele 7 zile”: numărători agregate, agențiile demo excluse. */
-async function buildWeek(admin: Admin): Promise<SuperadminWeek> {
+async function buildWeek(admin: Admin, lastLogin: Map<string, string | null>): Promise<SuperadminWeek> {
   const now = Date.now();
   const since = new Date(now - 7 * 86_400_000).toISOString();
   const prev = new Date(now - 14 * 86_400_000).toISOString();
@@ -352,14 +360,6 @@ async function buildWeek(admin: Admin): Promise<SuperadminWeek> {
   const failed = ([["proprietăți", props], ["proprietăți anterioare", propsPrev], ["lead-uri", leads], ["lead-uri anterioare", leadsPrev], ["operațiuni reușite", okOps], ["operațiuni eșuate", badOps], ["utilizatori", members]] as [string, { error: { message: string } | null }][]).filter(([, r]) => r.error);
   if (failed.length) throw new Error(`Interogările dashboardului au eșuat — ${failed.map(([l, r]) => `${l}: ${r.error?.message}`).join(" | ")}`);
 
-  // Din Auth citim doar `last_sign_in_at`, nimic altceva nu iese din server.
-  const lastLogin = new Map<string, string | null>();
-  for (let page = 1; page <= 50; page++) {
-    const { data, error: authErr } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
-    if (authErr) throw new Error("Ultimele autentificări nu au putut fi citite.");
-    for (const u of data.users) lastLogin.set(u.id, u.last_sign_in_at ?? null);
-    if (data.users.length < 1000) break;
-  }
   const ids = (members.data ?? []).map((m) => m.id);
   const since7 = now - 7 * 86_400_000;
   const active = orgs.filter((o) => !o.is_demo && o.status === "active" && !o.archived_at);
@@ -376,4 +376,56 @@ async function buildWeek(admin: Admin): Promise<SuperadminWeek> {
     portalSuccess: okOps.count ?? 0,
     portalFailed: badOps.count ?? 0,
   };
+}
+
+/** O singură parcurgere Auth; din ea citim doar `last_sign_in_at`. */
+async function loadLastLogins(admin: Admin): Promise<Map<string, string | null>> {
+  const lastLogin = new Map<string, string | null>();
+  for (let page = 1; page <= 50; page++) {
+    const { data, error: authErr } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (authErr) throw new Error("Ultimele autentificări nu au putut fi citite.");
+    for (const u of data.users) lastLogin.set(u.id, u.last_sign_in_at ?? null);
+    if (data.users.length < 1000) break;
+  }
+  return lastLogin;
+}
+
+/** Cardul „Agenții”: numărători agregate per agenție activă, non-demo. */
+async function buildAgencyRows(admin: Admin, lastLogin: Map<string, string | null>): Promise<AgencyRow[]> {
+  const { data: orgRows, error } = await admin
+    .from("organizations")
+    .select("id,name,plan,is_demo,status,archived_at,is_trial,subscription_term,subscription_expires_at");
+  if (error) throw new Error(`Interogările dashboardului au eșuat — agenții: ${error.message}`);
+  const orgs = (orgRows ?? []).filter((o) => !o.is_demo && o.status === "active" && !o.archived_at);
+  const since30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const head = { count: "exact" as const, head: true };
+  const stats = await Promise.all(
+    orgs.map(async (o) => {
+      const [props, leads, conns, errs, members] = await Promise.all([
+        admin.from("properties").select("id", head).eq("organization_id", o.id).eq("status", "active").is("deleted_at", null),
+        admin.from("leads").select("id", head).eq("organization_id", o.id).is("deleted_at", null).gte("created_at", since30),
+        admin.from("portal_connections").select("id", head).eq("organization_id", o.id).eq("activated", true),
+        admin.from("portal_publications").select("id", head).eq("organization_id", o.id).eq("enabled", true).eq("status", "error").neq("portal_key", "facebook_catalog"),
+        admin.from("profiles").select("id").eq("organization_id", o.id),
+      ]);
+      const bad = [props, leads, conns, errs, members].find((r) => r.error);
+      if (bad?.error) throw new Error(`Interogările dashboardului au eșuat — agenții: ${bad.error.message}`);
+      const ids = (members.data ?? []).map((m) => m.id);
+      return {
+        id: o.id,
+        name: o.name,
+        plan: o.plan,
+        isTrial: o.is_trial ?? false,
+        term: o.subscription_term,
+        expiresAt: o.subscription_expires_at,
+        users: ids.length,
+        activeProperties: props.count ?? 0,
+        leads30: leads.count ?? 0,
+        portals: conns.count ?? 0,
+        errors: errs.count ?? 0,
+        lastLoginAt: ids.map((id) => lastLogin.get(id) ?? null).filter((x): x is string => !!x).sort().at(-1) ?? null,
+      };
+    }),
+  );
+  return buildAgencyRowsFrom(stats, Date.now());
 }
