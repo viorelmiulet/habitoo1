@@ -74,8 +74,43 @@ export async function loadImospotCompanyData(
   };
 }
 
+export type KeyRequestTransport = "gmail" | "mailgun";
+
+type KeyRequestEmail = Parameters<NotifyDeps["send"]>[0];
+
+/** Gmail-ul platformei când e configurat; altfel Mailgun, ca rezervă. */
+export async function sendKeyRequestEmail(
+  email: KeyRequestEmail,
+): Promise<{ ok: boolean; error?: string; transport: KeyRequestTransport }> {
+  const gmail = await import("@/lib/gmail/gmail-workspace.server");
+  if (gmail.workspaceGmailConfigStatus().configured) {
+    const r = await gmail.sendWorkspaceGmail({
+      from: email.from,
+      to: email.to,
+      cc: email.cc,
+      replyTo: email.replyTo,
+      subject: email.subject,
+      text: email.text,
+      html: email.html,
+    });
+    return r.ok ? { ok: true, transport: "gmail" } : { ok: false, error: r.error, transport: "gmail" };
+  }
+  const { sendEmail } = await import("@/lib/mailgun.server");
+  const r = await sendEmail({
+    from: email.from,
+    to: email.to,
+    cc: email.cc,
+    replyTo: email.replyTo,
+    subject: email.subject,
+    text: email.text,
+    html: email.html,
+  });
+  return r.ok ? { ok: true, transport: "mailgun" } : { ok: false, error: r.error, transport: "mailgun" };
+}
+
 function liveDeps(actorId: string | null): NotifyDeps {
   const requestedBy = new Map<string, string | null>();
+  let transport: KeyRequestTransport | null = null;
   return {
     loadRequest: async (id) => {
       const db = await admin();
@@ -99,16 +134,8 @@ function liveDeps(actorId: string | null): NotifyDeps {
       loadImospotCompanyData(row.organizationId, requestedBy.get(row.id) ?? null),
     loadSettings: loadKeyRequestSettings,
     send: async (email) => {
-      const { sendEmail } = await import("@/lib/mailgun.server");
-      const r = await sendEmail({
-        from: email.from,
-        to: email.to,
-        cc: email.cc,
-        replyTo: email.replyTo,
-        subject: email.subject,
-        text: email.text,
-        html: email.html,
-      });
+      const r = await sendKeyRequestEmail(email);
+      transport = r.transport;
       return r.ok ? { ok: true } : { ok: false, error: r.error };
     },
     save: async (id, patch) => {
@@ -130,7 +157,7 @@ function liveDeps(actorId: string | null): NotifyDeps {
         action: "portal.provider_key_requested",
         entity: "portal_activation_requests",
         entity_id: row.id,
-        new_values: { portal: row.portal, ...values },
+        new_values: { portal: row.portal, ...values, ...(transport ? { transport } : {}) },
       } as never);
     },
   };
