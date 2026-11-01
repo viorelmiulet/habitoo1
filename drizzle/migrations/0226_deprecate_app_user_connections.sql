@@ -1,0 +1,1 @@
+COMMENT ON TABLE public.app_user_connections IS 'DEPRECATED: per-user Gmail connections removed; drop once the published app no longer references it.';
