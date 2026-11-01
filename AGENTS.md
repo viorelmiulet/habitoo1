@@ -28,7 +28,7 @@
 - Property features share stable taxonomy groups and one edit/create panel layout, with no saved display mode. Why: preserve values, focus and identical writes.
 - Location/overview edits share the page draft, guard and buildEditPatch; detail layouts use opt-in props. Why: presentation-only tabs without divergent writes.
 - Property PDFs share privacy-filtered fragments and measured pagination in a lazy browser renderer; hydrate overrides, use agency defaults and mobile ready-file clicks. Why: consistent privacy and delivery.
-- Read nested `AGENTS.md` before edits; portal rules include ZUP atomic catalogue/preview isolation. Why: preserve scoped contracts.
+- Read nested AGENTS.md, including src/components/app/AGENTS.md; portal rules include ZUP atomic catalogue/preview isolation. Why: scoped contracts.
 - ZonaTa uses a scoped durable attempt journal. Why: interrupted jobs must leave evidence.
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
 - Completed videos store caller-owned metadata and server-resolved music snapshots in generated_video_clips, not media; history uses caller RLS and never publishes. Why: include unpublished clips and retain soundtrack identity after library edits.
