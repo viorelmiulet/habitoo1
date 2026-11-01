@@ -65,10 +65,10 @@ function StatCard({
     <div
       className={cn(
         "flex min-w-0 flex-col gap-3 rounded-[14px] p-5",
-        featured ? "bg-navy text-surface" : "border border-border bg-surface",
+        featured ? "bg-navy text-on-navy dark:border dark:border-border dark:bg-sidebar-accent" : "border border-border bg-surface",
       )}
     >
-      <p className={cn("text-[13px]", featured ? "text-surface/75" : "text-muted-foreground")}>
+      <p className={cn("text-[13px]", featured ? "text-on-navy/75" : "text-muted-foreground")}>
         {label}
       </p>
       <div className="flex items-end justify-between gap-2">
