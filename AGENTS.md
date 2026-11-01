@@ -18,7 +18,7 @@
 - Public offers use display prices; billing/seats stay separate. Subscription requests follow src/lib/AGENTS.md. Why: one renewal flow.
 - Collaboration auto-activation lives only in the DB (insert trigger `properties_auto_collaboration`, RPC `collaboration_auto_activate`), copying the agency default commission only when none is explicit; `collaboration_opted_out` is never overridden. Why: one rule for all inserts.
 - `HomeHeader` only on homepage/blog; else `PublicHeader`. Why: isolate overlay.
-- Public photos share PublicPhotoHeading and a leaf asset registry; publicHead defaults elsewhere. Why: consistent loading/previews.
+- Public photos share PublicPhotoHeading and a leaf asset registry; publicHead defaults elsewhere. Why: consistent previews.
 - Public agency pages: `/agentii` and public logo reads use `public_partner_eligible`; `public_partner_agencies` returns a slug only for enabled profiles. `/agentii/$slug` remains opt-in via `public_agency_profile`/`public_agency_agents`; agent phone only with `public_show_phone`. Why: list eligibility is independent of optional profile/contact disclosure.
 - Social posters share a dialog-scoped decoded-image pool for thumbnails/PNG; styles/templates persist locally and latest blob stays in memory. Why: avoid duplicate downloads and use the same poster at every destination.
 
@@ -31,20 +31,21 @@
 - Read nested `AGENTS.md` before edits; portal rules include ZUP atomic catalogue/preview isolation. Why: preserve scoped contracts.
 - ZonaTa uses a scoped durable attempt journal. Why: interrupted jobs must leave evidence.
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
-- Completed property video generations store caller-owned metadata and server-resolved music snapshots in generated_video_clips, not media files; history uses caller RLS and does not publish. Why: include unpublished clips and retain soundtrack identity after library edits without storing large videos.
+- Completed videos store caller-owned metadata and server-resolved music snapshots in generated_video_clips, not media; history uses caller RLS and never publishes. Why: include unpublished clips and retain soundtrack identity after library edits.
 - Video narration uses a direct MiniMax TTS server boundary with validated hex decoding, atomic organization-locked reservations and character usage, caller-RLS private audio signing, and one offline audio mix for both encoders. Why: preserve quotas and privacy without provider prediction polling.
 - No global `entities` aliases/version overrides: consumers need different majors/exports.
 - PortalLogo shares asset pointers; overview uses registry. Why: logos don't change public access.
 - Property filters: PropertyFilterPanel + `applyPropertyFilterClauses`. Why: one tested query builder.
 - Imobiliare.ro destination and promotion drafts use the existing durable publication queue; requested mode lives on publications/jobs and confirmed mode on listings, with no new portal. Destination changes send both statuses in one POST; unchanged published promotions remain partial; Bonus and imoradar-only bypass local capacity reads/checks. Why: keep destination switching recoverable and let the portal decide capacity.
 - Private listing geography is canonicalized by a database trigger using the locality/county nomenclature; generated normalized keys drive caller-RLS filtering and complete paged facets, with legacy city/zone URL compatibility. Why: imports, existing rows, counts and diacritic-insensitive filters must agree without changing CRM geography.
-- MAP tabs share Habitoo brand assets.
+- UI light colors/typography use global CSS; navy actions rebind primary locally, excluding light cards/dark mode. Root loads UI font; material fonts remain separate. Why: preserve tools/materials.
+- MAP tabs share brand assets.
 - hbsync market lock expiry and bounded retry are scoped to its importer via explicit claim arguments; other importers retain the RPC default. Why: recover interrupted partial pushes without altering manual or scheduled sync semantics.
 - ACP observed-age filters share whole-day timestamp bounds on first_seen_at across listing counts and intelligence aggregates; source choices come from the canonical market registry. Why: re-imports must not reset age and observed duration must never imply traffic or confirmed time-to-sale.
 
 - Removed publishing integrations have no registry definition, adapter, requirements, logo or public detail content; shared import formats and historical data remain intact. Why: removal must stop availability and outbound calls without rewriting history or unrelated imports.
 - Imobiliare media uses one replacement-gallery POST, a read-back confirmation and Worker-safe sequential JPEG compression with an encoded-JSON size budget; the card reads the portal gallery without refreshing tokens. Why: batching replaced prior photos and submission counts were not portal confirmations.
-- Superadmin-only surfaces reuse one gate: the nav item is added through `withMarketDataNav` and the page is wrapped in `SuperadminGate` (decision in `superadminGateDecision`), so direct links redirect instead of rendering privileged data. Why: menu visibility and route access must not drift apart.
+- Superadmin surfaces use `withMarketDataNav` and `SuperadminGate` (`superadminGateDecision`); direct links redirect. Why: menu visibility and route access must agree.
 - Private listing portfolio imports use an authenticated transactional RPC keyed by agency/source/external ID, with pre-copied private media and cleanup of losing concurrent attempts; imported-property agency read access is explicit. Why: consent, draft creation and duplicate prevention must be atomic without invoking publishing.
 - Agency commissions live only in `commissions`; visibility/edit rights are enforced by RLS plus guard trigger `commissions_guard` (admin = agency_admin of own agency via `is_commission_admin`; admin allocations flagged `allocated_by_admin` are read-only for agents). Why: the UI only mirrors the DB rule (`src/lib/commissions.ts`).
 - Commission list/report/export reads share complete caller-RLS pagination and saved-rate conversion, with lazy client-side file generators and ready-file delivery. Why: exports must match filters and access without truncation or historical rate drift.
