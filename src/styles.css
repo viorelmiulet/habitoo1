@@ -201,6 +201,64 @@
   --gold-foreground: #0E1E2B;
 }
 
+.dark {
+  --background: #0B1620;
+  --foreground: #E6EAEE;
+  --surface: #13212D;
+  --surface-foreground: #E6EAEE;
+  --card: #13212D;
+  --card-foreground: #E6EAEE;
+  --popover: #172836;
+  --popover-foreground: #E6EAEE;
+  --primary: #D6A85A;
+  --primary-foreground: #0E1E2B;
+  --secondary: #13212D;
+  --secondary-foreground: #E6EAEE;
+  --muted: #182A39;
+  --muted-foreground: #9AA7B4;
+  --faint: #8794A1;
+  --accent: #2B2416;
+  --accent-foreground: #E9C98F;
+  --destructive: #F08A80;
+  --destructive-foreground: #0B1620;
+  --danger-border: #6B2E28;
+  --danger-tint: #3A1A18;
+  --success: #6FCF9F;
+  --success-foreground: #12352A;
+  --warning: #D6A85A;
+  --warning-foreground: #2B2416;
+  --info: #9AA7B4;
+  --info-foreground: #182A39;
+  --neutral: #9AA7B4;
+  --neutral-foreground: #182A39;
+  --border: #26394B;
+  --input: #31475C;
+  --input-error: #B4645A;
+  --ring: #D6A85A;
+  --control-disabled: #182A39;
+  --control-disabled-foreground: #6B7886;
+  --chart-1: #E6EAEE;
+  --chart-2: #D6A85A;
+  --chart-3: #6F9BD1;
+  --chart-4: #5CC09A;
+  --chart-5: #8794A1;
+  --sidebar: #08121A;
+  --sidebar-foreground: #C9D1D9;
+  --sidebar-primary: #D6A85A;
+  --sidebar-primary-foreground: #0E1E2B;
+  --sidebar-accent: #16283A;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #1B2D3F;
+  --sidebar-ring: #D6A85A;
+  --navy: #08121A;
+  --navy-foreground: #C9D1D9;
+  --navy-muted: #8995A1;
+  --gold: #D6A85A;
+  --gold-dark: #E2BC7A;
+  --gold-tint: #2B2416;
+  --gold-foreground: #0E1E2B;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -457,22 +515,6 @@
 
 
 @layer components {
-  /* Local dark surfaces for the property feature editor and read-only groups. */
-  .dark .property-feature-sections {
-    --background: oklch(0.18 0.01 260);
-    --foreground: oklch(0.93 0.01 85);
-    --surface: oklch(0.22 0.01 260);
-    --card: oklch(0.22 0.01 260);
-    --muted: oklch(0.25 0.01 260);
-    --muted-foreground: oklch(0.75 0.01 85);
-    --accent: oklch(0.29 0.035 75);
-    --accent-foreground: oklch(0.86 0.09 75);
-    --primary: oklch(0.74 0.12 75);
-    --primary-foreground: oklch(0.2 0.02 75);
-    --border: oklch(0.35 0.015 75);
-    --input: oklch(0.42 0.025 75);
-    --gold-dark: oklch(0.86 0.09 75);
-  }
   .blog-prose { color: var(--color-foreground); font-size: 1.0625rem; line-height: 1.85; overflow-wrap: anywhere; }
   .blog-prose h2 { margin-top: 2.5rem; margin-bottom: .8rem; color: var(--color-navy); font-size: 1.75rem; line-height: 1.25; }
   .blog-prose h3 { margin-top: 2rem; margin-bottom: .65rem; color: var(--color-navy); font-size: 1.3rem; line-height: 1.35; }
