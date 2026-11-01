@@ -1,14 +1,19 @@
-import { StatusPill, type StatusPillState } from "@/components/ui/status-pill";
+import { cn } from "@/lib/utils";
 
 type Tone = "neutral" | "success" | "warning" | "info" | "danger" | "primary";
 
-const toneStates: Record<Tone, StatusPillState> = {
-  neutral: "inactive",
-  success: "published",
-  warning: "pending",
-  info: "inactive",
-  danger: "error",
-  primary: "pending",
+/**
+ * Pastilă de status: rotundă, 12px, greutate 700. Nuanțele urmează paleta
+ * „Bleumarin & auriu” (success #E6F2EC/#17603F, warning #F6EEDF/#7A561E,
+ * danger #FBEAE8/#A12A1F, info/neutral #EEF1F4/#3B4651).
+ */
+const toneClasses: Record<Tone, string> = {
+  neutral: "bg-neutral-foreground text-neutral",
+  success: "bg-success-foreground text-success",
+  warning: "bg-gold-tint text-[#7A561E]",
+  info: "bg-neutral-foreground text-neutral",
+  danger: "bg-danger-tint text-destructive",
+  primary: "bg-gold-tint text-[#7A561E]",
 };
 
 export function StatusBadge({
@@ -24,8 +29,15 @@ export function StatusBadge({
   dot?: boolean;
 }) {
   return (
-    <StatusPill state={toneStates[tone]} dot={dot} className={className}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap",
+        toneClasses[tone],
+        className,
+      )}
+    >
+      {dot ? <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden /> : null}
       {children}
-    </StatusPill>
+    </span>
   );
 }
