@@ -1,6 +1,6 @@
 ## Topbar și PageHeader — aspect
-- [ ] Actualizare strict vizuală a barei, controalelor și antetului standard; funcții/bannere/data-tour păstrate
-- [ ] Teste existente, verificare autentificată desktop/390px și build; inventar PageHeader și antete proprii
+- [x] Actualizare strict vizuală a barei, controalelor și antetului standard; funcții/bannere/data-tour păstrate
+- [x] 67 teste ghiduri + 1 notificări trec; build OK. În cont: căutare HB-1271, scurtătură, QuickAdd, suport și notificări; desktop 64px, telefon 56px și toate cele 7 controale 44×44px, fără scroll orizontal sau erori. 50 pagini folosesc PageHeader; fișa proprietății și fișa utilizatorului SuperAdmin au antete proprii. Fără modificări de date/publicare.
 
 ## Meniu lateral compact
 - [x] Logo deschis și favicon derivat, trei secțiuni, cont compact; roluri/AI și selectorul legacy Portofoliu păstrate, migrare stare veche
