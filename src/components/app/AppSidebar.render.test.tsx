@@ -93,4 +93,15 @@ describe("meniul lateral randat", () => {
     expect(document.querySelector('[data-tour="nav:/app/collaboration"]')).not.toBeNull();
     expect(document.body.textContent).toContain("MVA Imobiliare");
   });
+  it("restrâns folosește iconița deschisă, iar meniul extins logo-ul lat", () => {
+    renderSidebar(agencyNavFor(true), true);
+    const mark = document.querySelector<HTMLImageElement>('a[aria-label="Habitoo CRM — acasă"] img');
+    expect(mark?.getAttribute("src")).toContain("habitoo-mark-light");
+    expect(mark?.getAttribute("src")).not.toContain("favicon");
+
+    renderSidebar(agencyNavFor(true), false);
+    const logo = document.querySelector<HTMLImageElement>('a[aria-label="Habitoo CRM — acasă"] img');
+    expect(logo?.getAttribute("src")).toContain("habitoo-sidebar-light");
+    expect(logo?.getAttribute("src")).not.toContain("favicon");
+  });
 });
