@@ -48,13 +48,13 @@
 
 /*
  * Habitoo CRM — design system
- * Premium SaaS look: cool slate neutrals, deep teal primary, warm amber accent.
+ * Navy & gold palette shared by the CRM and public site.
  * All colours are semantic tokens. Never hardcode colours in components.
  */
 
 @theme inline {
   --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-display: var(--font-sans);
   /*
    * Layering scale (z-index):
    *   base overlays (popover, dialog, dropdown, select…) — Tailwind/shadcn default: 50
@@ -144,61 +144,61 @@
   --card-radius: 14px;
   --panel-radius: 16px;
   --pill-radius: 999px;
-  --background: #f7f4ee;
-  --foreground: #14171c;
-  --surface: #ffffff;
-  --surface-foreground: #14171c;
-  --card: #ffffff;
-  --card-foreground: #14171c;
-  --popover: #ffffff;
-  --popover-foreground: #14171c;
-  --primary: #c08a3e;
-  --primary-foreground: #1a1206;
-  --secondary: #ffffff;
-  --secondary-foreground: #14171c;
-  --muted: #fbf9f5;
-  --muted-foreground: #5e6570;
-  --faint: #8a9099;
-  --accent: #f6efe2;
-  --accent-foreground: #5c3e10;
-  --destructive: #8a2f24;
+  --background: #F2F4F6;
+  --foreground: #0E1E2B;
+  --surface: #FFFFFF;
+  --surface-foreground: #0E1E2B;
+  --card: #FFFFFF;
+  --card-foreground: #0E1E2B;
+  --popover: #FFFFFF;
+  --popover-foreground: #0E1E2B;
+  --primary: #0E1E2B;
+  --primary-foreground: #FFFFFF;
+  --secondary: #FFFFFF;
+  --secondary-foreground: #0E1E2B;
+  --muted: #F7F8FA;
+  --muted-foreground: #56616D;
+  --faint: #66717D;
+  --accent: #F6EEDF;
+  --accent-foreground: #6B4C1A;
+  --destructive: #A12A1F;
   --destructive-foreground: #ffffff;
-  --danger-border: #d8b9b3;
-  --danger-tint: #f6e4e1;
-  --success: #1f5138;
-  --success-foreground: #e3efe7;
-  --warning: #c08a3e;
-  --warning-foreground: #5c3e10;
-  --info: #4a5059;
-  --info-foreground: #efebe2;
-  --neutral: #4a5059;
-  --neutral-foreground: #efebe2;
-  --border: #e4ded2;
-  --input: #d9d2c5;
-  --input-error: #c08880;
-  --ring: #c08a3e;
-  --control-disabled: #f3f0ea;
-  --control-disabled-foreground: #9ba2ac;
-  --chart-1: oklch(0.26 0.03 250);
-  --chart-2: oklch(0.66 0.105 72);
-  --chart-3: oklch(0.62 0.13 245);
-  --chart-4: oklch(0.7 0.12 165);
-  --chart-5: oklch(0.72 0.015 255);
-  --sidebar: #171b21;
-  --sidebar-foreground: #d5d1c8;
-  --sidebar-primary: #c08a3e;
-  --sidebar-primary-foreground: #1a1206;
-  --sidebar-accent: #262c35;
-  --sidebar-accent-foreground: #d5d1c8;
-  --sidebar-border: #262c35;
-  --sidebar-ring: #c08a3e;
-  --navy: #171b21;
-  --navy-foreground: #d5d1c8;
-  --navy-muted: #8a9099;
-  --gold: #c08a3e;
-  --gold-dark: #8a5d1c;
-  --gold-tint: #f6efe2;
-  --gold-foreground: #1a1206;
+  --danger-border: #F0C9C4;
+  --danger-tint: #FBEAE8;
+  --success: #17603F;
+  --success-foreground: #E6F2EC;
+  --warning: #D6A85A;
+  --warning-foreground: #6B4C1A;
+  --info: #3B4651;
+  --info-foreground: #EEF1F4;
+  --neutral: #3B4651;
+  --neutral-foreground: #EEF1F4;
+  --border: #E2E6EA;
+  --input: #D3D9DF;
+  --input-error: #D9958C;
+  --ring: #0E1E2B;
+  --control-disabled: #EEF1F4;
+  --control-disabled-foreground: #8D97A1;
+  --chart-1: #0E1E2B;
+  --chart-2: #D6A85A;
+  --chart-3: #4F7CAC;
+  --chart-4: #3E9C7A;
+  --chart-5: #AEB7C0;
+  --sidebar: #0E1E2B;
+  --sidebar-foreground: #C9D1D9;
+  --sidebar-primary: #D6A85A;
+  --sidebar-primary-foreground: #0E1E2B;
+  --sidebar-accent: #1D3246;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #23384C;
+  --sidebar-ring: #D6A85A;
+  --navy: #0E1E2B;
+  --navy-foreground: #C9D1D9;
+  --navy-muted: #8995A1;
+  --gold: #D6A85A;
+  --gold-dark: #8A6324;
+  --gold-tint: #F6EEDF;
+  --gold-foreground: #0E1E2B;
 }
 
 @layer base {
@@ -217,7 +217,7 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0;
   }
 }
@@ -499,3 +499,15 @@
     background-color: var(--surface);
     color: var(--accent-foreground);
   }
+
+/* Heading typography stays consistent even where legacy utilities set semibold. */
+h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
+
+/* Gold primary actions on navy, without recoloring nested light tools/cards.
+   Rebind tokens only on the action itself: surrounding forms keep navy primary.
+   Existing local dark-theme rules are intentionally excluded. */
+:where(.bg-navy, .mk-navy-bg, .login-backdrop, .bg-sidebar)
+  :where(.bg-primary, .text-primary):not(:where(.bg-navy, .mk-navy-bg, .login-backdrop, .bg-sidebar) :where(.bg-card, .bg-background, .bg-surface, .bg-popover) *):not(:where(.dark, .dark *)) {
+  --primary: var(--gold);
+  --primary-foreground: var(--gold-foreground);
+}
