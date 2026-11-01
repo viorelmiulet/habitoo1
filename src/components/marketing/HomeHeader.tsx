@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
+import sidebarLogo from "@/assets/habitoo-sidebar-light.png.asset.json";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,10 +30,8 @@ export function HomeHeader() {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-40 border-b bg-background/85 backdrop-blur-xl transition-all duration-300",
-        scrolled
-          ? "h-16 border-border/70 shadow-soft"
-          : "h-16 border-border/40 lg:h-[72px]",
+        "fixed inset-x-0 top-0 z-40 border-b border-navy-foreground/15 bg-navy transition-all duration-300",
+        scrolled ? "h-16 shadow-soft" : "h-16 lg:h-[72px]",
       )}
     >
       <div className="mx-auto grid h-full w-full max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 sm:px-6 lg:grid-cols-[1fr_auto_1fr] lg:px-8">
@@ -41,7 +40,13 @@ export function HomeHeader() {
           className="flex h-full w-fit items-center"
           aria-label="Habitoo CRM — pagina principală"
         >
-          <BrandLogo className="h-8 w-auto max-w-none lg:h-10" priority />
+          <img
+            src={sidebarLogo.url}
+            alt="Habitoo CRM"
+            className="block h-8 w-auto max-w-none object-contain lg:h-10"
+            loading="eager"
+            decoding="async"
+          />
         </Link>
 
         <nav aria-label="Navigare principală" className="hidden items-center gap-1 lg:flex">
@@ -50,7 +55,7 @@ export function HomeHeader() {
               key={item.to}
               to={item.to}
               className={cn(
-                "rounded-full px-4 py-2 text-[15px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                "rounded-full px-4 py-2 text-[15px] font-semibold text-navy-foreground transition-colors hover:bg-surface/10 hover:text-surface",
               )}
             >
               {item.label}
@@ -62,11 +67,11 @@ export function HomeHeader() {
           <Button
             asChild
             variant="ghost"
-            className="h-10 rounded-full px-[18px] text-[15px] text-foreground"
+            className="h-10 rounded-full px-[18px] text-[15px] text-surface hover:bg-surface/10 hover:text-surface"
           >
             <CrmLink to="/login">Autentificare</CrmLink>
           </Button>
-          <Button asChild className="h-10 rounded-full px-[18px] text-[15px] shadow-raised">
+          <Button asChild className="h-10 rounded-full bg-gold px-[18px] text-[15px] font-semibold text-navy shadow-raised hover:bg-gold/90">
             <CrmLink to="/register">
               Creează agenția <ArrowRight />
             </CrmLink>
@@ -78,7 +83,7 @@ export function HomeHeader() {
             <Button
               variant="outline"
               size="icon"
-              className="size-11 rounded-full border-gold/30 bg-background lg:hidden"
+              className="size-11 rounded-full border-navy-foreground/25 bg-navy text-navy-foreground hover:bg-surface/10 hover:text-surface lg:hidden"
               aria-label="Deschide meniul"
             >
               <Menu />

@@ -355,16 +355,13 @@
 
 @utility home-bento-card {
   height: 100%;
-  border: 1px solid color-mix(in oklab, var(--color-gold) 17%, var(--color-border));
-  border-radius: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
   background: var(--color-card);
   padding: 1.75rem;
-  box-shadow: 0 18px 52px color-mix(in oklab, var(--color-navy) 7%, transparent);
-  transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
+  transition: border-color 240ms ease;
   &:hover {
-    transform: translateY(-5px);
-    border-color: color-mix(in oklab, var(--color-gold) 42%, var(--color-border));
-    box-shadow: 0 26px 64px color-mix(in oklab, var(--color-navy) 12%, transparent);
+    border-color: color-mix(in oklab, var(--color-gold) 45%, var(--color-border));
   }
 }
 

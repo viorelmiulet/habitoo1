@@ -68,7 +68,7 @@ export function AppFrame({
                 key={i}
                 className={cn(
                   "flex size-8 items-center justify-center rounded-lg text-sidebar-foreground/60",
-                  i === activeIndex && "bg-sidebar-primary text-sidebar-primary-foreground",
+                  i === activeIndex && "bg-gold text-navy",
                 )}
               >
                 <Icon className="size-4" />

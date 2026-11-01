@@ -41,20 +41,40 @@ export function DashboardMock({ className }: { className?: string }) {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {mockKpis.map((k, i) => {
             const Icon = kpiIcons[i]!;
+            const primary = i === 0;
             return (
-              <div key={k.label} className="panel p-3">
+              <div key={k.label} className={cn("panel p-3", primary && "border-navy bg-navy")}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                    <p
+                      className={cn(
+                        "truncate text-[10px] font-medium tracking-wide uppercase",
+                        primary ? "text-navy-foreground" : "text-muted-foreground",
+                      )}
+                    >
                       {k.label}
                     </p>
-                    <p className="mt-1 text-xl font-semibold tracking-tight">{k.value}</p>
-                    <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{k.hint}</p>
+                    <p
+                      className={cn(
+                        "mt-1 text-xl font-semibold tracking-tight",
+                        primary && "text-surface",
+                      )}
+                    >
+                      {k.value}
+                    </p>
+                    <p
+                      className={cn(
+                        "mt-0.5 truncate text-[10px]",
+                        primary ? "text-navy-foreground" : "text-muted-foreground",
+                      )}
+                    >
+                      {k.hint}
+                    </p>
                   </div>
                   <span
                     className={cn(
                       "flex size-8 shrink-0 items-center justify-center rounded-lg",
-                      kpiTones[i],
+                      primary ? "bg-surface/15 text-gold" : kpiTones[i],
                     )}
                   >
                     <Icon className="size-4" />
