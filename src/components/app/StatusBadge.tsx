@@ -10,10 +10,10 @@ type Tone = "neutral" | "success" | "warning" | "info" | "danger" | "primary";
 const toneClasses: Record<Tone, string> = {
   neutral: "bg-neutral-foreground text-neutral",
   success: "bg-success-foreground text-success",
-  warning: "bg-gold-tint text-[#7A561E]",
+  warning: "bg-gold-tint text-[#7A561E] dark:text-gold-dark",
   info: "bg-neutral-foreground text-neutral",
   danger: "bg-danger-tint text-destructive",
-  primary: "bg-gold-tint text-[#7A561E]",
+  primary: "bg-gold-tint text-[#7A561E] dark:text-gold-dark",
 };
 
 export function StatusBadge({

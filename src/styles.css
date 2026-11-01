@@ -123,6 +123,7 @@
   --color-gold-foreground: var(--gold-foreground);
   --color-gold-dark: var(--gold-dark);
   --color-gold-tint: var(--gold-tint);
+  --color-on-navy: var(--on-navy);
   --color-neutral: var(--neutral);
   --color-neutral-foreground: var(--neutral-foreground);
   --color-danger-border: var(--danger-border);
@@ -199,6 +200,7 @@
   --gold-dark: #8A6324;
   --gold-tint: #F6EEDF;
   --gold-foreground: #0E1E2B;
+  --on-navy: #FFFFFF;
 }
 
 .dark {
@@ -257,6 +259,7 @@
   --gold-dark: #E2BC7A;
   --gold-tint: #2B2416;
   --gold-foreground: #0E1E2B;
+  --on-navy: #FFFFFF;
 }
 
 @layer base {
