@@ -9,8 +9,6 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   Building2,
   History,
-  Inbox,
-  LifeBuoy,
   PlugZap,
   Users,
   Layers,
@@ -38,6 +36,8 @@ import {
 } from "@/lib/superadmin-dashboard.functions";
 import { cn } from "@/lib/utils";
 import { appHead } from "@/components/app/app-head";
+import { TodoBlock } from "@/components/app/SuperadminTodoBlock";
+import { todoItemCount, todoSubtitle } from "@/lib/superadmin-todo";
 
 export const Route = createFileRoute("/_authenticated/superadmin/")({
   head: () => appHead("Habitoo CRM — panou superadmin"),
@@ -55,7 +55,6 @@ function SuperadminDashboard() {
     staleTime: 15_000,
   });
 
-  const queue = data?.queue;
   const growth = data?.growth;
 
   return (
@@ -63,7 +62,11 @@ function SuperadminDashboard() {
       <PageHeader
         eyebrow="Platformă"
         title="Dashboard global"
-        description="Ce așteaptă intervenția ta, starea integrărilor și evoluția platformei."
+        description={
+          data?.todo
+            ? todoSubtitle(new Date(), todoItemCount(data.todo))
+            : "Ce așteaptă intervenția ta, starea integrărilor și evoluția platformei."
+        }
       />
 
       {isError ? (
@@ -72,38 +75,8 @@ function SuperadminDashboard() {
         </div>
       ) : null}
 
-      {/* 1 · Coada de lucru */}
-      <section className="space-y-3">
-        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Coada de lucru
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <QueueCard
-            label="Cereri de înscriere agenție"
-            count={queue?.pendingRegistrations}
-            loading={isLoading}
-            icon={Inbox}
-            to="/superadmin/agencies"
-            actionLabel="Vezi cererile în așteptare"
-          />
-          <QueueCard
-            label="Tichete de suport nerezolvate"
-            count={queue?.unresolvedTickets}
-            loading={isLoading}
-            icon={LifeBuoy}
-            to="/superadmin/support"
-            actionLabel="Deschide suportul"
-          />
-          <QueueCard
-            label="Cereri de activare portal"
-            count={queue?.pendingPortalActivations}
-            loading={isLoading}
-            icon={PlugZap}
-            to="/superadmin/portals"
-            actionLabel="Deschide portalurile"
-          />
-        </div>
-      </section>
+      {/* 1 · De rezolvat */}
+      <TodoBlock todo={data?.todo} loading={isLoading} />
 
       {/* 2 · Sănătatea integrărilor */}
       <section className="panel overflow-hidden">
@@ -248,64 +221,6 @@ function SuperadminDashboard() {
         )}
       </section>
     </>
-  );
-}
-
-function QueueCard({
-  label,
-  count,
-  loading,
-  icon: Icon,
-  to,
-  actionLabel,
-}: {
-  label: string;
-  count: number | undefined;
-  loading: boolean;
-  icon: LucideIcon;
-  to: "/superadmin/agencies" | "/superadmin/portals" | "/superadmin/support";
-  actionLabel: string;
-}) {
-  const active = (count ?? 0) > 0;
-  return (
-    <Link
-      to={to}
-      className={cn(
-        "panel group block p-5 transition-[box-shadow,transform] hover:-translate-y-px hover:shadow-raised focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-        active ? "border-primary/40" : "opacity-80",
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {label}
-          </p>
-          {loading ? (
-            <Skeleton className="mt-2.5 h-8 w-14" />
-          ) : (
-            <p
-              className={cn(
-                "mt-2 text-3xl font-semibold tracking-tight tabular-nums",
-                active ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              {formatNumber(count ?? 0)}
-            </p>
-          )}
-          <p className="mt-1 truncate text-xs text-muted-foreground">
-            {loading ? "…" : active ? actionLabel : "Nimic de făcut aici"}
-          </p>
-        </div>
-        <span
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-xl",
-            active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
-          )}
-        >
-          <Icon className="size-5" />
-        </span>
-      </div>
-    </Link>
   );
 }
 
