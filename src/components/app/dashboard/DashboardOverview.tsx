@@ -128,7 +128,7 @@ function PortalBars({
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-navy"
+                  className="h-full rounded-full bg-navy dark:bg-gold"
                   style={{ width: `${max > 0 ? (row.count / max) * 100 : 0}%` }}
                 />
               </div>
