@@ -140,7 +140,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      ...(matches.some(m => m.pathname.startsWith('/o/')) ? [{ rel: "icon", href: "data:," }] : [{ rel: "icon", href: "/favicon.png", type: "image/png" }]),
+      ...(matches.some(m => m.pathname.startsWith('/o/')) ? [{ rel: "icon", href: "data:," }] : [{ rel: "icon", href: "/favicon.png", type: "image/png", sizes: "64x64" }]),
     ],
   }),
   shellComponent: RootShell,

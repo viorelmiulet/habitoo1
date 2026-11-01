@@ -391,7 +391,7 @@ export function AppSidebar({
     });
   };
 
-  const renderItem = (item: NavItem, child = false) => {
+  const renderItem = (item: NavItem, child = false, groupTitle?: string) => {
     const badge = badges?.[String(item.to)];
     const active = item.to === activePath;
     return (
@@ -399,7 +399,8 @@ export function AppSidebar({
         <CollapsedTip collapsed={collapsed} label={item.label}>
           <Link
             to={item.to}
-            data-tour={`nav:${String(item.to)}`}
+            data-tour={groupTitle ? `group:${groupTitle === "Proprietăți" ? "Portofoliu" : groupTitle}` : `nav:${String(item.to)}`}
+            data-nav-targets={groupTitle ? `nav:${String(item.to)}` : undefined}
             data-nav-row
             activeOptions={{ exact: item.exact }}
             aria-current={active ? "page" : undefined}
@@ -477,7 +478,7 @@ export function AppSidebar({
                 {group.section ? <p className="px-2.5 pt-4 pb-1 text-[10px] font-semibold text-navy-muted uppercase">{group.section}</p> : null}
                 <Button
                   type="button"
-                  data-tour={`group:${title}`}
+                  data-tour={`group:${title === "Proprietăți" ? "Portofoliu" : title}`}
                   data-nav-targets={group.items.map((item) => `nav:${String(item.to)}`).join(" ")}
                   variant="ghost"
                   data-nav-row
@@ -517,7 +518,7 @@ export function AppSidebar({
                 <div className="mx-2 my-2 h-px bg-sidebar-border" aria-hidden />
               ) : null}
               <ul className="space-y-0.5">{collapsed && expandable && group.items[0]
-                ? renderItem({ ...group.items[0], label: title ?? group.items[0].label })
+                ? renderItem({ ...group.items[0], label: title ?? group.items[0].label }, false, title)
                 : group.items.map((item) => renderItem(item))}</ul>
             </div>
           );
