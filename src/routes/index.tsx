@@ -198,7 +198,7 @@ function HomePage() {
               <Eyebrow tone="light" className="border-gold/30 bg-gold/10 text-gold">
                 CRM imobiliar pentru agenții din România
               </Eyebrow>
-              <h1 className="mt-6 text-[36px] leading-[1.08] font-semibold tracking-[-0.02em] text-balance text-surface md:text-[44px] xl:text-[56px]">
+              <h1 className="mt-6 text-[36px] leading-[1.08] font-semibold tracking-[-0.02em] text-balance text-surface md:text-[44px] xl:text-[56px]" style={{ letterSpacing: "-0.02em" }}>
                 CRM imobiliar care transformă cererile și proprietățile în{" "}
                 <span className="text-gold">tranzacții închise.</span>
               </h1>
