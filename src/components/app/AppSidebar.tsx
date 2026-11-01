@@ -454,7 +454,7 @@ export function AppSidebar({
             collapsed ? "size-11" : "min-h-14 w-full",
           )}
         >
-          <img src={collapsed ? "/favicon.png" : sidebarLogo.url} alt="Habitoo CRM"
+          <img src={collapsed ? sidebarMark.url : sidebarLogo.url} alt="Habitoo CRM"
             className={cn("object-contain", collapsed ? "size-10" : "h-auto w-40 max-w-full")}
             loading="eager" decoding="async" />
         </Link>
