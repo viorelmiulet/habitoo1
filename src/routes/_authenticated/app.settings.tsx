@@ -1,5 +1,4 @@
 import { MetaConnectionCard } from "@/components/app/MetaConnectionCard";
-import { YoutubeConnectionCard } from "@/components/app/YoutubeConnectionCard";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";

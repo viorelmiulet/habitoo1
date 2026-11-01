@@ -66,8 +66,8 @@ export const stage5Guides: GuideDefinition[] = [
     { id: 'status', title: 'Conexiune și locuri', text: 'Citești starea fiecărui portal și locurile disponibile. O conexiune activă nu publică singură proprietăți; publicarea se face din anunț.', selector: '[data-tour="settings-portals"]' },
     { id: 'keys', title: 'Chei și integrări', text: 'Arată-mi Integrări. Cheile se introduc doar în câmpurile dedicate, niciodată în mesaje sau în ghid.', selector: '[data-tour="settings-tab-integrations"]', mode: 'show', show: 'settings-integrations' },
     { id: 'argus', title: 'Argus', text: 'Cardul arată Conectat și doar ultimele caractere ale cheii. Salvează, Testează conexiunea și Deconectează sunt acțiuni reale; ghidul nu le apasă.', selector: '[data-tour="settings-integrations"]' },
-    { id: 'social', title: 'Facebook, Instagram și YouTube', text: 'Arată-mi Promovare. Administratorul autorizează conturile și alege pagina sau canalul; ghidul nu începe autorizarea.', selector: '[data-tour="settings-tab-promotion"]', mode: 'show', show: 'settings-promotion' },
-    { id: 'social-status', title: 'Starea conturilor sociale', text: 'Cardurile Meta și YouTube arată contul, pagina/canalul și starea legăturii. Verifică permisiunile înainte să publici.', selector: '[data-tour="settings-promotion"]' },
+    { id: 'social', title: 'Facebook și Instagram', text: 'Arată-mi Promovare. Administratorul autorizează conturile și alege pagina; ghidul nu începe autorizarea.', selector: '[data-tour="settings-tab-promotion"]', mode: 'show', show: 'settings-promotion' },
+    { id: 'social-status', title: 'Starea conturilor sociale', text: 'Cardurile Meta arată contul, pagina și starea legăturii. Verifică permisiunile înainte să publici.', selector: '[data-tour="settings-promotion"]' },
     { id: 'stop', title: 'Nicio conexiune schimbată', text: 'Nu salvăm chei, nu testăm servicii, nu conectăm, nu deconectăm și nu publicăm nimic.' },
   ] },
   { id: 'abonament', title: 'Abonament', group: 'Management', path: '/abonament', roles: admin, steps: [
