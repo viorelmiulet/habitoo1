@@ -15,7 +15,6 @@ import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
 import { ArgusConnectionCard } from "@/components/app/ArgusConnectionCard";
-import { GmailConnectionCard } from "@/components/app/GmailConnectionCard";
 import { CollaborationAutoSwitch } from "@/components/app/CollaborationAutoSwitch";
 import { AgencyCompanyDataFields } from "@/components/app/AgencyCompanyDataFields";
 import { FacebookCatalogCard } from "@/components/app/FacebookCatalogCard";
@@ -437,7 +436,6 @@ function SettingsPage() {
               <AccountAccessCard highlightedRequestId={request} />
             </div>
             <div className="mt-4">
-              <GmailConnectionCard />
             </div>
           </TabsContent>
 
