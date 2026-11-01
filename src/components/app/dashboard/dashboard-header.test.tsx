@@ -21,7 +21,10 @@ vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({ mutate: vi.fn(), isPending: false }),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
-vi.mock("@tanstack/react-start", () => ({ useServerFn: () => vi.fn() }));
+vi.mock("@tanstack/react-start", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-start")>()),
+  useServerFn: () => vi.fn(),
+}));
 vi.mock("@/lib/dashboard.functions", () => ({
   getAgentDashboard: {},
   getManagerDashboard: {},
