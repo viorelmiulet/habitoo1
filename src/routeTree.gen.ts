@@ -106,6 +106,7 @@ import { Route as AuthenticatedSuperadminAgenciesIdRouteImport } from './routes/
 import { Route as AuthenticatedSuperadminBlogIndexRouteImport } from './routes/_authenticated/superadmin.blog.index'
 import { Route as AuthenticatedSuperadminUsersIndexRouteImport } from './routes/_authenticated/superadmin.users.index'
 import { Route as AuthenticatedSuperadminUsersIdRouteImport } from './routes/_authenticated/superadmin.users.$id'
+import { Route as ApiOauthGoogleMailReturnRouteImport } from './routes/api/oauth/google-mail/return'
 import { Route as ApiPublicBlogMediaSplatRouteImport } from './routes/api/public/blog-media/$'
 import { Route as ApiPublicBlogOgSplatRouteImport } from './routes/api/public/blog-og/$'
 import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/public/cron/account-deletion'
@@ -715,6 +716,12 @@ const AuthenticatedSuperadminUsersIdRoute =
     path: '/users/$id',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
+const ApiOauthGoogleMailReturnRoute =
+  ApiOauthGoogleMailReturnRouteImport.update({
+    id: '/api/oauth/google-mail/return',
+    path: '/api/oauth/google-mail/return',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBlogMediaSplatRoute = ApiPublicBlogMediaSplatRouteImport.update({
   id: '/api/public/blog-media/$',
   path: '/api/public/blog-media/$',
@@ -1251,6 +1258,7 @@ export interface FileRoutesByFullPath {
   '/app/team/$id': typeof AuthenticatedAppTeamIdRoute
   '/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
   '/superadmin/users/$id': typeof AuthenticatedSuperadminUsersIdRoute
+  '/api/oauth/google-mail/return': typeof ApiOauthGoogleMailReturnRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
@@ -1423,6 +1431,7 @@ export interface FileRoutesByTo {
   '/app/team/$id': typeof AuthenticatedAppTeamIdRoute
   '/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
   '/superadmin/users/$id': typeof AuthenticatedSuperadminUsersIdRoute
+  '/api/oauth/google-mail/return': typeof ApiOauthGoogleMailReturnRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
@@ -1601,6 +1610,7 @@ export interface FileRoutesById {
   '/_authenticated/app/team/$id': typeof AuthenticatedAppTeamIdRoute
   '/_authenticated/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
   '/_authenticated/superadmin/users/$id': typeof AuthenticatedSuperadminUsersIdRoute
+  '/api/oauth/google-mail/return': typeof ApiOauthGoogleMailReturnRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
@@ -1779,6 +1789,7 @@ export interface FileRouteTypes {
     | '/app/team/$id'
     | '/superadmin/agencies/$id'
     | '/superadmin/users/$id'
+    | '/api/oauth/google-mail/return'
     | '/api/public/blog-media/$'
     | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
@@ -1951,6 +1962,7 @@ export interface FileRouteTypes {
     | '/app/team/$id'
     | '/superadmin/agencies/$id'
     | '/superadmin/users/$id'
+    | '/api/oauth/google-mail/return'
     | '/api/public/blog-media/$'
     | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
@@ -2128,6 +2140,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/team/$id'
     | '/_authenticated/superadmin/agencies/$id'
     | '/_authenticated/superadmin/users/$id'
+    | '/api/oauth/google-mail/return'
     | '/api/public/blog-media/$'
     | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
@@ -2253,6 +2266,7 @@ export interface RootRouteChildren {
   OCodeRoute: typeof OCodeRoute
   OfertaIdRoute: typeof OfertaIdRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  ApiOauthGoogleMailReturnRoute: typeof ApiOauthGoogleMailReturnRoute
   ApiPublicBlogMediaSplatRoute: typeof ApiPublicBlogMediaSplatRoute
   ApiPublicBlogOgSplatRoute: typeof ApiPublicBlogOgSplatRoute
   ApiPublicCronAccountDeletionRoute: typeof ApiPublicCronAccountDeletionRoute
@@ -3007,6 +3021,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/superadmin/users/$id'
       preLoaderRoute: typeof AuthenticatedSuperadminUsersIdRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/api/oauth/google-mail/return': {
+      id: '/api/oauth/google-mail/return'
+      path: '/api/oauth/google-mail/return'
+      fullPath: '/api/oauth/google-mail/return'
+      preLoaderRoute: typeof ApiOauthGoogleMailReturnRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/blog-media/$': {
       id: '/api/public/blog-media/$'
@@ -3840,6 +3861,7 @@ const rootRouteChildren: RootRouteChildren = {
   OCodeRoute: OCodeRoute,
   OfertaIdRoute: OfertaIdRoute,
   BlogIndexRoute: BlogIndexRoute,
+  ApiOauthGoogleMailReturnRoute: ApiOauthGoogleMailReturnRoute,
   ApiPublicBlogMediaSplatRoute: ApiPublicBlogMediaSplatRoute,
   ApiPublicBlogOgSplatRoute: ApiPublicBlogOgSplatRoute,
   ApiPublicCronAccountDeletionRoute: ApiPublicCronAccountDeletionRoute,
