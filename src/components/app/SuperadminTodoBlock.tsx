@@ -54,7 +54,7 @@ function TodoContent({ todo }: { todo: SuperadminTodo }) {
           <AccentCard tone="error">
             <CardTitle icon={Unplug}>{formatNumber(c.failingConnections)} {c.failingConnections === 1 ? "conexiune de portal are" : "conexiuni de portal au"} eroare de sincronizare</CardTitle>
             <p className="text-[13px] text-muted-foreground">Conexiuni activate pentru agenții.</p>
-            <Actions><ActionLink to="/superadmin/portals">Portaluri</ActionLink></Actions>
+            <Actions><Link className={actionCls} to="/superadmin/portals">Portaluri</Link></Actions>
           </AccentCard>
         )}
         {todo.blocked.map((b) => (
@@ -64,8 +64,8 @@ function TodoContent({ todo }: { todo: SuperadminTodo }) {
               {formatNumber(b.notPublishable)} „Oferta nu este publicabilă” (nepublicate în CRM) · {formatNumber(b.other)} alte erori
             </p>
             <Actions>
-              <ActionLink to="/superadmin/portal-logs" search={{ org: b.organizationId, status: "error" }}>Jurnal portaluri</ActionLink>
-              <ActionLink to="/superadmin/agencies/$id" params={{ id: b.organizationId }}>Deschide agenția</ActionLink>
+              <Link className={actionCls} to="/superadmin/portal-logs" search={{ org: b.organizationId, status: "error" }}>Jurnal portaluri</Link>
+              <Link className={actionCls} to="/superadmin/agencies/$id" params={{ id: b.organizationId }}>Deschide agenția</Link>
             </Actions>
           </AccentCard>
         ))}
@@ -109,7 +109,7 @@ function SubscriptionCard({ alert: a }: { alert: SubscriptionAlert }) {
       <p className="text-[13px] text-muted-foreground">
         {formatNumber(a.activeProperties)} proprietăți active · ultima autentificare: {a.lastLoginAt ? formatDateTime(a.lastLoginAt) : "niciodată"}
       </p>
-      <Actions><ActionLink to="/superadmin/agencies/$id" params={{ id: a.organizationId }}>Deschide agenția</ActionLink></Actions>
+      <Actions><Link className={actionCls} to="/superadmin/agencies/$id" params={{ id: a.organizationId }}>Deschide agenția</Link></Actions>
     </AccentCard>
   );
 }
@@ -135,6 +135,4 @@ function Actions({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">{children}</div>;
 }
 
-function ActionLink(props: React.ComponentProps<typeof Link>) {
-  return <Link {...props} className="text-sm font-semibold text-gold-dark hover:underline" />;
-}
+const actionCls = "text-sm font-semibold text-gold-dark hover:underline";
