@@ -1,3 +1,7 @@
+## Paleta Bleumarin & auriu
+- [ ] Tokenuri globale și Manrope, cu materiale și tema întunecată păstrate
+- [ ] Butoane vizibile pe bleumarin; verificare contrast, homepage/login și inventar culori directe
+
 ## Promovare — încadrare social și carduri compacte
 - [x] Editor + previzualizare 360px, miniaturi fără depășire, portaluri 3/4 coloane cu toate controalele păstrate
 - [x] Capturi autentificate HB-1271 la 1440/1920/390: fără depășire, 3/4/1 coloane; inventarul butoanelor și opțiunilor identic înainte/după; 40 teste trec, build OK. Fără publicări sau modificări de date.
