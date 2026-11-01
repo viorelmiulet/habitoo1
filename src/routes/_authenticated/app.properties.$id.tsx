@@ -827,16 +827,16 @@ function PropertyDetailContent() {
         </nav>
         <div className="flex shrink-0 gap-2">
           {previousProperty ? (
-            <Button variant="outline" size="compact" asChild>
-              <Link to="/app/properties/$id" params={{ id: previousProperty.id }}>
-                <ChevronLeft aria-hidden /> {previousProperty.reference ?? "Anterior"}
+            <Button variant="outline" size="compact" className="max-sm:size-11 max-sm:p-0" asChild>
+              <Link to="/app/properties/$id" params={{ id: previousProperty.id }} aria-label={`Anterior: ${previousProperty.reference ?? "proprietatea anterioară"}`}>
+                <ChevronLeft aria-hidden /> <span className="max-sm:hidden">{previousProperty.reference ?? "Anterior"}</span>
               </Link>
             </Button>
           ) : null}
           {nextProperty ? (
-            <Button variant="outline" size="compact" asChild>
-              <Link to="/app/properties/$id" params={{ id: nextProperty.id }}>
-                {nextProperty.reference ?? "Următor"} <ChevronRight aria-hidden />
+            <Button variant="outline" size="compact" className="max-sm:size-11 max-sm:p-0" asChild>
+              <Link to="/app/properties/$id" params={{ id: nextProperty.id }} aria-label={`Următor: ${nextProperty.reference ?? "proprietatea următoare"}`}>
+                <span className="max-sm:hidden">{nextProperty.reference ?? "Următor"}</span> <ChevronRight aria-hidden />
               </Link>
             </Button>
           ) : null}
@@ -853,7 +853,7 @@ function PropertyDetailContent() {
               {property.negotiable ? <StatusBadge tone="info">Negociabil</StatusBadge> : null}
               {property.collaboration ? <StatusBadge tone="primary">{property.collab_commission_percent ? `Colaborare · ${property.collab_commission_percent}%` : "Colaborare"}</StatusBadge> : null}
             </div>
-            <h1 className="mt-4 text-[34px] leading-[1.15] font-semibold">{property.title}</h1>
+            <h1 className="mt-4 text-[28px] leading-[1.15] font-bold md:text-[32px]">{property.title}</h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
               {locationLabel ? <span className="inline-flex items-center gap-1"><MapPin className="size-4" aria-hidden />{locationLabel}</span> : null}
               {property.reference ? <><span aria-hidden>·</span><span>{property.reference}</span></> : null}
@@ -861,23 +861,32 @@ function PropertyDetailContent() {
             </div>
           </div>
           <div className="text-right max-md:text-left">
-            {salePrice ? <p className="font-display text-[38px] leading-none font-semibold">{formatMoney(salePrice, property.sale_currency ?? property.currency)}</p> : null}
-            {rentPrice ? <p className={salePrice ? "mt-2 font-display text-xl font-semibold" : "font-display text-[38px] leading-none font-semibold"}>{formatMoney(rentPrice, property.rent_currency ?? property.currency)} <span className="font-sans text-base font-normal text-muted-foreground">/ lună</span></p> : null}
+            {salePrice ? <p className="font-sans text-[26px] leading-none font-extrabold md:text-[32px]">{formatMoney(salePrice, property.sale_currency ?? property.currency)}</p> : null}
+            {rentPrice ? <p className={salePrice ? "mt-2 font-sans text-[18px] font-bold" : "font-sans text-[26px] leading-none font-extrabold md:text-[32px]"}>{formatMoney(rentPrice, property.rent_currency ?? property.currency)} <span className="font-sans text-base font-normal text-muted-foreground">/ lună</span></p> : null}
             {usableSurface ? <p className="mt-3 text-sm text-muted-foreground">{pricePerSqm ? `${formatNumber(pricePerSqm)} €/m² · ` : ""}{formatNumber(usableSurface)} m² utili</p> : null}
           </div>
         </div>
         <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5" data-tour="property-actions">
           {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" data-tour="property-edit-button" onClick={() => { startEdit(); if (!INLINE_EDIT_TABS.has(tab)) setTab("overview"); }}><Pencil /> Editează</Button>}
-          <span title={offerSendReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(offerSendReason(property))} onClick={() => setSendOfferOpen(true)}><Share2 /> Trimite oferta</Button></span>
-          <span title={neutralOfferReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(neutralOfferReason(property))} onClick={() => setCollaboratorOfferOpen(true)}><Share2 /> Trimite unui colaborator</Button></span>
-          {offerSendReason(property) ? <span className="text-xs text-muted-foreground">{offerSendReason(property)}</span> : null}
+          <span className="max-md:hidden" title={offerSendReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(offerSendReason(property))} onClick={() => setSendOfferOpen(true)}><Share2 /> Trimite oferta</Button></span>
+          <span className="max-md:hidden" title={neutralOfferReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(neutralOfferReason(property))} onClick={() => setCollaboratorOfferOpen(true)}><Share2 /> Trimite unui colaborator</Button></span>
+          {offerSendReason(property) ? <span className="text-xs text-muted-foreground max-md:hidden">{offerSendReason(property)}</span> : null}
           <Button variant="outline" data-tour="property-viewing" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
-          <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
-          <Button variant="outline" onClick={() => setTab("acp")}><BarChart3 /> Analiză comparativă de piață (ACP)</Button>
-          <Button variant="outline" asChild><Link to="/app/comisioane" search={{ nou: true, proprietate: id }}>Adaugă comision</Link></Button>
+          <Button variant="outline" className="max-md:hidden" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
+          <Button variant="outline" className="max-md:hidden" onClick={() => setTab("acp")}><BarChart3 /> Analiză comparativă de piață (ACP)</Button>
+          <Button variant="outline" className="max-md:hidden" asChild><Link to="/app/comisioane" search={{ nou: true, proprietate: id }}>Adaugă comision</Link></Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni" data-tour="property-more"><MoreHorizontal /></Button></DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="max-w-[calc(100vw-1rem)]">
+              <div className="md:hidden" data-mobile-actions>
+                <DropdownMenuItem disabled={Boolean(offerSendReason(property))} onClick={() => setSendOfferOpen(true)}><Share2 /> Trimite oferta</DropdownMenuItem>
+                {offerSendReason(property) ? <p className="px-2 pb-1.5 text-xs text-muted-foreground">{offerSendReason(property)}</p> : null}
+                <DropdownMenuItem disabled={Boolean(neutralOfferReason(property))} onClick={() => setCollaboratorOfferOpen(true)}><Share2 /> Trimite unui colaborator</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivityDialog({ open: true, kind: "call" })}><CalendarPlus /> Adaugă activitate</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTab("acp")}><BarChart3 /> Analiză comparativă de piață (ACP)</DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/app/comisioane" search={{ nou: true, proprietate: id }}>Adaugă comision</Link></DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </div>
               <DropdownMenuItem onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>Clonează</DropdownMenuItem>
               <DropdownMenuItem onClick={() => { setReadyPdf(null); setIncludeAllPhotos(true); setPresentationDialogOpen(true); }}><Download /> Generează fișa de proprietate</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setAddClientOpen(true)}><UserPlus /> Adaugă client</DropdownMenuItem>
@@ -918,7 +927,7 @@ function PropertyDetailContent() {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <div className="sticky top-16 z-20 -mx-1 overflow-x-auto bg-background px-1">
+        <div className="sticky top-14 z-20 -mx-1 overflow-x-auto bg-background px-1 sm:top-16" data-property-tabs-bar>
         <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății" data-tour="property-tabs">
           {[
             ["agent", "Agent"],
@@ -937,7 +946,7 @@ function PropertyDetailContent() {
               key={value}
               value={value as string}
               data-tour={`property-tab-${value}`}
-              className="rounded-[4px] border border-transparent bg-transparent px-3 py-2 text-[15px] font-normal text-primary shadow-none data-[state=active]:border-primary data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              className="-mb-px rounded-none border-0 border-b-2 border-transparent bg-transparent px-3 py-2.5 text-[15px] font-normal text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-gold data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
               {label}
             </TabsTrigger>
