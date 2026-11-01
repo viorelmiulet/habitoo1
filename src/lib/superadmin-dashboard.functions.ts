@@ -6,6 +6,13 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  classifyExpiry,
+  groupBlockedPublishing,
+  termLabel,
+  type SubscriptionAlert,
+  type SuperadminTodo,
+} from "@/lib/superadmin-todo";
 
 type AuthContext = {
   supabase: {
@@ -65,6 +72,7 @@ export type SuperadminDashboard = {
   integrations: IntegrationHealthRow[];
   growth: PlatformGrowth;
   audit: RecentAuditEntry[];
+  todo: SuperadminTodo;
 };
 
 /** Acțiunile sensibile urmărite în secțiunea „Activitate recentă”. */
@@ -226,7 +234,10 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
         return a.organizationName.localeCompare(b.organizationName, "ro");
       });
 
+    const todo = await buildTodo(admin);
+
     return {
+      todo,
       queue: {
         pendingRegistrations: registrations.count ?? 0,
         pendingPortalActivations: activations.count ?? 0,
@@ -253,3 +264,102 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
       })),
     };
   });
+
+type Admin = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
+
+/** Blocul „De rezolvat”: numărători agregate, agențiile demo excluse peste tot. */
+async function buildTodo(admin: Admin): Promise<SuperadminTodo> {
+  const { data: orgRows, error: orgErr } = await admin
+    .from("organizations")
+    .select("id,name,is_demo,status,archived_at,is_trial,subscription_term,subscription_expires_at");
+  if (orgErr) throw new Error(`Interogările dashboardului au eșuat — organizații: ${orgErr.message}`);
+  const orgs = orgRows ?? [];
+  const demoIds = orgs.filter((o) => o.is_demo).map((o) => o.id);
+  const nameOf = new Map(orgs.map((o) => [o.id, o.name]));
+  // Rândurile fără agenție (ex. cereri de înscriere noi) rămân incluse.
+  const notDemo = <T extends { or: (f: string) => T }>(q: T): T =>
+    demoIds.length ? q.or(`organization_id.is.null,organization_id.not.in.(${demoIds.join(",")})`) : q;
+
+  const [reg, subs, act, tick, conns, pubs] = await Promise.all([
+    notDemo(admin.from("agency_registration_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
+    notDemo(admin.from("subscription_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
+    notDemo(admin.from("portal_activation_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
+    notDemo(admin.from("support_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"])),
+    notDemo(
+      admin
+        .from("portal_connections")
+        .select("id", { count: "exact", head: true })
+        .eq("activated", true)
+        .or("status.eq.error,last_sync_status.eq.error"),
+    ),
+    notDemo(
+      admin
+        .from("portal_publications")
+        .select("organization_id,last_error")
+        .eq("enabled", true)
+        .eq("status", "error")
+        .neq("portal_key", "facebook_catalog"),
+    ),
+  ]);
+  const failed = (
+    [["cereri de înscriere", reg], ["cereri de abonament", subs], ["activări portal", act], ["tichete", tick], ["conexiuni", conns], ["publicări", pubs]] as [string, { error: { message: string } | null }][]
+  ).filter(([, r]) => r.error);
+  if (failed.length) {
+    throw new Error(`Interogările dashboardului au eșuat — ${failed.map(([l, r]) => `${l}: ${r.error?.message}`).join(" | ")}`);
+  }
+
+  const now = Date.now();
+  const alerts: (SubscriptionAlert & { kind: "expiring" | "expired" })[] = [];
+  for (const o of orgs) {
+    if (o.is_demo || o.status !== "active" || o.archived_at) continue;
+    const c = classifyExpiry(o.subscription_expires_at, now);
+    if (!c) continue;
+    alerts.push({
+      kind: c.kind,
+      organizationId: o.id,
+      organizationName: o.name,
+      termLabel: termLabel(o.subscription_term, o.is_trial ?? false),
+      expiresAt: o.subscription_expires_at as string,
+      daysLeft: c.daysLeft,
+      expired: c.kind === "expired",
+      activeProperties: 0,
+      lastLoginAt: null,
+    });
+  }
+
+  await Promise.all(
+    alerts.map(async (a) => {
+      const [{ count }, { data: members }] = await Promise.all([
+        admin
+          .from("properties")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", a.organizationId)
+          .eq("status", "active")
+          .is("deleted_at", null),
+        admin.from("profiles").select("id").eq("organization_id", a.organizationId),
+      ]);
+      a.activeProperties = count ?? 0;
+      const logins = await Promise.all(
+        (members ?? []).map(async (m) => (await admin.auth.admin.getUserById(m.id)).data.user?.last_sign_in_at ?? null),
+      );
+      a.lastLoginAt = logins.filter((x): x is string => !!x).sort().at(-1) ?? null;
+    }),
+  );
+  const strip = ({ kind: _k, ...rest }: (typeof alerts)[number]): SubscriptionAlert => rest;
+
+  return {
+    counts: {
+      pendingRegistrations: reg.count ?? 0,
+      pendingSubscriptionRequests: subs.count ?? 0,
+      pendingPortalActivations: act.count ?? 0,
+      openTickets: tick.count ?? 0,
+      failingConnections: conns.count ?? 0,
+    },
+    expiring: alerts.filter((a) => a.kind === "expiring").sort((x, y) => x.daysLeft - y.daysLeft).map(strip),
+    expired: alerts.filter((a) => a.kind === "expired").sort((x, y) => x.daysLeft - y.daysLeft).map(strip),
+    blocked: groupBlockedPublishing(
+      (pubs.data ?? []) as { organization_id: string; last_error: string | null }[],
+      (id) => nameOf.get(id) ?? "—",
+    ),
+  };
+}
