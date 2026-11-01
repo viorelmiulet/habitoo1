@@ -727,7 +727,6 @@ function SettingsPage() {
             <TabsContent data-tour="settings-promotion" value="promotion" className="mt-0">
               <div className="space-y-6">
                 <MetaConnectionCard />
-                <YoutubeConnectionCard />
                 <FacebookCatalogCard />
               </div>
             </TabsContent>
