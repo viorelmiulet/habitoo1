@@ -1,3 +1,4 @@
 - Sidebar group metadata and visibility helpers live in AppSidebar; preserve flat child items for AI filtering, breadcrumbs and market-data gating. Why: existing consumers share the same route inventory.
 - Agency sections use section labels independently of collapsible group titles; collapsed groups link to their first visible child and highlight any active child. Why: keep the narrow navigation compact and deterministic.
 - Keep legacy group:Portofoliu on the Properties group and migrate its persisted open-state title. Preserve nav route data-tour selectors on expanded child links. Why: existing onboarding guides and preferences must survive regrouping.
+- Topbar supplies optional trigger classes to shared support and notification controls; PageHeader owns responsive title/action alignment. Why: shell styling must not change dialogs, page content, or controls used elsewhere.

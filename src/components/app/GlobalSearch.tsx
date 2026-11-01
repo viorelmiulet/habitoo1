@@ -130,27 +130,30 @@ export function GlobalSearch({ compact = false }: { compact?: boolean } = {}) {
   return (
     <>
       {compact ? (
-        <button data-tour="global-search-open"
+        <Button data-tour="global-search-open"
           type="button"
           onClick={() => {setOpen(true);announceGuideContext('topbar:tools');}}
           aria-label="Caută în agenție (⌘K)"
-          className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          variant="outline"
+          size="icon"
+          className="size-11 text-muted-foreground sm:size-10"
         >
           <Search className="size-[18px]" />
-        </button>
+        </Button>
       ) : (
-        <button data-tour="global-search-open"
+        <Button data-tour="global-search-open"
           type="button"
           onClick={() => {setOpen(true);announceGuideContext('topbar:tools');}}
           aria-label="Caută în agenție (⌘K)"
-          className="flex h-11 w-full min-w-0 items-center gap-2.5 rounded-2xl border border-border bg-surface px-4 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          variant="outline"
+          className="h-10 w-full min-w-0 justify-start gap-2.5 px-3 text-sm font-normal text-muted-foreground hover:border-primary/40 hover:text-foreground"
         >
           <Search className="size-4" />
-          <span className="min-w-0 truncate">Caută proprietăți, clienți, adrese…</span>
+          <span className="min-w-0 truncate">Caută proprietăți, clienți, lead-uri…</span>
           <kbd className="ml-auto hidden rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium sm:inline">
             ⌘K
           </kbd>
-        </button>
+        </Button>
       )}
 
       <CommandDialog open={open} onOpenChange={setOpen}>
