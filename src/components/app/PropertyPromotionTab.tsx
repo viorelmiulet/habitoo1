@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, Download, Facebook, Film, Image as ImageIcon, Instagram, MessageCircle, Music2, Share2, Sparkles, Youtube } from "lucide-react";
+import { Copy, Download, Facebook, Film, Image as ImageIcon, Instagram, MessageCircle, Music2, Share2, Sparkles } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VIDEO_UPLOAD_URL, videoUploadCopy, videoUploadStep, type VideoUploadNetwork } from "@/lib/share";
@@ -19,8 +19,6 @@ import { getPropertyPromotion } from "@/lib/property-promotion.functions";
 import { getMetaPostingContext } from "@/lib/meta/post.functions";
 import { MetaPostDialog } from "@/components/app/MetaPostDialog";
 import { InstagramPostDialog } from "@/components/app/InstagramPostDialog";
-import { YoutubePostDialog } from "@/components/app/YoutubePostDialog";
-import { getYoutubePostingContext } from "@/lib/youtube/youtube.functions";
 import { IG_NO_ACCOUNT_MESSAGE } from "@/lib/meta/instagram-core";
 import { formatDateTime } from "@/lib/format";
 import { generateMarketing } from "@/lib/ai/agents/marketing/marketing.functions";
@@ -75,9 +73,6 @@ export function PropertyPromotionTab({
   const [qrOpen, setQrOpen] = useState(false);
   const [metaOpen, setMetaOpen] = useState(false);
   const [igOpen, setIgOpen] = useState(false);
-  const [ytOpen, setYtOpen] = useState(false);
-  const loadYt = useServerFn(getYoutubePostingContext);
-  const ytQ = useQuery({ queryKey: ["youtube-posting", propertyId], queryFn: () => loadYt({ data: { propertyId } }) });
   const loadMeta = useServerFn(getMetaPostingContext);
   const metaQ = useQuery({ queryKey: ["meta-posting", propertyId], queryFn: () => loadMeta({ data: { propertyId } }) });
   const [pageUrl, setPageUrl] = useState("");
@@ -202,8 +197,8 @@ export function PropertyPromotionTab({
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     window.open(VIDEO_UPLOAD_URL[n], "_blank", "noopener,noreferrer");
-    toast.success(`Titlul și descrierea sunt copiate, lipește-le pe ${n === "tiktok" ? "TikTok" : "YouTube"}`);
-    logShare(`Distribuit pe ${n === "tiktok" ? "TikTok" : "YouTube"}`);
+    toast.success(`Titlul și descrierea sunt copiate, lipește-le pe TikTok`);
+    logShare(`Distribuit pe TikTok`);
   };
   const sharePhone = () => void shareFilesFromPhone(photoFiles, `${text}\n\n${offerLink}`, () => logShare("Distribuit din telefon"));
   const fbState = facebookListingState(d.catalog.enabled, d.catalog.reason).label;
@@ -256,20 +251,6 @@ export function PropertyPromotionTab({
     { key: "whatsapp", icon: MessageCircle, tone: "bg-[#25D366] text-white", title: "WhatsApp",
       text: "Trimite oferta clienților sau în grupuri.", action: "Trimite",
       onClick: () => { window.open(shareLinks(offerLink, text).whatsapp, "_blank", "noopener,noreferrer"); logShare("Distribuit pe WhatsApp"); } },
-    { key: "youtube", icon: Youtube, tone: "bg-[#FF0000] text-white", title: "YouTube",
-      text: "Publică video-ul de prezentare pe canalul tău.", action: "Publică pe YouTube",
-      onClick: () => (ytQ.data?.status === "connected" ? setYtOpen(true) : uploadVideo("youtube")), disabled: !video,
-      footer: (
-        <div className="space-y-1">
-          {ytQ.data?.lastPost ? (
-            <p className="text-xs text-muted-foreground">
-              Publicat pe {ytQ.data.lastPost.channelTitle} · {ytQ.data.lastPost.publishedAt ? formatDateTime(ytQ.data.lastPost.publishedAt) : ""}
-              {ytQ.data.lastPost.url ? <> · <a href={ytQ.data.lastPost.url} target="_blank" rel="noopener noreferrer" className="underline">Vezi video</a></> : null}
-            </p>
-          ) : null}
-          {ytQ.data?.status === "expired" ? <p className="text-xs text-muted-foreground">Reconectează canalul YouTube din Setări → Promovare</p> : null}
-        </div>
-      ) },
     { key: "tiktok", icon: Music2, tone: "bg-[#010101] text-white", title: "TikTok",
       text: "Publică video-ul vertical pe contul tău de TikTok.", action: "Publică pe TikTok",
       onClick: () => uploadVideo("tiktok"), disabled: !video },
@@ -315,7 +296,7 @@ export function PropertyPromotionTab({
               onResult={(r) => {
                 setVideoResult(r);
                 if (pendingUpload && videoUploadStep(pendingUpload, r) === "upload") {
-                  toast.success(`Video gata. Apasă din nou „Publică pe ${pendingUpload === "tiktok" ? "TikTok" : "YouTube"}”.`);
+                  toast.success(`Video gata. Apasă din nou „Publică pe TikTok”.`);
                   setPendingUpload(null);
                 }
               }}
@@ -360,22 +341,6 @@ export function PropertyPromotionTab({
         />
       ) : null}
 
-      {ytQ.data?.status === "connected" ? (
-        <YoutubePostDialog
-          open={ytOpen}
-          onOpenChange={setYtOpen}
-          propertyId={propertyId}
-          ctx={ytQ.data}
-          listingTitle={video?.title ?? ""}
-          price={video?.price ?? null}
-          initialText={text}
-          hashtags={hashtags}
-          video={videoResult?.blob ?? null}
-          musicTrackId={videoResult?.musicTrackId ?? null}
-          onCreateVideo={() => { setYtOpen(false); setPendingUpload(null); setVideoOpen(true); }}
-          onPosted={() => void ytQ.refetch()}
-        />
-      ) : null}
 
       <Dialog open={qrOpen} onOpenChange={setQrOpen}>
         <DialogContent className="max-w-sm">

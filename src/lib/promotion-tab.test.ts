@@ -10,13 +10,11 @@ describe("tab Promovare", () => {
     expect(pub).not.toContain("setSocialPosterOpen");
     expect(src).toContain("onOpenPoster={() => setSocialPosterOpen(true)}");
   });
-  it("YouTube și TikTok cer video-ul înainte", () => {
-    expect(videoUploadStep("youtube", null)).toBe("generate");
+  it("TikTok cere video-ul vertical înainte", () => {
     expect(videoUploadStep("tiktok", null)).toBe("generate");
     expect(videoUploadStep("tiktok", { format: "square" })).toBe("generate");
     expect(videoUploadStep("tiktok", { format: "vertical" })).toBe("upload");
-    expect(videoUploadStep("youtube", { format: "landscape" })).toBe("upload");
-    expect(VIDEO_UPLOAD_URL).toEqual({ youtube: "https://www.youtube.com/upload", tiktok: "https://www.tiktok.com/upload" });
+    expect(VIDEO_UPLOAD_URL).toEqual({ tiktok: "https://www.tiktok.com/upload" });
   });
   it("titlul și descrierea copiate conțin prețul și linkul ofertei", () => {
     const c = videoUploadCopy("Apartament 2 camere", "120.000 €", "Text", offerShareUrl("abc"));

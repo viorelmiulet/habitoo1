@@ -135,7 +135,7 @@ const guideDefinitions: GuideDefinition[] = [
     { id: "cards", title: "Ce poți crea", text: "Poster pentru feed sau story, video de prezentare și postări directe pe rețelele conectate.", selector: '[data-tour="social-cards"]' },
     { id: "video", title: "Video-ul proprietății", text: "Video-ul se generează din fotografii, cu animații. La generare alegi și muzica clipului din bibliotecă." },
     { id: "poster", title: "Posterul social", text: "Posterul folosește șabloane gata de postat, cu datele și pozele anunțului. Îl descarci sau îl trimiți mai departe." },
-    { id: "networks", title: "Instagram, Facebook, YouTube", text: "Cu paginile conectate în Setări → Promovare postezi direct din CRM. Altfel, distribui de pe telefon sau cu linkul ofertei." },
+    { id: "networks", title: "Instagram, Facebook", text: "Cu paginile conectate în Setări → Promovare postezi direct din CRM. Altfel, distribui de pe telefon sau cu linkul ofertei." },
     { id: "post", title: "Textul postării", text: "Textul se completează singur din datele anunțului și îl poți rescrie. Îl copiezi sau îl trimiți cu pozele.", selector: '[data-tour="social-post"]', optional: true },
     { id: "clips", title: "Clipurile mele", text: "Toate clipurile generate de tine, inclusiv cele nepublicate, le găsești în meniu la Clipurile mele." },
   ]},
