@@ -153,7 +153,7 @@ export function AppShell({
             <main
               id="continut"
               tabIndex={-1}
-              className="mx-auto w-full max-w-[1500px] space-y-6 px-4 pt-5 pb-24 outline-none sm:px-6 lg:px-8 lg:pt-6 lg:pb-10"
+              className="mx-auto w-full max-w-[1500px] space-y-6 px-4 pt-5 pb-[calc(6rem+env(safe-area-inset-bottom))] outline-none sm:px-6 lg:px-8 lg:pt-6 lg:pb-10"
             >
               {children}
             </main>
