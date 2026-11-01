@@ -749,27 +749,27 @@ function PropertiesPage() {
         ) : null}
 
         <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
-          <div data-tour="properties-views" className="inline-flex w-fit max-w-full overflow-x-auto rounded-[4px] border border-border bg-muted">
+          <div data-tour="properties-views" className="inline-flex w-fit max-w-full overflow-x-auto rounded-[10px] bg-muted p-1">
             {([["list", "Afișare în Listă", List], ["grid", "Carduri", LayoutGrid], ["publish", "Publicare", Send]] as const).map(([key, label, Icon]) => (
-              <button key={key} type="button" data-tour={key === "publish" ? "properties-view-publish" : undefined} aria-pressed={view === key} onClick={() => setView(key)} className={cn("inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap border-r border-border px-4 text-[15px] last:border-r-0", view === key ? "bg-foreground/10 font-medium text-foreground" : "text-foreground/80 hover:bg-foreground/5")}>
+              <button key={key} type="button" data-tour={key === "publish" ? "properties-view-publish" : undefined} aria-pressed={view === key} onClick={() => setView(key)} className={cn("inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 text-[15px]", view === key ? "bg-surface font-bold text-foreground shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground")}>
                 <Icon className="size-4" aria-hidden /> {label}
               </button>
             ))}
           </div>
-          <div className="justify-self-start rounded-full border border-border bg-surface px-8 py-2 text-[15px] text-foreground/80 md:justify-self-center">
+          <div className="justify-self-start text-sm text-muted-foreground md:justify-self-center">
             Pagina {Math.min(page + 1, totalPages)}/{totalPages}, {total} rezultate
           </div>
           <div data-tour="properties-order" className="flex flex-wrap items-center gap-2 justify-self-start md:justify-self-end">
             <PageSizeSelect value={PAGE_SIZE} onChange={changePageSize} />
             <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-              <SelectTrigger aria-label="Sortare" className="h-10 w-auto gap-2 rounded-[4px] border-border bg-surface px-4 text-[15px] shadow-none"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Sortare" className="h-10 w-auto gap-2 rounded-[10px] border-border bg-surface px-4 text-[15px] shadow-none"><SelectValue /></SelectTrigger>
               <SelectContent>{Object.entries(sortOptions).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
             </Select>
           </div>
         </div>
 
         {selected.length > 0 ? (
-          <div data-tour="properties-selection" className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+          <div data-tour="properties-selection" className="flex flex-wrap items-center gap-3 rounded-[14px] border border-gold/40 bg-gold-tint px-4 py-3">
             <span className="text-sm font-medium">{selected.length} selectate</span>
             <Select
               value=""
@@ -847,7 +847,7 @@ function PropertiesPage() {
         ) : null}
       </div>
 
-      <div data-tour="properties-results" className="panel overflow-hidden">
+      <div data-tour="properties-results" className="panel overflow-hidden rounded-[14px]">
         <div className="flex flex-col justify-between gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center">
           <div className="flex items-baseline gap-2">
             <span className="whitespace-nowrap font-semibold">{total} {total === 1 ? "proprietate" : "proprietăți"}</span>
@@ -876,7 +876,7 @@ function PropertiesPage() {
         ) : view === "list" ? (
           <>
             <div className={cn(
-              "hidden items-center gap-[18px] border-b border-border px-[18px] py-3 text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase lg:grid",
+              "hidden items-center gap-[18px] border-b border-border px-[18px] py-3 text-xs font-bold tracking-[0.08em] text-navy-muted uppercase lg:grid",
               portals.hasPortals
                 ? "lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_150px_170px_36px]"
                 : "lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_170px_36px]",
@@ -913,7 +913,7 @@ function PropertiesPage() {
                   <li
                     key={p.id}
                     className={cn(
-                      "relative grid grid-cols-2 items-center gap-[18px] border-b border-border px-[18px] py-[14px] text-sm transition-colors last:border-b-0 hover:bg-accent/40 lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_170px_36px]",
+                      "relative grid grid-cols-2 items-center gap-[18px] border-b border-border px-[18px] py-[14px] text-sm transition-colors last:border-b-0 hover:bg-muted lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_170px_36px]",
                       portals.hasPortals && "lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_150px_170px_36px]",
                       selected.includes(p.id) && "bg-accent hover:bg-accent",
                     )}
@@ -931,7 +931,7 @@ function PropertiesPage() {
                         propertyId={p.id}
                         title={p.title}
                         cover={coverOf(p.id)}
-                        className="size-full rounded-xl"
+                        className="size-full rounded-[10px]"
                       />
                       <Button
                         type="button"
@@ -963,7 +963,7 @@ function PropertiesPage() {
                       {details ? <p className="mt-1 truncate text-[13px] text-muted-foreground">{details}</p> : null}
                     </div>
                     <div className="col-span-2 text-left lg:col-span-1 lg:text-right">
-                      <p className="font-display text-[21px] leading-tight font-semibold">{price.main}{price.suffix ? <span className="ml-1 font-sans text-xs font-normal text-muted-foreground">{price.suffix}</span> : null}</p>
+                      <p className="font-display text-[18px] leading-tight font-extrabold">{price.main}{price.suffix ? <span className="ml-1 font-sans text-xs font-normal text-muted-foreground">{price.suffix}</span> : null}</p>
                       {price.perSquareMeter ? <p className="mt-1 text-xs text-muted-foreground">{price.perSquareMeter}</p> : null}
                     </div>
                     {portals.hasPortals ? (
