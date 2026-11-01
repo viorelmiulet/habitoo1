@@ -5,6 +5,8 @@ import { createRoot } from "react-dom/client";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
+const mock = vi.hoisted(() => ({ pathname: "/app" }));
+
 vi.mock("@tanstack/react-router", async () => {
   const React = await import("react");
   return {
@@ -14,7 +16,7 @@ vi.mock("@tanstack/react-router", async () => {
         { href: String(to), className: className as string, ...rest },
         children as React.ReactNode,
       ),
-    useRouterState: () => "/app",
+    useRouterState: () => mock.pathname,
     useRouter: () => ({ navigate: () => undefined }),
   };
 });
@@ -32,7 +34,7 @@ function renderSidebar(groups: NavGroup[], collapsed = false) {
   document.body.appendChild(host);
   root = createRoot(host);
   act(() =>
-    root!.render(
+    root?.render(
       <TooltipProvider>
         <AppSidebar
           groups={groups}
@@ -46,48 +48,49 @@ function renderSidebar(groups: NavGroup[], collapsed = false) {
   );
 }
 
-function lists(): string[][] {
-  return [...document.querySelectorAll("nav ul")].map((ul) =>
-    [...ul.querySelectorAll("a")].map(
-      (a) => a.getAttribute("data-tour") ?? (a.textContent ?? "").trim(),
-    ),
-  );
-}
-
 afterEach(() => {
-  if (root) act(() => root!.unmount());
+  if (root) act(() => root?.unmount());
   root = null;
+  window.localStorage.clear();
+  mock.pathname = "/app";
 });
 
-describe("meniul cu Comisioane ca element separat", () => {
-  for (const [name, isAdmin] of [
-    ["administratorul", true],
-    ["agentul", false],
-  ] as const) {
-    for (const [layout, collapsed] of [
-      ["laterală desfășurată", false],
-      ["meniul restrâns", true],
-    ] as const) {
-      it(`${name} vede Clienți (3 elemente), apoi Lead-uri și Comisioane fără titlu, în ${layout}`, () => {
-        renderSidebar(agencyNavFor(isAdmin), collapsed);
-        const groups = lists();
-        const clientsIndex = groups.findIndex(
-          (items) =>
-            items.join("|") ===
-            "nav:/app/contacts|nav:/app/requests|nav:/app/contracts",
-        );
-        expect(clientsIndex).toBeGreaterThanOrEqual(0);
-        expect(groups[clientsIndex + 1]).toEqual(["nav:/app/leads"]);
-        expect(groups[clientsIndex + 2]).toEqual(["nav:/app/comisioane"]);
-        expect(groups.flat().filter((h) => h === "nav:/app/leads")).toHaveLength(1);
-        const commissionsList = [...document.querySelectorAll("nav ul")].find(
-          (ul) =>
-            ul.querySelectorAll("a").length === 1 &&
-            ul.querySelector("a")?.getAttribute("href") === "/app/comisioane",
-        );
-        expect(commissionsList).toBeDefined();
-        expect(commissionsList!.parentElement?.querySelector("p")).toBeNull();
-      });
-    }
+describe("meniul lateral randat", () => {
+  for (const admin of [true, false]) {
+    it(`rol ${admin ? "admin" : "agent"}: arată numai paginile permise`, () => {
+      renderSidebar(agencyNavFor(admin));
+      const links = [...document.querySelectorAll("nav a")].map(a => a.getAttribute("href"));
+      expect(links.includes("/app/team")).toBe(admin);
+      expect(links.includes("/abonament")).toBe(admin);
+      expect(document.querySelector('[href="/app/settings"]')?.textContent).toBe(admin ? "Setări agenție" : "Profilul meu");
+      expect(document.querySelector('[data-tour="nav:/app/leads"]')).not.toBeNull();
+    });
+    it(`rol ${admin ? "admin" : "agent"}: restrâns are o singură legătură per grup`, () => {
+      renderSidebar(agencyNavFor(admin), true);
+      const links = [...document.querySelectorAll("nav a")].map(a => a.getAttribute("href"));
+      expect(links).toHaveLength(13);
+      expect(links).toContain("/app/properties");
+      expect(links).not.toContain("/app/properties/new");
+      expect(links).toContain("/app/settings");
+      expect(document.querySelector('[data-tour="group:Portofoliu"]')?.textContent).toBe("");
+    });
   }
+  it("deschide grupul activ și păstrează închiderea în stocarea locală", () => {
+    mock.pathname = "/app/properties/new";
+    renderSidebar(agencyNavFor(true));
+    const group = document.querySelector<HTMLButtonElement>('[data-tour="group:Portofoliu"]');
+    expect(group?.getAttribute("aria-expanded")).toBe("true");
+    expect(document.querySelector('[aria-current="page"]')?.getAttribute("href")).toBe("/app/properties/new");
+    act(() => group?.click());
+    expect(group?.getAttribute("aria-expanded")).toBe("false");
+    expect(JSON.parse(window.localStorage.getItem("habitoo.sidebar.groups.anonymous") ?? "[]")).not.toContain("Proprietăți");
+  });
+  it("păstrează selectorii ghidului și numele agenției", () => {
+    renderSidebar(agencyNavFor(true));
+    expect(document.querySelector('[data-tour="main-navigation"]')).not.toBeNull();
+    expect(document.querySelector('[data-tour="group:Portofoliu"]')).not.toBeNull();
+    expect(document.querySelector('[data-tour="group:Clienți"]')).not.toBeNull();
+    expect(document.querySelector('[data-tour="nav:/app/collaboration"]')).not.toBeNull();
+    expect(document.body.textContent).toContain("MVA Imobiliare");
+  });
 });
