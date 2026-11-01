@@ -7,7 +7,7 @@ import { QuickAdd } from "@/components/app/QuickAdd";
 import { NotificationsMenu } from "@/components/app/NotificationsMenu";
 import { SupportWidget } from "@/components/app/SupportWidget";
 import { type ShellVariant } from "@/components/app/AppSidebar";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import topbarMarkDark from "@/assets/habitoo-mark-light.png.asset.json";
 import { useOnboardingTour } from "@/components/app/OnboardingTour";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -52,7 +52,21 @@ export function Topbar({
         className="flex size-11 shrink-0 items-center justify-center rounded-control bg-surface ring-1 ring-input lg:hidden"
         aria-label="Habitoo CRM — acasă"
       >
-        <BrandLogo markOnly className="size-7" priority />
+        {/* Tema deschisă păstrează /favicon.png; pe fundal surface închis sigla bleumarin ar dispărea. */}
+        <img
+          src="/favicon.png"
+          alt="Habitoo CRM"
+          className="size-7 block h-auto max-w-full object-contain dark:hidden"
+          loading="eager"
+          decoding="async"
+        />
+        <img
+          src={topbarMarkDark.url}
+          alt="Habitoo CRM"
+          className="size-7 hidden h-auto max-w-full object-contain dark:block"
+          loading="eager"
+          decoding="async"
+        />
       </Link>
 
       {/* Căutare globală lată */}
