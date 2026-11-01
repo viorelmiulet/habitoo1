@@ -1,3 +1,7 @@
+## Titlul hero — dimensionare după Manrope
+- [x] h1 homepage 36/44/56px, line-height 1.08, letter-spacing -0.02em (inline, fiindcă regula globală `h1,h2,h3{letter-spacing:0}` bat utilitatea), coloana text 1.05fr
+- [x] Playwright 1440/1024/390: 4/4/4 rânduri, fără scroll orizontal, aurul și textul neschimbate; 92 teste + build OK
+
 ## Topbar și PageHeader — aspect
 - [x] Actualizare strict vizuală a barei, controalelor și antetului standard; funcții/bannere/data-tour păstrate
 - [x] 67 teste ghiduri + 1 notificări trec; build OK. În cont: căutare HB-1271, scurtătură, QuickAdd, suport și notificări; desktop 64px, telefon 56px și toate cele 7 controale 44×44px, fără scroll orizontal sau erori. 50 pagini folosesc PageHeader; fișa proprietății și fișa utilizatorului SuperAdmin au antete proprii. Fără modificări de date/publicare.
