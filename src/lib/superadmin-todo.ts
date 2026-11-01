@@ -30,6 +30,11 @@ export type SubscriptionAlert = {
 export type BlockedPublishing = {
   organizationId: string;
   organizationName: string;
+  /** Anunțuri distincte (proprietăți) cu cel puțin o eroare. */
+  listings: number;
+  /** Portaluri distincte afectate. */
+  portals: number;
+  /** Rânduri portal × anunț în eroare. */
   total: number;
   notPublishable: number;
   other: number;
@@ -69,24 +74,38 @@ export function classifyExpiry(
 
 /** Grupează erorile de publicare pe agenție, cu împărțirea pe tipuri. */
 export function groupBlockedPublishing(
-  rows: { organization_id: string; last_error: string | null }[],
+  rows: { organization_id: string; property_id: string; portal_key: string; last_error: string | null }[],
   orgName: (id: string) => string,
 ): BlockedPublishing[] {
-  const map = new Map<string, BlockedPublishing>();
+  const map = new Map<string, BlockedPublishing & { _p: Set<string>; _k: Set<string> }>();
   for (const r of rows) {
     const g = map.get(r.organization_id) ?? {
       organizationId: r.organization_id,
       organizationName: orgName(r.organization_id),
+      listings: 0,
+      portals: 0,
       total: 0,
       notPublishable: 0,
       other: 0,
+      _p: new Set<string>(),
+      _k: new Set<string>(),
     };
     g.total += 1;
+    g._p.add(r.property_id);
+    g._k.add(r.portal_key);
     if (isNotPublishableError(r.last_error)) g.notPublishable += 1;
     else g.other += 1;
     map.set(r.organization_id, g);
   }
-  return [...map.values()].sort((a, b) => b.total - a.total);
+  return [...map.values()]
+    .map(({ _p, _k, ...g }) => ({ ...g, listings: _p.size, portals: _k.size }))
+    .sort((a, b) => b.listings - a.listings);
+}
+
+/** „pe 11 portaluri · 363 de erori (356 „Oferta nu este publicabilă”, 7 alte erori)”. */
+export function blockedDetail(b: BlockedPublishing): string {
+  const ro = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : `${n} ${n >= 20 || n === 0 ? "de " : ""}${many}`);
+  return `pe ${ro(b.portals, "portal", "portaluri")} · ${ro(b.total, "eroare", "erori")} (${b.notPublishable} „Oferta nu este publicabilă”, ${b.other} ${b.other === 1 ? "altă eroare" : "alte erori"})`;
 }
 
 export const COUNT_LABELS: Record<keyof TodoCounts, string> = {

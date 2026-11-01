@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import {
   anunturiLabel,
+  blockedDetail,
   todoItemCount,
   zeroCategories,
   type SubscriptionAlert,
@@ -59,10 +60,8 @@ function TodoContent({ todo }: { todo: SuperadminTodo }) {
         )}
         {todo.blocked.map((b) => (
           <AccentCard key={b.organizationId} tone="error">
-            <CardTitle icon={AlertTriangle}>{anunturiLabel(b.total)} nu pot fi publicate · {b.organizationName}</CardTitle>
-            <p className="text-[13px] text-muted-foreground">
-              {formatNumber(b.notPublishable)} „Oferta nu este publicabilă” (nepublicate în CRM) · {formatNumber(b.other)} alte erori
-            </p>
+            <CardTitle icon={AlertTriangle}>{anunturiLabel(b.listings)} nu pot fi publicate · {b.organizationName}</CardTitle>
+            <p className="text-[13px] text-muted-foreground">{blockedDetail(b)}</p>
             <Actions>
               <Link className={actionCls} to="/superadmin/portal-logs" search={{ org: b.organizationId, status: "error" }}>Jurnal portaluri</Link>
               <Link className={actionCls} to="/superadmin/agencies/$id" params={{ id: b.organizationId }}>Deschide agenția</Link>
