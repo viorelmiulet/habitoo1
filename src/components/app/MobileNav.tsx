@@ -1,16 +1,15 @@
 import { Link, type LinkProps } from "@tanstack/react-router";
-import { Building2, CalendarDays, Flame, Gauge, Menu, ShieldCheck, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Building2, Flame, Gauge, Menu, ShieldCheck, Users } from "lucide-react";
 import type { ShellVariant } from "@/components/app/AppSidebar";
+import { QuickAdd } from "@/components/app/QuickAdd";
 
 type Item = { label: string; to: LinkProps["to"]; icon: typeof Gauge; exact?: boolean };
 
-const agencyItems: Item[] = [
+const agencyLeft: Item[] = [
   { label: "Acasă", to: "/app", icon: Gauge, exact: true },
   { label: "Proprietăți", to: "/app/properties", icon: Building2 },
-  { label: "Lead-uri", to: "/app/leads", icon: Flame },
-  { label: "Calendar", to: "/app/calendar", icon: CalendarDays },
 ];
+const agencyRight: Item[] = [{ label: "Lead-uri", to: "/app/leads", icon: Flame }];
 
 const platformItems: Item[] = [
   { label: "Acasă", to: "/superadmin", icon: Gauge, exact: true },
@@ -18,6 +17,25 @@ const platformItems: Item[] = [
   { label: "Utilizatori", to: "/superadmin/users", icon: Users },
   { label: "Audit", to: "/superadmin/audit", icon: ShieldCheck },
 ];
+
+const itemClass =
+  "group flex h-16 min-w-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground";
+
+function NavItem({ item }: { item: Item }) {
+  return (
+    <li>
+      <Link
+        to={item.to}
+        activeOptions={{ exact: item.exact }}
+        className={itemClass}
+        activeProps={{ className: "!text-foreground font-bold [&>svg]:text-gold", "aria-current": "page" }}
+      >
+        <item.icon className="size-[22px]" />
+        <span className="max-w-full truncate leading-none">{item.label}</span>
+      </Link>
+    </li>
+  );
+}
 
 /** Bară de navigare fixă pe mobil (sub 1024px) cu cele mai folosite secțiuni. */
 export function MobileNav({
@@ -27,36 +45,36 @@ export function MobileNav({
   variant?: ShellVariant;
   onOpenMenu: () => void;
 }) {
-  const items = variant === "platform" ? platformItems : agencyItems;
+  const isPlatform = variant === "platform";
   return (
     <nav
       aria-label="Navigare rapidă"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <ul className="grid grid-cols-5">
-        {items.map((item) => (
-          <li key={String(item.to)}>
-            <Link
-              to={item.to}
-              activeOptions={{ exact: item.exact }}
-              className="flex h-14 flex-col items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-              activeProps={{ className: "text-primary" }}
-            >
-              <item.icon className="size-5" />
-              <span className="leading-none">{item.label}</span>
-            </Link>
-          </li>
-        ))}
+        {isPlatform ? (
+          platformItems.map((item) => <NavItem key={String(item.to)} item={item} />)
+        ) : (
+          <>
+            {agencyLeft.map((item) => (
+              <NavItem key={String(item.to)} item={item} />
+            ))}
+            <li className="flex h-16 items-start justify-center" data-mobile-quick-add>
+              <QuickAdd variant="mobile-nav" />
+            </li>
+            {agencyRight.map((item) => (
+              <NavItem key={String(item.to)} item={item} />
+            ))}
+          </>
+        )}
         <li>
           <button
             type="button"
             onClick={onOpenMenu}
-            className={cn(
-              "flex h-14 w-full flex-col items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground",
-            )}
+            className={`${itemClass} w-full`}
             aria-label="Deschide meniul complet"
           >
-            <Menu className="size-5" />
+            <Menu className="size-[22px]" />
             <span className="leading-none">Meniu</span>
           </button>
         </li>
