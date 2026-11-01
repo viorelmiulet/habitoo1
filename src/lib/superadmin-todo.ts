@@ -50,7 +50,7 @@ export function isNotPublishableError(message: string | null | undefined): boole
 /** Durata termenului, ca text: „Trial 30 zile”, „30 de zile” etc. */
 export function termLabel(term: string | null | undefined, isTrial: boolean): string {
   const label = subscriptionTermLabel(term);
-  if (label !== "Fără termen") return label;
+  if (label !== "Fără termen") return isTrial && !term?.startsWith("trial_") ? `Trial ${label}` : label;
   return isTrial ? "Trial" : "Abonament";
 }
 

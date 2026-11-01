@@ -25,6 +25,7 @@ describe("De rezolvat", () => {
     expect(termLabel("trial_30d", true)).toBe("Trial 30 zile");
     expect(termLabel("trial_90d", false)).toContain("90");
     expect(termLabel("30d", false)).toBe("30 de zile");
+    expect(termLabel("30d", true)).toBe("Trial 30 de zile");
   });
 
   it("separă „Oferta nu este publicabilă” de alte erori, pe agenție", () => {
