@@ -1,33 +1,13 @@
 /**
- * Superadmin → Dashboard global: „ce arde în platformă”.
- * Coadă de lucru, sănătatea integrărilor, creșterea platformei și activitatea
- * recentă, dintr-o singură interogare agregată server-side.
+ * Superadmin → Dashboard global: De rezolvat → Ultimele 7 zile → Agenții →
+ * Portaluri, dintr-o singură interogare agregată server-side.
  */
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  History,
-  PlugZap,
-} from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
-import { StatusBadge } from "@/components/app/StatusBadge";
-import { EmptyState } from "@/components/app/EmptyState";
 import { QueryError } from "@/components/app/QueryError";
-import { ListSkeleton } from "@/components/app/LoadingState";
-import { PortalLogo } from "@/components/app/PortalLogo";
-import { formatDateTime, formatNumber } from "@/lib/format";
-import { auditActionLabel, auditEntityLabels } from "@/lib/labels";
-import {
-  PORTAL_CONNECTION_LABEL,
-  getPortalDefinition,
-  integrationDisplayStatus,
-} from "@/lib/portals/registry";
-import {
-  getSuperadminDashboard,
-  type IntegrationHealthRow,
-} from "@/lib/superadmin-dashboard.functions";
-import { cn } from "@/lib/utils";
+import { getSuperadminDashboard } from "@/lib/superadmin-dashboard.functions";
 import { appHead } from "@/components/app/app-head";
 import { AgenciesCard } from "@/components/app/SuperadminAgenciesCard";
 import { PortalsSection } from "@/components/app/SuperadminPortalsSection";
@@ -73,7 +53,7 @@ function SuperadminDashboard() {
       {/* 1 · De rezolvat */}
       <TodoBlock todo={data?.todo} loading={isLoading} />
 
-      {/* 3 · Ultimele 7 zile */}
+      {/* 2 · Ultimele 7 zile */}
       <WeekBlock week={data?.week} loading={isLoading} />
 
       <AgenciesCard rows={data?.agencies} loading={isLoading} />
