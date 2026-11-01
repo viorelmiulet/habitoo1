@@ -13,7 +13,7 @@ import {
   type SubscriptionAlert,
   type SuperadminTodo,
 } from "@/lib/superadmin-todo";
-import { buildAgencyRowsFrom, type AgencyRow } from "@/lib/superadmin-agencies";
+import { AGENCY_ROW_LIMIT, buildAgencyRowsFrom, type AgencyRow } from "@/lib/superadmin-agencies";
 import { WEEK_PORTAL_OPERATIONS, isActiveLogin, type SuperadminWeek } from "@/lib/superadmin-week";
 
 type AuthContext = {
@@ -427,5 +427,5 @@ async function buildAgencyRows(admin: Admin, lastLogin: Map<string, string | nul
       };
     }),
   );
-  return buildAgencyRowsFrom(stats, Date.now());
+  return buildAgencyRowsFrom(stats, Date.now()).slice(0, AGENCY_ROW_LIMIT);
 }
