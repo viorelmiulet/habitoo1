@@ -228,7 +228,7 @@ export function QuickAdd() {
     <>
       <DropdownMenu onOpenChange={open=>{if(open)announceGuideContext('topbar:tools');}}>
         <DropdownMenuTrigger asChild>
-          <Button data-tour="quick-add-open" aria-label="Adăugare rapidă" size="sm" className="gap-1.5">
+          <Button data-tour="quick-add-open" aria-label="Adăugare rapidă" size="sm" className="size-11 gap-1.5 p-0 sm:h-10 sm:w-auto sm:px-3">
             <Plus className="size-4" />
             <span className="hidden sm:inline">Adaugă</span>
           </Button>

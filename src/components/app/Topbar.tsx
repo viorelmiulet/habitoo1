@@ -32,7 +32,7 @@ export function Topbar({
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/85 px-3 backdrop-blur-md sm:px-4 lg:px-6",
+        "sticky top-0 z-30 flex h-14 min-w-0 shrink-0 items-center gap-2 border-b border-border bg-background px-3 sm:h-16 sm:px-4 lg:px-6",
         isPlatform && "shadow-[inset_0_2px_0_0_var(--color-gold)]",
       )}
     >
@@ -40,7 +40,7 @@ export function Topbar({
         ref={menuTriggerRef}
         variant="ghost"
         size="icon"
-        className="lg:hidden"
+        className="size-11 shrink-0 lg:hidden"
         onClick={onOpenMenu}
         aria-label="Deschide meniul de navigare"
       >
@@ -49,7 +49,7 @@ export function Topbar({
 
       <Link
         to={isPlatform ? "/superadmin" : "/app"}
-        className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface ring-1 ring-border lg:hidden"
+        className="flex size-11 shrink-0 items-center justify-center rounded-control bg-surface ring-1 ring-input lg:hidden"
         aria-label="Habitoo CRM — acasă"
       >
         <BrandLogo markOnly className="size-7" priority />
@@ -60,7 +60,7 @@ export function Topbar({
         <GlobalSearch />
       </div>
 
-      <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+      <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
         <div className="md:hidden">
           <GlobalSearch compact />
         </div>
@@ -87,9 +87,9 @@ export function Topbar({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="gap-1.5"
+                className="size-11 gap-1.5 p-0 sm:h-10 sm:w-auto sm:px-3"
                 data-tour="guide-menu"
                 aria-label="Ghid"
               >
@@ -104,9 +104,9 @@ export function Topbar({
           </DropdownMenu>
         ) : null}
 
-        {isPlatform ? null : <SupportWidget />}
+        {isPlatform ? null : <SupportWidget triggerClassName="size-11 rounded-control border border-input bg-surface hover:bg-muted hover:text-foreground sm:size-10" />}
 
-        <NotificationsMenu userId={user.userId} />
+        <NotificationsMenu userId={user.userId} triggerClassName="size-11 rounded-control border border-input bg-surface hover:bg-muted hover:text-foreground sm:size-10" />
       </div>
     </header>
   );

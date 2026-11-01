@@ -34,7 +34,7 @@ import {
   type SupportCategory,
 } from "@/lib/support.functions";
 
-export function SupportWidget({ children }: { children?: ReactNode }) {
+export function SupportWidget({ children, triggerClassName }: { children?: ReactNode; triggerClassName?: string }) {
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState<SupportCategory>("technical");
@@ -79,6 +79,7 @@ export function SupportWidget({ children }: { children?: ReactNode }) {
               <Button
                 variant="ghost"
                 size="icon"
+                className={triggerClassName}
                 aria-label="Ajutor și suport"
                 data-tour="support-button"
               >
