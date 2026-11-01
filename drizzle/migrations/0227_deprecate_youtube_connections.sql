@@ -1,0 +1,1 @@
+COMMENT ON TABLE public.youtube_connections IS 'DEPRECATED: YouTube integration removed; no longer used by the app.';

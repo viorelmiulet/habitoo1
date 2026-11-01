@@ -161,7 +161,6 @@ import { Route as ApiPublicSitesV1AgentsRouteImport } from './routes/api/public/
 import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/public/sites/v1/contacts'
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
 import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
-import { Route as ApiPublicYoutubeOauthCallbackRouteImport } from './routes/api/public/youtube/oauth.callback'
 import { Route as ApiPublicFeedClickimobChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/clickimob/[index]/$indexKey'
 import { Route as ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/imobiliareplus/[index]/$indexKey'
 import { Route as ApiPublicFeedImobliChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/imobli/[index]/$indexKey'
@@ -1024,12 +1023,6 @@ const ApiPublicSitesV1VisitsRoute = ApiPublicSitesV1VisitsRouteImport.update({
   path: '/api/public/sites/v1/visits',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicYoutubeOauthCallbackRoute =
-  ApiPublicYoutubeOauthCallbackRouteImport.update({
-    id: '/api/public/youtube/oauth/callback',
-    path: '/api/public/youtube/oauth/callback',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute =
   ApiPublicFeedClickimobChar91indexChar93IndexKeyRouteImport.update({
     id: '/api/public/feed/clickimob/index/$indexKey',
@@ -1313,7 +1306,6 @@ export interface FileRoutesByFullPath {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
-  '/api/public/youtube/oauth/callback': typeof ApiPublicYoutubeOauthCallbackRoute
   '/app/acp/date-piata/': typeof AuthenticatedAppAcpDatePiataIndexRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobiliareplus/index/$indexKey': typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
@@ -1485,7 +1477,6 @@ export interface FileRoutesByTo {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
-  '/api/public/youtube/oauth/callback': typeof ApiPublicYoutubeOauthCallbackRoute
   '/app/acp/date-piata': typeof AuthenticatedAppAcpDatePiataIndexRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobiliareplus/index/$indexKey': typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
@@ -1663,7 +1654,6 @@ export interface FileRoutesById {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
-  '/api/public/youtube/oauth/callback': typeof ApiPublicYoutubeOauthCallbackRoute
   '/_authenticated/app/acp/date-piata/': typeof AuthenticatedAppAcpDatePiataIndexRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobiliareplus/index/$indexKey': typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
@@ -1841,7 +1831,6 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
-    | '/api/public/youtube/oauth/callback'
     | '/app/acp/date-piata/'
     | '/api/public/feed/clickimob/index/$indexKey'
     | '/api/public/feed/imobiliareplus/index/$indexKey'
@@ -2013,7 +2002,6 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
-    | '/api/public/youtube/oauth/callback'
     | '/app/acp/date-piata'
     | '/api/public/feed/clickimob/index/$indexKey'
     | '/api/public/feed/imobiliareplus/index/$indexKey'
@@ -2190,7 +2178,6 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
-    | '/api/public/youtube/oauth/callback'
     | '/_authenticated/app/acp/date-piata/'
     | '/api/public/feed/clickimob/index/$indexKey'
     | '/api/public/feed/imobiliareplus/index/$indexKey'
@@ -2305,7 +2292,6 @@ export interface RootRouteChildren {
   ApiPublicSitesV1ContactsRoute: typeof ApiPublicSitesV1ContactsRoute
   ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRouteWithChildren
   ApiPublicSitesV1VisitsRoute: typeof ApiPublicSitesV1VisitsRoute
-  ApiPublicYoutubeOauthCallbackRoute: typeof ApiPublicYoutubeOauthCallbackRoute
   ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
   ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
   ApiPublicFeedImobliChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
@@ -3393,13 +3379,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1VisitsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/youtube/oauth/callback': {
-      id: '/api/public/youtube/oauth/callback'
-      path: '/api/public/youtube/oauth/callback'
-      fullPath: '/api/public/youtube/oauth/callback'
-      preLoaderRoute: typeof ApiPublicYoutubeOauthCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/feed/clickimob/index/$indexKey': {
       id: '/api/public/feed/clickimob/index/$indexKey'
       path: '/api/public/feed/clickimob/index/$indexKey'
@@ -3897,7 +3876,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSitesV1ContactsRoute: ApiPublicSitesV1ContactsRoute,
   ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRouteWithChildren,
   ApiPublicSitesV1VisitsRoute: ApiPublicSitesV1VisitsRoute,
-  ApiPublicYoutubeOauthCallbackRoute: ApiPublicYoutubeOauthCallbackRoute,
   ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute:
     ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute,
   ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute:
