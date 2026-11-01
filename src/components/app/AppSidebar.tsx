@@ -374,7 +374,7 @@ export function AppSidebar({
     } catch {
       stored = [];
     }
-    setOpenGroups(new Set([...stored, ...activeGroupTitles]));
+    setOpenGroups(new Set([...stored.map((title) => title === "Portofoliu" ? "Proprietăți" : title), ...activeGroupTitles]));
   }, [activeGroupTitles, user?.userId]);
 
   const toggleGroup = (title: string) => {
@@ -393,7 +393,7 @@ export function AppSidebar({
 
   const renderItem = (item: NavItem, child = false, groupTitle?: string) => {
     const badge = badges?.[String(item.to)];
-    const active = item.to === activePath;
+    const active = item.to === activePath || Boolean(groupTitle && groups.find((group) => group.title === groupTitle)?.items.some((entry) => entry.to === activePath));
     return (
       <li key={String(item.to)}>
         <CollapsedTip collapsed={collapsed} label={item.label}>
@@ -514,7 +514,7 @@ export function AppSidebar({
                 <p className="px-2.5 pt-2 pb-1 text-[10px] font-semibold tracking-[0.14em] text-navy-muted uppercase">
                   {title}
                 </p>
-              ) : title && collapsed ? (
+              ) : title && collapsed && !expandable ? (
                 <div className="mx-2 my-2 h-px bg-sidebar-border" aria-hidden />
               ) : null}
               <ul className="space-y-0.5">{collapsed && expandable && group.items[0]
