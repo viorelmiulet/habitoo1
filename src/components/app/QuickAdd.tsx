@@ -216,7 +216,7 @@ function LeadSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
   );
 }
 
-export function QuickAdd() {
+export function QuickAdd({ variant = "topbar" }: { variant?: "topbar" | "mobile-nav" } = {}) {
   const { data: user } = useCurrentUser();
   const navigate = useNavigate();
   const [contactOpen, setContactOpen] = useState(false);
@@ -228,12 +228,22 @@ export function QuickAdd() {
     <>
       <DropdownMenu onOpenChange={open=>{if(open)announceGuideContext('topbar:tools');}}>
         <DropdownMenuTrigger asChild>
-          <Button data-tour="quick-add-open" aria-label="Adăugare rapidă" size="sm" className="size-11 gap-1.5 p-0 sm:h-10 sm:w-auto sm:px-3">
-            <Plus className="size-4" />
-            <span className="hidden sm:inline">Adaugă</span>
-          </Button>
+          {variant === "mobile-nav" ? (
+            <button
+              type="button"
+              aria-label="Adăugare rapidă"
+              className="flex size-[52px] -translate-y-3 items-center justify-center rounded-full bg-gold text-primary shadow-lg ring-4 ring-surface transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-primary"
+            >
+              <Plus className="size-6" strokeWidth={2.5} />
+            </button>
+          ) : (
+            <Button data-tour="quick-add-open" aria-label="Adăugare rapidă" size="sm" className="size-11 gap-1.5 p-0 sm:h-10 sm:w-auto sm:px-3">
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">Adaugă</span>
+            </Button>
+          )}
         </DropdownMenuTrigger>
-        <DropdownMenuContent data-tour="quick-add-menu" align="end" className="w-56">
+        <DropdownMenuContent data-tour={variant === "topbar" ? "quick-add-menu" : undefined} align={variant === "mobile-nav" ? "center" : "end"} side={variant === "mobile-nav" ? "top" : undefined} className="w-56">
           <DropdownMenuLabel>Adăugare rapidă</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
