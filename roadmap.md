@@ -1,3 +1,7 @@
+## Topbar și PageHeader — aspect
+- [ ] Actualizare strict vizuală a barei, controalelor și antetului standard; funcții/bannere/data-tour păstrate
+- [ ] Teste existente, verificare autentificată desktop/390px și build; inventar PageHeader și antete proprii
+
 ## Meniu lateral compact
 - [x] Logo deschis și favicon derivat, trei secțiuni, cont compact; roluri/AI și selectorul legacy Portofoliu păstrate, migrare stare veche
 - [x] 17 teste meniu/acces + 67 ghiduri trec; cont real desktop/72px/390: grup activ deschis, prima subpagină în 72px, navigare mobilă la Contacte fără erori. Build OK; fără date modificate sau publicare.
