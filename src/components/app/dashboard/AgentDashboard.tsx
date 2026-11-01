@@ -22,7 +22,6 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { PageHeader } from "@/components/app/PageHeader";
 import { AgentPortfolioList } from "@/components/app/AgentPortfolioList";
 import { SectionCard } from "@/components/app/SectionCard";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -83,24 +82,24 @@ export function AgentDashboard() {
   const brandNew =
     data && data.totals.properties === 0 && data.totals.leads === 0 && data.totals.activities === 0;
 
-  const firstName = user?.profile?.full_name?.split(" ")[0] ?? "bun venit";
-
   return (
     <>
-      <PageHeader
-        title={`Salut, ${firstName}`}
-        description="Ziua ta: ce ai programat, ce s-a blocat și ce anunțuri au nevoie de atenție."
-        actions={
-          <>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/app/calendar">Calendar</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/app/properties/new">Adaugă proprietate</Link>
-            </Button>
-          </>
-        }
-      />
+      <div className="flex flex-col gap-x-6 gap-y-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0 sm:flex-1">
+          <h2 className="text-xl font-bold text-balance break-words">Ziua ta</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Ziua ta: ce ai programat, ce s-a blocat și ce anunțuri au nevoie de atenție.
+          </p>
+        </div>
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 [&>*]:max-w-full sm:w-auto sm:justify-end">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/app/calendar">Calendar</Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link to="/app/properties/new">Adaugă proprietate</Link>
+          </Button>
+        </div>
+      </div>
 
       {dashboard.isLoading ? (
         <div className="panel p-6">
