@@ -1,3 +1,7 @@
+## Meniu lateral compact
+- [ ] Logo deschis, trei secțiuni și cont compact; acces, ghiduri și starea grupurilor păstrate
+- [ ] Teste structură/roluri/AI; verificare în cont desktop, 72px și telefon
+
 ## Paleta Bleumarin & auriu
 - [x] Tokenuri globale și Manrope; raze, materiale și reguli dark păstrate; Fraunces rămâne pentru materiale
 - [x] Homepage/login 1280/390: butoane vizibile și fără erori; contraste 4,51–16,95:1; build OK; inventar hex în 6 componente/pagini. 6 teste homepage/login/sidebar randat trec; un test vechi sidebar cere Lead-uri în grupul Clienți (meniul actual le are separat), neschimbat.
