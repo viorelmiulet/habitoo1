@@ -13,6 +13,7 @@ import {
   type SubscriptionAlert,
   type SuperadminTodo,
 } from "@/lib/superadmin-todo";
+import { WEEK_PORTAL_OPERATIONS, isActiveLogin, type SuperadminWeek } from "@/lib/superadmin-week";
 
 type AuthContext = {
   supabase: {
@@ -47,17 +48,6 @@ export type IntegrationHealthRow = {
   lastError: string | null;
 };
 
-export type PlatformGrowth = {
-  activeAgencies: number;
-  pendingAgencies: number;
-  totalUsers: number;
-  admins: number;
-  agents: number;
-  totalProperties: number;
-  publishedProperties: number;
-  collaborationAgencies: number;
-};
-
 export type RecentAuditEntry = {
   id: string;
   action: string;
@@ -70,7 +60,7 @@ export type RecentAuditEntry = {
 export type SuperadminDashboard = {
   queue: WorkQueue;
   integrations: IntegrationHealthRow[];
-  growth: PlatformGrowth;
+  week: SuperadminWeek;
   audit: RecentAuditEntry[];
   todo: SuperadminTodo;
 };
@@ -110,13 +100,6 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
       registrations,
       activations,
       tickets,
-      activeOrgs,
-      pendingOrgs,
-      collabOrgs,
-      properties,
-      roles,
-      profilesCount,
-      publications,
       connections,
       orgs,
       auditSensitive,
@@ -133,23 +116,6 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
         .from("support_tickets")
         .select("id", { count: "exact", head: true })
         .in("status", ["open", "in_progress"]),
-      admin
-        .from("organizations")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "active")
-        .is("archived_at", null),
-      admin
-        .from("organizations")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending_approval"),
-      admin
-        .from("organizations")
-        .select("id", { count: "exact", head: true })
-        .eq("collaboration_enabled", true),
-      admin.from("properties").select("id", { count: "exact", head: true }).is("deleted_at", null),
-      admin.from("user_roles").select("role"),
-      admin.from("profiles").select("id", { count: "exact", head: true }),
-      admin.from("portal_publications").select("property_id").neq("portal_key", "facebook_catalog").eq("enabled", true),
       admin
         .from("portal_connections")
         .select(
@@ -171,13 +137,6 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
         ["cereri de înscriere", registrations],
         ["cereri de activare portal", activations],
         ["tichete de suport", tickets],
-        ["agenții active", activeOrgs],
-        ["agenții în așteptare", pendingOrgs],
-        ["agenții în colaborare", collabOrgs],
-        ["proprietăți", properties],
-        ["roluri", roles],
-        ["profiluri", profilesCount],
-        ["publicări portal", publications],
         ["conexiuni portal", connections],
         ["organizații", orgs],
         ["jurnal audit", auditSensitive],
@@ -212,8 +171,6 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
       for (const p of data ?? []) actorName.set(p.id, p.full_name);
     }
 
-    const roleList = (roles.data ?? []).map((r) => r.role as string);
-    const publishedProperties = new Set((publications.data ?? []).map((p) => p.property_id)).size;
 
     const statusRank: Record<string, number> = { error: 0, not_configured: 1, disconnected: 2 };
     const integrations: IntegrationHealthRow[] = (connections.data ?? [])
@@ -234,7 +191,7 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
         return a.organizationName.localeCompare(b.organizationName, "ro");
       });
 
-    const todo = await buildTodo(admin);
+    const [todo, week] = await Promise.all([buildTodo(admin), buildWeek(admin)]);
 
     return {
       todo,
@@ -244,16 +201,7 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
         unresolvedTickets: tickets.count ?? 0,
       },
       integrations,
-      growth: {
-        activeAgencies: activeOrgs.count ?? 0,
-        pendingAgencies: pendingOrgs.count ?? 0,
-        totalUsers: profilesCount.count ?? 0,
-        admins: roleList.filter((r) => r === "agency_admin").length,
-        agents: roleList.filter((r) => r === "agent").length,
-        totalProperties: properties.count ?? 0,
-        publishedProperties,
-        collaborationAgencies: collabOrgs.count ?? 0,
-      },
+      week,
       audit: auditRows.map((a) => ({
         id: a.id,
         action: a.action,
@@ -361,5 +309,71 @@ async function buildTodo(admin: Admin): Promise<SuperadminTodo> {
       (pubs.data ?? []) as { organization_id: string; last_error: string | null }[],
       (id) => nameOf.get(id) ?? "—",
     ),
+  };
+}
+
+/** Blocul „Ultimele 7 zile”: numărători agregate, agențiile demo excluse. */
+async function buildWeek(admin: Admin): Promise<SuperadminWeek> {
+  const now = Date.now();
+  const since = new Date(now - 7 * 86_400_000).toISOString();
+  const prev = new Date(now - 14 * 86_400_000).toISOString();
+  const { data: orgRows, error } = await admin.from("organizations").select("id,is_demo,status,archived_at,is_trial");
+  if (error) throw new Error(`Interogările dashboardului au eșuat — organizații: ${error.message}`);
+  const orgs = orgRows ?? [];
+  const demoIds = orgs.filter((o) => o.is_demo).map((o) => o.id);
+  const notDemo = <T extends { or: (f: string) => T }>(q: T): T =>
+    demoIds.length ? q.or(`organization_id.is.null,organization_id.not.in.(${demoIds.join(",")})`) : q;
+  const realOrg = <T extends { not: (c: string, o: string, v: string) => T; filter: (c: string, o: string, v: string) => T }>(q: T): T =>
+    demoIds.length ? q.not("organization_id", "in", `(${demoIds.join(",")})`) : q;
+  const count = (t: "properties" | "leads", from: string, to?: string) => {
+    let q = admin.from(t).select("id", { count: "exact", head: true }).is("deleted_at", null).gte("created_at", from);
+    if (to) q = q.lt("created_at", to);
+    return realOrg(q);
+  };
+  const ops = (success: boolean) =>
+    notDemo(
+      admin
+        .from("portal_operation_logs")
+        .select("id", { count: "exact", head: true })
+        .in("operation", [...WEEK_PORTAL_OPERATIONS])
+        .eq("success", success)
+        .gte("created_at", since),
+    );
+
+  const [props, propsPrev, leads, leadsPrev, okOps, badOps, members] = await Promise.all([
+    count("properties", since),
+    count("properties", prev, since),
+    count("leads", since),
+    count("leads", prev, since),
+    ops(true),
+    ops(false),
+    realOrg(admin.from("profiles").select("id").not("organization_id", "is", null)),
+  ]);
+  const failed = ([["proprietăți", props], ["proprietăți anterioare", propsPrev], ["lead-uri", leads], ["lead-uri anterioare", leadsPrev], ["operațiuni reușite", okOps], ["operațiuni eșuate", badOps], ["utilizatori", members]] as [string, { error: { message: string } | null }][]).filter(([, r]) => r.error);
+  if (failed.length) throw new Error(`Interogările dashboardului au eșuat — ${failed.map(([l, r]) => `${l}: ${r.error?.message}`).join(" | ")}`);
+
+  // Din Auth citim doar `last_sign_in_at`, nimic altceva nu iese din server.
+  const lastLogin = new Map<string, string | null>();
+  for (let page = 1; page <= 50; page++) {
+    const { data, error: authErr } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (authErr) throw new Error("Ultimele autentificări nu au putut fi citite.");
+    for (const u of data.users) lastLogin.set(u.id, u.last_sign_in_at ?? null);
+    if (data.users.length < 1000) break;
+  }
+  const ids = (members.data ?? []).map((m) => m.id);
+  const since7 = now - 7 * 86_400_000;
+  const active = orgs.filter((o) => !o.is_demo && o.status === "active" && !o.archived_at);
+  return {
+    activeAgencies: active.length,
+    trialAgencies: active.filter((o) => o.is_trial).length,
+    paidAgencies: active.filter((o) => !o.is_trial).length,
+    activeUsers: ids.filter((id) => isActiveLogin(lastLogin.get(id), since7)).length,
+    totalUsers: ids.length,
+    newProperties: props.count ?? 0,
+    newPropertiesPrev: propsPrev.count ?? 0,
+    newLeads: leads.count ?? 0,
+    newLeadsPrev: leadsPrev.count ?? 0,
+    portalSuccess: okOps.count ?? 0,
+    portalFailed: badOps.count ?? 0,
   };
 }

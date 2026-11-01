@@ -7,22 +7,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Building2,
   History,
   PlugZap,
-  Users,
-  Layers,
-  Handshake,
-  UploadCloud,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { QueryError } from "@/components/app/QueryError";
 import { ListSkeleton } from "@/components/app/LoadingState";
 import { PortalLogo } from "@/components/app/PortalLogo";
-import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateTime, formatNumber } from "@/lib/format";
 import { auditActionLabel, auditEntityLabels } from "@/lib/labels";
 import {
@@ -36,6 +29,7 @@ import {
 } from "@/lib/superadmin-dashboard.functions";
 import { cn } from "@/lib/utils";
 import { appHead } from "@/components/app/app-head";
+import { WeekBlock } from "@/components/app/SuperadminWeekBlock";
 import { TodoBlock } from "@/components/app/SuperadminTodoBlock";
 import { todoItemCount, todoSubtitle } from "@/lib/superadmin-todo";
 
@@ -55,7 +49,6 @@ function SuperadminDashboard() {
     staleTime: 15_000,
   });
 
-  const growth = data?.growth;
 
   return (
     <>
@@ -119,59 +112,8 @@ function SuperadminDashboard() {
         )}
       </section>
 
-      {/* 3 · Creșterea platformei */}
-      <section className="space-y-3">
-        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Creșterea platformei
-        </h2>
-        <div className="grid gap-px overflow-hidden rounded-2xl bg-border sm:grid-cols-2 xl:grid-cols-5">
-          <MetricCard
-            label="Agenții active"
-            value={growth?.activeAgencies}
-            hint={
-              growth
-                ? `${formatNumber(growth.pendingAgencies)} în așteptare de aprobare`
-                : undefined
-            }
-            icon={Building2}
-            loading={isLoading}
-            to="/superadmin/agencies"
-          />
-          <MetricCard
-            label="Utilizatori"
-            value={growth?.totalUsers}
-            hint={
-              growth
-                ? `${formatNumber(growth.admins)} admini · ${formatNumber(growth.agents)} agenți`
-                : undefined
-            }
-            icon={Users}
-            loading={isLoading}
-            to="/superadmin/users"
-          />
-          <MetricCard
-            label="Proprietăți"
-            value={growth?.totalProperties}
-            hint="în toate agențiile"
-            icon={Layers}
-            loading={isLoading}
-          />
-          <MetricCard
-            label="Publicate pe portal"
-            value={growth?.publishedProperties}
-            hint="pe cel puțin un portal"
-            icon={UploadCloud}
-            loading={isLoading}
-          />
-          <MetricCard
-            label="Agenții în colaborare"
-            value={growth?.collaborationAgencies}
-            hint="modul MLS activat"
-            icon={Handshake}
-            loading={isLoading}
-          />
-        </div>
-      </section>
+      {/* 3 · Ultimele 7 zile */}
+      <WeekBlock week={data?.week} loading={isLoading} />
 
       {/* 4 · Activitate recentă */}
       <section className="panel overflow-hidden">
@@ -222,51 +164,6 @@ function SuperadminDashboard() {
       </section>
     </>
   );
-}
-
-function MetricCard({
-  label,
-  value,
-  hint,
-  icon: Icon,
-  loading,
-  to,
-}: {
-  label: string;
-  value: number | undefined;
-  hint?: string;
-  icon: LucideIcon;
-  loading: boolean;
-  to?: "/superadmin/agencies" | "/superadmin/users";
-}) {
-  const body = (
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          {label}
-        </p>
-        {loading ? (
-          <Skeleton className="mt-2.5 h-7 w-16" />
-        ) : (
-          <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
-            {formatNumber(value ?? 0)}
-          </p>
-        )}
-        {hint ? <p className="mt-1 truncate text-xs text-muted-foreground">{hint}</p> : null}
-      </div>
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-        <Icon className="size-4.5" />
-      </span>
-    </div>
-  );
-  if (to) {
-    return (
-      <Link to={to} className="block bg-surface p-5 transition-colors hover:bg-muted/40">
-        {body}
-      </Link>
-    );
-  }
-  return <div className="bg-surface p-5">{body}</div>;
 }
 
 function IntegrationRow({ row }: { row: IntegrationHealthRow }) {
