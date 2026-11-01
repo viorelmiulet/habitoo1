@@ -32,18 +32,14 @@ export function SectionCard({
 }) {
   return (
     <Panel asChild>
-      <section data-tour={dataTour} className={cn("overflow-hidden", className)}>
+      <section data-tour={dataTour} className={cn("overflow-hidden rounded-card", className)}>
         {title || action ? (
           <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3.5">
-            {Icon ? (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Icon className="size-4" />
-              </span>
-            ) : null}
+            {Icon ? <Icon className="size-[18px] shrink-0 text-navy-muted" /> : null}
             <div className="min-w-0 flex-1">
-              {title ? <h2 className="truncate text-sm font-semibold">{title}</h2> : null}
+              {title ? <h2 className="truncate text-base font-bold">{title}</h2> : null}
               {description ? (
-                <p className="truncate text-xs text-muted-foreground">{description}</p>
+                <p className="truncate text-[13px] text-muted-foreground">{description}</p>
               ) : null}
             </div>
             {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}

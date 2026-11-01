@@ -31,19 +31,17 @@ export function EmptyState({
       {Icon ? (
         <span
           className={cn(
-            "flex items-center justify-center rounded-2xl bg-muted text-muted-foreground ring-1 ring-border/60 ring-inset",
-            compact ? "size-10 rounded-xl" : "size-12",
+            "flex items-center justify-center rounded-full bg-muted text-muted-foreground",
+            compact ? "size-10" : "size-12",
           )}
         >
           <Icon className={compact ? "size-5" : "size-6"} />
         </span>
       ) : null}
       <div className="max-w-sm">
-        <p className={cn("font-medium", compact && "text-sm")}>{title}</p>
+        <p className="text-[15px] font-bold">{title}</p>
         {description ? (
-          <p className={cn("mt-1 text-muted-foreground", compact ? "text-xs" : "text-sm")}>
-            {description}
-          </p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{description}</p>
         ) : null}
       </div>
       {action ? (
