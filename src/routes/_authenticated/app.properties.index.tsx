@@ -733,12 +733,12 @@ function PropertiesPage() {
           destinations={meta?.destinations ?? []}
           savedLinks={<>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild><button type="button" data-tour="properties-saved-views" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">Filtre salvate <ChevronDown className="size-3.5" aria-hidden /></button></DropdownMenuTrigger>
+              <DropdownMenuTrigger asChild><button type="button" data-tour="properties-saved-views" className="inline-flex items-center gap-1 text-sm font-semibold text-gold-dark hover:text-gold-dark/80">Filtre salvate <ChevronDown className="size-3.5" aria-hidden /></button></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-56">
                 {savedViews.views.length > 0 ? savedViews.views.map((saved) => <DropdownMenuItem key={saved.id} onSelect={() => setFilters(normalizeSavedPropertyFilters(saved.config))}>{saved.name}</DropdownMenuItem>) : <DropdownMenuItem disabled>Niciun filtru salvat</DropdownMenuItem>}
               </DropdownMenuContent>
             </DropdownMenu>
-            <button type="button" onClick={saveFilter} className="text-sm text-muted-foreground hover:text-foreground">Salvează filtrul</button>
+            <button type="button" onClick={saveFilter} className="text-sm font-semibold text-gold-dark hover:text-gold-dark/80">Salvează filtrul</button>
           </>}
         />
 

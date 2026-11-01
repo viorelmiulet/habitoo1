@@ -93,7 +93,7 @@ export function PortalFilterSelect({
           <ChevronsUpDown className="size-4 shrink-0 opacity-60" aria-hidden />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 max-w-[calc(100vw-2rem)] p-0" align="start">
+      <PopoverContent className="w-80 max-w-[calc(100vw-2rem)] rounded-[12px] p-0" align="start">
         <PortalFilterOptionsList
           value={value}
           options={options}

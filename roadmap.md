@@ -1,3 +1,15 @@
+## Panoul de filtre în stilul nou (Proprietăți)
+- [x] Tab-uri fără aspect de dosar: 15px bold, activ cu linie aurie 2px, linie border sub toate
+- [x] Panou card surface, colțuri 14px, padding 20px; câmpuri 40px / colțuri 10px / text 14px stânga
+- [x] Etichete 13px/600 muted-foreground; „Caută" bleumarin 40px bold; linkuri 14px semibold gold-dark
+- [x] Ferestrele de filtre (localități, zonă, valabilitate, alte filtre, portaluri, promovare) colțuri 12px
+- [x] Verificat în cont: stiluri calculate corect, 12px pe toate pop-up-urile, fără scroll orizontal la 390px
+- [x] Teste: 155 trec (inclusiv 6 ale panoului); build OK
+
+## Repararea a 4 teste stricate din turnuri anterioare
+- [x] OnboardingTour.test.tsx + OnboardingTour.context.test.tsx + PortalRepublishDialog.test.tsx: lipsea `// @vitest-environment jsdom` (window/document/localStorage nedefinite)
+- [x] property-portal-grid.test.ts: clasele și mărimea logo-ului din cardul de publicare se schimbaseră la compactare (gap-3, xl:grid-cols-3 2xl:grid-cols-4, size 32)
+
 ## Titlul hero — dimensionare după Manrope
 - [x] h1 homepage 36/44/56px, line-height 1.08, letter-spacing -0.02em (inline, fiindcă regula globală `h1,h2,h3{letter-spacing:0}` bat utilitatea), coloana text 1.05fr
 - [x] Playwright 1440/1024/390: 4/4/4 rânduri, fără scroll orizontal, aurul și textul neschimbate; 92 teste + build OK

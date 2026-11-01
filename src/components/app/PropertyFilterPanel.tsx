@@ -1,6 +1,6 @@
 /**
- * Panoul de filtre al listei de proprietăți: tab-uri tip dosar și patru
- * coloane compacte. Tab-ul se aplică imediat; restul doar la „Caută” / Enter.
+ * Panoul de filtre al listei de proprietăți: tab-uri cu linie aurie dedesubt și
+ * patru coloane compacte. Tab-ul se aplică imediat; restul doar la „Caută” / Enter.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -51,14 +51,14 @@ export type PropertyFilterPanelProps = {
   savedLinks?: ReactNode;
 };
 
-const fieldBase = "h-9 w-full rounded-[4px] border border-input bg-surface px-2 text-[15px] text-foreground shadow-none placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:border-primary";
+const fieldBase = "h-10 w-full rounded-[10px] border border-input bg-surface px-2 text-[14px] text-foreground shadow-none placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:border-primary";
 const valued = "border-primary";
-const triggerBase = cn(fieldBase, "relative justify-center pr-7 text-center font-normal [&>svg]:absolute [&>svg]:right-2 [&>svg]:size-3.5 [&>svg]:opacity-80 [&>span]:text-center");
+const triggerBase = cn(fieldBase, "relative justify-start pr-7 text-left font-normal [&>svg]:absolute [&>svg]:right-2 [&>svg]:size-3.5 [&>svg]:opacity-80 [&>span]:text-left");
 
 function Row({ label, htmlFor, children, advanced, expanded }: { label: string; htmlFor?: string; children: ReactNode; advanced?: boolean; expanded?: boolean }) {
   return (
     <div data-filter-row={label} className={cn("grid grid-cols-1 gap-1 md:grid-cols-[minmax(104px,140px)_minmax(140px,220px)] md:items-center md:gap-3 xl:gap-2", advanced && !expanded && "hidden md:grid")}>
-      <label htmlFor={htmlFor} className="text-[15px] font-normal text-foreground/80 md:truncate md:text-right">{label}</label>
+      <label htmlFor={htmlFor} className="text-[13px] font-semibold text-muted-foreground md:truncate md:text-right">{label}</label>
       <div className="min-w-0">{children}</div>
     </div>
   );
@@ -68,9 +68,9 @@ function Range({ idPrefix, label, min, max, onMin, onMax, type = "text", format 
   const show = format ?? ((v: string) => v);
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
-      <input id={idPrefix} aria-label={`${label} de la`} type={type} inputMode={type === "text" ? "numeric" : undefined} value={show(min)} onChange={(e) => onMin(e.target.value)} className={cn(fieldBase, "px-1 text-[13px] [&::-webkit-calendar-picker-indicator]:hidden", min && valued)} />
+      <input id={idPrefix} aria-label={`${label} de la`} type={type} inputMode={type === "text" ? "numeric" : undefined} value={show(min)} onChange={(e) => onMin(e.target.value)} className={cn(fieldBase, "px-1 text-[14px] [&::-webkit-calendar-picker-indicator]:hidden", min && valued)} />
       <span className="text-foreground/70">-</span>
-      <input aria-label={`${label} până la`} type={type} inputMode={type === "text" ? "numeric" : undefined} value={show(max)} onChange={(e) => onMax(e.target.value)} className={cn(fieldBase, "px-1 text-[13px] [&::-webkit-calendar-picker-indicator]:hidden", max && valued)} />
+      <input aria-label={`${label} până la`} type={type} inputMode={type === "text" ? "numeric" : undefined} value={show(max)} onChange={(e) => onMax(e.target.value)} className={cn(fieldBase, "px-1 text-[14px] [&::-webkit-calendar-picker-indicator]:hidden", max && valued)} />
     </div>
   );
 }
@@ -89,12 +89,12 @@ function MultiSelect({ id, label, empty, options, value, onChange }: { id: strin
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" id={id} aria-label={label} className={cn(fieldBase, "relative flex items-center justify-center pr-7", value.length > 0 && valued)}>
+        <button type="button" id={id} aria-label={label} className={cn(fieldBase, "relative flex items-center justify-start pr-7", value.length > 0 && valued)}>
           <span className="truncate">{text}</span>
           <ChevronDown aria-hidden className="absolute right-2 size-3.5 opacity-80" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="max-h-80 w-64 overflow-y-auto p-1">
+      <PopoverContent align="start" className="max-h-80 w-64 overflow-y-auto rounded-[12px] p-1">
         {options.length === 0 ? <p className="px-2 py-1.5 text-sm text-muted-foreground">Nicio opțiune</p> : options.map((o) => {
           const checked = value.includes(o.value);
           return (
@@ -131,15 +131,16 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
 
   return (
     <div>
-      <div role="tablist" aria-label="Categorie proprietate" className="flex overflow-x-auto">
+      <div role="tablist" aria-label="Categorie proprietate" className="flex overflow-x-auto border-b border-border">
         {PROPERTY_TYPE_TABS.map((t) => (
           <button key={t.value} type="button" role="tab" aria-selected={tab === t.value} onClick={() => onTab(t.value)}
-            className={cn("relative h-10 shrink-0 rounded-t-[4px] border border-transparent px-4 text-base", tab === t.value ? "z-10 -mb-px border-border border-b-surface bg-surface text-foreground" : "text-primary hover:underline")}>
+            className={cn("relative h-10 shrink-0 px-4 text-[15px] font-bold", tab === t.value ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
             {t.label}
+            {tab === t.value ? <span aria-hidden className="absolute inset-x-2 bottom-0 h-[2px] rounded-full bg-gold" /> : null}
           </button>
         ))}
       </div>
-      <form onSubmit={submit} data-tour="properties-filters" className="rounded-[4px] rounded-tl-none border border-border bg-surface p-4">
+      <form onSubmit={submit} data-tour="properties-filters" className="mt-3 rounded-[14px] border border-border bg-surface p-5">
         <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2 xl:grid-cols-4">
           <div data-filter-column="1" className="space-y-2">
             <Row label="Județ" htmlFor="pf-county">
@@ -176,12 +177,12 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
             <Row label="Valabilitate" htmlFor="pf-statuses" advanced expanded={expanded}>
               <Popover>
                 <PopoverTrigger asChild>
-                  <button type="button" id="pf-statuses" className={cn(fieldBase, "relative flex items-center justify-center pr-7", draft.statuses && valued)}>
+                  <button type="button" id="pf-statuses" className={cn(fieldBase, "relative flex items-center justify-start pr-7", draft.statuses && valued)}>
                     <span className="whitespace-nowrap">{statuses.length} selectate</span>
                     <ChevronDown aria-hidden className="absolute right-2 size-3.5 opacity-80" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-56 p-1">
+                <PopoverContent align="start" className="w-56 rounded-[12px] p-1">
                   {PROPERTY_STATUSES.map((s) => {
                     const checked = statuses.includes(s);
                     return (
@@ -219,22 +220,22 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
             <Row label="Alte filtre" htmlFor="pf-other" advanced expanded={expanded}>
               <Popover>
                 <PopoverTrigger asChild>
-                  <button type="button" id="pf-other" className={cn(fieldBase, "relative flex items-center justify-center pr-7", otherCount > 0 && valued)}>
+                  <button type="button" id="pf-other" className={cn(fieldBase, "relative flex items-center justify-start pr-7", otherCount > 0 && valued)}>
                     <span>{otherCount > 0 ? `Opțiuni (${otherCount})` : "Opțiuni"}</span>
                     <ChevronDown aria-hidden className="absolute right-2 size-3.5 opacity-80" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="w-80 space-y-3 p-3">
+                <PopoverContent align="end" className="w-80 space-y-3 rounded-[12px] p-3">
                   {showAgent ? (
-                    <div className="space-y-1"><label htmlFor="pf-agent" className="text-sm">Agent</label>
+                    <div className="space-y-1"><label htmlFor="pf-agent" className="text-[13px] font-semibold text-muted-foreground">Agent</label>
                       <SimpleSelect id="pf-agent" value={draft.agent} active={draft.agent !== "all"} onChange={(v) => set("agent", v)} options={[["all", "Toți agenții"], ...props.agentOptions.map((o) => [o.value, `${o.label} (${o.count})`] as [string, string])]} /></div>
                   ) : null}
-                  <div className="space-y-1"><label htmlFor="pf-bathrooms" className="text-sm">Băi</label>
+                  <div className="space-y-1"><label htmlFor="pf-bathrooms" className="text-[13px] font-semibold text-muted-foreground">Băi</label>
                     <SimpleSelect id="pf-bathrooms" value={draft.bathrooms || "any"} active={Boolean(draft.bathrooms)} onChange={(v) => set("bathrooms", v === "any" ? "" : v)} options={[["any", "Toate"], ["1", "1"], ["2", "2"], ["3+", "3+"]]} /></div>
-                  <div className="space-y-1"><label htmlFor="pf-floor" className="text-sm">Etaj</label>
+                  <div className="space-y-1"><label htmlFor="pf-floor" className="text-[13px] font-semibold text-muted-foreground">Etaj</label>
                     <Range idPrefix="pf-floor" label="Etaj" min={draft.floorMin} max={draft.floorMax} onMin={(v) => set("floorMin", digitsOnly(v))} onMax={(v) => set("floorMax", digitsOnly(v))} /></div>
                   {props.sources.length >= 2 ? (
-                    <div className="space-y-1"><label htmlFor="pf-source" className="text-sm">Sursă</label>
+                    <div className="space-y-1"><label htmlFor="pf-source" className="text-[13px] font-semibold text-muted-foreground">Sursă</label>
                       <SimpleSelect id="pf-source" value={draft.source} active={draft.source !== "all"} onChange={(v) => set("source", v)} options={[["all", "Toate sursele"], ...props.sources.map((s) => [s, formatPropertySourceLabel(s)] as [string, string])]} /></div>
                   ) : null}
                   <label className="flex items-center gap-2 text-sm"><Checkbox checked={draft.mine} onCheckedChange={(c) => set("mine", c === true)} /> Doar ale mele</label>
@@ -246,15 +247,15 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
         </div>
         <div className="mt-4 grid grid-cols-1 items-center gap-3 md:flex md:justify-end xl:grid xl:grid-cols-4 xl:gap-x-4">
           <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 md:justify-end xl:col-span-3">
-            <button type="button" data-tour="properties-filters-toggle" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="inline-flex items-center gap-1 text-[15px] text-primary md:hidden">
+            <button type="button" data-tour="properties-filters-toggle" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="inline-flex items-center gap-1 text-sm font-semibold text-gold-dark md:hidden">
               {expanded ? "Mai puține filtre" : "Mai multe filtre"}{expanded ? <ChevronUp className="size-4" aria-hidden /> : <ChevronDown className="size-4" aria-hidden />}
             </button>
             {props.savedLinks}
-            <button type="button" onClick={onReset} className="text-[15px] text-primary hover:underline">Resetează toate filtrele</button>
+            <button type="button" onClick={onReset} className="text-sm font-semibold text-gold-dark hover:text-gold-dark/80">Resetează toate filtrele</button>
           </div>
           <div className="grid grid-cols-1 md:w-[220px] xl:w-auto xl:grid-cols-[minmax(104px,140px)_minmax(140px,220px)] xl:gap-2">
             <span aria-hidden className="hidden xl:block" />
-            <button type="submit" className="h-[38px] w-full rounded-[4px] bg-primary text-[15px] font-medium text-primary-foreground hover:bg-primary/90">Caută</button>
+            <button type="submit" className="h-10 w-full rounded-[10px] bg-primary text-sm font-bold text-primary-foreground hover:bg-primary/90">Caută</button>
           </div>
         </div>
       </form>
