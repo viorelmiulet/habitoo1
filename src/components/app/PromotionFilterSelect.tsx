@@ -97,7 +97,7 @@ export function PromotionFilterSelect({
           <ChevronsUpDown className="size-4 shrink-0 opacity-60" aria-hidden />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
+      <PopoverContent className="w-80 rounded-[12px] p-0" align="start">
         <Command>
           <p className="px-3 pt-3 pb-1 text-xs text-muted-foreground">
             Doar anunțurile publicate pe portalul respectiv. Poți alege mai multe.
