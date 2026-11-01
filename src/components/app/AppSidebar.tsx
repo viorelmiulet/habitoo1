@@ -50,6 +50,7 @@ import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import sidebarLogo from "@/assets/habitoo-sidebar-light.png.asset.json";
+import sidebarMark from "@/assets/habitoo-mark-light.png.asset.json";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import {
@@ -453,7 +454,7 @@ export function AppSidebar({
             collapsed ? "size-11" : "min-h-14 w-full",
           )}
         >
-          <img src={collapsed ? "/favicon.png" : sidebarLogo.url} alt="Habitoo CRM"
+          <img src={collapsed ? sidebarMark.url : sidebarLogo.url} alt="Habitoo CRM"
             className={cn("object-contain", collapsed ? "size-10" : "h-auto w-40 max-w-full")}
             loading="eager" decoding="async" />
         </Link>
