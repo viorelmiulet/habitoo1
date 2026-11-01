@@ -49,7 +49,7 @@ export function useRememberedPageSize(
 export function PageSizeSelect({ value, onChange }: { value: ListPageSize; onChange: (size: ListPageSize) => void }) {
   return (
     <Select value={String(value)} onValueChange={(v) => onChange(normalizeListPageSize(v))}>
-      <SelectTrigger aria-label="Anunțuri pe pagină" className="w-auto gap-2">
+      <SelectTrigger aria-label="Anunțuri pe pagină" className="h-10 w-auto gap-2 rounded-[10px]">
         <span className="shrink-0 text-muted-foreground">Anunțuri pe pagină:</span>
         <SelectValue />
       </SelectTrigger>

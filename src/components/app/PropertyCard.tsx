@@ -85,7 +85,7 @@ export function PropertyCard({
   ].filter(Boolean) as { icon: typeof Ruler; text: string }[];
 
   return (
-    <article className="group flex min-w-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-border transition-shadow hover:shadow-soft">
+    <article className="group flex min-w-0 flex-col overflow-hidden rounded-[14px] bg-card ring-1 ring-border transition-shadow hover:shadow-soft">
       <div className="relative">
         <PropertyThumb
           propertyId={property.id}
@@ -148,9 +148,9 @@ export function PropertyCard({
             <StatusBadge tone={propertyStatusTone[property.status]} dot>
               {propertyStatusLabels[property.status]}
             </StatusBadge>
-            <StatusBadge tone="primary">{transactionLabels[property.transaction_kind]}</StatusBadge>
+            <span className={cn("rounded-pill px-2.5 py-0.5 text-xs font-bold", property.transaction_kind === "rent" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>{transactionLabels[property.transaction_kind]}</span>
           </div>
-          <p className="shrink-0 text-lg font-semibold">
+          <p className="shrink-0 text-[18px] font-extrabold">
             {formatMoney(property.price, property.currency)}
           </p>
         </div>
