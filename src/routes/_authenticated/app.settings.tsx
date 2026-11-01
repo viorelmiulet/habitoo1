@@ -435,8 +435,6 @@ function SettingsPage() {
             <div className="rounded-[22px] border border-border/70 bg-card p-1 shadow-sm sm:p-2">
               <AccountAccessCard highlightedRequestId={request} />
             </div>
-            <div className="mt-4">
-            </div>
           </TabsContent>
 
           {user?.role === "agency_admin" ? (
