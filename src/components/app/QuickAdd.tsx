@@ -232,7 +232,7 @@ export function QuickAdd({ variant = "topbar" }: { variant?: "topbar" | "mobile-
             <button
               type="button"
               aria-label="Adăugare rapidă"
-              className="flex size-[52px] -translate-y-3 items-center justify-center rounded-full bg-gold text-primary shadow-lg ring-4 ring-surface transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-primary"
+              className="flex size-[52px] -translate-y-3 items-center justify-center rounded-full bg-gold text-gold-foreground shadow-lg ring-4 ring-surface transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-gold-foreground"
             >
               <Plus className="size-6" strokeWidth={2.5} />
             </button>
