@@ -14,6 +14,7 @@ import {
   type SuperadminTodo,
 } from "@/lib/superadmin-todo";
 import { AGENCY_ROW_LIMIT, buildAgencyRowsFrom, type AgencyRow } from "@/lib/superadmin-agencies";
+import { buildPortalCardsFrom, type PortalCard } from "@/lib/superadmin-portals";
 import { WEEK_PORTAL_OPERATIONS, isActiveLogin, type SuperadminWeek } from "@/lib/superadmin-week";
 
 type AuthContext = {
@@ -32,65 +33,12 @@ async function assertSuperadmin(context: AuthContext) {
   }
 }
 
-export type WorkQueue = {
-  pendingRegistrations: number;
-  pendingPortalActivations: number;
-  unresolvedTickets: number;
-};
-
-export type IntegrationHealthRow = {
-  organizationId: string;
-  organizationName: string;
-  portal: string;
-  status: string;
-  activated: boolean;
-  lastSyncAt: string | null;
-  lastSyncStatus: string | null;
-  lastError: string | null;
-};
-
-export type RecentAuditEntry = {
-  id: string;
-  action: string;
-  entity: string | null;
-  createdAt: string;
-  actorName: string | null;
-  organizationName: string | null;
-};
-
 export type SuperadminDashboard = {
-  queue: WorkQueue;
-  integrations: IntegrationHealthRow[];
+  todo: SuperadminTodo;
   week: SuperadminWeek;
   agencies: AgencyRow[];
-  audit: RecentAuditEntry[];
-  todo: SuperadminTodo;
+  portals: PortalCard[];
 };
-
-/** Acțiunile sensibile urmărite în secțiunea „Activitate recentă”. */
-const SENSITIVE_AUDIT_ACTIONS = [
-  "agency.created",
-  "agency.approved",
-  "agency.deleted",
-  "agency.archived",
-  "agency.suspended",
-  "agency.status_changed",
-  "organization.deleted",
-  "organization.suspended",
-  "registration.approved",
-  "registration.rejected",
-  "registration_request.approved",
-  "registration_request.rejected",
-  "user.deleted",
-  "user.reassigned",
-  "user.organization_changed",
-  "user.data_reassigned",
-  "portal.activated",
-  "portal.activation_approved",
-  "portal.activation_rejected",
-  "portal_connections.upsert",
-  "qa.purged",
-];
 
 export const getSuperadminDashboard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -98,127 +46,15 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
     await assertSuperadmin(context as AuthContext);
     const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
 
-    const [
-      registrations,
-      activations,
-      tickets,
-      connections,
-      orgs,
-      auditSensitive,
-    ] = await Promise.all([
-      admin
-        .from("agency_registration_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending"),
-      admin
-        .from("portal_activation_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending"),
-      admin
-        .from("support_tickets")
-        .select("id", { count: "exact", head: true })
-        .in("status", ["open", "in_progress"]),
-      admin
-        .from("portal_connections")
-        .select(
-          "organization_id,portal,status,activated,last_sync_at,last_sync_status,last_sync_error",
-        ),
-      admin.from("organizations").select("id,name"),
-      admin
-        .from("audit_logs")
-        .select("id,action,entity,created_at,actor_id,organization_id")
-        .in("action", SENSITIVE_AUDIT_ACTIONS)
-        .order("created_at", { ascending: false })
-        .limit(15),
-    ]);
-
-    // O eroare de coloană sau de permisiune nu trebuie să arate ca „nicio
-    // conexiune”: o ridicăm ca eroare vizibilă în interfață.
-    const failures = (
-      [
-        ["cereri de înscriere", registrations],
-        ["cereri de activare portal", activations],
-        ["tichete de suport", tickets],
-        ["conexiuni portal", connections],
-        ["organizații", orgs],
-        ["jurnal audit", auditSensitive],
-      ] as [string, { error: { message: string } | null }][]
-    )
-      .filter(([, r]) => r.error)
-      .map(([label, r]) => `${label}: ${r.error?.message}`);
-
-    if (failures.length > 0) {
-      console.error("[superadmin-dashboard] query failures", failures);
-      throw new Error(`Interogările dashboardului au eșuat — ${failures.join(" | ")}`);
-    }
-
-    const orgName = new Map((orgs.data ?? []).map((o) => [o.id, o.name]));
-
-    // Fallback: dacă nicio acțiune sensibilă nu este înregistrată încă, arătăm
-    // ultimele evenimente de audit, ca secțiunea să nu apară gol fără motiv.
-    let auditRows = auditSensitive.data ?? [];
-    if (auditRows.length === 0) {
-      const { data } = await admin
-        .from("audit_logs")
-        .select("id,action,entity,created_at,actor_id,organization_id")
-        .order("created_at", { ascending: false })
-        .limit(15);
-      auditRows = data ?? [];
-    }
-
-    const actorIds = [...new Set(auditRows.map((a) => a.actor_id).filter(Boolean))] as string[];
-    const actorName = new Map<string, string>();
-    if (actorIds.length > 0) {
-      const { data } = await admin.from("profiles").select("id,full_name").in("id", actorIds);
-      for (const p of data ?? []) actorName.set(p.id, p.full_name);
-    }
-
-
-    const statusRank: Record<string, number> = { error: 0, not_configured: 1, disconnected: 2 };
-    const integrations: IntegrationHealthRow[] = (connections.data ?? [])
-      .map((c) => ({
-        organizationId: c.organization_id,
-        organizationName: orgName.get(c.organization_id) ?? "—",
-        portal: c.portal,
-        status: c.status,
-        activated: c.activated,
-        lastSyncAt: c.last_sync_at,
-        lastSyncStatus: c.last_sync_status,
-        lastError: c.last_sync_error,
-      }))
-      .sort((a, b) => {
-        const aErr = a.lastError ? -1 : (statusRank[a.status] ?? 5);
-        const bErr = b.lastError ? -1 : (statusRank[b.status] ?? 5);
-        if (aErr !== bErr) return aErr - bErr;
-        return a.organizationName.localeCompare(b.organizationName, "ro");
-      });
-
     const lastLogin = await loadLastLogins(admin);
-    const [todo, week, agencies] = await Promise.all([
+    const [todo, week, agencies, portals] = await Promise.all([
       buildTodo(admin),
       buildWeek(admin, lastLogin),
       buildAgencyRows(admin, lastLogin),
+      buildPortalCards(admin),
     ]);
 
-    return {
-      todo,
-      queue: {
-        pendingRegistrations: registrations.count ?? 0,
-        pendingPortalActivations: activations.count ?? 0,
-        unresolvedTickets: tickets.count ?? 0,
-      },
-      integrations,
-      week,
-      agencies,
-      audit: auditRows.map((a) => ({
-        id: a.id,
-        action: a.action,
-        entity: a.entity,
-        createdAt: a.created_at,
-        actorName: a.actor_id ? (actorName.get(a.actor_id) ?? null) : null,
-        organizationName: a.organization_id ? (orgName.get(a.organization_id) ?? null) : null,
-      })),
-    };
+    return { todo, week, agencies, portals };
   });
 
 type Admin = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
@@ -251,7 +87,7 @@ async function buildTodo(admin: Admin): Promise<SuperadminTodo> {
     notDemo(
       admin
         .from("portal_publications")
-        .select("organization_id,last_error")
+        .select("organization_id,property_id,portal_key,last_error")
         .eq("enabled", true)
         .eq("status", "error")
         .neq("portal_key", "facebook_catalog"),
@@ -314,7 +150,7 @@ async function buildTodo(admin: Admin): Promise<SuperadminTodo> {
     expiring: alerts.filter((a) => a.kind === "expiring").sort((x, y) => x.daysLeft - y.daysLeft).map(strip),
     expired: alerts.filter((a) => a.kind === "expired").sort((x, y) => x.daysLeft - y.daysLeft).map(strip),
     blocked: groupBlockedPublishing(
-      (pubs.data ?? []) as { organization_id: string; last_error: string | null }[],
+      (pubs.data ?? []) as { organization_id: string; property_id: string; portal_key: string; last_error: string | null }[],
       (id) => nameOf.get(id) ?? "—",
     ),
   };
@@ -428,4 +264,40 @@ async function buildAgencyRows(admin: Admin, lastLogin: Map<string, string | nul
     }),
   );
   return buildAgencyRowsFrom(stats, Date.now()).slice(0, AGENCY_ROW_LIMIT);
+}
+
+/** Secțiunea „Portaluri”: câte un card pe portal cu conexiuni activate la agenții non-demo. */
+async function buildPortalCards(admin: Admin): Promise<PortalCard[]> {
+  const { data: orgRows, error } = await admin.from("organizations").select("id,is_demo");
+  if (error) throw new Error(`Interogările dashboardului au eșuat — organizații: ${error.message}`);
+  const demo = new Set((orgRows ?? []).filter((o) => o.is_demo).map((o) => o.id));
+  const { data: conns, error: cErr } = await admin
+    .from("portal_connections")
+    .select("organization_id,portal")
+    .eq("activated", true)
+    .neq("portal", "facebook_catalog");
+  if (cErr) throw new Error(`Interogările dashboardului au eșuat — conexiuni: ${cErr.message}`);
+  const agencies = new Map<string, Set<string>>();
+  for (const c of conns ?? []) {
+    if (demo.has(c.organization_id)) continue;
+    const set = agencies.get(c.portal) ?? new Set<string>();
+    set.add(c.organization_id);
+    agencies.set(c.portal, set);
+  }
+  const demoIds = [...demo];
+  const head = { count: "exact" as const, head: true };
+  const counted = await Promise.all(
+    [...agencies.entries()].map(async ([portal, orgs]) => {
+      const q = (status: string) => {
+        let x = admin.from("portal_publications").select("id", head).eq("portal_key", portal).eq("enabled", true).eq("status", status);
+        if (demoIds.length) x = x.not("organization_id", "in", `(${demoIds.join(",")})`);
+        return x;
+      };
+      const [ok, bad] = await Promise.all([q("synced"), q("error")]);
+      const e = ok.error ?? bad.error;
+      if (e) throw new Error(`Interogările dashboardului au eșuat — publicări: ${e.message}`);
+      return { portal, agencies: orgs.size, published: ok.count ?? 0, errors: bad.count ?? 0 };
+    }),
+  );
+  return buildPortalCardsFrom(counted);
 }

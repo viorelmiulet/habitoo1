@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   anunturiLabel,
+  blockedDetail,
   classifyExpiry,
   groupBlockedPublishing,
   termLabel,
@@ -31,18 +32,21 @@ describe("De rezolvat", () => {
   it("separă „Oferta nu este publicabilă” de alte erori, pe agenție", () => {
     const g = groupBlockedPublishing(
       [
-        { organization_id: "a", last_error: "VDI.ro: Oferta nu este publicabilă: verifică statusul" },
-        { organization_id: "a", last_error: "Vumsi a respins datele" },
-        { organization_id: "b", last_error: null },
+        { organization_id: "a", property_id: "p1", portal_key: "vdi", last_error: "VDI.ro: Oferta nu este publicabilă: verifică statusul" },
+        { organization_id: "a", property_id: "p1", portal_key: "vumsi", last_error: "Vumsi a respins datele" },
+        { organization_id: "b", property_id: "p2", portal_key: "vdi", last_error: null },
       ],
       (id) => id.toUpperCase(),
     );
-    expect(g[0]).toEqual({ organizationId: "a", organizationName: "A", total: 2, notPublishable: 1, other: 1 });
+    expect(g[0]).toEqual({ organizationId: "a", organizationName: "A", listings: 1, portals: 2, total: 2, notPublishable: 1, other: 1 });
+    expect(blockedDetail({ ...g[0], portals: 11, total: 363, notPublishable: 356, other: 7 })).toBe(
+      "pe 11 portaluri · 363 de erori (356 „Oferta nu este publicabilă”, 7 alte erori)",
+    );
     expect(g[1].other).toBe(1);
   });
 
   it("numără cardurile și listează categoriile la zero", () => {
-    const todo = { counts: { ...zero, openTickets: 2 }, expiring: [], expired: [], blocked: [{ organizationId: "a", organizationName: "A", total: 1, notPublishable: 1, other: 0 }] };
+    const todo = { counts: { ...zero, openTickets: 2 }, expiring: [], expired: [], blocked: [{ organizationId: "a", organizationName: "A", listings: 1, portals: 1, total: 1, notPublishable: 1, other: 0 }] };
     expect(todoItemCount(todo)).toBe(2);
     expect(zeroCategories(todo.counts)).not.toContain("Tichete de suport");
     expect(zeroCategories(todo.counts)).toHaveLength(4);
