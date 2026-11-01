@@ -50,6 +50,7 @@ import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import sidebarLogo from "@/assets/habitoo-sidebar-light.png.asset.json";
+import sidebarMark from "@/assets/habitoo-mark-light.png.asset.json";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import {
