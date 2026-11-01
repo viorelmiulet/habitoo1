@@ -193,12 +193,12 @@ function HomePage() {
           <div aria-hidden className="home-grid pointer-events-none absolute inset-0 opacity-50" />
           <div aria-hidden className="home-glow home-glow-one" />
           <div aria-hidden className="home-glow home-glow-two" />
-          <Container className="relative grid min-h-[760px] items-center gap-14 pb-20 pt-8 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16 lg:pb-28 lg:pt-12">
+          <Container className="relative grid min-h-[760px] items-center gap-14 pb-20 pt-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:pb-28 lg:pt-12">
             <div className="max-w-2xl">
               <Eyebrow tone="light" className="border-gold/30 bg-gold/10 text-gold">
                 CRM imobiliar pentru agenții din România
               </Eyebrow>
-              <h1 className="mt-6 text-[2.6rem] leading-[1.05] font-semibold text-balance text-surface sm:text-6xl lg:text-[4.4rem]">
+              <h1 className="mt-6 text-[36px] leading-[1.08] font-semibold tracking-[-0.02em] text-balance text-surface md:text-[44px] xl:text-[56px]">
                 CRM imobiliar care transformă cererile și proprietățile în{" "}
                 <span className="text-gold">tranzacții închise.</span>
               </h1>
