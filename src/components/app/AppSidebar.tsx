@@ -402,6 +402,7 @@ export function AppSidebar({
             data-tour={groupTitle ? `group:${groupTitle === "Proprietăți" ? "Portofoliu" : groupTitle}` : `nav:${String(item.to)}`}
             data-nav-targets={groupTitle ? `nav:${String(item.to)}` : undefined}
             data-nav-row
+            aria-label={collapsed ? item.label : undefined}
             activeOptions={{ exact: item.exact }}
             aria-current={active ? "page" : undefined}
             onClick={onNavigate}

@@ -1,6 +1,6 @@
 ## Meniu lateral compact
-- [ ] Logo deschis, trei secțiuni și cont compact; acces, ghiduri și starea grupurilor păstrate
-- [ ] Teste structură/roluri/AI; verificare în cont desktop, 72px și telefon
+- [x] Logo deschis și favicon derivat, trei secțiuni, cont compact; roluri/AI și selectorul legacy Portofoliu păstrate, migrare stare veche
+- [x] 17 teste meniu/acces + 67 ghiduri trec; cont real desktop/72px/390: grup activ deschis, prima subpagină în 72px, navigare mobilă la Contacte fără erori. Build OK; fără date modificate sau publicare.
 
 ## Paleta Bleumarin & auriu
 - [x] Tokenuri globale și Manrope; raze, materiale și reguli dark păstrate; Fraunces rămâne pentru materiale
