@@ -29,6 +29,7 @@ import {
 } from "@/lib/superadmin-dashboard.functions";
 import { cn } from "@/lib/utils";
 import { appHead } from "@/components/app/app-head";
+import { AgenciesCard } from "@/components/app/SuperadminAgenciesCard";
 import { WeekBlock } from "@/components/app/SuperadminWeekBlock";
 import { TodoBlock } from "@/components/app/SuperadminTodoBlock";
 import { todoItemCount, todoSubtitle } from "@/lib/superadmin-todo";
@@ -114,6 +115,8 @@ function SuperadminDashboard() {
 
       {/* 3 · Ultimele 7 zile */}
       <WeekBlock week={data?.week} loading={isLoading} />
+
+      <AgenciesCard rows={data?.agencies} loading={isLoading} />
 
       {/* 4 · Activitate recentă */}
       <section className="panel overflow-hidden">
