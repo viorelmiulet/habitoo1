@@ -4,15 +4,31 @@ import {
   ChevronLeft,
   ChevronRight,
   EyeOff,
-  GripVertical,
+  Move,
   ImageOff,
   Images,
   RotateCw,
-  Star,
   Trash2,
   Upload,
   X,
 } from "lucide-react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { moveItem, withPrimaryFirst } from "@/lib/media-order";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
@@ -149,37 +165,16 @@ export function PropertyMediaManager({
     onError: (e: Error) => toastError(e),
   });
 
-  const setPrimary = useMutation({
-    mutationFn: async (id: string) => {
-      const { error: clearError } = await supabase
-        .from("property_images")
-        .update({ is_primary: false } as never)
-        .eq("property_id", propertyId);
-      if (clearError) throw clearError;
-      const { error } = await supabase
-        .from("property_images")
-        .update({ is_primary: true } as never)
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Imagine principală actualizată.");
-      invalidate();
-    },
-    onError: (e: Error) => toastError(e),
-  });
-
   const removeImage = useMutation({
     mutationFn: async (img: ImageRow) => {
       if (img.storage_path) await removeFromBucket(MEDIA_BUCKET, [img.storage_path]);
       const { error } = await supabase.from("property_images").delete().eq("id", img.id);
       if (error) throw error;
 
-      // Renumerotează pozițiile și promovează o nouă imagine principală dacă a fost ștearsă cea principală.
+      // Renumerotează pozițiile; baza de date marchează automat prima fotografie ca principală.
       const remaining = images.filter((i) => i.id !== img.id);
       for (const [idx, rest] of remaining.entries()) {
         const values: Record<string, unknown> = { position: idx };
-        if (img.is_primary && idx === 0) values["is_primary"] = true;
         const { error: fixError } = await supabase
           .from("property_images")
           .update(values as never)
@@ -211,6 +206,9 @@ export function PropertyMediaManager({
   });
 
   const reorder = useMutation({
+    onMutate: (ordered: ImageRow[]) => {
+      qc.setQueryData(imagesKey, withPrimaryFirst(ordered));
+    },
     mutationFn: async (ordered: ImageRow[]) => {
       const results = await Promise.all(
         ordered.map((img, idx) =>
@@ -243,13 +241,17 @@ export function PropertyMediaManager({
     upload.mutate(valid);
   };
 
-  const onDropReorder = (index: number) => {
-    if (dragIndex.current === null || dragIndex.current === index) return;
-    const next = [...images];
-    const [moved] = next.splice(dragIndex.current, 1);
-    next.splice(index, 0, moved);
-    dragIndex.current = null;
-    reorder.mutate(next);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    const from = images.findIndex((i) => i.id === active.id);
+    const to = images.findIndex((i) => i.id === over.id);
+    if (from < 0 || to < 0) return;
+    reorder.mutate(moveItem(images, from, to));
   };
 
   const imgUrl = (img: ImageRow) => {
@@ -302,8 +304,8 @@ export function PropertyMediaManager({
 
       {images.length > 1 ? (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <GripVertical className="size-3.5" aria-hidden /> Trage fotografiile pentru a schimba
-          ordinea. Fotografia marcată „Principală" este coperta anunțului.
+          <Move className="size-3.5" aria-hidden /> Folosește butonul cu săgeți pentru a muta
+          fotografiile. Prima fotografie este coperta anunțului.
         </p>
       ) : null}
 
@@ -316,20 +318,22 @@ export function PropertyMediaManager({
           description="Adaugă poze pentru acest anunț."
         />
       ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={images.map((i) => i.id)} strategy={rectSortingStrategy}>
         <div data-tour="media-grid" className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {images.map((img, idx) => {
             const url = imgUrl(img);
+            const isFirst = idx === 0;
             return (
-              <div
+              <SortableTile
                 key={img.id}
-                draggable
-                onDragStart={() => (dragIndex.current = idx)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => onDropReorder(idx)}
+                id={img.id}
                 className={`group relative overflow-hidden rounded-2xl bg-card p-0 ring-1 transition-shadow hover:shadow-soft ${
-                  img.is_primary ? "ring-2 ring-primary" : "ring-border/60"
+                  isFirst ? "ring-2 ring-primary" : "ring-border/60"
                 }`}
               >
+                {(handle) => (
+                <>
                 <button
                   type="button"
                   className="block aspect-square w-full bg-muted"
@@ -343,7 +347,7 @@ export function PropertyMediaManager({
                     </div>
                   )}
                 </button>
-                {img.is_primary ? (
+                {isFirst ? (
                   <span className="absolute top-2 left-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground">
                     Principală
                   </span>
@@ -357,12 +361,12 @@ export function PropertyMediaManager({
                   <Button
                     size="sm"
                     variant="ghost"
-                    title="Setează principală"
-                    onClick={() => setPrimary.mutate(img.id)}
+                    title="Mută fotografia"
+                    aria-label="Mută fotografia"
+                    className="cursor-grab touch-none active:cursor-grabbing"
+                    {...handle}
                   >
-                    <Star
-                      className={`size-3.5 ${img.is_primary ? "fill-primary text-primary" : ""}`}
-                    />
+                    <Move className="size-3.5" />
                   </Button>
                   <Button
                     size="sm"
@@ -416,10 +420,14 @@ export function PropertyMediaManager({
                     }
                   />
                 </div>
-              </div>
+                </>
+                )}
+              </SortableTile>
             );
           })}
         </div>
+        </SortableContext>
+        </DndContext>
       )}
 
       <Dialog open={preview !== null} onOpenChange={(o) => !o && setPreview(null)}>
@@ -468,6 +476,33 @@ export function PropertyMediaManager({
           ) : null}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function SortableTile({
+  id,
+  className,
+  children,
+}: {
+  id: string;
+  className: string;
+  children: (handle: Record<string, unknown>) => React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 10 : undefined,
+        opacity: isDragging ? 0.85 : undefined,
+      }}
+      className={className}
+    >
+      {children({ ...attributes, ...listeners, ref: setActivatorNodeRef })}
     </div>
   );
 }
