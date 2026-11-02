@@ -6,7 +6,7 @@
 import { publicCoords } from "@/lib/geo";
 import type { PropertyRow } from "@/lib/site-feed/mapper";
 import { cutAtWord, htmlToText, imo24Transactions } from "@/lib/portals/imo24/mapper";
-import { fold, type VumsiAttribute, type VumsiCategory } from "./nomenclature";
+import { fold, vumsiCategoryModel, type VumsiAttribute, type VumsiCategory } from "./nomenclature";
 
 export const VUMSI_TITLE_MAX = 255;
 export const VUMSI_COMPANY_NAME_MAX = 64;
@@ -34,18 +34,52 @@ export function vumsiKindOf(propertyType: string | null | undefined): VumsiHabit
   return (VUMSI_HABITOO_KINDS.find((k) => k.kind === t)?.kind as VumsiHabitooKind | undefined) ?? null;
 }
 
+/** Modelul de atribute Vumsi așteptat (confirmat de Vumsi); celelalte tipuri nu au cerință. */
+export const VUMSI_EXPECTED_MODEL: Partial<Record<VumsiHabitooKind, string>> = {
+  house: "attr_real_estate_house",
+  industrial: "attr_real_estate_industrial",
+  land: "attr_real_estate_land",
+};
+/** Tipurile pentru care publicarea se blochează dacă modelul categoriei diferă. */
+export const VUMSI_STRICT_MODEL_KINDS: VumsiHabitooKind[] = ["house", "industrial"];
+const MODEL_TEXT: Record<string, string> = {
+  attr_real_estate_land: "atributele de teren",
+  attr_real_estate_house: "atributele de casă",
+  attr_real_estate_industrial: "atributele de spațiu industrial",
+  attr_real_estate_apartment: "atributele de apartament",
+  attr_generic: "atributele generice",
+};
+
+/** Motivul de blocare când categoria legată are alt model decât cel așteptat; `null` dacă e în regulă. */
+export function vumsiModelMismatch(kind: VumsiHabitooKind, model: string | null): string | null {
+  if (!VUMSI_STRICT_MODEL_KINDS.includes(kind)) return null;
+  const want = VUMSI_EXPECTED_MODEL[kind]!;
+  if (model === want) return null;
+  const label = VUMSI_HABITOO_KINDS.find((k) => k.kind === kind)!.label.replace(/\s*\/\s*/g, "/").toLowerCase();
+  const has = model ? `folosește ${MODEL_TEXT[model] ?? `modelul ${model}`}` : "nu are modelul de atribute în snapshot";
+  return `Categoria Vumsi aleasă pentru ${label} ${has}; alege în SuperAdmin → Vumsi categoria cu modelul ${want}.`;
+}
+
 const TX_WORDS: Record<VumsiTransaction, RegExp> = { sale: /vanzar|vand/, rent: /inchiri/ };
 
-/** Sugestie după nume: categoria frunză care conține cuvântul tipului (preferată cea cu tranzacția în nume). */
+/**
+ * Sugestie: pentru casă/vilă, industrial și teren se preferă categoria cu modelul de atribute
+ * așteptat (categoriile cu alt model cunoscut sunt excluse); altfel, după nume, ca înainte
+ * (preferată cea cu tranzacția în nume).
+ */
 export function suggestVumsiCategory(kind: VumsiHabitooKind, tx: VumsiTransaction, categories: VumsiCategory[]): VumsiCategory | null {
   const words = VUMSI_HABITOO_KINDS.find((k) => k.kind === kind)!.words;
+  const want = VUMSI_EXPECTED_MODEL[kind];
+  const other = tx === "sale" ? TX_WORDS.rent : TX_WORDS.sale;
   const scored = categories
     .map((c) => {
       const name = fold(c.name);
       const hit = words.some((w) => name.includes(w));
-      if (!hit) return null;
-      const other = tx === "sale" ? TX_WORDS.rent : TX_WORDS.sale;
-      const score = (TX_WORDS[tx].test(name) ? 2 : 0) - (other.test(name) ? 3 : 0);
+      const model = c.attr_model ?? null;
+      if (want && model && model !== want) return null;
+      const modelHit = !!want && model === want;
+      if (!hit && !modelHit) return null;
+      const score = (modelHit ? 10 : 0) + (hit ? 1 : 0) + (TX_WORDS[tx].test(name) ? 2 : 0) - (other.test(name) ? 3 : 0);
       return { c, score };
     })
     .filter((x): x is { c: VumsiCategory; score: number } => !!x)
@@ -99,14 +133,19 @@ function furnishingText(v: string | null | undefined): Raw {
 /** Câmpurile Habitoo cunoscute, recunoscute după cheia sau numele atributului Vumsi. */
 const KNOWN: Array<{ keys: RegExp; value: (p: Row) => Raw }> = [
   { keys: /^(property_type|tip proprietate)$/, value: (p) => TYPE_TEXT[(p.property_type ?? "").toLowerCase()] ?? null },
-  { keys: /^(rooms|room_count|nr_rooms|camere|numar camere|nr\. camere)$/, value: (p) => num(p.rooms) },
+  { keys: /^(rooms|room_count|nr_rooms|camere|numar camere|numarul de camere|nr\. camere)$/, value: (p) => num(p.rooms) },
   { keys: /^(bedrooms|dormitoare|numar dormitoare)$/, value: (p) => num(p.bedrooms) },
-  { keys: /^(bathrooms|bai|numar bai)$/, value: (p) => num(p.bathrooms) },
+  { keys: /^(bathrooms|bai|numar bai|numarul de bai)$/, value: (p) => num(p.bathrooms) },
+  { keys: /^(kitchens|bucatarii|numar bucatarii|numarul de bucatarii)$/, value: (p) => num(p.kitchens) },
+  { keys: /^(balconies|balcoane|numar balcoane|numarul de balcoane)$/, value: (p) => num(p.balconies) },
+  { keys: /^(garages|garaje|numar garaje|numarul de garaje)$/, value: (p) => num(p.garages) },
+  { keys: /^(floors|floor_count|floors_count|levels|nr_floors|number_of_floors|etaje|niveluri|numar etaje|numarul de etaje|numar niveluri|numarul de niveluri)$/, value: (p) => num(p.building_floors) },
+  { keys: /^(comfort|confort)$/, value: (p) => p.comfort ?? null },
   { keys: /^(usable_area|usable_surface|suprafata utila.*)$/, value: (p) => num(p.usable_surface) ?? num(p.surface) },
   { keys: /^(built_area|built_surface|suprafata construita.*)$/, value: (p) => num(p.built_surface) },
   { keys: /^(land_area|land_surface|total_area|suprafata teren.*|suprafata totala.*)$/, value: (p) => num(p.land_surface) ?? ((p.property_type ?? "") === "land" ? num(p.surface) : null) },
   { keys: /^(floor|etaj)$/, value: floorText },
-  { keys: /^(construction_year|year_built|build_year|an constructie|anul constructiei)$/, value: (p) => num(p.build_year) },
+  { keys: /^(construction_year|year_built|build_year|an constructie|anul constructiei|anul de constructie)$/, value: (p) => num(p.build_year) },
   { keys: /^(partitioning|layout|compartimentare)$/, value: (p) => p.layout ?? null },
   { keys: /^(furnished|furnishing|mobilat|mobilare)$/, value: (p) => furnishingText(p.furnishing) },
   { keys: /^(heating|incalzire)$/, value: (p) => p.heating ?? p.heating_systems?.[0] ?? null },
@@ -193,7 +232,7 @@ export type VumsiListingPlan = {
 };
 
 export type VumsiMapContext = {
-  attributes: Record<string, { fields: VumsiAttribute[] }>;
+  attributes: Record<string, { fields: VumsiAttribute[]; attr_model?: string | null; raw?: unknown }>;
   mappings: VumsiMappings;
   cityId: number | null;
 };
@@ -248,7 +287,9 @@ export function mapPropertyToVumsi(p: Row, ctx: VumsiMapContext): { plans: Vumsi
     const category = map ? { id: map.category_id, name: map.category_name ?? `#${map.category_id}` } : null;
     if (category) {
       const def = ctx.attributes[String(category.id)];
+      const mismatch = def && kind ? vumsiModelMismatch(kind, vumsiCategoryModel(category.id, ctx.attributes)) : null;
       if (!def) reasons.push(`Categoria Vumsi „${category.name}” nu mai este în snapshot. ${VUMSI_SETUP_MESSAGE}`);
+      else if (mismatch) reasons.push(mismatch);
       else {
         const a = buildVumsiAttrs(p, def.fields, category.name);
         attrs = a.attrs;
