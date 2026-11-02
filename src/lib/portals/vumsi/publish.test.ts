@@ -5,7 +5,8 @@ import { syncVumsiImages, vumsiStatusDue, vumsiStatusInfo, type VumsiCall, type 
 import type { VumsiPreview } from "./preview.server";
 import jpegJs from "jpeg-js";
 import { encode as encodePng } from "fast-png";
-import { toVumsiJpeg, sniffImage } from "./jpeg";
+import { toVumsiJpeg, sniffImage, prepareVumsiImage } from "./jpeg";
+import { GifWriter } from "omggif";
 
 const rgba = (w: number, h: number) => new Uint8Array(w * h * 4).fill(200);
 const JPG = new Uint8Array(jpegJs.encode({ data: rgba(8, 8), width: 8, height: 8 }, 90).data);
@@ -116,18 +117,55 @@ describe("publicare Vumsi", () => {
 });
 
 describe("poze Vumsi", () => {
-  it("la actualizare se șterg doar pozele scoase și se adaugă cele noi; max. 20", async () => {
+  it("la actualizare se șterg doar pozele scoase și se adaugă cele noi", async () => {
     const calls: string[] = [];
     let id = 100;
     const call: VumsiCall = async (method, path) => { calls.push(`${method} ${path}`); return { ok: true, status: 200, data: (method === "POST" ? { id: ++id } : null) as never }; };
     const r = await syncVumsiImages(call, "L", [{ source: "b", url: "u" }, { source: "c", url: "u" }], [{ source: "a", id: 1 }, { source: "b", id: 2 }], async () => realJpeg());
     expect(calls).toEqual(["DELETE /listings/L/images/1/", "POST /listings/L/images/"]);
     expect(r.ok && r.images).toEqual([{ source: "b", id: 2 }, { source: "c", id: 101 }]);
-    const many = Array.from({ length: 25 }, (_, i) => ({ source: `s${i}`, url: "u" }));
-    calls.length = 0;
-    const r2 = await syncVumsiImages(call, "L", many, [], async () => realJpeg());
-    expect(calls.length).toBe(20);
-    expect(r2.ok && r2.warnings[0]).toMatch(/cel mult 20/);
+  });
+
+  it("23 de poze trimise toate, în ordine, cu câmpul order", async () => {
+    const orders: string[] = [];
+    const call: VumsiCall = async (_m, _p, o) => { orders.push(String(o?.form?.get("order"))); return { ok: true, status: 201, data: { id: orders.length } as never }; };
+    const many = Array.from({ length: 23 }, (_, i) => ({ source: `s${i}`, url: "u" }));
+    const r = await syncVumsiImages(call, "L", many, [], async () => realJpeg());
+    expect(orders).toEqual(Array.from({ length: 23 }, (_, i) => String(i)));
+    expect(r.ok && r.images.map((x) => x.source)).toEqual(many.map((m) => m.source));
+    expect(r.ok && r.warnings).toEqual([]);
+  });
+
+  it("429 cu Retry-After: așteaptă cât cere Vumsi și continuă", async () => {
+    let n = 0;
+    const sleeps: number[] = [];
+    const { adapter, calls } = setup((m, p) => {
+      if (p.startsWith("/listings/by-external-id/")) return json(404, { errors: [] });
+      if (p.endsWith("/images/")) { n += 1; return n === 1 ? new Response("{}", { status: 429, headers: { "Retry-After": "3" } }) : json(201, { id: n }); }
+      if (p.endsWith("/publish/")) return json(200, { uuid: LU, status: 1 });
+      return json(201, { uuid: LU, status: 0 });
+    }, [], { sleep: async (ms: number) => { sleeps.push(ms); } });
+    const r = await adapter.publishListing(ctx, { propertyId: "p1", externalId: null });
+    expect(r.ok && r.data.portalStatus).not.toBe("pending");
+    expect(sleeps).toContain(3000);
+    expect(calls.filter((c) => c.endsWith("/images/"))).toHaveLength(3);
+  });
+
+  it("pozele rămase se trimit la salvarea următoare; cele încărcate nu se retrimit", async () => {
+    const sent: string[] = [];
+    let limit = 2;
+    const call: VumsiCall = async (_m, _p, o) => {
+      if (limit-- <= 0) return { ok: false, kind: "rate_limited", status: 429, message: "x", transient: true, retryAfterMs: 1000, body: null } as never;
+      sent.push(String(o?.form?.get("order"))); return { ok: true, status: 201, data: { id: sent.length } as never };
+    };
+    const want = Array.from({ length: 4 }, (_, i) => ({ source: `s${i}`, url: "u" }));
+    const r1 = await syncVumsiImages(call, "L", want, [], async () => realJpeg());
+    expect(r1.ok).toBe(false);
+    expect(r1.images.map((x) => x.source)).toEqual(["s0", "s1"]);
+    limit = 99; sent.length = 0;
+    const r2 = await syncVumsiImages(call, "L", want, r1.images, async () => realJpeg());
+    expect(sent).toEqual(["2", "3"]);
+    expect(r2.ok && r2.images.map((x) => x.source)).toEqual(["s0", "s1", "s2", "s3"]);
   });
 });
 
@@ -171,33 +209,53 @@ describe("status Vumsi", () => {
   });
 });
 
-describe("conversia JPEG pentru Vumsi", () => {
-  it("PNG/WebP cu nume .jpg devine JPEG real, max. 1600 px, sub 2 MB", () => {
-    const png = encodePng({ width: 3200, height: 1600, data: rgba(3200, 1600), channels: 4, depth: 8 });
-    const r = toVumsiJpeg(png);
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.sourceKind).toBe("png");
-    expect(sniffImage(r.bytes)).toBe("jpeg");
-    expect([r.width, r.height]).toEqual([1600, 800]);
-    expect(r.bytes.byteLength).toBeLessThan(2 * 1024 * 1024);
+describe("formatul pozelor Vumsi", () => {
+  const webp = () => { const b = new Uint8Array(64); b.set([...new TextEncoder().encode("RIFF")], 0); b.set([...new TextEncoder().encode("WEBP")], 8); return b; };
+  const gif = () => { const buf = new Uint8Array(1024); const w = new GifWriter(buf, 4, 4, { palette: [0xff0000, 0x00ff00] }); w.addFrame(0, 0, 4, 4, new Array(16).fill(0)); return buf.slice(0, w.end()); };
+  const forms: FormData[] = [];
+  const call: VumsiCall = async (_m, _p, o) => { if (o?.form) forms.push(o.form); return { ok: true, status: 201, data: { id: forms.length } as never }; };
+  beforeEach(() => { forms.length = 0; });
+
+  it("JPEG, PNG și WebP se trimit neschimbate, cu MIME și extensie corecte", async () => {
+    const png = encodePng({ width: 6000, height: 10, data: rgba(6000, 10), channels: 4, depth: 8 });
+    const src = [JPG, png, webp()];
+    await syncVumsiImages(call, "L", src.map((_, i) => ({ source: `s${i}`, url: String(i) })), [], async (u) => new Blob([src[Number(u)] as BlobPart]));
+    const files = forms.map((f) => f.get("image") as File);
+    expect(files.map((f) => f.name)).toEqual(["poza-1.jpg", "poza-2.png", "poza-3.webp"]);
+    expect(files.map((f) => f.type)).toEqual(["image/jpeg", "image/png", "image/webp"]);
+    for (const [i, f] of files.entries()) expect(new Uint8Array(await f.arrayBuffer())).toEqual(src[i]);
   });
 
-  it("încarcă image/jpeg cu numele poza-{n}.jpg", async () => {
-    const forms: FormData[] = [];
-    const call: VumsiCall = async (_m, _p, o) => { if (o?.form) forms.push(o.form); return { ok: true, status: 201, data: { id: forms.length } as never }; };
-    await syncVumsiImages(call, "L", [{ source: "a", url: "u" }, { source: "b", url: "u" }], [], async () => realJpeg());
-    const files = forms.map((f) => f.get("image") as File);
-    expect(files.map((f) => f.name)).toEqual(["poza-1.jpg", "poza-2.jpg"]);
-    expect(files.every((f) => f.type === "image/jpeg")).toBe(true);
+  it("GIF se convertește în JPEG", async () => {
+    await syncVumsiImages(call, "L", [{ source: "g", url: "u" }], [], async () => new Blob([gif() as BlobPart]));
+    const f = forms[0].get("image") as File;
+    expect([f.name, f.type]).toEqual(["poza-1.jpg", "image/jpeg"]);
+    expect(sniffImage(new Uint8Array(await f.arrayBuffer()))).toBe("jpeg");
+  });
+
+  it("fișierul de 26 MB se convertește în JPEG sub 25 MB", () => {
+    const w = 1200, h = 1000;
+    const data = new Uint8Array(w * h * 4);
+    let x = 12345; for (let i = 0; i < data.length; i++) { x = (x * 1103515245 + 12345) & 0x7fffffff; data[i] = x >> 16; }
+    const big = new Uint8Array(26 * 1024 * 1024);
+    big.set(encodePng({ width: w, height: h, data, channels: 4, depth: 8 }));
+    const r = prepareVumsiImage(big);
+    expect(r.ok && r.converted).toBe(true);
+    expect(r.ok && r.mime).toBe("image/jpeg");
+    expect(r.ok && r.bytes.byteLength).toBeLessThanOrEqual(25 * 1024 * 1024);
+    expect(r.ok && sniffImage(r.bytes)).toBe("jpeg");
   });
 
   it("un răspuns non-imagine (HTML) este omis cu avertisment, fără încărcare", async () => {
-    const calls: string[] = [];
-    const call: VumsiCall = async (m, p) => { calls.push(`${m} ${p}`); return { ok: true, status: 201, data: { id: 1 } as never }; };
     const r = await syncVumsiImages(call, "L", [{ source: "a", url: "u" }], [], async () => new Blob(["<!DOCTYPE html><html>Error 500</html>"], { type: "image/jpeg" }));
-    expect(calls).toEqual([]);
+    expect(forms).toEqual([]);
     expect(r.ok && r.warnings.join(" ")).toContain("nu este o imagine");
+    expect(toVumsiJpeg(new TextEncoder().encode("<html>")).ok).toBe(false);
+  });
+
+  it("o poză care nu poate fi citită: avertisment păstrat", async () => {
+    const r = await syncVumsiImages(call, "L", [{ source: "a", url: "u" }], [], async () => null);
+    expect(r.ok && r.warnings).toEqual(["O poză nu a putut fi citită și a fost omisă."]);
   });
 });
 
