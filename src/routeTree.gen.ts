@@ -164,6 +164,7 @@ import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/
 import { Route as ApiPublicFeedClickimobChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/clickimob/[index]/$indexKey'
 import { Route as ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/imobiliareplus/[index]/$indexKey'
 import { Route as ApiPublicFeedImobliChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/imobli/[index]/$indexKey'
+import { Route as ApiPublicFeedImoveChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/imove/[index]/$indexKey'
 import { Route as ApiPublicFeedLocuitChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/locuit/[index]/$indexKey'
 import { Route as ApiPublicFeedProperstarAgencyOfficeIdRouteImport } from './routes/api/public/feed/properstar/agency/$officeId'
 import { Route as ApiPublicFeedProperstarChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/properstar/[index]/$indexKey'
@@ -1041,6 +1042,12 @@ const ApiPublicFeedImobliChar91indexChar93IndexKeyRoute =
     path: '/api/public/feed/imobli/index/$indexKey',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicFeedImoveChar91indexChar93IndexKeyRoute =
+  ApiPublicFeedImoveChar91indexChar93IndexKeyRouteImport.update({
+    id: '/api/public/feed/imove/index/$indexKey',
+    path: '/api/public/feed/imove/index/$indexKey',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicFeedLocuitChar91indexChar93IndexKeyRoute =
   ApiPublicFeedLocuitChar91indexChar93IndexKeyRouteImport.update({
     id: '/api/public/feed/locuit/index/$indexKey',
@@ -1310,6 +1317,7 @@ export interface FileRoutesByFullPath {
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobiliareplus/index/$indexKey': typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobli/index/$indexKey': typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
+  '/api/public/feed/imove/index/$indexKey': typeof ApiPublicFeedImoveChar91indexChar93IndexKeyRoute
   '/api/public/feed/locuit/index/$indexKey': typeof ApiPublicFeedLocuitChar91indexChar93IndexKeyRoute
   '/api/public/feed/properstar/agency/$officeId': typeof ApiPublicFeedProperstarAgencyOfficeIdRoute
   '/api/public/feed/properstar/index/$indexKey': typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
@@ -1481,6 +1489,7 @@ export interface FileRoutesByTo {
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobiliareplus/index/$indexKey': typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobli/index/$indexKey': typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
+  '/api/public/feed/imove/index/$indexKey': typeof ApiPublicFeedImoveChar91indexChar93IndexKeyRoute
   '/api/public/feed/locuit/index/$indexKey': typeof ApiPublicFeedLocuitChar91indexChar93IndexKeyRoute
   '/api/public/feed/properstar/agency/$officeId': typeof ApiPublicFeedProperstarAgencyOfficeIdRoute
   '/api/public/feed/properstar/index/$indexKey': typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
@@ -1658,6 +1667,7 @@ export interface FileRoutesById {
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobiliareplus/index/$indexKey': typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobli/index/$indexKey': typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
+  '/api/public/feed/imove/index/$indexKey': typeof ApiPublicFeedImoveChar91indexChar93IndexKeyRoute
   '/api/public/feed/locuit/index/$indexKey': typeof ApiPublicFeedLocuitChar91indexChar93IndexKeyRoute
   '/api/public/feed/properstar/agency/$officeId': typeof ApiPublicFeedProperstarAgencyOfficeIdRoute
   '/api/public/feed/properstar/index/$indexKey': typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
@@ -1835,6 +1845,7 @@ export interface FileRouteTypes {
     | '/api/public/feed/clickimob/index/$indexKey'
     | '/api/public/feed/imobiliareplus/index/$indexKey'
     | '/api/public/feed/imobli/index/$indexKey'
+    | '/api/public/feed/imove/index/$indexKey'
     | '/api/public/feed/locuit/index/$indexKey'
     | '/api/public/feed/properstar/agency/$officeId'
     | '/api/public/feed/properstar/index/$indexKey'
@@ -2006,6 +2017,7 @@ export interface FileRouteTypes {
     | '/api/public/feed/clickimob/index/$indexKey'
     | '/api/public/feed/imobiliareplus/index/$indexKey'
     | '/api/public/feed/imobli/index/$indexKey'
+    | '/api/public/feed/imove/index/$indexKey'
     | '/api/public/feed/locuit/index/$indexKey'
     | '/api/public/feed/properstar/agency/$officeId'
     | '/api/public/feed/properstar/index/$indexKey'
@@ -2182,6 +2194,7 @@ export interface FileRouteTypes {
     | '/api/public/feed/clickimob/index/$indexKey'
     | '/api/public/feed/imobiliareplus/index/$indexKey'
     | '/api/public/feed/imobli/index/$indexKey'
+    | '/api/public/feed/imove/index/$indexKey'
     | '/api/public/feed/locuit/index/$indexKey'
     | '/api/public/feed/properstar/agency/$officeId'
     | '/api/public/feed/properstar/index/$indexKey'
@@ -2295,6 +2308,7 @@ export interface RootRouteChildren {
   ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
   ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
   ApiPublicFeedImobliChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
+  ApiPublicFeedImoveChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedImoveChar91indexChar93IndexKeyRoute
   ApiPublicFeedLocuitChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedLocuitChar91indexChar93IndexKeyRoute
   ApiPublicFeedProperstarAgencyOfficeIdRoute: typeof ApiPublicFeedProperstarAgencyOfficeIdRoute
   ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
@@ -3400,6 +3414,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/feed/imove/index/$indexKey': {
+      id: '/api/public/feed/imove/index/$indexKey'
+      path: '/api/public/feed/imove/index/$indexKey'
+      fullPath: '/api/public/feed/imove/index/$indexKey'
+      preLoaderRoute: typeof ApiPublicFeedImoveChar91indexChar93IndexKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/feed/locuit/index/$indexKey': {
       id: '/api/public/feed/locuit/index/$indexKey'
       path: '/api/public/feed/locuit/index/$indexKey'
@@ -3882,6 +3903,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute,
   ApiPublicFeedImobliChar91indexChar93IndexKeyRoute:
     ApiPublicFeedImobliChar91indexChar93IndexKeyRoute,
+  ApiPublicFeedImoveChar91indexChar93IndexKeyRoute:
+    ApiPublicFeedImoveChar91indexChar93IndexKeyRoute,
   ApiPublicFeedLocuitChar91indexChar93IndexKeyRoute:
     ApiPublicFeedLocuitChar91indexChar93IndexKeyRoute,
   ApiPublicFeedProperstarAgencyOfficeIdRoute:

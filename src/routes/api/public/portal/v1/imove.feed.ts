@@ -27,6 +27,10 @@ export const Route = createFileRoute("/api/public/portal/v1/imove/feed")({
             }
             const url = new URL(request.url);
             const { page, perPage } = parseImovePagination(url);
+            // Agenție în perioada de grație a indexului: feed gol, ca iMove să retragă ofertele.
+            if (auth.indexStatus === "grace") {
+              return { response: jsonResponse(imoveFeedBody({ listings: [], total: 0, page, perPage, selected: 0, excluded: [], warnings: [] })), items: 0 };
+            }
             const build = await buildImoveFeed({
               organizationId: auth.organizationId,
               requestUrl: url,
@@ -35,7 +39,7 @@ export const Route = createFileRoute("/api/public/portal/v1/imove/feed")({
             });
             return { response: jsonResponse(imoveFeedBody(build)), items: build.listings.length };
           },
-          { allowQueryToken: true, portalCredential: "imove" },
+          { allowQueryToken: true, portalCredential: "imove", indexPortal: "imove" },
         ),
     },
   },

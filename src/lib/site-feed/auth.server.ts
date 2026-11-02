@@ -12,7 +12,7 @@ export type FeedAuthOk = {
   tokenId: string;
   tokenPrefix: string;
   /** Din ce credențial a venit cererea: tokenul de site sau o cheie de portal. */
-  source: "site_token" | "portal_key" | "clickimob_index" | "imobli_index" | "locuit_index" | "imobiliareplus_index";
+  source: "site_token" | "portal_key" | "clickimob_index" | "imobli_index" | "locuit_index" | "imobiliareplus_index" | "imove_index";
   /**
    * Portalul care citește feedul, când cererea vine cu o cheie de portal.
    * `null` = token de site (feedul propriu al agenției, fără filtrare pe portal).
@@ -76,7 +76,7 @@ export function readTokenFromRequest(request: Request): string | null {
   return alt?.trim() || null;
 }
 
-const INDEX_TOKEN_PREFIX = { clickimob: "hbci_", imobli: "hbim_", locuit: "hblo_", imobiliareplus: "hbip_" } as const;
+const INDEX_TOKEN_PREFIX = { clickimob: "hbci_", imobli: "hbim_", locuit: "hblo_", imobiliareplus: "hbip_", imove: "hbmv_" } as const;
 
 function tokenPrefixOf(token: string | null): string | null {
   if (!token) return null;
@@ -86,6 +86,7 @@ function tokenPrefixOf(token: string | null): string | null {
   if (prefix.startsWith("hbci_")) return /^hbci_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
   if (prefix.startsWith("hbim_")) return /^hbim_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
   if (prefix.startsWith("hblo_")) return /^hblo_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
+  if (prefix.startsWith("hbmv_")) return /^hbmv_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
   // Cheile emise pentru portaluri: <portal>_portal_<8 hex>
   return /_portal_[0-9a-f]{8}$/.test(prefix) ? prefix : null;
 }
@@ -147,6 +148,12 @@ export type FeedAuthOptions = {
    * Activ DOAR pe /api/public/catalog/v1/facebook.csv; implicit respins.
    */
   allowFacebookCatalogToken?: boolean;
+  /**
+   * Portal cu feed dedicat (ex. iMove): acceptă tokenul lui din index și
+   * respinge tokenurile de index ale celorlalte portaluri. Tokenul acestui
+   * portal nu deschide alte feeduri.
+   */
+  indexPortal?: "imove";
 };
 
 export async function authenticateFeedRequest(
@@ -181,8 +188,14 @@ export async function authenticateFeedRequest(
     return { ok: false, status: 429, message: "Too many requests.", tokenPrefix: prefix };
   }
 
-  if (token.startsWith("hbci_") || token.startsWith("hbim_") || token.startsWith("hblo_") || token.startsWith("hbip_")) {
-    const portal = token.startsWith("hbci_") ? "clickimob" : token.startsWith("hbim_") ? "imobli" : token.startsWith("hbip_") ? "imobiliareplus" : "locuit";
+  const indexPortalOf = Object.entries(INDEX_TOKEN_PREFIX).find(([, p]) => token.startsWith(p))?.[0] as
+    | keyof typeof INDEX_TOKEN_PREFIX
+    | undefined;
+  if (indexPortalOf && (indexPortalOf === "imove" || options.indexPortal) && indexPortalOf !== options.indexPortal) {
+    return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
+  }
+  if (indexPortalOf) {
+    const portal = indexPortalOf;
     const { resolveClickimobFeedToken, resolvePortalIndexToken } = await import("@/lib/site-feed/clickimob-token.server");
     const match = portal === "clickimob"
       ? await resolveClickimobFeedToken(token)

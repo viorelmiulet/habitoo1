@@ -23,6 +23,7 @@ import {
   type IndexPortal,
   clickimobAgencyContact,
   clickimobFeedToken,
+  indexFeedPath,
   verifyClickimobIndexKey,
   type ClickimobIndex,
   type ClickimobIndexAgency,
@@ -191,7 +192,7 @@ export async function handlePortalIndex(
       generated_at: now.toISOString(),
       agencies: agencies.map((a) => ({
         ...a,
-        feed: { base_url: `${baseUrl}/api/public/sites/v1`, token: clickimobFeedToken(a.id, secret, portal) },
+        feed: { base_url: `${baseUrl}${indexFeedPath(portal)}`, token: clickimobFeedToken(a.id, secret, portal) },
       })),
     };
     await deps.log({ ...base, organizationId: null, status: 200, items: body.agencies.length });
