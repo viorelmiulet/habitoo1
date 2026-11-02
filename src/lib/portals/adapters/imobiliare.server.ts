@@ -275,6 +275,7 @@ export async function publishPlan(input: {
       httpStatus: number | null;
       portalResponse: unknown;
       promotionErrors: { promotionId: string; message: string }[];
+      mediaWarning: string | null;
     }
   | { ok: false; fail: PortalFailShape }
 > {
