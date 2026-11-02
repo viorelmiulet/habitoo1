@@ -1,3 +1,8 @@
+## Filtrul unic Portaluri
+- [x] Opțiuni comune în panou/listă; selecție multiplă, conversie URL/filtre salvate, fără câmp Promovare
+- [x] SAU în stări/promovări/prelungire și ȘI între tipuri, numai citire înainte de count/paginare
+- [x] 98 teste strict filtre/listă; MRM autentificat: ClickImob publicate 58, Imospot SAU VDI erori 35, Storia publicate ȘI prelungire activată 27; URL/reload și dark 390px fără depășire, build OK
+
 ## Filtrul Promovare — erori pe portal
 - [x] Grupe pentru toate portalurile activate și opțiuni de erori; combinare SAU în tip / ȘI între tipuri
 - [x] Filtrare server, URL și filtre salvate; 77 teste strict pentru filtru/listă trec; build OK

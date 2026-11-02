@@ -21,7 +21,7 @@ import {
 } from "@/lib/portals/promotion-filter";
 import { manageableImobiliarePromotions } from "@/lib/portals/imobiliare/promotions";
 import { PORTALS, portalDisplayName } from "@/lib/portals/registry";
-import { parsePromotionValues, serializePromotionValues, togglePromotionValue } from "@/components/app/PromotionFilterSelect";
+import { parsePromotionValues, serializePromotionValues, togglePromotionValue } from "@/lib/portals/promotion-filter";
 
 const info = (partial: Partial<PropertyPromotionInfo>): PropertyPromotionInfo => ({
   imobiliarePublished: false,

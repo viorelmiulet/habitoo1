@@ -35,14 +35,13 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PortalFilterSelect, portalFilterLabel } from "@/components/app/PortalFilterSelect";
-import { promotionFilterLabel, parsePromotionValues } from "@/components/app/PromotionFilterSelect";
-import { getPortalFilterOptions, getPropertyIdsByPortalState } from "@/lib/portals.functions";
+import { unifiedPortalValues } from "@/lib/portals/promotion-filter";
+import { getPortalFilterOptions } from "@/lib/portals.functions";
 import {
   getPromotionFilterOptions,
   getPropertyIdsByPromotion,
   getPropertyPromotionBadges,
 } from "@/lib/portals/promotion-filter.functions";
-import { parsePortalFilter } from "@/lib/portals/portal-state";
 import { portalListingLink } from "@/lib/portals/listing-links";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { PropertyFilterPanel } from "@/components/app/PropertyFilterPanel";
@@ -349,35 +348,18 @@ function PropertiesPage() {
   };
 
   const loadPortalOptions = useServerFn(getPortalFilterOptions);
-  const loadPortalIds = useServerFn(getPropertyIdsByPortalState);
-  const { data: portalOptions = [] } = useQuery({
+  const { data: portalOptions = [], isLoading: portalOptionsLoading } = useQuery({
     queryKey: ["property-portals-matrix", "filter-options", orgId],
     enabled: Boolean(orgId),
     queryFn: () => loadPortalOptions({ data: { organizationId: orgId } }),
   });
-  // Filtrul se aplică doar pe un portal încă activat (sau „any”).
-  const parsedPortal = parsePortalFilter(filters.portal);
-  const portalFilter =
-    parsedPortal &&
-    (parsedPortal.portal === "any" || portalOptions.some((o) => o.portalId === parsedPortal.portal))
-      ? parsedPortal
-      : null;
-  const { data: portalIds, isLoading: portalIdsLoading } = useQuery({
-    queryKey: ["property-portals-matrix", "filter-ids", orgId, portalFilter],
-    enabled: Boolean(orgId && portalFilter),
-    queryFn: () =>
-      loadPortalIds({
-        data: { organizationId: orgId, portal: portalFilter!.portal, state: portalFilter!.state },
-      }),
-  });
-
   // Filtrul „Promovare”: opțiunile vin din registru, doar pentru portalurile
   // conectate; id-urile se rezolvă pe server, apoi interogarea listei (sub RLS)
   // le intersectează — agentul vede în continuare doar anunțurile lui.
   const loadPromotionOptions = useServerFn(getPromotionFilterOptions);
   const loadPromotionIds = useServerFn(getPropertyIdsByPromotion);
   const loadPromotionBadges = useServerFn(getPropertyPromotionBadges);
-  const { data: promotionGroups = [] } = useQuery({
+  const { data: promotionGroups = [], isLoading: promotionOptionsLoading } = useQuery({
     queryKey: ["promotion-filter-options", orgId],
     enabled: Boolean(orgId),
     queryFn: async () => (await loadPromotionOptions({ data: { organizationId: orgId } })).groups,
@@ -386,10 +368,11 @@ function PropertiesPage() {
     const valid = new Set([
       "any",
       "none",
+      ...["any", ...portalOptions.map((o) => o.portalId)].flatMap((id) => ["published", "unpublished", "error"].map((state) => `${id}:${state}`)),
       ...promotionGroups.flatMap((group) => group.options.map((option) => option.value)),
     ]);
-    return parsePromotionValues(filters.promotion).filter((value) => valid.has(value));
-  }, [filters.promotion, promotionGroups]);
+    return unifiedPortalValues(filters.portal, filters.promotion).filter((value) => valid.has(value));
+  }, [filters.portal, filters.promotion, promotionGroups, portalOptions]);
   const { data: promotionIds, isLoading: promotionIdsLoading } = useQuery({
     queryKey: ["promotion-filter-ids", orgId, promotionValues],
     enabled: Boolean(orgId) && promotionValues.length > 0,
@@ -398,10 +381,10 @@ function PropertiesPage() {
 
   const { data: result, isLoading: listLoading } = useQuery({
     // (isLoading de mai jos combină și încărcarea filtrelor de portaluri/promovare)
-    queryKey: ["properties", orgId, filters, sort, page, PAGE_SIZE, favoriteIds, portalIds, promotionIds],
+    queryKey: ["properties", orgId, filters, sort, page, PAGE_SIZE, favoriteIds, promotionIds],
     enabled:
       Boolean(orgId) &&
-      (!portalFilter || portalIds !== undefined) &&
+      !portalOptionsLoading && !promotionOptionsLoading &&
       (promotionValues.length === 0 || promotionIds !== undefined),
     queryFn: async () => {
       const choices = parsePlaceChoices(placeValue);
@@ -417,10 +400,6 @@ function PropertiesPage() {
       if (filters.favoritesOnly) {
         if (favoriteIds.length === 0) return { rows: [], count: 0 };
         query = query.in("id", favoriteIds);
-      }
-      if (portalFilter) {
-        if (!portalIds || portalIds.length === 0) return { rows: [], count: 0 };
-        query = query.in("id", portalIds);
       }
       if (promotionValues.length > 0) {
         if (!promotionIds || promotionIds.length === 0) return { rows: [], count: 0 };
@@ -438,7 +417,7 @@ function PropertiesPage() {
 
   const isLoading =
     listLoading ||
-    (Boolean(portalFilter) && portalIdsLoading) ||
+    portalOptionsLoading || promotionOptionsLoading ||
     (promotionValues.length > 0 && promotionIdsLoading);
   const rows = result?.rows ?? [];
   // Etichetele „Promovat” (portal · serviciu) pentru rândurile din pagina curentă.
@@ -626,14 +605,8 @@ function PropertiesPage() {
       : null,
     filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
     filters.favoritesOnly ? { key: "favoritesOnly" as const, label: "Doar favorite" } : null,
-    portalFilter
-      ? { key: "portal" as const, label: portalFilterLabel(filters.portal, portalOptions) }
-      : null,
-    filters.promotion
-      ? {
-          key: "promotion" as const,
-          label: `Promovare: ${promotionFilterLabel(filters.promotion, promotionGroups)}`,
-        }
+    promotionValues.length > 0
+      ? { key: "portal" as const, label: portalFilterLabel(filters.portal, portalOptions, promotionGroups) }
       : null,
     filters.priceMin ? { key: "priceMin" as const, label: `Preț ≥ ${filters.priceMin}` } : null,
     filters.priceMax ? { key: "priceMax" as const, label: `Preț ≤ ${filters.priceMax}` } : null,

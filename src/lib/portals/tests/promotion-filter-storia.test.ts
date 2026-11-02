@@ -6,7 +6,7 @@ import {
   storiaAutoRenewValues,
   type PropertyPromotionInfo,
 } from "@/lib/portals/promotion-filter";
-import { promotionFilterLabel } from "@/components/app/PromotionFilterSelect";
+import { promotionFilterLabel } from "@/lib/portals/promotion-filter";
 
 const empty: PropertyPromotionInfo = { imobiliarePublished: false, imobiliareActiveServices: [], flagPromotions: [] };
 

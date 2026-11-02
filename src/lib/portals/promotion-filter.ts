@@ -204,6 +204,7 @@ export function matchingPropertyIds(
   autoRenew: ReadonlyMap<string, boolean>,
   errors: readonly PromotionErrorRow[],
   allPropertyIds: readonly string[] = [],
+  portalStateIds?: readonly string[],
 ): string[] {
   const sets: Set<string>[] = [];
   if (selection.any || selection.none || selection.imobiliareServices.length || selection.flagPortals.length) {
@@ -214,8 +215,8 @@ export function matchingPropertyIds(
   if (selection.storiaAutoRenew.length) {
     sets.push(new Set([...autoRenew].filter(([, value]) => selection.storiaAutoRenew.includes(value)).map(([id]) => id)));
   }
-  if (selection.errorPortals.length) {
-    sets.push(new Set(errors.filter((row) => row.enabled && row.status === "error" && selection.errorPortals.includes(row.portal_key)).map((row) => row.property_id)));
+  if (selection.errorPortals.length || portalStateIds !== undefined) {
+    sets.push(new Set([...(portalStateIds ?? []), ...errors.filter((row) => row.enabled && row.status === "error" && selection.errorPortals.includes(row.portal_key)).map((row) => row.property_id)]));
   }
   const [first, ...rest] = sets;
   return first ? [...first].filter((id) => rest.every((set) => set.has(id))) : [];
@@ -347,4 +348,51 @@ export function storiaAutoRenewValues(rows: StoriaAutoRenewRows): Map<string, bo
     out.set(property.id, effectiveStoriaAutoRenew(property.storia_auto_renew, rows.agencyDefault));
   }
   return out;
+}
+
+export function parsePromotionValues(value: string): string[] {
+  return value.split(",").map((v) => v.trim()).filter(Boolean);
+}
+
+export function serializePromotionValues(values: string[]): string {
+  return [...new Set(values)].join(",");
+}
+
+/**
+ * Comutarea unei valori: „Orice promovare” și „Fără promovare” sunt exclusive
+ * față de serviciile concrete; serviciile se combină liber între ele.
+ */
+export function togglePromotionValue(current: string[], value: string): string[] {
+  const independent = (v: string) => /:(published|unpublished|error)$/.test(v) || v === STORIA_AUTO_RENEW_ON || v === STORIA_AUTO_RENEW_OFF;
+  const special = value === PROMOTION_FILTER_ANY || value === PROMOTION_FILTER_NONE;
+  if (current.includes(value)) return current.filter((v) => v !== value);
+  if (independent(value)) return [...current, value];
+  if (special) return [...current.filter(independent), value];
+  return [...current.filter((v) => v !== PROMOTION_FILTER_ANY && v !== PROMOTION_FILTER_NONE), value];
+}
+
+/** Textul alegerii, folosit în buton și în pastila filtrului activ. */
+export function promotionFilterLabel(value: string, groups: PromotionFilterGroup[]): string {
+  const values = parsePromotionValues(value);
+  if (values.length === 0) return "Oricare";
+  const labels = values.map((v) => {
+    if (v === PROMOTION_FILTER_ANY) return "Orice promovare";
+    if (v === PROMOTION_FILTER_NONE) return "Fără promovare";
+    for (const group of groups) {
+      const option = group.options.find((o) => o.value === v);
+      if (option) return v.endsWith(":error") ? `Erori · ${group.chipName ?? group.portalName}` : `${group.chipName ?? group.portalName} · ${option.label}`;
+    }
+    return v;
+  });
+  if (labels.length <= 2) return labels.join(", ");
+  return `${labels[0]} +${labels.length - 1}`;
+}
+
+
+/** Canonical selection; legacy portal and promotion values merge without losing conditions. */
+export function unifiedPortalValues(portal = "all", promotion = ""): string[] {
+  return [...new Set([...parsePromotionValues(portal), ...parsePromotionValues(promotion)])].filter((v) => v !== "all" && !v.startsWith("facebook_catalog:"));
+}
+export function serializePortalValues(values: string[]): string {
+  return serializePromotionValues(values) || "all";
 }

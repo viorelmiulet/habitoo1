@@ -8,7 +8,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PortalFilterSelect, type PortalFilterOption } from "@/components/app/PortalFilterSelect";
-import { PromotionFilterSelect } from "@/components/app/PromotionFilterSelect";
 import type { PromotionFilterGroup } from "@/lib/portals/promotion-filter";
 import { propertyStatusLabels, propertyTypeLabels } from "@/lib/labels";
 import {
@@ -203,7 +202,7 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
             </Row>
             {props.portalOptions.length > 0 ? (
               <Row label="Portaluri" htmlFor="pf-portal" advanced expanded={expanded}>
-                <PortalFilterSelect id="pf-portal" value={draft.portal} options={props.portalOptions} onChange={(v) => set("portal", v)} onReset={() => set("portal", "all")} className={cn(triggerBase, draft.portal !== "all" && valued)} />
+                <PortalFilterSelect id="pf-portal" value={draft.portal} options={props.portalOptions} promotionGroups={props.promotionGroups} promotionValue={draft.promotion} onChange={(v) => setDraft((d) => ({ ...d, portal: v, promotion: "" }))} onReset={() => setDraft((d) => ({ ...d, portal: "all", promotion: "" }))} className={cn(triggerBase, draft.portal !== "all" && valued)} />
               </Row>
             ) : null}
           </div>
@@ -213,9 +212,6 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
             </Row>
             <Row label="Destinație" htmlFor="pf-destination" advanced expanded={expanded}>
               <SimpleSelect id="pf-destination" value={draft.destination} active={draft.destination !== "all"} onChange={(v) => set("destination", v)} options={[["all", "Toate"], ...props.destinations.map((d) => [d, d] as [string, string])]} />
-            </Row>
-            <Row label="Promovare" htmlFor="pf-promotion" advanced expanded={expanded}>
-              <PromotionFilterSelect id="pf-promotion" value={draft.promotion} groups={props.promotionGroups} onChange={(v) => set("promotion", v)} className={cn(triggerBase, "[&>svg]:size-3.5", draft.promotion && valued)} />
             </Row>
             <Row label="Alte filtre" htmlFor="pf-other" advanced expanded={expanded}>
               <Popover>

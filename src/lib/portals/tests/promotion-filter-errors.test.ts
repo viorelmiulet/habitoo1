@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { matchingPropertyIds, parsePromotionSelection, promotionFilterGroups, type PropertyPromotionInfo } from "@/lib/portals/promotion-filter";
-import { promotionFilterLabel, togglePromotionValue } from "@/components/app/PromotionFilterSelect";
+import { promotionFilterLabel, togglePromotionValue } from "@/lib/portals/promotion-filter";
 
 const plain: PropertyPromotionInfo = { imobiliarePublished: false, imobiliareActiveServices: [], flagPromotions: [] };
 const infos = new Map<string, PropertyPromotionInfo>([
@@ -49,5 +49,22 @@ describe("erori în filtrul Promovare", () => {
   });
   it("serviciile înlocuiesc numai Orice/Fără", () => {
     expect(togglePromotionValue(["none", "storia:auto_renew_on", "imospot:error"], "imobiliare_ro:tl")).toEqual(["storia:auto_renew_on", "imospot:error", "imobiliare_ro:tl"]);
+  });
+});
+describe("unified portal state category", () => {
+  it("ORs published/unpublished matches with errors, rather than intersecting", () => {
+    expect(matchingPropertyIds(parsePromotionSelection("imospot:error"), infos, autoRenew, errors, [], ["b", "plain"]).sort()).toEqual(["a", "b", "plain"]);
+  });
+  it("intersects published Storia with enabled renewal", () => {
+    expect(matchingPropertyIds(parsePromotionSelection("storia:auto_renew_on"), infos, autoRenew, [], [], ["a", "b"])).toEqual(["a"]);
+  });
+  it("intersects promotion and renewal with the union of states and errors", () => {
+    expect(matchingPropertyIds(parsePromotionSelection("imobiliare_ro:tl,storia:auto_renew_on,vdi:error"), infos, autoRenew, errors, [], ["a"])).toEqual(["a"]);
+  });
+  it("empty state matches do not disable the filter", () => {
+    expect(matchingPropertyIds(parsePromotionSelection(""), infos, autoRenew, errors, [], [])).toEqual([]);
+  });
+  it("Orice/Fără preserves published and unpublished selections", () => {
+    expect(togglePromotionValue(["storia:published", "vdi:unpublished", "imobiliare_ro:tl"], "none")).toEqual(["storia:published", "vdi:unpublished", "none"]);
   });
 });

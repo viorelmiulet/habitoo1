@@ -18,9 +18,10 @@ import {
 describe("filtrele listei de proprietăți", () => {
   it.each(["imospot:error,vdi:error", "storia:auto_renew_on,storia:error", "imobiliare_ro:tl,romimo:promoted"])("păstrează promovarea %s în URL și filtre salvate", (promotion) => {
     const state = propertyListStateFromSearch(propertyListSearchSchema.parse({ promotion, page: 2 }));
-    expect(state.filters.promotion).toBe(promotion);
-    expect(propertyListSearchFromState(state.filters, state.sort, state.page, state.view)).toMatchObject({ promotion, page: 2 });
-    expect(normalizeSavedPropertyFilters({ promotion }).promotion).toBe(promotion);
+    expect(state.filters.portal).toBe(promotion);
+    expect(state.filters.promotion).toBe("");
+    expect(propertyListSearchFromState(state.filters, state.sort, state.page, state.view)).toMatchObject({ portal: promotion, page: 2 });
+    expect(normalizeSavedPropertyFilters({ promotion }).portal).toBe(promotion);
   });
   it("interpretează 5+ camere și 3+ băi ca praguri minime", () => {
     expect(isAtLeastFilter("5+")).toBe(true);
@@ -173,4 +174,13 @@ describe("filtrul Agent", () => {
       { value: UNASSIGNED_AGENT_FILTER, label: "Nealocate", count: 1 },
     ]);
   });
+});
+
+it("merges legacy portal and promotion in URL and saved views", () => {
+  const config = { portal: "storia:published", promotion: "storia:auto_renew_on,imospot:error", q: "București" };
+  const state = propertyListStateFromSearch(propertyListSearchSchema.parse(config));
+  expect(state.filters.portal).toBe("storia:published,storia:auto_renew_on,imospot:error");
+  expect(state.filters.promotion).toBe("");
+  expect(normalizeSavedPropertyFilters(config)).toEqual(state.filters);
+  expect(propertyListSearchFromState(state.filters, state.sort, state.page, state.view)).toEqual({ portal: "storia:published,storia:auto_renew_on,imospot:error", q: "București" });
 });
