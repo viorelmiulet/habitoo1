@@ -119,6 +119,42 @@ describe("mapper Vumsi", () => {
   });
 });
 
+describe("limitele numerice din nomenclator (min/max)", () => {
+  const HOUSE_FIELDS = [
+    f("rooms", "number", { required: true, label: "Camere" }),
+    f("construction_year", "number", { label: "Anul construcției", min: 1900, max: 2026 }),
+    f("bedrooms", "number", { label: "Dormitoare", min: 1, max: 20 }),
+    f("land_area", "decimal", { label: "Suprafața teren" }),
+  ];
+  const houseCtx = { ...ctx, attributes: { "73": { attr_model: "attr_real_estate_house", fields: HOUSE_FIELDS } } };
+  const house = { ...base, property_type: "house", for_sale: true, rooms: 4, land_surface: 300 };
+
+  it("anul 2027 e omis, cu avertisment; anunțul se publică fără el", () => {
+    const r = mapPropertyToVumsi({ ...house, build_year: 2027 }, houseCtx);
+    expect(r.plans[0]!.body).not.toBeNull();
+    expect(r.plans[0]!.attrs.construction_year).toBeUndefined();
+    expect(r.warnings).toContain("Anul construcției 2027 nu a fost trimis la Vumsi (acceptă cel mult 2026).");
+  });
+
+  it("anul 2026 (limita) se trimite", () => {
+    const r = mapPropertyToVumsi({ ...house, build_year: 2026 }, houseCtx);
+    expect(r.plans[0]!.attrs.construction_year).toBe(2026);
+    expect(r.warnings).toEqual([]);
+  });
+
+  it("bedrooms 25 e omis, cu avertisment", () => {
+    const r = mapPropertyToVumsi({ ...house, bedrooms: 25 }, houseCtx);
+    expect(r.plans[0]!.attrs.bedrooms).toBeUndefined();
+    expect(r.warnings).toContain("Dormitoare 25 nu a fost trimis la Vumsi (acceptă cel mult 20).");
+  });
+
+  it("un câmp fără min/max se trimite neschimbat", () => {
+    const r = mapPropertyToVumsi({ ...house, land_surface: 12345 }, houseCtx);
+    expect(r.plans[0]!.attrs.land_area).toBe(12345);
+    expect(r.warnings).toEqual([]);
+  });
+});
+
 describe("previzualizare Vumsi", () => {
   function fakeDb(tables: Record<string, unknown>) {
     const q = (name: string): any => {
