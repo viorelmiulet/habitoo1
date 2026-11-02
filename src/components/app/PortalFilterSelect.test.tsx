@@ -41,7 +41,7 @@ describe("promovări din lista comună de portaluri", () => {
     const onSelect = vi.fn();
     await act(async () => root.render(<PortalFilterOptionsList value="all" options={options} promotionGroups={groups} onSelect={onSelect} />));
     await choose("imobiliare_ro:tl");
-    expect(onPromotionChange).toHaveBeenCalledWith("imobiliare_ro:tl");
+    expect(onSelect).toHaveBeenCalledWith("imobiliare_ro:tl");
     const selection = parsePromotionSelection(onSelect.mock.calls[0]?.[0] ?? "");
     const rows = [
       { id: "published-tl", imobiliarePublished: true, imobiliareActiveServices: ["tl"], flagPromotions: [] },
@@ -55,9 +55,9 @@ describe("promovări din lista comună de portaluri", () => {
     const onSelect = vi.fn();
     await act(async () => root.render(<PortalFilterOptionsList value="all" options={options} promotionGroups={groups} promotionValue="imobiliare_ro:tl" onSelect={onSelect} />));
     await choose("imobiliare_ro:bonus");
-    expect(onPromotionChange).toHaveBeenLastCalledWith("imobiliare_ro:tl,imobiliare_ro:bonus");
+    expect(onSelect).toHaveBeenLastCalledWith("imobiliare_ro:tl,imobiliare_ro:bonus");
     await choose("imobiliare_ro:tl");
-    expect(onPromotionChange).toHaveBeenLastCalledWith("all");
+    expect(onSelect).toHaveBeenLastCalledWith("all");
   });
 
   it("Oricare resetează împreună portalul și promovările", async () => {
