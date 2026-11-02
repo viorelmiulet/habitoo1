@@ -2566,7 +2566,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
               : (listing?.last_error ?? pub?.last_error ?? null),
           // Avertisment (ex. poze parțiale) doar pe un anunț bifat și publicat, niciodată peste o eroare.
           mediaWarning:
-            pub?.enabled === true && (state === "published" || state === "pending") && !(listing?.last_error ?? pub?.last_error)
+            pub?.enabled === true && (state === "published" || state === "syncing" || state === "in_feed") && !(listing?.last_error ?? pub?.last_error)
               ? (listing?.last_warning ?? pub?.last_warning ?? null)
               : null,
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
