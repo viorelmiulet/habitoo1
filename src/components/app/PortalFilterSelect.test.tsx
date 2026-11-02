@@ -31,18 +31,18 @@ afterEach(async () => {
 });
 
 async function choose(value: string) {
-  const option = container.querySelector(`[cmdk-item][data-value="promotion:${value}"]`);
+  const option = container.querySelector(`[cmdk-item][data-value="${value}"]`);
   if (!(option instanceof HTMLElement)) throw new Error(`Missing promotion ${value}`);
   await act(async () => option.click());
 }
 
 describe("promovări din lista comună de portaluri", () => {
   it("alegerea Top Listing filtrează numai proprietățile publicate cu serviciul pornit", async () => {
-    const onPromotionChange = vi.fn();
-    await act(async () => root.render(<PortalFilterOptionsList value="all" options={options} promotionGroups={groups} onSelect={() => {}} onPromotionChange={onPromotionChange} />));
+    const onSelect = vi.fn();
+    await act(async () => root.render(<PortalFilterOptionsList value="all" options={options} promotionGroups={groups} onSelect={onSelect} />));
     await choose("imobiliare_ro:tl");
     expect(onPromotionChange).toHaveBeenCalledWith("imobiliare_ro:tl");
-    const selection = parsePromotionSelection(onPromotionChange.mock.calls[0]?.[0] ?? "");
+    const selection = parsePromotionSelection(onSelect.mock.calls[0]?.[0] ?? "");
     const rows = [
       { id: "published-tl", imobiliarePublished: true, imobiliareActiveServices: ["tl"], flagPromotions: [] },
       { id: "unpublished-tl", imobiliarePublished: false, imobiliareActiveServices: ["tl"], flagPromotions: [] },
@@ -52,12 +52,12 @@ describe("promovări din lista comună de portaluri", () => {
   });
 
   it("păstrează selecțiile existente și permite deselectarea serviciului", async () => {
-    const onPromotionChange = vi.fn();
-    await act(async () => root.render(<PortalFilterOptionsList value="all" options={options} promotionGroups={groups} promotionValue="imobiliare_ro:tl" onSelect={() => {}} onPromotionChange={onPromotionChange} />));
+    const onSelect = vi.fn();
+    await act(async () => root.render(<PortalFilterOptionsList value="all" options={options} promotionGroups={groups} promotionValue="imobiliare_ro:tl" onSelect={onSelect} />));
     await choose("imobiliare_ro:bonus");
     expect(onPromotionChange).toHaveBeenLastCalledWith("imobiliare_ro:tl,imobiliare_ro:bonus");
     await choose("imobiliare_ro:tl");
-    expect(onPromotionChange).toHaveBeenLastCalledWith("");
+    expect(onPromotionChange).toHaveBeenLastCalledWith("all");
   });
 
   it("Oricare resetează împreună portalul și promovările", async () => {
@@ -73,11 +73,17 @@ describe("promovări din lista comună de portaluri", () => {
 
   it("URL-ul vechi de promovare păstrează filtrarea și celelalte filtre", () => {
     const old = propertyListStateFromSearch(propertyListSearchSchema.parse({ promotion: "imobiliare_ro:tl", city: "București", page: 2 }));
-    expect(old.filters.promotion).toBe("imobiliare_ro:tl");
-    expect(old.filters.portal).toBe("all");
-    expect(propertyListSearchFromState(old.filters, old.sort, old.page, old.view)).toMatchObject({ promotion: "imobiliare_ro:tl", city: "București", page: 2 });
-    const selection = parsePromotionSelection(old.filters.promotion);
+    expect(old.filters.promotion).toBe("");
+    expect(old.filters.portal).toBe("imobiliare_ro:tl");
+    expect(propertyListSearchFromState(old.filters, old.sort, old.page, old.view)).toMatchObject({ portal: "imobiliare_ro:tl", city: "București", page: 2 });
+    const selection = parsePromotionSelection(old.filters.portal);
     expect(propertyMatchesPromotion({ imobiliarePublished: true, imobiliareActiveServices: ["tl"], flagPromotions: [] }, selection)).toBe(true);
     expect(propertyMatchesPromotion({ imobiliarePublished: false, imobiliareActiveServices: ["tl"], flagPromotions: [] }, selection)).toBe(false);
   });
+});
+it("states toggle independently of promotions and renewal", async () => {
+  const onSelect = vi.fn();
+  await act(async () => root.render(<PortalFilterOptionsList value="any,storia:auto_renew_on,imospot:error" options={[...options, { portalId: "vdi", name: "VDI", pushSupported: true }]} promotionGroups={groups} onSelect={onSelect} />));
+  await choose("vdi:error");
+  expect(onSelect).toHaveBeenCalledWith("any,storia:auto_renew_on,imospot:error,vdi:error");
 });

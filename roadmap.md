@@ -1,3 +1,8 @@
+## Filtrul unic Portaluri
+- [x] Opțiuni comune în panou/listă; selecție multiplă, conversie URL/filtre salvate, fără câmp Promovare
+- [x] SAU în stări/promovări/prelungire și ȘI între tipuri, numai citire înainte de count/paginare
+- [ ] Teste strict filtre/listă și verificare MRM autentificată pentru cele trei selecții cerute
+
 ## Filtrul Promovare — erori pe portal
 - [x] Grupe pentru toate portalurile activate și opțiuni de erori; combinare SAU în tip / ȘI între tipuri
 - [x] Filtrare server, URL și filtre salvate; 77 teste strict pentru filtru/listă trec; build OK

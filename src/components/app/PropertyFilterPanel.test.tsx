@@ -49,7 +49,7 @@ describe("PropertyFilterPanel", () => {
       ["Județ", "Localități", "Zonă", "Stradă"],
       ["Tip proprietate", "Tip tranzacție", "Camere", "Suprafață utilă", "Preț"],
       ["Valabilitate", "Adăugat între", "Modificat între", "Portaluri"],
-      ["Cuvinte cheie", "Destinație", "Promovare", "Alte filtre"],
+      ["Cuvinte cheie", "Destinație", "Alte filtre"],
     ]);
     expect(container.querySelector("#pf-statuses")?.textContent).toBe("7 selectate");
   });
