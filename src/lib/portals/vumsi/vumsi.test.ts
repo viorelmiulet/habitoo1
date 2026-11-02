@@ -103,8 +103,15 @@ describe("snapshot nomenclatoare Vumsi", () => {
 
   it("citește câmpurile, tipul, obligativitatea și valorile permise", () => {
     const f = parseVumsiAttributes({ fields: [{ name: "rooms", label: "Camere", type: "integer", required: true }, { name: "heating", type: "choice", required: false, choices: [["gas", "Gaz"], ["none", "Fără"]] }] });
-    expect(f[0]).toEqual({ name: "rooms", label: "Camere", type: "integer", required: true, choices: [] });
+    expect(f[0]).toEqual({ name: "rooms", label: "Camere", type: "integer", required: true, choices: [], min: null, max: null });
     expect(f[1]!.choices).toEqual([{ value: "gas", label: "Gaz" }, { value: "none", label: "Fără" }]);
+  });
+
+  it("citește limitele numerice min/max ale câmpurilor", () => {
+    const f = parseVumsiAttributes({ fields: [{ name: "construction_year", type: "integer", min: 1900, max: 2026 }, { name: "bedrooms", type: "integer", min_value: "1", max_value: "20" }, { name: "surface", type: "decimal" }] });
+    expect(f[0]).toMatchObject({ min: 1900, max: 2026 });
+    expect(f[1]).toMatchObject({ min: 1, max: 20 });
+    expect(f[2]).toMatchObject({ min: null, max: null });
   });
 
   it("construiește snapshot-ul cu reference, categorii unice și atributele fiecăreia, doar prin GET", async () => {
