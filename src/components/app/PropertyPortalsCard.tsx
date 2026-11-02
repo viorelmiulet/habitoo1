@@ -1,3 +1,4 @@
+import { deselectedErrorHidden } from "@/lib/portals/deselect-cleanup";
 import { portalCanPublish } from "@/lib/portals/registry";
 import { UNCONFIRMED_UPDATE_NOTE } from "@/lib/portals/transient-failure";
 /**
@@ -930,7 +931,7 @@ export const PropertyPortalsCard = forwardRef<
                     ? { label: "Trimis pe imoradar24", pill: "published" as StatusPillState }
                     : STATE_VIEW[cell.state];
               const latestOperation = latestOperationByPortal.get(cell.portalId);
-              const latestOperationFailed = latestOperation?.success === false;
+              const latestOperationFailed = !hideDeselectedError && latestOperation?.success === false;
               const detail = publishSoon
                 ? "În curând"
                 : busy
