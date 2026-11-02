@@ -80,7 +80,13 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
 
   if (q.isLoading) return <InlineLoading label="Se încarcă Catalogul Facebook…" />;
   if (q.isError) return <QueryError error={q.error} onRetry={() => q.refetch()} />;
-  const d = q.data!;
+  const raw = q.data!;
+  const d = {
+    ...raw,
+    excluded: (raw?.excluded ?? {}) as NonNullable<typeof raw>["excluded"],
+    excludedTotal: raw?.excludedTotal ?? 0,
+    excludedItems: raw?.excludedItems ?? [],
+  };
 
   const copy = async (value: string) => {
     try {
@@ -92,7 +98,7 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
   };
 
   const reasons = (Object.keys(EXCLUSION_REASON_LABEL) as (keyof typeof EXCLUSION_REASON_LABEL)[])
-    .filter((r) => d.excluded[r] > 0);
+    .filter((r) => (d.excluded[r] ?? 0) > 0);
 
   const metaSteps = (
     <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
