@@ -115,13 +115,18 @@ type Call = (method: "GET", path: string) => Promise<{ ok: true; data: unknown }
 type Read = (v: unknown) => { status: number | null; url: string | null; expires_at: string | null; reason: string | null };
 
 /** GET `/listings/{uuid}/` pentru rândurile scadente; întoarce rândurile schimbate. */
-export async function checkVumsiStatuses<T extends VumsiStatusRow>(call: Call, read: Read, rows: T[], due: (r: T) => boolean, now: number): Promise<T[]> {
+export async function checkVumsiStatuses<T extends VumsiStatusRow>(call: Call, read: Read, rows: T[], due: (r: T) => boolean, now: number, shape?: (v: unknown) => string): Promise<T[]> {
   const changed: T[] = [];
   for (const s of rows) {
     if (!due(s)) continue;
     const r = await call("GET", `/listings/${s.vumsi_uuid}/`);
     if (!r.ok) continue;
     const l = read(r.data);
+    if (l.status === null) {
+      // Status necitit: păstrăm statusul cunoscut și nu atingem portal_listings.
+      console.warn("[vumsi-status] status necitit", shape ? shape(r.data) : "");
+      continue;
+    }
     Object.assign(s, { status: l.status, public_url: l.url ?? s.public_url, expires_at: l.expires_at, status_checked_at: new Date(now).toISOString(), reason: l.reason });
     changed.push(s);
   }
