@@ -33,8 +33,8 @@
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
 - Completed videos store caller-owned metadata and server-resolved music snapshots in generated_video_clips, not media; history uses caller RLS and never publishes. Why: include unpublished clips and retain soundtrack identity after library edits.
 - Video narration uses a direct MiniMax TTS server boundary with validated hex decoding, atomic organization-locked reservations and character usage, caller-RLS private audio signing, and one offline audio mix for both encoders. Why: preserve quotas and privacy without provider prediction polling.
-- No global `entities` aliases/overrides: consumers need different majors/exports.
-- PortalLogo shares assets; overview uses registry. Why: preserve public access.
+- No global `entities` aliases/overrides: consumers need distinct majors/exports.
+- PortalLogo shares assets; overview uses registry. Why: same access.
 - Filters share applyPropertyFilterClauses; merge legacy portal fields; OR within state/promotion/renewal, AND across types before count. Why: exact lists.
 - Imobiliare.ro destination and promotion drafts use the existing durable publication queue; requested mode lives on publications/jobs and confirmed mode on listings, with no new portal. Destination changes send both statuses in one POST; unchanged published promotions remain partial; Bonus and imoradar-only bypass local capacity reads/checks. Why: keep destination switching recoverable and let the portal decide capacity.
 - Private listing geography is canonicalized by a database trigger using the locality/county nomenclature; generated normalized keys drive caller-RLS filtering and complete paged facets, with legacy city/zone URL compatibility. Why: imports, existing rows, counts and diacritic-insensitive filters must agree without changing CRM geography.
