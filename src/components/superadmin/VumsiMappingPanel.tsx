@@ -57,13 +57,20 @@ export function VumsiMappingPanel() {
       <div className="grid gap-2 sm:grid-cols-2">
         {d.rows.map((r) => {
           const k = key(r.kind, r.transaction);
+          const chosen = d.categories.find((c) => c.id === cats[k]);
+          const wrong = !!r.expectedModel && !!chosen && chosen.attrModel !== r.expectedModel;
           return (
             <label key={k} className="space-y-1 text-xs">
               <span>{r.kindLabel} · {r.txLabel}{r.savedId === null ? (r.suggestedId ? " (sugestie, neconfirmată)" : " (fără corespondență)") : ""}</span>
               <select className={selectCls} value={cats[k] ?? ""} onChange={(e) => setCats((s) => ({ ...s, [k]: e.target.value ? Number(e.target.value) : null }))}>
                 <option value="">—</option>
-                {d.categories.map((c) => <option key={c.id} value={c.id}>{c.path}</option>)}
+                {d.categories.map((c) => <option key={c.id} value={c.id}>{c.path} · {c.attrModel ?? "model necunoscut"}</option>)}
               </select>
+              {(chosen || r.expectedModel) && (
+                <span className={wrong ? "block text-destructive" : "block text-muted-foreground"}>
+                  Model: {chosen ? (chosen.attrModel ?? "necunoscut") : "—"}{r.expectedModel ? ` · așteptat ${r.expectedModel}` : ""}
+                </span>
+              )}
             </label>
           );
         })}
