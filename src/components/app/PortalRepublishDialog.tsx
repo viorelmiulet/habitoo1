@@ -138,7 +138,7 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
                 <p className="font-semibold">{preview.listings} anunțuri pe {preview.portals} portaluri vor fi republicate</p>
                 <ul className="mt-2 space-y-1">
                   {preview.perPortal.map((p) => (
-                    <li key={p.portalId} className="flex items-start justify-between gap-3"><span className="min-w-0 break-words">{p.name}</span><span className="shrink-0 text-right tabular-nums">{p.queued > 0 ? `${p.queued} anunțuri` : <>{p.autoPull} anunțuri<span className="block text-xs text-muted-foreground">se actualizează automat la următoarea preluare</span></>}</span></li>
+                    <li key={p.portalId} className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1">{p.name}</span><span className="max-w-[60%] text-right tabular-nums">{p.queued > 0 ? `${p.queued} anunțuri` : <>{p.autoPull} anunțuri<span className="block text-xs text-muted-foreground">se actualizează automat la următoarea preluare</span></>}</span></li>
                   ))}
                 </ul>
               </div>
