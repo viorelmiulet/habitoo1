@@ -2,14 +2,13 @@
  * Vumsi: pașii de publicare cu un apel injectat (testabil fără rețea).
  *  - agent (`/users/`) și agenție (`/companies/`): GET după ID-ul nostru, POST doar dacă lipsesc;
  *  - anunț: GET `/listings/by-external-id/{ext}/` → PATCH (fără status) sau POST (fără dubluri);
- *  - poze: multipart câte una (`image`), la actualizare se șterg doar cele scoase, max. 20;
+ *  - poze: multipart câte una (`image`), la actualizare se șterg doar cele scoase, toate, în ordine (`order`), formatul original;
  *  - publish / unpublish; DELETE doar la ștergerea definitivă.
  */
 import type { VumsiCallFail, VumsiMethod } from "./client.server";
-import { toVumsiJpeg } from "./jpeg";
+import { prepareVumsiImage } from "./jpeg";
 import type { VumsiCompanyPayload, VumsiListingBody, VumsiTransaction, VumsiUserPayload } from "./mapper";
 
-export const VUMSI_MAX_IMAGES = 20;
 export const VUMSI_STATUS_TTL_MS = 60_000;
 export const VUMSI_IMAGES_PENDING_MESSAGE = "Pozele nu au ajuns la Vumsi – se reîncearcă la următoarea salvare";
 
@@ -105,11 +104,10 @@ export type ImageFetcher = (url: string) => Promise<Blob | null>;
 
 /** Șterge doar pozele scoase și încarcă doar cele noi (câte una, câmpul `image`). */
 export async function syncVumsiImages(call: VumsiCall, uuid: string, desired: VumsiDesiredImage[], current: VumsiImageRef[], fetchImage: ImageFetcher) {
-  const want = desired.slice(0, VUMSI_MAX_IMAGES);
+  const want = desired;
   const wanted = new Set(want.map((d) => d.source));
   const kept = new Map(current.filter((c) => wanted.has(c.source)).map((c) => [c.source, c]));
   const warnings: string[] = [];
-  if (desired.length > VUMSI_MAX_IMAGES) warnings.push(`Vumsi primește cel mult ${VUMSI_MAX_IMAGES} de poze; ${desired.length - VUMSI_MAX_IMAGES} nu au fost trimise.`);
   let deleted = 0;
   let uploaded = 0;
   for (const c of current) {
@@ -119,15 +117,16 @@ export async function syncVumsiImages(call: VumsiCall, uuid: string, desired: Vu
     deleted += 1;
   }
   const result: VumsiImageRef[] = [];
-  for (const d of want) {
+  for (const [order, d] of want.entries()) {
     const k = kept.get(d.source);
     if (k) { result.push(k); continue; }
     const blob = await fetchImage(d.url);
     if (!blob) { warnings.push("O poză nu a putut fi citită și a fost omisă."); continue; }
-    const jpg = toVumsiJpeg(new Uint8Array(await blob.arrayBuffer()));
-    if (!jpg.ok) { warnings.push(`O poză a fost omisă (${jpg.reason}).`); continue; }
+    const img = prepareVumsiImage(new Uint8Array(await blob.arrayBuffer()));
+    if (!img.ok) { warnings.push(`O poză a fost omisă (${img.reason}).`); continue; }
     const form = new FormData();
-    form.append("image", new Blob([jpg.bytes as BlobPart], { type: "image/jpeg" }), `poza-${result.length + 1}.jpg`);
+    form.append("image", new Blob([img.bytes as BlobPart], { type: img.mime }), `poza-${order + 1}.${img.ext}`);
+    form.append("order", String(order));
     const r = await call<unknown>("POST", `/listings/${uuid}/images/`, { form });
     if (!r.ok) return { ok: false as const, fail: r, images: [...result, ...[...kept.values()].filter((x) => !result.includes(x))] };
     const id = Number(rec(r.data)["id"]);
