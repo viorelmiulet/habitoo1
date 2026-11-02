@@ -1,3 +1,4 @@
+import { deselectedErrorHidden } from "@/lib/portals/deselect-cleanup";
 import { portalCanPublish } from "@/lib/portals/registry";
 import { UNCONFIRMED_UPDATE_NOTE } from "@/lib/portals/transient-failure";
 /**
@@ -881,9 +882,14 @@ export const PropertyPortalsCard = forwardRef<
             ) : null}
 
             {displayCellIndices.map(index => {
-              const cell = cells[index];
-              if (!cell) return null;
-              const value = checked[cell.portalId] ?? cell.selected;
+              const rawCell = cells[index];
+              if (!rawCell) return null;
+              const value = checked[rawCell.portalId] ?? rawCell.selected;
+              // Portal debifat: doar statusul, fără eroare/poze/Retrimite (excepție: retragere eșuată, anunț online).
+              const hideDeselectedError = deselectedErrorHidden({ selected: rawCell.selected, checked: value, lastError: rawCell.lastError, externalId: rawCell.externalId });
+              const cell = hideDeselectedError
+                ? { ...rawCell, lastError: null, state: rawCell.state === "error" ? ("withdrawn" as const) : rawCell.state }
+                : rawCell;
               const slot = slotQueries[index]?.data;
               const noSlots = cell.portalId !== "imobiliare_ro" && !value && !cell.selected && Boolean(slot && (slot.remaining === 0 || slot.agencyExhausted));
               const busy = activePortals.has(cell.portalId);
@@ -911,7 +917,7 @@ export const PropertyPortalsCard = forwardRef<
                 (cell.state === "error" ||
                   Boolean(cell.lastError) ||
                   (cell.availability === "available" && value && !cell.configured));
-              const latestOperationFailedFor = (id: string) => latestOperationByPortal.get(id)?.success === false;
+              const latestOperationFailedFor = (id: string) => !hideDeselectedError && latestOperationByPortal.get(id)?.success === false;
               const stateView =
                 cell.portalId === "olx_direct" && cell.state === "syncing"
                   ? { label: "În moderare OLX", pill: "pending" as StatusPillState }
@@ -925,7 +931,7 @@ export const PropertyPortalsCard = forwardRef<
                     ? { label: "Trimis pe imoradar24", pill: "published" as StatusPillState }
                     : STATE_VIEW[cell.state];
               const latestOperation = latestOperationByPortal.get(cell.portalId);
-              const latestOperationFailed = latestOperation?.success === false;
+              const latestOperationFailed = !hideDeselectedError && latestOperation?.success === false;
               const detail = publishSoon
                 ? "În curând"
                 : busy
@@ -975,7 +981,7 @@ export const PropertyPortalsCard = forwardRef<
                         </p>
                         {(cell.portalId === "imobiliare_ro" || cell.portalId === "imo24") && (cell.lastError || latestOperationFailed) ? <p role="alert" className="mt-2 break-words text-xs text-destructive">{cell.lastError ?? latestOperation?.errorMessage}</p> : null}
                         {cell.portalId === "imo24" && !cell.lastError && latestOperation?.success === true && latestOperation.errorMessage ? <p className="mt-2 break-words text-xs text-muted-foreground">{latestOperation.errorMessage}</p> : null}
-                        {cell.portalId === "imobiliare_ro" && cell.configured ? (
+                        {cell.portalId === "imobiliare_ro" && cell.configured && !hideDeselectedError ? (
                           <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                             <p>{imobiliareMedia.data ? `${imobiliareMedia.data.sent ?? "?"}/${imobiliareMedia.data.total} poze trimise` : imobiliareMedia.isError ? "Numărul pozelor nu a putut fi verificat." : "Se verifică pozele…"}</p>
                             {imobiliareMedia.data?.reasons.map(reason => <p key={reason} className="break-words text-warning-foreground">{reason}</p>)}

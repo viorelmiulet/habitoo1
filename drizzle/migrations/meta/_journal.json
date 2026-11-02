@@ -1597,6 +1597,13 @@
       "when": 1793566894612,
       "tag": "0227_deprecate_youtube_connections",
       "breakpoints": true
+    },
+    {
+      "idx": 228,
+      "version": "7",
+      "when": 1793639823044,
+      "tag": "0228_clear_deselected_portal_errors",
+      "breakpoints": true
     }
   ]
 }
