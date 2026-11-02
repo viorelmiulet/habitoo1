@@ -16,6 +16,7 @@ import {
   promotionStateActive,
   propertyHasAnyPromotion,
   propertyMatchesPromotion,
+  matchingPropertyIds,
   type PropertyPromotionInfo,
 } from "@/lib/portals/promotion-filter";
 import { manageableImobiliarePromotions } from "@/lib/portals/imobiliare/promotions";
@@ -35,7 +36,7 @@ describe("promotionFilterGroups", () => {
     const imobiliare = groups.find((g) => g.portalId === "imobiliare_ro");
     expect(imobiliare).toBeDefined();
     const expected = manageableImobiliarePromotions().map((p) => p.id);
-    expect(imobiliare!.options.map((o) => o.value)).toEqual(expected.map((id) => `imobiliare_ro:${id}`));
+    expect(imobiliare?.options.map((o) => o.value)).toEqual([...expected.map((id) => `imobiliare_ro:${id}`), "imobiliare_ro:error"]);
     // Toate serviciile gestionabile au writeField (se pot porni din Habitoo).
     expect(expected.length).toBeGreaterThan(0);
   });
@@ -52,7 +53,7 @@ describe("promotionFilterGroups", () => {
     for (const portalId of flagPortals) {
       const group = connected.find((g) => g.portalId === portalId);
       expect(group, portalId).toBeDefined();
-      expect(group!.options).toEqual([{ value: `${portalId}:promoted`, label: "Promovat" }]);
+      expect(group?.options).toEqual([{ value: `${portalId}:promoted`, label: "Promovat" }, { value: `${portalId}:error`, label: `Cu erori pe ${portalDisplayName(portalId)}` }]);
     }
     // Neconectat → nu apare.
     const notConnected = promotionFilterGroups(new Set(["imobiliare_ro"]));

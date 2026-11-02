@@ -15,8 +15,8 @@ describe("Storia + OLX · Prelungire automată în filtrul Promovare", () => {
     expect(promotionFilterGroups(new Set(["imobiliare_ro"])).some((g) => g.portalId === "storia")).toBe(false);
     const group = promotionFilterGroups(new Set(["storia"])).find((g) => g.portalId === "storia");
     expect(group?.portalName).toBe("Storia + OLX");
-    expect(group?.options.map((o) => o.value)).toEqual(["storia:auto_renew_on", "storia:auto_renew_off"]);
-    expect(promotionFilterLabel("storia:auto_renew_on", [group!])).toBe("Storia · Prelungire automată activată");
+    expect(group?.options.map((o) => o.value)).toEqual(["storia:auto_renew_on", "storia:auto_renew_off", "storia:error"]);
+    expect(promotionFilterLabel("storia:auto_renew_on", group ? [group] : [])).toBe("Storia · Prelungire automată activată");
   });
 
   it.each([

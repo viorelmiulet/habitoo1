@@ -16,6 +16,12 @@ import {
 } from "./property-list-filters";
 
 describe("filtrele listei de proprietăți", () => {
+  it.each(["imospot:error,vdi:error", "storia:auto_renew_on,storia:error", "imobiliare_ro:tl,romimo:promoted"])("păstrează promovarea %s în URL și filtre salvate", (promotion) => {
+    const state = propertyListStateFromSearch(propertyListSearchSchema.parse({ promotion, page: 2 }));
+    expect(state.filters.promotion).toBe(promotion);
+    expect(propertyListSearchFromState(state.filters, state.sort, state.page, state.view)).toMatchObject({ promotion, page: 2 });
+    expect(normalizeSavedPropertyFilters({ promotion }).promotion).toBe(promotion);
+  });
   it("interpretează 5+ camere și 3+ băi ca praguri minime", () => {
     expect(isAtLeastFilter("5+")).toBe(true);
     expect(numericFilterValue("5+")).toBe(5);
