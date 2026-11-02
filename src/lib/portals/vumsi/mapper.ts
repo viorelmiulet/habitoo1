@@ -133,7 +133,7 @@ function furnishingText(v: string | null | undefined): Raw {
 /** Câmpurile Habitoo cunoscute, recunoscute după cheia sau numele atributului Vumsi. */
 const KNOWN: Array<{ keys: RegExp; value: (p: Row) => Raw }> = [
   { keys: /^(property_type|tip proprietate)$/, value: (p) => TYPE_TEXT[(p.property_type ?? "").toLowerCase()] ?? null },
-  { keys: /^(rooms|room_count|nr_rooms|camere|numar camere|numarul de camere|nr\. camere)$/, value: (p) => num(p.rooms) },
+  { keys: /^(rooms|room_count|nr_rooms|camere|numar camere|nr\. camere)$/, value: (p) => num(p.rooms) },
   { keys: /^(bedrooms|dormitoare|numar dormitoare)$/, value: (p) => num(p.bedrooms) },
   { keys: /^(bathrooms|bai|numar bai|numarul de bai)$/, value: (p) => num(p.bathrooms) },
   { keys: /^(usable_area|usable_surface|suprafata utila.*)$/, value: (p) => num(p.usable_surface) ?? num(p.surface) },
