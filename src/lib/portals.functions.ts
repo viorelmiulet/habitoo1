@@ -1255,6 +1255,8 @@ export type ListingActionResult =
       processed: number | null;
       promotionErrors?: { promotionId: string; message: string }[];
       message: string | null;
+      /** Publicare reușită cu poze parțiale: avertisment, nu eroare. */
+      mediaWarning?: string | null;
     }
   | {
       ok: false;
@@ -2229,6 +2231,8 @@ export type PropertyPortalCell = {
   pushSupported: boolean;
   lastSyncAt: string | null;
   lastError: string | null;
+  /** Avertisment de publicare reușită (ex. poze parțiale). */
+  mediaWarning: string | null;
   externalId: string | null;
   /** Linkul public al anunțului pe portal, dacă portalul îl întoarce. */
   publicUrl: string | null;
