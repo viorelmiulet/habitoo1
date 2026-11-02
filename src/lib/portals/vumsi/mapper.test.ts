@@ -26,7 +26,7 @@ const APT_FIELDS = [
 ];
 const ATTRS = {
   "461": { fields: APT_FIELDS },
-  "73": { fields: [f("rooms", "number", { required: true, label: "Camere" }), f("land_area", "decimal")] },
+  "73": { attr_model: "attr_real_estate_house", fields: [f("rooms", "number", { required: true, label: "Camere" }), f("land_area", "decimal")] },
   "74": { fields: [f("total_area", "decimal", { required: true, label: "Suprafața totală (m2)" })] },
 };
 const MAPPINGS: VumsiMappings = {
