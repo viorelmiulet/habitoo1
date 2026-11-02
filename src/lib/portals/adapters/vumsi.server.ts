@@ -136,7 +136,7 @@ export function createVumsiAdapter(deps: VumsiAdapterDeps = {}): PortalAdapter {
       const imgReasons = [...pics.warnings, ...(img.ok ? img.warnings : [`${VUMSI_IMAGES_PENDING_MESSAGE}${img.fail.message ? ` (${img.fail.message})` : ""}.`])];
       if (img.ok) for (const w of img.warnings) if (!notes.includes(w)) notes.push(w);
       else notes.push(`${VUMSI_IMAGES_PENDING_MESSAGE}.`);
-      mediaWarnings.push(photoWarning(img.images.length, pics.images.length + pics.warnings.length, imgReasons));
+      mediaWarnings.push(photoWarning(img.images.length, pics.images.length, imgReasons));
       const pub = await publishVumsiListing(call, up.uuid, state.status);
       if (!pub.ok) { await save(); return vumsiToPortalFail(pub.fail, prefix); }
       state.status = pub.status;

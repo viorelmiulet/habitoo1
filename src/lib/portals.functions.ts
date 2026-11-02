@@ -1639,6 +1639,14 @@ export async function executeListingAction(input: {
       ? (result.data.message ?? "Portalul a raportat o problemă la acest anunț.")
       : null;
   /**
+   * Avertisment separat de eroare (ex. poze parțiale): doar pe o publicare/actualizare
+   * reușită, care nu a ajuns în stare de eroare. Nu declanșează notificarea de eșec.
+   */
+  const mediaWarning =
+    result.ok && action !== "withdraw" && !errorMessage && status !== "error"
+      ? (result.data.mediaWarning ?? null)
+      : null;
+  /**
    * Motivul retragerii: o retragere cerută de un om rămâne „user” și nu se
    * retrimite automat niciodată; o publicare/actualizare reușită îl șterge.
    * Automatizările pot cere alt motiv (ex. reducerea locurilor de publicare).
@@ -1656,6 +1664,7 @@ export async function executeListingAction(input: {
     status,
     last_sync_at: now,
     last_error: errorMessage,
+    last_warning: mediaWarning,
     ...(result.ok && definition.id === "imobiliare_ro" ? { imobiliare_mode: action === "withdraw" ? null : result.data.imobiliareMode ?? listing?.imobiliare_mode ?? null } : {}),
     ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
     // Linkul public al anunțului, când portalul îl întoarce (generic, nu doar Storia).
@@ -1693,6 +1702,7 @@ export async function executeListingAction(input: {
       status: status === "error" ? "error" : action === "withdraw" ? "disabled" : "synced",
       last_synced_at: now,
       last_error: errorMessage,
+      last_warning: mediaWarning,
       external_ref:
         result.ok && result.data.externalId
           ? result.data.externalId
@@ -1796,6 +1806,7 @@ export async function executeListingAction(input: {
         processed: result.data.processed ?? null,
         promotionErrors,
         message: result.data.message ?? null,
+        mediaWarning,
       }
     : {
         ok: false as const,
