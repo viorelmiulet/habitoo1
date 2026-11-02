@@ -102,20 +102,20 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-xl rounded-[18px] bg-card">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-xl flex-col gap-4 overflow-hidden rounded-[18px] bg-card p-4 sm:grid sm:max-h-none sm:w-full sm:overflow-visible sm:p-6">
+        <DialogHeader className="shrink-0 pr-6">
           <DialogTitle className="font-display">Republică anunțurile</DialogTitle>
           <DialogDescription>Retrimite pe portaluri anunțurile deja publicate, cu datele actuale. Nu publică nimic nou, nu retrage și nu folosește promovări plătite.</DialogDescription>
         </DialogHeader>
         {batch ? (
-          <div className="space-y-3 text-sm">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto text-sm sm:overflow-visible">
             <p className="font-semibold">{batch.status === "done" ? "Republicare terminată" : "Republicare în curs…"}</p>
             <p>{batch.succeeded} reușite · {batch.failed} erori · {batch.skipped} sărite{batch.pending ? ` · ${batch.pending} în așteptare` : ""} (din {batch.total})</p>
             {batch.errors.length ? <section><p className="font-semibold text-destructive">Erori</p><ul className="max-h-40 space-y-1 overflow-auto">{batch.errors.map((e, i) => <li key={i}>{e.listing} · {e.portal}: {e.message}</li>)}</ul></section> : null}
             {batch.skippedItems.length ? <section><p className="font-semibold">Sărite</p><ul className="max-h-40 space-y-1 overflow-auto text-muted-foreground">{batch.skippedItems.map((e, i) => <li key={i}>{e.listing} · {e.portal}: {e.message}</li>)}</ul></section> : null}
           </div>
         ) : (
-          <div className="space-y-4 text-sm">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto text-sm sm:overflow-visible">
             {preview?.canChooseScope ? (
               <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Ce anunțuri">
                 {([["mine", "Anunțurile mele"], ["all", "Toate anunțurile agenției"]] as const).map(([value, text]) => (
@@ -128,7 +128,7 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
                 <p className="mb-2 text-muted-foreground">Portaluri (implicit toate)</p>
                 <div className="flex flex-wrap gap-2">
                   {allPortals.perPortal.map((p) => (
-                    <Button key={p.portalId} type="button" size="sm" variant={portalFilter.includes(p.portalId) ? "default" : "outline"} aria-pressed={portalFilter.includes(p.portalId)} onClick={() => toggle(p.portalId)}>{p.name}</Button>
+                    <Button key={p.portalId} type="button" size="sm" variant={portalFilter.includes(p.portalId) ? "default" : "outline"} aria-pressed={portalFilter.includes(p.portalId)} className="h-9 max-w-full px-3 text-[13px] sm:h-9 sm:text-sm" onClick={() => toggle(p.portalId)}>{p.name}</Button>
                   ))}
                 </div>
               </div>
@@ -138,7 +138,7 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
                 <p className="font-semibold">{preview.listings} anunțuri pe {preview.portals} portaluri vor fi republicate</p>
                 <ul className="mt-2 space-y-1">
                   {preview.perPortal.map((p) => (
-                    <li key={p.portalId}>{p.name}: {p.queued > 0 ? `${p.queued} anunțuri` : `${p.autoPull} anunțuri · se actualizează automat la următoarea preluare`}</li>
+                    <li key={p.portalId} className="flex items-start justify-between gap-3"><span className="min-w-0 break-words">{p.name}</span><span className="shrink-0 text-right tabular-nums">{p.queued > 0 ? `${p.queued} anunțuri` : <>{p.autoPull} anunțuri<span className="block text-xs text-muted-foreground">se actualizează automat la următoarea preluare</span></>}</span></li>
                   ))}
                 </ul>
               </div>
@@ -146,10 +146,10 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
             {preview?.activeBatchId ? <p className="font-semibold text-destructive">O republicare rulează deja pentru agenție.</p> : null}
           </div>
         )}
-        <DialogFooter>
-          {batch?.status === "done" ? <Button variant="outline" onClick={onDismiss}>Republicare nouă</Button> : null}
-          <Button variant="outline" onClick={onClose}>Închide</Button>
-          {!batch ? <Button disabled={blocked} onClick={() => mutation.mutate()}>Republică</Button> : null}
+        <DialogFooter className="shrink-0 gap-2 sm:gap-0">
+          {batch?.status === "done" ? <Button variant="outline" className="w-full sm:w-auto" onClick={onDismiss}>Republicare nouă</Button> : null}
+          <Button variant="outline" className="w-full sm:w-auto" onClick={onClose}>Închide</Button>
+          {!batch ? <Button disabled={blocked} className="w-full sm:w-auto" onClick={() => mutation.mutate()}>Republică</Button> : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>
