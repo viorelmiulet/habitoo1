@@ -3401,7 +3401,7 @@ export async function applyPortalSelectionForOrg(input: {
           action: res.ok ? (action === "update" ? "updated" : "published") : "blocked",
           ok: res.ok,
           message: res.ok
-            ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.${res.promotionErrors?.length ? " " + res.promotionErrors.map((error) => error.message).join("; ") : ""}`
+            ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.${res.promotionErrors?.length ? " " + res.promotionErrors.map((error) => error.message).join("; ") : ""}${res.mediaWarning ? ` Avertisment: ${res.mediaWarning}` : ""}`
             : withPortalPrefixOnce([name, definition.display_name], res.message),
           ...(!res.ok ? { code: res.code, httpStatus: res.httpStatus ?? null } : {}),
         });
