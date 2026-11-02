@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -86,7 +86,6 @@ export function PropertyMediaManager({
   const [signed, setSigned] = useState<Record<string, string>>({});
   const [cacheBust, setCacheBust] = useState<Record<string, number>>({});
   const [preview, setPreview] = useState<number | null>(null);
-  const dragIndex = useRef<number | null>(null);
 
   const queryKey = ["property-images", propertyId] as const;
 
@@ -207,7 +206,7 @@ export function PropertyMediaManager({
 
   const reorder = useMutation({
     onMutate: (ordered: ImageRow[]) => {
-      qc.setQueryData(imagesKey, withPrimaryFirst(ordered));
+      queryClient.setQueryData(queryKey, withPrimaryFirst(ordered));
     },
     mutationFn: async (ordered: ImageRow[]) => {
       const results = await Promise.all(
@@ -319,114 +318,119 @@ export function PropertyMediaManager({
         />
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={images.map((i) => i.id)} strategy={rectSortingStrategy}>
-        <div data-tour="media-grid" className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {images.map((img, idx) => {
-            const url = imgUrl(img);
-            const isFirst = idx === 0;
-            return (
-              <SortableTile
-                key={img.id}
-                id={img.id}
-                className={`group relative overflow-hidden rounded-2xl bg-card p-0 ring-1 transition-shadow hover:shadow-soft ${
-                  isFirst ? "ring-2 ring-primary" : "ring-border/60"
-                }`}
-              >
-                {(handle) => (
-                <>
-                <button
-                  type="button"
-                  className="block aspect-square w-full bg-muted"
-                  onClick={() => setPreview(idx)}
-                >
-                  {url ? (
-                    <img src={url} alt="" className="size-full object-cover" />
-                  ) : (
-                    <div className="flex size-full items-center justify-center text-muted-foreground">
-                      <ImageOff className="size-6" />
-                    </div>
-                  )}
-                </button>
-                {isFirst ? (
-                  <span className="absolute top-2 left-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground">
-                    Principală
-                  </span>
-                ) : null}
-                {img.is_confidential ? (
-                  <span className="absolute top-2 right-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    <EyeOff className="size-3" />
-                  </span>
-                ) : null}
-                <div className="flex flex-wrap items-center gap-1 border-t border-border p-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    title="Mută fotografia"
-                    aria-label="Mută fotografia"
-                    className="cursor-grab touch-none active:cursor-grabbing"
-                    {...handle}
+          <SortableContext items={images.map((i) => i.id)} strategy={rectSortingStrategy}>
+            <div
+              data-tour="media-grid"
+              className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+            >
+              {images.map((img, idx) => {
+                const url = imgUrl(img);
+                const isFirst = idx === 0;
+                return (
+                  <SortableTile
+                    key={img.id}
+                    id={img.id}
+                    className={`group relative overflow-hidden rounded-2xl bg-card p-0 ring-1 transition-shadow hover:shadow-soft ${
+                      isFirst ? "ring-2 ring-primary" : "ring-border/60"
+                    }`}
                   >
-                    <Move className="size-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    title="Rotește"
-                    onClick={() => rotate.mutate(img)}
-                  >
-                    <RotateCw className="size-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    title="Ascunde/arată"
-                    onClick={() =>
-                      patch.mutate({
-                        id: img.id,
-                        values: { is_confidential: !img.is_confidential },
-                      })
-                    }
-                  >
-                    <EyeOff className={`size-3.5 ${img.is_confidential ? "text-primary" : ""}`} />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="sm" variant="ghost" title="Șterge">
-                        <Trash2 className="size-3.5 text-destructive" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Ștergi imaginea?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Această acțiune nu poate fi anulată.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Anulează</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => removeImage.mutate(img)}>
-                          Șterge
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-                <div className="flex items-center justify-between gap-2 border-t border-border px-2 py-1.5 text-[11px] text-muted-foreground">
-                  <span>Publică</span>
-                  <Switch
-                    checked={img.include_in_publish}
-                    onCheckedChange={(c) =>
-                      patch.mutate({ id: img.id, values: { include_in_publish: c } })
-                    }
-                  />
-                </div>
-                </>
-                )}
-              </SortableTile>
-            );
-          })}
-        </div>
-        </SortableContext>
+                    {(handle) => (
+                      <>
+                        <button
+                          type="button"
+                          className="block aspect-square w-full bg-muted"
+                          onClick={() => setPreview(idx)}
+                        >
+                          {url ? (
+                            <img src={url} alt="" className="size-full object-cover" />
+                          ) : (
+                            <div className="flex size-full items-center justify-center text-muted-foreground">
+                              <ImageOff className="size-6" />
+                            </div>
+                          )}
+                        </button>
+                        {isFirst ? (
+                          <span className="absolute top-2 left-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground">
+                            Principală
+                          </span>
+                        ) : null}
+                        {img.is_confidential ? (
+                          <span className="absolute top-2 right-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            <EyeOff className="size-3" />
+                          </span>
+                        ) : null}
+                        <div className="flex flex-wrap items-center gap-1 border-t border-border p-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            title="Mută fotografia"
+                            aria-label="Mută fotografia"
+                            className="cursor-grab touch-none active:cursor-grabbing"
+                            {...handle}
+                          >
+                            <Move className="size-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            title="Rotește"
+                            onClick={() => rotate.mutate(img)}
+                          >
+                            <RotateCw className="size-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            title="Ascunde/arată"
+                            onClick={() =>
+                              patch.mutate({
+                                id: img.id,
+                                values: { is_confidential: !img.is_confidential },
+                              })
+                            }
+                          >
+                            <EyeOff
+                              className={`size-3.5 ${img.is_confidential ? "text-primary" : ""}`}
+                            />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="ghost" title="Șterge">
+                                <Trash2 className="size-3.5 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Ștergi imaginea?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Această acțiune nu poate fi anulată.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Anulează</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => removeImage.mutate(img)}>
+                                  Șterge
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 border-t border-border px-2 py-1.5 text-[11px] text-muted-foreground">
+                          <span>Publică</span>
+                          <Switch
+                            checked={img.include_in_publish}
+                            onCheckedChange={(c) =>
+                              patch.mutate({ id: img.id, values: { include_in_publish: c } })
+                            }
+                          />
+                        </div>
+                      </>
+                    )}
+                  </SortableTile>
+                );
+              })}
+            </div>
+          </SortableContext>
         </DndContext>
       )}
 
@@ -487,10 +491,17 @@ function SortableTile({
 }: {
   id: string;
   className: string;
-  children: (handle: Record<string, unknown>) => React.ReactNode;
+  children: (handle: Record<string, unknown>) => ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
-    useSortable({ id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
   return (
     <div
       ref={setNodeRef}
