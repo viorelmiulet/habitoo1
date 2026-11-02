@@ -185,8 +185,13 @@ export function buildVumsiAttrs(p: Row, fields: VumsiAttribute[], categoryName: 
   for (const f of fields) {
     const { known, value } = habitooValue(p, f);
     const v = known ? convert(f, value) : null;
-    if (v !== null) { attrs[f.name] = v; continue; }
     const label = f.label ?? f.name;
+    if (typeof v === "number" && ((f.max != null && v > f.max) || (f.min != null && v < f.min))) {
+      const limit = f.max != null && v > f.max ? `acceptă cel mult ${f.max}` : `acceptă cel puțin ${f.min}`;
+      warnings.push(`${label} ${v} nu a fost trimis la Vumsi (${limit}).`);
+      continue;
+    }
+    if (v !== null) { attrs[f.name] = v; continue; }
     if (f.required) {
       reasons.push(known && value !== null
         ? `Valoarea „${String(value)}” pentru „${label}” nu este acceptată de Vumsi la ${categoryName}; alege una dintre: ${f.choices.map((c) => c.label).join(", ")}.`
