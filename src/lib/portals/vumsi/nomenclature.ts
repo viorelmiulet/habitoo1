@@ -104,6 +104,13 @@ export function parseVumsiAttrModel(body: unknown): string | null {
   return str(b?.["attr_model"] ?? rec(b?.["data"])?.["attr_model"]);
 }
 
+/** Câmpurile categoriei: recalculate din `raw` (limite min/max actuale), altfel `fields` salvat. */
+export function vumsiCategoryFields(def: { fields?: VumsiAttribute[]; raw?: unknown } | null | undefined): VumsiAttribute[] {
+  if (!def) return [];
+  if (def.raw != null) { const f = parseVumsiAttributes(def.raw); if (f.length) return f; }
+  return def.fields ?? [];
+}
+
 /** Modelul categoriei: din categorie, apoi din atributele salvate (snapshoturi vechi: din `raw`). */
 export function vumsiCategoryModel(
   id: number,

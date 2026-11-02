@@ -136,6 +136,19 @@ describe("limitele numerice din nomenclator (min/max)", () => {
     expect(r.warnings).toContain("Anul construcției 2027 nu a fost trimis la Vumsi (acceptă cel mult 2026).");
   });
 
+  it("snapshot vechi: limitele se recalculează din raw când fields nu le are", () => {
+    const raw = { attr_model: "attr_real_estate_house", fields: [
+      { name: "rooms", type: "number", required: true, label: "Camere" },
+      { name: "construction_year", type: "number", label: "Anul construcției", min: 1900, max: 2026 },
+    ] };
+    const oldFields = [f("rooms", "number", { required: true, label: "Camere" }), f("construction_year", "number", { label: "Anul construcției" })];
+    const oldCtx = { ...ctx, attributes: { "73": { attr_model: "attr_real_estate_house", fields: oldFields, raw } } };
+    const r = mapPropertyToVumsi({ ...house, build_year: 2027 }, oldCtx);
+    expect(r.plans[0]!.attrs.construction_year).toBeUndefined();
+    expect(r.warnings).toContain("Anul construcției 2027 nu a fost trimis la Vumsi (acceptă cel mult 2026).");
+  });
+
+
   it("anul 2026 (limita) se trimite", () => {
     const r = mapPropertyToVumsi({ ...house, build_year: 2026 }, houseCtx);
     expect(r.plans[0]!.attrs.construction_year).toBe(2026);
