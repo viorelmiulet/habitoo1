@@ -105,6 +105,11 @@ export type ListingOutcome = {
    */
   promotedConfirmed?: boolean;
   imobiliareMode?: import("./imobiliare/card-promotions").ImobiliarePublicationMode;
+  /**
+   * Anunț acceptat, dar nu cu toate pozele: avertisment separat de eroare
+   * (ex. „7 din 8 poze trimise – …”). Publicarea rămâne reușită.
+   */
+  mediaWarning?: string | null;
 };
 
 export type ConnectionStatusOutcome = {

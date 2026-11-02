@@ -1255,6 +1255,8 @@ export type ListingActionResult =
       processed: number | null;
       promotionErrors?: { promotionId: string; message: string }[];
       message: string | null;
+      /** Publicare reușită cu poze parțiale: avertisment, nu eroare. */
+      mediaWarning?: string | null;
     }
   | {
       ok: false;
@@ -1639,6 +1641,14 @@ export async function executeListingAction(input: {
       ? (result.data.message ?? "Portalul a raportat o problemă la acest anunț.")
       : null;
   /**
+   * Avertisment separat de eroare (ex. poze parțiale): doar pe o publicare/actualizare
+   * reușită, care nu a ajuns în stare de eroare. Nu declanșează notificarea de eșec.
+   */
+  const mediaWarning =
+    result.ok && action !== "withdraw" && !errorMessage && status !== "error"
+      ? (result.data.mediaWarning ?? null)
+      : null;
+  /**
    * Motivul retragerii: o retragere cerută de un om rămâne „user” și nu se
    * retrimite automat niciodată; o publicare/actualizare reușită îl șterge.
    * Automatizările pot cere alt motiv (ex. reducerea locurilor de publicare).
@@ -1656,6 +1666,7 @@ export async function executeListingAction(input: {
     status,
     last_sync_at: now,
     last_error: errorMessage,
+    last_warning: mediaWarning,
     ...(result.ok && definition.id === "imobiliare_ro" ? { imobiliare_mode: action === "withdraw" ? null : result.data.imobiliareMode ?? listing?.imobiliare_mode ?? null } : {}),
     ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
     // Linkul public al anunțului, când portalul îl întoarce (generic, nu doar Storia).
@@ -1693,6 +1704,7 @@ export async function executeListingAction(input: {
       status: status === "error" ? "error" : action === "withdraw" ? "disabled" : "synced",
       last_synced_at: now,
       last_error: errorMessage,
+      last_warning: mediaWarning,
       external_ref:
         result.ok && result.data.externalId
           ? result.data.externalId
@@ -1796,6 +1808,7 @@ export async function executeListingAction(input: {
         processed: result.data.processed ?? null,
         promotionErrors,
         message: result.data.message ?? null,
+        mediaWarning,
       }
     : {
         ok: false as const,
@@ -2218,6 +2231,8 @@ export type PropertyPortalCell = {
   pushSupported: boolean;
   lastSyncAt: string | null;
   lastError: string | null;
+  /** Avertisment de publicare reușită (ex. poze parțiale). */
+  mediaWarning: string | null;
   externalId: string | null;
   /** Linkul public al anunțului pe portal, dacă portalul îl întoarce. */
   publicUrl: string | null;
@@ -2457,13 +2472,13 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
       admin
         .from("portal_publications")
         .select(
-          "property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref, promoted, imobiliare_mode",
+          "property_id, portal_key, enabled, status, last_synced_at, last_error, last_warning, external_ref, promoted, imobiliare_mode",
         )
         .eq("organization_id", organizationId)
         .in("property_id", data.propertyIds),
       admin
         .from("portal_listings")
-        .select("property_id, portal, status, last_sync_at, last_error, external_id, public_url, portal_offers, imobiliare_mode")
+        .select("property_id, portal, status, last_sync_at, last_error, last_warning, external_id, public_url, portal_offers, imobiliare_mode")
         .eq("organization_id", organizationId)
         .in("property_id", data.propertyIds),
       admin
@@ -2553,6 +2568,11 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
             !pushSupported && state === "error"
               ? "Oferta este selectată, dar nu intră în feed: verifică statusul și publicarea pe site."
               : (listing?.last_error ?? pub?.last_error ?? null),
+          // Avertisment (ex. poze parțiale) doar pe un anunț bifat și publicat, niciodată peste o eroare.
+          mediaWarning:
+            pub?.enabled === true && (state === "published" || state === "syncing" || state === "in_feed") && !(listing?.last_error ?? pub?.last_error)
+              ? (listing?.last_warning ?? pub?.last_warning ?? null)
+              : null,
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
           // Imobiliare.ro: linkul se afișează doar din ID-ul real salvat.
           publicUrl:
@@ -3385,7 +3405,7 @@ export async function applyPortalSelectionForOrg(input: {
           action: res.ok ? (action === "update" ? "updated" : "published") : "blocked",
           ok: res.ok,
           message: res.ok
-            ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.${res.promotionErrors?.length ? " " + res.promotionErrors.map((error) => error.message).join("; ") : ""}`
+            ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.${res.promotionErrors?.length ? " " + res.promotionErrors.map((error) => error.message).join("; ") : ""}${res.mediaWarning ? ` Avertisment: ${res.mediaWarning}` : ""}`
             : withPortalPrefixOnce([name, definition.display_name], res.message),
           ...(!res.ok ? { code: res.code, httpStatus: res.httpStatus ?? null } : {}),
         });

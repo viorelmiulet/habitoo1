@@ -59,7 +59,7 @@ describe("encodeImobiliareImages — reîncercarea descărcărilor", () => {
     const s = vi.fn(async () => {});
     const out = await encodeImobiliareImages({ admin, organizationId: "o", propertyId: "p", sleep: s });
     expect(out.images).toHaveLength(1);
-    expect(out.transient).toBe(false);
+    expect(out.transient).toBeFalsy();
     expect(s).not.toHaveBeenCalled();
     expect(out.warnings.join(" ")).toContain("nu are fișier disponibil");
   });

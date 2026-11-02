@@ -460,7 +460,8 @@ export const PropertyPortalsCard = forwardRef<
       finished = true;
       if (job.portalId === "imobiliare_ro") setImobiliareDrafts({});
       const name = cells.find((c) => c.portalId === job.portalId)?.portalName ?? job.portalId;
-      if (job.ok) toast.success(`${name}: ${job.action === "withdrawn" ? "retras" : job.action === "updated" ? "actualizat" : "publicat"}`);
+      if (job.ok && job.message?.includes("Avertisment:")) toast.warning(job.message);
+      else if (job.ok) toast.success(`${name}: ${job.action === "withdrawn" ? "retras" : job.action === "updated" ? "actualizat" : "publicat"}`);
       else toast.error(job.message ? `${name}: ${job.message}` : `${name}: publicarea a eșuat.`);
     }
     if (finished) {
@@ -979,6 +980,9 @@ export const PropertyPortalsCard = forwardRef<
                         >
                           {detail}
                         </p>
+                        {cell.mediaWarning && !problem && !latestOperationFailed ? (
+                          <p className="mt-1 break-words text-xs font-medium text-warning-foreground">{cell.mediaWarning}</p>
+                        ) : null}
                         {(cell.portalId === "imobiliare_ro" || cell.portalId === "imo24") && (cell.lastError || latestOperationFailed) ? <p role="alert" className="mt-2 break-words text-xs text-destructive">{cell.lastError ?? latestOperation?.errorMessage}</p> : null}
                         {cell.portalId === "imo24" && !cell.lastError && latestOperation?.success === true && latestOperation.errorMessage ? <p className="mt-2 break-words text-xs text-muted-foreground">{latestOperation.errorMessage}</p> : null}
                         {cell.portalId === "imobiliare_ro" && cell.configured && !hideDeselectedError ? (

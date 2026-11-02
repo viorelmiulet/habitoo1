@@ -39,7 +39,7 @@ describe("Imobiliare replacement gallery", () => {
   it("reports partial acceptance, never assumes 200 means all photos", async () => {
     request.mockResolvedValue({ ok: true, status: 200, body: { data: [{ id: 1, order: 1, collection: "images" }] } });
     const result = await sendImobiliareGallery({} as never, ctx, "HB-1111", images);
-    expect(result).toMatchObject({ ok: false, fail: { message: expect.stringContaining("1/8") } });
+    expect(result).toMatchObject({ ok: true, sent: 1, warning: expect.stringContaining("1 din 8 poze trimise") });
   });
   it("does not silently truncate a gallery over 30", async () => {
     expect((await sendImobiliareGallery({} as never, ctx, "HB-1111", Array.from({ length: 31 }, () => images[0] ?? { dataUrl: "", bytes: 0 }))).ok).toBe(false);

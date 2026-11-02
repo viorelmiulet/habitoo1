@@ -77,14 +77,14 @@ export async function encodeImobiliareImages(input: {
   const eligible = ((rows ?? []) as PropertyImageRow[]).filter(isImageFeedEligible);
   const expected = eligible.length;
   if (expected > IMOBILIARE_MAX_IMAGES) {
-    return { images: [], expected, warnings: [`Galeria are ${expected} poze publicabile; Imobiliare.ro acceptă maximum 30. Nicio poză nu a fost omisă automat.`] };
+    warnings.push(`Imobiliare.ro acceptă maximum ${IMOBILIARE_MAX_IMAGES} poze; se trimit primele ${IMOBILIARE_MAX_IMAGES}.`);
   }
   const cfg = watermarkFromOrg(org ?? null);
 
   const images: EncodedImage[] = [];
   const seenHashes = new Map<string, number>();
   let duplicates = 0;
-  for (const row of eligible) {
+  for (const row of eligible.slice(0, IMOBILIARE_MAX_IMAGES)) {
     if (!row.storage_path) {
       warnings.push(`Poza ${eligible.indexOf(row) + 1} nu are fișier disponibil.`);
       dataError = true;
@@ -135,7 +135,9 @@ export async function encodeImobiliareImages(input: {
   if (images.length === 0) {
     warnings.push("Nicio imagine publicabilă nu a putut fi pregătită pentru Imobiliare.ro.");
   }
-  if (images.length !== expectedUnique) return { images, warnings, expected, transient: transient && !dataError };
+  // O poză care nu se poate citi se sare; restul galeriei se trimite.
+  const meta = images.length === 0 ? { transient: transient && !dataError } : {};
+  if (images.length === 0) return { images, warnings, expected: expectedUnique, ...meta };
   try {
     return { images: fitImobiliareGallery(images), warnings, expected: expectedUnique };
   } catch (error) {

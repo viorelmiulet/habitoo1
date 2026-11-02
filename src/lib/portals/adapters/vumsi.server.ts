@@ -7,6 +7,7 @@
  *  - status real `GET /listings/{uuid}/`, cel mult o dată pe minut pe anunț.
  * Fără promovări plătite.
  */
+import { photoWarning, joinWarnings } from "../media-warning";
 import type { ConnectionStatusOutcome, ListingDiagnostics, ListingOutcome, ListingRef, PortalAdapter, PortalContext, PortalFail, PortalResult } from "../adapter";
 import { notSupported } from "../adapter";
 import type { PortalErrorCode } from "../errors";
@@ -113,6 +114,7 @@ export function createVumsiAdapter(deps: VumsiAdapterDeps = {}): PortalAdapter {
     const states: VumsiStored[] = [];
     const notes: string[] = [...pics.warnings];
     const done: string[] = [];
+    const mediaWarnings: (string | null)[] = [];
     const save = () => d.save(ctx.organizationId, ref.propertyId, states).catch(() => undefined);
 
     for (const body of bodies) {
@@ -129,22 +131,12 @@ export function createVumsiAdapter(deps: VumsiAdapterDeps = {}): PortalAdapter {
       states.push(state);
       const img = await syncVumsiImages(call, up.uuid, pics.images, up.images, d.fetchImage);
       state.images = img.images;
-      if (!img.ok) {
-        // Eroare doar la poze: fără publish, fără status „refuzat”; următoarea salvare reîncearcă doar pozele
-        // (anunțul existent e găsit după external_id și actualizat, nu recreat).
-        await save();
-        return {
-          ok: true,
-          data: {
-            externalId: bodies.map((b) => b.external_id).join(","), live: true, processed: states.length,
-            detail: `vumsi_images_failed http=${img.fail.status ?? "-"} kind=${img.fail.kind}`,
-            message: `${prefix}${VUMSI_IMAGES_PENDING_MESSAGE}.`,
-            portalStatus: "pending",
-            portalResponse: { images_error: { status: img.fail.status, kind: img.fail.kind }, listings: states.map(({ images: _i, ...s }) => s) },
-          },
-        };
-      }
-      for (const w of img.warnings) if (!notes.includes(w)) notes.push(w);
+      // Anunțul există la Vumsi: pozele care nu au ajuns devin avertisment, anunțul se publică
+      // cu cele încărcate; următoarea salvare trimite doar pozele lipsă.
+      const imgReasons = [...pics.warnings, ...(img.ok ? img.warnings : [`${VUMSI_IMAGES_PENDING_MESSAGE}${img.fail.message ? ` (${img.fail.message})` : ""}.`])];
+      if (img.ok) for (const w of img.warnings) if (!notes.includes(w)) notes.push(w);
+      else notes.push(`${VUMSI_IMAGES_PENDING_MESSAGE}.`);
+      mediaWarnings.push(photoWarning(img.images.length, pics.images.length, imgReasons));
       const pub = await publishVumsiListing(call, up.uuid, state.status);
       if (!pub.ok) { await save(); return vumsiToPortalFail(pub.fail, prefix); }
       state.status = pub.status;
@@ -174,6 +166,7 @@ export function createVumsiAdapter(deps: VumsiAdapterDeps = {}): PortalAdapter {
         processed: current.length,
         detail: `vumsi_${action} ${current.map((s) => `${s.external_id}:${s.status}`).join(",")}`,
         message: `Vumsi: ${done.join("; ")}.${notes.length ? ` ${notes.join(" ")}` : ""}`,
+        mediaWarning: joinWarnings(mediaWarnings),
         portalStatus: pending ? "pending" : "published",
         ...(offers[0] ? { publicUrl: offers[0].url, offers } : {}),
         portalResponse: current.map(({ images: _i, ...s }) => s),
