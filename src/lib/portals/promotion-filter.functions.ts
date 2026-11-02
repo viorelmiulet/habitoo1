@@ -8,9 +8,11 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { parsePortalFilter, matchesPortalFilter } from "@/lib/portals/portal-state";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
   activatedPortalIds,
+  computeOrgPortalStates,
   resolvePublishingOrg,
   type AuthContext,
 } from "@/lib/portals.functions";
@@ -23,6 +25,7 @@ import {
   matchingPropertyIds,
   promotionBadgesFor,
   storiaAutoRenewValues,
+  unifiedPortalValues,
   type PromotionFilterGroup,
   type PromotionRows,
   type PropertyPromotionBadge,
@@ -139,7 +142,7 @@ export const getPromotionFilterOptions = createServerFn({ method: "POST" })
   });
 
 const promotionValuesSchema = z
-  .array(z.string().regex(/^(any|none|imobiliare_ro:[a-z0-9_]+|[a-z0-9_]+:(promoted|error)|storia:auto_renew_(on|off))$/))
+  .array(z.string().regex(/^(any|none|imobiliare_ro:[a-z0-9_]+|[a-z0-9_]+:(promoted|published|unpublished|error)|storia:auto_renew_(on|off))$/))
   .max(100);
 
 /**
@@ -161,11 +164,16 @@ export const getPropertyIdsByPromotion = createServerFn({ method: "POST" })
       context as unknown as AuthContext,
       data.organizationId,
     );
-    const selection = parsePromotionSelection(data.values.join(","));
-    if (promotionSelectionIsEmpty(selection)) return [];
+    const connected = await activatedPortalIds(organizationId);
+    const valid = new Set(["any", "none", ...promotionFilterGroups(connected).flatMap((g) => g.options.map((o) => o.value)), ...["any", ...connected].filter((id) => id !== "facebook_catalog").flatMap((id) => ["published", "unpublished", "error"].map((state) => `${id}:${state}`))]);
+    const values = unifiedPortalValues(data.values.join(",")).filter((v) => valid.has(v));
+    const stateFilters = values.map(parsePortalFilter).filter((v) => v !== null);
+    const errorPortals = stateFilters.filter((f) => f.state === "error").flatMap((f) => f.portal === "any" ? [...connected].filter((p) => p !== "facebook_catalog") : [f.portal]);
+    const selection = parsePromotionSelection([...values.filter((v) => !parsePortalFilter(v)), ...errorPortals.map((p) => `${p}:error`)].join(","));
+    if (promotionSelectionIsEmpty(selection) && stateFilters.length === 0) return [];
     const admin = await loadAdmin();
     const hasPromotions = selection.any || selection.none || selection.imobiliareServices.length > 0 || selection.flagPortals.length > 0;
-    const [rows, autoRenew, errors, all] = await Promise.all([
+    const [rows, autoRenew, errors, all, states] = await Promise.all([
       hasPromotions ? fetchPromotionRows(organizationId) : Promise.resolve({ listings: [], states: [], publications: [] }),
       selection.storiaAutoRenew.length ? fetchStoriaAutoRenewValues(organizationId) : Promise.resolve(new Map<string, boolean>()),
       selection.errorPortals.length ? fetchAllRows((a, b) =>
@@ -186,8 +194,10 @@ export const getPropertyIdsByPromotion = createServerFn({ method: "POST" })
           .order("id")
           .range(a, b),
       ) : Promise.resolve([]),
+      stateFilters.some((f) => f.state !== "error") ? computeOrgPortalStates(organizationId) : Promise.resolve(new Map()),
     ]);
-    return matchingPropertyIds(selection, buildPromotionInfos(rows), autoRenew, errors, all.map((row) => row.id));
+    const stateIds = stateFilters.length ? [...states].filter(([, cells]) => stateFilters.some((f) => f.state !== "error" && matchesPortalFilter(cells, f))).map(([id]) => id) : undefined;
+    return matchingPropertyIds(selection, buildPromotionInfos(rows), autoRenew, errors, all.map((row) => row.id), stateIds);
   });
 
 /** Etichetele „Promovat” pentru rândurile din pagina curentă a listei. */
