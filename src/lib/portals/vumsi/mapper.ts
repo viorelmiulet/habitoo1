@@ -6,7 +6,7 @@
 import { publicCoords } from "@/lib/geo";
 import type { PropertyRow } from "@/lib/site-feed/mapper";
 import { cutAtWord, htmlToText, imo24Transactions } from "@/lib/portals/imo24/mapper";
-import { fold, vumsiCategoryModel, type VumsiAttribute, type VumsiCategory } from "./nomenclature";
+import { fold, vumsiCategoryFields, vumsiCategoryModel, type VumsiAttribute, type VumsiCategory } from "./nomenclature";
 
 export const VUMSI_TITLE_MAX = 255;
 export const VUMSI_COMPANY_NAME_MAX = 64;
@@ -292,7 +292,7 @@ export function mapPropertyToVumsi(p: Row, ctx: VumsiMapContext): { plans: Vumsi
       if (!def) reasons.push(`Categoria Vumsi „${category.name}” nu mai este în snapshot. ${VUMSI_SETUP_MESSAGE}`);
       else if (mismatch) reasons.push(mismatch);
       else {
-        const a = buildVumsiAttrs(p, def.fields, category.name);
+        const a = buildVumsiAttrs(p, vumsiCategoryFields(def), category.name);
         attrs = a.attrs;
         reasons.push(...a.reasons);
         for (const w of a.warnings) if (!warnings.includes(w)) warnings.push(w);
