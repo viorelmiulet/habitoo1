@@ -1,13 +1,20 @@
 /**
- * Vumsi: fiecare poză devine un JPEG real înainte de încărcare (calitate ~85,
- * max. 1600 px pe latura mare, sub 2 MB). Pur JS (jpeg-js / fast-png), sigur în Worker.
+ * Vumsi acceptă JPEG/PNG/WebP/HEIC până la 25 MB (redimensionează ei peste 5000 px):
+ * acestea pleacă neschimbate. Conversia în JPEG e doar rezervă (alte formate, ex. GIF,
+ * sau fișiere peste 25 MB). Pur JS (jpeg-js / fast-png / omggif), sigur în Worker.
  */
 import jpeg from "jpeg-js";
 import { decode as decodePng } from "fast-png";
+import { GifReader } from "omggif";
 
-export const VUMSI_JPEG_MAX_SIDE = 1600;
-export const VUMSI_JPEG_MAX_BYTES = 2 * 1024 * 1024;
+export const VUMSI_MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 export const VUMSI_JPEG_QUALITY = 85;
+const PASSTHROUGH: Partial<Record<SniffedKind, { mime: string; ext: string }>> = {
+  jpeg: { mime: "image/jpeg", ext: "jpg" },
+  png: { mime: "image/png", ext: "png" },
+  webp: { mime: "image/webp", ext: "webp" },
+  heic: { mime: "image/heic", ext: "heic" },
+};
 
 export type SniffedKind = "jpeg" | "png" | "webp" | "gif" | "heic" | "html" | "unknown";
 
@@ -44,6 +51,17 @@ function decode(bytes: Uint8Array, kind: SniffedKind): Raster | null {
     }
     return { data: out, width: png.width, height: png.height };
   }
+  if (kind === "gif") {
+    const g = new GifReader(bytes);
+    const out = new Uint8Array(g.width * g.height * 4);
+    g.decodeAndBlitFrameRGBA(0, out);
+    for (let i = 0; i < g.width * g.height; i++) {
+      const a = out[i * 4 + 3] / 255;
+      for (let c = 0; c < 3; c++) out[i * 4 + c] = Math.round(out[i * 4 + c] * a + 255 * (1 - a));
+      out[i * 4 + 3] = 255;
+    }
+    return { data: out, width: g.width, height: g.height };
+  }
   return null;
 }
 
@@ -66,19 +84,33 @@ export type VumsiJpegResult =
   | { ok: true; bytes: Uint8Array; width: number; height: number; sourceKind: SniffedKind; sourceBytes: number }
   | { ok: false; reason: string; sourceKind: SniffedKind; sourceBytes: number; head: string };
 
-/** Convertește în JPEG real; răspunsurile non-imagine (HTML etc.) sunt refuzate. */
+/** Rezervă: convertește în JPEG real sub 25 MB; răspunsurile non-imagine (HTML etc.) sunt refuzate. */
 export function toVumsiJpeg(src: Uint8Array): VumsiJpegResult {
   const kind = sniffImage(src);
   const base = { sourceKind: kind, sourceBytes: src.byteLength, head: hexHead(src) };
   let raster: Raster | null = null;
   try { raster = decode(src, kind); } catch { raster = null; }
   if (!raster) return { ok: false, ...base, reason: kind === "html" || kind === "unknown" ? "răspunsul nu este o imagine" : `format ${kind} necompatibil` };
-  for (const side of [VUMSI_JPEG_MAX_SIDE, 1280, 1024]) {
-    const r = resize(raster, side);
-    for (const q of [VUMSI_JPEG_QUALITY, 75, 65]) {
+  for (const side of [Infinity, 5000, 3000]) {
+    const r = Number.isFinite(side) ? resize(raster, side) : raster;
+    for (const q of [VUMSI_JPEG_QUALITY, 75]) {
       const out = jpeg.encode({ data: r.data as Uint8Array, width: r.width, height: r.height }, q).data;
-      if (out.byteLength < VUMSI_JPEG_MAX_BYTES) return { ok: true, bytes: new Uint8Array(out), width: r.width, height: r.height, sourceKind: kind, sourceBytes: src.byteLength };
+      if (out.byteLength <= VUMSI_MAX_IMAGE_BYTES) return { ok: true, bytes: new Uint8Array(out), width: r.width, height: r.height, sourceKind: kind, sourceBytes: src.byteLength };
     }
   }
-  return { ok: false, ...base, reason: "imaginea depășește 2 MB și după comprimare" };
+  return { ok: false, ...base, reason: "imaginea depășește 25 MB și după comprimare" };
+}
+
+export type VumsiUpload =
+  | { ok: true; bytes: Uint8Array; mime: string; ext: string; converted: boolean; sourceKind: SniffedKind }
+  | { ok: false; reason: string; sourceKind: SniffedKind };
+
+/** Formatele acceptate de Vumsi (≤ 25 MB) pleacă neschimbate; restul trec prin conversia JPEG. */
+export function prepareVumsiImage(src: Uint8Array): VumsiUpload {
+  const kind = sniffImage(src);
+  const pass = PASSTHROUGH[kind];
+  if (pass && src.byteLength <= VUMSI_MAX_IMAGE_BYTES) return { ok: true, bytes: src, ...pass, converted: false, sourceKind: kind };
+  const j = toVumsiJpeg(src);
+  if (!j.ok) return { ok: false, reason: j.reason, sourceKind: kind };
+  return { ok: true, bytes: j.bytes, mime: "image/jpeg", ext: "jpg", converted: true, sourceKind: kind };
 }
