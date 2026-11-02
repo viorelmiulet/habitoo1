@@ -94,7 +94,10 @@ export function Topbar({
             <ShieldCheck className="size-3.5" /> Platformă
           </span>
         ) : (
-          <QuickAdd />
+          /* Sub 1024 px adăugarea rapidă e numai plusul din bara de jos (MobileNav). */
+          <div className="hidden lg:flex">
+            <QuickAdd />
+          </div>
         )}
 
         {tour.available ? (

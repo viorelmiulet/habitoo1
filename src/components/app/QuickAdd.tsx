@@ -231,6 +231,7 @@ export function QuickAdd({ variant = "topbar" }: { variant?: "topbar" | "mobile-
           {variant === "mobile-nav" ? (
             <button
               type="button"
+              data-tour="quick-add-open"
               aria-label="Adăugare rapidă"
               className="flex size-[52px] -translate-y-3 items-center justify-center rounded-full bg-gold text-gold-foreground shadow-lg ring-4 ring-surface transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-gold-foreground"
             >
@@ -243,7 +244,7 @@ export function QuickAdd({ variant = "topbar" }: { variant?: "topbar" | "mobile-
             </Button>
           )}
         </DropdownMenuTrigger>
-        <DropdownMenuContent data-tour={variant === "topbar" ? "quick-add-menu" : undefined} align={variant === "mobile-nav" ? "center" : "end"} side={variant === "mobile-nav" ? "top" : undefined} className="w-56">
+        <DropdownMenuContent data-tour="quick-add-menu" align={variant === "mobile-nav" ? "center" : "end"} side={variant === "mobile-nav" ? "top" : undefined} className="w-56">
           <DropdownMenuLabel>Adăugare rapidă</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
