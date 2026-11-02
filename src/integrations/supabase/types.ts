@@ -11614,6 +11614,10 @@ export type Database = {
       portal_status_withdraw_tick: { Args: never; Returns: undefined }
       promotion_withdraw_arm: { Args: never; Returns: undefined }
       promotion_withdraw_tick: { Args: never; Returns: undefined }
+      property_images_sync_primary: {
+        Args: { _property_id: string }
+        Returns: undefined
+      }
       property_import_images_arm: { Args: never; Returns: undefined }
       property_import_images_close_dead: { Args: never; Returns: number }
       property_import_images_tick: { Args: never; Returns: undefined }
