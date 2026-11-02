@@ -14,14 +14,18 @@ export const VUMSI_CATEGORY_QUERIES = [
   "spatii",
   "birouri",
   "industrial",
+  "industriale",
+  "hale",
+  "depozite",
+  "spatii industriale",
 ] as const;
 
-export type VumsiCategory = { id: number; name: string; path: string; parent: number | null; query: string };
+export type VumsiCategory = { id: number; name: string; path: string; parent: number | null; query: string; attr_model?: string | null };
 export type VumsiAttribute = { name: string; label: string | null; type: string | null; required: boolean; choices: Array<{ value: string; label: string }> };
 export type VumsiSnapshot = {
   reference: unknown;
   categories: VumsiCategory[];
-  attributes: Record<string, { fields: VumsiAttribute[]; raw: unknown }>;
+  attributes: Record<string, { fields: VumsiAttribute[]; attr_model: string | null; raw: unknown }>;
   counts: { categories: number; attributes: number; required: number };
 };
 
@@ -88,6 +92,22 @@ export function parseVumsiAttributes(body: unknown): VumsiAttribute[] {
   return out;
 }
 
+/** `attr_model` din răspunsul `GET /categories/{id}/attributes/` (ex. `attr_real_estate_house`). */
+export function parseVumsiAttrModel(body: unknown): string | null {
+  const b = rec(body);
+  return str(b?.["attr_model"] ?? rec(b?.["data"])?.["attr_model"]);
+}
+
+/** Modelul categoriei: din categorie, apoi din atributele salvate (snapshoturi vechi: din `raw`). */
+export function vumsiCategoryModel(
+  id: number,
+  attributes: Record<string, { attr_model?: string | null; raw?: unknown }> | null | undefined,
+  category?: { attr_model?: string | null } | null,
+): string | null {
+  const def = attributes?.[String(id)];
+  return category?.attr_model ?? def?.attr_model ?? parseVumsiAttrModel(def?.raw) ?? null;
+}
+
 /** Citește tot și întoarce snapshot-ul; orice eroare oprește (nu se salvează parțial). */
 export async function buildVumsiSnapshot(get: VumsiGetter): Promise<VumsiSnapshot> {
   const reference = await get("/reference/");
@@ -107,7 +127,9 @@ export async function buildVumsiSnapshot(get: VumsiGetter): Promise<VumsiSnapsho
     const res = await get(`/categories/${c.id}/attributes/`);
     if (!res.ok) throw new Error(`${c.name}: ${res.message}`);
     const fields = parseVumsiAttributes(res.data);
-    attributes[String(c.id)] = { fields, raw: res.data };
+    const attr_model = parseVumsiAttrModel(res.data);
+    c.attr_model = attr_model;
+    attributes[String(c.id)] = { fields, attr_model, raw: res.data };
     total += fields.length;
     required += fields.filter((f) => f.required).length;
   }

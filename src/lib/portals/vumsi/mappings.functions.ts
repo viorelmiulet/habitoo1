@@ -15,13 +15,15 @@ export const getVumsiMappingState = createServerFn({ method: "POST" })
     const { loadVumsiSetup } = await import("./preview.server");
     const m = await import("./mapper");
     const { snapshot, mappings } = await loadVumsiSetup(context.supabase);
-    const categories = (snapshot?.categories ?? []).map((c) => ({ id: c.id, name: c.name, path: c.path }));
+    const { vumsiCategoryModel } = await import("./nomenclature");
+    const withModels = (snapshot?.categories ?? []).map((c) => ({ ...c, attr_model: vumsiCategoryModel(c.id, snapshot?.attributes as any, c) }));
+    const categories = withModels.map((c) => ({ id: c.id, name: c.name, path: c.path, attrModel: c.attr_model ?? null }));
     const types = m.vumsiListingTypes(snapshot?.reference);
     const rows = m.VUMSI_HABITOO_KINDS.flatMap((k) =>
       m.VUMSI_TRANSACTIONS.map((tx) => {
         const saved = mappings.categories.find((x) => x.habitoo_kind === k.kind && x.transaction === tx);
-        const suggested = m.suggestVumsiCategory(k.kind, tx, snapshot?.categories ?? []);
-        return { kind: k.kind, kindLabel: k.label, transaction: tx, txLabel: m.VUMSI_TX_LABEL[tx], savedId: saved?.category_id ?? null, suggestedId: suggested?.id ?? null };
+        const suggested = m.suggestVumsiCategory(k.kind, tx, withModels);
+        return { kind: k.kind, kindLabel: k.label, transaction: tx, txLabel: m.VUMSI_TX_LABEL[tx], savedId: saved?.category_id ?? null, suggestedId: suggested?.id ?? null, expectedModel: m.VUMSI_EXPECTED_MODEL[k.kind] ?? null };
       }),
     );
     const typeRows = m.VUMSI_TRANSACTIONS.map((tx) => ({
