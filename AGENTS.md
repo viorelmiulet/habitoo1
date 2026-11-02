@@ -35,7 +35,7 @@
 - Video narration uses a direct MiniMax TTS server boundary with validated hex decoding, atomic organization-locked reservations and character usage, caller-RLS private audio signing, and one offline audio mix for both encoders. Why: preserve quotas and privacy without provider prediction polling.
 - No global `entities` aliases/version overrides: consumers need different majors/exports.
 - PortalLogo shares asset pointers; overview uses registry. Why: logos don't change public access.
-- Property filters: PropertyFilterPanel + `applyPropertyFilterClauses`. Why: one tested query builder.
+- Property filters share applyPropertyFilterClauses; promotion sets intersect before count. Why: exact lists.
 - Imobiliare.ro destination and promotion drafts use the existing durable publication queue; requested mode lives on publications/jobs and confirmed mode on listings, with no new portal. Destination changes send both statuses in one POST; unchanged published promotions remain partial; Bonus and imoradar-only bypass local capacity reads/checks. Why: keep destination switching recoverable and let the portal decide capacity.
 - Private listing geography is canonicalized by a database trigger using the locality/county nomenclature; generated normalized keys drive caller-RLS filtering and complete paged facets, with legacy city/zone URL compatibility. Why: imports, existing rows, counts and diacritic-insensitive filters must agree without changing CRM geography.
 - UI light colors/typography use global CSS; navy actions rebind primary locally, excluding light cards/dark mode. Root loads UI font; material fonts remain separate. Why: preserve tools/materials.
