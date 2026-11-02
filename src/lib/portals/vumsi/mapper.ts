@@ -136,11 +136,6 @@ const KNOWN: Array<{ keys: RegExp; value: (p: Row) => Raw }> = [
   { keys: /^(rooms|room_count|nr_rooms|camere|numar camere|numarul de camere|nr\. camere)$/, value: (p) => num(p.rooms) },
   { keys: /^(bedrooms|dormitoare|numar dormitoare)$/, value: (p) => num(p.bedrooms) },
   { keys: /^(bathrooms|bai|numar bai|numarul de bai)$/, value: (p) => num(p.bathrooms) },
-  { keys: /^(kitchens|bucatarii|numar bucatarii|numarul de bucatarii)$/, value: (p) => num(p.kitchens) },
-  { keys: /^(balconies|balcoane|numar balcoane|numarul de balcoane)$/, value: (p) => num(p.balconies) },
-  { keys: /^(garages|garaje|numar garaje|numarul de garaje)$/, value: (p) => num(p.garages) },
-  { keys: /^(floors|floor_count|floors_count|levels|nr_floors|number_of_floors|etaje|niveluri|numar etaje|numarul de etaje|numar niveluri|numarul de niveluri)$/, value: (p) => num(p.building_floors) },
-  { keys: /^(comfort|confort)$/, value: (p) => p.comfort ?? null },
   { keys: /^(usable_area|usable_surface|suprafata utila.*)$/, value: (p) => num(p.usable_surface) ?? num(p.surface) },
   { keys: /^(built_area|built_surface|suprafata construita.*)$/, value: (p) => num(p.built_surface) },
   { keys: /^(land_area|land_surface|total_area|suprafata teren.*|suprafata totala.*)$/, value: (p) => num(p.land_surface) ?? ((p.property_type ?? "") === "land" ? num(p.surface) : null) },
@@ -149,6 +144,7 @@ const KNOWN: Array<{ keys: RegExp; value: (p: Row) => Raw }> = [
   { keys: /^(partitioning|layout|compartimentare)$/, value: (p) => p.layout ?? null },
   { keys: /^(furnished|furnishing|mobilat|mobilare)$/, value: (p) => furnishingText(p.furnishing) },
   { keys: /^(heating|incalzire)$/, value: (p) => p.heating ?? p.heating_systems?.[0] ?? null },
+  { keys: /^(parking_spots|parking_spaces|locuri de parcare|numar locuri de parcare)$/, value: (p) => num(p.parking_spaces) },
   { keys: /^(parking|parcare)$/, value: (p) => p.parking ?? (num(p.parking_spaces) ? true : null) },
 ];
 
