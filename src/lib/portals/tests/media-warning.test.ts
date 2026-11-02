@@ -29,7 +29,7 @@ describe("Imobiliare.ro", () => {
   beforeEach(() => request.mockReset());
 
   it("portalul confirmă 7 din 8 → reușit cu avertisment, nu eroare", async () => {
-    request.mockImplementation(async (...args: unknown[]) => { const call = args.find((a) => a && typeof a === "object" && "method" in (a as object)) as { method: string }; return { ok: true, status: 200, classification: null,
+    request.mockImplementation(async (...args: unknown[]) => { console.log("ARGS", JSON.stringify(args)); const call = (args.find((a) => a && typeof a === "object" && "method" in (a as object)) ?? {}) as { method?: string }; return { ok: true, status: 200, classification: null,
       body: { data: call.method === "POST" ? [] : Array.from({ length: 7 }, (_, i) => ({ id: i + 1, order: i + 1, collection: "images" })) } }; });
     const r = await sendImobiliareGallery({} as never, ctx, "HB-1", eight);
     expect(r).toMatchObject({ ok: true, sent: 7 });
