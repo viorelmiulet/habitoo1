@@ -1,6 +1,7 @@
 ## Filtrul Promovare — erori pe portal
-- [ ] Grupe pentru toate portalurile activate și opțiuni de erori; combinare SAU în tip / ȘI între tipuri
-- [ ] Filtrare server, URL și filtre salvate; teste strict pentru filtru/listă și numărători MRM
+- [x] Grupe pentru toate portalurile activate și opțiuni de erori; combinare SAU în tip / ȘI între tipuri
+- [x] Filtrare server, URL și filtre salvate; 77 teste strict pentru filtru/listă trec; build OK
+- [x] MRM autentificat: Imospot 35, Imospot SAU VDI 35, prelungire activată ȘI eroare Storia 0; URL/reload și 390px fără overflow verificate
 
 ## Panoul de filtre în stilul nou (Proprietăți)
 - [x] Tab-uri fără aspect de dosar: 15px bold, activ cu linie aurie 2px, linie border sub toate
