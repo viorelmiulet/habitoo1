@@ -54,6 +54,7 @@ import {
 import { imobiliareLocationStats } from "../imobiliare/locations.server";
 import { encodeImobiliareImages } from "../imobiliare/media.server";
 import { sendImobiliareGallery } from "../imobiliare/media-transfer.server";
+import { photoWarning, joinWarnings } from "../media-warning";
 import { buildImobiliarePayload, type ImobiliareListingPlan } from "../imobiliare/payload.server";
 import { parseAgents } from "../imobiliare/agents.server";
 import {
@@ -281,6 +282,7 @@ export async function publishPlan(input: {
   let mode = input.mode;
   const steps: string[] = [];
   let mediaResponse: unknown = null;
+  let mediaWarning: string | null = null;
 
   let created = await imobiliareAuthedRequest(session, {
     method: mode === "create" ? "POST" : "PUT",
@@ -305,6 +307,7 @@ export async function publishPlan(input: {
     const media = await sendImobiliareGallery(session, ctx, plan.customReference, images);
     if (!media.ok) return { ok: false, fail: media.fail };
     mediaResponse = media.body;
+    mediaWarning = media.warning;
     steps.push(`${media.sent}/${images.length} poze trimise`);
   }
 
@@ -313,7 +316,7 @@ export async function publishPlan(input: {
     const publicUrl = await fetchImobiliarePublicUrlWithRetries(session, ctx, plan.customReference);
     return { ok: true, steps, publicUrl,
       offer: buildImobiliareOffer(plan.customReference, plan.transaction, created.body),
-      httpStatus: created.status, portalResponse: mediaResponse ? { listing: created.body, medias: mediaResponse } : created.body ?? null, promotionErrors: [] };
+      httpStatus: created.status, portalResponse: mediaResponse ? { listing: created.body, medias: mediaResponse } : created.body ?? null, promotionErrors: [], mediaWarning };
   }
 
   // Fără acest pas anunțul rămâne invizibil, deși API-ul nu semnalează eroare.
@@ -337,6 +340,7 @@ export async function publishPlan(input: {
     httpStatus: promoted.status,
     portalResponse: mediaResponse ? { publication: promoted.body, medias: mediaResponse } : promoted.body ?? null,
     promotionErrors: "promotionErrors" in promoted ? promoted.promotionErrors : [],
+    mediaWarning,
   };
 }
 
@@ -371,8 +375,8 @@ async function write(
       organizationId: ctx.organizationId,
       propertyId: ref.propertyId,
     });
-    // Never replace an existing gallery with a silently truncated preparation.
-    if (media.images.length !== media.expected) {
+    // Nicio poză pregătită: nu înlocuim galeria cu una goală (eroare, ca până acum).
+    if (media.images.length === 0 && media.expected > 0) {
       if (media.transient) {
         // Descărcare din storage eșuată după reîncercări: temporar → coada reprogramează.
         return { ok: false, code: "PORTAL_ERROR", message: `Eroare temporară: 0/${media.expected} poze trimise — ${media.warnings.join(" ")}`, detail: "medias_prepare" };
@@ -438,6 +442,7 @@ async function write(
     const publicUrls: string[] = [];
     const offers: PortalOffer[] = [];
     const promotionErrors: { promotionId: string; message: string }[] = [];
+    const mediaWarnings: (string | null)[] = [];
     let lastHttpStatus: number | null = null;
     let lastPortalResponse: unknown = null;
     const replacedReferences = payload.plans.length === 1 && storedReferences.length === 1
@@ -482,6 +487,7 @@ async function write(
       if (!result.ok) return result.fail;
       steps.push(`${plan.customReference}: ${result.steps.join(" → ")}`);
       promotionErrors.push(...result.promotionErrors);
+      mediaWarnings.push(result.mediaWarning ?? null);
       if (result.publicUrl) publicUrls.push(result.publicUrl);
       if (result.offer) offers.push(result.offer);
       lastHttpStatus = result.httpStatus;
@@ -505,6 +511,13 @@ async function write(
         portalResponse: lastPortalResponse,
         promotionErrors,
         message: warnings.length ? warnings.join(" ") : undefined,
+        // Poze lipsă la pregătire (sărite) sau neconfirmate de portal: avertisment, nu eroare.
+        mediaWarning: joinWarnings([
+          media.images.length < media.expected
+            ? photoWarning(media.images.length, media.expected, media.warnings.filter((w) => !w.includes("identică")))
+            : null,
+          ...mediaWarnings,
+        ]),
       },
     };
   } catch (error) {
