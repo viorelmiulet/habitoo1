@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { matchingPropertyIds, parsePromotionSelection, promotionFilterGroups, type PropertyPromotionInfo } from "@/lib/portals/promotion-filter";
-import { promotionFilterLabel, togglePromotionValue } from "@/components/app/PromotionFilterSelect";
+import { promotionFilterLabel, togglePromotionValue } from "@/lib/portals/promotion-filter";
 
 const plain: PropertyPromotionInfo = { imobiliarePublished: false, imobiliareActiveServices: [], flagPromotions: [] };
 const infos = new Map<string, PropertyPromotionInfo>([

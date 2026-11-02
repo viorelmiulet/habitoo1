@@ -1,3 +1,4 @@
+import { unifiedPortalValues, serializePortalValues } from "@/lib/portals/promotion-filter";
 import { isListPageSize } from "@/lib/list-page-size";
 import { z } from "zod";
 
@@ -151,7 +152,7 @@ export function propertyListStateFromSearch(search: PropertyListSearch): {
     if (typeof value === typeof filters[key]) (filters as Record<string, unknown>)[key] = value;
   }
   return {
-    filters: migrateLegacyStatusFilters(filters),
+    filters: migrateLegacyPortalFilters(migrateLegacyStatusFilters(filters)),
     sort: propertyListSorts.has(search.sort as PropertyListSort)
       ? search.sort as PropertyListSort
       : PROPERTY_LIST_DEFAULT_SORT,
@@ -166,6 +167,7 @@ export function propertyListSearchFromState(
   page: number,
   view: PropertyListView,
 ): PropertyListSearch {
+  filters = migrateLegacyPortalFilters(filters);
   const search: PropertyListSearch = {};
   for (const key of Object.keys(emptyPropertyListFilters) as (keyof PropertyListFilters)[]) {
     if (filters[key] !== emptyPropertyListFilters[key]) {
@@ -220,14 +222,18 @@ export function normalizeSavedPropertyFilters(
   config: Record<string, unknown>,
 ): PropertyListFilters {
   const legacyFloor = typeof config.floor === "string" ? config.floor : "";
-  return migrateLegacyStatusFilters({
+  return migrateLegacyPortalFilters(migrateLegacyStatusFilters({
     ...emptyPropertyListFilters,
     ...(config as Partial<PropertyListFilters>),
     floorMin:
       typeof config.floorMin === "string" ? config.floorMin : legacyFloor,
     floorMax:
       typeof config.floorMax === "string" ? config.floorMax : legacyFloor,
-  });
+  }));
+}
+
+export function migrateLegacyPortalFilters(filters: PropertyListFilters): PropertyListFilters {
+  return { ...filters, portal: serializePortalValues(unifiedPortalValues(filters.portal, filters.promotion)), promotion: "" };
 }
 
 /** Ordinea statusurilor în „Valabilitate”. */
