@@ -46,7 +46,7 @@ describe("Vumsi attr_model", () => {
   });
 
   const mappings = (kind: string, id: number): VumsiMappings => ({ categories: [{ habitoo_kind: kind, transaction: "sale", category_id: id, category_name: "X" }], types: [{ transaction: "sale", type_value: 1 }] });
-  const prop = (property_type: string) => ({ id: "p1", property_type, transaction_type: "sale", sale_price: 100000, description: "Descriere", usable_surface: 120, built_surface: 140, land_surface: 500, build_year: 2010, bathrooms: 2, bedrooms: 4, parking_spaces: 3 }) as any;
+  const prop = (property_type: string) => ({ id: "p1", property_type, for_sale: true, for_rent: false, sale_price: 100000, description: "Descriere", usable_surface: 120, built_surface: 140, land_surface: 500, build_year: 2010, bathrooms: 2, bedrooms: 4, parking_spaces: 3 }) as any;
 
   it("blochează publicarea casei pe categoria cu model de teren", () => {
     const r = mapPropertyToVumsi(prop("house"), { attributes: { "73": { fields: [], attr_model: "attr_real_estate_land" } }, mappings: mappings("house", 73), cityId: 1 });
