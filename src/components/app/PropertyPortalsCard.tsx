@@ -881,9 +881,14 @@ export const PropertyPortalsCard = forwardRef<
             ) : null}
 
             {displayCellIndices.map(index => {
-              const cell = cells[index];
-              if (!cell) return null;
-              const value = checked[cell.portalId] ?? cell.selected;
+              const rawCell = cells[index];
+              if (!rawCell) return null;
+              const value = checked[rawCell.portalId] ?? rawCell.selected;
+              // Portal debifat: doar statusul, fără eroare/poze/Retrimite (excepție: retragere eșuată, anunț online).
+              const hideDeselectedError = deselectedErrorHidden({ selected: rawCell.selected, checked: value, lastError: rawCell.lastError, externalId: rawCell.externalId });
+              const cell = hideDeselectedError
+                ? { ...rawCell, lastError: null, state: rawCell.state === "error" ? ("withdrawn" as const) : rawCell.state }
+                : rawCell;
               const slot = slotQueries[index]?.data;
               const noSlots = cell.portalId !== "imobiliare_ro" && !value && !cell.selected && Boolean(slot && (slot.remaining === 0 || slot.agencyExhausted));
               const busy = activePortals.has(cell.portalId);
