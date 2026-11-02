@@ -6763,6 +6763,7 @@ export type Database = {
           last_error: string | null
           last_event_at: string | null
           last_sync_at: string | null
+          last_warning: string | null
           organization_id: string
           portal: string
           portal_offers: Json
@@ -6783,6 +6784,7 @@ export type Database = {
           last_error?: string | null
           last_event_at?: string | null
           last_sync_at?: string | null
+          last_warning?: string | null
           organization_id: string
           portal: string
           portal_offers?: Json
@@ -6803,6 +6805,7 @@ export type Database = {
           last_error?: string | null
           last_event_at?: string | null
           last_sync_at?: string | null
+          last_warning?: string | null
           organization_id?: string
           portal?: string
           portal_offers?: Json
@@ -7066,6 +7069,7 @@ export type Database = {
           imoradar_opt_out: boolean
           last_error: string | null
           last_synced_at: string | null
+          last_warning: string | null
           organization_id: string
           portal_key: string
           promoted: boolean
@@ -7086,6 +7090,7 @@ export type Database = {
           imoradar_opt_out?: boolean
           last_error?: string | null
           last_synced_at?: string | null
+          last_warning?: string | null
           organization_id: string
           portal_key: string
           promoted?: boolean
@@ -7106,6 +7111,7 @@ export type Database = {
           imoradar_opt_out?: boolean
           last_error?: string | null
           last_synced_at?: string | null
+          last_warning?: string | null
           organization_id?: string
           portal_key?: string
           promoted?: boolean
