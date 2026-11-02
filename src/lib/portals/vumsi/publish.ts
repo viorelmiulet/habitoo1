@@ -28,21 +28,7 @@ export type VumsiStored = {
   deleted_at: string | null;
 };
 
-export type VumsiStatusInfo = { label: string; portalStatus: "pending" | "published" | "withdrawn" | "error"; online: boolean };
-
-/** Statusurile Vumsi (`/reference/` listing_statuses) → eticheta din Habitoo. */
-export function vumsiStatusInfo(status: number | null | undefined): VumsiStatusInfo {
-  switch (status) {
-    case 1: return { label: "În moderare Vumsi", portalStatus: "pending", online: false };
-    case 2: return { label: "Publicat", portalStatus: "published", online: true };
-    case 4: return { label: "Respins de Vumsi", portalStatus: "error", online: false };
-    case 5: return { label: "Expirat", portalStatus: "withdrawn", online: false };
-    case 0: return { label: "Retras", portalStatus: "withdrawn", online: false };
-    case 3: return { label: "Ciornă la Vumsi", portalStatus: "pending", online: false };
-    case 6: return { label: "Dezactivat de companie la Vumsi", portalStatus: "withdrawn", online: false };
-    default: return { label: "Stare necunoscută", portalStatus: "pending", online: false };
-  }
-}
+export { vumsiStatusInfo, type VumsiStatusInfo } from "./status";
 
 const rec = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 const uuidOf = (v: unknown) => (typeof rec(v)["uuid"] === "string" ? (rec(v)["uuid"] as string) : null);
@@ -55,6 +41,8 @@ export function readListing(v: unknown) {
     status: Number.isInteger(status) ? status : null,
     url: typeof r["url"] === "string" && /^https:\/\//.test(r["url"] as string) ? (r["url"] as string) : null,
     expires_at: typeof r["expires_at"] === "string" ? (r["expires_at"] as string) : null,
+    reason: (["rejection_reason", "moderation_reason", "reject_reason", "reason"] as const)
+      .map((k) => r[k]).find((v): v is string => typeof v === "string" && v.trim() !== "")?.trim() ?? null,
   };
 }
 

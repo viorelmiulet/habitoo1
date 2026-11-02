@@ -40,6 +40,7 @@ import { OferaPreviewButton } from "@/components/app/OferaPreviewButton";
 import { ZupPreviewButton } from "@/components/app/ZupPreviewButton";
 import { OferaStatusPanel } from "@/components/app/OferaStatusPanel";
 import { ZonataStatusPanel } from "@/components/app/ZonataStatusPanel";
+import { getVumsiListingStatus } from "@/lib/portals/vumsi/status.functions";
 import { ZupStatusPanel } from "@/components/app/ZupStatusPanel";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
@@ -239,6 +240,16 @@ export const PropertyPortalsCard = forwardRef<
     () => matrix.data?.properties[propertyId] ?? [],
     [matrix.data, propertyId],
   );
+  // Vumsi: statusul real, verificat la deschidere (max 1/min/anunț pe server).
+  const loadVumsiStatus = useServerFn(getVumsiListingStatus);
+  const vumsiSelected = cells.some((c) => c.portalId === "vumsi" && c.selected);
+  const vumsiStatus = useQuery({
+    queryKey: ["property-vumsi-status", organizationId, propertyId] as const,
+    queryFn: () => loadVumsiStatus({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }),
+    enabled: vumsiSelected,
+    staleTime: 60_000,
+  });
+  const vumsiView = vumsiSelected ? vumsiStatus.data ?? null : null;
   const displayCellIndices = useMemo(() => {
     const indices = cells.map((_, index) => index);
     const imobiliare = cells.findIndex(cell => cell.portalId === "imobiliare_ro");
@@ -920,7 +931,9 @@ export const PropertyPortalsCard = forwardRef<
                   (cell.availability === "available" && value && !cell.configured));
               const latestOperationFailedFor = (id: string) => !hideDeselectedError && latestOperationByPortal.get(id)?.success === false;
               const stateView =
-                cell.portalId === "olx_direct" && cell.state === "syncing"
+                cell.portalId === "vumsi" && cell.selected && vumsiView && !(latestOperationFailedFor(cell.portalId) && vumsiView.pill !== "error")
+                  ? { label: vumsiView.label, pill: vumsiView.pill as StatusPillState }
+                  : cell.portalId === "olx_direct" && cell.state === "syncing"
                   ? { label: "În moderare OLX", pill: "pending" as StatusPillState }
                   : cell.portalId === "zonata" && cell.state === "syncing"
                   ? { label: "În verificare", pill: "pending" as StatusPillState }
@@ -941,7 +954,13 @@ export const PropertyPortalsCard = forwardRef<
                   ? "Eroare la ultima publicare"
                   : cell.portalId === "imobiliare_ro" && cell.imobiliareConfirmedMode === "imoradar_only" && cell.selected
                     ? "Trimis pe imoradar24"
-                    : stateSentence(cell, value);
+                    : cell.portalId === "vumsi" && cell.selected && vumsiView
+                      ? vumsiView.pill === "error"
+                        ? vumsiView.reason ?? cell.lastError ?? "Anunțul a fost respins de Vumsi."
+                        : vumsiView.status === 1
+                          ? "Anunțul a ajuns la Vumsi și așteaptă moderarea."
+                          : stateSentence({ ...cell, state: vumsiView.pill === "published" ? "published" : cell.state === "syncing" ? "withdrawn" : cell.state }, value)
+                      : stateSentence(cell, value);
 
               return (
                 <li key={cell.portalId} className="min-w-0">
