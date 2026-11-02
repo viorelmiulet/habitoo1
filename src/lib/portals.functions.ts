@@ -3284,6 +3284,14 @@ export async function applyPortalSelectionForOrg(input: {
               (listingRow as { external_id?: string | null } | undefined)?.external_id ?? null,
             ...(input.withdrawReason ? { withdrawReason: input.withdrawReason } : {}),
           });
+          if (withdrawal.ok) {
+            const { clearDeselectedPortalError } = await import("@/lib/portals/deselect-cleanup");
+            await clearDeselectedPortalError(admin as never, {
+              organizationId,
+              propertyId: data.propertyId,
+              portalId: definition.id,
+            });
+          }
           results.push({
             portalId: definition.id,
             portalName: name,
