@@ -146,7 +146,8 @@ describe("poze Vumsi", () => {
       return json(201, { uuid: LU, status: 0 });
     }, [], { sleep: async (ms: number) => { sleeps.push(ms); } });
     const r = await adapter.publishListing(ctx, { propertyId: "p1", externalId: null });
-    expect(r.ok && r.data.portalStatus).not.toBe("pending");
+    expect(r.ok && r.data.message).not.toContain("Pozele nu au ajuns");
+    expect(calls.some((c) => c.endsWith("/publish/"))).toBe(true);
     expect(sleeps).toContain(3000);
     expect(calls.filter((c) => c.endsWith("/images/"))).toHaveLength(3);
   });
