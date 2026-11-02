@@ -20,8 +20,7 @@ import {
   parsePromotionSelection,
   promotionFilterGroups,
   promotionSelectionIsEmpty,
-  propertyHasAnyPromotion,
-  propertyMatchesPromotion,
+  matchingPropertyIds,
   promotionBadgesFor,
   storiaAutoRenewValues,
   type PromotionFilterGroup,
@@ -140,8 +139,8 @@ export const getPromotionFilterOptions = createServerFn({ method: "POST" })
   });
 
 const promotionValuesSchema = z
-  .array(z.string().regex(/^(any|none|imobiliare_ro:[a-z0-9_]+|[a-z0-9_]+:promoted|storia:auto_renew_(on|off))$/))
-  .max(40);
+  .array(z.string().regex(/^(any|none|imobiliare_ro:[a-z0-9_]+|[a-z0-9_]+:(promoted|error)|storia:auto_renew_(on|off))$/))
+  .max(100);
 
 /**
  * Id-urile proprietăților care se potrivesc cu selecția filtrului.
@@ -164,29 +163,21 @@ export const getPropertyIdsByPromotion = createServerFn({ method: "POST" })
     );
     const selection = parsePromotionSelection(data.values.join(","));
     if (promotionSelectionIsEmpty(selection)) return [];
-    const rows = await fetchPromotionRows(organizationId);
-    const infos = buildPromotionInfos(rows);
-    const matched: string[] = [];
-    if (selection.storiaAutoRenew.length > 0) {
-      // SAU cu celelalte selecții; nu e promovare.
-      const values = await fetchStoriaAutoRenewValues(organizationId);
-      for (const [propertyId, value] of values) {
-        if (selection.storiaAutoRenew.includes(value)) matched.push(propertyId);
-      }
-    }
-    for (const [propertyId, info] of infos) {
-      if (
-        (selection.any || selection.imobiliareServices.length > 0 || selection.flagPortals.length > 0) &&
-        propertyMatchesPromotion(info, selection) &&
-        !matched.includes(propertyId)
-      ) {
-        matched.push(propertyId);
-      }
-    }
-    if (selection.none) {
-      // „Fără promovare”: toate proprietățile agenției, mai puțin cele promovate.
-      const admin = await loadAdmin();
-      const all = await fetchAllRows((a, b) =>
+    const admin = await loadAdmin();
+    const hasPromotions = selection.any || selection.none || selection.imobiliareServices.length > 0 || selection.flagPortals.length > 0;
+    const [rows, autoRenew, errors, all] = await Promise.all([
+      hasPromotions ? fetchPromotionRows(organizationId) : Promise.resolve({ listings: [], states: [], publications: [] }),
+      selection.storiaAutoRenew.length ? fetchStoriaAutoRenewValues(organizationId) : Promise.resolve(new Map<string, boolean>()),
+      selection.errorPortals.length ? fetchAllRows((a, b) =>
+        admin.from("portal_publications")
+          .select("property_id, portal_key, enabled, status")
+          .eq("organization_id", organizationId)
+          .eq("enabled", true)
+          .eq("status", "error")
+          .in("portal_key", selection.errorPortals)
+          .order("id").range(a, b),
+      ) : Promise.resolve([]),
+      selection.none ? fetchAllRows((a, b) =>
         admin
           .from("properties")
           .select("id")
@@ -194,13 +185,9 @@ export const getPropertyIdsByPromotion = createServerFn({ method: "POST" })
           .is("deleted_at", null)
           .order("id")
           .range(a, b),
-      );
-      const promoted = new Set(
-        [...infos.entries()].filter(([, info]) => propertyHasAnyPromotion(info)).map(([id]) => id),
-      );
-      return all.map((row) => row.id).filter((id) => !promoted.has(id));
-    }
-    return matched;
+      ) : Promise.resolve([]),
+    ]);
+    return matchingPropertyIds(selection, buildPromotionInfos(rows), autoRenew, errors, all.map((row) => row.id));
   });
 
 /** Etichetele „Promovat” pentru rândurile din pagina curentă a listei. */

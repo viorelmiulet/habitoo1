@@ -12,6 +12,8 @@ import { PortalLogoStack } from "@/components/app/PortalLogo";
 import {
   PROMOTION_FILTER_ANY,
   PROMOTION_FILTER_NONE,
+  STORIA_AUTO_RENEW_ON,
+  STORIA_AUTO_RENEW_OFF,
   type PromotionFilterGroup,
 } from "@/lib/portals/promotion-filter";
 import { cn } from "@/lib/utils";
@@ -29,9 +31,11 @@ export function serializePromotionValues(values: string[]): string {
  * față de serviciile concrete; serviciile se combină liber între ele.
  */
 export function togglePromotionValue(current: string[], value: string): string[] {
+  const independent = (v: string) => v.endsWith(":error") || v === STORIA_AUTO_RENEW_ON || v === STORIA_AUTO_RENEW_OFF;
   const special = value === PROMOTION_FILTER_ANY || value === PROMOTION_FILTER_NONE;
   if (current.includes(value)) return current.filter((v) => v !== value);
-  if (special) return [value];
+  if (independent(value)) return [...current, value];
+  if (special) return [...current.filter(independent), value];
   return [...current.filter((v) => v !== PROMOTION_FILTER_ANY && v !== PROMOTION_FILTER_NONE), value];
 }
 
@@ -39,12 +43,12 @@ export function togglePromotionValue(current: string[], value: string): string[]
 export function promotionFilterLabel(value: string, groups: PromotionFilterGroup[]): string {
   const values = parsePromotionValues(value);
   if (values.length === 0) return "Oricare";
-  if (values.includes(PROMOTION_FILTER_ANY)) return "Orice promovare";
-  if (values.includes(PROMOTION_FILTER_NONE)) return "Fără promovare";
   const labels = values.map((v) => {
+    if (v === PROMOTION_FILTER_ANY) return "Orice promovare";
+    if (v === PROMOTION_FILTER_NONE) return "Fără promovare";
     for (const group of groups) {
       const option = group.options.find((o) => o.value === v);
-      if (option) return `${group.chipName ?? group.portalName} · ${option.label}`;
+      if (option) return v.endsWith(":error") ? `Erori · ${group.chipName ?? group.portalName}` : `${group.chipName ?? group.portalName} · ${option.label}`;
     }
     return v;
   });
@@ -99,9 +103,6 @@ export function PromotionFilterSelect({
       </PopoverTrigger>
       <PopoverContent className="w-80 rounded-[12px] p-0" align="start">
         <Command>
-          <p className="px-3 pt-3 pb-1 text-xs text-muted-foreground">
-            Doar anunțurile publicate pe portalul respectiv. Poți alege mai multe.
-          </p>
           <CommandList className="max-h-96">
             <CommandGroup>
               {item("", "Oricare")}

@@ -32,7 +32,7 @@ export type PromotionFilterGroup = {
 
 /**
  * Grupele de opțiuni pentru portalurile conectate ale agenției. Ordinea:
- * Imobiliare.ro (serviciile gestionabile), apoi portalurile cu flag „Promovat”.
+ * Imobiliare.ro, portalurile cu promovări, Storia + OLX, apoi restul alfabetic.
  */
 export function promotionFilterGroups(
   connectedPortalIds: ReadonlySet<string>,
@@ -68,7 +68,17 @@ export function promotionFilterGroups(
       ],
     });
   }
-  return groups;
+  const existingIds = new Set(groups.map((group) => group.portalId));
+  const remaining = PORTALS.filter((portal) =>
+    connectedPortalIds.has(portal.id) && portal.id !== "facebook_catalog" && !existingIds.has(portal.id),
+  ).sort((a, b) => portalDisplayName(a.id).localeCompare(portalDisplayName(b.id), "ro"));
+  for (const portal of remaining) {
+    groups.push({ portalId: portal.id, portalName: portalDisplayName(portal.id), options: [] });
+  }
+  return groups.filter((group) => group.portalId !== "facebook_catalog").map((group) => ({
+    ...group,
+    options: [...group.options, { value: `${group.portalId}:error`, label: `Cu erori pe ${group.portalName}` }],
+  }));
 }
 
 export type PromotionSelection = {
@@ -80,6 +90,7 @@ export type PromotionSelection = {
   flagPortals: string[];
   /** Valori efective ale prelungirii automate Storia căutate. */
   storiaAutoRenew: boolean[];
+  errorPortals: string[];
 };
 
 /** Valorile din URL (separate prin virgulă) → selecție structurată. */
@@ -91,6 +102,7 @@ export function parsePromotionSelection(raw: string): PromotionSelection {
     imobiliareServices: [],
     flagPortals: [],
     storiaAutoRenew: [],
+    errorPortals: [],
   };
   for (const value of values) {
     if (value === PROMOTION_FILTER_ANY) selection.any = true;
@@ -98,6 +110,11 @@ export function parsePromotionSelection(raw: string): PromotionSelection {
     else if (value === STORIA_AUTO_RENEW_ON || value === STORIA_AUTO_RENEW_OFF) {
       const wanted = value === STORIA_AUTO_RENEW_ON;
       if (!selection.storiaAutoRenew.includes(wanted)) selection.storiaAutoRenew.push(wanted);
+    } else if (value.endsWith(":error")) {
+      const portal = value.slice(0, -":error".length);
+      if (portal && portal !== "facebook_catalog" && PORTALS.some((p) => p.id === portal) && !selection.errorPortals.includes(portal)) {
+        selection.errorPortals.push(portal);
+      }
     } else if (value.startsWith("imobiliare_ro:")) {
       const service = value.slice("imobiliare_ro:".length);
       if (service && !selection.imobiliareServices.includes(service)) {
@@ -117,7 +134,8 @@ export function promotionSelectionIsEmpty(selection: PromotionSelection): boolea
     !selection.none &&
     selection.imobiliareServices.length === 0 &&
     selection.flagPortals.length === 0 &&
-    selection.storiaAutoRenew.length === 0
+    selection.storiaAutoRenew.length === 0 &&
+    selection.errorPortals.length === 0
   );
 }
 
@@ -147,9 +165,8 @@ export function propertyHasAnyPromotion(info: PropertyPromotionInfo): boolean {
 }
 
 /**
- * Potrivirea unei proprietăți cu selecția filtrului. Selecțiile multiple se
- * combină cu SAU; „Fără promovare” se aplică doar singură (interfața o face
- * exclusivă, dar funcția e defensivă).
+ * Potrivirea doar a tipului promovări (SAU între servicii).
+ * Prelungirea și erorile se intersectează separat în matchingPropertyIds.
  */
 export function propertyMatchesPromotion(
   info: PropertyPromotionInfo,
@@ -160,8 +177,7 @@ export function propertyMatchesPromotion(
     selection.none &&
     !selection.any &&
     selection.imobiliareServices.length === 0 &&
-    selection.flagPortals.length === 0 &&
-    selection.storiaAutoRenew.length === 0
+    selection.flagPortals.length === 0
   ) {
     return !propertyHasAnyPromotion(info);
   }
@@ -177,6 +193,32 @@ export function propertyMatchesPromotion(
       (flag) => flag.portalId === portalId && flag.published && flag.promoted,
     ),
   );
+}
+
+export type PromotionErrorRow = { property_id: string; portal_key: string; enabled: boolean; status: string };
+
+/** SAU în fiecare tip, ȘI între tipuri; rezultatul precedă count/paginarea sub RLS. */
+export function matchingPropertyIds(
+  selection: PromotionSelection,
+  infos: ReadonlyMap<string, PropertyPromotionInfo>,
+  autoRenew: ReadonlyMap<string, boolean>,
+  errors: readonly PromotionErrorRow[],
+  allPropertyIds: readonly string[] = [],
+): string[] {
+  const sets: Set<string>[] = [];
+  if (selection.any || selection.none || selection.imobiliareServices.length || selection.flagPortals.length) {
+    const emptyInfo: PropertyPromotionInfo = { imobiliarePublished: false, imobiliareActiveServices: [], flagPromotions: [] };
+    const candidates = selection.none ? allPropertyIds : [...infos.keys()];
+    sets.push(new Set(candidates.filter((id) => propertyMatchesPromotion(infos.get(id) ?? emptyInfo, selection))));
+  }
+  if (selection.storiaAutoRenew.length) {
+    sets.push(new Set([...autoRenew].filter(([, value]) => selection.storiaAutoRenew.includes(value)).map(([id]) => id)));
+  }
+  if (selection.errorPortals.length) {
+    sets.push(new Set(errors.filter((row) => row.enabled && row.status === "error" && selection.errorPortals.includes(row.portal_key)).map((row) => row.property_id)));
+  }
+  const [first, ...rest] = sets;
+  return first ? [...first].filter((id) => rest.every((set) => set.has(id))) : [];
 }
 
 /** Rândurile brute din DB folosite la construirea informației de promovare. */
