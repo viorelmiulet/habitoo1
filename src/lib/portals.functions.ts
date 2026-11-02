@@ -2468,13 +2468,13 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
       admin
         .from("portal_publications")
         .select(
-          "property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref, promoted, imobiliare_mode",
+          "property_id, portal_key, enabled, status, last_synced_at, last_error, last_warning, external_ref, promoted, imobiliare_mode",
         )
         .eq("organization_id", organizationId)
         .in("property_id", data.propertyIds),
       admin
         .from("portal_listings")
-        .select("property_id, portal, status, last_sync_at, last_error, external_id, public_url, portal_offers, imobiliare_mode")
+        .select("property_id, portal, status, last_sync_at, last_error, last_warning, external_id, public_url, portal_offers, imobiliare_mode")
         .eq("organization_id", organizationId)
         .in("property_id", data.propertyIds),
       admin
@@ -2564,6 +2564,11 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
             !pushSupported && state === "error"
               ? "Oferta este selectată, dar nu intră în feed: verifică statusul și publicarea pe site."
               : (listing?.last_error ?? pub?.last_error ?? null),
+          // Avertisment (ex. poze parțiale) doar pe un anunț bifat și publicat, niciodată peste o eroare.
+          mediaWarning:
+            pub?.enabled === true && (state === "published" || state === "pending") && !(listing?.last_error ?? pub?.last_error)
+              ? (listing?.last_warning ?? pub?.last_warning ?? null)
+              : null,
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
           // Imobiliare.ro: linkul se afișează doar din ID-ul real salvat.
           publicUrl:
