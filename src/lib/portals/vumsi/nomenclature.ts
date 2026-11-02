@@ -21,7 +21,7 @@ export const VUMSI_CATEGORY_QUERIES = [
 ] as const;
 
 export type VumsiCategory = { id: number; name: string; path: string; parent: number | null; query: string; attr_model?: string | null };
-export type VumsiAttribute = { name: string; label: string | null; type: string | null; required: boolean; choices: Array<{ value: string; label: string }> };
+export type VumsiAttribute = { name: string; label: string | null; type: string | null; required: boolean; choices: Array<{ value: string; label: string }>; min?: number | null; max?: number | null };
 export type VumsiSnapshot = {
   reference: unknown;
   categories: VumsiCategory[];
@@ -33,6 +33,10 @@ export type VumsiGetter = (path: string, query?: Record<string, string | number>
 
 const rec = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : typeof v === "number" ? String(v) : null);
+const bound = (v: unknown): number | null => {
+  const n = typeof v === "string" && v.trim() ? Number(v) : v;
+  return typeof n === "number" && Number.isFinite(n) ? n : null;
+};
 const truthy = (v: unknown) => v === true || v === 1 || (typeof v === "string" && /^(true|1|yes)$/i.test(v.trim()));
 
 export function fold(s: string): string {
@@ -87,6 +91,8 @@ export function parseVumsiAttributes(body: unknown): VumsiAttribute[] {
       type: str(r["type"] ?? r["field_type"] ?? r["widget"]),
       required: truthy(r["required"] ?? r["is_required"]),
       choices: choicesOf(r["choices"] ?? r["options"] ?? r["values"] ?? r["enum"]),
+      min: bound(r["min"] ?? r["min_value"] ?? r["minimum"]),
+      max: bound(r["max"] ?? r["max_value"] ?? r["maximum"]),
     });
   }
   return out;
