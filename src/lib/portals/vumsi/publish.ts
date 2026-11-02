@@ -33,12 +33,42 @@ export { vumsiStatusInfo, type VumsiStatusInfo } from "./status";
 const rec = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 const uuidOf = (v: unknown) => (typeof rec(v)["uuid"] === "string" ? (rec(v)["uuid"] as string) : null);
 
-export function readListing(v: unknown) {
+/** Codurile numite din documentația Vumsi (`reference.listing_statuses`). */
+export const VUMSI_STATUS_NAMES: Record<string, number> = {
+  unpublished: 0, pending_review: 1, published: 2, draft: 3, rejected: 4, expired: 5, disabled_by_company: 6,
+};
+
+/** Status Vumsi în orice formă: 2, "2", "published", {value|id|code, code|name|label}. */
+export function parseVumsiStatus(v: unknown, names: Record<string, number> = VUMSI_STATUS_NAMES): number | null {
+  if (typeof v === "number") return Number.isInteger(v) && v >= 0 ? v : null;
+  if (typeof v === "string") {
+    const t = v.trim();
+    if (/^\d+$/.test(t)) return Number(t);
+    const n = names[t.toLowerCase()];
+    return n === undefined ? null : n;
+  }
+  if (v && typeof v === "object" && !Array.isArray(v)) {
+    const o = v as Record<string, unknown>;
+    for (const k of ["value", "id", "code", "name"]) {
+      const n = parseVumsiStatus(o[k], names);
+      if (n !== null) return n;
+    }
+  }
+  return null;
+}
+
+/** Forma răspunsului (doar chei și tipuri), pentru log fără date personale. */
+export function vumsiStatusShape(v: unknown): string {
+  const s = rec(v)["status"];
+  if (s && typeof s === "object" && !Array.isArray(s)) return `status:{${Object.entries(s).map(([k, x]) => `${k}:${typeof x}`).join(",")}}`;
+  return `status:${s === null ? "null" : typeof s}; keys:${Object.keys(rec(v)).slice(0, 20).join(",")}`;
+}
+
+export function readListing(v: unknown, names?: Record<string, number>) {
   const r = rec(v);
-  const status = Number(r["status"]);
   return {
     uuid: uuidOf(v),
-    status: Number.isInteger(status) ? status : null,
+    status: parseVumsiStatus(r["status"], names),
     url: typeof r["url"] === "string" && /^https:\/\//.test(r["url"] as string) ? (r["url"] as string) : null,
     expires_at: typeof r["expires_at"] === "string" ? (r["expires_at"] as string) : null,
     reason: (["rejection_reason", "moderation_reason", "reject_reason", "reason"] as const)

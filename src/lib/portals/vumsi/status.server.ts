@@ -4,7 +4,7 @@
  */
 import { hasVumsiKey } from "./config";
 import { vumsiRequest } from "./client.server";
-import { readListing } from "./publish";
+import { readListing, vumsiStatusShape } from "./publish";
 import { aggregateVumsiStatus, checkVumsiStatuses, vumsiCardView, vumsiListingPatch, vumsiOnOpenDue, vumsiScheduledDue, type VumsiStatusRow } from "./status";
 
 type Row = VumsiStatusRow & { organization_id: string; property_id: string };
@@ -51,7 +51,7 @@ export async function refreshVumsiStatus(organizationId: string, propertyId: str
   const rows = ((data ?? []) as Row[]).filter((r) => r.vumsi_uuid && !r.deleted_at);
   if (hasVumsiKey()) {
     const now = Date.now();
-    const changed = await checkVumsiStatuses(call, readListing, rows, (r) => vumsiOnOpenDue(r, now), now);
+    const changed = await checkVumsiStatuses(call, readListing, rows, (r) => vumsiOnOpenDue(r, now), now, vumsiStatusShape);
     if (changed.length) {
       await saveChecked(db, changed);
       await syncPortalListing(db, organizationId, propertyId, rows);
@@ -74,7 +74,7 @@ export async function pollVumsiStatuses(): Promise<{ checked: number; published:
   const now = Date.now();
   const all = ((data ?? []) as Row[]).filter((r) => on.has(`${r.organization_id}:${r.property_id}`));
   const due = all.filter((r) => vumsiScheduledDue(r, now)).slice(0, VUMSI_POLL_LIMIT);
-  const changed = await checkVumsiStatuses(call, readListing, due, () => true, now);
+  const changed = await checkVumsiStatuses(call, readListing, due, () => true, now, vumsiStatusShape);
   if (changed.length) await saveChecked(db, changed);
   const props = new Set(changed.map((r) => `${r.organization_id}:${r.property_id}`));
   for (const key of props) {
