@@ -13,12 +13,10 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { contractNumberVariables, documentText, printedContractNumber } from "@/lib/contracts/numbering";
-import { c3ContractFields, c3FieldVariables, partyTemplateVariables } from "@/lib/contracts/c3-fields";
-import { viewingTable } from "@/lib/contracts/viewing-table";
+import { documentText, printedContractNumber } from "@/lib/contracts/numbering";
+import { c3ContractFields } from "@/lib/contracts/c3-fields";
 import { contractTemplateVars, mergeStoredIdentity } from "@/lib/contracts/template-vars";
 import { isC5Kind } from "@/lib/contracts/c5";
-import { propertyTypeLabels } from "@/lib/labels";
 import {
   CONTRACT_KINDS,
   PARTY_ROLES,
