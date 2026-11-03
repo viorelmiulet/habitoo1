@@ -2707,6 +2707,7 @@ export type Database = {
           name: string
           organization_id: string | null
           source_template_id: string | null
+          standard_code: string | null
           updated_at: string
         }
         Insert: {
@@ -2719,6 +2720,7 @@ export type Database = {
           name: string
           organization_id?: string | null
           source_template_id?: string | null
+          standard_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -2731,6 +2733,7 @@ export type Database = {
           name?: string
           organization_id?: string | null
           source_template_id?: string | null
+          standard_code?: string | null
           updated_at?: string
         }
         Relationships: [

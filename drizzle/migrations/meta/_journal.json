@@ -1632,6 +1632,13 @@
       "when": 1793681097918,
       "tag": "0232_contracts_c2_document_number_series",
       "breakpoints": true
+    },
+    {
+      "idx": 233,
+      "version": "7",
+      "when": 1793681597513,
+      "tag": "0233_contracts_c3_standard_templates",
+      "breakpoints": true
     }
   ]
 }
