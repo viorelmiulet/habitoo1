@@ -1625,6 +1625,13 @@
       "when": 1793679950293,
       "tag": "0231_contracts_c1_number_assignment_identities",
       "breakpoints": true
+    },
+    {
+      "idx": 232,
+      "version": "7",
+      "when": 1793681097918,
+      "tag": "0232_contracts_c2_document_number_series",
+      "breakpoints": true
     }
   ]
 }

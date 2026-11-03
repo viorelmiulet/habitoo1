@@ -13,6 +13,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { contractNumberVariables, documentText, printedContractNumber } from "@/lib/contracts/numbering";
 import {
   CONTRACT_KINDS,
   PARTY_ROLES,
@@ -232,6 +233,8 @@ export const deleteTemplate = createServerFn({ method: "POST" })
 export type ContractListRow = {
   id: string;
   number: string | null;
+  docSeries: string | null;
+  docNumber: number | null;
   kind: string;
   title: string;
   status: string;
@@ -303,6 +306,8 @@ export const listContracts = createServerFn({ method: "GET" })
       return {
         id: c.id,
         number: c.number,
+        docSeries: c.doc_series,
+        docNumber: c.doc_number,
         kind: c.kind,
         title: c.title,
         status: c.status,
@@ -446,7 +451,7 @@ export const createContract = createServerFn({ method: "POST" })
       "client.adresa": client.address,
       "client.telefon": client.phone,
       "client.email": client.email,
-      "contract.numar": "{{contract.numar}}",
+      ...contractNumberVariables(data.kind),
       "contract.data": new Date().toLocaleDateString("ro-RO"),
       "contract.pret": price ?? "",
       "contract.moneda": currency,
@@ -463,7 +468,7 @@ export const createContract = createServerFn({ method: "POST" })
     if (data.kind === "exclusive_representation" && !beneficiary) {
       throw new Error("Contractul de reprezentare exclusivă necesită beneficiarul.");
     }
-    const contractNumber = "{{contract.numar}}";
+    const contractNumber = data.kind === "exclusive_representation" ? "{{contract.numar}}" : "";
     const signingDate = new Date().toLocaleDateString("ro-RO");
     const propertyAddress = [property?.address, property?.city, property?.county]
       .filter(Boolean)
@@ -762,6 +767,9 @@ export const getContract = createServerFn({ method: "POST" })
     return {
       contract: {
         id: contract.id,
+        number: contract.number,
+        docSeries: contract.doc_series,
+        docNumber: contract.doc_number,
         kind: contract.kind,
         title: contract.title,
         status: contract.status,
@@ -871,11 +879,11 @@ export async function renderAndStorePdf(contractId: string, actorId: string | nu
     ? contract.data as Record<string, unknown>
     : {};
   const bytes = await buildContractPdf({
-    title: contract.title,
-    subtitle: contract.kind === "exclusive_representation"
-      ? `Nr. ${typeof snapshot["contractNumber"] === "string" ? snapshot["contractNumber"] : "__________"} / ${typeof snapshot["signingDate"] === "string" ? snapshot["signingDate"] : "__________"}`
+    title: documentText(contract.title, contract.number),
+    subtitle: contract.doc_number != null
+      ? `${printedContractNumber(contract.doc_series, contract.doc_number)} / ${typeof snapshot["signingDate"] === "string" ? snapshot["signingDate"] : "__________"}`
       : `${contractKindLabels[contract.kind] ?? "Contract"} · generat la ${new Date().toLocaleDateString("ro-RO")}`,
-    body: contract.body,
+    body: documentText(contract.body, contract.number),
     agency: {
       name: org?.name ?? "Agenție",
       legalName: org?.legal_name ?? null,

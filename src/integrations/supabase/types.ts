@@ -2498,6 +2498,41 @@ export type Database = {
           },
         ]
       }
+      contract_number_series: {
+        Row: {
+          kind: string
+          next_number: number
+          organization_id: string
+          series: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          kind: string
+          next_number?: number
+          organization_id: string
+          series?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          kind?: string
+          next_number?: number
+          organization_id?: string
+          series?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_number_series_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_parties: {
         Row: {
           address: string | null
@@ -2725,6 +2760,8 @@ export type Database = {
           created_by: string | null
           currency: string | null
           data: Json
+          doc_number: number | null
+          doc_series: string | null
           document_path: string | null
           duration_days: number | null
           id: string
@@ -2751,6 +2788,8 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           data?: Json
+          doc_number?: number | null
+          doc_series?: string | null
           document_path?: string | null
           duration_days?: number | null
           id?: string
@@ -2777,6 +2816,8 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           data?: Json
+          doc_number?: number | null
+          doc_series?: string | null
           document_path?: string | null
           duration_days?: number | null
           id?: string
@@ -11875,6 +11916,10 @@ export type Database = {
       restore_lead: { Args: { _id: string }; Returns: string }
       restore_property: { Args: { _id: string }; Returns: string }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
+      save_contract_number_series: {
+        Args: { _kind: string; _next_number: number; _series: string }
+        Returns: undefined
+      }
       schedule_imo24_image_retry: {
         Args: {
           _actor: string
