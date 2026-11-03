@@ -56,6 +56,7 @@ import { requestStatusLabels, requestStatusTone, activityStatusTone } from "@/li
 import { appHead } from "@/components/app/app-head";
 import { ContactConsentFields } from "@/components/app/ContactConsentFields";
 import { EMPTY_CONTACT_CONSENT, contactConsentPatch, consentHistory } from "@/lib/contact-consent";
+import { ContactIdentitySection } from "@/components/app/contacts/ContactIdentitySection";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/$id")({
   head: () => { const title = "Habitoo CRM — detalii contact"; const description = "Datele contactului, proprietăți, cereri, activități și cronologia interacțiunilor."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -450,6 +451,7 @@ function ContactDetailPage() {
         {!contact.gdpr_consent && <p className="text-xs text-muted-foreground">Trimiterea unei oferte cerute de client rămâne posibilă.</p>}
         <ul className="space-y-1 text-sm">{consentHistory(contact.gdpr_consent_history).map((event, i) => <li key={`${event.at}-${i}`}>{event.action === 'granted' ? 'Acord înregistrat' : 'Acord retras'} · {formatDateTime(event.at)} · {event.method || 'Mod neînregistrat'} · {agentName(event.agent_id)}</li>)}</ul>
       </section>
+      <ContactIdentitySection contactId={contact.id} firstName={contact.first_name ?? ""} lastName={contact.last_name ?? ""} />
       <Tabs defaultValue="overview">
         <TabsList data-tour="contact-tabs" className="flex-wrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>
