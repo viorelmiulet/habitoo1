@@ -21,6 +21,7 @@ import { SectionCard } from "@/components/app/SectionCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { InventoryEditor } from "@/components/app/contracts/InventoryEditor";
+import { ContractBodyPreview } from "@/components/app/contracts/ContractBodyPreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -225,9 +226,7 @@ function ContractDetailPage() {
               />
             </div>
           ) : (
-            <pre data-tour="contract-body" className="max-h-[620px] overflow-auto text-sm leading-relaxed whitespace-pre-wrap">
-              {contract.body}
-            </pre>
+            <ContractBodyPreview body={contract.body} />
           )}
         </SectionCard>
 
