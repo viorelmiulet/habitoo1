@@ -1639,6 +1639,13 @@
       "when": 1793681597513,
       "tag": "0233_contracts_c3_standard_templates",
       "breakpoints": true
+    },
+    {
+      "idx": 234,
+      "version": "7",
+      "when": 1793681629231,
+      "tag": "0234_contracts_c3_combined_printed_number",
+      "breakpoints": true
     }
   ]
 }
