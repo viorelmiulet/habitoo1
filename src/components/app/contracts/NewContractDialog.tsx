@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { GDPR_NOTICE_INFO, shouldAttachGdprNotice } from "@/lib/contracts/gdpr-notice";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
@@ -488,6 +489,17 @@ export function NewContractDialog({
         {(documentKind === "exclusive_representation" || documentKind === "commission" || documentKind === "viewing") && numberSeries.isSuccess && !numberSeries.data.some((row) => row.kind === documentKind && row.series) ? (
           <p className="text-sm text-muted-foreground">Setează seria în Setări → Numerotare contracte</p>
         ) : null}
+        {(() => {
+          const current = documentKind === "exclusive_representation"
+            ? [{ ...beneficiary, stored: false }]
+            : documentKind === "commission" || documentKind === "viewing"
+              ? [{ ...c5Parties.client, stored: Boolean(c5Stored.client) }]
+              : [];
+          const attach = shouldAttachGdprNotice(documentKind, current.map((p) => ({
+            role: p.role, cnp: p.cnp || (p.stored ? "stored" : ""), idSeries: p.idSeries, idNumber: p.idNumber,
+          })));
+          return attach ? <p className="text-sm text-muted-foreground">{GDPR_NOTICE_INFO}</p> : null;
+        })()}
         <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
           <div className="space-y-1.5">
             <Label>Tip document</Label>

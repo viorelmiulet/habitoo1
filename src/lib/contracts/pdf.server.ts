@@ -43,6 +43,8 @@ export type ContractPdfInput = {
   parties: ContractPdfParty[];
   rentalAgreement?: boolean;
   exclusiveRepresentation?: boolean;
+  /** C7: GDPR notice annex, signed for receipt by every non-agent party. */
+  gdprNotice?: { body: string; signers: ContractPdfParty[] } | null;
   inventory?: {
     propertyAddress: string;
     handoverDate: string;
@@ -258,29 +260,17 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
     );
   }
 
-  /* Semnături pe pagina finală */
-  newPage();
-  y -= 32;
-  text("SEMNĂTURI", { size: 13, font: bold, color: NAVY, gap: 18 });
-
-  const signatureParties = input.rentalAgreement
-    ? input.parties.filter((party) => party.role === "landlord" || party.role === "tenant")
-    : input.exclusiveRepresentation
-      ? input.parties.filter((party) => party.role === "agent" || party.role === "seller")
-    : input.parties;
-  const columnWidth = (contentWidth - 32) / 2;
-  const slots = signatureParties.length === 2 ? signatureParties : input.parties;
-
-  for (const [index, party] of slots.entries()) {
+  const drawSignatureSlots = async (
+    list: ContractPdfParty[],
+    titleFor: (party: ContractPdfParty) => string,
+    nameFor: (party: ContractPdfParty) => string,
+  ) => {
+  for (const [index, party] of list.entries()) {
     const x = MARGIN + (index % 2) * (columnWidth + 32);
     const top = y - Math.floor(index / 2) * 150;
-    const roleTitle = input.exclusiveRepresentation && party.role === "agent"
-      ? "PRESTATOR"
-      : input.exclusiveRepresentation && party.role === "seller"
-        ? "BENEFICIAR"
-        : party.role === "landlord" ? "PROPRIETAR" : party.role === "tenant" ? "CHIRIAS" : party.roleLabel.toUpperCase();
+    const roleTitle = titleFor(party);
     page.drawText(roleTitle, { x, y: top, size: 10.5, font: bold, color: NAVY });
-    page.drawText(input.exclusiveRepresentation && party.role === "agent" ? (input.agency.legalName || input.agency.name) : party.fullName, { x, y: top - 18, size: 9, font: regular, color: INK });
+    page.drawText(nameFor(party), { x, y: top - 18, size: 9, font: regular, color: INK });
 
     if (party.signature) {
       try {
@@ -310,6 +300,48 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
       page.drawRectangle({ x, y: top - 98, width: columnWidth, height: 0.8, color: MUTED });
       page.drawText("Semnătura", { x, y: top - 112, size: 7.5, font: regular, color: MUTED });
     }
+  }
+
+    y -= Math.ceil(list.length / 2) * 150;
+  };
+
+  /* Semnături pe pagina finală */
+  newPage();
+  y -= 32;
+  text("SEMNĂTURI", { size: 13, font: bold, color: NAVY, gap: 18 });
+
+  const signatureParties = input.rentalAgreement
+    ? input.parties.filter((party) => party.role === "landlord" || party.role === "tenant")
+    : input.exclusiveRepresentation
+      ? input.parties.filter((party) => party.role === "agent" || party.role === "seller")
+    : input.parties;
+  const columnWidth = (contentWidth - 32) / 2;
+  const slots = signatureParties.length === 2 ? signatureParties : input.parties;
+
+  await drawSignatureSlots(
+    slots,
+    (party) => input.exclusiveRepresentation && party.role === "agent"
+      ? "PRESTATOR"
+      : input.exclusiveRepresentation && party.role === "seller"
+        ? "BENEFICIAR"
+        : party.role === "landlord" ? "PROPRIETAR" : party.role === "tenant" ? "CHIRIAS" : party.roleLabel.toUpperCase(),
+    (party) => input.exclusiveRepresentation && party.role === "agent" ? (input.agency.legalName || input.agency.name) : party.fullName,
+  );
+
+  if (input.gdprNotice) {
+    newPage();
+    y -= 18;
+    const RECEIPT = "Am primit un exemplar al acestei note.";
+    const noticeBody = input.gdprNotice.body.trim().endsWith(RECEIPT)
+      ? input.gdprNotice.body.trim().slice(0, -RECEIPT.length).trimEnd()
+      : input.gdprNotice.body.trim();
+    const [heading, ...rest] = noticeBody.split(/\r?\n/);
+    text(heading ?? "", { size: 12, font: bold, color: NAVY, gap: 8 });
+    text(rest.join("\n"), { size: 9.5, gap: 12 });
+    ensure(40);
+    text(RECEIPT, { size: 10, font: bold, gap: 16 });
+    ensure(150);
+    await drawSignatureSlots(input.gdprNotice.signers, (party) => party.roleLabel.toUpperCase(), (party) => party.fullName);
   }
 
   /* Numerotare pagini */

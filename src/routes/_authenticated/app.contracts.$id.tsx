@@ -22,6 +22,7 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { InventoryEditor } from "@/components/app/contracts/InventoryEditor";
 import { ContractBodyPreview } from "@/components/app/contracts/ContractBodyPreview";
+import { gdprNoticeAttached } from "@/lib/contracts/gdpr-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -229,6 +230,11 @@ function ContractDetailPage() {
             <ContractBodyPreview body={contract.body} />
           )}
         </SectionCard>
+        {gdprNoticeAttached(contract.data) ? (
+          <SectionCard title="Notă de informare GDPR" description="Anexă la final, pe pagină nouă, semnată pentru primire de fiecare parte.">
+            <ContractBodyPreview body={gdprNoticeAttached(contract.data) ?? ""} />
+          </SectionCard>
+        ) : null}
 
           {inventoryData?.["included"] === true ? (
             <SectionCard

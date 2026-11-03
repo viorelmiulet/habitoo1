@@ -84,3 +84,25 @@ export function gdprNoticeForDocument(input: {
 
 /** Natural-person signers of the notice: every party except the agent. */
 export const gdprNoticeSigners = <P extends { role: string }>(parties: P[]) => parties.filter((p) => p.role !== "agent");
+
+export type GdprNoticeSaved = GdprNoticeSnapshot & { attached: boolean };
+
+/**
+ * Snapshot saved on the contract at creation. Eligible kinds always keep the rendered text
+ * (so later template edits never change it); `attached` records whether ID data was present.
+ */
+export function buildGdprNoticeSnapshot<T extends { id: string; kind: string; organization_id: string | null; is_active?: boolean | null; body: string }>(input: {
+  kind: string; parties: IdParty[]; templates: T[]; orgId: string; vars: TemplateVars;
+}): GdprNoticeSaved | null {
+  if (!(GDPR_NOTICE_KINDS as readonly string[]).includes(input.kind)) return null;
+  const template = pickGdprTemplate(input.templates, input.orgId);
+  const body = renderGdprNotice(template?.body ?? GDPR_NOTICE_STANDARD_BODY, input.vars);
+  return { body, templateId: template?.id ?? null, attached: shouldAttachGdprNotice(input.kind, input.parties) };
+}
+
+export function gdprNoticeAttached(data: unknown): string | null {
+  const saved = readGdprNotice(data);
+  if (!saved) return null;
+  const raw = (data as Record<string, unknown>)["gdprNotice"] as Record<string, unknown>;
+  return raw["attached"] === false ? null : saved.body;
+}
