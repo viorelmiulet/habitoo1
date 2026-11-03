@@ -12,6 +12,7 @@ import { getContactIdentity, saveContactIdentity } from "@/lib/contracts/contact
 import { scanContactIdentity } from "@/lib/contracts/identity-scan.functions";
 import { prepareIdCapture } from "@/lib/contracts/image";
 import { formatDate } from "@/lib/format";
+import { IdScanPanel } from "@/components/app/contracts/IdScanPanel";
 import {
   SCAN_DOC_TYPES,
   SCAN_DOC_TYPE_LABELS,
@@ -61,9 +62,6 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
   });
 
   const [scanOpen, setScanOpen] = useState(false);
-  const [files, setFiles] = useState<File[]>([]);
-  const [certificate, setCertificate] = useState<File | null>(null);
-  const [docTypeHint, setDocTypeHint] = useState<ScanDocType | "auto">("auto");
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [nameChoice, setNameChoice] = useState<"keep" | "act">("keep");
@@ -72,31 +70,6 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
   /* Fără acces (nu e admin sau agent responsabil): secțiunea nu apare. */
   if (identity.isError) return null;
   const row = identity.data;
-
-  function addFiles(list: FileList | null) {
-    const picked = Array.from(list ?? []);
-    if (picked.some((f) => f.size > MAX_FILE_BYTES)) { toast.error("Fiecare imagine poate avea cel mult 10 MB."); return; }
-    setFiles((prev) => [...prev, ...picked].slice(0, 2));
-  }
-
-  async function runScan(extraCertificate?: File | null) {
-    setBusy(true);
-    try {
-      const images = [];
-      for (const f of files) images.push(await prepareIdCapture(f));
-      const certFile = extraCertificate ?? certificate;
-      if (certFile && certFile.size > MAX_FILE_BYTES) throw new Error("Certificatul poate avea cel mult 10 MB.");
-      const cert = certFile ? await prepareIdCapture(certFile) : null;
-      const res = await scan({ data: { contactId, images, certificate: cert, docType: docTypeHint === "auto" ? null : docTypeHint } });
-      if (res.state !== "read") { toast.error(res.message); return; }
-      openDraft(res.result);
-      setScanOpen(false);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Actul nu a putut fi citit.");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   function openDraft(result: ScanResult) {
     const values = emptyValues();
@@ -171,8 +144,6 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
       });
       toast.success("Datele actului au fost confirmate.");
       setDraft(null);
-      setFiles([]);
-      setCertificate(null);
       await qc.invalidateQueries({ queryKey: ["contact-identity", contactId] });
       if (useActName) await qc.invalidateQueries();
     } catch (e) {
@@ -191,7 +162,7 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
           <IdCard className="size-4" aria-hidden /> Act de identitate
         </h2>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={() => { setFiles([]); setCertificate(null); setScanOpen(true); }}>
+          <Button size="sm" onClick={() => setScanOpen(true)}>
             <Camera className="size-4" aria-hidden /> Scanează actul
           </Button>
           <Button size="sm" variant="outline" onClick={openManual}>
@@ -214,40 +185,12 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
         </dl>
       )}
 
-      <Dialog open={scanOpen} onOpenChange={(o) => !busy && setScanOpen(o)}>
+      <Dialog open={scanOpen} onOpenChange={setScanOpen}>
         <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader><DialogTitle>Scanează actul</DialogTitle></DialogHeader>
-          <div className="space-y-4 text-sm">
-            <p className="text-muted-foreground">Fotografiază fața și, dacă e cazul, versoul (maximum 2 imagini, 10 MB fiecare). Imaginile nu se păstrează.</p>
-            <div className="space-y-1.5">
-              <Label htmlFor="id-scan-files">Fotografii act ({files.length}/2)</Label>
-              <Input id="id-scan-files" type="file" accept="image/*" capture="environment" disabled={files.length >= 2 || busy}
-                onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
-              {files.length ? (
-                <ul className="text-xs text-muted-foreground">
-                  {files.map((f, i) => <li key={i}>{i === 0 ? "Față" : "Verso"}: {f.name}</li>)}
-                </ul>
-              ) : null}
-            </div>
-            <div className="space-y-1.5">
-              <Label>Tipul actului</Label>
-              <Select value={docTypeHint} onValueChange={(v) => setDocTypeHint(v as ScanDocType | "auto")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto">Detectare automată</SelectItem>
-                  {SCAN_DOC_TYPES.map((t) => <SelectItem key={t} value={t}>{SCAN_DOC_TYPE_LABELS[t]}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="id-scan-cert">Certificat de atestare a domiciliului (opțional, pentru CEI)</Label>
-              <Input id="id-scan-cert" type="file" accept="image/*,application/pdf" disabled={busy}
-                onChange={(e) => { const f = e.target.files?.[0] ?? null; if (f && f.size > MAX_FILE_BYTES) { toast.error("Certificatul poate avea cel mult 10 MB."); e.target.value = ""; return; } setCertificate(f); }} />
-            </div>
-          </div>
+          <IdScanPanel contactId={contactId} idPrefix="contact-id-scan" onResult={(result) => { openDraft(result); setScanOpen(false); }} />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setScanOpen(false)} disabled={busy}>Renunță</Button>
-            <Button onClick={() => runScan()} disabled={busy || (!files.length && !certificate)}>{busy ? "Se citește…" : "Citește actul"}</Button>
+            <Button variant="outline" onClick={() => setScanOpen(false)}>Renunță</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
