@@ -19,10 +19,10 @@ beforeAll(async () => {
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT nullif(current_setting('test.uid',true),'')::uuid$$;
     CREATE FUNCTION public.current_org() RETURNS uuid LANGUAGE sql AS $$SELECT '${org}'::uuid$$;
     CREATE FUNCTION public.is_superadmin() RETURNS boolean LANGUAGE sql AS $$SELECT coalesce(current_setting('test.super',true),'')='true'$$;
-    CREATE FUNCTION public.is_org_admin() RETURNS boolean LANGUAGE sql AS $$SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=auth.uid() AND organization_id=public.current_org() AND role='agency_admin')$$;
     CREATE TABLE organizations(id uuid PRIMARY KEY);
     CREATE TABLE profiles(id uuid PRIMARY KEY,organization_id uuid);
     CREATE TABLE user_roles(user_id uuid,organization_id uuid,role text);
+    CREATE FUNCTION public.is_org_admin() RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=auth.uid() AND organization_id=public.current_org() AND role='agency_admin')$$;
     CREATE TABLE contacts(id uuid PRIMARY KEY,organization_id uuid,assigned_to uuid);
     CREATE TABLE contracts(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),organization_id uuid,created_by uuid,created_at timestamptz DEFAULT now(),body text DEFAULT '',data jsonb DEFAULT '{}');
     CREATE TABLE contract_parties(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),contract_id uuid,organization_id uuid);
