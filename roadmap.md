@@ -1,3 +1,8 @@
+## Contracte C3 — șabloane standard
+- [ ] Catalog/mapare câmpuri și trei texte standard exacte; tipuri ascunse
+- [ ] Tabel vizionare în previzualizare/PDF; numerotare combinată
+- [ ] Numai teste noi C3 și verificare fără emailuri
+
 ## Contracte C2 — serie și număr tipărit
 - [x] Serii per agenție/tip, alocare atomică și setări doar admin agenție; migrarea 0232 aplicată și coloanele verificate
 - [x] Variabile, PDF și listă separate de numărul intern; închiriere/comodat fără număr tipărit
