@@ -66,4 +66,3 @@
 - `market_listings` retention runs only in `market_listings_lifecycle()` (nightly cron): unseen 14 days → inactive with `disappeared_at`, `last_seen_at` older than 365 days → deleted; ingestion never deletes and ignores observations older than the stored `last_seen_at`. ACP v5 weights inactive offers by age. Why: one place for retention, idempotent historical imports.
 - ACP PDF reports render only the version snapshot (extras in `snapshot.report`); photos/OSM tiles time out to placeholders; appendix opt-in. Exception: demand counts computed at generation in `report/demand*.ts`, numbers only for partners, frozen in the PDF. Why: reproducible, private.
 
-- Contact ID scanning (C4) runs only through `scanContactIdentity` → `runIdentityScan` (injected deps, no storage/DB writes except an action-only audit); saving happens only via `saveContactIdentity` on explicit confirmation. Why: ID images stay in request memory and nothing is persisted unconfirmed.
