@@ -1618,6 +1618,13 @@
       "when": 1793640631506,
       "tag": "0230_portal_media_warning",
       "breakpoints": true
+    },
+    {
+      "idx": 231,
+      "version": "7",
+      "when": 1793679950293,
+      "tag": "0231_contracts_c1_number_assignment_identities",
+      "breakpoints": true
     }
   ]
 }
