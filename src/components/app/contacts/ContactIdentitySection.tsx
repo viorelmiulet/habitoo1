@@ -75,7 +75,7 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
 
   function addFiles(list: FileList | null) {
     const picked = Array.from(list ?? []);
-    if (picked.some((f) => f.size > MAX_FILE_BYTES)) return toast.error("Fiecare imagine poate avea cel mult 10 MB.");
+    if (picked.some((f) => f.size > MAX_FILE_BYTES)) { toast.error("Fiecare imagine poate avea cel mult 10 MB."); return; }
     setFiles((prev) => [...prev, ...picked].slice(0, 2));
   }
 
@@ -88,7 +88,7 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
       if (certFile && certFile.size > MAX_FILE_BYTES) throw new Error("Certificatul poate avea cel mult 10 MB.");
       const cert = certFile ? await prepareIdCapture(certFile) : null;
       const res = await scan({ data: { contactId, images, certificate: cert, docType: docTypeHint === "auto" ? null : docTypeHint } });
-      if (res.state !== "read") return toast.error(res.message);
+      if (res.state !== "read") { toast.error(res.message); return; }
       openDraft(res.result);
       setScanOpen(false);
     } catch (e) {
@@ -152,9 +152,9 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
     if (!draft) return;
     const v = draft.values;
     const fullName = `${v.last_name} ${v.first_name}`.trim();
-    if (fullName.length < 3) return toast.error("Completează numele și prenumele.");
-    if (v.cnp && !/^\d{13}$/.test(v.cnp)) return toast.error("CNP-ul trebuie să aibă 13 cifre.");
-    if (needsAddress) return toast.error("La buletinul cu cip adaugă certificatul de domiciliu sau completează manual domiciliul.");
+    if (fullName.length < 3) { toast.error("Completează numele și prenumele."); return; }
+    if (v.cnp && !/^\d{13}$/.test(v.cnp)) { toast.error("CNP-ul trebuie să aibă 13 cifre."); return; }
+    if (needsAddress) { toast.error("La buletinul cu cip adaugă certificatul de domiciliu sau completează manual domiciliul."); return; }
     setBusy(true);
     try {
       const date = (s: string) => (/^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null);
@@ -290,14 +290,14 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
                     onChange={async (e) => {
                       const f = e.target.files?.[0]; e.target.value = "";
                       if (!f) return;
-                      if (f.size > MAX_FILE_BYTES) return toast.error("Certificatul poate avea cel mult 10 MB.");
+                      if (f.size > MAX_FILE_BYTES) { toast.error("Certificatul poate avea cel mult 10 MB."); return; }
                       setBusy(true);
                       try {
                         const cert = await prepareIdCapture(f);
                         const res = await scan({ data: { contactId, images: [], certificate: cert, docType: draft.docType } });
-                        if (res.state !== "read") return toast.error(res.message);
+                        if (res.state !== "read") { toast.error(res.message); return; }
                         const addr = res.result.fields.address;
-                        if (!addr.value) return toast.error("Domiciliul nu a putut fi citit. Completează manual.");
+                        if (!addr.value) { toast.error("Domiciliul nu a putut fi citit. Completează manual."); return; }
                         setDraft((d) => d && ({ ...d, values: { ...d.values, address: addr.value ?? "" }, addressSource: "certificat_domiciliu", flags: { ...d.flags, address: addr.flags.filter((x) => x !== "address_required") } }));
                       } catch (err) {
                         toast.error(err instanceof Error ? err.message : "Certificatul nu a putut fi citit.");
