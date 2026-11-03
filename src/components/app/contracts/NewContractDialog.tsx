@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
@@ -47,8 +47,21 @@ import type { IdFieldConflict } from "@/lib/contracts/id/vision.parse";
 import { useCurrentUser } from "@/hooks/use-session";
 import { InventoryEditor } from "./InventoryEditor";
 import { getContractNumberSeries } from "@/lib/contracts/numbering.functions";
+import { getContactIdentity } from "@/lib/contracts/contact-identity.functions";
+import { C5Fields } from "./C5Fields";
+import {
+  buildC5Request,
+  C5_PARTY_SLOTS,
+  commissionText,
+  defaultC5Form,
+  isC5Kind,
+  type C5Form,
+  type C5Kind,
+  type C5Target,
+} from "@/lib/contracts/c5";
 
-type PartyTarget = "landlord" | "tenant" | "beneficiary";
+type PartyTarget = "landlord" | "tenant" | "beneficiary" | C5Target;
+type DocumentKind = "rent_agreement" | "exclusive_representation" | C5Kind;
 type CaptureSide = "back" | "front";
 
 type PartyForm = {
@@ -99,9 +112,22 @@ export function NewContractDialog({
   const runCreate = useServerFn(createContract);
   const runRead = useServerFn(readIdDocument);
   const fetchExtractionStatus = useServerFn(getIdReadingStatus);
-  const [documentKind, setDocumentKind] = useState<"rent_agreement" | "exclusive_representation">(
-    "rent_agreement",
-  );
+  const runIdentity = useServerFn(getContactIdentity);
+  const [documentKind, setDocumentKind] = useState<DocumentKind>("rent_agreement");
+  const c5Kind = isC5Kind(documentKind) ? documentKind : null;
+  const [c5Form, setC5Form] = useState<C5Form>(() => defaultC5Form(currentUser?.organization?.city));
+  const [c5Parties, setC5Parties] = useState<Record<C5Target, PartyForm>>({
+    client: emptyParty("client"),
+    lender: emptyParty("lender"),
+    borrower: emptyParty("borrower"),
+  });
+  const agencyCity = currentUser?.organization?.city;
+  useEffect(() => {
+    if (agencyCity) setC5Form((current) => (current.locality ? current : { ...current, locality: agencyCity }));
+  }, [agencyCity]);
+  const [c5Contacts, setC5Contacts] = useState<Record<C5Target, string>>({ client: "", lender: "", borrower: "" });
+  const [c5Stored, setC5Stored] = useState<Record<C5Target, string | null>>({ client: null, lender: null, borrower: null });
+  const [c5Save, setC5Save] = useState<Record<C5Target, boolean>>({ client: false, lender: false, borrower: false });
   const [templateId, setTemplateId] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(propertyId ?? "");
   const [selectedContact, setSelectedContact] = useState(contactId ?? "");
@@ -112,11 +138,17 @@ export function NewContractDialog({
     landlord: emptyPartyIdState,
     tenant: emptyPartyIdState,
     beneficiary: emptyPartyIdState,
+    client: emptyPartyIdState,
+    lender: emptyPartyIdState,
+    borrower: emptyPartyIdState,
   });
   const [backDone, setBackDone] = useState<Record<PartyTarget, boolean>>({
     landlord: false,
     tenant: false,
     beneficiary: false,
+    client: false,
+    lender: false,
+    borrower: false,
   });
   const [reading, setReading] = useState<{ target: PartyTarget; side: CaptureSide } | null>(null);
   const [destination, setDestination] = useState("locuinta");
@@ -170,7 +202,19 @@ export function NewContractDialog({
     () => (templates.data ?? []).filter((item) => item.kind === "exclusive_representation"),
     [templates.data],
   );
-  const kindTemplates = documentKind === "rent_agreement" ? rentalTemplates : exclusiveTemplates;
+  const c5Templates = useMemo(
+    () =>
+      (templates.data ?? [])
+        .filter((item) => item.kind === documentKind)
+        // Șablonul agenției are prioritate față de cel standard Habitoo.
+        .sort((a, b) => Number(a.isPlatform) - Number(b.isPlatform)),
+    [templates.data, documentKind],
+  );
+  const kindTemplates = c5Kind
+    ? c5Templates
+    : documentKind === "rent_agreement"
+      ? rentalTemplates
+      : exclusiveTemplates;
   const activeTemplate = kindTemplates.some((item) => item.id === templateId)
     ? templateId
     : kindTemplates[0]?.id || "";
@@ -205,8 +249,19 @@ export function NewContractDialog({
     },
   });
 
+  const c5Setter = (target: C5Target) => (next: PartyForm | ((previous: PartyForm) => PartyForm)) =>
+    setC5Parties((current) => ({
+      ...current,
+      [target]: typeof next === "function" ? next(current[target]) : next,
+    }));
   const setterFor = (target: PartyTarget) =>
-    target === "landlord" ? setLandlord : target === "tenant" ? setTenant : setBeneficiary;
+    target === "client" || target === "lender" || target === "borrower"
+      ? c5Setter(target)
+      : target === "landlord"
+        ? setLandlord
+        : target === "tenant"
+          ? setTenant
+          : setBeneficiary;
   const patchIdState = (target: PartyTarget, next: (state: PartyIdState) => PartyIdState) =>
     setIdStates((current) => ({ ...current, [target]: next(current[target]) }));
 
@@ -247,6 +302,11 @@ export function NewContractDialog({
           quality: result.messages,
         }));
         if (side === "back") setBackDone((current) => ({ ...current, [target]: true }));
+        if (target === "client" || target === "lender" || target === "borrower") {
+          // După o scanare în fereastră, salvarea pe fișa clientului e bifată implicit.
+          setC5Save((current) => ({ ...current, [target]: true }));
+          setC5Stored((current) => ({ ...current, [target]: null }));
+        }
         if (result.conflicts.length > 0)
           toast.warning(
             "Fața actului și zona citibilă nu spun același lucru. Alege valoarea corectă.",
@@ -288,8 +348,9 @@ export function NewContractDialog({
     patchIdState(target, (state) => resolveConflict(state, conflict.field));
   };
 
-  const activeParties: { label: string; target: PartyTarget; state: PartyIdState }[] =
-    documentKind === "rent_agreement"
+  const activeParties: { label: string; target: PartyTarget; state: PartyIdState }[] = c5Kind
+    ? C5_PARTY_SLOTS[c5Kind].map((slot) => ({ label: slot.label, target: slot.target, state: idStates[slot.target] }))
+    : documentKind === "rent_agreement"
       ? [
           { label: "Proprietar", target: "landlord", state: idStates.landlord },
           { label: "Chiriaș", target: "tenant", state: idStates.tenant },
@@ -297,9 +358,55 @@ export function NewContractDialog({
       : [{ label: "Beneficiar", target: "beneficiary", state: idStates.beneficiary }];
   const blockers = idGenerationBlockers(activeParties);
 
+  const agentParty = (): PartyForm => ({
+    ...emptyParty("agent"),
+    fullName:
+      currentUser?.profile?.full_name ||
+      currentUser?.organization?.legal_representative ||
+      currentUser?.organization?.name ||
+      "Reprezentant agenție",
+    email: currentUser?.email || "",
+  });
+  const partyPayload = (party: PartyForm) => ({
+    ...party,
+    email: party.email.trim(),
+    phone: party.phone.trim() || undefined,
+    address: party.address.trim() || undefined,
+    cnp: party.cnp.trim() || undefined,
+    idSeries: party.idSeries.trim() || undefined,
+    idNumber: party.idNumber.trim() || undefined,
+    idIssuer: party.idIssuer.trim() || undefined,
+    idIssuedOn: party.idIssuedOn.trim() || undefined,
+    birthDate: party.birthDate.trim() || undefined,
+    citizenship: party.citizenship.trim() || undefined,
+  });
   const create = useMutation({
     mutationFn: async () => {
       if (!activeTemplate) throw new Error("Șablonul documentului nu este disponibil.");
+      if (c5Kind) {
+        const withMeta = Object.fromEntries(
+          (Object.keys(c5Parties) as C5Target[]).map((target) => [
+            target,
+            {
+              ...partyPayload(c5Parties[target]),
+              contactId: c5Contacts[target] || undefined,
+              saveIdentity: Boolean(c5Contacts[target]) && c5Save[target],
+            },
+          ]),
+        ) as Record<C5Target, ReturnType<typeof partyPayload> & { contactId?: string; saveIdentity?: boolean }>;
+        for (const party of Object.values(withMeta))
+          if (party.cnp && !isValidCnp(party.cnp))
+            throw new Error(`CNP-ul pentru ${party.fullName} nu este valid.`);
+        const request = buildC5Request(c5Kind, c5Form, withMeta, partyPayload(agentParty()));
+        return runCreate({
+          data: {
+            templateId: activeTemplate,
+            propertyId: selectedProperty || undefined,
+            contactId: c5Contacts.client || undefined,
+            ...request,
+          },
+        });
+      }
       const clientParties = documentKind === "rent_agreement" ? [landlord, tenant] : [beneficiary];
       if (clientParties.some((party) => party.fullName.trim().length < 3))
         throw new Error("Completează numele tuturor părților.");
@@ -378,6 +485,44 @@ export function NewContractDialog({
     onError: (error: Error) => toastError(error),
   });
 
+  const selectC5Contact = async (target: C5Target, value: string) => {
+    const contactId = value === "none" ? "" : value;
+    setC5Contacts((current) => ({ ...current, [target]: contactId }));
+    setC5Save((current) => ({ ...current, [target]: false }));
+    setC5Stored((current) => ({ ...current, [target]: null }));
+    const found = contacts.data?.find((contact) => contact.id === contactId);
+    if (!found) return;
+    c5Setter(target)((previous) => ({
+      ...previous,
+      fullName: [found.first_name, found.last_name].filter(Boolean).join(" ") || previous.fullName,
+      email: found.email ?? previous.email,
+      phone: found.phone ?? previous.phone,
+    }));
+    try {
+      // Serverul verifică accesul (admin agenție / agent responsabil) și întoarce doar date mascate.
+      const identity = await runIdentity({ data: { contactId } });
+      if (!identity) return;
+      c5Setter(target)((previous) => ({
+        ...previous,
+        fullName: identity.full_name || previous.fullName,
+        address: identity.address ?? previous.address,
+        citizenship: identity.citizenship ?? previous.citizenship,
+        idIssuer: identity.id_issuer ?? previous.idIssuer,
+        idIssuedOn: identity.id_issued_on ?? previous.idIssuedOn,
+        birthDate: identity.birth_date ?? previous.birthDate,
+        cnp: "",
+        idSeries: "",
+        idNumber: "",
+      }));
+      setC5Stored((current) => ({
+        ...current,
+        [target]: `Date din fișa clientului: CNP ${identity.cnp ?? "—"}, seria ${identity.idSeries ?? "—"} nr. ${identity.idNumber ?? "—"}. Se completează automat la creare.`,
+      }));
+    } catch {
+      /* Fără acces la identitate: rămân doar datele de contact. */
+    }
+  };
+
   const selectContact = (value: string) => {
     setSelectedContact(value === "none" ? "" : value);
     const found = contacts.data?.find((contact) => contact.id === value);
@@ -402,7 +547,7 @@ export function NewContractDialog({
             Alege documentul, completează datele și verifică informațiile citite din act.
           </DialogDescription>
         </DialogHeader>
-        {documentKind === "exclusive_representation" && numberSeries.isSuccess && !numberSeries.data.some((row) => row.kind === documentKind && row.series) ? (
+        {(documentKind === "exclusive_representation" || documentKind === "commission" || documentKind === "viewing") && numberSeries.isSuccess && !numberSeries.data.some((row) => row.kind === documentKind && row.series) ? (
           <p className="text-sm text-muted-foreground">Setează seria în Setări → Numerotare contracte</p>
         ) : null}
         <div className="grid gap-4 sm:grid-cols-2">
@@ -423,6 +568,9 @@ export function NewContractDialog({
                 <SelectItem value="exclusive_representation">
                   Contract de reprezentare exclusivă
                 </SelectItem>
+                <SelectItem value="commission">Contract de comision</SelectItem>
+                <SelectItem value="loan_for_use">Contract de comodat</SelectItem>
+                <SelectItem value="viewing">Contract de vizionare</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -449,7 +597,15 @@ export function NewContractDialog({
               onValueChange={(value) => {
                 setSelectedProperty(value === "none" ? "" : value);
                 const found = properties.data?.find((property) => property.id === value);
-                if (found) {
+                if (found && c5Kind) {
+                  setC5Form((current) => ({
+                    ...current,
+                    commission: commissionText(found.commission, current.transactionType) || current.commission,
+                    propertyAddress:
+                      [found.address, found.city, found.county].filter(Boolean).join(", ") ||
+                      current.propertyAddress,
+                  }));
+                } else if (found) {
                   setRent(found.price ? String(found.price) : "");
                   setCurrency(found.currency ?? "EUR");
                   setCommission(found.commission ?? "3");
@@ -495,6 +651,7 @@ export function NewContractDialog({
               </SelectContent>
             </Select>
           </div>
+          {c5Kind ? null : (
           <div className="space-y-1.5">
             <Label>{documentKind === "rent_agreement" ? "Chiriaș" : "Beneficiar"} din CRM</Label>
             <Select value={selectedContact || "none"} onValueChange={selectContact}>
@@ -511,7 +668,8 @@ export function NewContractDialog({
               </SelectContent>
             </Select>
           </div>
-          {documentKind === "exclusive_representation" ? (
+          )}
+          {c5Kind ? null : documentKind === "exclusive_representation" ? (
             <>
               <Field label="Comision (%)" value={commission} onChange={setCommission} />
               <Field
@@ -564,7 +722,80 @@ export function NewContractDialog({
           )}
         </div>
 
-        {documentKind === "rent_agreement" ? (
+        {c5Kind ? (
+          <>
+            <C5Fields
+              kind={c5Kind}
+              form={c5Form}
+              onChange={setC5Form}
+              properties={(properties.data ?? []).map((p) => ({
+                id: p.id,
+                label: `${p.reference ? `${p.reference} · ` : ""}${p.title ?? ""}`,
+              }))}
+            />
+            <div className="grid gap-4 lg:grid-cols-2">
+              {C5_PARTY_SLOTS[c5Kind].map((slot, index) => (
+                <div key={slot.target} className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label>{slot.label}: alege din CRM</Label>
+                    <Select
+                      value={c5Contacts[slot.target] || "none"}
+                      onValueChange={(value) => void selectC5Contact(slot.target, value)}
+                    >
+                      <SelectTrigger aria-label={`${slot.label} din CRM`}>
+                        <SelectValue placeholder="Fără contact" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Fără contact</SelectItem>
+                        {contacts.data?.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            {[contact.first_name, contact.last_name].filter(Boolean).join(" ")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {c5Stored[slot.target] ? (
+                    <p className="flex items-start gap-1.5 rounded-md border border-border bg-muted/40 p-2 text-xs text-muted-foreground">
+                      <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+                      {c5Stored[slot.target]}
+                    </p>
+                  ) : null}
+                  <PartySection
+                    title={`${index + 1}. ${slot.label}`}
+                    party={c5Parties[slot.target]}
+                    onChange={c5Setter(slot.target)}
+                    idState={idStates[slot.target]}
+                    backDone={backDone[slot.target]}
+                    extractionEnabled={extractionEnabled}
+                    reading={extract.isPending && reading?.target === slot.target ? reading.side : null}
+                    onCapture={(file, side) => {
+                      setReading({ target: slot.target, side });
+                      extract.mutate({ file, target: slot.target, side });
+                    }}
+                    onConfirm={() => patchIdState(slot.target, confirmPendingFields)}
+                    onChoose={(conflict, source) => chooseConflict(slot.target, conflict, source)}
+                  />
+                  {c5Contacts[slot.target] &&
+                  (backDone[slot.target] || idStates[slot.target].verified.length > 0 || idStates[slot.target].pending.length > 0) ? (
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`save-identity-${slot.target}`}
+                        checked={c5Save[slot.target]}
+                        onCheckedChange={(checked) =>
+                          setC5Save((current) => ({ ...current, [slot.target]: checked === true }))
+                        }
+                      />
+                      <Label htmlFor={`save-identity-${slot.target}`} className="text-xs">
+                        Salvează datele și pe fișa clientului
+                      </Label>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : documentKind === "rent_agreement" ? (
           <div className="grid gap-4 lg:grid-cols-2">
             <PartySection
               title="1. Proprietar (locator)"
