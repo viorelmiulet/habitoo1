@@ -125,7 +125,6 @@ export function NewContractDialog({
   const [deposit, setDeposit] = useState("");
   const [includeInventory, setIncludeInventory] = useState(false);
   const [inventory, setInventory] = useState<InventoryItem[] | null>(null);
-  const [contractNumber, setContractNumber] = useState("");
   const [commission, setCommission] = useState("3");
   const [negotiable, setNegotiable] = useState<"DA" | "NU">("DA");
   const [exclusiveProperty, setExclusiveProperty] = useState({
@@ -344,8 +343,6 @@ export function NewContractDialog({
           deposit: deposit ? Number(deposit) : undefined,
           includeInventory: documentKind === "rent_agreement" && includeInventory,
           inventory: includeInventory ? cleanInventory : undefined,
-          contractNumber:
-            documentKind === "exclusive_representation" ? contractNumber || undefined : undefined,
           commission: documentKind === "exclusive_representation" ? commission : undefined,
           negotiable: documentKind === "exclusive_representation" ? negotiable : undefined,
           exclusiveProperty:
@@ -506,12 +503,6 @@ export function NewContractDialog({
           </div>
           {documentKind === "exclusive_representation" ? (
             <>
-              <Field
-                label="Număr contract (opțional, generat automat)"
-                value={contractNumber}
-                onChange={setContractNumber}
-                placeholder="CTR-000001"
-              />
               <Field label="Comision (%)" value={commission} onChange={setCommission} />
               <Field
                 label="Durată (luni)"

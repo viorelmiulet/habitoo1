@@ -25,6 +25,7 @@ import { NewContractDialog } from "@/components/app/contracts/NewContractDialog"
 import { listContracts } from "@/lib/contracts.functions";
 import {
   CONTRACT_STATUSES,
+  CONTRACT_KINDS,
   contractKindLabels,
   contractStatusLabels,
   contractStatusTone,
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/_authenticated/app/contracts/")({
   component: ContractsPage,
 });
 
-const contractListDefaults = { status: "all", search: "" };
+const contractListDefaults = { status: "all", kind: "all", search: "" };
 
 function ContractsPage() {
   const fetchContracts = useServerFn(listContracts);
@@ -47,16 +48,18 @@ function ContractsPage() {
     (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
   const status = persisted.state.status;
   const setStatus = (value: string) => persisted.set("status", value);
+  const kind = persisted.state.kind;
   const search = persisted.state.search;
   const setSearch = (value: string) => persisted.set("search", value);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const contracts = useQuery({
-    queryKey: ["contracts", status, search],
+    queryKey: ["contracts", status, kind, search],
     queryFn: () =>
       fetchContracts({
         data: {
           ...(status !== "all" ? { status } : {}),
+          ...(kind !== "all" ? { kind } : {}),
           ...(search.trim() ? { search: search.trim() } : {}),
         },
       }),
@@ -98,6 +101,13 @@ function ContractsPage() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={kind} onValueChange={(value) => persisted.set("kind", value)}>
+          <SelectTrigger aria-label="Tip contract" className="w-[240px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toate tipurile</SelectItem>
+            {CONTRACT_KINDS.map((value) => <SelectItem key={value} value={value}>{contractKindLabels[value]}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <Button variant="ghost" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
       </div>
 
@@ -127,7 +137,7 @@ function ContractsPage() {
                     <FileSignature className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{c.title}</p>
+                    <p className="truncate text-sm font-medium">{c.number ? `${c.number} · ` : ""}{c.title}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       {contractKindLabels[c.kind] ?? c.kind}
                       {c.clientName ? ` · ${c.clientName}` : ""}

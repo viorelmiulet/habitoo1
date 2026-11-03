@@ -2222,6 +2222,80 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_identities: {
+        Row: {
+          address: string | null
+          address_source: string
+          birth_date: string | null
+          birth_place: string | null
+          citizenship: string | null
+          cnp_enc: string | null
+          confirmed_by: string | null
+          contact_id: string
+          doc_type: string
+          expires_at: string | null
+          extracted_at: string | null
+          full_name: string
+          id: string
+          id_issued_on: string | null
+          id_issuer: string | null
+          id_number_enc: string | null
+          id_series_enc: string | null
+          sex: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          address_source?: string
+          birth_date?: string | null
+          birth_place?: string | null
+          citizenship?: string | null
+          cnp_enc?: string | null
+          confirmed_by?: string | null
+          contact_id: string
+          doc_type?: string
+          expires_at?: string | null
+          extracted_at?: string | null
+          full_name?: string
+          id?: string
+          id_issued_on?: string | null
+          id_issuer?: string | null
+          id_number_enc?: string | null
+          id_series_enc?: string | null
+          sex?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          address_source?: string
+          birth_date?: string | null
+          birth_place?: string | null
+          citizenship?: string | null
+          cnp_enc?: string | null
+          confirmed_by?: string | null
+          contact_id?: string
+          doc_type?: string
+          expires_at?: string | null
+          extracted_at?: string | null
+          full_name?: string
+          id?: string
+          id_issued_on?: string | null
+          id_issuer?: string | null
+          id_number_enc?: string | null
+          id_series_enc?: string | null
+          sex?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_identities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: true
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_requests: {
         Row: {
           agency: string
@@ -2398,15 +2472,48 @@ export type Database = {
           },
         ]
       }
+      contract_number_counters: {
+        Row: {
+          last_number: number
+          organization_id: string
+          year: number
+        }
+        Insert: {
+          last_number?: number
+          organization_id: string
+          year: number
+        }
+        Update: {
+          last_number?: number
+          organization_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_number_counters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_parties: {
         Row: {
           address: string | null
+          address_source: string | null
           birth_date: string | null
+          birth_place: string | null
           citizenship: string | null
           cnp_enc: string | null
+          confirmed_by: string | null
+          contact_id: string | null
           contract_id: string
           created_at: string
+          doc_type: string | null
           email: string | null
+          expires_at: string | null
+          extracted_at: string | null
           full_name: string
           id: string
           id_issued_on: string | null
@@ -2416,6 +2523,7 @@ export type Database = {
           organization_id: string
           phone: string | null
           role: string
+          sex: string | null
           sign_order: number
           signature_ip: string | null
           signature_path: string | null
@@ -2424,12 +2532,19 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          address_source?: string | null
           birth_date?: string | null
+          birth_place?: string | null
           citizenship?: string | null
           cnp_enc?: string | null
+          confirmed_by?: string | null
+          contact_id?: string | null
           contract_id: string
           created_at?: string
+          doc_type?: string | null
           email?: string | null
+          expires_at?: string | null
+          extracted_at?: string | null
           full_name: string
           id?: string
           id_issued_on?: string | null
@@ -2439,6 +2554,7 @@ export type Database = {
           organization_id: string
           phone?: string | null
           role: string
+          sex?: string | null
           sign_order?: number
           signature_ip?: string | null
           signature_path?: string | null
@@ -2447,12 +2563,19 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          address_source?: string | null
           birth_date?: string | null
+          birth_place?: string | null
           citizenship?: string | null
           cnp_enc?: string | null
+          confirmed_by?: string | null
+          contact_id?: string | null
           contract_id?: string
           created_at?: string
+          doc_type?: string | null
           email?: string | null
+          expires_at?: string | null
+          extracted_at?: string | null
           full_name?: string
           id?: string
           id_issued_on?: string | null
@@ -2462,6 +2585,7 @@ export type Database = {
           organization_id?: string
           phone?: string | null
           role?: string
+          sex?: string | null
           sign_order?: number
           signature_ip?: string | null
           signature_path?: string | null
@@ -2469,6 +2593,13 @@ export type Database = {
           signed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "contract_parties_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contract_parties_contract_id_fkey"
             columns: ["contract_id"]
@@ -2586,6 +2717,7 @@ export type Database = {
       }
       contracts: {
         Row: {
+          assigned_to: string | null
           body: string
           commission: string | null
           contact_id: string | null
@@ -2598,6 +2730,7 @@ export type Database = {
           id: string
           kind: string
           lead_id: string | null
+          number: string | null
           organization_id: string
           price: number | null
           property_id: string | null
@@ -2610,6 +2743,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_to?: string | null
           body?: string
           commission?: string | null
           contact_id?: string | null
@@ -2622,6 +2756,7 @@ export type Database = {
           id?: string
           kind: string
           lead_id?: string | null
+          number?: string | null
           organization_id: string
           price?: number | null
           property_id?: string | null
@@ -2634,6 +2769,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_to?: string | null
           body?: string
           commission?: string | null
           contact_id?: string | null
@@ -2646,6 +2782,7 @@ export type Database = {
           id?: string
           kind?: string
           lead_id?: string | null
+          number?: string | null
           organization_id?: string
           price?: number | null
           property_id?: string | null
@@ -11006,6 +11143,10 @@ export type Database = {
       }
       can_access_acp_analysis: {
         Args: { _analysis_id: string }
+        Returns: boolean
+      }
+      can_access_contact_identity: {
+        Args: { _contact_id: string }
         Returns: boolean
       }
       can_access_contract: { Args: { _contract_id: string }; Returns: boolean }

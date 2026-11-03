@@ -10,6 +10,8 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   CONTRACT_KINDS,
@@ -28,12 +30,7 @@ export const CONTRACTS_BUCKET = "contract-documents";
 const SIGN_TOKEN_DAYS = 7;
 
 type Ctx = {
-  supabase: {
-    rpc: (
-      fn: string,
-      args?: Record<string, unknown>,
-    ) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
-  };
+  supabase: SupabaseClient<Database>;
   userId: string;
 };
 
@@ -105,18 +102,15 @@ async function audit(params: {
 
 /** Verifică accesul la un contract: creator sau administrator al agenției. */
 async function loadContract(ctx: Ctx, contractId: string) {
-  const { orgId, isAdmin } = await orgContext(ctx);
-  const db = await admin();
-  const { data: contract } = await db
+  const { data: contract } = await ctx.supabase
     .from("contracts")
     .select("*")
     .eq("id", contractId)
     .maybeSingle();
-  if (!contract || contract.organization_id !== orgId) throw new Error("Contractul nu există.");
-  if (contract.created_by !== ctx.userId && !isAdmin) {
-    throw new Error("Nu ai acces la acest contract.");
-  }
-  return { contract, orgId, isAdmin, db };
+  if (!contract) throw new Error("Contractul nu există sau nu ai acces la el.");
+  const db = await admin();
+  const { data: isAdmin } = await ctx.supabase.rpc("is_org_admin");
+  return { contract, orgId: contract.organization_id, isAdmin: isAdmin === true, db };
 }
 
 /* ------------------------------------------------------------------ */
@@ -237,6 +231,7 @@ export const deleteTemplate = createServerFn({ method: "POST" })
 
 export type ContractListRow = {
   id: string;
+  number: string | null;
   kind: string;
   title: string;
   status: string;
@@ -256,6 +251,7 @@ export const listContracts = createServerFn({ method: "GET" })
     z
       .object({
         status: z.string().optional(),
+        kind: z.string().optional(),
         propertyId: uuid.optional(),
         contactId: uuid.optional(),
         search: z.string().trim().max(120).optional(),
@@ -265,22 +261,21 @@ export const listContracts = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }): Promise<ContractListRow[]> => {
     const ctx = context as unknown as Ctx;
-    const { orgId, isAdmin } = await orgContext(ctx);
-    const db = await admin();
+    const db = ctx.supabase;
 
     let query = db
       .from("contracts")
       .select("*")
-      .eq("organization_id", orgId)
       .order("created_at", { ascending: false })
       .limit(300);
-    if (!isAdmin) query = query.eq("created_by", ctx.userId);
     if (data.status) query = query.eq("status", data.status);
+    if (data.kind) query = query.eq("kind", data.kind);
     if (data.propertyId) query = query.eq("property_id", data.propertyId);
     if (data.contactId) query = query.eq("contact_id", data.contactId);
     if (data.search) query = query.ilike("title", `%${data.search}%`);
 
-    const { data: rows } = await query;
+    const { data: rows, error } = await query;
+    if (error) throw new Error("Contractele nu au putut fi citite.");
     const contracts = rows ?? [];
     if (contracts.length === 0) return [];
 
@@ -307,6 +302,7 @@ export const listContracts = createServerFn({ method: "GET" })
       const client = own.find((p) => p.role !== "agent");
       return {
         id: c.id,
+        number: c.number,
         kind: c.kind,
         title: c.title,
         status: c.status,
@@ -323,6 +319,7 @@ export const listContracts = createServerFn({ method: "GET" })
   });
 
 const partyInput = z.object({
+  contactId: uuid.optional(),
   role: z.enum(PARTY_ROLES),
   fullName: z.string().trim().min(3).max(160),
   email: z.string().trim().email().optional().or(z.literal("")),
@@ -379,6 +376,19 @@ export const createContract = createServerFn({ method: "POST" })
     const { orgId } = await orgContext(ctx);
     const db = await admin();
     const { encryptPii } = await import("@/lib/contracts/crypto.server");
+    const { assertContactIdentityAccess, identityPartyValues } = await import("@/lib/contracts/contact-identity.server");
+    const identities = new Map<string, Database["public"]["Tables"]["contact_identities"]["Row"]>();
+    const defaultClientIndex = data.parties.findIndex((p) => p.role === (data.kind === "rent_agreement" ? "tenant" : "seller"));
+    const parties = await Promise.all(data.parties.map(async (p, index) => {
+      const contactId = p.contactId ?? (index === defaultClientIndex ? data.contactId : undefined);
+      if (!contactId) return p;
+      await assertContactIdentityAccess(ctx.supabase, contactId);
+      const { data: identity, error } = await ctx.supabase.from("contact_identities").select("*").eq("contact_id", contactId).maybeSingle();
+      if (error) throw new Error("Identitatea clientului nu a putut fi citită.");
+      if (!identity) return { ...p, contactId };
+      identities.set(contactId, identity);
+      return { ...p, ...identityPartyValues(identity), contactId };
+    }));
 
     const [{ data: template }, { data: org }, { data: profile }] = await Promise.all([
       db.from("contract_templates").select("*").eq("id", data.templateId).maybeSingle(),
@@ -401,7 +411,7 @@ export const createContract = createServerFn({ method: "POST" })
         ).data
       : null;
 
-    const client = data.parties.find((p) => p.role !== "agent") ?? data.parties[0];
+    const client = parties.find((p) => p.role !== "agent") ?? parties[0];
     if (!client) throw new Error("Adaugă cel puțin o parte contractantă.");
     const price = data.price ?? property?.price ?? null;
     const currency = data.currency ?? property?.currency ?? "EUR";
@@ -436,7 +446,7 @@ export const createContract = createServerFn({ method: "POST" })
       "client.adresa": client.address,
       "client.telefon": client.phone,
       "client.email": client.email,
-      "contract.numar": "",
+      "contract.numar": "{{contract.numar}}",
       "contract.data": new Date().toLocaleDateString("ro-RO"),
       "contract.pret": price ?? "",
       "contract.moneda": currency,
@@ -444,23 +454,16 @@ export const createContract = createServerFn({ method: "POST" })
       "contract.durata": data.durationDays ?? "",
     };
 
-    const landlord = data.parties.find((p) => p.role === "landlord");
-    const tenant = data.parties.find((p) => p.role === "tenant");
-    const beneficiary = data.parties.find((p) => p.role === "seller");
+    const landlord = parties.find((p) => p.role === "landlord");
+    const tenant = parties.find((p) => p.role === "tenant");
+    const beneficiary = parties.find((p) => p.role === "seller");
     if (data.kind === "rent_agreement" && (!landlord || !tenant)) {
       throw new Error("Contractul de închiriere necesită proprietar și chiriaș.");
     }
     if (data.kind === "exclusive_representation" && !beneficiary) {
       throw new Error("Contractul de reprezentare exclusivă necesită beneficiarul.");
     }
-    let contractNumber = data.contractNumber?.trim() || "";
-    if (data.kind === "exclusive_representation" && !contractNumber) {
-      const { data: generated, error: numberError } = await db.rpc("next_contract_number");
-      if (numberError || typeof generated !== "string") {
-        throw new Error("Numărul contractului nu a putut fi generat.");
-      }
-      contractNumber = generated;
-    }
+    const contractNumber = "{{contract.numar}}";
     const signingDate = new Date().toLocaleDateString("ro-RO");
     const propertyAddress = [property?.address, property?.city, property?.county]
       .filter(Boolean)
@@ -567,8 +570,9 @@ export const createContract = createServerFn({ method: "POST" })
         commission,
         duration_days: data.durationDays ?? null,
         created_by: ctx.userId,
+        assigned_to: ctx.userId,
       } as never)
-      .select("id")
+      .select("id,number")
       .single();
     if (error) {
       if (error.message.includes("contracts_org_contract_number_uidx")) {
@@ -577,10 +581,18 @@ export const createContract = createServerFn({ method: "POST" })
       throw new Error(error.message);
     }
 
-    const rows = data.parties.map((p, index) => ({
+    const rows = parties.map((p, index) => ({
       contract_id: contract.id,
       organization_id: orgId,
       role: p.role,
+      contact_id: p.contactId ?? null,
+      ...(p.contactId && identities.has(p.contactId) ? (() => {
+        const identity = identities.get(p.contactId);
+        if (!identity) return {};
+        return { doc_type: identity.doc_type, birth_place: identity.birth_place, sex: identity.sex,
+          expires_at: identity.expires_at, address_source: identity.address_source,
+          extracted_at: identity.extracted_at, confirmed_by: identity.confirmed_by };
+      })() : {}),
       full_name: p.fullName,
       email: p.email || null,
       phone: p.phone || null,
