@@ -45,6 +45,7 @@ import { IdScanPanel } from "./IdScanPanel";
 import { useCurrentUser } from "@/hooks/use-session";
 import { InventoryEditor } from "./InventoryEditor";
 import { getContractNumberSeries } from "@/lib/contracts/numbering.functions";
+import { identityContactId } from "@/lib/contracts/c6";
 import { getContactIdentity } from "@/lib/contracts/contact-identity.functions";
 import { C5Fields } from "./C5Fields";
 import {

@@ -115,3 +115,20 @@ describe("C6 combinare și salvare", () => {
     expect(await saveIdentitiesAfterCreate([{ contactId: "c1", saveIdentity: false }], save)).toBeNull();
   });
 });
+
+describe("C6.1 — scanare fără acces la fișa clientului", () => {
+  it("trimite contactId și permite salvarea doar cu acces explicit", async () => {
+    const { identityContactId } = await import("./c6");
+    expect(identityContactId("c1", { c1: true })).toBe("c1");
+    expect(identityContactId("c1", { c1: false })).toBe("");
+    expect(identityContactId("c1", {})).toBe("");
+    expect(identityContactId("", { "": true })).toBe("");
+  });
+  it("getContactIdentity întoarce un câmp explicit canAccessIdentity", () => {
+    const src = readFileSync("src/lib/contracts/contact-identity.functions.ts", "utf8");
+    expect(src).toContain("canAccessIdentity: false");
+    expect(src).toContain("canAccessIdentity: true");
+    const dialog = readFileSync("src/components/app/contracts/NewContractDialog.tsx", "utf8");
+    expect(dialog).not.toContain("contactId={contactFor(");
+  });
+});
