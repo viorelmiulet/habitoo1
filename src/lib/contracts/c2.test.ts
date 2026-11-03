@@ -70,7 +70,7 @@ it("only agency admin can configure series; agents cannot write settings directl
   await db.exec(`DELETE FROM user_roles;`);
   await expect(db.exec("SELECT save_contract_number_series('viewing','OTHER',1)")).rejects.toThrow("Doar administratorul");
   await db.exec("GRANT USAGE ON SCHEMA auth,public TO authenticated; SET ROLE authenticated;");
-  expect((await db.query("SELECT * FROM contract_number_series")).rows.every((r) => r.organization_id === org)).toBe(true);
+  expect((await db.query<{ organization_id: string }>("SELECT * FROM contract_number_series")).rows.every((r) => r.organization_id === org)).toBe(true);
   await expect(db.exec("UPDATE contract_number_series SET next_number=1")).rejects.toThrow("permission denied");
   await db.exec("RESET ROLE");
 });
