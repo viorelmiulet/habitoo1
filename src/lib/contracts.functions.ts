@@ -16,7 +16,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { documentText, printedContractNumber } from "@/lib/contracts/numbering";
 import { c3ContractFields } from "@/lib/contracts/c3-fields";
 import { contractTemplateVars, mergeStoredIdentity } from "@/lib/contracts/template-vars";
-import { isC5Kind } from "@/lib/contracts/c5";
 import {
   CONTRACT_KINDS,
   PARTY_ROLES,
@@ -341,8 +340,9 @@ const partyInput = z.object({
   birthDate: z.string().trim().max(20).optional(),
   citizenship: z.string().trim().max(80).optional(),
   docType: z.enum(["ci", "cei", "pasaport", "permis_sedere", "altul"]).optional(),
-  /** C5: party scanned in the dialog; save to contact_identities at creation instead of using the stored one. */
+  /** C6: party scanned in the dialog; also save it to contact_identities at creation (any kind). */
   saveIdentity: z.boolean().optional(),
+  addressSource: z.enum(["act", "certificat_domiciliu", "manual"]).optional(),
 });
 
 function isoDate(value: string | undefined) {
@@ -400,9 +400,8 @@ export const createContract = createServerFn({ method: "POST" })
       if (error) throw new Error("Identitatea clientului nu a putut fi citită.");
       if (!identity) return { ...p, contactId };
       identities.set(contactId, identity);
-      if (isC5Kind(data.kind))
-        return { ...mergeStoredIdentity(p, { ...identityPartyValues(identity), docType: identity.doc_type }), contactId } as typeof p & { contactId: string };
-      return { ...p, ...identityPartyValues(identity), docType: identity.doc_type as "ci" | "cei" | "pasaport" | "permis_sedere" | "altul", contactId };
+      // C6: valorile din fereastră câștigă; identitatea salvată completează doar câmpurile goale.
+      return { ...mergeStoredIdentity(p, { ...identityPartyValues(identity), docType: identity.doc_type }), contactId } as typeof p & { contactId: string };
     }));
 
     const [{ data: template }, { data: org }, { data: profile }] = await Promise.all([
@@ -608,24 +607,25 @@ export const createContract = createServerFn({ method: "POST" })
     const { error: partyError } = await db.from("contract_parties").insert(rows as never);
     if (partyError) throw new Error(partyError.message);
 
-    // C5: identities scanned in the dialog are saved on the client only now, at creation.
-    for (const p of parties) {
-      if (!isC5Kind(data.kind) || !p.saveIdentity || !p.contactId) continue;
-      const { encryptedIdentityValues } = await import("@/lib/contracts/contact-identity.server");
+    // C6: identities scanned in the dialog are saved on the client only now, at creation, for every kind.
+    // A failed save never fails the created contract: the client opens it and shows a warning.
+    const { encryptedIdentityValues } = await import("@/lib/contracts/contact-identity.server");
+    const { saveIdentitiesAfterCreate } = await import("@/lib/contracts/c6");
+    const identityWarning = await saveIdentitiesAfterCreate(parties, async (p) => {
       const enc = encryptedIdentityValues({ cnp: p.cnp, idSeries: p.idSeries, idNumber: p.idNumber });
       const { error: identityError } = await db.from("contact_identities").upsert({
         contact_id: p.contactId, doc_type: p.docType ?? "ci", full_name: p.fullName,
         birth_date: isoDate(p.birthDate), citizenship: p.citizenship || null,
         id_issuer: p.idIssuer || null, id_issued_on: isoDate(p.idIssuedOn), address: p.address || null,
-        address_source: "act", extracted_at: new Date().toISOString(), confirmed_by: ctx.userId,
+        address_source: p.addressSource ?? "act", extracted_at: new Date().toISOString(), confirmed_by: ctx.userId,
         updated_at: new Date().toISOString(),
         ...(p.cnp ? { cnp_enc: enc.cnp_enc } : {}),
         ...(p.idSeries ? { id_series_enc: enc.id_series_enc } : {}),
         ...(p.idNumber ? { id_number_enc: enc.id_number_enc } : {}),
       } as never, { onConflict: "contact_id" });
-      if (identityError) throw new Error("Contractul a fost creat, dar datele de identitate nu au putut fi salvate pe fișa clientului.");
+      if (identityError) throw new Error("identity_save_failed");
       await audit({ orgId, actorId: ctx.userId, action: "contact_identity.confirmed", entityId: p.contactId, values: { source: "contract" } });
-    }
+    });
 
     await audit({
       orgId,
@@ -635,7 +635,7 @@ export const createContract = createServerFn({ method: "POST" })
       values: { kind: data.kind, property_id: data.propertyId ?? null, parties: rows.length },
     });
 
-    return { id: contract.id };
+    return { id: contract.id, identityWarning };
   });
 
 export const updateContractBody = createServerFn({ method: "POST" })

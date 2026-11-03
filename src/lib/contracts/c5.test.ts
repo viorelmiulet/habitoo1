@@ -66,11 +66,9 @@ describe("C5 new contract kinds", () => {
       ["Referință", "Adresă", "Preț"], ["HB-100", "Strada A nr. 1", "150.000 EUR"], ["HB-200", "Strada B nr. 2", "500 EUR"]] });
     expect(() => buildC5Request("viewing", { ...form("viewing"), viewingPropertyIds: [] }, { client: person("Client Test") }, agent)).toThrow(/cel puțin un imobil/);
   });
-  it("fills the party from contact_identities unless scanned in the dialog", () => {
+  it("dialog values win over contact_identities; stored data fills only empty fields", () => {
     const stored = { fullName: "Popescu Ion", cnp: "1800101123456", idSeries: "RX", idNumber: "999999", address: "Str. Fișă 9", docType: "cei", citizenship: undefined };
-    const merged = mergeStoredIdentity({ role: "client", fullName: "Ion P", phone: "0700", citizenship: "română", saveIdentity: false }, stored);
-    expect(merged).toMatchObject({ fullName: "Popescu Ion", cnp: "1800101123456", idNumber: "999999", address: "Str. Fișă 9", docType: "cei", phone: "0700", citizenship: "română" });
-    const scanned = { role: "client", fullName: "Scanat Nou", cnp: "2900101123456", saveIdentity: true };
-    expect(mergeStoredIdentity(scanned, stored)).toEqual(scanned);
+    const merged = mergeStoredIdentity({ role: "client", fullName: "Ion P", phone: "0700", citizenship: "română", address: "", cnp: undefined }, stored);
+    expect(merged).toMatchObject({ fullName: "Ion P", cnp: "1800101123456", idNumber: "999999", address: "Str. Fișă 9", docType: "cei", phone: "0700", citizenship: "română" });
   });
 });
