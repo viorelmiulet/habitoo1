@@ -31,7 +31,7 @@ export function C5Fields({
       checked ? [...form.viewingPropertyIds, id] : form.viewingPropertyIds.filter((value) => value !== id),
     );
   return (
-    <div className="grid min-w-0 gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
+    <div className="grid min-w-0 grid-cols-1 gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
       <h3 className="text-sm font-semibold sm:col-span-2">Date contract</h3>
       {kind === "commission" ? (
         <>
@@ -52,7 +52,7 @@ export function C5Fields({
           <Text label="Data începerii" value={form.startDate} onChange={(v) => set("startDate", v)} placeholder="ZZ.LL.AAAA" />
           <div className="space-y-1.5">
             <Label>Durata</Label>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Input
                 aria-label="Durata în luni"
                 value={form.loanMonths}
