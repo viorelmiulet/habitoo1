@@ -33,7 +33,8 @@
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
 - Completed videos store caller-owned metadata and server-resolved music snapshots in generated_video_clips, not media; history uses caller RLS and never publishes. Why: include unpublished clips and retain soundtrack identity after library edits.
 - Video narration uses a direct MiniMax TTS server boundary with validated hex decoding, atomic organization-locked reservations and character usage, caller-RLS private audio signing, and one offline audio mix for both encoders. Why: preserve quotas and privacy without provider prediction polling.
-- Contract reads use caller RLS; numbering uses atomic agency/year counters and identity copies use encrypted server-only masked DTOs. Why: safe access, numbering and snapshots.
+- No global `entities` aliases/overrides: use distinct exports.
+- Contracts use caller RLS, atomic agency/year numbers and encrypted identity snapshots with masked DTOs. Why: privacy.
 - PortalLogo shares assets; overview uses registry. Why: same access.
 - Filters share applyPropertyFilterClauses; merge legacy portal fields; OR within state/promotion/renewal, AND across types before count. Why: exact lists.
 - Imobiliare.ro destination and promotion drafts use the existing durable publication queue; requested mode lives on publications/jobs and confirmed mode on listings, with no new portal. Destination changes send both statuses in one POST; unchanged published promotions remain partial; Bonus and imoradar-only bypass local capacity reads/checks. Why: keep destination switching recoverable and let the portal decide capacity.
