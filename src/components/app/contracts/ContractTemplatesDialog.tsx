@@ -52,13 +52,13 @@ export function ContractTemplatesDialog({ open, onOpenChange }: { open: boolean;
     onError: (error: Error) => toastError(error),
   });
   return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-5xl overflow-y-auto">
+    <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-5xl overflow-x-hidden overflow-y-auto">
       <DialogHeader><DialogTitle>Șabloane contracte</DialogTitle></DialogHeader>
       <Select value={selected} onValueChange={(id) => {
         const t = templates.data?.find((value) => value.id === id);
         setSelected(id); setName(t?.name ?? ""); setBody(t?.body ?? "");
       }}>
-        <SelectTrigger aria-label="Șablon contract"><SelectValue placeholder="Alege șablonul" /></SelectTrigger>
+        <SelectTrigger aria-label="Șablon contract" className="min-w-0 [&>span]:truncate"><SelectValue placeholder="Alege șablonul" /></SelectTrigger>
         <SelectContent>{templates.data?.map((t) => <SelectItem key={t.id} value={t.id}>{t.kind === GDPR_NOTICE_KIND && !t.isPlatform ? "Notă de informare GDPR" : t.name}{t.isPlatform ? " · Habitoo" : " · Agenție"}</SelectItem>)}</SelectContent>
       </Select>
       {templates.isError ? <p role="alert" className="text-sm text-destructive">Șabloanele nu au putut fi citite.</p> : null}
