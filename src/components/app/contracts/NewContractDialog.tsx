@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, Camera, CheckCircle2, Loader2, RotateCcw, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
@@ -26,24 +26,21 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { isValidCnp, type InventoryItem, type PartyRole } from "@/lib/contracts/templates";
-import { prepareIdCapture } from "@/lib/contracts/image";
 import {
   createContract,
   listTemplates,
 } from "@/lib/contracts.functions";
-import { getIdReadingStatus, readIdDocument } from "@/lib/contracts/id-document.functions";
 import {
-  applyIdReading,
+  applyScanResult,
   confirmPendingFields,
-  conflictLabel,
   emptyPartyIdState,
   idGenerationBlockers,
-  idWarningMessage,
-  resolveConflict,
+  ID_WARNING_MESSAGES,
   type IdFormKey,
   type PartyIdState,
 } from "@/lib/contracts/id/form-state";
-import type { IdFieldConflict } from "@/lib/contracts/id/vision.parse";
+import type { ScanResult } from "@/lib/contracts/id/scan";
+import { IdScanPanel } from "./IdScanPanel";
 import { useCurrentUser } from "@/hooks/use-session";
 import { InventoryEditor } from "./InventoryEditor";
 import { getContractNumberSeries } from "@/lib/contracts/numbering.functions";
@@ -62,7 +59,6 @@ import {
 
 type PartyTarget = "landlord" | "tenant" | "beneficiary" | C5Target;
 type DocumentKind = "rent_agreement" | "exclusive_representation" | C5Kind;
-type CaptureSide = "back" | "front";
 
 type PartyForm = {
   role: PartyRole;
@@ -77,6 +73,8 @@ type PartyForm = {
   idIssuedOn: string;
   birthDate: string;
   citizenship: string;
+  docType?: "ci" | "cei" | "pasaport" | "permis_sedere" | "altul";
+  addressSource?: "act" | "certificat_domiciliu" | "manual";
 };
 
 const emptyParty = (role: PartyRole): PartyForm => ({
@@ -110,8 +108,6 @@ export function NewContractDialog({
   const fetchTemplates = useServerFn(listTemplates);
   const fetchNumberSeries = useServerFn(getContractNumberSeries);
   const runCreate = useServerFn(createContract);
-  const runRead = useServerFn(readIdDocument);
-  const fetchExtractionStatus = useServerFn(getIdReadingStatus);
   const runIdentity = useServerFn(getContactIdentity);
   const [documentKind, setDocumentKind] = useState<DocumentKind>("rent_agreement");
   const c5Kind = isC5Kind(documentKind) ? documentKind : null;
@@ -127,7 +123,9 @@ export function NewContractDialog({
   }, [agencyCity]);
   const [c5Contacts, setC5Contacts] = useState<Record<C5Target, string>>({ client: "", lender: "", borrower: "" });
   const [c5Stored, setC5Stored] = useState<Record<C5Target, string | null>>({ client: null, lender: null, borrower: null });
-  const [c5Save, setC5Save] = useState<Record<C5Target, boolean>>({ client: false, lender: false, borrower: false });
+  const [saveIdentity, setSaveIdentity] = useState<Record<PartyTarget, boolean>>({
+    landlord: false, tenant: false, beneficiary: false, client: false, lender: false, borrower: false,
+  });
   const [templateId, setTemplateId] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(propertyId ?? "");
   const [selectedContact, setSelectedContact] = useState(contactId ?? "");
@@ -142,15 +140,6 @@ export function NewContractDialog({
     lender: emptyPartyIdState,
     borrower: emptyPartyIdState,
   });
-  const [backDone, setBackDone] = useState<Record<PartyTarget, boolean>>({
-    landlord: false,
-    tenant: false,
-    beneficiary: false,
-    client: false,
-    lender: false,
-    borrower: false,
-  });
-  const [reading, setReading] = useState<{ target: PartyTarget; side: CaptureSide } | null>(null);
   const [destination, setDestination] = useState("locuinta");
   const [durationMonths, setDurationMonths] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -187,13 +176,6 @@ export function NewContractDialog({
     queryFn: () => fetchNumberSeries(),
     enabled: open,
   });
-  const extractionStatus = useQuery({
-    queryKey: ["contract-id-extraction-status"],
-    queryFn: () => fetchExtractionStatus({}),
-    enabled: open,
-    staleTime: 300_000,
-  });
-  const extractionEnabled = extractionStatus.data?.configured !== false;
   const rentalTemplates = useMemo(
     () => (templates.data ?? []).filter((item) => item.kind === "rent_agreement"),
     [templates.data],
@@ -265,87 +247,39 @@ export function NewContractDialog({
   const patchIdState = (target: PartyTarget, next: (state: PartyIdState) => PartyIdState) =>
     setIdStates((current) => ({ ...current, [target]: next(current[target]) }));
 
-  /* Poza există doar în memorie pe durata cererii: nu o punem în state și nu o arătăm. */
-  const extract = useMutation({
-    mutationFn: async ({
-      file,
-      target,
-      side,
-    }: {
-      file: File;
-      target: PartyTarget;
-      side: CaptureSide;
-    }) => {
-      const capture = await prepareIdCapture(file);
-      const payload = side === "back" ? { back: capture } : { front: capture };
-      return { target, side, result: await runRead({ data: payload }) };
-    },
-    onSuccess: ({ target, side, result }) => {
-      if (result.state === "read") {
-        const applied = applyIdReading(
-          result.reading,
-          result.front,
-          result.conflicts,
-          idStates[target],
-        );
-        setterFor(target)((previous) => ({ ...previous, ...applied.values }));
-        patchIdState(target, (state) => ({
-          ...applied.state,
-          verified: [...new Set([...state.verified, ...applied.state.verified])],
-          pending: [...new Set([...state.pending, ...applied.state.pending])],
-          conflicts: [
-            ...state.conflicts.filter(
-              (item) => !applied.state.conflicts.some((next) => next.field === item.field),
-            ),
-            ...applied.state.conflicts,
-          ],
-          quality: result.messages,
-        }));
-        if (side === "back") setBackDone((current) => ({ ...current, [target]: true }));
-        if (target === "client" || target === "lender" || target === "borrower") {
-          // După o scanare în fereastră, salvarea pe fișa clientului e bifată implicit.
-          setC5Save((current) => ({ ...current, [target]: true }));
-          setC5Stored((current) => ({ ...current, [target]: null }));
-        }
-        if (result.conflicts.length > 0)
-          toast.warning(
-            "Fața actului și zona citibilă nu spun același lucru. Alege valoarea corectă.",
-          );
-        else
-          toast.success(
-            side === "back"
-              ? "Datele verificate au fost completate."
-              : "Datele de pe față au fost completate. Confirmă-le.",
-          );
-        return;
-      }
-      if (result.state === "needs_better_photo") {
-        patchIdState(target, (state) => ({ ...state, quality: result.messages }));
-        return;
-      }
-      patchIdState(target, (state) => ({ ...state, quality: [result.message] }));
-    },
-    onError: (error: Error) => toast.error(error.message, { duration: 9000 }),
-  });
+  /** Partea legată de un contact din CRM (pentru salvarea pe fișa clientului). */
+  const contactFor = (target: PartyTarget): string => {
+    if (target === "client" || target === "lender" || target === "borrower") return c5Kind ? c5Contacts[target] : "";
+    if (target === "tenant") return documentKind === "rent_agreement" ? selectedContact : "";
+    if (target === "beneficiary") return documentKind === "exclusive_representation" ? selectedContact : "";
+    return "";
+  };
+  const partyFor = (target: PartyTarget): PartyForm =>
+    target === "client" || target === "lender" || target === "borrower"
+      ? c5Parties[target]
+      : target === "landlord" ? landlord : target === "tenant" ? tenant : beneficiary;
 
-  const chooseConflict = (
-    target: PartyTarget,
-    conflict: IdFieldConflict,
-    source: "mrz" | "vision",
-  ) => {
-    if (source === "vision") {
-      const value = conflict.vision;
-      setterFor(target)((previous) => {
-        if (conflict.field === "series" || conflict.field === "documentNumber") {
-          const clean = value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-          const letters = /[A-Z]{2}/.exec(clean)?.[0] ?? previous.idSeries;
-          const digits = /[0-9]{6}/.exec(clean)?.[0] ?? previous.idNumber;
-          return { ...previous, idSeries: letters, idNumber: digits };
-        }
-        return { ...previous, fullName: value };
-      });
-    }
-    patchIdState(target, (state) => resolveConflict(state, conflict.field));
+  /* Rezultatul scannerului unic (C4): fără imagini, doar valori și marcaje. */
+  const onScanned = (target: PartyTarget, result: ScanResult) => {
+    const applied = applyScanResult(result);
+    setterFor(target)((previous) => ({
+      ...previous,
+      ...applied.values,
+      docType: result.docType,
+      addressSource: result.addressSource ?? (applied.values.address ? "act" : previous.addressSource),
+    }));
+    patchIdState(target, () => applied.state);
+    // După o scanare, salvarea pe fișa clientului e bifată implicit (se salvează doar la creare).
+    setSaveIdentity((current) => ({ ...current, [target]: true }));
+    if (target === "client" || target === "lender" || target === "borrower")
+      setC5Stored((current) => ({ ...current, [target]: null }));
+    toast.success(applied.state.pending.length ? "Datele au fost completate. Verifică câmpurile marcate." : "Datele din act au fost completate.");
+  };
+  const onPartyChange = (target: PartyTarget) => (next: PartyForm) => {
+    const previous = partyFor(target);
+    if (next.address !== previous.address && idStates[target].scanned && next.addressSource !== "certificat_domiciliu")
+      next = { ...next, addressSource: "manual" };
+    setterFor(target)(next);
   };
 
   const activeParties: { label: string; target: PartyTarget; state: PartyIdState }[] = c5Kind
@@ -356,7 +290,7 @@ export function NewContractDialog({
           { label: "Chiriaș", target: "tenant", state: idStates.tenant },
         ]
       : [{ label: "Beneficiar", target: "beneficiary", state: idStates.beneficiary }];
-  const blockers = idGenerationBlockers(activeParties);
+  const blockers = idGenerationBlockers(activeParties.map((p) => ({ ...p, address: partyFor(p.target).address })));
 
   const agentParty = (): PartyForm => ({
     ...emptyParty("agent"),
@@ -367,6 +301,10 @@ export function NewContractDialog({
       "Reprezentant agenție",
     email: currentUser?.email || "",
   });
+  const identityMeta = (target: PartyTarget) => {
+    const linked = contactFor(target);
+    return { contactId: linked || undefined, saveIdentity: Boolean(linked) && idStates[target].scanned && saveIdentity[target] };
+  };
   const partyPayload = (party: PartyForm) => ({
     ...party,
     email: party.email.trim(),
@@ -389,8 +327,7 @@ export function NewContractDialog({
             target,
             {
               ...partyPayload(c5Parties[target]),
-              contactId: c5Contacts[target] || undefined,
-              saveIdentity: Boolean(c5Contacts[target]) && c5Save[target],
+              ...identityMeta(target),
             },
           ]),
         ) as Record<C5Target, ReturnType<typeof partyPayload> & { contactId?: string; saveIdentity?: boolean }>;
@@ -418,7 +355,7 @@ export function NewContractDialog({
       );
       const parties =
         documentKind === "rent_agreement"
-          ? [landlord, tenant]
+          ? [{ ...landlord, ...identityMeta("landlord") }, { ...tenant, ...identityMeta("tenant") }]
           : [
               {
                 ...emptyParty("agent"),
@@ -429,7 +366,7 @@ export function NewContractDialog({
                   "Reprezentant agenție",
                 email: currentUser?.email || "",
               },
-              beneficiary,
+              { ...beneficiary, ...identityMeta("beneficiary") },
             ];
       return runCreate({
         data: {
@@ -477,8 +414,9 @@ export function NewContractDialog({
         },
       });
     },
-    onSuccess: ({ id }) => {
+    onSuccess: ({ id, identityWarning }) => {
       toast.success("Contract creat.");
+      if (identityWarning) toast.warning(identityWarning, { duration: 12000 });
       onOpenChange(false);
       navigate({ to: "/app/contracts/$id", params: { id } });
     },
@@ -488,7 +426,7 @@ export function NewContractDialog({
   const selectC5Contact = async (target: C5Target, value: string) => {
     const contactId = value === "none" ? "" : value;
     setC5Contacts((current) => ({ ...current, [target]: contactId }));
-    setC5Save((current) => ({ ...current, [target]: false }));
+    setSaveIdentity((current) => ({ ...current, [target]: false }));
     setC5Stored((current) => ({ ...current, [target]: null }));
     const found = contacts.data?.find((contact) => contact.id === contactId);
     if (!found) return;
@@ -764,33 +702,15 @@ export function NewContractDialog({
                   <PartySection
                     title={`${index + 1}. ${slot.label}`}
                     party={c5Parties[slot.target]}
-                    onChange={c5Setter(slot.target)}
+                    onChange={onPartyChange(slot.target)}
                     idState={idStates[slot.target]}
-                    backDone={backDone[slot.target]}
-                    extractionEnabled={extractionEnabled}
-                    reading={extract.isPending && reading?.target === slot.target ? reading.side : null}
-                    onCapture={(file, side) => {
-                      setReading({ target: slot.target, side });
-                      extract.mutate({ file, target: slot.target, side });
-                    }}
+                    target={slot.target}
+                    contactId={contactFor(slot.target)}
+                    onScanned={(result) => onScanned(slot.target, result)}
                     onConfirm={() => patchIdState(slot.target, confirmPendingFields)}
-                    onChoose={(conflict, source) => chooseConflict(slot.target, conflict, source)}
+                    saveIdentity={saveIdentity[slot.target]}
+                    onSaveIdentity={(v) => setSaveIdentity((c) => ({ ...c, [slot.target]: v }))}
                   />
-                  {c5Contacts[slot.target] &&
-                  (backDone[slot.target] || idStates[slot.target].verified.length > 0 || idStates[slot.target].pending.length > 0) ? (
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id={`save-identity-${slot.target}`}
-                        checked={c5Save[slot.target]}
-                        onCheckedChange={(checked) =>
-                          setC5Save((current) => ({ ...current, [slot.target]: checked === true }))
-                        }
-                      />
-                      <Label htmlFor={`save-identity-${slot.target}`} className="text-xs">
-                        Salvează datele și pe fișa clientului
-                      </Label>
-                    </div>
-                  ) : null}
                 </div>
               ))}
             </div>
@@ -800,32 +720,26 @@ export function NewContractDialog({
             <PartySection
               title="1. Proprietar (locator)"
               party={landlord}
-              onChange={setLandlord}
+              onChange={onPartyChange("landlord")}
               idState={idStates.landlord}
-              backDone={backDone.landlord}
-              extractionEnabled={extractionEnabled}
-              reading={extract.isPending && reading?.target === "landlord" ? reading.side : null}
-              onCapture={(file, side) => {
-                setReading({ target: "landlord", side });
-                extract.mutate({ file, target: "landlord", side });
-              }}
+              target="landlord"
+              contactId={contactFor("landlord")}
+              onScanned={(result) => onScanned("landlord", result)}
               onConfirm={() => patchIdState("landlord", confirmPendingFields)}
-              onChoose={(conflict, source) => chooseConflict("landlord", conflict, source)}
+              saveIdentity={saveIdentity.landlord}
+              onSaveIdentity={(v) => setSaveIdentity((c) => ({ ...c, landlord: v }))}
             />
             <PartySection
               title="2. Chiriaș (locatar)"
               party={tenant}
-              onChange={setTenant}
+              onChange={onPartyChange("tenant")}
               idState={idStates.tenant}
-              backDone={backDone.tenant}
-              extractionEnabled={extractionEnabled}
-              reading={extract.isPending && reading?.target === "tenant" ? reading.side : null}
-              onCapture={(file, side) => {
-                setReading({ target: "tenant", side });
-                extract.mutate({ file, target: "tenant", side });
-              }}
+              target="tenant"
+              contactId={contactFor("tenant")}
+              onScanned={(result) => onScanned("tenant", result)}
               onConfirm={() => patchIdState("tenant", confirmPendingFields)}
-              onChoose={(conflict, source) => chooseConflict("tenant", conflict, source)}
+              saveIdentity={saveIdentity.tenant}
+              onSaveIdentity={(v) => setSaveIdentity((c) => ({ ...c, tenant: v }))}
             />
           </div>
         ) : (
@@ -864,17 +778,14 @@ export function NewContractDialog({
             <PartySection
               title="Beneficiar"
               party={beneficiary}
-              onChange={setBeneficiary}
+              onChange={onPartyChange("beneficiary")}
               idState={idStates.beneficiary}
-              backDone={backDone.beneficiary}
-              extractionEnabled={extractionEnabled}
-              reading={extract.isPending && reading?.target === "beneficiary" ? reading.side : null}
-              onCapture={(file, side) => {
-                setReading({ target: "beneficiary", side });
-                extract.mutate({ file, target: "beneficiary", side });
-              }}
+              target="beneficiary"
+              contactId={contactFor("beneficiary")}
+              onScanned={(result) => onScanned("beneficiary", result)}
               onConfirm={() => patchIdState("beneficiary", confirmPendingFields)}
-              onChoose={(conflict, source) => chooseConflict("beneficiary", conflict, source)}
+              saveIdentity={saveIdentity.beneficiary}
+              onSaveIdentity={(v) => setSaveIdentity((c) => ({ ...c, beneficiary: v }))}
             />
           </>
         )}
@@ -933,226 +844,91 @@ export function NewContractDialog({
   );
 }
 
-const FRAMING_HINT: Record<CaptureSide, string> = {
-  back: "Fotografiază spatele actului: cele trei rânduri de jos trebuie să intre complet în cadru, drept, fără reflexii.",
-  front: "Fotografiază fața actului: tot cardul în cadru, cu textul lizibil.",
-};
+const FLAG_KEYS: IdFormKey[] = ["fullName", "cnp", "idSeries", "idNumber", "idIssuer", "idIssuedOn", "birthDate", "address", "citizenship"];
 
 function PartySection({
   title,
   party,
   onChange,
   idState,
-  backDone,
-  extractionEnabled,
-  reading,
-  onCapture,
+  target,
+  contactId,
+  onScanned,
   onConfirm,
-  onChoose,
+  saveIdentity,
+  onSaveIdentity,
 }: {
   title: string;
   party: PartyForm;
   onChange: (party: PartyForm) => void;
   idState: PartyIdState;
-  backDone: boolean;
-  extractionEnabled: boolean;
-  reading: CaptureSide | null;
-  onCapture: (file: File, side: CaptureSide) => void;
+  target: string;
+  contactId: string;
+  onScanned: (result: ScanResult) => void;
   onConfirm: () => void;
-  onChoose: (conflict: IdFieldConflict, source: "mrz" | "vision") => void;
+  saveIdentity: boolean;
+  onSaveIdentity: (value: boolean) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [side, setSide] = useState<CaptureSide>("back");
   const set = (key: keyof PartyForm, value: string) => onChange({ ...party, [key]: value });
-  const pick = (next: CaptureSide) => {
-    setSide(next);
-    inputRef.current?.click();
-  };
   const badge = (key: IdFormKey) =>
-    idState.verified.includes(key) ? "verified" : idState.pending.includes(key) ? "pending" : null;
-  const warningFor = (key: IdFormKey) => {
-    if (key === "idSeries" && idState.warnings.includes("series_pair_unknown"))
-      return idWarningMessage("series_pair_unknown");
-    if (key === "idIssuedOn" && idState.warnings.includes("document_expired"))
-      return idWarningMessage("document_expired");
-    return undefined;
-  };
+    idState.pending.includes(key) ? "pending" : idState.verified.includes(key) ? "verified" : null;
+  const warningFor = (key: IdFormKey) => idState.flags[key]?.join(" · ");
   return (
-    <section className="space-y-4 rounded-md border border-border p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*,application/pdf"
-          capture="environment"
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) onCapture(file, side);
-            event.target.value = "";
-          }}
-        />
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant={backDone ? "outline" : "default"}
-            onClick={() => pick("back")}
-            disabled={reading !== null || !extractionEnabled}
-          >
-            {reading === "back" ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Camera className="size-4" />
-            )}{" "}
-            {backDone ? "Refotografiază spatele" : "1. Spatele actului"}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => pick("front")}
-            disabled={reading !== null || !extractionEnabled}
-          >
-            {reading === "front" ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Camera className="size-4" />
-            )}{" "}
-            2. Fața actului (opțional)
-          </Button>
-        </div>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        {FRAMING_HINT[reading ?? (backDone ? "front" : "back")]}
-      </p>
-      <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-        <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
-        Fotografia nu este salvată nicăieri. Verifică datele completate.
-      </p>
-      {idState.quality.length > 0 ? (
-        <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs">
-          <ul className="space-y-1">
-            {idState.quality.map((message) => (
-              <li key={message}>{message}</li>
-            ))}
-          </ul>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => pick(backDone ? "front" : "back")}
-            disabled={reading !== null}
-          >
-            <RotateCcw className="size-3.5" /> Încearcă din nou
-          </Button>
-        </div>
-      ) : null}
-      {idState.conflicts.length > 0 ? (
-        <div className="space-y-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-xs">
-          <p className="font-medium">
-            Fața actului și zona citibilă spun altceva. Alege valoarea corectă:
-          </p>
-          {idState.conflicts.map((conflict) => (
-            <div key={conflict.field} className="flex flex-wrap items-center gap-2">
-              <span className="font-medium">{conflictLabel(conflict.field)}:</span>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => onChoose(conflict, "mrz")}
-              >
-                Zona citibilă: {conflict.mrz}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => onChoose(conflict, "vision")}
-              >
-                Fața actului: {conflict.vision}
-              </Button>
-            </div>
-          ))}
-        </div>
+    <section className="min-w-0 space-y-4 rounded-md border border-border p-4">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <IdScanPanel contactId={contactId || null} idPrefix={`party-${target}`} onResult={onScanned} />
+      {idState.warnings.map((w) => (
+        <p key={w} className="flex items-start gap-1.5 rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs">
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0" /> {ID_WARNING_MESSAGES[w] ?? w}
+        </p>
+      ))}
+      {idState.needsAddress && !party.address.trim() ? (
+        <p className="flex items-start gap-1.5 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs">
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-destructive" />
+          Buletinul cu cip nu are domiciliul tipărit. Scanează mai sus certificatul de atestare a domiciliului sau completează domiciliul manual.
+        </p>
       ) : null}
       {idState.pending.length > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs">
-          <span>
-            Datele citite de pe fața actului nu au cifră de control. Verifică-le, apoi confirmă.
-          </span>
+          <span className="min-w-0">Unele câmpuri sunt marcate „de verificat”. Verifică-le, apoi confirmă.</span>
           <Button type="button" size="sm" onClick={onConfirm}>
-            <CheckCircle2 className="size-3.5" /> Confirm datele de pe față
+            <CheckCircle2 className="size-3.5" /> Am verificat datele
           </Button>
         </div>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field
-          label="Nume complet"
-          value={party.fullName}
-          onChange={(value) => set("fullName", value)}
-          className="sm:col-span-2"
-          badge={badge("fullName")}
-        />
-        <Field
-          label="CNP"
-          value={party.cnp}
-          onChange={(value) => set("cnp", value.replace(/\D/g, "").slice(0, 13))}
-          badge={badge("cnp")}
-        />
-        <Field
-          label="Cetățenie"
-          value={party.citizenship}
-          onChange={(value) => set("citizenship", value)}
-        />
-        <Field
-          label="Serie act"
-          value={party.idSeries}
-          onChange={(value) => set("idSeries", value)}
-          badge={badge("idSeries")}
-          warning={warningFor("idSeries")}
-        />
-        <Field
-          label="Număr act"
-          value={party.idNumber}
-          onChange={(value) => set("idNumber", value)}
-          badge={badge("idNumber")}
-        />
-        <Field
-          label="Eliberat de"
-          value={party.idIssuer}
-          onChange={(value) => set("idIssuer", value)}
-          badge={badge("idIssuer")}
-        />
-        <Field
-          label="Data eliberării"
-          value={party.idIssuedOn}
-          onChange={(value) => set("idIssuedOn", value)}
-          placeholder="ZZ.LL.AAAA"
-          badge={badge("idIssuedOn")}
-          warning={warningFor("idIssuedOn")}
-        />
-        <Field
-          label="Data nașterii"
-          value={party.birthDate}
-          onChange={(value) => set("birthDate", value)}
-          placeholder="ZZ.LL.AAAA"
-          badge={badge("birthDate")}
-        />
-        <Field
-          label="Domiciliu"
-          value={party.address}
-          onChange={(value) => set("address", value)}
-          className="sm:col-span-2"
-          badge={badge("address")}
-        />
+        <Field label="Nume complet" value={party.fullName} onChange={(value) => set("fullName", value)}
+          className="sm:col-span-2" badge={badge("fullName")} warning={warningFor("fullName")} />
+        <Field label="CNP" value={party.cnp} onChange={(value) => set("cnp", value.replace(/\D/g, "").slice(0, 13))}
+          badge={badge("cnp")} warning={warningFor("cnp")} />
+        <Field label="Cetățenie" value={party.citizenship} onChange={(value) => set("citizenship", value)}
+          badge={badge("citizenship")} warning={warningFor("citizenship")} />
+        <Field label="Serie act" value={party.idSeries} onChange={(value) => set("idSeries", value)}
+          badge={badge("idSeries")} warning={warningFor("idSeries")} />
+        <Field label="Număr act" value={party.idNumber} onChange={(value) => set("idNumber", value)}
+          badge={badge("idNumber")} warning={warningFor("idNumber")} />
+        <Field label="Eliberat de" value={party.idIssuer} onChange={(value) => set("idIssuer", value)}
+          badge={badge("idIssuer")} warning={warningFor("idIssuer")} />
+        <Field label="Data eliberării" value={party.idIssuedOn} onChange={(value) => set("idIssuedOn", value)}
+          placeholder="ZZ.LL.AAAA" badge={badge("idIssuedOn")} warning={warningFor("idIssuedOn")} />
+        <Field label="Data nașterii" value={party.birthDate} onChange={(value) => set("birthDate", value)}
+          placeholder="ZZ.LL.AAAA" badge={badge("birthDate")} warning={warningFor("birthDate")} />
+        <Field label="Domiciliu" value={party.address} onChange={(value) => set("address", value)}
+          className="sm:col-span-2" badge={badge("address")} warning={warningFor("address")} />
         <Field label="Email" value={party.email} onChange={(value) => set("email", value)} />
         <Field label="Telefon" value={party.phone} onChange={(value) => set("phone", value)} />
       </div>
+      {contactId && idState.scanned ? (
+        <div className="flex items-center gap-2">
+          <Checkbox id={`save-identity-${target}`} checked={saveIdentity} onCheckedChange={(checked) => onSaveIdentity(checked === true)} />
+          <Label htmlFor={`save-identity-${target}`} className="text-xs">Salvează datele și pe fișa clientului</Label>
+        </div>
+      ) : null}
     </section>
   );
 }
+
+void FLAG_KEYS;
 
 function Field({
   label,
@@ -1182,7 +958,7 @@ function Field({
         ) : null}
         {badge === "pending" ? (
           <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-            de confirmat
+            de verificat
           </span>
         ) : null}
       </div>
