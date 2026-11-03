@@ -105,3 +105,35 @@ export async function runIdentityScan(
     if (deps.usage && calls > 0) await deps.usage({ calls, inputTokens, outputTokens, success }).catch(() => undefined);
   }
 }
+
+/* ------------------------------------------------------------ Scope ---- */
+
+export type ScanScope = { organizationId: string; entity: "contact" | "contract_party"; entityId: string | null };
+
+/**
+ * C6 — cine poate scana și pe ce agenție se face auditul.
+ * Cu `contactId`: aceeași verificare ca pe fișa clientului (admin agenție / agent responsabil).
+ * Fără `contactId` (parte necompletată din CRM): orice utilizator autentificat dintr-o agenție.
+ * Setarea AI a agenției nu contează.
+ */
+export async function resolveScanScope(
+  contactId: string | null | undefined,
+  deps: {
+    assertContactAccess: (contactId: string) => Promise<void>;
+    contactOrganization: (contactId: string) => Promise<string | null>;
+    currentOrganization: () => Promise<string | null>;
+  },
+): Promise<ScanScope> {
+  if (contactId) {
+    await deps.assertContactAccess(contactId);
+    const org = (await deps.contactOrganization(contactId)) ?? (await deps.currentOrganization());
+    if (!org) throw new Error("Agenția nu este configurată.");
+    return { organizationId: org, entity: "contact", entityId: contactId };
+  }
+  const org = await deps.currentOrganization();
+  if (!org) throw new Error("Scanarea actului este disponibilă doar membrilor unei agenții.");
+  return { organizationId: org, entity: "contract_party", entityId: null };
+}
+
+/** Un singur bucket pentru ambele locuri (fișa clientului și „Document nou”). */
+export const scanRateBucket = (userId: string) => `contact_identity_scan:user:hour:${userId}`;

@@ -1,5 +1,5 @@
 /**
- * C4 — „Scanează actul” pe fișa clientului. Funcționează pentru toate agențiile,
+ * C4/C6 — singurul scanner de acte: pe fișa clientului și în „Document nou”. Funcționează pentru toate agențiile,
  * indiferent de setarea AI a agenției. Nimic din act nu se salvează aici; imaginile
  * rămân doar în memoria cererii și nu sunt logate.
  */
@@ -11,7 +11,7 @@ import type { ScanOutcome } from "@/lib/contracts/id/scan.server";
 
 const image = z.object({ contentType: z.string().trim().max(100), base64: z.string().min(1).max(14_500_000) });
 const input = z.object({
-  contactId: z.string().uuid(),
+  contactId: z.string().uuid().nullable().optional(),
   images: z.array(image).max(2),
   certificate: image.nullable().optional(),
   docType: z.enum(SCAN_DOC_TYPES).nullable().optional(),
@@ -22,9 +22,19 @@ export const scanContactIdentity = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => input.parse(data))
   .handler(async ({ data, context }): Promise<ScanOutcome | { state: "not_configured"; message: string }> => {
     const { assertContactIdentityAccess } = await import("./contact-identity.server");
-    await assertContactIdentityAccess(context.supabase, data.contactId);
-    const { data: contact } = await context.supabase.from("contacts").select("organization_id").eq("id", data.contactId).maybeSingle();
-    const org = contact?.organization_id ?? null;
+    const { resolveScanScope, scanRateBucket } = await import("@/lib/contracts/id/scan.server");
+    const scope = await resolveScanScope(data.contactId, {
+      assertContactAccess: (id) => assertContactIdentityAccess(context.supabase, id),
+      contactOrganization: async (id) => {
+        const { data: contact } = await context.supabase.from("contacts").select("organization_id").eq("id", id).maybeSingle();
+        return contact?.organization_id ?? null;
+      },
+      currentOrganization: async () => {
+        const { data: org } = await context.supabase.rpc("current_org" as never);
+        return typeof org === "string" ? org : null;
+      },
+    });
+    const org = scope.organizationId;
 
     const { resolveAiProvider } = await import("@/lib/ai/providers/registry.server");
     const primary = resolveAiProvider();
@@ -39,7 +49,7 @@ export const scanContactIdentity = createServerFn({ method: "POST" })
     let allowed = false;
     try {
       const { data: ok, error } = await supabaseAdmin.rpc("rate_limit_hit" as never, {
-        _bucket: `contact_identity_scan:user:hour:${context.userId}`,
+        _bucket: scanRateBucket(context.userId),
         _limit: ID_SCAN_PER_HOUR,
         _window_seconds: 3600,
       } as never);
@@ -60,13 +70,11 @@ export const scanContactIdentity = createServerFn({ method: "POST" })
               return prepared.ok ? { mimeType: prepared.attachment.mimeType, base64: prepared.attachment.base64 } : null;
             },
             audit: async (action) => {
-              if (!org) return;
               await supabaseAdmin.from("audit_logs").insert({
-                organization_id: org, actor_id: context.userId, action, entity: "contact", entity_id: data.contactId,
+                organization_id: org, actor_id: context.userId, action, entity: scope.entity, entity_id: scope.entityId,
               } as never);
             },
             usage: async (u) => {
-              if (!org) return;
               await writeAiUsage(supabaseAdmin as never, {
                 organization_id: org, user_id: context.userId, provider: provider.id, model: provider.model,
                 fallback_used: provider.id === "gemini", capability: "id_document_vision",
