@@ -1,3 +1,8 @@
+## Contracte C1 — adaptare
+- [ ] Tipuri/roluri aditive, numerotare anuală atomică și acces creator/responsabil
+- [ ] Identitate client criptată, copiere la parte, număr și filtru tip în listă
+- [ ] Numai teste noi C1 și verificare
+
 ## Filtrul unic Portaluri
 - [x] Opțiuni comune în panou/listă; selecție multiplă, conversie URL/filtre salvate, fără câmp Promovare
 - [x] SAU în stări/promovări/prelungire și ȘI între tipuri, numai citire înainte de count/paginare
