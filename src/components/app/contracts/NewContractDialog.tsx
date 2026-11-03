@@ -488,7 +488,7 @@ export function NewContractDialog({
         {(documentKind === "exclusive_representation" || documentKind === "commission" || documentKind === "viewing") && numberSeries.isSuccess && !numberSeries.data.some((row) => row.kind === documentKind && row.series) ? (
           <p className="text-sm text-muted-foreground">Setează seria în Setări → Numerotare contracte</p>
         ) : null}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
           <div className="space-y-1.5">
             <Label>Tip document</Label>
             <Select
