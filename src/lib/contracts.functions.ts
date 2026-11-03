@@ -142,7 +142,7 @@ export const saveTemplate = createServerFn({ method: "POST" })
     z
       .object({
         id: uuid.optional(),
-        kind: z.enum(CONTRACT_KINDS),
+        kind: z.enum([...CONTRACT_KINDS, "gdpr_notice"]),
         name: z.string().trim().min(3).max(160),
         body: z.string().min(10),
         copyOf: uuid.optional(),
@@ -442,6 +442,14 @@ export const createContract = createServerFn({ method: "POST" })
       durationDays: data.durationDays, durationMonths: data.durationMonths, startDate: data.startDate,
       fields: data.fields, viewingProperties,
     });
+    const { buildGdprNoticeSnapshot } = await import("@/lib/contracts/gdpr-notice");
+    const { data: gdprTemplates } = await db.from("contract_templates")
+      .select("id,kind,organization_id,is_active,body")
+      .eq("kind", "gdpr_notice").or(`organization_id.is.null,organization_id.eq.${orgId}`);
+    const gdprNotice = buildGdprNoticeSnapshot({
+      kind: data.kind, parties, templates: gdprTemplates ?? [], orgId,
+      vars: { ...vars, "contract.data": vars["contract.data"] ?? new Date().toLocaleDateString("ro-RO") },
+    });
 
     const landlord = parties.find((p) => p.role === "landlord");
     const tenant = parties.find((p) => p.role === "tenant");
@@ -527,6 +535,7 @@ export const createContract = createServerFn({ method: "POST" })
         body,
         data: {
           fields: data.fields ?? {},
+          gdprNotice,
           viewingProperties,
           agency: {
             name: org?.name ?? "",
@@ -892,7 +901,17 @@ export async function renderAndStorePdf(contractId: string, actorId: string | nu
     ? contract.data as Record<string, unknown>
     : {};
   const templateOwnHeading = ["commission", "loan_for_use", "viewing"].includes(contract.kind);
+  const { gdprNoticeForDocument, gdprNoticeSigners } = await import("@/lib/contracts/gdpr-notice");
+  const decryptedIds = (parties ?? []).map((p) => ({
+    role: p.role, cnp: decryptPii(p.cnp_enc), idSeries: decryptPii(p.id_series_enc), idNumber: decryptPii(p.id_number_enc),
+  }));
+  // C7: frozen once signing started; before that the attach decision follows the current parties.
+  const gdprBody = gdprNoticeForDocument({
+    kind: contract.kind, data: contract.data, parties: decryptedIds,
+    signingStarted: (parties ?? []).some((p) => p.signed_at),
+  });
   const bytes = await buildContractPdf({
+    gdprNotice: gdprBody ? { body: gdprBody, signers: gdprNoticeSigners(pdfParties) } : null,
     title: templateOwnHeading ? "" : documentText(contract.title, contract.number),
     subtitle: templateOwnHeading ? null : contract.doc_number != null
       ? `${printedContractNumber(contract.doc_series, contract.doc_number)} / ${typeof snapshot["signingDate"] === "string" ? snapshot["signingDate"] : "__________"}`
