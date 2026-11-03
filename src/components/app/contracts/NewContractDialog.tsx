@@ -127,6 +127,13 @@ export function NewContractDialog({
   const [saveIdentity, setSaveIdentity] = useState<Record<PartyTarget, boolean>>({
     landlord: false, tenant: false, beneficiary: false, client: false, lender: false, borrower: false,
   });
+  const [identityAccess, setIdentityAccess] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!selectedContact || selectedContact in identityAccess) return;
+    runIdentity({ data: { contactId: selectedContact } })
+      .then((r) => setIdentityAccess((m) => ({ ...m, [selectedContact]: r.canAccessIdentity })))
+      .catch(() => setIdentityAccess((m) => ({ ...m, [selectedContact]: false })));
+  }, [selectedContact]); // eslint-disable-line react-hooks/exhaustive-deps
   const [templateId, setTemplateId] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(propertyId ?? "");
   const [selectedContact, setSelectedContact] = useState(contactId ?? "");
@@ -249,6 +256,7 @@ export function NewContractDialog({
     setIdStates((current) => ({ ...current, [target]: next(current[target]) }));
 
   /** Partea legată de un contact din CRM (pentru salvarea pe fișa clientului). */
+  const scanContactFor = (target: PartyTarget) => identityContactId(contactFor(target), identityAccess);
   const contactFor = (target: PartyTarget): string => {
     if (target === "client" || target === "lender" || target === "borrower") return c5Kind ? c5Contacts[target] : "";
     if (target === "tenant") return documentKind === "rent_agreement" ? selectedContact : "";
@@ -304,7 +312,7 @@ export function NewContractDialog({
   });
   const identityMeta = (target: PartyTarget) => {
     const linked = contactFor(target);
-    return { contactId: linked || undefined, saveIdentity: Boolean(linked) && idStates[target].scanned && saveIdentity[target] };
+    return { contactId: linked || undefined, saveIdentity: Boolean(scanContactFor(target)) && idStates[target].scanned && saveIdentity[target] };
   };
   const partyPayload = (party: PartyForm) => ({
     ...party,
@@ -439,7 +447,9 @@ export function NewContractDialog({
     }));
     try {
       // Serverul verifică accesul (admin agenție / agent responsabil) și întoarce doar date mascate.
-      const identity = await runIdentity({ data: { contactId } });
+      const result = await runIdentity({ data: { contactId } });
+      setIdentityAccess((m) => ({ ...m, [contactId]: result.canAccessIdentity }));
+      const identity = result.identity;
       if (!identity) return;
       c5Setter(target)((previous) => ({
         ...previous,
@@ -458,6 +468,7 @@ export function NewContractDialog({
         [target]: `Date din fișa clientului: CNP ${identity.cnp ?? "—"}, seria ${identity.idSeries ?? "—"} nr. ${identity.idNumber ?? "—"}. Se completează automat la creare.`,
       }));
     } catch {
+      setIdentityAccess((m) => ({ ...m, [contactId]: false }));
       /* Fără acces la identitate: rămân doar datele de contact. */
     }
   };
@@ -717,7 +728,7 @@ export function NewContractDialog({
                     onChange={onPartyChange(slot.target)}
                     idState={idStates[slot.target]}
                     target={slot.target}
-                    contactId={contactFor(slot.target)}
+                    contactId={scanContactFor(slot.target)}
                     onScanned={(result) => onScanned(slot.target, result)}
                     onConfirm={() => patchIdState(slot.target, confirmPendingFields)}
                     saveIdentity={saveIdentity[slot.target]}
@@ -735,7 +746,7 @@ export function NewContractDialog({
               onChange={onPartyChange("landlord")}
               idState={idStates.landlord}
               target="landlord"
-              contactId={contactFor("landlord")}
+              contactId={scanContactFor("landlord")}
               onScanned={(result) => onScanned("landlord", result)}
               onConfirm={() => patchIdState("landlord", confirmPendingFields)}
               saveIdentity={saveIdentity.landlord}
@@ -747,7 +758,7 @@ export function NewContractDialog({
               onChange={onPartyChange("tenant")}
               idState={idStates.tenant}
               target="tenant"
-              contactId={contactFor("tenant")}
+              contactId={scanContactFor("tenant")}
               onScanned={(result) => onScanned("tenant", result)}
               onConfirm={() => patchIdState("tenant", confirmPendingFields)}
               saveIdentity={saveIdentity.tenant}
@@ -793,7 +804,7 @@ export function NewContractDialog({
               onChange={onPartyChange("beneficiary")}
               idState={idStates.beneficiary}
               target="beneficiary"
-              contactId={contactFor("beneficiary")}
+              contactId={scanContactFor("beneficiary")}
               onScanned={(result) => onScanned("beneficiary", result)}
               onConfirm={() => patchIdState("beneficiary", confirmPendingFields)}
               saveIdentity={saveIdentity.beneficiary}

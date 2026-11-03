@@ -23,3 +23,8 @@ export async function saveIdentitiesAfterCreate<P extends { saveIdentity?: boole
   }
   return failed ? IDENTITY_SAVE_WARNING : null;
 }
+
+/** C6.1: contactId goes to the scanner / save checkbox only when access is explicitly confirmed. */
+export function identityContactId(contactId: string | null | undefined, access: Record<string, boolean>): string {
+  return contactId && access[contactId] === true ? contactId : "";
+}

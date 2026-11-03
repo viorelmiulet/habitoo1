@@ -68,8 +68,8 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
   const certInput = useRef<HTMLInputElement>(null);
 
   /* Fără acces (nu e admin sau agent responsabil): secțiunea nu apare. */
-  if (identity.isError) return null;
-  const row = identity.data;
+  if (identity.isError || identity.data?.canAccessIdentity === false) return null;
+  const row = identity.data?.identity ?? null;
 
   function openDraft(result: ScanResult) {
     const values = emptyValues();

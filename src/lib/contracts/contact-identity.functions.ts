@@ -10,11 +10,14 @@ export const getContactIdentity = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => contactInput.parse(data))
   .handler(async ({ data, context }) => {
-    const { assertContactIdentityAccess, maskedContactIdentity } = await import("./contact-identity.server");
-    await assertContactIdentityAccess(context.supabase, data.contactId);
+    const { maskedContactIdentity } = await import("./contact-identity.server");
+    // Explicit access flag: callers decide UI from this, never from error text.
+    const { data: allowed, error: accessError } = await context.supabase.rpc("can_access_contact_identity", { _contact_id: data.contactId });
+    if (accessError) throw new Error("Accesul la datele de identitate nu a putut fi verificat.");
+    if (allowed !== true) return { canAccessIdentity: false as const, identity: null };
     const { data: row, error } = await context.supabase.from("contact_identities").select("*").eq("contact_id", data.contactId).maybeSingle();
     if (error) throw new Error("Datele de identitate nu au putut fi citite.");
-    return row ? maskedContactIdentity(row) : null;
+    return { canAccessIdentity: true as const, identity: row ? maskedContactIdentity(row) : null };
   });
 
 export const saveContactIdentity = createServerFn({ method: "POST" })
