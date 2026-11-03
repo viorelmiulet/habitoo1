@@ -76,11 +76,16 @@ export function contractTemplateVars(input: {
 }
 
 /** Stored identity wins unless the party was scanned in the dialog and will be saved back. */
-export function mergeStoredIdentity<P extends { saveIdentity?: boolean }>(
+export function mergeStoredIdentity<P extends object>(
   party: P,
-  stored: Record<string, string | undefined> & { docType?: string },
+  stored: Record<string, string | undefined | null> & { docType?: string | null },
 ): P {
-  if (party.saveIdentity) return party;
-  const defined = Object.fromEntries(Object.entries(stored).filter(([, v]) => v !== undefined && v !== null && v !== ""));
-  return { ...party, ...defined };
+  /* C6: valorile din fereastră câștigă; identitatea salvată completează doar câmpurile goale. */
+  const out = { ...party } as Record<string, unknown>;
+  for (const [key, value] of Object.entries(stored)) {
+    if (value === undefined || value === null || value === "") continue;
+    const current = out[key];
+    if (current === undefined || current === null || (typeof current === "string" && current.trim() === "")) out[key] = value;
+  }
+  return out as P;
 }
