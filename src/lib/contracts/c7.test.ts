@@ -5,17 +5,19 @@ import {
 import { unknownVariables } from "./templates";
 
 const ORG = "org-1";
-const standard = { id: "std", kind: "gdpr_notice", organization_id: null, is_active: true, body: GDPR_NOTICE_STANDARD_BODY };
+type P = { role: string; cnp?: string; idSeries?: string; idNumber?: string };
+type T = { id: string; kind: string; organization_id: string | null; is_active: boolean; body: string };
+const standard: T = { id: "std", kind: "gdpr_notice", organization_id: null, is_active: true, body: GDPR_NOTICE_STANDARD_BODY };
 const vars = {
   "contract.data": "03.11.2026", "agentie.denumire_legala": "Agenția Test SRL", "agentie.cui": "RO123",
   "agentie.registru": "J40/1/2020", "agentie.adresa": "Str. Exemplu 1, București",
   "agentie.email": "office@test.ro", "agentie.telefon": "0700000000",
   "client.cnp": "1900101400011", "client.serie": "RX", "client.numar": "123456",
 };
-const withCnp = [{ role: "agent" }, { role: "client", cnp: "1900101400011", idSeries: "RX", idNumber: "123456" }];
-const snap = (kind: string, parties = withCnp, templates = [standard]) =>
+const withCnp: P[] = [{ role: "agent" }, { role: "client", cnp: "1900101400011", idSeries: "RX", idNumber: "123456" }];
+const snap = (kind: string, parties: P[] = withCnp, templates: T[] = [standard]) =>
   buildGdprNoticeSnapshot({ kind, parties, templates, orgId: ORG, vars });
-const attached = (kind: string, parties = withCnp) => {
+const attached = (kind: string, parties: P[] = withCnp) => {
   const s = snap(kind, parties);
   return gdprNoticeForDocument({ kind, data: s ? { gdprNotice: s } : {}, parties, signingStarted: false });
 };
@@ -31,7 +33,7 @@ describe("C7 notă GDPR", () => {
     expect(attached(kind)).toBeNull();
   });
   it("fără date din act nu se anexează", () => {
-    const parties = [{ role: "agent", cnp: "1900101400011" }, { role: "client" }];
+    const parties: P[] = [{ role: "agent", cnp: "1900101400011" }, { role: "client" }];
     expect(snap("commission", parties)?.attached).toBe(false);
     expect(attached("commission", parties)).toBeNull();
   });
