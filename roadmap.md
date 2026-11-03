@@ -1,7 +1,7 @@
 ## Contracte C1 — adaptare
-- [ ] Tipuri/roluri aditive, numerotare anuală atomică și acces creator/responsabil
-- [ ] Identitate client criptată, copiere la parte, număr și filtru tip în listă
-- [ ] Numai teste noi C1 și verificare
+- [x] Tipuri/roluri aditive, numerotare anuală atomică și acces creator/responsabil
+- [x] Identitate client criptată, copiere la parte, număr și filtru tip în listă
+- [x] 6/6 teste noi C1 pe migrarea reală într-o bază izolată; browser autentificat: filtru tip și Document nou; fără creări reale/emailuri, build OK
 
 ## Filtrul unic Portaluri
 - [x] Opțiuni comune în panou/listă; selecție multiplă, conversie URL/filtre salvate, fără câmp Promovare
