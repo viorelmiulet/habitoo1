@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
@@ -121,6 +121,10 @@ export function NewContractDialog({
     lender: emptyParty("lender"),
     borrower: emptyParty("borrower"),
   });
+  const agencyCity = currentUser?.organization?.city;
+  useEffect(() => {
+    if (agencyCity) setC5Form((current) => (current.locality ? current : { ...current, locality: agencyCity }));
+  }, [agencyCity]);
   const [c5Contacts, setC5Contacts] = useState<Record<C5Target, string>>({ client: "", lender: "", borrower: "" });
   const [c5Stored, setC5Stored] = useState<Record<C5Target, string | null>>({ client: null, lender: null, borrower: null });
   const [c5Save, setC5Save] = useState<Record<C5Target, boolean>>({ client: false, lender: false, borrower: false });
@@ -772,7 +776,8 @@ export function NewContractDialog({
                     onConfirm={() => patchIdState(slot.target, confirmPendingFields)}
                     onChoose={(conflict, source) => chooseConflict(slot.target, conflict, source)}
                   />
-                  {c5Contacts[slot.target] && backDone[slot.target] ? (
+                  {c5Contacts[slot.target] &&
+                  (backDone[slot.target] || idStates[slot.target].verified.length > 0 || idStates[slot.target].pending.length > 0) ? (
                     <div className="flex items-center gap-2">
                       <Checkbox
                         id={`save-identity-${slot.target}`}
