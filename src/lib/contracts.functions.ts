@@ -16,6 +16,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { contractNumberVariables, documentText, printedContractNumber } from "@/lib/contracts/numbering";
 import { c3ContractFields, c3FieldVariables, partyTemplateVariables } from "@/lib/contracts/c3-fields";
 import { viewingTable } from "@/lib/contracts/viewing-table";
+import { contractTemplateVars, mergeStoredIdentity } from "@/lib/contracts/template-vars";
+import { isC5Kind } from "@/lib/contracts/c5";
 import { propertyTypeLabels } from "@/lib/labels";
 import {
   CONTRACT_KINDS,
@@ -341,6 +343,8 @@ const partyInput = z.object({
   birthDate: z.string().trim().max(20).optional(),
   citizenship: z.string().trim().max(80).optional(),
   docType: z.enum(["ci", "cei", "pasaport", "permis_sedere", "altul"]).optional(),
+  /** C5: party scanned in the dialog; save to contact_identities at creation instead of using the stored one. */
+  saveIdentity: z.boolean().optional(),
 });
 
 function isoDate(value: string | undefined) {
@@ -398,6 +402,8 @@ export const createContract = createServerFn({ method: "POST" })
       if (error) throw new Error("Identitatea clientului nu a putut fi citită.");
       if (!identity) return { ...p, contactId };
       identities.set(contactId, identity);
+      if (isC5Kind(data.kind))
+        return { ...mergeStoredIdentity(p, { ...identityPartyValues(identity), docType: identity.doc_type }), contactId } as typeof p & { contactId: string };
       return { ...p, ...identityPartyValues(identity), docType: identity.doc_type as "ci" | "cei" | "pasaport" | "permis_sedere" | "altul", contactId };
     }));
 
@@ -434,49 +440,11 @@ export const createContract = createServerFn({ method: "POST" })
     if (viewingError || viewingRows?.length !== viewingIds.length) throw new Error("Imobilele alese pentru vizionare nu au putut fi citite.");
     const viewingProperties = viewingIds.flatMap((id) => { const row = viewingRows?.find((p) => p.id === id); return row ? [row] : []; });
 
-    const vars = {
-      "agentie.denumire": org?.name,
-      "agentie.denumire_legala": org?.legal_name,
-      "agentie.cui": org?.cui,
-      "agentie.registru": org?.trade_registry_number,
-      "agentie.adresa": org?.material_address,
-      "agentie.telefon": org?.phone,
-      "agentie.email": org?.email,
-      "agentie.reprezentant": org?.legal_representative,
-      "agent.nume": profile?.full_name,
-      "agent.telefon": profile?.phone,
-      "agent.email": profile?.email,
-      "proprietate.titlu": property?.title,
-      "proprietate.referinta": property?.reference,
-      "proprietate.adresa": property?.address,
-      "proprietate.localitate": property?.city,
-      "proprietate.judet": property?.county,
-      "proprietate.suprafata": property?.surface,
-      "proprietate.camere": property?.rooms,
-      "proprietate.pret": property?.price,
-      "proprietate.tip": property?.property_type ? propertyTypeLabels[property.property_type] ?? property.property_type : undefined,
-      "client.nume": client.fullName,
-      "client.cnp": client.cnp,
-      "client.serie": client.idSeries,
-      "client.numar": client.idNumber,
-      "client.emitent": client.idIssuer,
-      "client.data_eliberarii": client.idIssuedOn,
-      "client.data_nasterii": client.birthDate,
-      "client.adresa": client.address,
-      "client.telefon": client.phone,
-      "client.email": client.email,
-      ...contractNumberVariables(data.kind),
-      "contract.data": new Date().toLocaleDateString("ro-RO"),
-      "contract.pret": price ?? "",
-      "contract.moneda": currency,
-      "contract.comision": commission ?? "",
-      "contract.durata": data.durationDays ?? "",
-      ...partyTemplateVariables("client",client),
-      ...partyTemplateVariables("comodant",parties.find((p) => p.role === "lender")),
-      ...partyTemplateVariables("comodatar",parties.find((p) => p.role === "borrower")),
-      ...c3FieldVariables({ ...data.fields, durationMonths: data.fields?.durationMonths ?? data.durationMonths, startDate: data.fields?.startDate ?? data.startDate }),
-      "vizionare.tabel": viewingTable(viewingProperties),
-    };
+    const vars = contractTemplateVars({
+      kind: data.kind, org, profile, property, client, parties, price, currency, commission,
+      durationDays: data.durationDays, durationMonths: data.durationMonths, startDate: data.startDate,
+      fields: data.fields, viewingProperties,
+    });
 
     const landlord = parties.find((p) => p.role === "landlord");
     const tenant = parties.find((p) => p.role === "tenant");
@@ -487,6 +455,12 @@ export const createContract = createServerFn({ method: "POST" })
     if (data.kind === "exclusive_representation" && !beneficiary) {
       throw new Error("Contractul de reprezentare exclusivă necesită beneficiarul.");
     }
+    if ((data.kind === "commission" || data.kind === "viewing") && !parties.some((p) => p.role === "client"))
+      throw new Error("Contractul necesită clientul.");
+    if (data.kind === "loan_for_use" && (!parties.some((p) => p.role === "lender") || !parties.some((p) => p.role === "borrower")))
+      throw new Error("Contractul de comodat necesită comodantul și comodatarul.");
+    if (data.kind === "viewing" && viewingProperties.length < 1)
+      throw new Error("Alege cel puțin un imobil vizionat.");
     const contractNumber = data.kind === "exclusive_representation" ? "{{contract.numar}}" : "";
     const signingDate = new Date().toLocaleDateString("ro-RO");
     const propertyAddress = [property?.address, property?.city, property?.county]
@@ -635,6 +609,25 @@ export const createContract = createServerFn({ method: "POST" })
     }));
     const { error: partyError } = await db.from("contract_parties").insert(rows as never);
     if (partyError) throw new Error(partyError.message);
+
+    // C5: identities scanned in the dialog are saved on the client only now, at creation.
+    for (const p of parties) {
+      if (!isC5Kind(data.kind) || !p.saveIdentity || !p.contactId) continue;
+      const { encryptedIdentityValues } = await import("@/lib/contracts/contact-identity.server");
+      const enc = encryptedIdentityValues({ cnp: p.cnp, idSeries: p.idSeries, idNumber: p.idNumber });
+      const { error: identityError } = await db.from("contact_identities").upsert({
+        contact_id: p.contactId, doc_type: p.docType ?? "ci", full_name: p.fullName,
+        birth_date: isoDate(p.birthDate), citizenship: p.citizenship || null,
+        id_issuer: p.idIssuer || null, id_issued_on: isoDate(p.idIssuedOn), address: p.address || null,
+        address_source: "act", extracted_at: new Date().toISOString(), confirmed_by: ctx.userId,
+        updated_at: new Date().toISOString(),
+        ...(p.cnp ? { cnp_enc: enc.cnp_enc } : {}),
+        ...(p.idSeries ? { id_series_enc: enc.id_series_enc } : {}),
+        ...(p.idNumber ? { id_number_enc: enc.id_number_enc } : {}),
+      } as never, { onConflict: "contact_id" });
+      if (identityError) throw new Error("Contractul a fost creat, dar datele de identitate nu au putut fi salvate pe fișa clientului.");
+      await audit({ orgId, actorId: ctx.userId, action: "contact_identity.confirmed", entityId: p.contactId, values: { source: "contract" } });
+    }
 
     await audit({
       orgId,
