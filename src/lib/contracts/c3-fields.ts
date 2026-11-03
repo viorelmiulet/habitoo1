@@ -9,7 +9,7 @@ export const c3ContractFields = z.object({
   durationMonths: z.number().int().positive().max(1200).optional(),
   commissionPaymentMoment: text, protectionMonths: z.number().int().nonnegative().max(1200).optional(),
   usePurpose: text, durationText: text, startDate: text, viewingDate: text,
-  landBook: text, cadastralNumber: text,
+  landBook: text, cadastralNumber: text, propertyAddress: text,
 });
 export function c3FieldVariables(fields: z.infer<typeof c3ContractFields>): TemplateVars {
   return {
