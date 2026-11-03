@@ -31,6 +31,7 @@ import {
   contractStatusTone,
 } from "@/lib/contracts/templates";
 import { formatDateTime } from "@/lib/format";
+import { printedContractNumber } from "@/lib/contracts/numbering";
 
 export const Route = createFileRoute("/_authenticated/app/contracts/")({
   head: () => { const title = "Habitoo CRM — contracte și documente"; const description = "Contractele și documentele agenției, cu filtre și starea semnăturilor."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -137,7 +138,7 @@ function ContractsPage() {
                     <FileSignature className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{c.number ? `${c.number} · ` : ""}{c.title}</p>
+                    <p className="truncate text-sm font-medium">{c.number ? `${c.number} · ` : ""}{c.docNumber != null ? `${printedContractNumber(c.docSeries, c.docNumber)} · ` : ""}{c.title}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       {contractKindLabels[c.kind] ?? c.kind}
                       {c.clientName ? ` · ${c.clientName}` : ""}

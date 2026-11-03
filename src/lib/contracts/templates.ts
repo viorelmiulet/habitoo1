@@ -265,7 +265,9 @@ export const TEMPLATE_VARIABLES: { group: string; items: { key: string; label: s
   {
     group: "Contract",
     items: [
-      { key: "contract.numar", label: "Număr contract" },
+      { key: "contract.serie", label: "Serie tipărită" },
+      { key: "contract.numar", label: "Număr tipărit" },
+      { key: "contract.numar_intern", label: "Număr intern Habitoo (nu se tipărește)" },
       { key: "contract.data", label: "Data contractului" },
       { key: "contract.pret", label: "Preț" },
       { key: "contract.moneda", label: "Monedă" },
@@ -286,6 +288,7 @@ const PLACEHOLDER = /\{\{\s*([a-z0-9_.]+)\s*\}\}/gi;
 export function renderTemplate(body: string, vars: TemplateVars, blank = "__________"): string {
   return (body ?? "").replace(PLACEHOLDER, (_all, name: string) => {
     const value = vars[name.toLowerCase()];
+    if ((name.toLowerCase() === "contract.serie" || name.toLowerCase() === "contract.numar") && value === "") return "";
     if (value === null || value === undefined || String(value).trim() === "") return blank;
     return String(value);
   });

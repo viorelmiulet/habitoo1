@@ -46,6 +46,7 @@ import {
 import type { IdFieldConflict } from "@/lib/contracts/id/vision.parse";
 import { useCurrentUser } from "@/hooks/use-session";
 import { InventoryEditor } from "./InventoryEditor";
+import { getContractNumberSeries } from "@/lib/contracts/numbering.functions";
 
 type PartyTarget = "landlord" | "tenant" | "beneficiary";
 type CaptureSide = "back" | "front";
@@ -94,6 +95,7 @@ export function NewContractDialog({
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser();
   const fetchTemplates = useServerFn(listTemplates);
+  const fetchNumberSeries = useServerFn(getContractNumberSeries);
   const runCreate = useServerFn(createContract);
   const runRead = useServerFn(readIdDocument);
   const fetchExtractionStatus = useServerFn(getIdReadingStatus);
@@ -146,6 +148,11 @@ export function NewContractDialog({
   const templates = useQuery({
     queryKey: ["contract-templates"],
     queryFn: () => fetchTemplates({}),
+    enabled: open,
+  });
+  const numberSeries = useQuery({
+    queryKey: ["contract-number-series", currentUser?.organization?.id],
+    queryFn: () => fetchNumberSeries(),
     enabled: open,
   });
   const extractionStatus = useQuery({
@@ -395,6 +402,9 @@ export function NewContractDialog({
             Alege documentul, completează datele și verifică informațiile citite din act.
           </DialogDescription>
         </DialogHeader>
+        {documentKind === "exclusive_representation" && numberSeries.isSuccess && !numberSeries.data.some((row) => row.kind === documentKind && row.series) ? (
+          <p className="text-sm text-muted-foreground">Setează seria în Setări → Numerotare contracte</p>
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label>Tip document</Label>

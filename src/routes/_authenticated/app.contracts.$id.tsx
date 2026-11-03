@@ -29,6 +29,7 @@ import { appHead } from "@/components/app/app-head";
 import { formatDateTime } from "@/lib/format";
 import { contractKindLabels, contractStatusLabels, contractStatusTone } from "@/lib/contracts/templates";
 import type { InventoryItem } from "@/lib/contracts/templates";
+import { printedContractNumber } from "@/lib/contracts/numbering";
 import {
   cancelContract,
   contractDocumentUrl,
@@ -169,7 +170,7 @@ function ContractDetailPage() {
         backLabel="Toate documentele"
         eyebrow={`${contractKindLabels[contract.kind] ?? "Document"}${contract.propertyReference ? ` · ${contract.propertyReference}` : ""}`}
         title={contract.title}
-        description={`Creat la ${formatDateTime(contract.createdAt)}${contract.signedAt ? ` · semnat la ${formatDateTime(contract.signedAt)}` : ""}`}
+        description={`${contract.number ? `${contract.number} · ` : ""}${contract.docNumber != null ? `${printedContractNumber(contract.docSeries, contract.docNumber)} · ` : ""}Creat la ${formatDateTime(contract.createdAt)}${contract.signedAt ? ` · semnat la ${formatDateTime(contract.signedAt)}` : ""}`}
         meta={
           <StatusBadge dot tone={contractStatusTone[contract.status] ?? "neutral"}>
             {contractStatusLabels[contract.status] ?? contract.status}
