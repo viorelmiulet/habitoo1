@@ -6,12 +6,18 @@
 export const CONTRACT_KINDS = [
   "rent_agreement",
   "exclusive_representation",
+  "commission",
+  "loan_for_use",
+  "viewing",
 ] as const;
 export type ContractKind = (typeof CONTRACT_KINDS)[number];
 
 export const contractKindLabels: Record<string, string> = {
   rent_agreement: "Contract de închiriere",
   exclusive_representation: "Contract de reprezentare exclusivă",
+  commission: "Contract de comision",
+  loan_for_use: "Contract de comodat",
+  viewing: "Contract de vizionare",
 };
 
 export const CONTRACT_STATUSES = [
@@ -42,7 +48,7 @@ export const contractStatusTone: Record<
   cancelled: "danger",
 };
 
-export const PARTY_ROLES = ["seller", "buyer", "landlord", "tenant", "agent"] as const;
+export const PARTY_ROLES = ["seller", "buyer", "landlord", "tenant", "agent", "lender", "borrower", "client"] as const;
 export type PartyRole = (typeof PARTY_ROLES)[number];
 
 export const partyRoleLabels: Record<string, string> = {
@@ -51,6 +57,9 @@ export const partyRoleLabels: Record<string, string> = {
   landlord: "Proprietar",
   tenant: "Chiriaș",
   agent: "Agent",
+  lender: "Comodant",
+  borrower: "Comodatar",
+  client: "Client",
 };
 
 export const INVENTORY_CONDITIONS = ["Foarte buna", "Buna", "Uzata", "Defecta"] as const;
