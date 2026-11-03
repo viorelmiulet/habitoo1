@@ -1,3 +1,8 @@
+## Contracte C2 — serie și număr tipărit
+- [ ] Serii per agenție/tip, alocare atomică și setări doar admin agenție
+- [ ] Variabile, PDF și listă separate de numărul intern; închiriere/comodat fără număr tipărit
+- [ ] Numai teste noi C2 și verificări ale paginilor, fără emailuri
+
 ## Contracte C1 — adaptare
 - [x] Tipuri/roluri aditive, numerotare anuală atomică și acces creator/responsabil
 - [x] Identitate client criptată, copiere la parte, număr și filtru tip în listă
