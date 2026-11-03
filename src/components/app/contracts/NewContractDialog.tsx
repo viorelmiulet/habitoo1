@@ -129,15 +129,15 @@ export function NewContractDialog({
     landlord: false, tenant: false, beneficiary: false, client: false, lender: false, borrower: false,
   });
   const [identityAccess, setIdentityAccess] = useState<Record<string, boolean>>({});
+  const [templateId, setTemplateId] = useState("");
+  const [selectedProperty, setSelectedProperty] = useState(propertyId ?? "");
+  const [selectedContact, setSelectedContact] = useState(contactId ?? "");
   useEffect(() => {
     if (!selectedContact || selectedContact in identityAccess) return;
     runIdentity({ data: { contactId: selectedContact } })
       .then((r) => setIdentityAccess((m) => ({ ...m, [selectedContact]: r.canAccessIdentity })))
       .catch(() => setIdentityAccess((m) => ({ ...m, [selectedContact]: false })));
   }, [selectedContact]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [templateId, setTemplateId] = useState("");
-  const [selectedProperty, setSelectedProperty] = useState(propertyId ?? "");
-  const [selectedContact, setSelectedContact] = useState(contactId ?? "");
   const [landlord, setLandlord] = useState<PartyForm>(emptyParty("landlord"));
   const [tenant, setTenant] = useState<PartyForm>(emptyParty("tenant"));
   const [beneficiary, setBeneficiary] = useState<PartyForm>(emptyParty("seller"));
