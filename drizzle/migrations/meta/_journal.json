@@ -1646,6 +1646,13 @@
       "when": 1793681629231,
       "tag": "0234_contracts_c3_combined_printed_number",
       "breakpoints": true
+    },
+    {
+      "idx": 235,
+      "version": "7",
+      "when": 1793693220921,
+      "tag": "0235_contracts_c7_gdpr_notice",
+      "breakpoints": true
     }
   ]
 }
