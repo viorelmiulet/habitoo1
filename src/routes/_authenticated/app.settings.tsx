@@ -76,6 +76,7 @@ import {
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { announceGuideContext } from "@/lib/onboarding-tour";
+import { ContractNumberSeriesSettings } from "@/components/app/contracts/ContractNumberSeriesSettings";
 
 const TAB_ICONS: Record<SettingsTab, LucideIcon> = {
   profile: UserRound,
@@ -438,6 +439,7 @@ function SettingsPage() {
 
           {user?.role === "agency_admin" ? (
             <TabsContent data-tour="settings-agency" value="agency" className="mt-0">
+              {user.organization?.id ? <ContractNumberSeriesSettings organizationId={user.organization.id} /> : null}
               <form
                 className="space-y-6"
                 onSubmit={(e) => {
