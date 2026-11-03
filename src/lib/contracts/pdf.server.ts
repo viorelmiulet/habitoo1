@@ -7,6 +7,7 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf
 import fontkit from "@pdf-lib/fontkit";
 import { CONTRACT_FONT_BOLD_B64, CONTRACT_FONT_REGULAR_B64 } from "./fonts";
 import type { InventoryItem } from "./templates";
+import { contractBodyBlocks } from "./viewing-table";
 
 export type ContractPdfParty = {
   role: string;
@@ -178,7 +179,7 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
   y -= 26;
 
   /* Titlu */
-  text((input.rentalAgreement ? "CONTRACT DE INCHIRIERE" : input.exclusiveRepresentation ? "CONTRACT DE REPREZENTARE EXCLUSIVA" : input.title).toUpperCase(), {
+  if (input.title || input.rentalAgreement || input.exclusiveRepresentation) text((input.rentalAgreement ? "CONTRACT DE INCHIRIERE" : input.exclusiveRepresentation ? "CONTRACT DE REPREZENTARE EXCLUSIVA" : input.title).toUpperCase(), {
     size: 15,
     font: bold,
     color: NAVY,
@@ -189,7 +190,26 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
   else y -= 8;
 
   /* Corpul contractului */
-  text(input.body, { size: 10.5, gap: 12 });
+  for (const block of contractBodyBlocks(input.body)) {
+    if (block.type === "text") { text(block.text, { size: 10.5, gap: 12 }); continue; }
+    const widths = [90, contentWidth - 190, 100];
+    const drawTableRow = (values: string[], header: boolean) => {
+      const rowFont = header ? bold : regular;
+      const cells = values.map((value, i) => wrap(value, rowFont, 9, (widths[i] ?? 100) - 12));
+      const height = Math.max(26, ...cells.map((lines) => lines.length * 13 + 12));
+      ensure(height + 4);
+      let x = MARGIN;
+      cells.forEach((lines, i) => {
+        const w = widths[i] ?? 100;
+        page.drawRectangle({ x, y: y - height, width: w, height, borderColor: MUTED, borderWidth: 0.5 });
+        lines.forEach((line, j) => page.drawText(line, { x: x + 6, y: y - 15 - j * 13, size: 9, font: rowFont, color: INK }));
+        x += w;
+      });
+      y -= height;
+    };
+    block.rows.forEach((row, i) => drawTableRow(row, i === 0));
+    y -= 12;
+  }
 
   if (input.inventory) {
     newPage();

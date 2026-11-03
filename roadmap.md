@@ -1,3 +1,8 @@
+## Contracte C3 — șabloane standard
+- [x] Catalog/mapare câmpuri și trei texte standard exacte aplicate prin 0233; hash-urile coincid, tipuri ascunse
+- [x] Tabel vizionare în previzualizare/PDF; numerotare combinată prin 0234; editor/copiere agenție accesibil din Contracte → Șabloane
+- [x] 5/5 teste noi C3; șabloane și tabel cu două imobile verificate în cont; fără salvări/creări/emailuri; build OK
+
 ## Contracte C2 — serie și număr tipărit
 - [x] Serii per agenție/tip, alocare atomică și setări doar admin agenție; migrarea 0232 aplicată și coloanele verificate
 - [x] Variabile, PDF și listă separate de numărul intern; închiriere/comodat fără număr tipărit

@@ -10,6 +10,7 @@ export function contractNumberVariables(kind: string) {
   return {
     "contract.serie": numbered ? "{{contract.serie}}" : "",
     "contract.numar": numbered ? "{{contract.numar}}" : "",
+    "contract.serie_numar": numbered ? "{{contract.serie_numar}}" : "",
     "contract.numar_intern": "{{contract.numar_intern}}",
   };
 }

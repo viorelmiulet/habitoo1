@@ -22,6 +22,7 @@ import { validateListSearch } from "@/lib/list-state";
 import { useCurrentUser } from "@/hooks/use-session";
 import { appHead } from "@/components/app/app-head";
 import { NewContractDialog } from "@/components/app/contracts/NewContractDialog";
+import { ContractTemplatesDialog } from "@/components/app/contracts/ContractTemplatesDialog";
 import { listContracts } from "@/lib/contracts.functions";
 import {
   CONTRACT_STATUSES,
@@ -53,6 +54,7 @@ function ContractsPage() {
   const search = persisted.state.search;
   const setSearch = (value: string) => persisted.set("search", value);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
 
   const contracts = useQuery({
     queryKey: ["contracts", status, kind, search],
@@ -72,9 +74,12 @@ function ContractsPage() {
         title="Contracte și documente"
         description="Mandate, procese-verbale de vizionare și semnături electronice."
         actions={
+          <div className="flex flex-wrap gap-2">
+          {user?.role === "agency_admin" ? <Button variant="outline" onClick={() => setTemplatesOpen(true)}>Șabloane</Button> : null}
           <Button data-tour="contract-create-open" onClick={() => setDialogOpen(true)}>
             <Plus className="size-4" /> Document nou
           </Button>
+          </div>
         }
       />
 
@@ -160,6 +165,7 @@ function ContractsPage() {
       </SectionCard>
 
       <NewContractDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      {user?.role === "agency_admin" ? <ContractTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} /> : null}
     </div>
   );
 }

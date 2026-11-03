@@ -14,6 +14,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { contractNumberVariables, documentText, printedContractNumber } from "@/lib/contracts/numbering";
+import { c3ContractFields, c3FieldVariables, partyTemplateVariables } from "@/lib/contracts/c3-fields";
+import { viewingTable } from "@/lib/contracts/viewing-table";
+import { propertyTypeLabels } from "@/lib/labels";
 import {
   CONTRACT_KINDS,
   PARTY_ROLES,
@@ -337,6 +340,7 @@ const partyInput = z.object({
   idIssuedOn: z.string().trim().max(20).optional(),
   birthDate: z.string().trim().max(20).optional(),
   citizenship: z.string().trim().max(80).optional(),
+  docType: z.enum(["ci", "cei", "pasaport", "permis_sedere", "altul"]).optional(),
 });
 
 function isoDate(value: string | undefined) {
@@ -372,6 +376,8 @@ export const createContract = createServerFn({ method: "POST" })
         contractNumber: z.string().trim().max(60).optional(),
         negotiable: z.enum(["DA", "NU"]).optional(),
         exclusiveProperty: exclusivePropertyInput.optional(),
+        fields: c3ContractFields.optional(),
+        viewingPropertyIds: z.array(uuid).max(100).optional(),
         parties: z.array(partyInput).min(1).max(6),
       })
       .parse(data),
@@ -392,7 +398,7 @@ export const createContract = createServerFn({ method: "POST" })
       if (error) throw new Error("Identitatea clientului nu a putut fi citită.");
       if (!identity) return { ...p, contactId };
       identities.set(contactId, identity);
-      return { ...p, ...identityPartyValues(identity), contactId };
+      return { ...p, ...identityPartyValues(identity), docType: identity.doc_type as "ci" | "cei" | "pasaport" | "permis_sedere" | "altul", contactId };
     }));
 
     const [{ data: template }, { data: org }, { data: profile }] = await Promise.all([
@@ -409,7 +415,7 @@ export const createContract = createServerFn({ method: "POST" })
       ? (
           await db
             .from("properties")
-            .select("id,title,reference,address,city,county,street,street_number,rooms,layout,floor,floor_label,comfort,bathrooms,balconies,usable_surface,surface,price,currency,commission,negotiable")
+            .select("id,title,property_type,reference,address,city,county,street,street_number,rooms,layout,floor,floor_label,comfort,bathrooms,balconies,usable_surface,surface,price,currency,commission,negotiable")
             .eq("id", data.propertyId)
             .eq("organization_id", orgId)
             .maybeSingle()
@@ -421,6 +427,12 @@ export const createContract = createServerFn({ method: "POST" })
     const price = data.price ?? property?.price ?? null;
     const currency = data.currency ?? property?.currency ?? "EUR";
     const commission = data.commission ?? property?.commission ?? null;
+    const viewingIds = [...new Set(data.viewingPropertyIds ?? [])];
+    const { data: viewingRows, error: viewingError } = viewingIds.length
+      ? await ctx.supabase.from("properties").select("id,reference,address,price,currency").eq("organization_id",orgId).in("id",viewingIds)
+      : { data: [], error: null };
+    if (viewingError || viewingRows?.length !== viewingIds.length) throw new Error("Imobilele alese pentru vizionare nu au putut fi citite.");
+    const viewingProperties = viewingIds.flatMap((id) => { const row = viewingRows?.find((p) => p.id === id); return row ? [row] : []; });
 
     const vars = {
       "agentie.denumire": org?.name,
@@ -430,6 +442,7 @@ export const createContract = createServerFn({ method: "POST" })
       "agentie.adresa": org?.material_address,
       "agentie.telefon": org?.phone,
       "agentie.email": org?.email,
+      "agentie.reprezentant": org?.legal_representative,
       "agent.nume": profile?.full_name,
       "agent.telefon": profile?.phone,
       "agent.email": profile?.email,
@@ -441,6 +454,7 @@ export const createContract = createServerFn({ method: "POST" })
       "proprietate.suprafata": property?.surface,
       "proprietate.camere": property?.rooms,
       "proprietate.pret": property?.price,
+      "proprietate.tip": property?.property_type ? propertyTypeLabels[property.property_type] ?? property.property_type : undefined,
       "client.nume": client.fullName,
       "client.cnp": client.cnp,
       "client.serie": client.idSeries,
@@ -457,6 +471,11 @@ export const createContract = createServerFn({ method: "POST" })
       "contract.moneda": currency,
       "contract.comision": commission ?? "",
       "contract.durata": data.durationDays ?? "",
+      ...partyTemplateVariables("client",client),
+      ...partyTemplateVariables("comodant",parties.find((p) => p.role === "lender")),
+      ...partyTemplateVariables("comodatar",parties.find((p) => p.role === "borrower")),
+      ...c3FieldVariables({ ...data.fields, durationMonths: data.fields?.durationMonths ?? data.durationMonths, startDate: data.fields?.startDate ?? data.startDate }),
+      "vizionare.tabel": viewingTable(viewingProperties),
     };
 
     const landlord = parties.find((p) => p.role === "landlord");
@@ -536,6 +555,8 @@ export const createContract = createServerFn({ method: "POST" })
         lead_id: data.leadId ?? null,
         body,
         data: {
+          fields: data.fields ?? {},
+          viewingProperties,
           agency: {
             name: org?.name ?? "",
             legalName: org?.legal_name ?? null,
@@ -590,6 +611,7 @@ export const createContract = createServerFn({ method: "POST" })
       contract_id: contract.id,
       organization_id: orgId,
       role: p.role,
+      doc_type: p.docType ?? null,
       contact_id: p.contactId ?? null,
       ...(p.contactId && identities.has(p.contactId) ? (() => {
         const identity = identities.get(p.contactId);
@@ -878,9 +900,10 @@ export async function renderAndStorePdf(contractId: string, actorId: string | nu
   const snapshot = contract.data && typeof contract.data === "object" && !Array.isArray(contract.data)
     ? contract.data as Record<string, unknown>
     : {};
+  const templateOwnHeading = ["commission", "loan_for_use", "viewing"].includes(contract.kind);
   const bytes = await buildContractPdf({
-    title: documentText(contract.title, contract.number),
-    subtitle: contract.doc_number != null
+    title: templateOwnHeading ? "" : documentText(contract.title, contract.number),
+    subtitle: templateOwnHeading ? null : contract.doc_number != null
       ? `${printedContractNumber(contract.doc_series, contract.doc_number)} / ${typeof snapshot["signingDate"] === "string" ? snapshot["signingDate"] : "__________"}`
       : `${contractKindLabels[contract.kind] ?? "Contract"} · generat la ${new Date().toLocaleDateString("ro-RO")}`,
     body: documentText(contract.body, contract.number),

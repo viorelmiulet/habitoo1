@@ -229,6 +229,7 @@ export const TEMPLATE_VARIABLES: { group: string; items: { key: string; label: s
       { key: "agentie.adresa", label: "Adresă sediu" },
       { key: "agentie.telefon", label: "Telefon" },
       { key: "agentie.email", label: "Email" },
+      { key: "agentie.reprezentant", label: "Reprezentant legal" },
       { key: "agent.nume", label: "Agent responsabil" },
       { key: "agent.telefon", label: "Telefon agent" },
       { key: "agent.email", label: "Email agent" },
@@ -245,6 +246,9 @@ export const TEMPLATE_VARIABLES: { group: string; items: { key: string; label: s
       { key: "proprietate.suprafata", label: "Suprafață" },
       { key: "proprietate.camere", label: "Camere" },
       { key: "proprietate.pret", label: "Preț listat" },
+      { key: "proprietate.tip", label: "Tip proprietate" },
+      { key: "proprietate.cf", label: "Carte funciară (manual)" },
+      { key: "proprietate.cadastral", label: "Număr cadastral (manual)" },
     ],
   },
   {
@@ -260,12 +264,15 @@ export const TEMPLATE_VARIABLES: { group: string; items: { key: string; label: s
       { key: "client.adresa", label: "Adresă / domiciliu" },
       { key: "client.telefon", label: "Telefon" },
       { key: "client.email", label: "Email" },
+      { key: "client.act_tip", label: "Tip act" },
+      { key: "client.cetatenie", label: "Cetățenie" },
     ],
   },
   {
     group: "Contract",
     items: [
       { key: "contract.serie", label: "Serie tipărită" },
+      { key: "contract.serie_numar", label: "Serie și număr tipărit" },
       { key: "contract.numar", label: "Număr tipărit" },
       { key: "contract.numar_intern", label: "Număr intern Habitoo (nu se tipărește)" },
       { key: "contract.data", label: "Data contractului" },
@@ -273,8 +280,28 @@ export const TEMPLATE_VARIABLES: { group: string; items: { key: string; label: s
       { key: "contract.moneda", label: "Monedă" },
       { key: "contract.comision", label: "Comision" },
       { key: "contract.durata", label: "Durată (zile)" },
+      { key: "contract.localitate", label: "Localitate semnare" },
+      { key: "contract.exemplare", label: "Număr exemplare" },
+      { key: "contract.calitate_client", label: "Calitatea clientului" },
+      { key: "contract.tip_tranzactie", label: "Tip tranzacție" },
+      { key: "contract.durata_luni", label: "Durată (luni)" },
+      { key: "contract.moment_plata_comision", label: "Moment plată comision" },
+      { key: "contract.luni_protectie", label: "Protecție (luni)" },
+      { key: "contract.scop_folosinta", label: "Scopul folosinței" },
+      { key: "contract.durata_text", label: "Durata folosinței" },
+      { key: "contract.data_inceput", label: "Data începerii" },
+      { key: "contract.data_vizionare", label: "Data vizionării" },
     ],
   },
+  ...["comodant", "comodatar"].map((group) => ({
+    group: group === "comodant" ? "Comodant" : "Comodatar",
+    items: [
+      ["nume", "Nume complet"], ["cnp", "CNP"], ["act_tip", "Tip act"],
+      ["serie", "Serie act"], ["numar", "Număr act"], ["emitent", "Emitent"],
+      ["data_eliberarii", "Data eliberării"], ["adresa", "Domiciliu"], ["telefon", "Telefon"],
+    ].map(([key, label]) => ({ key: `${group}.${key}`, label: label ?? "" })),
+  })),
+  { group: "Vizionare", items: [{ key: "vizionare.tabel", label: "Tabel imobile vizionate" }] },
 ];
 
 export type TemplateVars = Record<string, string | number | null | undefined>;
@@ -288,7 +315,7 @@ const PLACEHOLDER = /\{\{\s*([a-z0-9_.]+)\s*\}\}/gi;
 export function renderTemplate(body: string, vars: TemplateVars, blank = "__________"): string {
   return (body ?? "").replace(PLACEHOLDER, (_all, name: string) => {
     const value = vars[name.toLowerCase()];
-    if ((name.toLowerCase() === "contract.serie" || name.toLowerCase() === "contract.numar") && value === "") return "";
+    if (["contract.serie", "contract.numar", "contract.serie_numar"].includes(name.toLowerCase()) && value === "") return "";
     if (value === null || value === undefined || String(value).trim() === "") return blank;
     return String(value);
   });
