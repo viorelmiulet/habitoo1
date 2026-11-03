@@ -31,7 +31,7 @@ export function C5Fields({
       checked ? [...form.viewingPropertyIds, id] : form.viewingPropertyIds.filter((value) => value !== id),
     );
   return (
-    <div className="grid gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
+    <div className="grid min-w-0 gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
       <h3 className="text-sm font-semibold sm:col-span-2">Date contract</h3>
       {kind === "commission" ? (
         <>
@@ -75,7 +75,7 @@ export function C5Fields({
           <Choice label="Tipul tranzacției" value={form.transactionType} options={TRANSACTION_TYPES} onChange={(v) => set("transactionType", v)} />
           <Text label="Comision" value={form.commission} onChange={(v) => set("commission", v)} placeholder="2% + TVA din prețul de vânzare" />
           <Text label="Luni de protecție" value={form.protectionMonths} onChange={(v) => set("protectionMonths", digits(v))} />
-          <fieldset className="space-y-2 sm:col-span-2">
+          <fieldset className="min-w-0 space-y-2 sm:col-span-2">
             <legend className="text-sm font-medium">
               Imobile vizionate ({form.viewingPropertyIds.length} alese, minim 1)
             </legend>
@@ -89,7 +89,7 @@ export function C5Fields({
                       checked={form.viewingPropertyIds.includes(property.id)}
                       onCheckedChange={(c) => toggleViewing(property.id, c === true)}
                     />
-                    <span className="truncate">{property.label}</span>
+                    <span className="min-w-0 flex-1 truncate">{property.label}</span>
                   </label>
                 ))
               )}
