@@ -844,8 +844,6 @@ export function NewContractDialog({
   );
 }
 
-const FLAG_KEYS: IdFormKey[] = ["fullName", "cnp", "idSeries", "idNumber", "idIssuer", "idIssuedOn", "birthDate", "address", "citizenship"];
-
 function PartySection({
   title,
   party,
@@ -927,8 +925,6 @@ function PartySection({
     </section>
   );
 }
-
-void FLAG_KEYS;
 
 function Field({
   label,
