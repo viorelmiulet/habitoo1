@@ -1,7 +1,7 @@
 ## Contracte C2 — serie și număr tipărit
-- [ ] Serii per agenție/tip, alocare atomică și setări doar admin agenție
-- [ ] Variabile, PDF și listă separate de numărul intern; închiriere/comodat fără număr tipărit
-- [ ] Numai teste noi C2 și verificări ale paginilor, fără emailuri
+- [x] Serii per agenție/tip, alocare atomică și setări doar admin agenție; migrarea 0232 aplicată și coloanele verificate
+- [x] Variabile, PDF și listă separate de numărul intern; închiriere/comodat fără număr tipărit
+- [x] 7/7 teste noi C2; setare/exemplu/indicație verificate în cont, fără salvări/creări reale sau emailuri; build OK
 
 ## Contracte C1 — adaptare
 - [x] Tipuri/roluri aditive, numerotare anuală atomică și acces creator/responsabil
