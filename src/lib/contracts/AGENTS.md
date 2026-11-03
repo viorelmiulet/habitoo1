@@ -1,0 +1,1 @@
+- Contact ID scanning (C4) runs only through `scanContactIdentity` → `runIdentityScan` (injected deps, no storage/DB writes except an action-only audit); saving happens only via `saveContactIdentity` on explicit confirmation. Why: ID images stay in request memory and nothing is persisted unconfirmed.
