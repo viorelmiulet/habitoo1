@@ -74,13 +74,13 @@ it("simultaneous creates have distinct consecutive numbers", async () => {
 it("agent reads only created or assigned contracts and their parties; admin/superadmin retain access", async () => {
   await db.exec(`INSERT INTO contracts(organization_id,created_by,assigned_to) VALUES('${org}','${b}','${b}'),('${org}','${b}','${a}'); INSERT INTO contract_parties(contract_id,organization_id) SELECT id,organization_id FROM contracts; SET ROLE authenticated;`);
   const own=await db.query<{created_by:string;assigned_to:string;organization_id:string}>("SELECT * FROM contracts");
-  expect(own.rows.length).toBe(15);
+  expect(own.rows.length).toBe(16);
   expect(own.rows.every(r=>r.organization_id===org && (r.created_by===a||r.assigned_to===a))).toBe(true);
-  const parties=await db.query("SELECT * FROM contract_parties"); expect(parties.rows.length).toBe(15);
+  const parties=await db.query("SELECT * FROM contract_parties"); expect(parties.rows.length).toBe(16);
   await db.exec(`RESET ROLE; INSERT INTO user_roles VALUES('${a}','${org}','agency_admin'); SET ROLE authenticated;`);
-  expect((await db.query("SELECT * FROM contracts")).rows.length).toBe(16);
-  await db.exec("SELECT set_config('test.super','true',false)");
   expect((await db.query("SELECT * FROM contracts")).rows.length).toBe(17);
+  await db.exec("SELECT set_config('test.super','true',false)");
+  expect((await db.query("SELECT * FROM contracts")).rows.length).toBe(18);
   await db.exec("RESET ROLE; SELECT set_config('test.super','false',false); DELETE FROM user_roles WHERE user_id='"+a+"';");
 });
 
