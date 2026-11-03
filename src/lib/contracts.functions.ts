@@ -900,9 +900,10 @@ export async function renderAndStorePdf(contractId: string, actorId: string | nu
   const snapshot = contract.data && typeof contract.data === "object" && !Array.isArray(contract.data)
     ? contract.data as Record<string, unknown>
     : {};
+  const templateOwnHeading = ["commission", "loan_for_use", "viewing"].includes(contract.kind);
   const bytes = await buildContractPdf({
-    title: documentText(contract.title, contract.number),
-    subtitle: contract.doc_number != null
+    title: templateOwnHeading ? "" : documentText(contract.title, contract.number),
+    subtitle: templateOwnHeading ? null : contract.doc_number != null
       ? `${printedContractNumber(contract.doc_series, contract.doc_number)} / ${typeof snapshot["signingDate"] === "string" ? snapshot["signingDate"] : "__________"}`
       : `${contractKindLabels[contract.kind] ?? "Contract"} · generat la ${new Date().toLocaleDateString("ro-RO")}`,
     body: documentText(contract.body, contract.number),

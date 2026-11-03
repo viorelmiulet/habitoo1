@@ -179,7 +179,7 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
   y -= 26;
 
   /* Titlu */
-  text((input.rentalAgreement ? "CONTRACT DE INCHIRIERE" : input.exclusiveRepresentation ? "CONTRACT DE REPREZENTARE EXCLUSIVA" : input.title).toUpperCase(), {
+  if (input.title || input.rentalAgreement || input.exclusiveRepresentation) text((input.rentalAgreement ? "CONTRACT DE INCHIRIERE" : input.exclusiveRepresentation ? "CONTRACT DE REPREZENTARE EXCLUSIVA" : input.title).toUpperCase(), {
     size: 15,
     font: bold,
     color: NAVY,
