@@ -652,10 +652,10 @@ export const PropertyPortalsCard = forwardRef<
         <section aria-labelledby="portal-publication-title">
           <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 id="portal-publication-title" className="text-xl font-semibold">
+              <h2 id="portal-publication-title" className="text-base font-bold">
                 Unde este publicat
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 {activeCount} din {totalRows} portaluri
                 {lastSync ? ` · ultima sincronizare ${syncAgo(lastSync)}` : ""}
               </p>
@@ -693,18 +693,18 @@ export const PropertyPortalsCard = forwardRef<
             <ContactBlockNotice
               message={contactBlock}
               isAdmin={sessionUser?.isAdmin === true}
-              className="mb-3 rounded-2xl border border-destructive bg-destructive/5 p-3 text-sm"
+              className="mb-3 rounded-[12px] border border-destructive/40 bg-danger-tint p-3 text-sm"
             />
           ) : null}
           <ul data-tour="publishing-portals" className="grid min-w-0 grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 [&_button]:max-w-full [&_button]:whitespace-normal [&_button]:text-xs [&_button:not([role=checkbox]):not([role=radio])]:h-auto [&_button:not([role=checkbox]):not([role=radio])]:min-h-7 [&_button:not([role=checkbox]):not([role=radio])]:px-2 [&_button:not([role=checkbox]):not([role=radio])]:py-1 [&_input]:h-8">
             <li className="min-w-0">
-              <Card className={cn("relative min-w-0 gap-3 bg-surface p-3 text-sm", fbValue && "border-gold ring-1 ring-gold/40", fbState.key === "excluded" && "bg-warning/10")}>
+              <Card className={cn("relative min-h-14 min-w-0 gap-3 rounded-[14px] border-border bg-card p-3 text-sm", fbValue && "border-gold ring-1 ring-gold/40", fbState.key === "excluded" && "bg-warning/10")}>
                 <label htmlFor="portal-facebook-catalog" aria-label="Catalog Facebook" className={cn("absolute inset-0 z-0", editing && canManage && canEditFacebookCatalog && !fb.isLoading ? "cursor-pointer" : "cursor-default")} />
                 <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
                   <div className="flex min-w-0 items-start gap-3">
                     <PortalLogo portalId="facebook_catalog" name="Catalog Facebook" fallback="FB" size={32} />
                     <div className="min-w-0 flex-1">
-                      <p className="break-words text-sm font-bold leading-5">Catalog Facebook</p>
+                      <p className="break-words text-[15px] font-semibold leading-5">Catalog Facebook</p>
                       <StatusPill
                         state={fbState.key === "in_catalog" ? "published" : fbState.key === "excluded" ? "pending" : "inactive"}
                         dot
@@ -759,7 +759,7 @@ export const PropertyPortalsCard = forwardRef<
               <li className="min-w-0">
                 <Card
                   className={cn(
-                    "relative min-w-0 gap-3 bg-surface p-3 text-sm",
+                    "relative min-h-14 min-w-0 gap-3 rounded-[14px] border-border bg-card p-3 text-sm",
                     collabValue && "border-gold ring-1 ring-gold/40",
                     collabValue &&
                       collabPercent.trim() === "" &&
@@ -775,7 +775,7 @@ export const PropertyPortalsCard = forwardRef<
                         <BrandLogo markOnly className="size-5" />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="break-words text-sm font-bold leading-5">Colaborare Habitoo</p>
+                        <p className="break-words text-[15px] font-semibold leading-5">Colaborare Habitoo</p>
                         <StatusPill state={collabValue ? "published" : "inactive"} dot>
                           {collabValue ? "Activ" : "Inactiv"}
                         </StatusPill>
@@ -964,13 +964,13 @@ export const PropertyPortalsCard = forwardRef<
 
               return (
                 <li key={cell.portalId} className="min-w-0">
-                  <Card aria-busy={busy} data-tour={`portal-card-${cell.portalId}`} className={cn("relative min-w-0 gap-3 bg-surface p-3 text-sm", value && "border-gold ring-1 ring-gold/40", !cell.configured && "opacity-55", busy && "opacity-70")}>
+                  <Card aria-busy={busy} data-tour={`portal-card-${cell.portalId}`} className={cn("relative min-h-14 min-w-0 gap-3 rounded-[14px] border-border bg-card p-3 text-sm", value && "border-gold ring-1 ring-gold/40", !cell.configured && "opacity-55", busy && "opacity-70")}>
                     {cell.configured ? <label htmlFor={`portal-${cell.portalId}`} aria-label={cell.portalName} className={cn("absolute inset-0 z-0", !disabled ? "cursor-pointer" : "cursor-default")} /> : null}
                     <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
                       <div className="flex min-w-0 items-start gap-3">
                         <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={32} />
                         <div className="min-w-0">
-                          <p className="break-words text-sm font-bold leading-5">{cell.portalName}</p>
+                          <p className="break-words text-[15px] font-semibold leading-5">{cell.portalName}</p>
                           <StatusPill state={stateView.pill} dot>{stateView.label}</StatusPill>
                         </div>
                       </div>
@@ -1189,14 +1189,14 @@ export const PropertyPortalsCard = forwardRef<
 
                     {/* Anunț trimis, dar pagina publică nu funcționează (cont fără abonament). */}
                     {cell.publicWarning ? (
-                      <p className="pointer-events-none relative z-10 mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+                      <p className="pointer-events-none relative z-10 mt-3 rounded-[12px] border border-gold/40 bg-gold-tint px-3 py-2 text-xs text-warning-foreground">
                         {cell.publicWarning}
                       </p>
                     ) : null}
 
                     {/* Validare pre-publicare: ce lipsește, în cuvinte, pe acest portal. */}
                     {missingReqs.length > 0 ? (
-                      <div className="pointer-events-none relative z-10 mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 pl-3 text-xs">
+                      <div className="pointer-events-none relative z-10 mt-3 rounded-[12px] border border-gold/40 bg-gold-tint px-3 py-2 pl-3 text-xs">
                         <p className="font-medium text-warning-foreground">
                           {missingReqs.every((m) => !m.requirement)
                             ? "Nu se poate publica încă:"

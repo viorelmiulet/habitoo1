@@ -259,10 +259,10 @@ export function PropertyPromotionTab({
   return (
     <div className="min-w-0 max-w-full space-y-6">
       <section className="space-y-4" data-tour="social-cards">
-        <h2 className="font-sans text-lg font-bold">Promovează proprietatea pe rețelele sociale</h2>
+        <h2 className="font-sans text-base font-bold">Promovează proprietatea pe rețelele sociale</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="promotion-cards">
           {cards.map((c) => (
-            <div key={c.key} className="panel flex flex-col gap-3 p-5">
+            <div key={c.key} className="flex flex-col gap-3 rounded-[14px] border border-border bg-card p-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
                 <span className={cn("grid size-12 place-items-center rounded-xl", c.tone)} aria-hidden="true">
                   <c.icon className="size-6" />
@@ -270,10 +270,10 @@ export function PropertyPromotionTab({
                 {c.badge ? <span className="rounded-pill bg-gold-tint px-2 py-0.5 text-xs font-semibold text-gold-dark">{c.badge}</span> : null}
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold">{c.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{c.text}</p>
+                <h3 className="text-base font-bold">{c.title}</h3>
+                <p className="mt-1 text-[13px] text-muted-foreground">{c.text}</p>
               </div>
-              <Button variant={c.key === "poster" ? "default" : "outline"} onClick={c.onClick} disabled={c.disabled}>{c.action}</Button>
+              <Button variant={c.key === "poster" ? "default" : "outline"} className="h-10 w-full rounded-[10px]" onClick={c.onClick} disabled={c.disabled}>{c.action}</Button>
               {c.footer}
             </div>
           ))}
@@ -354,9 +354,9 @@ export function PropertyPromotionTab({
         </DialogContent>
       </Dialog>
 
-      <div className="panel min-w-0 max-w-full space-y-5 p-4 sm:p-5">
+      <div className="min-w-0 max-w-full space-y-5 rounded-[14px] border border-border bg-card p-4 sm:p-5">
         <div>
-          <h3 className="font-medium" data-tour="social-post">Postare pe rețele sociale</h3>
+          <h3 className="text-base font-bold" data-tour="social-post">Postare pe rețele sociale</h3>
           <p className="text-sm text-muted-foreground">
             Textul și pozele se pregătesc aici; le copiezi și le postezi tu. Nimic nu se salvează.
           </p>
