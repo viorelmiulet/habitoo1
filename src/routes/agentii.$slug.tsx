@@ -94,7 +94,7 @@ function AgencyProfilePage() {
   const { agency, agents } = Route.useLoaderData();
   return (
     <PublicLayout homeHeader footerDescription="Agenții imobiliare care lucrează cu Habitoo CRM.">
-      <section className="mk-hero-bg border-b border-border">
+      <section className="mk-page-hero border-b">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
           <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
             <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-background p-2 sm:size-24">

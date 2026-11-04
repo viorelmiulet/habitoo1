@@ -19,7 +19,7 @@ export function LegalPage({
 }) {
   return (
     <PublicLayout>
-      <section className="border-b border-border bg-card">
+      <section className="mk-page-hero border-b">
         <Container className="py-14 sm:py-16">
           <Eyebrow>{eyebrow}</Eyebrow>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">
@@ -51,7 +51,7 @@ export function LegalPage({
             </ol>
           </div>
         </nav>
-        <article className="max-w-[68ch] lg:col-span-9">
+        <article className="min-w-0 max-w-[760px] lg:col-span-9">
           <div className="space-y-12">
             {sections.map((s, i) => (
               <section key={s.title} id={`sectiune-${i + 1}`} className="scroll-mt-28">

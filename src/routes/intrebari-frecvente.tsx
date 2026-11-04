@@ -132,7 +132,7 @@ export const Route = createFileRoute("/intrebari-frecvente")({
 function FaqPage() {
   return (
     <PublicLayout footerDescription="CRM imobiliar pentru agențiile din România, într-o singură platformă.">
-      <section className="mk-hero-bg border-b border-border">
+      <section className="mk-page-hero border-b">
         <Container className="py-16 sm:py-20 lg:py-24">
           <SectionHeading
             as="h1"

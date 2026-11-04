@@ -41,7 +41,7 @@ export const Route = createFileRoute("/integrari")({
 function IntegrationsPage() {
   return (
     <PublicLayout footerDescription="CRM imobiliar pentru agențiile din România, într-o singură platformă.">
-      <section className="overflow-hidden border-b border-border bg-background">
+      <section className="mk-page-hero overflow-hidden border-b">
         <Container className="pt-12 pb-8 sm:pt-16 sm:pb-12">
           <SectionHeading as="h1" title="Integrări cu portalurile imobiliare" text={DESCRIPTION} />
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">

@@ -54,7 +54,7 @@ function OwnerListingsPage() {
   const statisticsText = ownerStatisticsText(data.statistics, data.observedAt);
   return (
     <PublicLayout>
-      <section className="border-b border-border bg-muted/40">
+      <section className="mk-page-hero border-b">
         <Container className="py-14 sm:py-20">
           <SectionHeading as="h1" eyebrow="Anunțuri de la proprietari" title="Anunțurile de la proprietari din cinci portaluri, într-o singură listă" text="Habitoo adună automat anunțurile publicate de proprietari pe portalurile imobiliare și le pune într-o listă comună, filtrabilă pe județ, oraș și cartier. Agentul vede ce e nou în zona lui fără să deschidă cinci site-uri." />
         </Container>

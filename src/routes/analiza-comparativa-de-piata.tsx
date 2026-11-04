@@ -57,7 +57,7 @@ function PublicAcpPage() {
   const weightsText = scoring.components.map(({ label, weight }) => `${label.toLocaleLowerCase("ro-RO")} ${weight}%`).join(", ");
   return (
     <PublicLayout>
-      <section className="border-b border-border bg-muted/40">
+      <section className="mk-page-hero border-b">
         <Container className="py-14 sm:py-20">
           <PublicPhotoHeading photo={publicPagePhotos.acp}><SectionHeading align="left" as="h1" eyebrow="Analiză comparativă de piață" title="Analiza comparativă de piață, din oferte reale, cu fiecare ajustare explicată" text="ACP-ul din Habitoo estimează prețul unei proprietăți din portofoliu comparând-o cu oferte similare: proprietățile agenției, ofertele partenerilor din colaborare și ofertele de piață adunate de pe portaluri. Calculul nu folosește AI: ponderi fixe, ajustări explicate și statistică robustă, deci aceeași analiză dă același rezultat de fiecare dată." /></PublicPhotoHeading>
         </Container>
