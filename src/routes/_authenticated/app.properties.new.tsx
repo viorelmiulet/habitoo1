@@ -193,6 +193,7 @@ function NewPropertyPage() {
 
       <form
         className="space-y-4"
+        {...formInvalidHintHandlers}
         onSubmit={(e) => {
           e.preventDefault();
           create.mutate();
@@ -314,15 +315,16 @@ function NewPropertyPage() {
         </FormSection>
         </PropertyFormLayout>
 
-        <div className="flex justify-end gap-2">
+        <div className={FORM_ACTIONS_BAR}>
           <Button
             type="button"
             variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => navigate({ to: "/app/properties" })}
           >
             Renunță
           </Button>
-          <Button data-tour="new-save" type="submit" disabled={create.isPending}>
+          <Button data-tour="new-save" type="submit" className="w-full sm:w-auto" disabled={create.isPending}>
             {create.isPending ? "Se salvează…" : "Salvează proprietatea"}
           </Button>
         </div>

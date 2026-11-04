@@ -32,9 +32,9 @@ export function PropertyTitleDescriptionPanel({ title, description, onTitle, onD
     <FormSection title="Descriere și Titlu">
       {stacked ? <div className="min-w-0 space-y-2">
         <label htmlFor="title" className="text-[15px]">Titlu anunț<RequiredMark /> <span className="text-muted-foreground">({title.length}/{TITLE_COUNTER_MAX})</span></label>
-        <Input id="title" required={titleRequired} className="h-9 text-[15px]" value={title} placeholder={titlePlaceholder} onChange={(e) => onTitle(e.target.value)} />
+        <Input id="title" required={titleRequired} className="h-10 rounded-[10px] text-[15px]" value={title} placeholder={titlePlaceholder} onChange={(e) => onTitle(e.target.value)} />
       </div> : <FormRow htmlFor="title" label={<>Titlu anunț<RequiredMark /> <span className="text-muted-foreground">({title.length}/{TITLE_COUNTER_MAX})</span></>}>
-        <Input id="title" required={titleRequired} className="h-9 text-[15px]" value={title} placeholder={titlePlaceholder} onChange={(e) => onTitle(e.target.value)} />
+        <Input id="title" required={titleRequired} className="h-10 rounded-[10px] text-[15px]" value={title} placeholder={titlePlaceholder} onChange={(e) => onTitle(e.target.value)} />
       </FormRow>}
       <div className={stacked ? "grid min-w-0 grid-cols-1 gap-2" : "grid min-w-0 grid-cols-1 gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"}>
         <label htmlFor="description" className={stacked ? "text-[15px]" : "pt-2 text-[15px] sm:text-right"}>Descriere <span className="text-muted-foreground">({description.length}/{DESCRIPTION_COUNTER_MAX})</span></label>

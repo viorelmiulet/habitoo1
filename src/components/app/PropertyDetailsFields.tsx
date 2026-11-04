@@ -40,7 +40,7 @@ type Props = {
 };
 
 const NONE = "__none__";
-const CONTROL = "h-9 text-[15px]";
+const CONTROL = "h-10 rounded-[10px] text-[15px]";
 
 /**
  * IMPORTANT: câmpurile sunt componente definite la nivel de modul, NU în corpul

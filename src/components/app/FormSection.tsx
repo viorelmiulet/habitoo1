@@ -19,7 +19,7 @@ export function FormSection({
   actions?: ReactNode;
 }) {
   return (
-    <section className={cn("min-w-0 overflow-hidden rounded-[14px] border border-border bg-card text-[15px] [&_input]:rounded-[10px] [&_textarea]:rounded-[10px] [&_button[role=combobox]]:rounded-[10px]", className)}>
+    <section className={cn("min-w-0 overflow-hidden rounded-[14px] border border-border bg-card text-[15px] [&_input]:rounded-[10px] [&_textarea]:rounded-[10px] [&_button[role=combobox]]:rounded-[10px] [&_input:not([type=checkbox]):not([type=radio])]:h-10 [&_input]:text-[15px] [&_button[role=combobox]]:h-10 [&_button[role=combobox]]:text-[15px]", className)}>
       <header className="flex min-w-0 items-center justify-between gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
         <div className="min-w-0">
           <h2 className="font-sans text-base font-bold text-foreground">{title}</h2>
@@ -33,10 +33,13 @@ export function FormSection({
 }
 
 /** Rând compact: eticheta în stânga (aliniată la dreapta), câmpul în dreapta; pe telefon, una sub alta. */
+/** Bara Salvează / Anulează: pe telefon lipită jos, deasupra navigării de jos, cu fundal card. */
+export const FORM_ACTIONS_BAR = "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end max-sm:sticky max-sm:bottom-[calc(4rem+env(safe-area-inset-bottom))] max-sm:z-20 max-sm:-mx-4 max-sm:border-t max-sm:border-border max-sm:bg-card max-sm:px-4 max-sm:py-3";
+
 export function FormRow({ label, htmlFor, children, labelClassName, compact }: { label: ReactNode; htmlFor?: string; children: ReactNode; labelClassName?: string; /** Etichetă ~140px și câmp de maximum ~240px, pentru valori scurte. */ compact?: boolean }) {
   return (
-    <div className={cn("grid min-h-9 min-w-0 grid-cols-1 items-center gap-x-3 gap-y-1", compact ? "sm:grid-cols-[140px_minmax(0,240px)]" : "sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}>
-      <label htmlFor={htmlFor} className={cn("min-w-0 text-[15px] text-foreground sm:text-right", labelClassName)}>{label}</label>
+    <div className={cn("grid min-h-10 min-w-0 grid-cols-1 items-center gap-x-3 gap-y-1", compact ? "sm:grid-cols-[140px_minmax(0,240px)]" : "sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}>
+      <label htmlFor={htmlFor} className={cn("min-w-0 text-left text-[15px] text-foreground sm:text-right", labelClassName)}>{label}</label>
       <div className="min-w-0">{children}</div>
     </div>
   );

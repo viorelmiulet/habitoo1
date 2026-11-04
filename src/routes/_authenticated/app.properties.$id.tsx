@@ -982,7 +982,7 @@ function PropertyDetailContent() {
         </TabsContent>
 
         <TabsContent value="location" className="space-y-4">
-          {editing ? <form id="property-location-form" className="space-y-4" onSubmit={(e) => {
+          {editing ? <form id="property-location-form" className="space-y-4" {...formInvalidHintHandlers} onSubmit={(e) => {
             e.preventDefault();
             if (!hasTransactionSelection(tx)) {
               toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
@@ -1052,7 +1052,7 @@ function PropertyDetailContent() {
                 </div>
               </FormSection>
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className={FORM_ACTIONS_BAR}>
               <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setEditing(false)}>Anulează</Button>
               <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
@@ -1078,7 +1078,7 @@ function PropertyDetailContent() {
         </TabsContent>
 
         <TabsContent value="description" className="space-y-4">
-          {editing ? <form id="property-description-form" className="space-y-4" onSubmit={(e) => {
+          {editing ? <form id="property-description-form" className="space-y-4" {...formInvalidHintHandlers} onSubmit={(e) => {
             e.preventDefault();
             if (!hasTransactionSelection(tx)) {
               toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
@@ -1094,7 +1094,7 @@ function PropertyDetailContent() {
                 onDescription={(v) => setDraft((d) => ({ ...d, description: v }))}
               />
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className={FORM_ACTIONS_BAR}>
               <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setEditing(false)}>Anulează</Button>
               <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
@@ -1105,7 +1105,7 @@ function PropertyDetailContent() {
         </TabsContent>
 
         <TabsContent value="price" className="space-y-4">
-          {editing ? <form id="property-price-form" className="space-y-4" onSubmit={(e) => {
+          {editing ? <form id="property-price-form" className="space-y-4" {...formInvalidHintHandlers} onSubmit={(e) => {
             e.preventDefault();
             if (!hasTransactionSelection(tx)) {
               toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
@@ -1122,7 +1122,7 @@ function PropertyDetailContent() {
               </FormSection>
               </div>
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className={FORM_ACTIONS_BAR}>
               <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setEditing(false)}>Anulează</Button>
               <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
@@ -1145,6 +1145,7 @@ function PropertyDetailContent() {
             <form
               id="property-details-form"
               className="space-y-4"
+              {...formInvalidHintHandlers}
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!hasTransactionSelection(tx)) {
@@ -1160,7 +1161,7 @@ function PropertyDetailContent() {
                   <div className="space-y-1.5 text-[15px]">
                     <FormRow htmlFor="edit-status" label="Status">
                       <Select value={property.status} onValueChange={(key) => isWithdrawStatus(key) ? setPendingStatus(key as "sold" | "rented" | "archived") : changeStatus.mutate(key)}>
-                        <SelectTrigger id="edit-status" className="h-9 text-[15px]"><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="edit-status" className="h-10 rounded-[10px] text-[15px]"><SelectValue /></SelectTrigger>
                         <SelectContent>{Object.entries(propertyStatusLabels).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent>
                       </Select>
                     </FormRow>
@@ -1168,10 +1169,10 @@ function PropertyDetailContent() {
                       name={responsibleAgent?.full_name} candidates={orgMembers} onChange={setDraftAgent} />
                   </div>
                   <dl className="space-y-1.5 border-t border-border pt-3 text-[15px]">
-                    {salePrice ? <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Preț vânzare</dt><dd>{formatMoney(salePrice, property.sale_currency ?? property.currency ?? "EUR")}{pricePerSqm ? ` sau ${formatNumber(pricePerSqm)} €/m²` : ""}</dd></div> : null}
-                    {rentPrice ? <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Preț închiriere</dt><dd>{formatMoney(rentPrice, property.rent_currency ?? property.currency ?? "EUR")}</dd></div> : null}
-                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Adăugată la</dt><dd>{formatDateTime(property.created_at)}</dd></div>
-                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3"><dt className="text-right">Modificată la</dt><dd>{formatDateTime(property.updated_at)}</dd></div>
+                    {salePrice ? <div className="grid grid-cols-1 gap-x-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"><dt className="text-[13px] text-muted-foreground sm:text-right sm:text-[15px] sm:text-foreground">Preț vânzare</dt><dd>{formatMoney(salePrice, property.sale_currency ?? property.currency ?? "EUR")}{pricePerSqm ? ` sau ${formatNumber(pricePerSqm)} €/m²` : ""}</dd></div> : null}
+                    {rentPrice ? <div className="grid grid-cols-1 gap-x-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"><dt className="text-[13px] text-muted-foreground sm:text-right sm:text-[15px] sm:text-foreground">Preț închiriere</dt><dd>{formatMoney(rentPrice, property.rent_currency ?? property.currency ?? "EUR")}</dd></div> : null}
+                    <div className="grid grid-cols-1 gap-x-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"><dt className="text-[13px] text-muted-foreground sm:text-right sm:text-[15px] sm:text-foreground">Adăugată la</dt><dd>{formatDateTime(property.created_at)}</dd></div>
+                    <div className="grid grid-cols-1 gap-x-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"><dt className="text-[13px] text-muted-foreground sm:text-right sm:text-[15px] sm:text-foreground">Modificată la</dt><dd>{formatDateTime(property.updated_at)}</dd></div>
                   </dl>
                 </>}
                 details={<div data-tour="edit-details">
@@ -1200,11 +1201,11 @@ function PropertyDetailContent() {
               </FormSection>
               </PropertyFormLayout>
 
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
+              <div className={FORM_ACTIONS_BAR}>
+                <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setEditing(false)}>
                   Anulează
                 </Button>
-                <Button type="submit" disabled={save.isPending} data-tour="edit-save">
+                <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">
                   Salvează
                 </Button>
               </div>
