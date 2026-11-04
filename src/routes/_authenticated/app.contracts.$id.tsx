@@ -179,7 +179,7 @@ function ContractDetailPage() {
           </StatusBadge>
         }
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap [&>*]:h-11 [&>*]:w-full sm:[&>*]:h-10 sm:[&>*]:w-auto">
             <Button variant="outline" asChild>
               <Link to="/app/comisioane" search={{ nou: true, contract: id }}>Adaugă comision</Link>
             </Button>
@@ -308,7 +308,7 @@ function ContractDetailPage() {
           >
             <ul data-tour="contract-parties" className="space-y-3">
               {parties.map((p) => (
-                <li key={p.id} className="rounded-lg border border-border p-3">
+                <li key={p.id} className="rounded-[14px] border border-border bg-card p-4">
                   <div className="flex items-start gap-2">
                     {!p.signedAt && contract.status !== "cancelled" ? (
                       <Checkbox
@@ -323,8 +323,8 @@ function ContractDetailPage() {
                       />
                     ) : null}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{p.fullName}</p>
-                      <p className="text-xs text-muted-foreground">{p.roleLabel}</p>
+                      <p className="truncate text-sm font-semibold">{p.fullName}</p>
+                      <p className="text-[13px] text-muted-foreground">{p.roleLabel}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {p.cnp ? `CNP ${p.cnp}` : "CNP nespecificat"}
                         {p.idSeries || p.idNumber
@@ -356,7 +356,7 @@ function ContractDetailPage() {
             {unsigned.length > 0 && contract.status !== "cancelled" ? (
               <Button
                 data-tour="contract-send"
-                className="mt-4 w-full"
+                className="mt-4 h-11 w-full sm:h-10"
                 onClick={() => send.mutate()}
                 disabled={selected.length === 0 || send.isPending}
               >
@@ -374,16 +374,17 @@ function ContractDetailPage() {
             <SectionCard title="Linkuri de semnare" description="Valabile 7 zile, o singură dată.">
               <ul className="space-y-2">
                 {links.map((l) => (
-                  <li key={l.url} className="space-y-1 rounded-lg border border-border p-3">
-                    <p className="text-sm font-medium">{l.fullName}</p>
+                  <li key={l.url} className="space-y-1 rounded-[14px] border border-border bg-card p-4">
+                    <p className="text-sm font-semibold">{l.fullName}</p>
                     <p className="text-xs text-muted-foreground">
                       {l.email ? `Trimis pe email la ${l.email}` : "Fără email — trimite manual"}
                     </p>
                     <div className="flex items-center gap-2">
-                      <Input readOnly value={l.url} className="h-8 text-xs" />
+                      <Input readOnly value={l.url} className="h-10 min-w-0 rounded-[10px] text-xs" />
                       <Button
                         size="sm"
                         variant="ghost"
+                        className="size-11 shrink-0 sm:size-10"
                         aria-label="Copiază linkul"
                         onClick={() => {
                           navigator.clipboard.writeText(l.url);
@@ -407,7 +408,7 @@ function ContractDetailPage() {
             ) : (
               <ul className="space-y-2">
                 {documents.map((d) => (
-                  <li key={d.id} className="flex items-center gap-2 text-sm">
+                  <li key={d.id} className="flex min-h-11 items-center gap-2 text-sm">
                     <FileDown className="size-4 shrink-0 text-muted-foreground" />
                     <button
                       type="button"
