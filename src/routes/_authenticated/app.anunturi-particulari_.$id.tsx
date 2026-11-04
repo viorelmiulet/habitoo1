@@ -131,13 +131,13 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
         description={place || undefined}
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="space-y-6">
           <Gallery images={listing.images} title={listing.title?.trim() || "Fotografie anunț"} />
           {listing.description ? (
-            <section className="rounded-lg border border-border bg-card p-4">
-              <h2 className="mb-2 font-semibold">Descriere</h2>
-              <p className="whitespace-pre-line break-words text-sm text-muted-foreground">
+            <section className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+              <h2 className="mb-2 text-base font-bold">Descriere</h2>
+              <p className="whitespace-pre-line break-words text-[15px] leading-relaxed text-muted-foreground">
                 {listing.description}
               </p>
             </section>
@@ -145,15 +145,15 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
         </div>
 
         <div className="space-y-6">
-          <section className="space-y-3 rounded-lg border border-border bg-card p-4">
+          <section className="space-y-3 rounded-[14px] border border-border bg-card p-4 sm:p-5">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">{SOURCE_LABELS[listing.source] ?? listing.source}</Badge>
+              <Badge variant="outline">{SOURCE_LABELS[listing.source] ?? listing.source}</Badge>
               {transaction ? (
-                <span className="text-xs text-muted-foreground">{transaction}</span>
+                <span className="text-[13px] text-muted-foreground">{transaction}</span>
               ) : null}
             </div>
             {listing.price !== null ? (
-              <p className="text-2xl font-bold text-primary">
+              <p className="text-2xl font-extrabold tabular-nums text-foreground">
                 {money(listing.price, listing.currency)}
               </p>
             ) : (
@@ -164,8 +164,8 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
                 .filter(([, v]) => v)
                 .map(([label, value]) => (
                   <div key={label}>
-                    <dt className="text-muted-foreground">{label}</dt>
-                    <dd className="font-medium">{value}</dd>
+                    <dt className="text-[13px] text-muted-foreground">{label}</dt>
+                    <dd className="break-words font-semibold">{value}</dd>
                   </div>
                 ))}
             </dl>
@@ -178,14 +178,14 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
             <div className="flex flex-col gap-2 pt-1">
               <ImportListingButton listingId={listing.id} />
               {listing.phone ? (
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" className="h-11 w-full rounded-[10px] sm:h-10">
                   <a data-tour="listing-phone" href={`tel:${listing.phone}`}>
                     <Phone className="size-4" /> {listing.phone}
                   </a>
                 </Button>
               ) : null}
               {listing.url ? (
-                <Button asChild>
+                <Button asChild className="h-auto min-h-11 w-full whitespace-normal sm:min-h-10">
                   <a data-tour="listing-original" href={listing.url} target="_blank" rel="noopener noreferrer">
                     {listing.source === "facebook" ? "Vezi postarea pe Facebook" : "Anunțul original"} <ExternalLink className="size-4" />
                   </a>
@@ -205,7 +205,7 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
   const [index, setIndex] = useState(0);
   if (images.length === 0) {
     return (
-      <div className="flex aspect-[4/3] items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
+      <div className="flex aspect-[4/3] items-center justify-center rounded-[14px] border border-dashed border-border text-sm text-muted-foreground">
         Anunțul nu are fotografii.
       </div>
     );
@@ -213,7 +213,7 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
   const current = Math.min(index, images.length - 1);
   return (
     <section className="space-y-2">
-      <div className="relative overflow-hidden rounded-lg border border-border bg-muted">
+      <div className="relative overflow-hidden rounded-[14px] border border-border bg-muted">
         <img referrerPolicy="no-referrer"
           src={images[current]}
           alt={`${title} — poza ${current + 1}`}
@@ -225,7 +225,7 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
               type="button"
               variant="secondary"
               size="icon"
-              className="absolute left-2 top-1/2 -translate-y-1/2"
+              className="absolute left-2 top-1/2 size-11 -translate-y-1/2 sm:size-10"
               aria-label="Poza anterioară"
               disabled={current === 0}
               onClick={() => setIndex(current - 1)}
@@ -236,7 +236,7 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
               type="button"
               variant="secondary"
               size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2"
+              className="absolute right-2 top-1/2 size-11 -translate-y-1/2 sm:size-10"
               data-tour="listing-photo-next" aria-label="Poza următoare"
               disabled={current >= images.length - 1}
               onClick={() => setIndex(current + 1)}
@@ -258,8 +258,8 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
               onClick={() => setIndex(i)}
               aria-label={`Poza ${i + 1}`}
               aria-current={i === current}
-              className={`shrink-0 overflow-hidden rounded-md border-2 ${
-                i === current ? "border-primary" : "border-transparent"
+              className={`shrink-0 overflow-hidden rounded-[10px] border-2 ${
+                i === current ? "border-gold" : "border-transparent"
               }`}
             >
               <img referrerPolicy="no-referrer" src={src} alt="" loading="lazy" className="h-16 w-20 object-cover" />
@@ -300,12 +300,12 @@ function Comments({ listingId }: { listingId: string }) {
   };
 
   return (
-    <section data-tour="listing-comments" className="space-y-3 rounded-lg border border-border bg-card p-4">
-      <h2 className="flex items-center gap-2 font-semibold">
+    <section data-tour="listing-comments" className="space-y-3 rounded-[14px] border border-border bg-card p-4 sm:p-5">
+      <h2 className="flex items-center gap-2 text-base font-bold">
         <MessageSquare className="size-4" />
         Comentarii{comments.data?.length ? ` (${comments.data.length})` : ""}
       </h2>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-[13px] text-muted-foreground">
         Comentariile sunt vizibile tuturor agenților care deschid acest anunț, din orice agenție.
       </p>
 
@@ -314,7 +314,7 @@ function Comments({ listingId }: { listingId: string }) {
       ) : comments.data?.length ? (
         <ul className="space-y-3">
           {comments.data.map((c) => (
-            <li key={c.id} className="rounded-md border border-border bg-background p-3">
+            <li key={c.id} className="rounded-[10px] border border-border bg-background p-3">
               <div className="flex flex-wrap items-baseline gap-x-2 text-xs text-muted-foreground">
                 <span className="font-medium text-foreground">{c.authorName}</span>
                 {c.orgName ? <span>{c.orgName}</span> : null}
@@ -342,13 +342,13 @@ function Comments({ listingId }: { listingId: string }) {
           rows={3}
           data-tour="listing-comment-input" aria-label="Comentariu nou"
         />
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs text-muted-foreground">
             {body.length}/{LISTING_COMMENT_MAX_LENGTH}
           </span>
           <Button
             type="button"
-            size="sm"
+            className="h-11 w-full sm:h-9 sm:w-auto"
             disabled={!body.trim() || add.isPending}
             onClick={submit}
           >
