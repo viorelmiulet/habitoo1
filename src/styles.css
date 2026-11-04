@@ -590,7 +590,6 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
   color: var(--color-navy-foreground);
   border-color: color-mix(in oklab, var(--color-navy-foreground) 15%, transparent);
 }
-@layer components {
   .mk-page-hero h1:not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) { color: var(--color-on-navy); font-size: 32px; line-height: 1.12; }
   @media (min-width: 1024px) { .mk-page-hero h1:not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) { font-size: 44px; } }
   .mk-page-hero :where(.text-navy, .text-foreground, h2, h3):not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel, .bg-gold, .bg-gold-tint) *, .bg-gold-tint) { color: var(--color-on-navy); }
@@ -607,4 +606,3 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
     background-color: transparent;
     color: var(--color-on-navy);
   }
-}
