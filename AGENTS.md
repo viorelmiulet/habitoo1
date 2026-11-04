@@ -66,4 +66,3 @@
 - `market_listings` retention runs only in `market_listings_lifecycle()` (nightly cron): unseen 14 days → inactive with `disappeared_at`, `last_seen_at` older than 365 days → deleted; ingestion never deletes and ignores observations older than the stored `last_seen_at`. ACP v5 weights inactive offers by age. Why: one place for retention, idempotent historical imports.
 - ACP PDF reports render only the version snapshot (extras in `snapshot.report`); photos/OSM tiles fall back to placeholders; appendix opt-in; demand counts (`report/demand*.ts`) are computed at generation, partner-only numbers, frozen. Why: reproducible, private.
 
-- Property form validation hints render through HintedForm context read by Input/Textarea by id; no direct DOM insertion. Why: avoid React reconciliation errors.
