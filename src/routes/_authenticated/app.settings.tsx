@@ -102,10 +102,10 @@ function SettingsCard({
   className?: string;
 }) {
   return (
-    <section className={cn("rounded-[22px] border border-border/70 bg-card p-5 shadow-soft sm:p-6", className)}>
-      <header className="mb-5 space-y-1">
-        <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+    <section className={cn("min-w-0 rounded-[14px] border border-border bg-card p-4 sm:p-5", className)}>
+      <header className="mb-4 space-y-1 sm:mb-5">
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
+        {description ? <p className="text-[13px] text-muted-foreground">{description}</p> : null}
       </header>
       {children}
     </section>
@@ -127,7 +127,7 @@ function SettingsField({
     <div className="min-w-0 space-y-2">
       <Label htmlFor={id}>{label}</Label>
       {children}
-      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      {hint ? <p className="text-[13px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }
@@ -388,19 +388,19 @@ function SettingsPage() {
         </nav>
 
         {/* Telefon/tabletă: rând de file derulabil, lipit sus */}
-        <div className="sticky top-0 z-20 -mx-4 mb-5 bg-background/95 py-2 backdrop-blur lg:hidden">
+        <div className="sticky top-14 z-20 -mx-4 mb-5 bg-background sm:top-16 lg:hidden">
           <div className="relative min-w-0 max-w-full overflow-hidden after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-6 after:bg-gradient-to-l after:from-background after:to-transparent before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:z-10 before:w-6 before:bg-gradient-to-r before:from-background before:to-transparent">
             <TabsList
               ref={tabsListRef}
               data-settings-tabs
-              className="scrollbar-hidden flex h-auto w-full min-w-0 justify-start gap-1 overflow-x-auto overflow-y-hidden border-0 bg-transparent px-4 sm:px-1"
+              className="scrollbar-hidden flex h-auto w-full min-w-0 justify-start overflow-x-auto overflow-y-hidden px-4 sm:px-1"
             >
               {visibleTabs.map((value) => {
                 const Icon = TAB_ICONS[value];
                 return (
                   <TabsTrigger
                     key={value}
-                    className="min-h-11 shrink-0 gap-2 rounded-full border border-border/70 bg-card px-4 data-[state=active]:border-gold/50 data-[state=active]:bg-gold/15"
+                    className="min-h-11 shrink-0 gap-2"
                     value={value}
                     data-tour={`settings-tab-${value}`}
                   >
@@ -432,7 +432,7 @@ function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="access" className="mt-0">
-            <div className="rounded-[22px] border border-border/70 bg-card p-1 shadow-sm sm:p-2">
+            <div className="min-w-0 rounded-[14px] border border-border bg-card p-1 sm:p-2">
               <AccountAccessCard highlightedRequestId={request} />
             </div>
           </TabsContent>
@@ -493,12 +493,12 @@ function SettingsPage() {
 
                 <SettingsCard title="Informații publice" description="Colaborarea cu alte agenții, republicarea și planul curent.">
                   <div className="space-y-4">
-                    <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4">
+                    <div className="flex min-h-[52px] items-start justify-between gap-4 rounded-[12px] border border-border p-4">
                       <div className="min-w-0 space-y-1">
-                        <Label htmlFor="collab_enabled" className="text-sm">
+                        <Label htmlFor="collab_enabled" className="text-sm font-semibold">
                           Participă la Colaborare Habitoo
                         </Label>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Când este activ, proprietățile tale marcate „Disponibilă pentru colaborare” sunt
                           vizibile celorlalte agenții Habitoo, iar tu vezi ofertele lor. Dezactivarea te
                           scoate complet din rețea, în ambele sensuri.
@@ -542,7 +542,7 @@ function SettingsPage() {
                         initial={user.organization?.collaboration_auto_enabled !== false}
                       />
                     ) : null}
-                    <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4">
+                    <div className="flex min-h-[52px] items-start justify-between gap-4 rounded-[12px] border border-border p-4">
                       <div className="min-w-0 space-y-1">
                         <Label htmlFor="storia_auto_republish" className="text-sm">
                           Prelungire automată Storia (implicit pentru anunțurile fără alegere proprie)
@@ -564,7 +564,7 @@ function SettingsPage() {
                         onCheckedChange={(v) => setOrgForm((f) => ({ ...f, storia_auto_republish: v }))}
                       />
                     </div>
-                    <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4">
+                    <div className="flex min-h-[52px] items-start justify-between gap-4 rounded-[12px] border border-border p-4">
                       <div className="min-w-0 space-y-1">
                         <Label htmlFor="public_profile_enabled" className="text-sm">
                           Profil public pe site
@@ -635,7 +635,7 @@ function SettingsPage() {
                 {user?.isAdmin ? (
                   <div
                     data-settings-savebar
-                    className="sticky bottom-3 z-10 flex flex-col gap-2 rounded-[20px] border border-border/70 bg-card/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+                    className="sticky bottom-3 z-10 flex flex-col gap-2 rounded-[14px] border border-border bg-card p-3 shadow-lg sm:flex-row sm:items-center sm:justify-between"
                   >
                     <p className="px-1 text-sm text-muted-foreground" aria-live="polite">
                       {saveOrg.isPending
@@ -646,11 +646,11 @@ function SettingsPage() {
                             ? "Toate modificările sunt salvate."
                             : "Nicio modificare."}
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row">
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-11 flex-1 sm:flex-none"
+                        className="h-11 w-full sm:h-10 sm:w-auto"
                         disabled={!orgDirty || saveOrg.isPending}
                         onClick={() => setOrgForm(buildOrgForm())}
                       >
@@ -658,7 +658,7 @@ function SettingsPage() {
                       </Button>
                       <Button
                         type="submit"
-                        className="h-11 flex-1 bg-gold text-gold-foreground hover:bg-gold/90 sm:flex-none"
+                        className="h-11 w-full bg-gold text-gold-foreground hover:bg-gold/90 sm:h-10 sm:w-auto"
                         disabled={!orgDirty || saveOrg.isPending}
                       >
                         Salvează modificările
