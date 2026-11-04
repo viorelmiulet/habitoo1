@@ -127,7 +127,7 @@ function TeamPage() {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div data-tour="team-seats" className="panel p-4 sm:col-span-2">
+        <div data-tour="team-seats" className="rounded-[14px] border border-border bg-card p-4 sm:col-span-2 sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs text-muted-foreground">{data ? `Plan ${data.planLabel}` : "Plan"}</p>
@@ -167,12 +167,12 @@ function TeamPage() {
       </div>
 
       {limitReached && data?.upgradeHint ? (
-        <div className="panel border-warning/40 bg-warning/10 p-4 text-sm">{data.upgradeHint}</div>
+        <div className="rounded-[12px] border border-gold/40 bg-gold-tint p-4 text-sm">{data.upgradeHint}</div>
       ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2" data-tour="team-filters" role="group" aria-label="Filtrează agenții">
-          <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
+          <Button variant="link" className="h-11 px-1 text-sm font-semibold text-gold-dark sm:h-9" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
           {FILTERS.map((f) => (
             <Button
               key={f.key}
@@ -214,26 +214,26 @@ function TeamPage() {
           Niciun agent nu corespunde filtrului.
         </div>
       ) : (
-        <ul data-tour="team-members" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul data-tour="team-members" className="divide-y divide-border overflow-hidden rounded-[14px] border border-border bg-card">
           {visible.map((m) => (
-            <li key={m.id} className={cn("panel flex flex-col gap-3 p-4", !m.is_active && "opacity-70")}>
-              <div className="flex items-start gap-3">
-                <UserAvatar name={m.full_name} path={m.avatar_url} className="size-12 text-sm" />
+            <li key={m.id} className={cn("flex min-h-[52px] min-w-0 flex-col gap-2 px-4 py-3 sm:px-5", !m.is_active && "opacity-70")}>
+              <div className="flex min-w-0 items-center gap-3">
+                <UserAvatar name={m.full_name} path={m.avatar_url} className="size-10 shrink-0 text-sm" />
                 <div className="min-w-0 flex-1">
                   <Link
                     to="/app/team/$id"
                     params={{ id: m.id }}
-                    className="block truncate font-semibold hover:text-primary"
+                    className="block truncate text-[15px] font-bold hover:text-gold-dark"
                   >
                     {m.full_name}
                   </Link>
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="truncate text-[13px] text-muted-foreground">
                     {m.job_title || m.roles.map((r) => roleLabels[r] ?? r).join(" · ")}
                   </p>
                 </div>
                 <TeamMemberActions member={m} members={members} currentUserId={user?.userId} />
               </div>
-              <div className="space-y-1 text-sm">
+              <div className="flex min-w-0 flex-col gap-x-4 gap-y-1 text-[13px] sm:flex-row sm:pl-[52px]">
                 <p className="flex min-w-0 items-center gap-2 text-muted-foreground">
                   <Mail className="size-3.5 shrink-0" />
                   <span className="truncate">{m.email ?? "—"}</span>
@@ -243,7 +243,7 @@ function TeamPage() {
                   {m.phone || "—"}
                 </p>
               </div>
-              <div className="mt-auto flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 sm:pl-[52px]">
                 {m.roles.map((r) => (
                   <StatusBadge key={r} tone="primary">
                     {roleLabels[r] ?? r}
@@ -326,9 +326,9 @@ function TeamPage() {
 
 function Stat({ label, value, warn }: { label: string; value: number | null; warn?: boolean }) {
   return (
-    <div className="panel p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={cn("mt-1 text-lg font-semibold", warn && value ? "text-warning-foreground" : "")}>
+    <div className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+      <p className="text-[13px] text-muted-foreground">{label}</p>
+      <p className={cn("mt-1 text-2xl font-bold tabular-nums", warn && value ? "text-warning-foreground" : "")}>
         {value ?? "—"}
       </p>
     </div>

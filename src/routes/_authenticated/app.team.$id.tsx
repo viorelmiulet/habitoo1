@@ -98,7 +98,7 @@ function AgentDetailPage() {
         <ArrowLeft className="size-4" /> Agenți
       </Link>
 
-      <section data-tour="team-profile" className="panel flex flex-col gap-5 p-5 md:flex-row md:items-center">
+      <section data-tour="team-profile" className="flex min-w-0 flex-col gap-5 rounded-[14px] border border-border bg-card p-4 sm:p-5 md:flex-row md:items-center">
         <UserAvatar name={member.full_name} path={member.avatar_url} className="size-20 text-xl" />
         <div className="min-w-0 flex-1 space-y-2">
           <div>
@@ -143,14 +143,14 @@ function AgentDetailPage() {
         <Stat label="Total portofoliu" value={props.isLoading ? null : list.length} />
       </div>
 
-      <section data-tour="team-portfolio" className="panel overflow-hidden">
-        <div className="border-b border-border px-5 py-3">
-          <h2 className="text-sm font-semibold">Portofoliu</h2>
+      <section data-tour="team-portfolio" className="overflow-hidden rounded-[14px] border border-border bg-card">
+        <div className="border-b border-border px-4 py-3 sm:px-5">
+          <h2 className="text-base font-bold">Portofoliu</h2>
         </div>
         {props.isLoading ? (
           <p className="p-5 text-sm text-muted-foreground">Se încarcă proprietățile…</p>
         ) : props.error ? (
-          <p className="p-5 text-sm text-destructive">{(props.error as Error).message}</p>
+          <p className="m-4 rounded-[12px] bg-danger-tint p-4 text-sm text-destructive">{(props.error as Error).message}</p>
         ) : list.length === 0 ? (
           <p className="p-5 text-sm text-muted-foreground">Agentul nu are proprietăți atribuite.</p>
         ) : (
@@ -165,9 +165,9 @@ function AgentDetailPage() {
 
 function Stat({ label, value }: { label: string; value: number | null }) {
   return (
-    <div className="panel p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold">{value ?? "—"}</p>
+    <div className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+      <p className="text-[13px] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-2xl font-bold tabular-nums">{value ?? "—"}</p>
     </div>
   );
 }
