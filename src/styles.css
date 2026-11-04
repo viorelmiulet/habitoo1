@@ -624,3 +624,5 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
   [data-settings-root] :is(.panel, .rounded-card) :is(.grid-cols-2, .grid-cols-3) { grid-template-columns: minmax(0, 1fr); }
   [data-settings-root] button[type="submit"] { width: 100%; min-height: 44px; }
 }
+[data-settings-root] .panel > header h2 { font-size: 16px; font-weight: 700; text-transform: none; letter-spacing: normal; }
+[data-settings-root] .panel > header h2 + p, [data-settings-root] .panel > header div > h2 + p { font-size: 13px; }
