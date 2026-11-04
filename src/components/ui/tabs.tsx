@@ -10,7 +10,7 @@ const TabsVariantContext = React.createContext<TabsVariant>("underline");
 
 const listVariants: Record<TabsVariant, string> = {
   underline:
-    "scrollbar-hidden flex h-auto max-w-full items-end justify-start gap-1 overflow-x-auto overflow-y-hidden border-b border-border bg-transparent p-0 text-muted-foreground",
+    "scrollbar-hidden flex h-auto items-end justify-start gap-1 overflow-x-auto overflow-y-hidden border-b border-border bg-transparent p-0 text-muted-foreground",
   segmented: "inline-flex h-auto items-center justify-center gap-1 rounded-[10px] bg-muted p-1 text-muted-foreground",
 };
 
