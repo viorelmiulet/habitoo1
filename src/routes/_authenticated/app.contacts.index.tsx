@@ -358,10 +358,10 @@ function ContactsPage() {
         }
       />
 
-      <div data-tour="contacts-filters" className="panel space-y-3 p-4">
+      <div data-tour="contacts-filters" className="space-y-3 rounded-[14px] border border-border bg-card p-4 [&_input]:h-10 [&_input]:rounded-[10px] [&_[role=combobox]]:h-10 [&_[role=combobox]]:rounded-[10px]">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-56 flex-1">
-            <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
+          <div className="relative w-full min-w-0 sm:w-auto sm:min-w-56 sm:flex-1">
+            <Search className="pointer-events-none absolute top-3 left-3 size-4 text-muted-foreground" />
             <Input
               data-tour="contacts-search"
               value={filters.q}
@@ -370,149 +370,65 @@ function ContactsPage() {
               className="pl-9"
             />
           </div>
-          <Select
-            value={filters.type}
-            onValueChange={(v) => setFilters((f) => ({ ...f, type: v }))}
-          >
-            <SelectTrigger data-tour="contacts-type" className="w-44">
-              <SelectValue placeholder="Tip contact" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate tipurile</SelectItem>
-              {Object.entries(contactTypeLabels).map(([k, v]) => (
-                <SelectItem key={k} value={k}>
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.source}
-            onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}
-          >
-            <SelectTrigger aria-label="Filtru sursă" className="w-52">
-              <SelectValue placeholder="Sursă" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate sursele</SelectItem>
-              {sources.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filters.consent} onValueChange={v => setFilters(f => ({ ...f, consent: v }))}>
-            <SelectTrigger aria-label="Filtru consimțământ" className="w-52"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Orice consimțământ</SelectItem><SelectItem value="yes">Cu acord marketing</SelectItem><SelectItem value="no">Fără acord marketing</SelectItem></SelectContent>
-          </Select>
-          <Select
-            value={filters.assigned}
-            onValueChange={(v) => setFilters((f) => ({ ...f, assigned: v }))}
-          >
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="Agent responsabil" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toți agenții</SelectItem>
-              {agents.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.status}
-            onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate statusurile</SelectItem>
-              {Object.entries(statusLabels).map(([k, v]) => (
-                <SelectItem key={k} value={k}>
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filters.tag} onValueChange={(v) => setFilters((f) => ({ ...f, tag: v }))}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Etichetă" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate etichetele</SelectItem>
-              {tags.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isPhone ? null : renderFilterSelects(filters, (patch) => setFilters((f) => ({ ...f, ...patch })), true)}
           <Button
             variant={filters.mine ? "default" : "outline"}
-            size="sm"
+            className="h-10 rounded-[10px]"
             onClick={() => setFilters((f) => ({ ...f, mine: !f.mine }))}
           >
             Doar ale mele
           </Button>
-          <Button variant="ghost" size="sm" onClick={saveFilter}>
+          {isPhone ? (
+            <Button
+              variant="outline"
+              className="h-10 rounded-[10px]"
+              data-tour="contacts-type"
+              onClick={() => { setDraft(filters); setSheetOpen(true); }}
+            >
+              <SlidersHorizontal className="size-4" /> Filtre{activeCount > 0 ? ` (${activeCount})` : ""}
+            </Button>
+          ) : null}
+          <button type="button" onClick={saveFilter} className="inline-flex h-10 items-center gap-1.5 px-2 text-sm font-semibold text-gold-dark hover:underline">
             <Bookmark className="size-4" /> Salvează filtrul
-          </Button>
-          <Button variant="ghost" size="sm" onClick={persisted.reset}>
+          </button>
+          <button type="button" onClick={persisted.reset} className="inline-flex h-10 items-center gap-1.5 px-2 text-sm font-semibold text-gold-dark hover:underline">
             <X className="size-4" /> Resetează
-          </Button>
-          <div className="ml-auto flex items-center gap-1 rounded-lg border border-border p-0.5">
-            <Button
-              variant={view === "list" ? "secondary" : "ghost"}
-              size="icon"
-              className="size-8"
-              aria-label="Vizualizare listă"
-              data-tour="contacts-list-view"
-              aria-pressed={view === "list"}
-              onClick={() => setView("list")}
-            >
-              <List className="size-4" />
-            </Button>
-            <Button
-              variant={view === "card" ? "secondary" : "ghost"}
-              size="icon"
-              className="size-8"
-              aria-label="Vizualizare carduri"
-              data-tour="contacts-cards"
-              aria-pressed={view === "card"}
-              onClick={() => setView("card")}
-            >
-              <LayoutGrid className="size-4" />
-            </Button>
-          </div>
+          </button>
+          <Tabs value={view} onValueChange={(v) => setView(v as "list" | "card")} className="ml-auto">
+            <TabsList variant="segmented">
+              <TabsTrigger value="list" aria-label="Vizualizare listă" data-tour="contacts-list-view">
+                <List className="size-4" />
+              </TabsTrigger>
+              <TabsTrigger value="card" aria-label="Vizualizare carduri" data-tour="contacts-cards">
+                <LayoutGrid className="size-4" />
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         {views.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
             <span className="text-xs text-muted-foreground">Filtre salvate:</span>
             {views.map((v) => (
-              <Button
+              <button
+                type="button"
                 key={v.id}
-                variant="secondary"
-                size="sm"
+                className={cn(badgeVariants({ variant: "outline" }), "min-h-8 cursor-pointer px-3 text-sm font-semibold hover:bg-muted")}
                 onClick={() => setFilters({ ...emptyFilters, ...(v.config as Partial<Filters>) })}
                 onDoubleClick={() => remove.mutate(v.id)}
                 title="Dublu-click pentru a șterge"
               >
                 {v.name}
-              </Button>
+              </button>
             ))}
           </div>
         ) : null}
 
         {selected.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-gold/40 bg-gold-tint px-4 py-3">
             <span className="text-sm font-medium">{selected.length} selectate</span>
             <Select onValueChange={(v) => bulkUpdate.mutate({ assigned_to: v })}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Asignează agent" />
               </SelectTrigger>
               <SelectContent>
@@ -524,7 +440,7 @@ function ContactsPage() {
               </SelectContent>
             </Select>
             <Select onValueChange={(v) => bulkUpdate.mutate({ status: v })}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Schimbă status" />
               </SelectTrigger>
               <SelectContent>
@@ -600,34 +516,37 @@ function ContactsPage() {
                     <Link
                       to="/app/contacts/$id"
                       params={{ id: c.id }}
-                      className="truncate font-medium hover:text-primary"
+                      className="block truncate text-[15px] font-bold hover:text-primary"
                     >
                       {fullName}
                     </Link>
-                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                    <p className="mt-0.5 hidden flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground sm:flex">
                       <span>{contactTypeLabels[c.type] ?? c.type}</span>
                       {c.company || c.source ? <span>· {c.company || c.source}</span> : null}
                       <span>· adăugat {relativeDays(c.created_at)}</span>
                     </p>
+                    <p className="mt-0.5 truncate text-[13px] text-muted-foreground sm:hidden">
+                      {contactTypeLabels[c.type] ?? c.type}{c.phone ? ` · ${c.phone}` : ""}
+                    </p>
                   </div>
-                  <span className="w-40 text-xs text-muted-foreground">{c.phone ?? "—"}</span>
-                  <span className="w-56 truncate text-xs text-muted-foreground">
+                  <span className="hidden w-36 shrink-0 text-[13px] text-muted-foreground sm:block">{c.phone ?? "—"}</span>
+                  <span className="hidden w-52 shrink-0 truncate text-[13px] text-muted-foreground lg:block">
                     {c.email ?? "—"}
                   </span>
-                  <span className="w-24 text-xs text-muted-foreground">
+                  <span className="hidden w-24 shrink-0 text-[13px] text-muted-foreground lg:block">
                     {leads > 0 ? `${leads} ${leads === 1 ? "lead" : "lead-uri"}` : "fără lead-uri"}
                   </span>
-                  <span className="flex w-36 min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="hidden w-36 shrink-0 min-w-0 items-center gap-1.5 text-[13px] text-muted-foreground xl:flex">
                     <UserAvatar name={agentName(c.assigned_to)} className="size-6 text-[10px]" />
                     <span className="truncate">{agentName(c.assigned_to)}</span>
                   </span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex shrink-0 items-center gap-1">
                     {c.phone ? (
                       <>
                         <a
                           href={`tel:${c.phone}`}
                           aria-label={`Sună ${fullName}`}
-                          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          className="inline-flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:size-10"
                         >
                           <Phone className="size-4" aria-hidden />
                         </a>
@@ -636,7 +555,7 @@ function ContactsPage() {
                           target="_blank"
                           rel="noreferrer"
                           aria-label={`WhatsApp ${fullName}`}
-                          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          className="inline-flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:size-10"
                         >
                           <MessageCircle className="size-4" aria-hidden />
                         </a>
@@ -646,13 +565,13 @@ function ContactsPage() {
                       <a
                         href={`mailto:${c.email}`}
                         aria-label={`Email ${fullName}`}
-                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        className="hidden size-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
                       >
                         <Mail className="size-4" aria-hidden />
                       </a>
                     ) : null}
                   </div>
-                  <StatusBadge tone={c.status === "active" ? "success" : "neutral"}>
+                  <StatusBadge className="shrink-0" tone={c.status === "active" ? "success" : "neutral"}>
                     {statusLabels[c.status] ?? c.status}
                   </StatusBadge>
                 </li>
@@ -669,12 +588,12 @@ function ContactsPage() {
                   key={c.id}
                   to="/app/contacts/$id"
                   params={{ id: c.id }}
-                  className="rounded-2xl bg-card p-4 text-sm ring-1 ring-border/60 transition hover:ring-primary/40"
+                  className="rounded-[14px] border border-border bg-card p-4 text-sm transition hover:border-gold/60"
                 >
                   <div className="flex items-center gap-3">
                     <UserAvatar name={fullName} className="size-10 text-sm" />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-medium">{fullName}</span>
+                      <span className="block truncate text-[15px] font-bold">{fullName}</span>
                       <span className="block truncate text-xs text-muted-foreground">
                         {contactTypeLabels[c.type] ?? c.type}
                       </span>
@@ -701,14 +620,14 @@ function ContactsPage() {
       </div>
 
       {total > PAGE_SIZE ? (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between gap-3 text-[13px] text-muted-foreground">
           <span>
             {page * PAGE_SIZE + 1}–{Math.min(total, (page + 1) * PAGE_SIZE)} din {total}
           </span>
           <div className="flex gap-2">
             <Button
               variant="outline"
-              size="sm"
+              className="h-10"
               disabled={page === 0}
               onClick={() => setPage((p) => p - 1)}
             >
@@ -716,7 +635,7 @@ function ContactsPage() {
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              className="h-10"
               disabled={(page + 1) * PAGE_SIZE >= total}
               onClick={() => setPage((p) => p + 1)}
             >
@@ -848,6 +767,26 @@ function ContactsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto [&_[role=combobox]]:h-10 [&_[role=combobox]]:w-full [&_[role=combobox]]:rounded-[10px]">
+          <SheetHeader>
+            <SheetTitle>Filtre</SheetTitle>
+            <SheetDescription>Alege criteriile, apoi apasă „Aplică”.</SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 grid gap-3">
+            {renderFilterSelects(draft, (patch) => setDraft((d) => ({ ...d, ...patch })), false)}
+          </div>
+          <SheetFooter className="mt-4 flex-col-reverse gap-2 sm:flex-row">
+            <Button variant="outline" className="h-11 w-full sm:w-auto" onClick={() => { persisted.reset(); setSheetOpen(false); }}>
+              Resetează
+            </Button>
+            <Button className="h-11 w-full sm:w-auto" onClick={() => { setFilters((f) => ({ ...f, ...draft, q: f.q, mine: f.mine })); setSheetOpen(false); }}>
+              Aplică
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
     </>
