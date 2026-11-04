@@ -27,8 +27,8 @@ export function SuperadminSection({ title, description, children }: { title: str
   return (
     <section className="min-w-0 space-y-3">
       <header>
-        <h2 className="text-lg font-bold text-foreground">{title}</h2>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
+        {description ? <p className="text-[13px] text-muted-foreground">{description}</p> : null}
       </header>
       {children}
     </section>
@@ -39,8 +39,8 @@ export function DetailCard({ title, description, children, className }: { title:
   return (
     <section className={cn("min-w-0 rounded-[14px] border border-border bg-card p-4 sm:p-5", className)}>
       <header className="mb-4">
-        <h2 className="text-lg font-bold text-foreground">{title}</h2>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
+        {description ? <p className="text-[13px] text-muted-foreground">{description}</p> : null}
       </header>
       {children}
     </section>
