@@ -21,7 +21,6 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -252,7 +251,7 @@ function GoalsPage() {
       {isLoading ? (
         <CardGridSkeleton count={6} />
       ) : computed.length === 0 ? (
-        <div className="panel">
+        <div className="panel rounded-[14px]">
           <EmptyState
             icon={Layers}
             title="Niciun obiectiv definit"
@@ -285,7 +284,7 @@ function GoalsPage() {
                   const isCommission = g.metric === "commission";
                   const tone = toneFor(pct);
                   return (
-                    <div key={g.id} className="panel space-y-4 p-5">
+                    <div key={g.id} className="panel space-y-4 rounded-[14px] p-4 sm:p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-start gap-3">
                           <span
@@ -303,7 +302,7 @@ function GoalsPage() {
                             <p className="truncate text-sm font-semibold">
                               {goalMetricLabels[g.metric] ?? g.metric}
                             </p>
-                            <p className="truncate text-xs text-muted-foreground">
+                            <p className="truncate text-[13px] text-muted-foreground">
                               {nameFor(g.user_id)}
                             </p>
                           </div>
@@ -312,7 +311,7 @@ function GoalsPage() {
                       </div>
 
                       <div data-tour="goal-progress" className="space-y-2">
-                        <Progress value={pct} className="h-2" />
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, pct)}><div className={`h-full rounded-full transition-all ${pct >= 100 ? "bg-success" : "bg-gold"}`} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} /></div>
                         <div className="flex items-baseline justify-between text-xs">
                           <span className="font-medium tabular-nums">
                             {isCommission ? formatMoney(realized, "EUR") : realized}

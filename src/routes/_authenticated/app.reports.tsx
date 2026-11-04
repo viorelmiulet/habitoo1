@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import { Building2, Download, Flame, Handshake, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KpiCard } from "@/components/app/KpiCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -202,38 +203,37 @@ function ReportsPage() {
         description="Performanța portofoliului, a lead-urilor și a echipei."
       />
 
-      <div data-tour="reports-filters" className="panel flex flex-wrap items-end gap-3 p-4">
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">Perioadă</p>
-          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodOption)}>
-            <SelectTrigger data-tour="reports-period" className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="month">Luna asta</SelectItem>
-              <SelectItem value="3months">Ultimele 3 luni</SelectItem>
-              <SelectItem value="6months">Ultimele 6 luni</SelectItem>
-              <SelectItem value="year">Anul</SelectItem>
-              <SelectItem value="custom">Interval custom</SelectItem>
-            </SelectContent>
-          </Select>
+      <div data-tour="reports-filters" className="panel flex flex-wrap items-end gap-3 rounded-[14px] p-4 sm:p-5">
+        <div className="w-full min-w-0 space-y-1">
+          <p className="text-[13px] text-muted-foreground">Perioadă</p>
+          <Tabs value={period} onValueChange={(v) => setPeriod(v as PeriodOption)}>
+            <div className="max-w-full overflow-x-auto [scrollbar-width:none]">
+              <TabsList data-tour="reports-period" variant="segmented" className="w-max">
+                <TabsTrigger value="month">Luna asta</TabsTrigger>
+                <TabsTrigger value="3months">Ultimele 3 luni</TabsTrigger>
+                <TabsTrigger value="6months">Ultimele 6 luni</TabsTrigger>
+                <TabsTrigger value="year">Anul</TabsTrigger>
+                <TabsTrigger value="custom">Interval custom</TabsTrigger>
+              </TabsList>
+            </div>
+          </Tabs>
         </div>
         {period === "custom" ? (
           <>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">De la</p>
+              <p className="text-[13px] text-muted-foreground">De la</p>
               <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Până la</p>
+              <p className="text-[13px] text-muted-foreground">Până la</p>
               <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
             </div>
           </>
         ) : null}
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">Agent</p>
+        <div className="w-full space-y-1 sm:w-auto">
+          <p className="text-[13px] text-muted-foreground">Agent</p>
           <Select value={agentId} onValueChange={setAgentId}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="h-11 w-full rounded-[10px] sm:h-10 sm:w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -246,10 +246,10 @@ function ReportsPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">Sursă</p>
+        <div className="w-full space-y-1 sm:w-auto">
+          <p className="text-[13px] text-muted-foreground">Sursă</p>
           <Select value={source} onValueChange={setSource}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="h-11 w-full rounded-[10px] sm:h-10 sm:w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -262,10 +262,10 @@ function ReportsPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">Tip tranzacție</p>
+        <div className="w-full space-y-1 sm:w-auto">
+          <p className="text-[13px] text-muted-foreground">Tip tranzacție</p>
           <Select value={txKind} onValueChange={setTxKind}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="h-11 w-full rounded-[10px] sm:h-10 sm:w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -311,9 +311,9 @@ function ReportsPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <div className="panel">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 data-tour="reports-status" className="text-sm font-semibold">Proprietăți după status</h2>
+        <div className="panel min-w-0 rounded-[14px]">
+          <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-5">
+            <h2 data-tour="reports-status" className="text-base font-bold">Proprietăți după status</h2>
             <Button
               size="sm"
               variant="outline"
@@ -350,9 +350,9 @@ function ReportsPage() {
           </div>
         </div>
 
-        <div className="panel">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 data-tour="reports-source" className="text-sm font-semibold">Lead-uri după sursă</h2>
+        <div className="panel min-w-0 rounded-[14px]">
+          <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-5">
+            <h2 data-tour="reports-source" className="text-base font-bold">Lead-uri după sursă</h2>
             <Button
               size="sm"
               variant="outline"
@@ -389,9 +389,9 @@ function ReportsPage() {
           </div>
         </div>
 
-        <div className="panel">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 data-tour="reports-funnel" className="text-sm font-semibold">Funnel lead-uri pe etape</h2>
+        <div className="panel min-w-0 rounded-[14px]">
+          <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-5">
+            <h2 data-tour="reports-funnel" className="text-base font-bold">Funnel lead-uri pe etape</h2>
             <Button
               size="sm"
               variant="outline"
@@ -408,11 +408,11 @@ function ReportsPage() {
                   stroke="var(--color-border)"
                   horizontal={false}
                 />
-                <XAxis type="number" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis type="number" fontSize={12} tick={{ fill: "var(--color-muted-foreground)" }} tickLine={false} axisLine={false} />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  fontSize={12}
+                  fontSize={12} tick={{ fill: "var(--color-muted-foreground)" }}
                   tickLine={false}
                   axisLine={false}
                   width={90}
@@ -436,9 +436,9 @@ function ReportsPage() {
           </div>
         </div>
 
-        <div className="panel">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 data-tour="reports-activity" className="text-sm font-semibold">Activitate pe săptămâni</h2>
+        <div className="panel min-w-0 rounded-[14px]">
+          <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-5">
+            <h2 data-tour="reports-activity" className="text-base font-bold">Activitate pe săptămâni</h2>
             <Button
               size="sm"
               variant="outline"
@@ -455,8 +455,8 @@ function ReportsPage() {
                   stroke="var(--color-border)"
                   vertical={false}
                 />
-                <XAxis dataKey="week" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis fontSize={12} tickLine={false} axisLine={false} width={28} />
+                <XAxis dataKey="week" fontSize={12} tick={{ fill: "var(--color-muted-foreground)" }} tickLine={false} axisLine={false} />
+                <YAxis fontSize={12} tick={{ fill: "var(--color-muted-foreground)" }} tickLine={false} axisLine={false} width={28} />
                 <ReTooltip
                   contentStyle={{
                     background: "var(--color-popover)",
@@ -500,11 +500,11 @@ function ReportsPage() {
         </div>
       </div>
 
-      <div className="panel overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+      <div className="panel overflow-hidden rounded-[14px]">
+        <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-5">
           <div>
-            <h2 className="text-sm font-semibold">Activitatea agenților</h2>
-            <p className="text-xs text-muted-foreground">
+            <h2 className="text-base font-bold">Activitatea agenților</h2>
+            <p className="text-[13px] text-muted-foreground">
               Comparativ pe perioada și filtrele selectate.
             </p>
           </div>
