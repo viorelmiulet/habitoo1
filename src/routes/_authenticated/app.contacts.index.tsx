@@ -584,7 +584,7 @@ function ContactsPage() {
                       setSelected((s) => (v ? [...s, c.id] : s.filter((id) => id !== c.id)))
                     }
                   />
-                  <UserAvatar name={fullName} className="size-10 text-sm" />
+                  <UserAvatar name={fullName} className="size-9 shrink-0 text-sm sm:size-10" />
                   <div className="min-w-0 flex-1">
                     <Link
                       to="/app/contacts/$id"
@@ -613,7 +613,7 @@ function ContactsPage() {
                     <UserAvatar name={agentName(c.assigned_to)} className="size-6 text-[10px]" />
                     <span className="truncate">{agentName(c.assigned_to)}</span>
                   </span>
-                  <div className="flex shrink-0 items-center gap-1">
+                  <div className="-mx-1 flex shrink-0 items-center sm:mx-0 sm:gap-1">
                     {c.phone ? (
                       <>
                         <a
@@ -644,7 +644,7 @@ function ContactsPage() {
                       </a>
                     ) : null}
                   </div>
-                  <StatusBadge className="shrink-0" tone={c.status === "active" ? "success" : "neutral"}>
+                  <StatusBadge className="shrink-0 px-2 sm:px-2.5" tone={c.status === "active" ? "success" : "neutral"}>
                     {statusLabels[c.status] ?? c.status}
                   </StatusBadge>
                 </li>
