@@ -77,7 +77,7 @@ function UsersPage() {
         }
       />
 
-      <div className="grid gap-3 rounded-[20px] border border-border/70 bg-card p-4 shadow-sm md:grid-cols-4">
+      <div className="grid gap-3 rounded-[14px] border border-border bg-card p-4 md:grid-cols-4">
         <div className="relative md:col-span-2">
           <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
           <Input
@@ -169,12 +169,12 @@ function UsersPage() {
 
       <ul className="space-y-2" data-user-list>
         {isLoading ? <ListSkeleton rows={8} /> : rows.length === 0 ? (
-          <li className="rounded-[20px] border border-border/70 bg-card"><EmptyState icon={Users} title="Niciun utilizator găsit" /></li>
+          <li className="rounded-[14px] border border-border bg-card"><EmptyState icon={Users} title="Niciun utilizator găsit" /></li>
         ) : rows.map((u) => {
           const st = userStatusBadge(u.is_active);
           return (
             <li key={u.id}>
-              <Link to="/superadmin/users/$id" params={{ id: u.id }} className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[20px] border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-gold/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:grid-cols-[auto_minmax(0,1.5fr)_minmax(0,1fr)_auto_auto_minmax(0,0.8fr)_auto]">
+              <Link to="/superadmin/users/$id" params={{ id: u.id }} className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] border border-border bg-card p-4 transition-colors hover:border-gold/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:grid-cols-[auto_minmax(0,1.5fr)_minmax(0,1fr)_auto_auto_minmax(0,0.8fr)_auto]">
                 <UserAvatar name={u.full_name} path={u.avatar_url} className="size-11 shrink-0" />
                 <span className="min-w-0">
                   <span className="block truncate font-medium text-foreground">{u.full_name}</span>
