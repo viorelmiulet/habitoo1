@@ -544,10 +544,10 @@ function SettingsPage() {
                     ) : null}
                     <div className="flex min-h-[52px] items-start justify-between gap-4 rounded-[12px] border border-border p-4">
                       <div className="min-w-0 space-y-1">
-                        <Label htmlFor="storia_auto_republish" className="text-sm">
+                        <Label htmlFor="storia_auto_republish" className="text-sm font-semibold">
                           Prelungire automată Storia (implicit pentru anunțurile fără alegere proprie)
                         </Label>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           La expirare, Storia prelungește automat anunțul, din pachetul agenției.
                           Schimbarea implicitului se aplică la următoarea trimitere a fiecărui anunț.
                           Separat, când această setare a agenției este activată, Habitoo republică
@@ -566,10 +566,10 @@ function SettingsPage() {
                     </div>
                     <div className="flex min-h-[52px] items-start justify-between gap-4 rounded-[12px] border border-border p-4">
                       <div className="min-w-0 space-y-1">
-                        <Label htmlFor="public_profile_enabled" className="text-sm">
+                        <Label htmlFor="public_profile_enabled" className="text-sm font-semibold">
                           Profil public pe site
                         </Label>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Când este activ, agenția apare în lista publică „Agenții partenere” (nume, logo și
                           link spre pagina ei). Nu publicăm datele de contact ale agenției.
                         </p>
