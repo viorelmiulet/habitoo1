@@ -18,7 +18,6 @@ import { FacebookRequestsTab } from "@/components/app/FacebookRequestsTab";
 import { HabitooMapIcon } from "@/components/brand/HabitooMapIcon";
 import facebookAsset from "@/assets/facebook-brand.svg.asset.json";
 import argusAsset from "@/assets/argus-official.png.asset.json";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
