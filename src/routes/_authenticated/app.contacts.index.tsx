@@ -10,6 +10,7 @@ import {
   MessageCircle,
   Phone,
   Search,
+  SlidersHorizontal,
   Trash2,
   UserRound,
   X,
@@ -51,6 +52,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { badgeVariants } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
 import { useSavedViews } from "@/hooks/use-saved-views";
@@ -111,6 +116,19 @@ function useDebounced<T>(value: T, delay = 300) {
   return debounced;
 }
 
+/** Sub 640px: un singur set de filtre randat (data-tour unic). */
+function useIsPhone() {
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 639px)");
+    const on = () => setPhone(mql.matches);
+    on();
+    mql.addEventListener("change", on);
+    return () => mql.removeEventListener("change", on);
+  }, []);
+  return phone;
+}
+
 function ContactsPage() {
   const urlSearch = Route.useSearch();
   const { new: openNew } = urlSearch;
@@ -129,6 +147,7 @@ function ContactsPage() {
   const setPage = (value: number | ((previous: number) => number)) => persisted.set("page", value);
   const view = persisted.state.view;
   const setView = (value: "list" | "card") => persisted.set("view", value);
+  const isPhone = useIsPhone();
   const [selected, setSelected] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(Boolean(openNew));
   useEffect(() => {
@@ -327,6 +346,60 @@ function ContactsPage() {
         Sursă: c.source ?? "",
         Status: statusLabels[c.status] ?? c.status,
       })),
+    );
+  };
+
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [draft, setDraft] = useState<Filters>(filters);
+  const activeCount = (["type", "source", "consent", "assigned", "status", "tag"] as const).filter((k) => filters[k] !== "all").length;
+
+  /** Aceleași câmpuri pe rând (desktop) și în panoul de jos (telefon). */
+  const renderFilterSelects = (values: Filters, onChange: (patch: Partial<Filters>) => void, inline: boolean) => {
+    const w = (cls: string) => (inline ? cls : "w-full");
+    return (
+      <>
+        <Select value={values.type} onValueChange={(v) => onChange({ type: v })}>
+          <SelectTrigger data-tour={inline ? "contacts-type" : undefined} aria-label="Tip contact" className={w("w-44")}>
+            <SelectValue placeholder="Tip contact" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toate tipurile</SelectItem>
+            {Object.entries(contactTypeLabels).map(([k, v]) => (<SelectItem key={k} value={k}>{v}</SelectItem>))}
+          </SelectContent>
+        </Select>
+        <Select value={values.source} onValueChange={(v) => onChange({ source: v })}>
+          <SelectTrigger aria-label="Filtru sursă" className={w("w-52")}><SelectValue placeholder="Sursă" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toate sursele</SelectItem>
+            {sources.map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}
+          </SelectContent>
+        </Select>
+        <Select value={values.consent} onValueChange={(v) => onChange({ consent: v })}>
+          <SelectTrigger aria-label="Filtru consimțământ" className={w("w-52")}><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">Orice consimțământ</SelectItem><SelectItem value="yes">Cu acord marketing</SelectItem><SelectItem value="no">Fără acord marketing</SelectItem></SelectContent>
+        </Select>
+        <Select value={values.assigned} onValueChange={(v) => onChange({ assigned: v })}>
+          <SelectTrigger aria-label="Agent responsabil" className={w("w-44")}><SelectValue placeholder="Agent responsabil" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toți agenții</SelectItem>
+            {agents.map((a) => (<SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>))}
+          </SelectContent>
+        </Select>
+        <Select value={values.status} onValueChange={(v) => onChange({ status: v })}>
+          <SelectTrigger aria-label="Status" className={w("w-36")}><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toate statusurile</SelectItem>
+            {Object.entries(statusLabels).map(([k, v]) => (<SelectItem key={k} value={k}>{v}</SelectItem>))}
+          </SelectContent>
+        </Select>
+        <Select value={values.tag} onValueChange={(v) => onChange({ tag: v })}>
+          <SelectTrigger aria-label="Etichetă" className={w("w-36")}><SelectValue placeholder="Etichetă" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toate etichetele</SelectItem>
+            {tags.map((t) => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
+          </SelectContent>
+        </Select>
+      </>
     );
   };
 
