@@ -4,8 +4,8 @@ type Tone = "neutral" | "success" | "warning" | "info" | "danger" | "primary";
 
 /**
  * Pastilă de status: rotundă, 12px, greutate 700. Nuanțele urmează paleta
- * „Bleumarin & auriu” (success #E6F2EC/#17603F, warning #F6EEDF/#7A561E,
- * danger #FBEAE8/#A12A1F, info/neutral #EEF1F4/#3B4651).
+ * „Bleumarin & auriu”, numai din tokenuri: success, warning (gold-tint/warning-text),
+ * danger (danger-tint/destructive), info și neutral.
  */
 const toneClasses: Record<Tone, string> = {
   neutral: "bg-neutral-foreground text-neutral",
