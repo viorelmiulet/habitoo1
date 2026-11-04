@@ -193,7 +193,7 @@ function CollaborationPage() {
 
       {/* Agenția a ieșit din rețea: ofertele dispar, dar discuțiile în curs rămân. */}
       {!participating ? (
-        <div className="panel border-warning/40 bg-warning/10 p-4 text-sm">
+        <div className="rounded-[12px] border border-gold/40 bg-gold-tint p-4 text-sm">
           <p className="font-medium">Agenția ta nu participă la Colaborare Habitoo</p>
           <p className="mt-1 text-muted-foreground">
             Ofertele partenere nu sunt disponibile, iar proprietățile tale nu mai apar la celelalte
@@ -204,7 +204,7 @@ function CollaborationPage() {
       ) : null}
 
       <Tabs value={participating ? persisted.state.tab : "outgoing"} onValueChange={(value) => persisted.set("tab", value)}>
-        <TabsList className="flex-wrap" data-tour="collab-tabs">
+        <TabsList data-tour="collab-tabs">
           {participating ? (
             <TabsTrigger value="offers">Oferte partenere ({totalOffers})</TabsTrigger>
           ) : null}
@@ -222,7 +222,7 @@ function CollaborationPage() {
         </TabsList>
 
         <TabsContent value="offers" className="space-y-4">
-          <div data-tour="collab-filters" className="panel grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div data-tour="collab-filters" className="grid gap-3 rounded-[14px] border border-border bg-card p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-4">
             <div className="relative sm:col-span-2">
               <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
               <Input
@@ -316,10 +316,12 @@ function CollaborationPage() {
           </div>
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <p className="text-sm font-medium" aria-live="polite">{totalOffers} oferte</p>
-            <div className="flex shrink-0 gap-1" role="group" aria-label="Afișare oferte">
-              <Button size="sm" variant={view === "cards" ? "secondary" : "ghost"} aria-pressed={view === "cards"} onClick={() => changeView("cards")}><LayoutGrid className="size-4" />Carduri</Button>
-              <Button size="sm" variant={view === "list" ? "secondary" : "ghost"} aria-pressed={view === "list"} onClick={() => changeView("list")}><List className="size-4" />Listă</Button>
-            </div>
+            <Tabs value={view} onValueChange={(v) => changeView(v as typeof view)} className="shrink-0">
+              <TabsList variant="segmented" aria-label="Afișare oferte">
+                <TabsTrigger value="cards" className="min-h-10"><LayoutGrid className="size-4" />Carduri</TabsTrigger>
+                <TabsTrigger value="list" className="min-h-10"><List className="size-4" />Listă</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
           {offers.isLoading ? <CardGridSkeleton /> : offers.isError ? (
             <div className="py-8 text-center"><p className="mb-3 text-sm text-muted-foreground">Ofertele nu au putut fi încărcate.</p><Button variant="outline" onClick={() => offers.refetch()}>Reîncearcă</Button></div>
@@ -407,17 +409,17 @@ function ProposalList({
     return <EmptyState icon={Inbox} title={emptyTitle} description={emptyText} />;
   }
   return (
-    <ul className="panel divide-y divide-border overflow-hidden">
+    <ul className="divide-y divide-border overflow-hidden rounded-[14px] border border-border bg-card">
       {proposals.map((p) => (
-        <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3.5 text-sm">
-          <div className="size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
+        <li key={p.id} className="flex min-h-[52px] flex-wrap items-center gap-3 px-4 py-3 text-sm sm:px-5">
+          <div className="size-14 shrink-0 overflow-hidden rounded-[10px] bg-muted">
             {p.coverUrl ? (
               <img src={p.coverUrl} alt="" className="size-full object-cover" loading="lazy" />
             ) : null}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-medium">{p.propertyTitle}</p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate font-semibold">{p.propertyTitle}</p>
+            <p className="truncate text-[13px] text-muted-foreground">
               Client: <span className="text-foreground">{p.clientLabel}</span>
             </p>
             <p className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
@@ -430,7 +432,7 @@ function ProposalList({
             </p>
           </div>
           {p.collabCommissionPercent !== null ? (
-            <span className="rounded-full bg-gold px-2.5 py-0.5 text-xs font-semibold text-gold-foreground">
+            <span className="rounded-full border border-gold/40 bg-gold-tint px-2.5 py-0.5 text-xs font-bold text-gold-dark">
               {p.collabCommissionPercent}%
             </span>
           ) : null}
@@ -776,8 +778,8 @@ function ThreadDialog({ id, onClose }: { id: string | null; onClose: () => void 
                         {formatDateTime(m.createdAt)}
                       </p>
                       <p
-                        className={`mt-1 max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-line ${
-                          m.mine ? "bg-primary/8 text-foreground" : "bg-muted"
+                        className={`mt-1 max-w-[85%] rounded-[14px] px-3.5 py-2.5 text-sm whitespace-pre-line ${
+                          m.mine ? "bg-navy text-navy-foreground" : "bg-muted text-foreground"
                         }`}
                       >
                         {m.body}
@@ -788,7 +790,7 @@ function ThreadDialog({ id, onClose }: { id: string | null; onClose: () => void 
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 bg-card max-sm:sticky max-sm:bottom-[7rem] max-sm:z-10 max-sm:pt-2">
               <Label htmlFor="collab-reply">Mesaj nou</Label>
               <Textarea
                 id="collab-reply"
