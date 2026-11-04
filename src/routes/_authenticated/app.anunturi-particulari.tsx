@@ -325,7 +325,7 @@ function PrivateListingsPage() {
         description="Anunțuri de la proprietari, aduse automat din alte site-uri. Verifică datele înainte să contactezi proprietarul."
       />
 
-      <div data-tour="map-tabs" className="flex gap-3 overflow-x-auto border-b border-border sm:gap-5" role="tablist" aria-label="Sursa anunțurilor">
+      <div data-tour="map-tabs" className="flex gap-5 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6" role="tablist" aria-label="Sursa anunțurilor">
         {([
           { value: "", label: "MAP Habitoo" },
           { value: "facebook", label: "MAP Facebook" },
@@ -341,9 +341,9 @@ function PrivateListingsPage() {
               variant="ghost"
               role="tab"
               aria-selected={active}
-              className={`-mb-px h-auto shrink-0 gap-1.5 rounded-none border-b-2 px-0 pb-2 pt-0 text-sm font-medium transition-colors hover:bg-transparent ${
+              className={`-mb-px h-auto min-h-11 shrink-0 gap-1.5 rounded-none border-b-2 px-0 py-0 text-[15px] transition-colors hover:bg-transparent ${
                 active
-                  ? "border-primary text-primary"
+                  ? "border-gold font-bold text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
               onClick={() =>
@@ -373,7 +373,7 @@ function PrivateListingsPage() {
           apply(draft);
         }}
       >
-        <div data-tour="map-categories" className="flex gap-5 overflow-x-auto border-b border-border" role="tablist" aria-label="Categorie proprietate">
+        <div data-tour="map-categories" className="flex gap-5 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Categorie proprietate">
           {Object.entries(TAB_LABELS).map(([value, label]) => {
             const active = (search.tab ?? "toate") === value;
             return (
@@ -382,9 +382,9 @@ function PrivateListingsPage() {
                 type="button"
                 role="tab"
                 aria-selected={active}
-                className={`-mb-px shrink-0 border-b-2 px-1 pb-2 text-sm font-medium transition-colors ${
+                className={`-mb-px min-h-11 shrink-0 border-b-2 px-1 text-[15px] transition-colors ${
                   active
-                    ? "border-primary text-primary"
+                    ? "border-gold font-bold text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={() =>
@@ -405,7 +405,7 @@ function PrivateListingsPage() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 border border-border bg-card p-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.4fr_auto_auto]">
+        <div className="grid grid-cols-1 gap-3 rounded-[14px] border border-border bg-card p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-[1fr_1fr_1fr_1.4fr_auto_auto]">
           <Select value={draft.tranzactie || ALL} onValueChange={(v) => patch({ tranzactie: v === ALL ? "" : v })}>
             <SelectTrigger aria-label="Tranzacție"><SelectValue placeholder="Tranzacție" /></SelectTrigger>
             <SelectContent>
@@ -446,7 +446,7 @@ function PrivateListingsPage() {
         </div>
 
         {extendedOpen ? (
-          <div className="space-y-3 border border-border bg-card p-4">
+          <div className="space-y-3 rounded-[14px] border border-border bg-card p-4 sm:p-5">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {scope === "habitoo" ? <Select value={draft.sursa || ALL} onValueChange={(v) => patch({ sursa: v === ALL ? "" : v })}>
                 <SelectTrigger aria-label="Sursă"><SelectValue placeholder="Sursă" /></SelectTrigger>
@@ -506,7 +506,7 @@ function PrivateListingsPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={resetFilters}>
+              <Button type="button" variant="link" className="h-11 px-1 text-sm font-semibold text-gold-dark sm:h-10" onClick={resetFilters}>
                 Șterge filtre <X className="size-4" />
               </Button>
               <Button type="button" variant="outline" onClick={() => setExtendedOpen(false)}>
@@ -576,7 +576,7 @@ function PrivateListingsPage() {
           ))}
         </div>
       ) : total === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border py-16 text-center">
+        <div className="flex flex-col items-center gap-2 rounded-[14px] border border-dashed border-border py-16 text-center">
           <SearchX className="size-8 text-muted-foreground" />
           <p className="font-medium">Niciun anunț găsit</p>
           <p className="text-sm text-muted-foreground">
@@ -620,26 +620,26 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
         : "Vânzare"
     : null;
   return (
-    <article className="relative flex flex-col gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/40 sm:flex-row sm:gap-4">
+    <article className="relative flex min-w-0 flex-col gap-3 rounded-[14px] border border-border bg-card p-3 transition-colors hover:border-gold/50 sm:flex-row sm:gap-4">
       {firstImage ? (
         <img referrerPolicy="no-referrer"
           src={firstImage}
           alt={listing.title?.trim() || "Fotografie anunț"}
           loading="lazy"
-          className="aspect-[4/3] w-full shrink-0 rounded-md object-cover sm:w-44"
+          className="aspect-[4/3] w-full shrink-0 rounded-[10px] object-cover sm:w-44"
         />
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{SOURCE_LABELS[listing.source] ?? listing.source}</Badge>
-          {transaction ? <span className="text-xs text-muted-foreground">{transaction}</span> : null}
+          <Badge variant="outline" className="gap-1.5"><SourceLogo source={listing.source} />{SOURCE_LABELS[listing.source] ?? listing.source}</Badge>
+          {transaction ? <span className="text-[13px] text-muted-foreground">{transaction}</span> : null}
           {listing.firstSeenAt ? (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[13px] text-muted-foreground">
               Adăugat {new Date(listing.firstSeenAt).toLocaleDateString("ro-RO")}
             </span>
           ) : null}
         </div>
-        <h3 className="line-clamp-1 font-semibold leading-snug">
+        <h3 className="line-clamp-1 text-[15px] font-bold leading-snug">
           <Link
             to="/app/anunturi-particulari/$id"
             params={{ id: listing.id }}
@@ -661,7 +661,7 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
             ) : null}
           </p>
         ) : (
-          <p className="text-lg font-bold text-primary">{money(listing.price, listing.currency)}</p>
+          <p className="text-base font-extrabold tabular-nums text-foreground">{money(listing.price, listing.currency)}</p>
         )}
         {specs.length ? <p className="text-sm">{specs.join(" · ")}</p> : null}
         {place ? (
@@ -675,14 +675,14 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
       <div className="relative z-10 flex shrink-0 flex-col gap-2 sm:w-44 sm:justify-center">
         <ImportListingButton listingId={listing.id} />
         {listing.phone ? (
-          <Button asChild variant="outline" className="flex-1 sm:flex-none">
+          <Button asChild variant="outline" className="h-11 flex-1 rounded-[10px] sm:h-10 sm:flex-none">
             <a href={`tel:${listing.phone}`}>
               <Phone className="size-4" /> {listing.phone}
             </a>
           </Button>
         ) : null}
         {listing.url ? (
-          <Button asChild className="h-auto min-h-9 flex-1 whitespace-normal sm:flex-none">
+          <Button asChild className="h-auto min-h-11 flex-1 whitespace-normal sm:min-h-10 sm:flex-none">
             <a href={listing.url} target="_blank" rel="noopener noreferrer">
               {listing.source === "facebook" ? "Vezi postarea pe Facebook" : "Anunțul original"} <ExternalLink className="size-4 shrink-0" />
             </a>
@@ -691,6 +691,12 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
       </div>
     </article>
   );
+}
+
+function SourceLogo({ source }: { source: string }) {
+  if (source === "facebook") return <img src={facebookAsset.url} alt="" className="size-3.5 shrink-0 object-contain" />;
+  if (source === "argus") return <img src={argusAsset.url} alt="" className="size-3.5 shrink-0 object-contain" />;
+  return <HabitooMapIcon />;
 }
 
 const DESCRIPTION_COLLAPSED_LENGTH = 280;
@@ -712,7 +718,7 @@ function ListingDescription({ text }: { text: string }) {
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 px-2 text-xs"
+          className="h-11 px-2 text-xs sm:h-7"
           aria-expanded={expanded}
           onClick={() => setExpanded((v) => !v)}
         >
