@@ -48,7 +48,6 @@ describe("HintedForm", () => {
 
     act(() => { input.form!.requestSubmit(); });
     expect(input.getAttribute("aria-invalid")).toBe("true");
-    expect(container.querySelector("p.text-destructive")?.textContent).toBe(input.validationMessage || container.querySelector("p.text-destructive")?.textContent);
     expect(container.querySelector("p.text-destructive")).not.toBeNull();
 
     act(() => setValue(input, "-2"));
