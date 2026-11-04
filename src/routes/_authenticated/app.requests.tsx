@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, Download, Search, Sparkles, Target, X } from "lucide-react";
+import { Bookmark, Download, Search, SlidersHorizontal, Sparkles, Target, X } from "lucide-react";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -107,6 +108,90 @@ function RequestsPage() {
   };
   const debouncedQ = useDebounced(filters.q);
   const page = persisted.state.page;
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const activeFilterCount = (["kind", "status", "priority", "assigned", "city"] as const).filter((k) => filters[k] !== emptyFilters[k]).length;
+  const renderFilterFields = () => (
+    <>
+          <Select
+            value={filters.kind}
+            onValueChange={(v) => setFilters((f) => ({ ...f, kind: v }))}
+          >
+            <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-40">
+              <SelectValue placeholder="Tip cerere" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toate tipurile</SelectItem>
+              {Object.entries(requestKindLabels).map(([k, v]) => (
+                <SelectItem key={k} value={k}>
+                  {v}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={filters.status}
+            onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}
+          >
+            <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toate statusurile</SelectItem>
+              {requestStatusOptions.map((k) => (
+                <SelectItem key={k} value={k}>
+                  {requestStatusLabels[k]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={filters.priority}
+            onValueChange={(v) => setFilters((f) => ({ ...f, priority: v }))}
+          >
+            <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-36">
+              <SelectValue placeholder="Prioritate" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toate</SelectItem>
+              <SelectItem value="low">Scăzută</SelectItem>
+              <SelectItem value="medium">Medie</SelectItem>
+              <SelectItem value="high">Ridicată</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={filters.assigned}
+            onValueChange={(v) => setFilters((f) => ({ ...f, assigned: v }))}
+          >
+            <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-44">
+              <SelectValue placeholder="Agent" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toți agenții</SelectItem>
+              {agents.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  {a.full_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={filters.city}
+            onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}
+          >
+            <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-40">
+              <SelectValue placeholder="Oraș" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toate orașele</SelectItem>
+              {cities.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+    </>
+  );
   const setPage = (value: number | ((previous: number) => number)) => persisted.set("page", value);
   const [selected, setSelected] = useState<string[]>([]);
   const [open, setOpen] = useState(Boolean(openNew));
@@ -342,100 +427,26 @@ function RequestsPage() {
         }
       />
 
-      <div data-tour="requests-filters" className="panel space-y-3 p-4">
+      <div data-tour="requests-filters" className="space-y-3 rounded-[14px] border border-border bg-card p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-56 flex-1">
+          <div className="relative w-full min-w-0 flex-1 sm:min-w-56">
             <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
             <Input
               data-tour="requests-search"
               value={filters.q}
               onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
               placeholder="Caută după titlu…"
-              className="pl-9"
+              className="h-10 rounded-[10px] pl-9"
             />
           </div>
-          <Select
-            value={filters.kind}
-            onValueChange={(v) => setFilters((f) => ({ ...f, kind: v }))}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Tip cerere" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate tipurile</SelectItem>
-              {Object.entries(requestKindLabels).map(([k, v]) => (
-                <SelectItem key={k} value={k}>
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.status}
-            onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate statusurile</SelectItem>
-              {requestStatusOptions.map((k) => (
-                <SelectItem key={k} value={k}>
-                  {requestStatusLabels[k]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.priority}
-            onValueChange={(v) => setFilters((f) => ({ ...f, priority: v }))}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Prioritate" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate</SelectItem>
-              <SelectItem value="low">Scăzută</SelectItem>
-              <SelectItem value="medium">Medie</SelectItem>
-              <SelectItem value="high">Ridicată</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.assigned}
-            onValueChange={(v) => setFilters((f) => ({ ...f, assigned: v }))}
-          >
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="Agent" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toți agenții</SelectItem>
-              {agents.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.city}
-            onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Oraș" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate orașele</SelectItem>
-              {cities.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" size="sm" onClick={saveFilter}>
+          <Button type="button" variant="outline" className="h-11 rounded-[10px] sm:hidden" onClick={() => setFiltersOpen(true)}>
+            <SlidersHorizontal className="size-4" /> Filtre ({activeFilterCount})
+          </Button>
+          <div className="hidden sm:contents">{renderFilterFields()}</div>
+          <Button variant="link" size="sm" className="h-11 px-1 text-sm font-semibold text-gold-dark sm:h-10" onClick={saveFilter}>
             <Bookmark className="size-4" /> Salvează filtrul
           </Button>
-          <Button variant="ghost" size="sm" onClick={persisted.reset}>
+          <Button variant="link" size="sm" className="h-11 px-1 text-sm font-semibold text-gold-dark sm:h-10" onClick={persisted.reset}>
             <X className="size-4" /> Resetează
           </Button>
         </div>
@@ -459,7 +470,7 @@ function RequestsPage() {
         ) : null}
 
         {selected.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-gold/40 bg-gold-tint px-4 py-3">
             <span className="text-sm font-medium">{selected.length} selectate</span>
             <Select onValueChange={(v) => bulkUpdate.mutate({ status: v })}>
               <SelectTrigger className="w-44">
@@ -492,7 +503,18 @@ function RequestsPage() {
         ) : null}
       </div>
 
-      <div className="panel overflow-hidden">
+      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto">
+          <SheetHeader><SheetTitle>Filtre</SheetTitle></SheetHeader>
+          <div className="grid gap-3 px-4 py-2">{renderFilterFields()}</div>
+          <SheetFooter className="flex-col gap-2">
+            <Button className="h-11 w-full" onClick={() => setFiltersOpen(false)}>Aplică</Button>
+            <Button variant="outline" className="h-11 w-full" onClick={persisted.reset}>Resetează</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      <div className="overflow-hidden rounded-[14px] border border-border bg-card">
         {isLoading ? (
           <ListSkeleton rows={8} />
         ) : rows.length === 0 ? (
@@ -508,7 +530,7 @@ function RequestsPage() {
           />
         ) : (
           <ul className="divide-y divide-border">
-            <li className="flex items-center gap-3 bg-surface px-5 py-2.5 text-xs text-muted-foreground">
+            <li className="flex items-center gap-3 bg-muted px-4 py-2.5 text-xs text-muted-foreground sm:px-5">
               <Checkbox
                 checked={allSelected}
                 onCheckedChange={(v) => setSelected(v ? rows.map((r) => r.id) : [])}
@@ -521,7 +543,7 @@ function RequestsPage() {
               return (
                 <li
                   key={r.id}
-                  className="flex flex-wrap items-center gap-3 px-5 py-4 text-sm transition-colors hover:bg-surface"
+                  className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-sm transition-colors hover:bg-muted sm:px-5"
                 >
                   <Checkbox
                     checked={selected.includes(r.id)}
@@ -532,12 +554,12 @@ function RequestsPage() {
                   <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                     <Target className="size-4" aria-hidden />
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
+                  <div className="min-w-0 flex-1 basis-[calc(100%-5rem)] sm:basis-auto">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <Link
                         to="/app/requests/$id"
                         params={{ id: r.id }}
-                        className="truncate font-medium hover:text-primary"
+                        className="min-w-0 truncate font-semibold hover:text-primary"
                       >
                         {r.title}
                       </Link>
@@ -545,14 +567,14 @@ function RequestsPage() {
                         {priorityLabels[r.priority] ?? r.priority}
                       </StatusBadge>
                     </div>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
                       {requestKindLabels[r.kind]} ·{" "}
                       {propertyTypeLabels[r.property_type ?? ""] ?? "orice tip"} ·{" "}
                       {(r.cities ?? []).join(", ") || "orice oraș"} · {agentName(r.assigned_to)}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium tabular-nums">
+                  <div className="text-left max-sm:ml-[4.25rem] sm:text-right">
+                    <p className="text-sm font-semibold tabular-nums">
                       {formatMoney(r.budget_max, r.currency)}
                     </p>
                     <p className="text-[11px] text-muted-foreground tabular-nums">
@@ -566,7 +588,7 @@ function RequestsPage() {
                     value={r.status}
                     onValueChange={(v) => setStatusMutation.mutate({ id: r.id, value: v })}
                   >
-                    <SelectTrigger className="w-36">
+                    <SelectTrigger className="h-11 w-36 rounded-[10px] sm:h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -577,7 +599,7 @@ function RequestsPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <span className="w-24 text-right text-xs text-muted-foreground">
+                  <span className="text-[13px] text-muted-foreground sm:w-24 sm:text-right">
                     {relativeDays(r.created_at)}
                   </span>
                 </li>
@@ -588,7 +610,7 @@ function RequestsPage() {
       </div>
 
       {total > PAGE_SIZE ? (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-[13px] text-muted-foreground [&_button]:h-10">
           <span>
             {page * PAGE_SIZE + 1}–{Math.min(total, (page + 1) * PAGE_SIZE)} din {total}
           </span>
