@@ -768,7 +768,7 @@ export function NewContractDialog({
           </div>
         ) : (
           <>
-            <div className="grid gap-3 rounded-md border border-border p-4 sm:grid-cols-3">
+            <div className="grid gap-3 rounded-[14px] border border-border bg-card p-4 sm:grid-cols-3 sm:p-5">
               <h3 className="sm:col-span-3 text-sm font-semibold">Date proprietate (editabile)</h3>
               {Object.entries(exclusiveProperty).map(([key, value]) => (
                 <Field
@@ -815,7 +815,7 @@ export function NewContractDialog({
         )}
 
         {documentKind === "rent_agreement" ? (
-          <div className="space-y-4 rounded-md border border-border p-4">
+          <div className="space-y-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
             <div className="flex items-start gap-3">
               <Checkbox
                 id="include-inventory"
@@ -842,7 +842,7 @@ export function NewContractDialog({
           </div>
         ) : null}
         {blockers.length > 0 ? (
-          <ul className="space-y-1 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-foreground">
+          <ul className="space-y-1 rounded-[12px] border border-gold/40 bg-gold-tint p-3 text-xs text-foreground">
             {blockers.map((item) => (
               <li key={item} className="flex items-start gap-1.5">
                 <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
@@ -896,16 +896,16 @@ function PartySection({
     idState.pending.includes(key) ? "pending" : idState.verified.includes(key) ? "verified" : null;
   const warningFor = (key: IdFormKey) => idState.flags[key]?.join(" · ");
   return (
-    <section className="min-w-0 space-y-4 rounded-md border border-border p-4">
+    <section className="min-w-0 space-y-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
       <h3 className="text-sm font-semibold">{title}</h3>
       <IdScanPanel contactId={contactId || null} idPrefix={`party-${target}`} onResult={onScanned} />
       {idState.warnings.map((w) => (
-        <p key={w} className="flex items-start gap-1.5 rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs">
+        <p key={w} className="flex items-start gap-1.5 rounded-[12px] border border-gold/40 bg-gold-tint p-2 text-xs">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" /> {ID_WARNING_MESSAGES[w] ?? w}
         </p>
       ))}
       {idState.needsAddress && !party.address.trim() ? (
-        <p className="flex items-start gap-1.5 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs">
+        <p className="flex items-start gap-1.5 rounded-[12px] border border-destructive/40 bg-danger-tint p-2 text-xs">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-destructive" />
           Buletinul cu cip nu are domiciliul tipărit. Scanează mai sus certificatul de atestare a domiciliului sau completează domiciliul manual.
         </p>

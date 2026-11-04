@@ -70,9 +70,9 @@ function SignPage() {
   const view = request.data;
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-muted/40 px-4 py-10">
+    <main className="flex min-h-screen flex-col items-center bg-muted px-3 py-8 sm:px-4 sm:py-10">
       <BrandLogo className="mb-8 h-9 w-auto" />
-      <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+      <div className="w-full max-w-[720px] rounded-[14px] border border-border bg-card p-4 text-[15px] leading-[1.6] text-card-foreground sm:p-5">
         {!t ? (
           <Notice
             tone="warning"
@@ -119,7 +119,7 @@ function SignPage() {
                 href={view.documentUrl}
                 target="_blank"
                 rel="noopener"
-                className="flex items-center gap-3 rounded-xl border border-border p-4 transition-colors hover:bg-muted/60"
+                className="flex min-h-[52px] items-center gap-3 rounded-[12px] border border-border p-4 transition-colors hover:bg-muted/60"
               >
                 <FileText className="size-5 text-primary" />
                 <span className="text-sm font-medium">
@@ -132,7 +132,7 @@ function SignPage() {
             ) : null}
 
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold">Semnătura ta</h2>
+              <h2 className="text-base font-bold">Semnătura ta</h2>
               <SignaturePad onChange={setSignature} />
             </div>
 

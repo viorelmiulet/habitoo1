@@ -90,7 +90,7 @@ export function SignaturePad({
 
   return (
     <div className="space-y-2">
-      <div className="rounded-xl border border-dashed border-border bg-card p-1">
+      <div className="w-full rounded-[12px] border-2 border-dashed border-border bg-card p-1">
         <canvas
           ref={canvasRef}
           className="w-full touch-none rounded-lg"
