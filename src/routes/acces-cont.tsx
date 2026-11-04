@@ -76,7 +76,7 @@ function AccessRequestPage() {
   return (
     <PublicLayout>
       <Section className="login-backdrop relative bg-navy">
-        <Container className="login-card relative max-w-2xl bg-card p-6 text-card-foreground sm:p-8">
+        <Container className="login-card relative w-[calc(100%-2rem)] max-w-2xl bg-card p-6 text-card-foreground sm:p-8">
           <h1 className="font-display text-3xl">Cerere de acces la contul tău</h1>
 
           {!id || !token ? (
