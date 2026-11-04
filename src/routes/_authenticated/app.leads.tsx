@@ -1095,6 +1095,22 @@ function LeadsPage() {
                 <SheetTitle>{detailLead.name}</SheetTitle>
               </SheetHeader>
 
+              <div className="space-y-1.5">
+                <Label htmlFor="lead-detail-stage">Etapă</Label>
+                <Select value={detailLead.stage} onValueChange={(v) => requestStageChange(detailLead, v as LeadStage)}>
+                  <SelectTrigger id="lead-detail-stage" className="h-10 w-full rounded-[10px] sm:w-56">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {leadStages.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {leadStageLabels[s]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge tone={stageTone[detailLead.stage]}>
@@ -1119,7 +1135,7 @@ function LeadsPage() {
                     <>
                       <a
                         href={`tel:${detailLead.phone}`}
-                        className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
                         <Phone className="size-4" aria-hidden /> Sună
                       </a>
@@ -1127,7 +1143,7 @@ function LeadsPage() {
                         href={`https://wa.me/${detailLead.phone.replace(/[^0-9]/g, "")}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
                         <MessageCircle className="size-4" aria-hidden /> WhatsApp
                       </a>
@@ -1136,7 +1152,7 @@ function LeadsPage() {
                   {detailLead.email ? (
                     <a
                       href={`mailto:${detailLead.email}`}
-                      className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                     >
                       <Mail className="size-4" aria-hidden /> Email
                     </a>
@@ -1145,7 +1161,7 @@ function LeadsPage() {
                     <button
                       type="button"
                       onClick={() => setDeleteLeadId(detailLead.id)}
-                      className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-destructive transition-colors hover:bg-destructive/10"
+                      className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-destructive transition-colors hover:bg-destructive/10"
                     >
                       <Trash2 className="size-4" aria-hidden /> Șterge lead-ul
                     </button>
@@ -1157,7 +1173,7 @@ function LeadsPage() {
                 <Link
                   to="/app/properties/$id"
                   params={{ id: detailLead.property_id }}
-                  className="flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-border/60 transition hover:ring-primary/40"
+                  className="flex items-center gap-3 rounded-[14px] border border-border bg-card p-3 transition hover:border-primary/40"
                 >
                   <PropertyThumb
                     propertyId={detailLead.property_id}
@@ -1175,7 +1191,7 @@ function LeadsPage() {
                 </Link>
               ) : null}
 
-              <div className="grid grid-cols-2 gap-3 rounded-xl bg-card p-4 text-sm ring-1 ring-border/60">
+              <div className="grid grid-cols-2 gap-3 rounded-[14px] border border-border bg-card p-4 text-sm">
                 <div>
                   <p className="text-xs text-muted-foreground">Telefon</p>
                   <p>{detailLead.phone ?? "—"}</p>
@@ -1205,38 +1221,13 @@ function LeadsPage() {
               </div>
 
               {detailLead.notes ? (
-                <p className="rounded-xl bg-muted p-3 text-sm">{detailLead.notes}</p>
+                <p className="rounded-[14px] border border-border bg-card p-3 text-sm">{detailLead.notes}</p>
               ) : null}
 
               <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => setActivityOpen(true)}>
                   <Plus className="size-4" /> Adaugă activitate
                 </Button>
-                <Select
-                  value={detailLead.stage}
-                  onValueChange={(v) => {
-                    const stage = v as LeadStage;
-                    if (stage === "lost") {
-                      setLostDialog({ lead: detailLead });
-                      setLostReason(leadLostReasons[0]);
-                      setLostReasonFree("");
-                      return;
-                    }
-                    moveStage.mutate({ lead: detailLead, stage });
-                    setDetailLead({ ...detailLead, stage });
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-40 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {leadStages.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {leadStageLabels[s]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               <Tabs defaultValue="history">
