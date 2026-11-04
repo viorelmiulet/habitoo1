@@ -529,6 +529,93 @@ function LeadsPage() {
   const isOverdue = (lead: Lead) =>
     lead.next_followup_at ? new Date(lead.next_followup_at).getTime() < Date.now() : false;
 
+  const iconBtn = "inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted sm:size-8";
+  const renderLeadCard = (l: Lead) => {
+    const portalKey = portalKeyOf(l.source);
+    const stale = isStale(l);
+    const agentName = agentById.get(l.assigned_to ?? "") ?? null;
+    return (
+      <div
+        data-tour="lead-open"
+        key={l.id}
+        draggable={!isPhone}
+        onDragStart={() => setDragId(l.id)}
+        onDragEnd={() => {
+          setDragId(null);
+          setDragOverStage(null);
+        }}
+        onClick={() => setDetailLead(l)}
+        className={cn(
+          "cursor-pointer rounded-xl border border-border bg-card p-3.5 transition hover:border-primary/40",
+          dragId === l.id && "opacity-40",
+        )}
+      >
+        <div className="flex items-start justify-between gap-1">
+          <p className="min-w-0 flex-1 truncate pt-1 text-[15px] font-bold">{l.name}</p>
+          {stale ? (
+            <span className="pt-1" title="Fără activitate de peste o săptămână">
+              <StatusBadge tone="warning">stagnat</StatusBadge>
+            </span>
+          ) : null}
+          <button
+            type="button"
+            aria-label="Editează"
+            title="Editează"
+            className={iconBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              openEdit(l);
+            }}
+          >
+            <Pencil className="size-4" aria-hidden />
+          </button>
+          {canDeleteLead(user, l) ? (
+            <button
+              type="button"
+              aria-label={`Șterge lead-ul ${l.name}`}
+              title="Șterge lead-ul"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteLeadId(l.id);
+              }}
+              className={cn(iconBtn, "hover:text-destructive")}
+            >
+              <Trash2 className="size-4" aria-hidden />
+            </button>
+          ) : null}
+        </div>
+
+        {l.property_id ? (
+          <p className="mt-1 truncate text-[13px] text-muted-foreground">
+            {propertyById.get(l.property_id) ?? "Proprietate"}
+          </p>
+        ) : null}
+
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex max-w-40 items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+            {portalKey ? <PortalLogo portalId={portalKey} name={l.source ?? portalKey} size={14} /> : null}
+            <span className="truncate">{l.source ?? "sursă necunoscută"}</span>
+          </span>
+          {l.value ? <span className="text-sm font-bold">{formatMoney(l.value)}</span> : null}
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <UserAvatar name={agentName} className="size-6 text-[10px]" />
+            <span className="truncate">{agentName ?? "Neasignat"}</span>
+          </span>
+          <span className="shrink-0">{relativeDays(l.last_interaction_at)}</span>
+        </div>
+
+        {l.next_followup_at ? (
+          <p className={cn("mt-2 flex items-center gap-1 text-xs", isOverdue(l) ? "font-semibold text-destructive" : "text-muted-foreground")}>
+            {isOverdue(l) ? <AlertCircle className="size-3.5" aria-hidden /> : <CalendarClock className="size-3.5" aria-hidden />}
+            Follow-up: {relativeDays(l.next_followup_at)}
+          </p>
+        ) : null}
+      </div>
+    );
+  };
   return (
     <>
       <PageHeader
@@ -560,9 +647,9 @@ function LeadsPage() {
         }
       />
 
-      <div data-tour="leads-filters" className="panel flex flex-wrap items-center gap-2 p-3">
+      <div data-tour="leads-filters" className="grid grid-cols-2 items-center gap-2 rounded-[14px] border border-border bg-card p-3 sm:flex sm:flex-wrap">
         {propertyFilter ? (
-          <Button variant="secondary" size="sm" aria-label="Scoate filtrul de proprietate" onClick={() => void navigate({ search: (prev) => ({ ...prev, proprietate: undefined }) })}>
+          <Button variant="secondary" size="sm" className="col-span-2 justify-self-start" aria-label="Scoate filtrul de proprietate" onClick={() => void navigate({ search: (prev) => ({ ...prev, proprietate: undefined }) })}>
             Proprietate: {properties.find((p) => p.id === propertyFilter)?.reference ?? "…"} ×
           </Button>
         ) : null}
@@ -571,10 +658,10 @@ function LeadsPage() {
           placeholder="Caută nume, telefon, email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-56"
+          className="col-span-2 h-10 w-full rounded-[10px] sm:w-56"
         />
         <Select value={agentFilter} onValueChange={setAgentFilter}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-44">
             <SelectValue placeholder="Agent" />
           </SelectTrigger>
           <SelectContent>
@@ -587,7 +674,7 @@ function LeadsPage() {
           </SelectContent>
         </Select>
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-40">
             <SelectValue placeholder="Sursă" />
           </SelectTrigger>
           <SelectContent>
@@ -599,9 +686,8 @@ function LeadsPage() {
             ))}
           </SelectContent>
         </Select>
-        <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
         <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-40">
             <SelectValue placeholder="Campanie" />
           </SelectTrigger>
           <SelectContent>
@@ -613,6 +699,13 @@ function LeadsPage() {
             ))}
           </SelectContent>
         </Select>
+        <button
+          type="button"
+          onClick={persisted.reset}
+          className="inline-flex min-h-10 items-center justify-self-start text-sm font-semibold text-gold-dark underline-offset-4 hover:underline sm:ml-auto"
+        >
+          Șterge filtre
+        </button>
       </div>
 
       {isLoading ? (
@@ -631,7 +724,46 @@ function LeadsPage() {
           />
         </div>
       ) : (
-        <div data-tour="leads-pipeline" className="flex gap-4 overflow-x-auto pb-4">
+        <div data-tour="leads-pipeline">
+          {isPhone ? (
+            <div className="space-y-3">
+              <div role="tablist" aria-label="Etape" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {columns.map((stage) => {
+                  const count = visible.filter((l) => l.stage === stage).length;
+                  const active = stage === activeMobileStage;
+                  return (
+                    <button
+                      key={stage}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setMobileStage(stage)}
+                      className={cn(
+                        "inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-3.5 text-sm font-semibold transition-colors",
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-foreground hover:bg-muted",
+                      )}
+                    >
+                      {leadStageLabels[stage]}
+                      <span className={cn("rounded-full px-1.5 text-xs", active ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground")}>{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {activeMobileStage ? (
+                <div className="space-y-3">
+                  {visible.filter((l) => l.stage === activeMobileStage).map(renderLeadCard)}
+                  {visible.every((l) => l.stage !== activeMobileStage) ? (
+                    <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
+                      Nimic în „{leadStageLabels[activeMobileStage]}”.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : (
+        <div className="flex gap-4 overflow-x-auto pb-4">
           {columns.map((stage) => {
             const items = visible.filter((l) => l.stage === stage);
             const total = items.reduce((sum, l) => sum + (l.value ?? 0), 0);
@@ -641,8 +773,8 @@ function LeadsPage() {
                 key={stage}
                 data-stage={stage}
                 className={cn(
-                  "flex w-76 shrink-0 flex-col rounded-2xl bg-muted/40 ring-1 ring-border/60 transition",
-                  isDropTarget && "bg-primary/5 ring-2 ring-primary/50",
+                  "flex w-[300px] shrink-0 flex-col rounded-[14px] border border-border bg-muted transition",
+                  isDropTarget && "border-2 border-gold bg-gold-tint",
                 )}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -656,116 +788,15 @@ function LeadsPage() {
               >
                 <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{leadStageLabels[stage]}</p>
+                    <p className="truncate text-sm font-bold">{leadStageLabels[stage]}</p>
                     {total > 0 ? (
-                      <p className="mt-0.5 text-xs text-muted-foreground">{formatMoney(total)}</p>
+                      <p className="mt-0.5 text-[13px] text-muted-foreground">{formatMoney(total)}</p>
                     ) : null}
                   </div>
                   <StatusBadge tone={stageTone[stage]}>{items.length}</StatusBadge>
                 </div>
                 <div className="flex-1 space-y-3 px-3 pb-3">
-                  {items.map((l) => {
-                    const portalKey = portalKeyOf(l.source);
-                    const stale = isStale(l);
-                    const agentName = agentById.get(l.assigned_to ?? "") ?? null;
-                    return (
-                      <div
-                        data-tour="lead-open"
-                        key={l.id}
-                        draggable
-                        onDragStart={() => setDragId(l.id)}
-                        onDragEnd={() => {
-                          setDragId(null);
-                          setDragOverStage(null);
-                        }}
-                        onClick={() => setDetailLead(l)}
-                        className={cn(
-                          "cursor-pointer rounded-xl bg-card p-3.5 ring-1 ring-border/60 transition hover:ring-primary/40",
-                          dragId === l.id && "opacity-40 ring-primary/60",
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="min-w-0 flex-1 truncate text-sm font-medium">{l.name}</p>
-                          {canDeleteLead(user, l) ? (
-                            <button
-                              type="button"
-                              aria-label={`Șterge lead-ul ${l.name}`}
-                              title="Șterge lead-ul"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteLeadId(l.id);
-                              }}
-                              className="rounded p-0.5 text-muted-foreground hover:text-destructive"
-                            >
-                              <Trash2 className="size-3.5" aria-hidden />
-                            </button>
-                          ) : null}
-                          {stale ? (
-                            <span
-                              className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-warning-foreground"
-                              title="Fără activitate de peste o săptămână"
-                            >
-                              <Clock className="size-3" aria-hidden /> stagnat
-                            </span>
-                          ) : null}
-                        </div>
-
-                        {l.property_id ? (
-                          <p className="mt-1 truncate text-xs text-muted-foreground">
-                            {propertyById.get(l.property_id) ?? "Proprietate"}
-                          </p>
-                        ) : null}
-
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          <span className="inline-flex max-w-40 items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                            {portalKey ? (
-                              <PortalLogo
-                                portalId={portalKey}
-                                name={l.source ?? portalKey}
-                                size={14}
-                              />
-                            ) : null}
-                            <span className="truncate">{l.source ?? "sursă necunoscută"}</span>
-                          </span>
-                          {l.value ? (
-                            <span className="text-xs font-medium">{formatMoney(l.value)}</span>
-                          ) : null}
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                          <span className="flex min-w-0 items-center gap-1.5">
-                            <UserAvatar name={agentName} className="size-6 text-[10px]" />
-                            <span className="truncate">{agentName ?? "Neasignat"}</span>
-                          </span>
-                          <span className="shrink-0">{relativeDays(l.last_interaction_at)}</span>
-                        </div>
-
-                        {l.next_followup_at ? (
-                          <p
-                            className={cn(
-                              "mt-2 text-xs",
-                              isOverdue(l)
-                                ? "font-medium text-destructive"
-                                : "text-muted-foreground",
-                            )}
-                          >
-                            Follow-up: {relativeDays(l.next_followup_at)}
-                          </p>
-                        ) : null}
-
-                        <button
-                          type="button"
-                          className="mt-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEdit(l);
-                          }}
-                        >
-                          Editează
-                        </button>
-                      </div>
-                    );
-                  })}
+                  {items.map(renderLeadCard)}
                   {items.length === 0 ? (
                     <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
                       Nimic în „{leadStageLabels[stage]}”. Trage un lead aici.
@@ -775,6 +806,8 @@ function LeadsPage() {
               </div>
             );
           })}
+        </div>
+          )}
         </div>
       )}
 
