@@ -39,7 +39,7 @@ export const Route = createFileRoute("/import-proprietati")({
 function PublicPropertyImportPage() {
   return (
     <PublicLayout>
-      <section className="border-b border-border bg-muted/40">
+      <section className="mk-page-hero border-b">
         <Container className="py-14 sm:py-20">
           <PublicPhotoHeading photo={publicPagePhotos.propertyImport}>
             <SectionHeading

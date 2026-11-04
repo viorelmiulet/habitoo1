@@ -36,7 +36,7 @@ export const Route = createFileRoute("/colaborare-intre-agentii")({
 function PublicCollaborationPage() {
   return (
     <PublicLayout>
-      <section className="border-b border-border bg-muted/40">
+      <section className="mk-page-hero border-b">
         <Container className="py-14 sm:py-20">
           <SectionHeading
             as="h1"

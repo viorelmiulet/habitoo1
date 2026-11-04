@@ -48,7 +48,7 @@ function IntegrationPage() {
   const page = integrationPageBySlug(slug)!;
   return (
     <PublicLayout>
-      <section className="mk-hero-bg border-b border-border">
+      <section className="mk-page-hero border-b">
         <Container className="py-14 sm:py-20">
           <nav aria-label="Navigare" className="mb-6 text-sm text-muted-foreground">
             <Link to="/" className="hover:underline">Acasă</Link> ›{" "}

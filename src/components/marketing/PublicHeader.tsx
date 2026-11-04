@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Menu } from "lucide-react";
 import { useState } from "react";
+import sidebarLogo from "@/assets/habitoo-sidebar-light.png.asset.json";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +12,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
 import { publicNav } from "./public-nav";
 import { CrmLink } from "./CrmLink";
 
@@ -22,14 +22,20 @@ export function PublicHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:h-[72px] lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-navy-foreground/15 bg-navy">
+      <div className="mx-auto grid h-16 w-full max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 sm:px-6 lg:h-[72px] lg:grid-cols-[1fr_auto_1fr] lg:px-8">
         <Link
           to="/"
-          className="block w-32 shrink-0 sm:w-36 lg:w-40"
+          className="flex h-full w-fit items-center"
           aria-label="Habitoo CRM — pagina principală"
         >
-          <BrandLogo priority className="h-8 w-auto max-w-none lg:h-10" />
+          <img
+            src={sidebarLogo.url}
+            alt="Habitoo CRM"
+            className="block h-8 w-auto max-w-none object-contain lg:h-10"
+            loading="eager"
+            decoding="async"
+          />
         </Link>
 
         <nav aria-label="Navigare principală" className="hidden items-center gap-1 lg:flex">
@@ -37,36 +43,36 @@ export function PublicHeader() {
             <Link
               key={item.to}
               to={item.to}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              activeProps={{ className: "text-navy font-semibold" }}
+              className="rounded-full px-4 py-2 text-[15px] font-semibold text-navy-foreground transition-colors hover:bg-surface/10 hover:text-surface"
+              activeProps={{ className: "bg-surface/10 text-surface" }}
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
-          <Button asChild variant="ghost" size="sm">
+        <div className="hidden items-center justify-end gap-2 lg:flex">
+          <Button asChild variant="ghost" className="h-10 rounded-full px-[18px] text-[15px] text-surface hover:bg-surface/10 hover:text-surface">
             <CrmLink to="/login">Autentificare</CrmLink>
           </Button>
-          <Button asChild size="sm" className={navyButton}>
+          <Button asChild className="h-10 rounded-full bg-gold px-[18px] text-[15px] font-semibold text-navy shadow-raised hover:bg-gold/90">
             <CrmLink to="/register">
               Creează agenția <ArrowRight />
             </CrmLink>
           </Button>
         </div>
 
-        <div className="flex items-center gap-2 lg:hidden">
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+        <div className="flex items-center justify-end gap-2 lg:hidden">
+          <Button asChild variant="ghost" size="sm" className="hidden h-10 rounded-full text-surface hover:bg-surface/10 hover:text-surface sm:inline-flex">
             <CrmLink to="/login">Autentificare</CrmLink>
           </Button>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="Deschide meniul">
+              <Button variant="outline" size="icon" className="size-11 rounded-full border-navy-foreground/25 bg-navy text-navy-foreground hover:bg-surface/10 hover:text-surface" aria-label="Deschide meniul">
                 <Menu />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[88vw] max-w-sm">
+            <SheetContent side="right" className="w-[88vw] max-w-sm bg-background p-6">
               <SheetHeader className="text-left">
                 <SheetTitle className="sr-only">Meniu</SheetTitle>
                 <SheetDescription className="sr-only">Navigare Habitoo CRM</SheetDescription>
@@ -79,26 +85,26 @@ export function PublicHeader() {
                   <BrandLogo className="h-8 w-auto max-w-none" />
                 </Link>
               </SheetHeader>
-              <nav aria-label="Navigare mobilă" className="mt-8 flex flex-col gap-1">
+              <nav aria-label="Navigare mobilă" className="mt-10 flex flex-col gap-2">
                 {publicNav.map((item) => (
                   <Link
                     key={item.to}
                     to={item.to}
                     onClick={() => setOpen(false)}
-                    className="rounded-lg px-3 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted"
-                    activeProps={{ className: "bg-muted text-navy" }}
+                    className="flex min-h-12 items-center rounded-2xl px-4 text-base font-semibold text-foreground hover:bg-muted"
+                    activeProps={{ className: "bg-muted" }}
                   >
                     {item.label}
                   </Link>
                 ))}
               </nav>
-              <div className="mt-8 flex flex-col gap-2">
-                <Button asChild className={cn(navyButton, "h-11")}>
+              <div className="mt-8 grid gap-3">
+                <Button asChild className="h-12 rounded-full">
                   <CrmLink to="/register" onClick={() => setOpen(false)}>
                     Creează agenția <ArrowRight />
                   </CrmLink>
                 </Button>
-                <Button asChild variant="outline" className="h-11">
+                <Button asChild variant="outline" className="h-12 rounded-full">
                   <CrmLink to="/login" onClick={() => setOpen(false)}>
                     Autentificare
                   </CrmLink>

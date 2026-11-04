@@ -121,6 +121,7 @@
   --color-navy: var(--navy);
   --color-navy-foreground: var(--navy-foreground);
   --color-navy-muted: var(--navy-muted);
+  --color-on-navy: var(--on-navy);
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
   --color-gold-dark: var(--gold-dark);
@@ -200,6 +201,7 @@
   --navy: #0E1E2B;
   --navy-foreground: #C9D1D9;
   --navy-muted: #8995A1;
+  --on-navy: #FFFFFF;
   --gold: #D6A85A;
   --gold-dark: #8A6324;
   --gold-tint: #F6EEDF;
@@ -261,6 +263,7 @@
   --navy: #08121A;
   --navy-foreground: #C9D1D9;
   --navy-muted: #8995A1;
+  --on-navy: #FFFFFF;
   --gold: #D6A85A;
   --gold-dark: #E2BC7A;
   --gold-tint: #2B2416;
@@ -554,8 +557,8 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
 /* Gold primary actions on navy, without recoloring nested light tools/cards.
    Rebind tokens only on the action itself: surrounding forms keep navy primary.
    Existing local dark-theme rules are intentionally excluded. */
-:where(.bg-navy, .mk-navy-bg, .login-backdrop, .bg-sidebar)
-  :where(.bg-primary, .text-primary):not(:where(.bg-navy, .mk-navy-bg, .login-backdrop, .bg-sidebar) :where(.bg-card, .bg-background, .bg-surface, .bg-popover) *):not(:where(.dark, .dark *)) {
+:where(.bg-navy, .mk-navy-bg, .login-backdrop, .bg-sidebar, .mk-page-hero)
+  :where(.bg-primary, .text-primary):not(:where(.bg-navy, .mk-navy-bg, .login-backdrop, .bg-sidebar, .mk-page-hero) :where(.bg-card, .bg-background, .bg-surface, .bg-popover) *):not(:where(.dark, .dark *)) {
   --primary: var(--gold);
   --primary-foreground: var(--gold-foreground);
 }
@@ -579,3 +582,27 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
     }
   }
 }
+
+/* Public page hero: navy band like the homepage hero. Light cards/tools inside keep their own colours. */
+@utility mk-page-hero {
+  background-color: var(--color-navy);
+  background-image: radial-gradient(90% 70% at 85% 10%, color-mix(in oklab, var(--color-gold) 16%, transparent) 0%, transparent 60%);
+  color: var(--color-navy-foreground);
+  border-color: color-mix(in oklab, var(--color-navy-foreground) 15%, transparent);
+}
+  .mk-page-hero h1:not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) { color: var(--on-navy); font-size: 32px; line-height: 1.12; }
+  @media (min-width: 1024px) { .mk-page-hero h1:not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) { font-size: 44px; } }
+  .mk-page-hero :where(.text-navy, .text-foreground, h2, h3):not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel, .bg-gold, .bg-gold-tint) *, .bg-gold-tint) { color: var(--on-navy); }
+  .mk-page-hero :where(.text-muted-foreground, p):not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel, .bg-gold, .bg-gold-tint) *, .bg-gold-tint, .text-gold, .text-gold-dark, .text-primary) { color: var(--color-navy-foreground); }
+  .mk-page-hero .text-gold-dark:not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel, .bg-gold-tint) *, .bg-gold-tint) { color: var(--color-gold); }
+  .mk-page-hero .bg-primary\/8:not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) {
+    border-color: color-mix(in oklab, var(--color-gold) 35%, transparent);
+    background-color: color-mix(in oklab, var(--color-gold) 12%, transparent);
+    color: var(--color-gold);
+  }
+  .mk-page-hero :where(a, button).bg-navy { background-color: var(--color-gold); color: var(--color-navy); }
+  .mk-page-hero :where(a, button).border-input:not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) {
+    border-color: color-mix(in oklab, var(--color-navy-foreground) 35%, transparent);
+    background-color: transparent;
+    color: var(--on-navy);
+  }

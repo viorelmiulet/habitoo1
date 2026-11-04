@@ -93,7 +93,7 @@ function PartnersPage() {
   const partners = Route.useLoaderData();
   return (
     <PublicLayout homeHeader footerDescription="Agențiile imobiliare care lucrează cu Habitoo CRM.">
-      <section className="mk-hero-bg border-b border-border">
+      <section className="mk-page-hero border-b">
         <Container className="py-14 sm:py-20">
           <SectionHeading
             as="h1"

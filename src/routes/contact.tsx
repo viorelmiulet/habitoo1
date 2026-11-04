@@ -144,7 +144,7 @@ function ContactPage() {
 
   return (
     <PublicLayout>
-      <section className="mk-hero-bg relative overflow-hidden border-b border-border">
+      <section className="mk-page-hero relative overflow-hidden border-b">
         <div
           aria-hidden
           className="mk-dots pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"
