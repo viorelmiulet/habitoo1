@@ -1449,7 +1449,7 @@ export function MessageCard({
       )}
 
       {message.last_error && (
-        <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <p className="mt-2 rounded-[12px] bg-danger-tint px-3 py-2 text-xs text-destructive">
           Eroare livrare: {message.last_error}
         </p>
       )}
