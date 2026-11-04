@@ -44,7 +44,7 @@ import {
   testPortalConnection,
   type PortalHubItem,
 } from "@/lib/portals.functions";
-import { portalGridState, type PortalGridTone } from "@/lib/portals/grid-state";
+import { portalGridState } from "@/lib/portals/grid-state";
 import {
   revokeStoriaAuthorization,
   startStoriaAuthorization,
@@ -100,13 +100,6 @@ function ImobiliareSubscriptionBadge({ organizationId }: { organizationId: strin
     </StatusBadge>
   );
 }
-
-/** Punctul colorat din linia de stare a cardului din grilă. */
-const GRID_DOT_CLASS: Record<PortalGridTone, string> = {
-  success: "bg-success",
-  danger: "bg-destructive",
-  muted: "bg-muted-foreground/50",
-};
 
 export function PortalsCard({ organizationId, onSelectedChange }: { organizationId: string; onSelectedChange?: (portalId: string) => void }) {
   const hubKey = ["portal-hub", organizationId] as const;
@@ -437,13 +430,13 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                   </div>
                   <h3 className="mt-3 text-[17px] leading-6 font-bold break-words">{name}</h3>
                   <div data-portal-statuses className="mt-1 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground">
-                      <span
-                        aria-hidden
-                        className={cn("size-2 shrink-0 rounded-full", GRID_DOT_CLASS[state.tone])}
-                      />
+                    <StatusBadge
+                      className="h-7 text-[13px]"
+                      tone={state.tone === "muted" ? "neutral" : state.tone}
+                      dot
+                    >
                       {state.label}
-                    </span>
+                    </StatusBadge>
                   </div>
                 </div>
               );
