@@ -458,7 +458,7 @@ function ActivitiesPage() {
   };
 
   const activeFilterCount = [statusFilter !== "planned", kindFilter !== "all", agentFilter !== "all", periodFilter !== "all"].filter(Boolean).length;
-  const FilterFields = () => (
+  const renderFilterFields = () => (
     <>
         <Select
           value={statusFilter}
@@ -546,7 +546,7 @@ function ActivitiesPage() {
           <SlidersHorizontal className="size-4" /> Filtre ({activeFilterCount})
         </Button>
         <div className="hidden sm:contents">
-          <FilterFields />
+          {renderFilterFields()}
           <Button variant="link" size="sm" className="px-1 text-sm font-semibold text-gold-dark" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
         </div>
         {selected.size > 0 ? (
@@ -584,7 +584,7 @@ function ActivitiesPage() {
             <SheetTitle>Filtre</SheetTitle>
           </SheetHeader>
           <div className="grid gap-3 px-4 py-2">
-            <FilterFields />
+            {renderFilterFields()}
           </div>
           <SheetFooter className="flex-col gap-2">
             <Button className="h-11 w-full" onClick={() => setFiltersOpen(false)}>Aplică</Button>
