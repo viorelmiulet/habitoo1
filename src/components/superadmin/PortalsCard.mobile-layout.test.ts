@@ -7,7 +7,7 @@ describe("cardurile portalurilor pe mobil", () => {
 
   it("nu trunchiază numele portalurilor", () => {
     expect(superadmin).toContain('text-[17px] leading-6 font-bold break-words');
-    expect(agency).toContain('text-[17px] leading-6 font-bold break-words');
+    expect(agency).toContain('text-[15px] leading-6 font-semibold break-words');
     expect(superadmin).not.toContain('block truncate font-medium">{portalDisplayName(item.portal.id)}');
     expect(agency).not.toContain('truncate text-sm font-semibold">{item.displayName}');
   });

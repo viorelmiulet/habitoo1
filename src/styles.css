@@ -606,3 +606,23 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
     background-color: transparent;
     color: var(--on-navy);
   }
+
+/* R10a.2 — Setări: secțiuni din componente proprii aliniate la SettingsCard */
+[data-settings-root] :is(.panel, .rounded-card) { border-radius: 14px; box-shadow: none; min-width: 0; }
+[data-settings-root] .rounded-card > .p-6 { padding: 20px; }
+[data-settings-root] .rounded-card > .p-6.pt-0 { padding-top: 0; }
+[data-settings-root] .rounded-card .leading-none.tracking-tight { font-size: 16px; font-weight: 700; line-height: 1.4; }
+[data-settings-root] .rounded-card > .flex-col > .text-sm.text-muted-foreground { font-size: 13px; }
+[data-settings-root] :is(input:not([type="checkbox"], [type="radio"], [type="file"], [type="color"], [type="range"], [type="hidden"]), button[role="combobox"]) { min-height: 2.5rem; border-radius: 10px; }
+[data-settings-root] .justify-between:has(> [role="switch"]), [data-settings-root] label:has(> [role="switch"]) { min-height: 52px; }
+@media (max-width: 639px) {
+  [data-settings-root] :is(.panel, .rounded-card):is(.p-5, .p-4) { padding: 16px; }
+  [data-settings-root] .rounded-card > .p-6 { padding: 16px; }
+  [data-settings-root] .rounded-card > .p-6.pt-0 { padding-top: 0; }
+  [data-settings-root] .panel > :is(header, div).px-5 { padding-left: 16px; padding-right: 16px; }
+  [data-settings-root] .panel > div.p-5 { padding: 16px; }
+  [data-settings-root] :is(.panel, .rounded-card) :is(.grid-cols-2, .grid-cols-3) { grid-template-columns: minmax(0, 1fr); }
+  [data-settings-root] button[type="submit"] { width: 100%; min-height: 44px; }
+}
+[data-settings-root] .panel > header h2 { font-size: 16px; font-weight: 700; text-transform: none; letter-spacing: normal; }
+[data-settings-root] .panel > header h2 + p, [data-settings-root] .panel > header div > h2 + p { font-size: 13px; }
