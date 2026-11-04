@@ -14,7 +14,6 @@ import {
   CalendarClock,
   StickyNote,
   Users,
-  X,
   Trash2,
   Pencil,
   AlertCircle,
