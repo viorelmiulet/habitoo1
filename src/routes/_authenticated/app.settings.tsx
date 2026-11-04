@@ -393,7 +393,7 @@ function SettingsPage() {
             <TabsList
               ref={tabsListRef}
               data-settings-tabs
-              className="scrollbar-hidden flex h-auto w-full min-w-0 justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent px-4 sm:px-1"
+              className="scrollbar-hidden flex h-auto w-full min-w-0 justify-start gap-1 overflow-x-auto overflow-y-hidden border-0 bg-transparent px-4 sm:px-1"
             >
               {visibleTabs.map((value) => {
                 const Icon = TAB_ICONS[value];
