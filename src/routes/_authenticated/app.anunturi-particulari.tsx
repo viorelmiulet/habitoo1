@@ -308,6 +308,7 @@ function PrivateListingsPage() {
   const toggleDraftRoom = (r: number) =>
     patch({ camere: draft.camere.includes(r) ? draft.camere.filter((x) => x !== r) : [...draft.camere, r] });
 
+  const isMobile = useIsMobile();
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const extendedCount = [
     search.oras, selectedZones.length ? "x" : "", source, search.id, search.camere, search.q,

@@ -228,7 +228,7 @@ function AiPage() {
                 ) : null}
               </div>
 
-              <div className="sticky bottom-0 z-10 -mx-4 space-y-2 border-t border-border bg-card px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:p-0">
+              <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-4 space-y-2 border-t border-border bg-card px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:p-0">
                 <Textarea data-tour="assistant-input"
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
