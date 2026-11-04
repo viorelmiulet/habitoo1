@@ -174,7 +174,7 @@ export function AiMediaPanel() {
           ) : null}
 
           <Tabs value={kind} onValueChange={(value) => setKind(value as Kind)}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList variant="segmented" className="grid w-full grid-cols-3">
               {KINDS.map((option) => (
                 <TabsTrigger data-tour={`studio-${option.kind}`} aria-label={option.label} key={option.kind} value={option.kind} className="min-h-11 text-xs">
                   <option.icon className="mr-1.5 size-4" />
