@@ -605,14 +605,14 @@ function ContactsPage() {
                       {statusLabels[c.status] ?? c.status}
                     </StatusBadge>
                   </div>
-                  <span className="hidden w-36 shrink-0 text-[13px] text-muted-foreground sm:block">{c.phone ?? "—"}</span>
-                  <span className="hidden w-52 shrink-0 truncate text-[13px] text-muted-foreground lg:block">
+                  <span className="hidden w-28 shrink-0 text-[13px] text-muted-foreground sm:block">{c.phone ?? "—"}</span>
+                  <span className="hidden w-44 shrink-0 truncate text-[13px] text-muted-foreground lg:block">
                     {c.email ?? "—"}
                   </span>
-                  <span className="hidden w-24 shrink-0 text-[13px] text-muted-foreground lg:block">
+                  <span className="hidden w-20 shrink-0 text-[13px] text-muted-foreground lg:block">
                     {leads > 0 ? `${leads} ${leads === 1 ? "lead" : "lead-uri"}` : "fără lead-uri"}
                   </span>
-                  <span className="hidden w-36 shrink-0 min-w-0 items-center gap-1.5 text-[13px] text-muted-foreground xl:flex">
+                  <span className="hidden w-32 shrink-0 min-w-0 items-center gap-1.5 text-[13px] text-muted-foreground xl:flex">
                     <UserAvatar name={agentName(c.assigned_to)} className="size-6 text-[10px]" />
                     <span className="truncate">{agentName(c.assigned_to)}</span>
                   </span>
@@ -647,9 +647,9 @@ function ContactsPage() {
                       </a>
                     ) : null}
                   </div>
-                  <StatusBadge className="hidden shrink-0 sm:inline-flex" tone={c.status === "active" ? "success" : "neutral"}>
+                  <span className="hidden w-16 shrink-0 justify-end sm:flex"><StatusBadge tone={c.status === "active" ? "success" : "neutral"}>
                     {statusLabels[c.status] ?? c.status}
-                  </StatusBadge>
+                  </StatusBadge></span>
                 </li>
               );
             })}
