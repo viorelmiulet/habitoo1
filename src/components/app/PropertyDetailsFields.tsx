@@ -111,7 +111,7 @@ function NumberField({
         id={`${ctx.idPrefix}-${field}`}
         className={CONTROL}
         type="number"
-        inputMode="decimal"
+        inputMode={min < 0 ? undefined : field.endsWith("_surface") ? "decimal" : "numeric"}
         min={min}
         value={ctx.str(field)}
         onChange={(e) => ctx.setField(field, e.target.value === "" ? null : Number(e.target.value))}
@@ -158,7 +158,6 @@ function FloorField({ ctx }: { ctx: FieldCtx }) {
             id={`${ctx.idPrefix}-floor`}
             className={CONTROL}
             type="number"
-            inputMode="numeric"
             min={-5}
             required
             value={ctx.str("floor")}

@@ -120,6 +120,7 @@ export function PropertyTransactionFields({ idPrefix = "tx", value, onChange }: 
               <Input
                 id={`${idPrefix}-sale-price`}
                 type="number"
+                inputMode="decimal"
                 min="0"
                 disabled={!value.for_sale}
                 value={value.sale_price ?? ""}
@@ -165,6 +166,7 @@ export function PropertyTransactionFields({ idPrefix = "tx", value, onChange }: 
               <Input
                 id={`${idPrefix}-rent-price`}
                 type="number"
+                inputMode="decimal"
                 min="0"
                 disabled={!value.for_rent}
                 value={value.rent_price ?? ""}

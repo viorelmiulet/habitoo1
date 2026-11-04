@@ -17,7 +17,7 @@ import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FORM_ACTIONS_BAR, FormSection } from "@/components/app/FormSection";
-import { formInvalidHintHandlers } from "@/lib/form-invalid-hints";
+import { HintedForm } from "@/components/app/HintedForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -192,9 +192,8 @@ function NewPropertyPage() {
         }
       />
 
-      <form
+      <HintedForm
         className="space-y-4"
-        {...formInvalidHintHandlers}
         onSubmit={(e) => {
           e.preventDefault();
           create.mutate();
@@ -329,7 +328,7 @@ function NewPropertyPage() {
             {create.isPending ? "Se salvează…" : "Salvează proprietatea"}
           </Button>
         </div>
-      </form>
+      </HintedForm>
     </>
   );
 }

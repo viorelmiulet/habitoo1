@@ -33,7 +33,7 @@ import { changePropertyStatus } from "@/lib/property-status.functions";
 import { unarchiveProperty } from "@/lib/property-archive.functions";
 import { toastError } from "@/lib/errors";
 import { FORM_ACTIONS_BAR, FormRow, FormSection } from "@/components/app/FormSection";
-import { formInvalidHintHandlers } from "@/lib/form-invalid-hints";
+import { HintedForm } from "@/components/app/HintedForm";
 import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -983,7 +983,7 @@ function PropertyDetailContent() {
         </TabsContent>
 
         <TabsContent value="location" className="space-y-4">
-          {editing ? <form id="property-location-form" className="space-y-4" {...formInvalidHintHandlers} onSubmit={(e) => {
+          {editing ? <HintedForm id="property-location-form" className="space-y-4" onSubmit={(e) => {
             e.preventDefault();
             if (!hasTransactionSelection(tx)) {
               toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
@@ -1057,7 +1057,7 @@ function PropertyDetailContent() {
               <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setEditing(false)}>Anulează</Button>
               <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
-          </form> : <FormSection title="Localizare">
+          </HintedForm> : <FormSection title="Localizare">
             <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,552px)_minmax(0,1fr)]">
             <dl className="min-w-0 space-y-3">
               {[
@@ -1079,7 +1079,7 @@ function PropertyDetailContent() {
         </TabsContent>
 
         <TabsContent value="description" className="space-y-4">
-          {editing ? <form id="property-description-form" className="space-y-4" {...formInvalidHintHandlers} onSubmit={(e) => {
+          {editing ? <HintedForm id="property-description-form" className="space-y-4" onSubmit={(e) => {
             e.preventDefault();
             if (!hasTransactionSelection(tx)) {
               toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
@@ -1099,14 +1099,14 @@ function PropertyDetailContent() {
               <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setEditing(false)}>Anulează</Button>
               <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
-          </form> : <FormSection title="Descriere și Titlu">
+          </HintedForm> : <FormSection title="Descriere și Titlu">
             <h2 className="font-sans text-lg font-bold">{property.title || "—"}</h2>
             <p className="min-w-0 whitespace-pre-wrap break-words text-[15px] leading-6">{property.description || "Fără descriere."}</p>
           </FormSection>}
         </TabsContent>
 
         <TabsContent value="price" className="space-y-4">
-          {editing ? <form id="property-price-form" className="space-y-4" {...formInvalidHintHandlers} onSubmit={(e) => {
+          {editing ? <HintedForm id="property-price-form" className="space-y-4" onSubmit={(e) => {
             e.preventDefault();
             if (!hasTransactionSelection(tx)) {
               toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
@@ -1127,7 +1127,7 @@ function PropertyDetailContent() {
               <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setEditing(false)}>Anulează</Button>
               <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
-          </form> : <FormSection title="Tranzacție și preț">
+          </HintedForm> : <FormSection title="Tranzacție și preț">
             <dl className="space-y-3 sm:space-y-1.5">
               {[
                 ["Preț vânzare", salePrice ? formatMoney(salePrice, property.sale_currency ?? property.currency ?? "EUR") : ""],
@@ -1143,10 +1143,9 @@ function PropertyDetailContent() {
 
         <TabsContent value="overview" className="space-y-6" data-tour="property-overview">
           {editing ? (
-            <form
+            <HintedForm
               id="property-details-form"
               className="space-y-4"
-              {...formInvalidHintHandlers}
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!hasTransactionSelection(tx)) {
@@ -1210,7 +1209,7 @@ function PropertyDetailContent() {
                   Salvează
                 </Button>
               </div>
-            </form>
+            </HintedForm>
           ) : null}
 
           {!editing ? (
