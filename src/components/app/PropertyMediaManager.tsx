@@ -264,8 +264,8 @@ export function PropertyMediaManager({
     <div className="space-y-4">
       <div
         data-tour="media-upload"
-        className={`panel flex flex-col items-center justify-center gap-2 border-2 border-dashed p-8 text-center transition-colors ${
-          dragOver ? "border-primary bg-primary/5" : "border-border"
+        className={`flex flex-col items-center justify-center gap-2 rounded-[14px] border-2 border-dashed bg-card p-6 text-center transition-colors sm:p-8 ${
+          dragOver ? "border-gold bg-gold-tint" : "border-border"
         }`}
         onDragOver={(e) => {
           e.preventDefault();
@@ -294,6 +294,7 @@ export function PropertyMediaManager({
         <Button
           size="sm"
           variant="outline"
+          className="h-10 rounded-[10px]"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
         >
@@ -321,7 +322,7 @@ export function PropertyMediaManager({
           <SortableContext items={images.map((i) => i.id)} strategy={rectSortingStrategy}>
             <div
               data-tour="media-grid"
-              className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
             >
               {images.map((img, idx) => {
                 const url = imgUrl(img);
@@ -330,8 +331,8 @@ export function PropertyMediaManager({
                   <SortableTile
                     key={img.id}
                     id={img.id}
-                    className={`group relative overflow-hidden rounded-2xl bg-card p-0 ring-1 transition-shadow hover:shadow-soft ${
-                      isFirst ? "ring-2 ring-primary" : "ring-border/60"
+                    className={`group relative overflow-hidden rounded-[10px] border bg-card p-0 transition-shadow hover:shadow-soft ${
+                      isFirst ? "border-gold ring-1 ring-gold" : "border-border"
                     }`}
                   >
                     {(handle) => (
@@ -350,8 +351,8 @@ export function PropertyMediaManager({
                           )}
                         </button>
                         {isFirst ? (
-                          <span className="absolute top-2 left-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground">
-                            Principală
+                          <span className="absolute top-2 left-2 rounded-full bg-navy px-2.5 py-0.5 text-[11px] font-bold text-gold">
+                            Copertă
                           </span>
                         ) : null}
                         {img.is_confidential ? (
@@ -359,7 +360,7 @@ export function PropertyMediaManager({
                             <EyeOff className="size-3" />
                           </span>
                         ) : null}
-                        <div className="flex flex-wrap items-center gap-1 border-t border-border p-2">
+                        <div className="flex flex-wrap items-center justify-between gap-0.5 border-t border-border p-1 sm:justify-start sm:gap-1 sm:p-2 [&>button]:max-sm:size-11">
                           <Button
                             size="sm"
                             variant="ghost"
