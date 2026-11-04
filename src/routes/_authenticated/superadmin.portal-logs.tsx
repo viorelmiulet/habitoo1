@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { appHead } from "@/components/app/app-head";
 import { formatDateTime } from "@/lib/format";
@@ -123,7 +124,7 @@ function PortalLogsPage() {
         description="Operațiile cu portalurile imobiliare, pentru toate agențiile. Doar citire."
       />
 
-      <div className="panel grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="panel grid grid-cols-1 gap-3 rounded-[14px] p-4 sm:p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {filterSelect("Agenție", search.org, (v) => set({ org: v }),
           (orgs.data ?? []).map((o) => ({ value: o.id, label: o.name })))}
         {filterSelect("Portal", search.portal, (v) => set({ portal: v }),
@@ -155,7 +156,7 @@ function PortalLogsPage() {
         </form>
       </div>
 
-      <div className="panel overflow-hidden">
+      <div className="panel overflow-hidden rounded-[14px]">
         {logs.isLoading ? (
           <div className="p-5"><InlineLoading label="Se încarcă jurnalul…" /></div>
         ) : logs.isError ? (
@@ -163,44 +164,42 @@ function PortalLogsPage() {
         ) : (logs.data?.rows.length ?? 0) === 0 ? (
           <EmptyState icon={ScrollText} title="Nicio operațiune" description="Nu există înregistrări pentru filtrele alese." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-sm">
-              <thead className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground uppercase">
-                <tr>
-                  <th className="px-4 py-2.5">Data</th>
-                  <th className="px-4 py-2.5">Agenția</th>
-                  <th className="px-4 py-2.5">Portalul</th>
-                  <th className="px-4 py-2.5">Acțiunea</th>
-                  <th className="px-4 py-2.5">Anunțul</th>
-                  <th className="px-4 py-2.5">Stare</th>
-                  <th className="px-4 py-2.5">Detalii</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
+          <Table className="min-w-[860px]">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Data</TableHead>
+                  <TableHead>Agenția</TableHead>
+                  <TableHead>Portalul</TableHead>
+                  <TableHead>Acțiunea</TableHead>
+                  <TableHead>Anunțul</TableHead>
+                  <TableHead>Stare</TableHead>
+                  <TableHead>Detalii</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {logs.data!.rows.map((r) => (
-                  <tr
+                  <TableRow
                     key={r.id}
                     tabIndex={0}
                     onClick={() => setOpenId(r.id)}
                     onKeyDown={(e) => e.key === "Enter" && setOpenId(r.id)}
-                    className="cursor-pointer hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
+                    className="h-[52px] cursor-pointer hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
                   >
-                    <td className="px-4 py-2.5 whitespace-nowrap">{formatDateTime(r.createdAt)}</td>
-                    <td className="px-4 py-2.5">{r.organizationName ?? "—"}</td>
-                    <td className="px-4 py-2.5">{portalDisplayName(r.portal)}</td>
-                    <td className="px-4 py-2.5 font-mono text-xs">{r.operation}</td>
-                    <td className="px-4 py-2.5">{r.propertyReference ?? "—"}</td>
-                    <td className="px-4 py-2.5">
+                    <TableCell className="whitespace-nowrap">{formatDateTime(r.createdAt)}</TableCell>
+                    <TableCell>{r.organizationName ?? "—"}</TableCell>
+                    <TableCell>{portalDisplayName(r.portal)}</TableCell>
+                    <TableCell className="font-mono text-xs">{r.operation}</TableCell>
+                    <TableCell>{r.propertyReference ?? "—"}</TableCell>
+                    <TableCell>
                       <StatusBadge tone={r.success ? "success" : "danger"} dot>
                         {r.success ? "Reușit" : "Eroare"}
                       </StatusBadge>
-                    </td>
-                    <td className="max-w-[320px] truncate px-4 py-2.5 text-muted-foreground">{r.summary}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="max-w-[320px] truncate text-muted-foreground">{r.summary}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
         )}
         <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm">
           <span className="text-muted-foreground">{total} înregistrări · pagina {page} din {pages}</span>
@@ -238,8 +237,8 @@ function PortalLogsPage() {
                 <dt className="text-muted-foreground">Detalii</dt><dd className="break-words">{open.summary}</dd>
               </dl>
               <div className="mt-4 px-4 pb-6">
-                <p className="mb-2 text-sm font-medium">Răspunsul portalului</p>
-                <pre className="max-h-[50vh] overflow-auto rounded-lg border border-border bg-muted/40 p-3 text-xs">
+                <p className="mb-2 text-sm font-semibold">Răspunsul portalului</p>
+                <pre className="max-h-[50vh] max-w-full overflow-auto rounded-[10px] border border-border bg-muted p-3 font-mono text-xs">
                   {open.portalResponse === "null"
                     ? "—"
                     : JSON.stringify(JSON.parse(open.portalResponse), null, 2)}

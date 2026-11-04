@@ -113,18 +113,18 @@ function NomenclatorPage() {
           <SectionCard title="Versiune și import" icon={DatabaseZap}>
             <dl className="grid gap-4 sm:grid-cols-3">
               <div>
-                <dt className="text-xs text-muted-foreground">Versiune nomenclator</dt>
-                <dd className="text-sm font-medium">{data?.version ?? "Neimportat"}</dd>
+                <dt className="text-[13px] text-muted-foreground">Versiune nomenclator</dt>
+                <dd className="text-sm font-semibold">{data?.version ?? "Neimportat"}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Data importului</dt>
-                <dd className="text-sm font-medium">{fmtDateTime(data?.importedAt)}</dd>
+                <dt className="text-[13px] text-muted-foreground">Data importului</dt>
+                <dd className="text-sm font-semibold">{fmtDateTime(data?.importedAt)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Sursă oficială</dt>
-                <dd className="truncate text-sm font-medium">
+                <dt className="text-[13px] text-muted-foreground">Sursă oficială</dt>
+                <dd className="truncate text-sm font-semibold">
                   {data?.sourceUrl ? (
-                    <a className="underline" href={data.sourceUrl} target="_blank" rel="noreferrer">
+                    <a className="text-sm font-semibold text-gold-dark hover:underline" href={data.sourceUrl} target="_blank" rel="noreferrer">
                       data.gov.ro (INS)
                     </a>
                   ) : (
@@ -133,14 +133,14 @@ function NomenclatorPage() {
                 </dd>
               </div>
             </dl>
-            <p className="mt-4 text-xs text-muted-foreground">
+            <p className="mt-4 text-[13px] text-muted-foreground">
               Importul este idempotent: rulările repetate actualizează denumirile fără să creeze
               duplicate. Anunțurile existente care au deja localitate ca text sunt completate
               automat cu codul oficial atunci când potrivirea este neambiguă; textul introdus de
               agenți nu este șters.
             </p>
             {lastImport && (
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="mt-2 text-[13px] text-muted-foreground">
                 Ultimul import: {lastImport.counties} județe · {lastImport.uats} UAT-uri ·{" "}
                 {lastImport.localities} localități · {lastImport.propertiesMigrated} anunțuri
                 completate din {lastImport.propertiesChecked} verificate.
@@ -196,16 +196,16 @@ function ImobiliareLocationsCard() {
     <SectionCard title="Locații Imobiliare.ro" icon={MapPin}>
       <dl className="grid gap-4 sm:grid-cols-3">
         <div>
-          <dt className="text-xs text-muted-foreground">Înregistrări</dt>
-          <dd className="text-sm font-medium">{data?.total ?? 0}</dd>
+          <dt className="text-[13px] text-muted-foreground">Înregistrări</dt>
+          <dd className="text-sm font-semibold">{data?.total ?? 0}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">Zone publicabile</dt>
-          <dd className="text-sm font-medium">{data?.zones ?? 0}</dd>
+          <dt className="text-[13px] text-muted-foreground">Zone publicabile</dt>
+          <dd className="text-sm font-semibold">{data?.zones ?? 0}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">Ultima încărcare</dt>
-          <dd className="text-sm font-medium">{fmtDateTime(data?.syncedAt)}</dd>
+          <dt className="text-[13px] text-muted-foreground">Ultima încărcare</dt>
+          <dd className="text-sm font-semibold">{fmtDateTime(data?.syncedAt)}</dd>
         </div>
       </dl>
 
@@ -226,7 +226,7 @@ function ImobiliareLocationsCard() {
         </Button>
       </div>
 
-      <p className="mt-3 text-xs text-muted-foreground">
+      <p className="mt-3 text-[13px] text-muted-foreground">
         Publicarea pe Imobiliare.ro cere o zonă exactă din lista lor. Aceste date se încarcă doar
         din fișierul primit de la portal (SQL sau CSV, cu coloanele id, parent_id, depth, name); nu
         sunt deduse și nu sunt preluate automat. Reîncărcarea este idempotentă. Fără acest fișier,
