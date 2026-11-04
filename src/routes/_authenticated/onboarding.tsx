@@ -151,14 +151,16 @@ function OnboardingPage() {
       <AuthShell
         title="Cererea ta a plecat spre noi"
         subtitle="Verificăm datele agenției și îți activăm accesul după aprobare."
+        width="md"
+        progress={1 / 3}
       >
         <div className="space-y-6 text-sm">
           <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <Clock className="size-6" />
           </span>
 
-          <div className="rounded-xl border border-border bg-muted/40 p-4">
-            <p className="text-xs font-medium text-muted-foreground">Datele trimise</p>
+          <div className="rounded-[12px] border border-border bg-muted/40 p-4">
+            <p className="text-[13px] font-medium text-muted-foreground">Datele trimise</p>
             <p className="mt-2 font-semibold">{request.agency_name}</p>
             <dl className="mt-2 space-y-1 text-xs text-muted-foreground">
               <div className="flex justify-between gap-3">
@@ -282,6 +284,7 @@ function OnboardingPage() {
       title="Înscrie agenția"
       subtitle="Completează datele firmei. Contul devine activ după validarea echipei Habitoo."
       width="md"
+      progress={Object.values(form).filter((v) => String(v ?? "").trim() !== "").length / Math.max(1, Object.keys(form).length)}
     >
       <form onSubmit={submit} className="space-y-7">
         <fieldset className="space-y-4">
@@ -357,7 +360,7 @@ function OnboardingPage() {
                 aria-pressed={term === t}
                 onClick={() => setTerm(t)}
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                  "min-h-10 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
                   term === t
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground",
@@ -377,10 +380,10 @@ function OnboardingPage() {
                   aria-pressed={plan === k}
                   onClick={() => setPlan(k)}
                   className={cn(
-                    "rounded-xl border p-4 text-left transition-colors",
+                    "min-h-[52px] rounded-[14px] border p-4 text-left transition-colors",
                     plan === k
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/40",
+                      ? "border-2 border-gold bg-gold-tint"
+                      : "border-border hover:border-gold/50",
                   )}
                 >
                   <p className="text-sm font-semibold">{PLAN_LABELS[k]}</p>
@@ -402,7 +405,7 @@ function OnboardingPage() {
 
         <Button
           type="submit"
-          className="w-full"
+          className="h-11 w-full"
           disabled={loading || cuiState.kind === "duplicate" || cuiState.kind === "loading"}
         >
           {loading ? "Se trimite…" : "Trimite spre aprobare"}

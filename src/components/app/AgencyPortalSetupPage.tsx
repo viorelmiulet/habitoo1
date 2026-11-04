@@ -222,7 +222,7 @@ function AgencyPortalSetupBody({ portalId, organizationId }: { portalId: string;
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 sm:p-6" data-agency-portal-setup={s.id}>
       <BackLink />
-      <section className="panel space-y-4 p-5">
+      <section className="min-w-0 space-y-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
         <div className="flex items-center gap-3">
           <PortalLogoStack portalId={s.id} name={s.displayName} size={48} className="shrink-0" />
           <div className="min-w-0">
@@ -235,7 +235,7 @@ function AgencyPortalSetupBody({ portalId, organizationId }: { portalId: string;
         </div>
         <p className="text-sm" data-access-source>{s.accessSource}</p>
         {s.connection.lastSyncError ? (
-          <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{s.connection.lastSyncError}</p>
+          <p className="rounded-[12px] border border-destructive/40 bg-danger-tint p-3 text-sm text-destructive">{s.connection.lastSyncError}</p>
         ) : null}
 
         {isKeyRequestPortal(s.id) ? (
