@@ -1,4 +1,7 @@
 import { useMemo, useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -79,9 +82,9 @@ function dateLabel(value: string | null | undefined) {
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
+    <div className="min-w-0 rounded-[14px] border border-border bg-card p-4 sm:p-5">
+      <p className="text-[13px] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-[26px] leading-tight font-extrabold tabular-nums text-foreground">{value}</p>
       {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
@@ -272,7 +275,7 @@ function MarketDataCenterPage() {
           {(overview.data?.sources ?? []).map((source) => (
             <div
               key={source.id}
-              className="flex flex-col gap-2 rounded-xl border border-border bg-background/60 p-4 md:flex-row md:items-center md:justify-between"
+              className="flex min-h-[52px] flex-col gap-2 rounded-[12px] border border-border bg-card p-4 md:flex-row md:items-center md:justify-between"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
@@ -426,39 +429,39 @@ function MarketDataCenterPage() {
           {(overview.data?.lastRuns ?? []).length > 0 ? (
             <div className="mt-6 space-y-2">
               <p className="text-sm font-medium text-foreground">Ultimele rulări</p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="text-left text-xs uppercase text-muted-foreground">
-                    <tr>
-                      <th className="py-2 pr-4">Sursă</th>
-                      <th className="py-2 pr-4">Când</th>
-                      <th className="py-2 pr-4">Primite</th>
-                      <th className="py-2 pr-4">Noi</th>
-                      <th className="py-2 pr-4">Actualizate</th>
-                      <th className="py-2 pr-4">Invalide</th>
-                      <th className="py-2 pr-4">Dispărute</th>
-                      <th className="py-2 pr-4">Duplicate</th>
-                      <th className="py-2 pr-4">Erori</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
+              <div className="min-w-0 overflow-hidden rounded-[14px] border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Sursă</TableHead>
+                      <TableHead>Când</TableHead>
+                      <TableHead>Primite</TableHead>
+                      <TableHead>Noi</TableHead>
+                      <TableHead>Actualizate</TableHead>
+                      <TableHead>Invalide</TableHead>
+                      <TableHead>Dispărute</TableHead>
+                      <TableHead>Duplicate</TableHead>
+                      <TableHead>Erori</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {(overview.data?.lastRuns ?? []).map((run) => (
-                      <tr key={run.id}>
-                        <td className="py-2 pr-4">{run.sourceName}</td>
-                        <td className="py-2 pr-4 text-muted-foreground">
+                      <TableRow key={run.id}>
+                        <TableCell className="tabular-nums">{run.sourceName}</TableCell>
+                        <TableCell className="text-muted-foreground">
                           {dateLabel(run.startedAt)}
-                        </td>
-                        <td className="py-2 pr-4">{run.itemsReceived}</td>
-                        <td className="py-2 pr-4">{run.itemsCreated}</td>
-                        <td className="py-2 pr-4">{run.itemsUpdated}</td>
-                        <td className="py-2 pr-4">{run.itemsInvalid}</td>
-                        <td className="py-2 pr-4">{run.itemsDeactivated}</td>
-                        <td className="py-2 pr-4">{run.duplicates}</td>
-                        <td className="py-2 pr-4">{run.errorCount}</td>
-                      </tr>
+                        </TableCell>
+                        <TableCell className="tabular-nums">{run.itemsReceived}</TableCell>
+                        <TableCell className="tabular-nums">{run.itemsCreated}</TableCell>
+                        <TableCell className="tabular-nums">{run.itemsUpdated}</TableCell>
+                        <TableCell className="tabular-nums">{run.itemsInvalid}</TableCell>
+                        <TableCell className="tabular-nums">{run.itemsDeactivated}</TableCell>
+                        <TableCell className="tabular-nums">{run.duplicates}</TableCell>
+                        <TableCell className="tabular-nums">{run.errorCount}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </div>
           ) : null}
@@ -473,7 +476,7 @@ function MarketDataCenterPage() {
         >
           <div className="space-y-3">
             {(reviews.data ?? []).map((review) => (
-              <div key={review.id} className="rounded-xl border border-border p-4">
+              <div key={review.id} className="rounded-[12px] border border-border p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium text-foreground">
@@ -518,8 +521,11 @@ function MarketDataCenterPage() {
       ) : null}
 
       <SectionCard title="Ofertele de piață" icon={Filter}>
-        <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
-        <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <Button variant="link" size="sm" className="h-11 px-1 text-sm font-semibold text-gold-dark sm:h-10" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
+        <Button type="button" variant="outline" className="h-11 w-full rounded-[10px] md:hidden" onClick={() => setFiltersOpen(true)}>
+          <SlidersHorizontal className="size-4" /> Filtre ({Object.keys(marketListDefaults).filter((k) => (filters as Record<string, unknown>)[k] !== (marketListDefaults as Record<string, unknown>)[k]).length})
+        </Button>
+        <div className="hidden gap-3 md:grid md:grid-cols-3 xl:grid-cols-6">
           <div className="space-y-1">
             <Label className="text-xs">Sursă</Label>
             <Select
@@ -693,6 +699,189 @@ function MarketDataCenterPage() {
             }} />
           </div>
         </div>
+        <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+          <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto">
+            <SheetHeader><SheetTitle>Filtre</SheetTitle></SheetHeader>
+            <div className="grid gap-3 px-4 py-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Sursă</Label>
+            <Select
+              value={filters.source}
+              onValueChange={(value) => {
+                setPage(1);
+                setFilters((f) => ({ ...f, source: value }));
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toate sursele</SelectItem>
+                {MARKET_SOURCES.map((source) => (
+                  <SelectItem key={source.id} value={source.id}>
+                    {source.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Oraș</Label>
+            <Input
+              value={filters.city}
+              onChange={(event) => {
+                setPage(1);
+                setFilters((f) => ({ ...f, city: event.target.value }));
+              }}
+              placeholder="București"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Sector</Label>
+            <Input value={filters.sector} placeholder="Sector 3" onChange={(event) => {
+              setPage(1);
+              setFilters((f) => ({ ...f, sector: event.target.value }));
+            }} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Cartier</Label>
+            <Input value={filters.neighborhood} placeholder="Titan" onChange={(event) => {
+              setPage(1);
+              setFilters((f) => ({ ...f, neighborhood: event.target.value }));
+            }} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Zonă / adresă</Label>
+            <Input
+              value={filters.area}
+              onChange={(event) => {
+                setPage(1);
+                setFilters((f) => ({ ...f, area: event.target.value }));
+              }}
+              placeholder="Aviatorilor"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Tip</Label>
+            <Select
+              value={filters.propertyType}
+              onValueChange={(value) => {
+                setPage(1);
+                setFilters((f) => ({ ...f, propertyType: value }));
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toate tipurile</SelectItem>
+                <SelectItem value="apartament">Apartament</SelectItem>
+                <SelectItem value="casa">Casă</SelectItem>
+                <SelectItem value="teren">Teren</SelectItem>
+                <SelectItem value="spatiu comercial">Spațiu comercial</SelectItem>
+                <SelectItem value="birou">Birou</SelectItem>
+                <SelectItem value="hala">Hală</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Tranzacție</Label>
+            <Select
+              value={filters.transactionType}
+              onValueChange={(value) => {
+                setPage(1);
+                setFilters((f) => ({ ...f, transactionType: value }));
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toate</SelectItem>
+                <SelectItem value="sale">Vânzare</SelectItem>
+                <SelectItem value="rent">Închiriere</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Status</Label>
+            <Select
+              value={filters.status}
+              onValueChange={(value) => {
+                setPage(1);
+                setFilters((f) => ({ ...f, status: value as typeof filters.status }));
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Dispărute</SelectItem>
+                <SelectItem value="archived">Arhivate</SelectItem>
+                <SelectItem value="all">Toate</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Preț minim</Label>
+            <Input
+              inputMode="numeric"
+              value={filters.priceMin}
+              onChange={(event) => setFilters((f) => ({ ...f, priceMin: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Preț maxim</Label>
+            <Input
+              inputMode="numeric"
+              value={filters.priceMax}
+              onChange={(event) => setFilters((f) => ({ ...f, priceMax: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Suprafață min.</Label>
+            <Input
+              inputMode="numeric"
+              value={filters.areaMin}
+              onChange={(event) => setFilters((f) => ({ ...f, areaMin: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Suprafață max.</Label>
+            <Input
+              inputMode="numeric"
+              value={filters.areaMax}
+              onChange={(event) => setFilters((f) => ({ ...f, areaMax: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Camere</Label>
+            <Input
+              inputMode="numeric"
+              value={filters.rooms}
+              onChange={(event) => setFilters((f) => ({ ...f, rooms: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="listing-age-min" className="text-xs">Vechime min. (zile)</Label>
+            <Input id="listing-age-min" type="number" min={0} step={1} value={filters.daysOnMarketMin} onChange={(event) => {
+              setPage(1); setFilters((f) => ({ ...f, daysOnMarketMin: event.target.value }));
+            }} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="listing-age-max" className="text-xs">Vechime max. (zile)</Label>
+            <Input id="listing-age-max" type="number" min={0} step={1} value={filters.daysOnMarketMax} onChange={(event) => {
+              setPage(1); setFilters((f) => ({ ...f, daysOnMarketMax: event.target.value }));
+            }} />
+          </div>
+            </div>
+            <SheetFooter className="flex-col gap-2">
+              <Button className="h-11 w-full" onClick={() => setFiltersOpen(false)}>Aplică</Button>
+              <Button variant="outline" className="h-11 w-full" onClick={persisted.reset}>Resetează</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
 
         <div className="mt-5">
           {listings.isLoading ? (
@@ -710,9 +899,9 @@ function MarketDataCenterPage() {
                   <Link
                     to="/app/acp/date-piata/$id"
                     params={{ id: row.id }}
-                    className="flex h-full gap-3 rounded-xl border border-border bg-card p-3 transition hover:border-primary/40 hover:shadow-sm"
+                    className="flex h-full min-w-0 gap-3 rounded-[14px] border border-border bg-card p-3 transition hover:border-gold/50 hover:shadow-sm"
                   >
-                    <div className="size-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                    <div className="size-20 shrink-0 overflow-hidden rounded-[10px] border border-border bg-muted">
                       {row.imageUrl ? (
                         <img
                           src={row.imageUrl}
@@ -727,24 +916,23 @@ function MarketDataCenterPage() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-foreground">
+                      <p className="truncate text-sm font-semibold text-foreground">
                         {row.title ?? row.city ?? "Ofertă de piață"}
                       </p>
-                      <p className="truncate text-sm text-muted-foreground">
+                      <p className="truncate text-[13px] text-muted-foreground">
                         {[row.city, row.sector, row.neighborhood ?? row.district].filter(Boolean).join(", ") ||
                           "Locație necunoscută"}
                       </p>
-                      <p className="mt-1 text-sm text-foreground">
+                      <p className="mt-1 text-base font-bold tabular-nums text-foreground">
                         {row.price
                           ? formatMoney(row.price, row.currency ?? "EUR")
                           : "Preț necomunicat"}
-                        {row.pricePerSqm ? (
-                          <span className="text-muted-foreground">
-                            {" "}
-                            · {Math.round(row.pricePerSqm)} /mp
-                          </span>
-                        ) : null}
                       </p>
+                      {row.pricePerSqm ? (
+                        <p className="text-[13px] tabular-nums text-muted-foreground">
+                          {Math.round(row.pricePerSqm)} /mp
+                        </p>
+                      ) : null}
                       <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
                         <Badge variant="outline">{row.sourceName}</Badge>
                         {listingAgeDays(row.firstSeenAt) !== null ? <Badge variant="outline">{listingAgeDays(row.firstSeenAt)} zile de la prima observare</Badge> : null}
