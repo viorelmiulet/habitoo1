@@ -287,7 +287,7 @@ function ContactDetailPage() {
         }
       />
 
-      <div className="rounded-2xl bg-card p-5 ring-1 ring-border/60">
+      <div className="rounded-[14px] border border-border bg-card p-5">
         <div className="flex flex-wrap items-start gap-4">
           <UserAvatar
             name={`${contact.first_name} ${contact.last_name}`}
@@ -305,7 +305,7 @@ function ContactDetailPage() {
                 <StatusBadge tone="success">Consimțământ GDPR</StatusBadge>
               ) : <StatusBadge tone="neutral">Fără acord marketing</StatusBadge>}
             </div>
-            <div className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-3 grid gap-x-6 gap-y-3 text-sm font-semibold sm:grid-cols-2 lg:grid-cols-5 [&_p:first-child]:text-xs [&_p:first-child]:font-normal [&_p:first-child]:text-muted-foreground">
               <div>
                 <p className="text-xs text-muted-foreground">Telefon</p>
                 <p>{contact.phone ?? "—"}</p>
@@ -331,12 +331,13 @@ function ContactDetailPage() {
               <div><p className="text-xs text-muted-foreground">Sursă</p><p>{contact.source || '—'}</p></div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-1">
+        </div>
+        <div className="mt-4 grid grid-cols-4 gap-2 sm:flex sm:flex-wrap sm:items-center">
             {contact.phone ? (
               <>
                 <a
                   href={`tel:${contact.phone}`}
-                  className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-[10px] border border-border px-1 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:h-10 sm:min-h-0 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm [&_svg]:size-[18px] sm:[&_svg]:size-4"
                 >
                   <Phone className="size-4" aria-hidden /> Sună
                 </a>
@@ -344,7 +345,7 @@ function ContactDetailPage() {
                   href={`https://wa.me/${contact.phone.replace(/[^\d]/g, "")}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-[10px] border border-border px-1 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:h-10 sm:min-h-0 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm [&_svg]:size-[18px] sm:[&_svg]:size-4"
                 >
                   <MessageCircle className="size-4" aria-hidden /> WhatsApp
                 </a>
@@ -353,7 +354,7 @@ function ContactDetailPage() {
             {contact.email ? (
               <a
                 href={`mailto:${contact.email}`}
-                className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-[10px] border border-border px-1 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:h-10 sm:min-h-0 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm [&_svg]:size-[18px] sm:[&_svg]:size-4"
               >
                 <Mail className="size-4" aria-hidden /> Email
               </a>
@@ -361,38 +362,37 @@ function ContactDetailPage() {
             <button
               type="button"
               onClick={() => setActivityDialog({ kind: "meeting", title: "Activitate" })}
-              className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-[10px] border border-border px-1 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:h-10 sm:min-h-0 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm [&_svg]:size-[18px] sm:[&_svg]:size-4"
             >
               <CalendarClock className="size-4" aria-hidden /> Activitate
             </button>
             <button
               type="button"
               onClick={() => setActivityDialog({ kind: "task", title: "Task" })}
-              className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-[10px] border border-border px-1 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:h-10 sm:min-h-0 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm [&_svg]:size-[18px] sm:[&_svg]:size-4"
             >
               <Plus className="size-4" aria-hidden /> Task
             </button>
             <button
               type="button"
               onClick={() => setActivityDialog({ kind: "viewing", title: "Vizionare" })}
-              className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-[10px] border border-border px-1 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:h-10 sm:min-h-0 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm [&_svg]:size-[18px] sm:[&_svg]:size-4"
             >
               <Eye className="size-4" aria-hidden /> Vizionare
             </button>
             <button
               type="button"
               onClick={() => setRequestDialogOpen(true)}
-              className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-[10px] border border-border px-1 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:h-10 sm:min-h-0 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm [&_svg]:size-[18px] sm:[&_svg]:size-4"
             >
               <Target className="size-4" aria-hidden /> Cerere
             </button>
-          </div>
         </div>
       </div>
 
       {edit ? (
         <form
-          className="panel space-y-4 p-5"
+          className="space-y-4 rounded-[14px] border border-border bg-card p-5"
           onSubmit={(e) => {
             e.preventDefault();
             save.mutate({
@@ -433,28 +433,29 @@ function ContactDetailPage() {
             />
           </div>
           <ContactConsentFields value={editConsent} onChange={patch => setEditConsent(f => ({ ...f, ...patch }))} />
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setEdit(null)}>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setEdit(null)}>
               Anulează
             </Button>
-            <Button type="submit" disabled={save.isPending}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending}>
               Salvează
             </Button>
           </div>
         </form>
       ) : null}
 
-      <section aria-label="Istoricul acordului" className="space-y-3 border-y border-border py-4">
-        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-sm font-semibold">Consimțământ GDPR</h2>{contact.gdpr_consent && <Button variant="outline" size="sm" disabled={withdraw.isPending} onClick={() => withdraw.mutate()}>Acordul a fost retras</Button>}</div>
+      <section aria-label="Istoricul acordului" className="space-y-3 rounded-[14px] border border-border bg-card p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-base font-bold">Consimțământ GDPR</h2>{contact.gdpr_consent && <Button variant="outline" size="sm" disabled={withdraw.isPending} onClick={() => withdraw.mutate()}>Acordul a fost retras</Button>}</div>
         <p className="text-sm">{contact.gdpr_consent ? 'Acord marketing înregistrat' : 'Fără acord marketing'}{contact.gdpr_consent_at && <> · {formatDateTime(contact.gdpr_consent_at)} · {contact.gdpr_consent_method || 'Mod neînregistrat'} · {agentName(contact.gdpr_consent_by)}</>}</p>
         {contact.gdpr_withdrawn_at && <p className="text-sm">Retras la {formatDateTime(contact.gdpr_withdrawn_at)}</p>}
         {!contact.gdpr_consent && <p className="text-xs text-muted-foreground">Trimiterea unei oferte cerute de client rămâne posibilă.</p>}
-        <ul className="space-y-1 text-sm">{consentHistory(contact.gdpr_consent_history).map((event, i) => <li key={`${event.at}-${i}`}>{event.action === 'granted' ? 'Acord înregistrat' : 'Acord retras'} · {formatDateTime(event.at)} · {event.method || 'Mod neînregistrat'} · {agentName(event.agent_id)}</li>)}</ul>
+        <ul className="divide-y divide-border text-[13px] [&>li]:py-1.5">{consentHistory(contact.gdpr_consent_history).map((event, i) => <li key={`${event.at}-${i}`}>{event.action === 'granted' ? 'Acord înregistrat' : 'Acord retras'} · {formatDateTime(event.at)} · {event.method || 'Mod neînregistrat'} · {agentName(event.agent_id)}</li>)}</ul>
       </section>
       <ContactIdentitySection contactId={contact.id} firstName={contact.first_name ?? ""} lastName={contact.last_name ?? ""} />
       <Tabs defaultValue="overview">
-        <TabsList data-tour="contact-tabs" className="flex-wrap">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+        <div className="sticky top-14 z-20 -mx-1 bg-background px-1 sm:top-16">
+        <TabsList data-tour="contact-tabs" className="w-full">
+          <TabsTrigger value="overview">Rezumat</TabsTrigger>
           <TabsTrigger data-tour="contact-tab-properties" value="properties">Proprietăți ({data?.properties.length ?? 0})</TabsTrigger>
           <TabsTrigger data-tour="contact-tab-requests" value="requests">Cereri ({data?.requests.length ?? 0})</TabsTrigger>
           <TabsTrigger data-tour="contact-tab-leads" value="leads">Lead-uri ({data?.leads.length ?? 0})</TabsTrigger>
@@ -464,42 +465,43 @@ function ContactDetailPage() {
           <TabsTrigger data-tour="contact-tab-notes" value="notes">Note</TabsTrigger>
           <TabsTrigger data-tour="contact-tab-timeline" value="timeline">Timeline</TabsTrigger>
         </TabsList>
+        </div>
 
-        <TabsContent value="overview" className="panel space-y-2 p-5 text-sm">
-          <p>
-            <span className="text-muted-foreground">Sursă:</span> {contact.source ?? "—"}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Companie:</span> {contact.company ?? "—"}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Etichete:</span>{" "}
-            {(contact.tags ?? []).join(", ") || "—"}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Note:</span> {contact.notes ?? "—"}
-          </p>
+        <TabsContent value="overview" className="rounded-[14px] border border-border bg-card p-5">
+          <dl className="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
+            {([
+              ["Sursă", contact.source ?? "—"],
+              ["Companie", contact.company ?? "—"],
+              ["Etichete", (contact.tags ?? []).join(", ") || "—"],
+              ["Note", contact.notes ?? "—"],
+            ] as const).map(([label, value]) => (
+              <div key={label} className="min-w-0">
+                <dt className="text-xs text-muted-foreground">{label}:</dt>
+                <dd className="mt-0.5 break-words font-semibold">{value}</dd>
+              </div>
+            ))}
+          </dl>
         </TabsContent>
 
         <TabsContent value="properties">
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             {(data?.properties.length ?? 0) === 0 ? (
               <EmptyState title="Nicio proprietate deținută" />
             ) : (
               <ul className="divide-y divide-border">
                 {data?.properties.map((p) => (
-                  <li key={p.id} className="flex items-center gap-3 px-5 py-3 text-sm">
+                  <li key={p.id} className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm sm:flex-nowrap sm:px-5">
                     <Link
                       to="/app/properties/$id"
                       params={{ id: p.id }}
-                      className="min-w-0 flex-1 truncate font-medium hover:text-primary"
+                      className="min-w-0 basis-full truncate font-semibold sm:basis-auto sm:flex-1 hover:text-primary"
                     >
                       {p.title}
                     </Link>
                     <StatusBadge tone={propertyStatusTone[p.status]}>
                       {propertyStatusLabels[p.status]}
                     </StatusBadge>
-                    <span className="w-28 text-right">{formatMoney(p.price, p.currency)}</span>
+                    <span className="ml-auto text-right sm:w-28">{formatMoney(p.price, p.currency)}</span>
                   </li>
                 ))}
               </ul>
@@ -508,17 +510,17 @@ function ContactDetailPage() {
         </TabsContent>
 
         <TabsContent value="requests">
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             {(data?.requests.length ?? 0) === 0 ? (
               <EmptyState title="Nicio cerere înregistrată" />
             ) : (
               <ul className="divide-y divide-border">
                 {data?.requests.map((r) => (
-                  <li key={r.id} className="flex items-center gap-3 px-5 py-3 text-sm">
+                  <li key={r.id} className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm sm:flex-nowrap sm:px-5">
                     <Link
                       to="/app/requests/$id"
                       params={{ id: r.id }}
-                      className="min-w-0 flex-1 truncate font-medium hover:text-primary"
+                      className="min-w-0 basis-full truncate font-semibold sm:basis-auto sm:flex-1 hover:text-primary"
                     >
                       {r.title}
                     </Link>
@@ -540,14 +542,14 @@ function ContactDetailPage() {
         </TabsContent>
 
         <TabsContent value="leads">
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             {(data?.leads.length ?? 0) === 0 ? (
               <EmptyState title="Niciun lead asociat" />
             ) : (
               <ul className="divide-y divide-border">
                 {data?.leads.map((l) => (
-                  <li key={l.id} className="flex items-center gap-3 px-5 py-3 text-sm">
-                    <span className="min-w-0 flex-1 truncate">{l.name}</span>
+                  <li key={l.id} className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm sm:flex-nowrap sm:px-5">
+                    <span className="min-w-0 basis-full truncate font-semibold sm:basis-auto sm:flex-1">{l.name}</span>
                     <StatusBadge tone="info">{leadStageLabels[l.stage]}</StatusBadge>
                   </li>
                 ))}
@@ -557,18 +559,18 @@ function ContactDetailPage() {
         </TabsContent>
 
         <TabsContent value="activities">
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             {(data?.activities.length ?? 0) === 0 ? (
               <EmptyState title="Nicio activitate" />
             ) : (
               <ul className="divide-y divide-border">
                 {data?.activities.map((a) => (
-                  <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                  <li key={a.id} className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm sm:flex-nowrap sm:px-5">
                     <StatusBadge tone={activityStatusTone[a.status] ?? "neutral"}>
                       {activityKindLabels[a.kind]}
                     </StatusBadge>
-                    <span className="min-w-0 flex-1">{a.title}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="min-w-0 basis-full truncate font-semibold sm:basis-auto sm:flex-1 sm:order-none order-first">{a.title}</span>
+                    <span className="text-[13px] text-muted-foreground">
                       {formatDateTime(a.starts_at)}
                     </span>
                   </li>
@@ -579,7 +581,7 @@ function ContactDetailPage() {
         </TabsContent>
 
         <TabsContent value="viewings">
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             {(data?.activities.filter((a) => a.kind === "viewing").length ?? 0) === 0 ? (
               <EmptyState title="Nicio vizionare" />
             ) : (
@@ -587,12 +589,12 @@ function ContactDetailPage() {
                 {data?.activities
                   .filter((a) => a.kind === "viewing")
                   .map((a) => (
-                    <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                    <li key={a.id} className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm sm:flex-nowrap sm:px-5">
                       <StatusBadge tone={activityStatusTone[a.status] ?? "neutral"}>
                         {a.status}
                       </StatusBadge>
-                      <span className="min-w-0 flex-1">{a.title}</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="min-w-0 basis-full truncate font-semibold sm:basis-auto sm:flex-1 sm:order-none order-first">{a.title}</span>
+                      <span className="text-[13px] text-muted-foreground">
                         {formatDateTime(a.starts_at)}
                       </span>
                     </li>
@@ -609,7 +611,7 @@ function ContactDetailPage() {
         </TabsContent>
 
         <TabsContent value="notes" className="space-y-4">
-          <div className="panel space-y-3 p-5">
+          <div className="space-y-3 rounded-[14px] border border-border bg-card p-5">
             <Label htmlFor="note">Adaugă notă</Label>
             <Textarea
               id="note"
@@ -628,7 +630,7 @@ function ContactDetailPage() {
               </Button>
             </div>
           </div>
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             {(data?.activities.filter((a) => a.kind === "note").length ?? 0) === 0 ? (
               <EmptyState icon={FileText} title="Nicio notă" />
             ) : (
@@ -636,9 +638,9 @@ function ContactDetailPage() {
                 {data?.activities
                   .filter((a) => a.kind === "note")
                   .map((a) => (
-                    <li key={a.id} className="px-5 py-3 text-sm">
-                      <p>{a.title}</p>
-                      <p className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</p>
+                    <li key={a.id} className="min-h-[52px] px-4 py-2.5 text-sm sm:px-5">
+                      <p className="font-semibold">{a.title}</p>
+                      <p className="text-[13px] text-muted-foreground">{formatDateTime(a.starts_at)}</p>
                     </li>
                   ))}
               </ul>
@@ -647,16 +649,16 @@ function ContactDetailPage() {
         </TabsContent>
 
         <TabsContent value="timeline">
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             {timeline.length === 0 ? (
               <EmptyState title="Niciun eveniment" />
             ) : (
               <ul className="divide-y divide-border">
                 {timeline.map((t, i) => (
-                  <li key={i} className="flex items-center gap-3 px-5 py-3 text-sm">
+                  <li key={i} className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm sm:flex-nowrap sm:px-5">
                     <t.icon className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="min-w-0 flex-1">{t.label}</span>
-                    <span className="text-xs text-muted-foreground">{formatDateTime(t.at)}</span>
+                    <span className="min-w-0 flex-1 font-semibold">{t.label}</span>
+                    <span className="basis-full pl-7 text-[13px] text-muted-foreground sm:basis-auto sm:pl-0">{formatDateTime(t.at)}</span>
                   </li>
                 ))}
               </ul>

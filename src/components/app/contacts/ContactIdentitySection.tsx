@@ -156,7 +156,7 @@ export function ContactIdentitySection({ contactId, firstName, lastName }: { con
   const expired = row?.expires_at ? row.expires_at < new Date().toISOString().slice(0, 10) : false;
 
   return (
-    <section className="rounded-2xl bg-card p-5 ring-1 ring-border/60" aria-labelledby="contact-identity-title">
+    <section className="rounded-[14px] border border-border bg-card p-5" aria-labelledby="contact-identity-title">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="contact-identity-title" className="flex items-center gap-2 text-base font-semibold">
           <IdCard className="size-4" aria-hidden /> Act de identitate
