@@ -68,20 +68,21 @@ function NotificationsPage() {
       <li
         data-tour="notification-item"
         key={n.id}
-        className={`flex items-start gap-3 px-5 py-4 text-sm transition-colors ${
-          isUnread ? "bg-primary/[0.04]" : "hover:bg-surface"
+        className={`relative flex min-h-[52px] flex-wrap items-start gap-3 px-4 py-3 text-sm transition-colors sm:flex-nowrap sm:px-5 ${
+          isUnread ? "bg-gold-tint/50" : "hover:bg-muted"
         }`}
       >
+        {isUnread ? <span aria-hidden className="absolute left-1.5 top-1/2 size-2 -translate-y-1/2 rounded-full bg-gold sm:left-2" /> : null}
         <span
           className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl ${
-            isUnread ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+            isUnread ? "bg-gold-tint text-gold-dark" : "bg-muted text-muted-foreground"
           }`}
         >
           <Icon className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className={isUnread ? "font-semibold" : "font-medium text-muted-foreground"}>
+            <p className={isUnread ? "font-semibold" : "font-semibold text-muted-foreground"}>
               {safeInternalPath(n.link) ? <Link to={safeInternalPath(n.link) ?? "/app/notifications"} className="hover:underline">{n.title}</Link> : n.title}
             </p>
             {isUnread ? (
@@ -91,15 +92,15 @@ function NotificationsPage() {
             ) : null}
           </div>
           {n.body ? (
-            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{n.body}</p>
+            <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">{n.body}</p>
           ) : null}
-          <p className="mt-1 text-[11px] text-muted-foreground">{formatDateTime(n.created_at)}</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{formatDateTime(n.created_at)}</p>
         </div>
         {isUnread ? (
           <Button
             size="sm"
             variant="ghost"
-            className="shrink-0"
+            className="h-11 shrink-0 max-sm:ml-12 max-sm:w-[calc(100%-3rem)] sm:h-10"
             onClick={() => markRead.mutate([n.id])}
           >
             Marchează citit
@@ -129,7 +130,8 @@ function NotificationsPage() {
             <Button
               data-tour="notifications-read-all"
               size="sm"
-              variant="outline"
+              variant="link"
+              className="h-11 px-0 text-sm font-semibold text-gold-dark"
               onClick={() => markRead.mutate(unread.map((n) => n.id))}
             >
               <CheckCheck className="size-4" /> Marchează toate ca citite
@@ -139,30 +141,30 @@ function NotificationsPage() {
       />
 
       {isLoading ? (
-        <div className="panel overflow-hidden">
+        <div className="overflow-hidden rounded-[14px] border border-border bg-card">
           <ListSkeleton rows={6} compact />
         </div>
       ) : notifications.length === 0 ? (
-        <div className="panel overflow-hidden">
+        <div className="overflow-hidden rounded-[14px] border border-border bg-card">
           <EmptyState icon={Bell} title="Nicio notificare" description="Ești la zi cu tot." />
         </div>
       ) : (
         <div className="space-y-6">
           {unread.length > 0 ? (
-            <section className="panel overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-                <h2 className="text-sm font-semibold">Necitite</h2>
-                <span className="text-xs text-muted-foreground">{unread.length}</span>
+            <section className="overflow-hidden rounded-[14px] border border-border bg-card">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3.5 sm:px-5">
+                <h2 className="text-base font-bold">Necitite</h2>
+                <span className="text-[13px] text-muted-foreground">{unread.length}</span>
               </div>
               <ul className="divide-y divide-border">{unread.map(renderItem)}</ul>
             </section>
           ) : null}
 
           {read.length > 0 ? (
-            <section className="panel overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-                <h2 className="text-sm font-semibold text-muted-foreground">Citite</h2>
-                <span className="text-xs text-muted-foreground">{read.length}</span>
+            <section className="overflow-hidden rounded-[14px] border border-border bg-card">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3.5 sm:px-5">
+                <h2 className="text-base font-bold text-muted-foreground">Citite</h2>
+                <span className="text-[13px] text-muted-foreground">{read.length}</span>
               </div>
               <ul className="divide-y divide-border">{read.map(renderItem)}</ul>
             </section>

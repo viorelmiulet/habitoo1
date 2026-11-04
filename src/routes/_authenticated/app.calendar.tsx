@@ -38,6 +38,7 @@ import { activityStatusLabels, activityStatusTone, logAudit } from "@/lib/crm";
 import { useCurrentUser } from "@/hooks/use-session";
 import type { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/calendar")({
@@ -49,24 +50,24 @@ type Activity = Tables<"activities">;
 type ViewMode = "day" | "week" | "month";
 
 const kindTone: Record<string, string> = {
-  call: "border-info/40 bg-info/10 text-info",
-  meeting: "border-primary/40 bg-primary/10 text-primary",
-  viewing: "border-success/40 bg-success/10 text-success",
-  task: "border-warning/40 bg-warning/10 text-warning-foreground",
-  email: "border-muted-foreground/30 bg-muted text-muted-foreground",
-  followup: "border-accent/40 bg-accent/10 text-accent-foreground",
-  note: "border-border bg-card text-foreground",
+  call: "border-chart-3/40 bg-chart-3/15",
+  meeting: "border-chart-1/40 bg-chart-1/10",
+  viewing: "border-chart-4/40 bg-chart-4/15",
+  task: "border-chart-2/50 bg-chart-2/15",
+  email: "border-chart-5/50 bg-chart-5/20",
+  followup: "border-chart-2/50 bg-chart-2/25",
+  note: "border-chart-5/40 bg-chart-5/10",
 };
 
 /** Prezentare: punctul din calendarul lunar, colorat după tipul activității. */
 const kindDot: Record<string, string> = {
-  call: "bg-info",
-  meeting: "bg-primary",
-  viewing: "bg-success",
-  task: "bg-warning",
-  email: "bg-muted-foreground",
-  followup: "bg-accent",
-  note: "bg-border",
+  call: "bg-chart-3",
+  meeting: "bg-chart-1",
+  viewing: "bg-chart-4",
+  task: "bg-chart-2",
+  email: "bg-chart-5",
+  followup: "bg-chart-2",
+  note: "bg-chart-5",
 };
 
 const durationOptions = [15, 30, 45, 60, 90, 120];
@@ -355,7 +356,7 @@ function CalendarPage() {
         openDetail(activity);
       }}
       className={cn(
-        "w-full cursor-grab rounded-md border px-2 py-1 text-left text-xs transition active:cursor-grabbing",
+        "w-full min-h-9 cursor-grab rounded-[8px] border px-2 py-1 text-left text-xs text-foreground transition active:cursor-grabbing",
         kindTone[activity.kind] ?? "border-border bg-card",
         activity.status === "cancelled" && "opacity-50 line-through",
       )}
@@ -376,45 +377,36 @@ function CalendarPage() {
         description="Activități, vizionări și follow-up-uri ale echipei."
         actions={
           <>
-            <div data-tour="calendar-views" className="flex items-center overflow-hidden rounded-lg border border-border">
-              {(["day", "week", "month"] as ViewMode[]).map((v) => (
-                <button
-                  data-tour={`calendar-${v}`}
-                  aria-pressed={view === v}
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={cn(
-                    "px-3 py-1.5 text-sm font-medium transition",
-                    view === v
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-transparent hover:bg-muted",
-                  )}
-                >
-                  {v === "day" ? "Zi" : v === "week" ? "Săptămână" : "Lună"}
-                </button>
-              ))}
-            </div>
-            <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+            <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)} className="w-full sm:w-auto">
+              <TabsList data-tour="calendar-views" variant="segmented" className="w-full sm:w-auto">
+                {(["day", "week", "month"] as ViewMode[]).map((v) => (
+                  <TabsTrigger data-tour={`calendar-${v}`} key={v} value={v} className="min-h-10 flex-1 sm:flex-none">
+                    {v === "day" ? "Zi" : v === "week" ? "Săptămână" : "Lună"}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            <Button variant="outline" size="sm" aria-label="Înapoi" className="size-11 rounded-[10px] sm:size-10" onClick={() => navigate(-1)}>
               <ChevronLeft className="size-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setAnchor(new Date())}>
+            <Button variant="outline" size="sm" className="h-11 flex-1 rounded-[10px] sm:h-10 sm:flex-none" onClick={() => setAnchor(new Date())}>
               Azi
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(1)}>
+            <Button variant="outline" size="sm" aria-label="Înainte" className="size-11 rounded-[10px] sm:size-10" onClick={() => navigate(1)}>
               <ChevronRight className="size-4" />
             </Button>
-            <Button data-tour="calendar-create" size="sm" onClick={() => openCreate(new Date())}>
+            <Button data-tour="calendar-create" size="sm" className="h-11 w-full sm:h-10 sm:w-auto" onClick={() => openCreate(new Date())}>
               Activitate nouă
             </Button>
           </>
         }
       />
 
-      <div data-tour="calendar-filters" className="mt-4 flex flex-wrap items-center gap-3">
-        <p className="text-sm font-semibold">{rangeLabel}</p>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+      <div data-tour="calendar-filters" className="mt-4 flex flex-wrap items-center gap-3 rounded-[14px] border border-border bg-card p-4 sm:p-3">
+        <p className="w-full text-base font-bold sm:w-auto">{rangeLabel}</p>
+        <div className="grid w-full grid-cols-1 gap-2 sm:ml-auto sm:flex sm:w-auto sm:flex-wrap sm:items-center">
           <Select value={agentFilter} onValueChange={setAgentFilter}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-44">
               <SelectValue placeholder="Agent" />
             </SelectTrigger>
             <SelectContent>
@@ -427,7 +419,7 @@ function CalendarPage() {
             </SelectContent>
           </Select>
           <Select value={kindFilter} onValueChange={setKindFilter}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-44">
               <SelectValue placeholder="Tip activitate" />
             </SelectTrigger>
             <SelectContent>
@@ -439,14 +431,14 @@ function CalendarPage() {
               ))}
             </SelectContent>
           </Select>
-          <label className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm">
+          <label className="flex min-h-11 items-center gap-2 rounded-[10px] border border-border px-3 text-sm sm:min-h-10">
             <Checkbox checked={onlyMine} onCheckedChange={(v) => setOnlyMine(Boolean(v))} />
             Doar ale mele
           </label>
         </div>
       </div>
 
-      <div className="panel mt-4 overflow-hidden">
+      <div className="mt-4 overflow-hidden rounded-[14px] border border-border bg-card">
         {isLoading ? (
           <InlineLoading label="Se încarcă activitățile…" className="py-16" />
         ) : filtered.length === 0 && view !== "month" ? (
@@ -517,7 +509,7 @@ function CalendarPage() {
                         setDayPanel(null);
                         openDetail(a);
                       }}
-                      className="flex w-full items-start gap-3 rounded-xl bg-card p-3 text-left ring-1 ring-border/60 transition hover:ring-primary/40"
+                      className="flex min-h-[52px] w-full items-start gap-3 rounded-xl bg-card p-3 text-left ring-1 ring-border transition hover:bg-muted"
                     >
                       <span className="w-14 shrink-0 text-xs tabular-nums text-muted-foreground">
                         {formatTime(a.starts_at)}
@@ -815,7 +807,7 @@ function WeekView({
             <div
               className={cn(
                 "cursor-pointer border-b border-border px-3 py-2",
-                isToday && "bg-primary/10",
+                isToday && "border-b-2 border-b-gold bg-gold-tint",
               )}
               onClick={() => onDayClick(day)}
             >
@@ -891,7 +883,7 @@ function MonthView({
             <span
               className={cn(
                 "mb-1.5 grid size-6 place-items-center rounded-full text-xs font-semibold",
-                isToday && "bg-primary text-primary-foreground",
+                isToday && "bg-gold text-gold-foreground",
               )}
             >
               {day.getDate()}

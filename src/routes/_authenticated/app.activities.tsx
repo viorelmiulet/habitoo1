@@ -50,6 +50,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { useFilterList } from "@/hooks/use-list-state";
 import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SlidersHorizontal } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/activities")({
   head: () => { const title = "Habitoo CRM — activități"; const description = "Activitățile agenției, programări și filtre pe responsabil, tip și perioadă."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -108,6 +110,7 @@ function ActivitiesPage() {
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(Boolean(openNew));
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const navigate = useNavigate({ from: Route.fullPath });
   const persisted = useFilterList("activities", user?.userId, activityListDefaults, Route.useSearch(),
     (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
@@ -349,20 +352,20 @@ function ActivitiesPage() {
       a.request_id ? `Cerere: ${requestById.get(a.request_id) ?? "—"}` : null,
     ].filter(Boolean) as string[];
     return (
-      <li key={a.id} className="flex items-start gap-3 px-5 py-3.5 text-sm">
+      <li key={a.id} className="flex min-h-[52px] flex-wrap items-start gap-x-3 gap-y-2 px-4 py-3 text-sm hover:bg-muted sm:flex-nowrap sm:px-5">
         <Checkbox
           className="mt-1"
           checked={selected.has(a.id)}
           onCheckedChange={() => toggleSelect(a.id)}
         />
-        <div className="w-24 shrink-0 pt-0.5 text-xs tabular-nums">
+        <div className="w-14 shrink-0 pt-0.5 text-[13px] tabular-nums sm:w-24">
           <p className={overdue ? "font-medium text-destructive" : "text-muted-foreground"}>
             {new Date(a.starts_at).toLocaleTimeString("ro-RO", {
               hour: "2-digit",
               minute: "2-digit",
             })}
           </p>
-          <p className="text-[11px] text-muted-foreground">{a.duration_minutes} min</p>
+          <p className="text-xs text-muted-foreground">{a.duration_minutes} min</p>
         </div>
         <span
           className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${
@@ -371,25 +374,26 @@ function ActivitiesPage() {
         >
           <Icon className="size-4" aria-hidden />
         </span>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-[calc(100%-8rem)] sm:basis-auto">
           <p
             className={
               a.status === "done"
                 ? "truncate text-muted-foreground line-through"
-                : "truncate font-medium"
+                : "truncate font-semibold"
             }
           >
             {a.title}
           </p>
           {a.description ? (
-            <p className="truncate text-xs text-muted-foreground">{a.description}</p>
+            <p className="truncate text-[13px] text-muted-foreground">{a.description}</p>
           ) : null}
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
             {[activityKindLabels[a.kind], ...context, profileById.get(a.assigned_to ?? "") ?? null]
               .filter(Boolean)
               .join(" · ")}
           </p>
         </div>
+        <div className="flex w-full items-center justify-between gap-2 pl-7 sm:w-auto sm:justify-end sm:gap-3 sm:pl-0">
         <StatusBadge tone={activityStatusTone[a.status]}>
           {activityStatusLabels[a.status]}
         </StatusBadge>
@@ -398,7 +402,7 @@ function ActivitiesPage() {
             <Button
               size="icon"
               variant="ghost"
-              title="Finalizează"
+              title="Finalizează" className="size-11 sm:size-10"
               onClick={() => updateStatus.mutate({ id: a.id, status: "done" })}
             >
               <CheckCircle2 className="size-4" />
@@ -408,7 +412,7 @@ function ActivitiesPage() {
             <Button
               size="icon"
               variant="ghost"
-              title="Anulează"
+              title="Anulează" className="size-11 sm:size-10"
               onClick={() => updateStatus.mutate({ id: a.id, status: "cancelled" })}
             >
               <XCircle className="size-4" />
@@ -417,7 +421,7 @@ function ActivitiesPage() {
           <Button
             size="icon"
             variant="ghost"
-            title="Reprogramează"
+            title="Reprogramează" className="size-11 sm:size-10"
             data-tour="activity-reschedule"
             onClick={() => {
               setReschedule(a);
@@ -428,7 +432,7 @@ function ActivitiesPage() {
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="icon" variant="ghost" title="Șterge">
+              <Button size="icon" variant="ghost" title="Șterge" className="size-11 sm:size-10">
                 <Trash2 className="size-4 text-destructive" />
               </Button>
             </AlertDialogTrigger>
@@ -448,35 +452,19 @@ function ActivitiesPage() {
             </AlertDialogContent>
           </AlertDialog>
         </div>
+        </div>
       </li>
     );
   };
 
-  return (
+  const activeFilterCount = [statusFilter !== "planned", kindFilter !== "all", agentFilter !== "all", periodFilter !== "all"].filter(Boolean).length;
+  const renderFilterFields = () => (
     <>
-      <PageHeader
-        title="Activități"
-        description="Apeluri, întâlniri, vizionări și task-uri, cu bifare rapidă."
-        actions={
-          <Button size="sm" onClick={() => setDialogOpen(true)}>
-            Adaugă activitate
-          </Button>
-        }
-      />
-
-      <div data-tour="activities-filters" className="panel flex flex-wrap items-center gap-2 p-3">
-        <Input
-          data-tour="activities-search"
-          placeholder="Caută…"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="w-52"
-        />
         <Select
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
         >
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -486,9 +474,8 @@ function ActivitiesPage() {
             <SelectItem value="all">Toate</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
         <Select value={kindFilter} onValueChange={setKindFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-40">
             <SelectValue placeholder="Tip" />
           </SelectTrigger>
           <SelectContent>
@@ -501,7 +488,7 @@ function ActivitiesPage() {
           </SelectContent>
         </Select>
         <Select value={agentFilter} onValueChange={setAgentFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-40">
             <SelectValue placeholder="Agent" />
           </SelectTrigger>
           <SelectContent>
@@ -517,7 +504,7 @@ function ActivitiesPage() {
           value={periodFilter}
           onValueChange={(v) => setPeriodFilter(v as typeof periodFilter)}
         >
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="h-10 w-full rounded-[10px] sm:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -527,8 +514,43 @@ function ActivitiesPage() {
             <SelectItem value="overdue">Restante</SelectItem>
           </SelectContent>
         </Select>
+    </>
+  );
+
+  return (
+    <>
+      <PageHeader
+        title="Activități"
+        description="Apeluri, întâlniri, vizionări și task-uri, cu bifare rapidă."
+        actions={
+          <Button size="sm" onClick={() => setDialogOpen(true)}>
+            Adaugă activitate
+          </Button>
+        }
+      />
+
+      <div data-tour="activities-filters" className="mb-4 flex flex-wrap items-center gap-2 rounded-[14px] border border-border bg-card p-4 sm:p-3">
+        <Input
+          data-tour="activities-search"
+          placeholder="Caută…"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="h-10 w-full rounded-[10px] sm:w-52"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 flex-1 rounded-[10px] sm:hidden"
+          onClick={() => setFiltersOpen(true)}
+        >
+          <SlidersHorizontal className="size-4" /> Filtre ({activeFilterCount})
+        </Button>
+        <div className="hidden sm:contents">
+          {renderFilterFields()}
+          <Button variant="link" size="sm" className="px-1 text-sm font-semibold text-gold-dark" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
+        </div>
         {selected.size > 0 ? (
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
             <span className="text-xs text-muted-foreground">{selected.size} selectate</span>
             <Button
               size="sm"
@@ -549,13 +571,29 @@ function ActivitiesPage() {
             </Button>
           </div>
         ) : (
-          <Button size="sm" variant="outline" className="ml-auto" onClick={exportCsv}>
+          <Button size="sm" variant="outline" className="h-10 w-full rounded-[10px] sm:ml-auto sm:w-auto" onClick={exportCsv}>
             Export CSV
           </Button>
         )}
       </div>
 
-      <div className="panel overflow-hidden">
+
+      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Filtre</SheetTitle>
+          </SheetHeader>
+          <div className="grid gap-3 px-4 py-2">
+            {renderFilterFields()}
+          </div>
+          <SheetFooter className="flex-col gap-2">
+            <Button className="h-11 w-full" onClick={() => setFiltersOpen(false)}>Aplică</Button>
+            <Button variant="outline" className="h-11 w-full" onClick={persisted.reset}>Resetează</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      <div className="overflow-hidden rounded-[14px] border border-border bg-card">
         {isLoading ? (
           <ListSkeleton rows={8} />
         ) : rows.length === 0 ? (
@@ -573,7 +611,7 @@ function ActivitiesPage() {
           <div className="divide-y divide-border/70">
             {overdueRows.length > 0 ? (
               <div>
-                <div className="flex items-center justify-between gap-2 bg-destructive/10 px-5 py-2.5 text-xs font-semibold tracking-wide text-destructive uppercase">
+                <div className="flex items-center justify-between gap-2 bg-danger-tint px-4 py-2.5 text-xs font-semibold tracking-wide sm:px-5 text-destructive uppercase">
                   <span>Restante</span>
                   <span>{overdueRows.length}</span>
                 </div>
@@ -582,7 +620,7 @@ function ActivitiesPage() {
             ) : null}
             {grouped.map(([day, items]) => (
               <div key={day}>
-                <div className="bg-muted/60 px-5 py-2.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                <div className="bg-muted/60 px-4 py-2.5 text-xs font-semibold tracking-wide sm:px-5 text-muted-foreground uppercase">
                   {sameDayAsToday(day)
                     ? "Azi"
                     : new Date(day).toLocaleDateString("ro-RO", {
