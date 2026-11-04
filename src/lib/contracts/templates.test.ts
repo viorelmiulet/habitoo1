@@ -8,11 +8,14 @@ import {
 } from "./templates";
 
 describe("contract templates", () => {
-  it("exposes only the two real document types", () => {
-    expect(CONTRACT_KINDS).toEqual(["rent_agreement", "exclusive_representation"]);
+  it("exposes the five real document types", () => {
+    expect(CONTRACT_KINDS).toEqual(["rent_agreement", "exclusive_representation", "commission", "loan_for_use", "viewing"]);
     expect(Object.values(contractKindLabels)).toEqual([
       "Contract de închiriere",
       "Contract de reprezentare exclusivă",
+      "Contract de comision",
+      "Contract de comodat",
+      "Contract de vizionare",
     ]);
   });
 

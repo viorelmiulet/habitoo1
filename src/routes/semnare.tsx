@@ -7,6 +7,7 @@ import { toastError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import sidebarLightLogo from "@/assets/habitoo-sidebar-light.png.asset.json";
 import { SignaturePad } from "@/components/app/contracts/SignaturePad";
 import { publicHead } from "@/components/marketing/public-head";
 import { getSignatureRequest, submitSignature } from "@/lib/contracts-sign.functions";
@@ -71,7 +72,8 @@ function SignPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-muted px-3 py-8 sm:px-4 sm:py-10">
-      <BrandLogo className="mb-8 h-9 w-auto" />
+      <BrandLogo className="mb-8 h-9 w-auto dark:hidden" />
+      <img src={sidebarLightLogo.url} alt="Habitoo CRM" className="mb-8 hidden h-9 w-auto dark:block" />
       <div className="w-full max-w-[720px] rounded-[14px] border border-border bg-card p-4 text-[15px] leading-[1.6] text-card-foreground sm:p-5">
         {!t ? (
           <Notice
@@ -181,9 +183,11 @@ function Notice({
   const Icon = tone === "success" ? CheckCircle2 : TriangleAlert;
   return (
     <div className="space-y-2 text-center">
-      <Icon
-        className={`mx-auto size-10 ${tone === "success" ? "text-success" : "text-warning-foreground"}`}
-      />
+      <div className={tone === "warning" ? "mx-auto w-fit dark:rounded-full dark:bg-gold-tint dark:p-2.5" : "mx-auto w-fit"}>
+        <Icon
+          className={`size-10 ${tone === "success" ? "text-success" : "text-warning-foreground dark:text-warning"}`}
+        />
+      </div>
       <h1 className="text-lg font-semibold">{title}</h1>
       <p className="text-sm text-muted-foreground">{text}</p>
     </div>
