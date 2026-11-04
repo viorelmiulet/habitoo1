@@ -44,7 +44,7 @@ import {
 
 function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="rounded-[12px] border border-border bg-card p-4">
       <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
         {label}
       </p>
@@ -155,7 +155,7 @@ export function PropertyAcpCard({ propertyId }: { propertyId: string }) {
   const deltaLabel = acpPriceDeltaLabel(price);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 [&>section]:rounded-[14px] [&>section]:border [&>section]:border-border [&>section>header]:px-4 sm:[&>section>header]:px-5 [&>section>header_h2]:whitespace-normal [&>section>header_p]:text-[13px]">
       <SectionCard
         title="Analiză comparativă de piață (ACP)"
         description="Evaluare deterministă, versionată, pornită din această proprietate."

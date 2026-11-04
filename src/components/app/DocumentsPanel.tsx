@@ -115,9 +115,9 @@ export function DocumentsPanel({
   };
 
   return (
-    <div className="panel space-y-4 p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold">Documente</h2>
+    <div className="space-y-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
+      <div className="flex flex-col gap-3 rounded-[14px] border-2 border-dashed border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-base font-bold">Documente</h2>
         <div>
           <input
             ref={inputRef}
@@ -135,6 +135,7 @@ export function DocumentsPanel({
           <Button
             size="sm"
             variant="outline"
+            className="h-10 w-full rounded-[10px] sm:w-auto"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
           >
@@ -154,24 +155,25 @@ export function DocumentsPanel({
       ) : (
         <ul className="divide-y divide-border">
           {docs.map((d) => (
-            <li key={d.id} className="flex items-center gap-3 py-3 text-sm">
+            <li key={d.id} className="flex min-h-[52px] items-center gap-2 py-2 text-sm sm:gap-3">
               <FileText className="size-4 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{d.name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="truncate font-semibold">{d.name}</p>
+                <p className="text-[13px] text-muted-foreground">
                   {formatSize(d.size_bytes)} · {formatDateTime(d.created_at)}
                 </p>
               </div>
               <Button
                 size="sm"
                 variant="ghost"
+                className="max-sm:size-11"
                 onClick={() => handleDownload(d.storage_path, d.name)}
               >
                 <Download className="size-4" />
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="ghost">
+                  <Button size="sm" variant="ghost" className="max-sm:size-11">
                     <Trash2 className="size-4 text-destructive" />
                   </Button>
                 </AlertDialogTrigger>
