@@ -593,14 +593,17 @@ function ContactsPage() {
                     >
                       {fullName}
                     </Link>
-                    <p className="mt-0.5 hidden flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground sm:flex">
-                      <span>{contactTypeLabels[c.type] ?? c.type}</span>
-                      {c.company || c.source ? <span>· {c.company || c.source}</span> : null}
-                      <span>· adăugat {relativeDays(c.created_at)}</span>
+                    <p className="mt-0.5 hidden truncate text-[13px] text-muted-foreground sm:block">
+                      {contactTypeLabels[c.type] ?? c.type}
+                      {c.company || c.source ? ` · ${c.company || c.source}` : ""}
+                      {` · adăugat ${relativeDays(c.created_at)}`}
                     </p>
                     <p className="mt-0.5 truncate text-[13px] text-muted-foreground sm:hidden">
                       {contactTypeLabels[c.type] ?? c.type}{c.phone ? ` · ${c.phone}` : ""}
                     </p>
+                    <StatusBadge className="mt-1 sm:hidden" tone={c.status === "active" ? "success" : "neutral"}>
+                      {statusLabels[c.status] ?? c.status}
+                    </StatusBadge>
                   </div>
                   <span className="hidden w-36 shrink-0 text-[13px] text-muted-foreground sm:block">{c.phone ?? "—"}</span>
                   <span className="hidden w-52 shrink-0 truncate text-[13px] text-muted-foreground lg:block">
@@ -644,7 +647,7 @@ function ContactsPage() {
                       </a>
                     ) : null}
                   </div>
-                  <StatusBadge className="shrink-0 px-2 sm:px-2.5" tone={c.status === "active" ? "success" : "neutral"}>
+                  <StatusBadge className="hidden shrink-0 sm:inline-flex" tone={c.status === "active" ? "success" : "neutral"}>
                     {statusLabels[c.status] ?? c.status}
                   </StatusBadge>
                 </li>
