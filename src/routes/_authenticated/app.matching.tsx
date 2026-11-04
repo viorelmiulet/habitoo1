@@ -416,7 +416,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
       />
 
       <div data-tour="matching-filters" className="min-w-0 space-y-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
-        <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
+        <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
           <TabsList variant="segmented" className="w-full sm:w-auto">
             <TabsTrigger value="request-to-property" className="min-h-10 flex-1 sm:flex-none">Cerere → Proprietăți</TabsTrigger>
             <TabsTrigger value="property-to-request" data-tour="matching-direction" className="min-h-10 flex-1 sm:flex-none">Proprietate → Clienți</TabsTrigger>
