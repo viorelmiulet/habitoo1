@@ -16,7 +16,8 @@ import {
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
-import { FormSection } from "@/components/app/FormSection";
+import { FORM_ACTIONS_BAR, FormSection } from "@/components/app/FormSection";
+import { formInvalidHintHandlers } from "@/lib/form-invalid-hints";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -193,6 +194,7 @@ function NewPropertyPage() {
 
       <form
         className="space-y-4"
+        {...formInvalidHintHandlers}
         onSubmit={(e) => {
           e.preventDefault();
           create.mutate();
@@ -314,15 +316,16 @@ function NewPropertyPage() {
         </FormSection>
         </PropertyFormLayout>
 
-        <div className="flex justify-end gap-2">
+        <div className={FORM_ACTIONS_BAR}>
           <Button
             type="button"
             variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => navigate({ to: "/app/properties" })}
           >
             Renunță
           </Button>
-          <Button data-tour="new-save" type="submit" disabled={create.isPending}>
+          <Button data-tour="new-save" type="submit" className="w-full sm:w-auto" disabled={create.isPending}>
             {create.isPending ? "Se salvează…" : "Salvează proprietatea"}
           </Button>
         </div>

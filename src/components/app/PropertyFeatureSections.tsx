@@ -65,8 +65,8 @@ function FeatureGroupFields({ group, value, onChange, idPrefix }: {
   const selected = selectedOptions(value, group);
   const Icon = group.icon;
   const headingId = `${idPrefix}-${group.field}-heading`;
-  const optionsClass = "grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] items-start gap-1";
-  const optionClass = "flex min-h-9 min-w-0 items-center gap-2 rounded-control px-2 py-1.5 text-sm font-normal leading-5 [overflow-wrap:normal] [word-break:normal] hyphens-none";
+  const optionsClass = "grid grid-cols-2 items-start gap-1 sm:grid-cols-[repeat(auto-fill,minmax(170px,1fr))]";
+  const optionClass = "flex min-h-11 min-w-0 sm:min-h-9 items-center gap-2 rounded-control px-2 py-1.5 text-sm font-normal leading-5 [overflow-wrap:normal] [word-break:normal] hyphens-none";
   return (
     <div data-feature-group={group.field} className="h-full min-w-0 rounded-card border border-border bg-card p-3">
       <div className="mb-3 flex min-w-0 items-center gap-2 border-b border-primary/25 pb-3">
