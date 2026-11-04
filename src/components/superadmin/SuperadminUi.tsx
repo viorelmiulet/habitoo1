@@ -15,10 +15,10 @@ const toneBar: Record<StatusTone, string> = {
 
 export function SummaryCard({ label, value, tone = "neutral" }: { label: string; value: ReactNode; tone?: StatusTone }) {
   return (
-    <div className="relative overflow-hidden rounded-[20px] border border-border/70 bg-card p-4 shadow-sm">
+    <div className="relative overflow-hidden rounded-[14px] border border-border bg-card p-4">
       <span className={cn("absolute inset-y-0 left-0 w-1", toneBar[tone])} aria-hidden />
       <p className="text-2xl font-semibold tabular-nums text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-[13px] text-muted-foreground">{label}</p>
     </div>
   );
 }
@@ -27,8 +27,8 @@ export function SuperadminSection({ title, description, children }: { title: str
   return (
     <section className="min-w-0 space-y-3">
       <header>
-        <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
+        {description ? <p className="text-[13px] text-muted-foreground">{description}</p> : null}
       </header>
       {children}
     </section>
@@ -37,10 +37,10 @@ export function SuperadminSection({ title, description, children }: { title: str
 
 export function DetailCard({ title, description, children, className }: { title: string; description?: string; children: ReactNode; className?: string }) {
   return (
-    <section className={cn("min-w-0 rounded-[22px] border border-border/70 bg-card p-5 shadow-sm sm:p-6", className)}>
+    <section className={cn("min-w-0 rounded-[14px] border border-border bg-card p-4 sm:p-5", className)}>
       <header className="mb-4">
-        <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
+        {description ? <p className="text-[13px] text-muted-foreground">{description}</p> : null}
       </header>
       {children}
     </section>
@@ -50,7 +50,7 @@ export function DetailCard({ title, description, children, className }: { title:
 export function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid min-w-0 gap-0.5 py-2 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4">
-      <dt className="text-xs text-muted-foreground sm:text-sm">{label}</dt>
+      <dt className="text-[13px] text-muted-foreground">{label}</dt>
       <dd className="min-w-0 break-words text-sm text-foreground">{children ?? "—"}</dd>
     </div>
   );
@@ -66,8 +66,8 @@ export function BackLink({ to, label }: { to: "/superadmin/agencies" | "/superad
 
 export function DetailNotFound({ title, to, label }: { title: string; to: "/superadmin/agencies" | "/superadmin/users"; label: string }) {
   return (
-    <div className="mx-auto max-w-md rounded-[22px] border border-border/70 bg-card p-8 text-center shadow-sm" data-detail-not-found>
-      <h1 className="font-display text-2xl font-semibold text-foreground">{title}</h1>
+    <div className="mx-auto max-w-md rounded-[14px] border border-border bg-card p-8 text-center" data-detail-not-found>
+      <h1 className="text-2xl font-bold text-foreground">{title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">Poate a fost ștearsă sau adresa nu este corectă.</p>
       <div className="mt-6"><BackLink to={to} label={label} /></div>
     </div>

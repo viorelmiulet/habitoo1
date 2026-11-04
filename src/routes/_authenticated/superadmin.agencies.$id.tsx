@@ -67,11 +67,11 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
   return (
     <div className="min-w-0 max-w-full space-y-6 overflow-x-hidden">
       <BackLink to="/superadmin/agencies" label="Înapoi la agenții" />
-      <header className="flex flex-col gap-4 rounded-[22px] border border-border/70 bg-card p-5 shadow-sm sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+      <header className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <AgencyLogo name={org.name} path={org.logo_path} urls={logoUrls} size="detail" />
           <div className="min-w-0">
-            <h1 className="truncate font-display text-2xl font-semibold text-foreground">{org.name}</h1>
+            <h1 className="truncate text-2xl font-bold text-foreground">{org.name}</h1>
             <div className="mt-1 flex flex-wrap gap-1.5">
               <StatusBadge tone={badge.tone}>{badge.label}</StatusBadge>
               {org.company_status === "inactiva" ? <StatusBadge tone="danger">Firmă inactivă (ANAF)</StatusBadge> : null}
@@ -80,7 +80,6 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
             </div>
           </div>
         </div>
-        <AgencyHeaderActions org={org} />
       </header>
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -161,6 +160,10 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
           </DetailCard>
         ) : null}
       </div>
+
+      <section data-danger-actions className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <AgencyHeaderActions org={org} />
+      </section>
     </div>
   );
 }

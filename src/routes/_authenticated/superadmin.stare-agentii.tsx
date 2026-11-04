@@ -195,7 +195,7 @@ function AgencyOverviewPage() {
         })()}
       </div>
 
-      <div className="mb-4 flex items-center gap-4 rounded-[20px] border border-border/70 bg-card p-4 shadow-sm">
+      <div className="mb-4 flex items-center gap-4 rounded-[14px] border border-border bg-card p-4">
         <div className="relative w-full max-w-md">
           <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
           <Input
@@ -207,7 +207,7 @@ function AgencyOverviewPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[20px] border border-border/70 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-[14px] border border-border bg-card">
         {isLoading ? (
           <ListSkeleton rows={5} />
         ) : rows.length === 0 ? (

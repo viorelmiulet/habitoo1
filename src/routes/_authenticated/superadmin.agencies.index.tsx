@@ -71,7 +71,7 @@ function RegistrationRequestListItem({
   });
 
   return (
-    <li className="space-y-3 rounded-[20px] border border-border/70 bg-card p-4 text-sm shadow-sm">
+    <li className="space-y-3 rounded-[14px] border border-border bg-card p-4 text-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2">
           <Button
@@ -202,7 +202,7 @@ function AgenciesPage() {
 
       <SuperadminSection title="Cereri de înscriere" description="Agenția se creează abia după aprobare.">
         {loadingRequests ? <ListSkeleton rows={3} /> : (requests ?? []).length === 0 ? (
-          <div className="rounded-[20px] border border-border/70 bg-card"><EmptyState icon={Building2} title="Nicio cerere în așteptare" /></div>
+          <div className="rounded-[14px] border border-border bg-card"><EmptyState icon={Building2} title="Nicio cerere în așteptare" /></div>
         ) : (
           <ul className="space-y-3">
             {(requests ?? []).map((r) => (
@@ -224,7 +224,7 @@ function AgenciesPage() {
       </SuperadminSection>
 
       <SuperadminSection title="Agenții" description="Apasă pe o agenție pentru pagina ei de detaliu.">
-        <div className="mb-4 grid gap-3 rounded-[20px] border border-border/70 bg-card p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_200px_auto] md:items-center">
+        <div className="mb-4 grid gap-3 rounded-[14px] border border-border bg-card p-4 md:grid-cols-[minmax(0,1fr)_200px_auto] md:items-center">
           <div className="relative min-w-0">
             <Search className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Caută agenție, oraș sau CUI…" aria-label="Caută agenție" className="h-11 pl-9" />
@@ -246,7 +246,7 @@ function AgenciesPage() {
           </div>
         </div>
         {isLoading ? <ListSkeleton rows={6} /> : rows.length === 0 ? (
-          <div className="rounded-[20px] border border-border/70 bg-card"><EmptyState icon={Building2} title="Nicio agenție găsită" /></div>
+          <div className="rounded-[14px] border border-border bg-card"><EmptyState icon={Building2} title="Nicio agenție găsită" /></div>
         ) : (
           <ul className="space-y-2" data-agency-list>
             {rows.map((o) => {
@@ -256,7 +256,7 @@ function AgenciesPage() {
                   <Link
                     to="/superadmin/agencies/$id"
                     params={{ id: o.id }}
-                    className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[20px] border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-gold/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:grid-cols-[auto_minmax(0,1.6fr)_minmax(0,0.8fr)_minmax(0,0.6fr)_auto_minmax(0,0.8fr)_auto]"
+                    className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] border border-border bg-card p-4 transition-colors hover:border-gold/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:grid-cols-[auto_minmax(0,1.6fr)_minmax(0,0.8fr)_minmax(0,0.6fr)_auto_minmax(0,0.8fr)_auto]"
                   >
                     <AgencyLogo name={o.name} path={o.logo_path} urls={logoUrls} />
                     <span className="min-w-0">

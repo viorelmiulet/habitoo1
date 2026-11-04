@@ -44,11 +44,11 @@ function UserDetail({ user, users, organizations }: { user: PlatformUser; users:
   return (
     <div className="min-w-0 max-w-full space-y-6 overflow-x-hidden">
       <BackLink to="/superadmin/users" label="Înapoi la utilizatori" />
-      <header className="flex flex-col gap-4 rounded-[22px] border border-border/70 bg-card p-5 shadow-sm sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+      <header className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <UserAvatar name={user.full_name} path={user.avatar_url} className="size-16 shrink-0" />
           <div className="min-w-0">
-            <h1 className="truncate font-display text-2xl font-semibold text-foreground">{user.full_name}</h1>
+            <h1 className="truncate text-2xl font-bold text-foreground">{user.full_name}</h1>
             <p className="truncate text-sm text-muted-foreground">{user.email ?? "—"}</p>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <StatusBadge tone={st.tone}>{st.label}</StatusBadge>
@@ -62,7 +62,6 @@ function UserDetail({ user, users, organizations }: { user: PlatformUser; users:
             </div>
           </div>
         </div>
-        <UserAdminActions user={user} users={users} organizations={organizations} />
       </header>
       <div className="grid gap-6 xl:grid-cols-2">
         <DetailCard title="Profil">
@@ -91,6 +90,10 @@ function UserDetail({ user, users, organizations }: { user: PlatformUser; users:
           </dl>
         </DetailCard>
       </div>
+
+      <section data-danger-actions className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <UserAdminActions user={user} users={users} organizations={organizations} />
+      </section>
     </div>
   );
 }

@@ -114,18 +114,18 @@ export function UserAdminActions({ user, users, organizations }: { user: Platfor
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Button variant="outline" className="h-11" onClick={openEdit}><Pencil className="mr-1.5 size-4" />Editează</Button>
-      <Button variant="outline" className="h-11" disabled={toggleActive.isPending} onClick={() => toggleActive.mutate({ userId: user.id, isActive: !user.is_active })}>{user.is_active ? "Dezactivează" : "Reactivează"}</Button>
+    <div className="grid gap-2 sm:flex sm:flex-wrap sm:items-center">
+      <Button variant="outline" className="h-11 w-full sm:w-auto" onClick={openEdit}><Pencil className="mr-1.5 size-4" />Editează</Button>
+      <Button variant="outline" className="h-11 w-full sm:w-auto" disabled={toggleActive.isPending} onClick={() => toggleActive.mutate({ userId: user.id, isActive: !user.is_active })}>{user.is_active ? "Dezactivează" : "Reactivează"}</Button>
       {isSuper ? null : live ? (
-        <Button className="h-11" onClick={() => void enterAccount(live.id)} title="Accesul a fost aprobat de utilizator"><LogIn className="mr-1.5 size-4" />Intră în cont</Button>
+        <Button className="h-11 w-full sm:w-auto" onClick={() => void enterAccount(live.id)} title="Accesul a fost aprobat de utilizator"><LogIn className="mr-1.5 size-4" />Intră în cont</Button>
       ) : (
-        <Button variant="outline" className="h-11" disabled={pending} onClick={() => setAccessOpen(true)} title={pending ? "Cerere trimisă, în așteptarea acordului utilizatorului" : "Solicită acces temporar la cont"}>
+        <Button variant="outline" className="h-11 w-full sm:w-auto" disabled={pending} onClick={() => setAccessOpen(true)} title={pending ? "Cerere trimisă, în așteptarea acordului utilizatorului" : "Solicită acces temporar la cont"}>
           <KeyRound className="mr-1.5 size-4" />{pending ? "Cerere trimisă" : "Acces temporar"}
         </Button>
       )}
-      {user.organization_id ? <Button variant="outline" className="h-11" onClick={() => setReassignOpen(true)}><ArrowRightLeft className="mr-1.5 size-4" />Mută proprietățile</Button> : null}
-      <Button variant="ghost" className="h-11 text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={isSuper} onClick={() => setDeleting(true)}><Trash2 className="mr-1.5 size-4" />Șterge</Button>
+      {user.organization_id ? <Button variant="outline" className="h-11 w-full sm:w-auto" onClick={() => setReassignOpen(true)}><ArrowRightLeft className="mr-1.5 size-4" />Mută proprietățile</Button> : null}
+      <Button variant="destructive" className="h-11 w-full sm:w-auto" disabled={isSuper} onClick={() => setDeleting(true)}><Trash2 className="mr-1.5 size-4" />Șterge</Button>
 
       <ImpersonationRequestDialog open={accessOpen} onOpenChange={setAccessOpen} targetUserId={accessOpen ? user.id : null} targetLabel={user.full_name || user.email || "Utilizatorul"} />
       <ReassignUserDataSheet users={users} open={reassignOpen} onOpenChange={setReassignOpen} initialFrom={user.id} />
