@@ -1,3 +1,4 @@
+import { countActiveFilters } from "@/lib/filter-count";
 import { useMemo, useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -524,7 +525,7 @@ function MarketDataCenterPage() {
       <SectionCard title="Ofertele de piață" icon={Filter}>
         <Button variant="link" size="sm" className="h-11 px-1 text-sm font-semibold text-gold-dark sm:h-10" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
         <Button type="button" variant="outline" className="h-11 w-full rounded-[10px] md:hidden" onClick={() => setFiltersOpen(true)}>
-          <SlidersHorizontal className="size-4" /> Filtre ({Object.keys(marketListDefaults).filter((k) => (filters as Record<string, unknown>)[k] !== (marketListDefaults as Record<string, unknown>)[k]).length})
+          <SlidersHorizontal className="size-4" /> Filtre ({countActiveFilters(filters as Record<string, unknown>, marketListDefaults)})
         </Button>
         <div className="hidden gap-3 md:grid md:grid-cols-3 xl:grid-cols-6">
           <div className="space-y-1">

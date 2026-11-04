@@ -3,19 +3,21 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
-import { ChevronDown, ChevronUp, ExternalLink, MapPin, Phone, Search, SearchX, X } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, MapPin, Phone, Search, SearchX, SlidersHorizontal, X } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
 import { SearchPlacesPicker } from "@/components/app/SearchPlacesPicker";
 import { legacyPlaceChoices, parsePlaceChoices, serializePlaces } from "@/lib/search-places";
 import { ImportListingButton } from "@/components/app/ImportListingButton";
+import { ListingSourcePill } from "@/components/app/ListingSourcePill";
+import { countFilledValues } from "@/lib/filter-count";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { OwnerListingsTable } from "@/components/app/OwnerListingsTable";
 import { ArgusTab } from "@/components/app/argus/ArgusTab";
 import { FacebookRequestsTab } from "@/components/app/FacebookRequestsTab";
 import { HabitooMapIcon } from "@/components/brand/HabitooMapIcon";
 import facebookAsset from "@/assets/facebook-brand.svg.asset.json";
 import argusAsset from "@/assets/argus-official.png.asset.json";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -305,10 +307,12 @@ function PrivateListingsPage() {
   const toggleDraftRoom = (r: number) =>
     patch({ camere: draft.camere.includes(r) ? draft.camere.filter((x) => x !== r) : [...draft.camere, r] });
 
+  const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const extendedCount = [
     search.oras, selectedZones.length ? "x" : "", source, search.id, search.camere, search.q,
     search.mpMin, search.mpMax, search.etajMin, search.etajMax, search.anMin, search.anMax,
   ].filter((v) => v !== undefined && v !== "").length;
+  const mobileFilterCount = extendedCount + countFilledValues([search.tranzactie, search.zile, search.pretMin, search.pretMax]);
   const hasFilters = Boolean(
     search.locuri || search.judet || search.oras || selectedZones.length || rooms.length || search.q || source || search.tranzactie ||
       search.tip || search.id || search.zile !== undefined ||
@@ -406,7 +410,7 @@ function PrivateListingsPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-3 rounded-[14px] border border-border bg-card p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-[1fr_1fr_1fr_1.4fr_auto_auto]">
-          <Select value={draft.tranzactie || ALL} onValueChange={(v) => patch({ tranzactie: v === ALL ? "" : v })}>
+          <div className="hidden sm:contents"><Select value={draft.tranzactie || ALL} onValueChange={(v) => patch({ tranzactie: v === ALL ? "" : v })}>
             <SelectTrigger aria-label="Tranzacție"><SelectValue placeholder="Tranzacție" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>Tranzacție</SelectItem>
@@ -414,9 +418,9 @@ function PrivateListingsPage() {
               <SelectItem value="rent">Închiriere</SelectItem>
               <SelectItem value="rent_day">Închiriere pe zi</SelectItem>
             </SelectContent>
-          </Select>
+          </Select></div>
           <div data-tour="map-places"><SearchPlacesPicker options={facets.data?.places ?? []} value={draft.locuri} onApply={(locuri) => { if (!locuri && Object.keys(search).every(k => ["locuri", "judet", "oras", "zona", "lista"].includes(k) || search[k as keyof typeof search] === undefined)) clearListState(); const next = { ...draft, locuri, judet: "", oras: "", zona: [] }; setDraft(next); void apply(next); }} /></div>
-          <Select value={draft.zile || ALL} onValueChange={(v) => patch({ zile: v === ALL ? "" : v })}>
+          <div className="hidden sm:contents"><Select value={draft.zile || ALL} onValueChange={(v) => patch({ zile: v === ALL ? "" : v })}>
             <SelectTrigger aria-label="Zile în piață"><SelectValue placeholder="Zile în piață" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>Indiferent</SelectItem>
@@ -443,10 +447,14 @@ function PrivateListingsPage() {
           <Button data-tour="map-search" type="submit">
             <Search className="size-4" /> Căutare
           </Button>
+          </div>
+          <Button type="button" variant="outline" data-tour="map-filters-toggle" className="h-11 w-full rounded-[10px] sm:hidden" onClick={() => setFiltersSheetOpen(true)}>
+            <SlidersHorizontal className="size-4" /> Filtre ({mobileFilterCount})
+          </Button>
         </div>
 
         {extendedOpen ? (
-          <div className="space-y-3 rounded-[14px] border border-border bg-card p-4 sm:p-5">
+          <div className="hidden space-y-3 rounded-[14px] border border-border bg-card p-4 sm:block sm:p-5">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {scope === "habitoo" ? <Select value={draft.sursa || ALL} onValueChange={(v) => patch({ sursa: v === ALL ? "" : v })}>
                 <SelectTrigger aria-label="Sursă"><SelectValue placeholder="Sursă" /></SelectTrigger>
@@ -518,6 +526,96 @@ function PrivateListingsPage() {
             </div>
           </div>
         ) : null}
+
+        <Sheet open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
+          <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto sm:hidden">
+            <SheetHeader><SheetTitle>Filtre</SheetTitle></SheetHeader>
+            <div className="grid grid-cols-1 gap-3 py-4">
+              <Select value={draft.tranzactie || ALL} onValueChange={(v) => patch({ tranzactie: v === ALL ? "" : v })}>
+            <SelectTrigger aria-label="Tranzacție"><SelectValue placeholder="Tranzacție" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Tranzacție</SelectItem>
+              <SelectItem value="sale">Vânzare</SelectItem>
+              <SelectItem value="rent">Închiriere</SelectItem>
+              <SelectItem value="rent_day">Închiriere pe zi</SelectItem>
+            </SelectContent>
+          </Select>
+              <Select value={draft.zile || ALL} onValueChange={(v) => patch({ zile: v === ALL ? "" : v })}>
+            <SelectTrigger aria-label="Zile în piață"><SelectValue placeholder="Zile în piață" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Indiferent</SelectItem>
+              {DAYS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+              <div className="grid grid-cols-2 gap-2">
+            <Input inputMode="numeric" value={draft.pretMin} onChange={(e) => patch({ pretMin: e.target.value })} placeholder="Preț de la" aria-label="Preț de la" />
+            <Input inputMode="numeric" value={draft.pretMax} onChange={(e) => patch({ pretMax: e.target.value })} placeholder="Preț până la" aria-label="Preț până la" />
+          </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {scope === "habitoo" ? <Select value={draft.sursa || ALL} onValueChange={(v) => patch({ sursa: v === ALL ? "" : v })}>
+                <SelectTrigger aria-label="Sursă"><SelectValue placeholder="Sursă" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Toate sursele</SelectItem>
+                  {Object.entries(SOURCE_LABELS).filter(([k]) => k !== "facebook").map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select> : null}
+              <Input value={draft.id} onChange={(e) => patch({ id: e.target.value })} placeholder="ID anunț" aria-label="ID anunț" />
+              <div className="flex items-center gap-1" role="group" aria-label="Camere">
+                <span className="mr-1 text-sm text-muted-foreground">Camere</span>
+                {ROOM_OPTIONS.map((r) => (
+                  <Button
+                    key={r}
+                    type="button"
+                    size="sm"
+                    variant={draft.camere.includes(r) ? "default" : "outline"}
+                    aria-pressed={draft.camere.includes(r)}
+                    className="h-10 min-w-10"
+                    onClick={() => toggleDraftRoom(r)}
+                  >
+                    {r === 5 ? "5+" : r}
+                  </Button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input inputMode="numeric" value={draft.mpMin} onChange={(e) => patch({ mpMin: e.target.value })} placeholder="Suprafață de la (m²)" aria-label="Suprafață utilă de la" />
+                <Input inputMode="numeric" value={draft.mpMax} onChange={(e) => patch({ mpMax: e.target.value })} placeholder="Suprafață până la (m²)" aria-label="Suprafață utilă până la" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input inputMode="numeric" value={draft.etajMin} onChange={(e) => patch({ etajMin: e.target.value })} placeholder="Etaj de la (Parter = 0)" aria-label="Etaj de la" />
+                <Input inputMode="numeric" value={draft.etajMax} onChange={(e) => patch({ etajMax: e.target.value })} placeholder="Etaj până la" aria-label="Etaj până la" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input inputMode="numeric" value={draft.anMin} onChange={(e) => patch({ anMin: e.target.value })} placeholder="An construcție de la" aria-label="An construcție de la" />
+                <Input inputMode="numeric" value={draft.anMax} onChange={(e) => patch({ anMax: e.target.value })} placeholder="An construcție până la" aria-label="An construcție până la" />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={draft.anNespecificat}
+                  onCheckedChange={(checked) => patch({ anNespecificat: checked === true })}
+                  aria-label="Include an construcție nespecificat"
+                />
+                Include an construcție nespecificat
+              </label>
+              <div className="relative sm:col-span-2 lg:col-span-3">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={draft.q}
+                  onChange={(e) => patch({ q: e.target.value })}
+                  placeholder="Cuvinte cheie: centrală, parcare, renovat…"
+                  className="pl-9"
+                  aria-label="Cuvinte cheie"
+                />
+              </div>
+            </div>
+            <SheetFooter className="gap-2">
+              <Button type="button" className="h-11 w-full" onClick={() => { void apply(draft); setFiltersSheetOpen(false); }}>Aplică</Button>
+              <Button type="button" variant="outline" className="h-11 w-full" onClick={() => { resetFilters(); setFiltersSheetOpen(false); }}>Resetează</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </form>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
@@ -631,7 +729,7 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="gap-1.5"><SourceLogo source={listing.source} />{SOURCE_LABELS[listing.source] ?? listing.source}</Badge>
+          <ListingSourcePill source={listing.source} label={SOURCE_LABELS[listing.source] ?? listing.source} />
           {transaction ? <span className="text-[13px] text-muted-foreground">{transaction}</span> : null}
           {listing.firstSeenAt ? (
             <span className="text-[13px] text-muted-foreground">
@@ -691,12 +789,6 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
       </div>
     </article>
   );
-}
-
-function SourceLogo({ source }: { source: string }) {
-  if (source === "facebook") return <img src={facebookAsset.url} alt="" className="size-3.5 shrink-0 object-contain" />;
-  if (source === "argus") return <img src={argusAsset.url} alt="" className="size-3.5 shrink-0 object-contain" />;
-  return <HabitooMapIcon />;
 }
 
 const DESCRIPTION_COLLAPSED_LENGTH = 280;

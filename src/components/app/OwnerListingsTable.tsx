@@ -2,27 +2,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { ExternalLink, Phone } from "lucide-react";
 import type { OwnerListing } from "@/lib/listings.functions";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import facebookLogo from "@/assets/portals/facebook.svg";
-import imobiliareLogo from "@/assets/portals/imobiliare_ro.png";
-import olxLogo from "@/assets/portals/olx.png";
-import romimoLogo from "@/assets/portals/romimo.png";
-import storiaLogo from "@/assets/portals/storia.png";
-import imoradarLogo from "@/assets/portals/imoradar.png";
-import anuntulLogo from "@/assets/portals/anuntul.png";
-import homezzLogo from "@/assets/portals/homezz.png";
-
-const SOURCE_ICONS: Record<string, string> = {
-  storia: storiaLogo,
-  olx: olxLogo,
-  imobiliare: imobiliareLogo,
-  romimo: romimoLogo,
-  facebook: facebookLogo,
-  imoradar: imoradarLogo,
-  anuntul: anuntulLogo,
-  homezz: homezzLogo,
-};
-const SOURCE_TOKENS: Record<string, string> = {};
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ListingSourcePill } from "@/components/app/ListingSourcePill";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 function typeLabel(t: string | null) {
   const v = (t ?? "").toLowerCase();
@@ -70,20 +52,20 @@ export function OwnerListingsTable({ items, sourceLabels }: { items: OwnerListin
   const open = (id: string) => navigate({ to: "/app/anunturi-particulari/$id", params: { id } });
   return (
     <TooltipProvider delayDuration={200}>
-    <div className="overflow-x-auto rounded-lg border border-border bg-card">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-          <tr>
-            <th className="p-3 font-medium">Imagine</th>
-            <th className="p-3 font-medium">Tip proprietate / Caracteristici</th>
-            <th className="p-3 font-medium">Zile piață / Ultima modif.</th>
-            <th className="p-3 font-medium">Locație</th>
-            <th className="p-3 font-medium">Preț</th>
-            <th className="p-3 font-medium">Sursa</th>
-            <th className="p-3 font-medium">Operațiuni</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="overflow-hidden rounded-[14px] border border-border bg-card">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Imagine</TableHead>
+            <TableHead>Tip proprietate / Caracteristici</TableHead>
+            <TableHead>Zile piață / Ultima modif.</TableHead>
+            <TableHead>Locație</TableHead>
+            <TableHead>Preț</TableHead>
+            <TableHead>Sursa</TableHead>
+            <TableHead>Operațiuni</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {items.map((l) => {
             const specs = [
               l.surface !== null ? `S.U. ${fmtNum(l.surface)} mp` : null,
@@ -97,58 +79,47 @@ export function OwnerListingsTable({ items, sourceLabels }: { items: OwnerListin
             const label = sourceLabels[l.source] ?? l.source;
             const updated = l.scrapedAt ?? l.firstSeenAt;
             return (
-              <tr
+              <TableRow
                 key={l.id}
                 onClick={() => open(l.id)}
-                className="cursor-pointer border-t border-border even:bg-muted/30 hover:bg-primary/5"
+                className="h-[52px] cursor-pointer"
               >
-                <td className="p-3">
+                <TableCell>
                   {l.images[0] ? (
-                    <img referrerPolicy="no-referrer" src={l.images[0]} alt="" loading="lazy" className="h-[70px] w-[100px] rounded-md object-cover" />
+                    <img referrerPolicy="no-referrer" src={l.images[0]} alt="" loading="lazy" className="h-[70px] w-[100px] rounded-[10px] object-cover" />
                   ) : (
-                    <div className="h-[70px] w-[100px] rounded-md bg-muted" />
+                    <div className="h-[70px] w-[100px] rounded-[10px] bg-muted" />
                   )}
-                </td>
-                <td className="max-w-64 p-3">
+                </TableCell>
+                <TableCell className="max-w-64">
                   <div className="font-semibold">{listingHeadline(l)}</div>
                   {specs.length ? <div className="text-xs text-muted-foreground">{specs.join(" · ")}</div> : null}
-                </td>
-                <td className="whitespace-nowrap p-3">
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
                   {listingAge(l.firstSeenAt) ? (
                     <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${ageTone(l.firstSeenAt)}`}>
                       {listingAge(l.firstSeenAt)}
                     </span>
                   ) : null}
                   {updated ? <div className="mt-1 text-xs text-muted-foreground">{fmtDate(updated)}</div> : null}
-                </td>
-                <td className="max-w-56 p-3">{place || "—"}</td>
-                <td className="whitespace-nowrap p-3">
+                </TableCell>
+                <TableCell className="max-w-56">{place || "—"}</TableCell>
+                <TableCell className="whitespace-nowrap">
                   {l.price === null ? (
                     <span className="text-muted-foreground">Preț nedisponibil</span>
                   ) : (
                     <>
-                      <div className="text-base font-bold">
+                      <div className="text-base font-extrabold">
                         {fmtNum(l.price)} {cur(l.currency)}{rent ? (perDay ? " / zi" : " / lună") : ""}
                       </div>
                       {!rent && ppm ? <div className="text-xs text-muted-foreground">{fmtNum(ppm)} {cur(l.currency)}/mp</div> : null}
                     </>
                   )}
-                </td>
-                <td className="p-3">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex size-8 items-center justify-center overflow-hidden rounded bg-background text-[10px] font-bold" aria-label={label}>
-                        {SOURCE_ICONS[l.source] ? (
-                          <img src={SOURCE_ICONS[l.source]} alt={label} className="size-7 object-contain" />
-                        ) : (
-                          SOURCE_TOKENS[l.source] ?? label.slice(0, 2).toUpperCase()
-                        )}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>{label}</TooltipContent>
-                  </Tooltip>
-                </td>
-                <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                </TableCell>
+                <TableCell>
+                  <ListingSourcePill source={l.source} label={label} />
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex flex-col items-start gap-1">
                     <Button size="sm" className="h-7" onClick={() => open(l.id)}>Detalii</Button>
                     {l.phone ? (
@@ -162,12 +133,12 @@ export function OwnerListingsTable({ items, sourceLabels }: { items: OwnerListin
                       </a>
                     ) : null}
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
     </TooltipProvider>
   );
