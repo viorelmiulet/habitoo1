@@ -161,7 +161,7 @@ function QaPanelPage() {
       </Alert>
 
       {error ? (
-        <div className="panel p-6">
+        <div className="panel rounded-[14px] p-4 sm:p-5">
           <EmptyState
             icon={ShieldAlert}
             title="Nu am putut încărca starea QA"
@@ -169,11 +169,11 @@ function QaPanelPage() {
           />
         </div>
       ) : isLoading ? (
-        <div className="panel overflow-hidden">
+        <div className="panel overflow-hidden rounded-[14px]">
           <ListSkeleton rows={4} />
         </div>
       ) : !org ? (
-        <div className="panel p-6">
+        <div className="panel rounded-[14px] p-4 sm:p-5">
           <EmptyState
             icon={FlaskConical}
             title="Nu există încă o agenție QA"
@@ -192,7 +192,7 @@ function QaPanelPage() {
         </div>
       ) : (
         <>
-          <section className="panel p-5">
+          <section className="panel rounded-[14px] p-4 sm:p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex items-start gap-3">
                 <span className="flex size-11 items-center justify-center rounded-xl bg-warning/20 text-warning-foreground">
@@ -363,7 +363,7 @@ function QaPanelPage() {
           ) : null}
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <section className="panel p-5">
+            <section className="panel rounded-[14px] p-4 sm:p-5">
               <div className="flex items-start gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                   <Users className="size-4" aria-hidden />
@@ -406,7 +406,7 @@ function QaPanelPage() {
               )}
 
               {credentials ? (
-                <div className="mt-4 rounded-lg border border-warning/40 bg-warning/10 p-3">
+                <div className="mt-4 rounded-[12px] border border-gold/40 bg-gold-tint p-3">
                   <p className="text-xs font-semibold text-warning-foreground">
                     Parole afișate o singură dată – nu sunt stocate nicăieri. Copiază-le acum.
                   </p>
@@ -425,7 +425,7 @@ function QaPanelPage() {
               ) : null}
             </section>
 
-            <section className="panel p-5">
+            <section className="panel rounded-[14px] p-4 sm:p-5">
               <div className="flex items-start gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/20 text-accent-foreground">
                   <ListChecks className="size-4" aria-hidden />

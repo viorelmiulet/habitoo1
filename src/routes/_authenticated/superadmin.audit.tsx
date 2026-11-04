@@ -49,7 +49,7 @@ function AuditPage() {
         description="Cine a făcut ce și când, în toate agențiile."
       />
 
-      <div className="panel p-4">
+      <div className="panel rounded-[14px] p-4 sm:p-5">
         <div className="relative max-w-md">
           <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
           <Input
@@ -61,7 +61,7 @@ function AuditPage() {
         </div>
       </div>
 
-      <div className="panel overflow-hidden">
+      <div className="panel overflow-hidden rounded-[14px]">
         {isLoading ? (
           <ListSkeleton rows={10} compact />
         ) : rows.length === 0 ? (
@@ -69,19 +69,19 @@ function AuditPage() {
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((l) => (
-              <li key={l.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+              <li key={l.id} className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm sm:px-5">
                 <StatusBadge tone="primary">{l.action}</StatusBadge>
                 <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
                   {l.entity ?? "—"}
                   {l.entity_id ? ` · ${l.entity_id.slice(0, 8)}` : ""}
                 </span>
-                <span className="w-40 truncate text-xs text-muted-foreground">
+                <span className="max-w-full truncate text-[13px] sm:w-40 sm:text-xs text-muted-foreground">
                   {data?.profiles.find((p) => p.id === l.actor_id)?.full_name ?? "Sistem"}
                 </span>
-                <span className="w-40 truncate text-xs text-muted-foreground">
+                <span className="max-w-full truncate text-[13px] sm:w-40 sm:text-xs text-muted-foreground">
                   {data?.orgs.find((o) => o.id === l.organization_id)?.name ?? "—"}
                 </span>
-                <span className="w-36 text-right text-xs text-muted-foreground">
+                <span className="text-[13px] sm:w-36 sm:text-right sm:text-xs text-muted-foreground">
                   {formatDateTime(l.created_at)}
                 </span>
               </li>

@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { ListSkeleton } from "@/components/app/LoadingState";
 import { EmptyState } from "@/components/app/EmptyState";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -76,7 +77,7 @@ function DeletedItemsPage() {
           <TabsTrigger value="properties">Anunțuri</TabsTrigger>
           <TabsTrigger value="leads">Lead-uri</TabsTrigger>
         </TabsList>
-        <TabsContent value="properties" className="panel p-4">
+        <TabsContent value="properties" className="panel rounded-[14px] p-4 sm:p-5">
           <div className="relative mb-4 max-w-md">
             <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
             <Input
@@ -92,43 +93,43 @@ function DeletedItemsPage() {
           ) : rows.length === 0 ? (
             <EmptyState icon={Trash2} title="Niciun anunț șters" description="Anunțurile șterse apar aici." />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-left text-xs text-muted-foreground uppercase">
-                  <tr>
-                    <th className="py-2 pr-3">Agenție</th>
-                    <th className="py-2 pr-3">Referință</th>
-                    <th className="py-2 pr-3">Titlu</th>
-                    <th className="py-2 pr-3">Șters de</th>
-                    <th className="py-2 pr-3">Când</th>
-                    <th className="py-2 pr-3">Status anterior</th>
-                    <th className="py-2" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+            <div>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Agenție</TableHead>
+                    <TableHead>Referință</TableHead>
+                    <TableHead>Titlu</TableHead>
+                    <TableHead>Șters de</TableHead>
+                    <TableHead>Când</TableHead>
+                    <TableHead>Status anterior</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {rows.map((r) => (
-                    <tr key={r.id}>
-                      <td className="py-2 pr-3">{data?.orgs.get(r.organization_id) ?? "—"}</td>
-                      <td className="py-2 pr-3 font-mono">{r.reference ?? "—"}</td>
-                      <td className="max-w-[280px] truncate py-2 pr-3">{r.title}</td>
-                      <td className="py-2 pr-3">{r.deleted_by ? (data?.people.get(r.deleted_by) ?? "—") : "—"}</td>
-                      <td className="py-2 pr-3">{formatDateTime(r.deleted_at)}</td>
-                      <td className="py-2 pr-3">
+                    <TableRow className="h-[52px]" key={r.id}>
+                      <TableCell>{data?.orgs.get(r.organization_id) ?? "—"}</TableCell>
+                      <TableCell className="font-mono">{r.reference ?? "—"}</TableCell>
+                      <TableCell className="max-w-[280px] truncate">{r.title}</TableCell>
+                      <TableCell>{r.deleted_by ? (data?.people.get(r.deleted_by) ?? "—") : "—"}</TableCell>
+                      <TableCell>{formatDateTime(r.deleted_at)}</TableCell>
+                      <TableCell>
                         {r.pre_delete_status ? (propertyStatusLabels[r.pre_delete_status] ?? r.pre_delete_status) : "—"}
-                      </td>
-                      <td className="py-2 text-right">
-                        <Button variant="outline" size="sm" onClick={() => setTarget(r)}>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" className="h-11 rounded-[10px] sm:h-10" onClick={() => setTarget(r)}>
                           Restabilește
                         </Button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </TabsContent>
-        <TabsContent value="leads" className="panel p-4">
+        <TabsContent value="leads" className="panel rounded-[14px] p-4 sm:p-5">
           <DeletedLeadsTab />
         </TabsContent>
       </Tabs>
@@ -218,43 +219,43 @@ function DeletedLeadsTab() {
       ) : rows.length === 0 ? (
         <EmptyState icon={Trash2} title="Niciun lead șters" description="Lead-urile șterse apar aici." />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-xs text-muted-foreground uppercase">
-              <tr>
-                <th className="py-2 pr-3">Agenție</th>
-                <th className="py-2 pr-3">Client</th>
-                <th className="py-2 pr-3">Proprietate</th>
-                <th className="py-2 pr-3">Etapa anterioară</th>
-                <th className="py-2 pr-3">Șters de</th>
-                <th className="py-2 pr-3">Când</th>
-                <th className="py-2" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
+        <div>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Agenție</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Proprietate</TableHead>
+                <TableHead>Etapa anterioară</TableHead>
+                <TableHead>Șters de</TableHead>
+                <TableHead>Când</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {rows.map((r) => (
-                <tr key={r.id}>
-                  <td className="py-2 pr-3">{data?.orgs.get(r.organization_id) ?? "—"}</td>
-                  <td className="py-2 pr-3">{r.name}</td>
-                  <td className="max-w-[240px] truncate py-2 pr-3">
+                <TableRow className="h-[52px]" key={r.id}>
+                  <TableCell>{data?.orgs.get(r.organization_id) ?? "—"}</TableCell>
+                  <TableCell>{r.name}</TableCell>
+                  <TableCell className="max-w-[240px] truncate">
                     {r.property_id ? (data?.props.get(r.property_id) ?? "—") : "—"}
-                  </td>
-                  <td className="py-2 pr-3">
+                  </TableCell>
+                  <TableCell>
                     {r.pre_delete_stage
                       ? ((leadStageLabels as Record<string, string>)[r.pre_delete_stage] ?? r.pre_delete_stage)
                       : "—"}
-                  </td>
-                  <td className="py-2 pr-3">{r.deleted_by ? (data?.people.get(r.deleted_by) ?? "—") : "—"}</td>
-                  <td className="py-2 pr-3">{formatDateTime(r.deleted_at)}</td>
-                  <td className="py-2 text-right">
-                    <Button variant="outline" size="sm" onClick={() => setTarget(r)}>
+                  </TableCell>
+                  <TableCell>{r.deleted_by ? (data?.people.get(r.deleted_by) ?? "—") : "—"}</TableCell>
+                  <TableCell>{formatDateTime(r.deleted_at)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="outline" className="h-11 rounded-[10px] sm:h-10" onClick={() => setTarget(r)}>
                       Restabilește
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
       <ConfirmDialog

@@ -199,11 +199,11 @@ function SuperadminMusicPage() {
       ) : (
         <ul className="space-y-2">
           {q.data.map((r, i) => (
-            <li key={r.id} className="panel flex flex-wrap items-center gap-3 p-3">
-              <Button size="icon" variant="ghost" aria-label={playing === r.id ? `Oprește ${r.title}` : `Ascultă ${r.title}`} onClick={() => void toggle(r)}>{playing === r.id ? <Pause className="size-4" /> : <Play className="size-4" />}</Button>
+            <li key={r.id} className="panel flex min-h-[52px] flex-wrap items-center gap-3 rounded-[14px] p-3 sm:p-4">
+              <Button size="icon" variant="outline" className="size-11 shrink-0 rounded-full" aria-label={playing === r.id ? `Oprește ${r.title}` : `Ascultă ${r.title}`} onClick={() => void toggle(r)}>{playing === r.id ? <Pause className="size-4" /> : <Play className="size-4" />}</Button>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{r.title}</p>
-                <p className="text-xs text-muted-foreground">{r.style} · {formatDuration(r.duration_sec)}{r.artist ? ` · ${r.artist}` : ""} · {r.license}{r.source_url ? <> · <a className="underline" href={r.source_url} target="_blank" rel="noopener noreferrer">sursă</a></> : null}{r.certificate_path ? <> · <button type="button" className="inline-flex items-center gap-1 underline" onClick={() => void signed(r.certificate_path!).then((u) => window.open(u, "_blank", "noopener")).catch(toastError)}><FileText className="size-3" />certificat</button></> : null}</p>
+                <p className="truncate text-sm font-semibold">{r.title}</p>
+                <p className="text-[13px] text-muted-foreground">{r.style} · {formatDuration(r.duration_sec)}{r.artist ? ` · ${r.artist}` : ""} · {r.license}{r.source_url ? <> · <a className="underline" href={r.source_url} target="_blank" rel="noopener noreferrer">sursă</a></> : null}{r.certificate_path ? <> · <button type="button" className="inline-flex items-center gap-1 underline" onClick={() => void signed(r.certificate_path!).then((u) => window.open(u, "_blank", "noopener")).catch(toastError)}><FileText className="size-3" />certificat</button></> : null}</p>
               </div>
               <label className="flex items-center gap-2 text-sm"><Switch checked={r.active} onCheckedChange={(v) => update.mutate({ id: r.id, patch: { active: v } })} aria-label={`Activă: ${r.title}`} />{r.active ? "Activă" : "Inactivă"}</label>
               <Button size="icon" variant="ghost" aria-label="Mută mai sus" disabled={i === 0} onClick={() => void move(i, -1)}><ArrowUp className="size-4" /></Button>
