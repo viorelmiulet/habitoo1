@@ -49,7 +49,7 @@ function AcpListPage() {
         title="Analize salvate"
         description="Analizele comparative de piață create în agenția ta, cu comparabilele și scorurile păstrate pentru transparență."
         actions={
-          <Button asChild>
+          <Button asChild className="w-full sm:w-auto">
             <Link data-tour="acp-new-open" to="/app/acp/new">
               <PlusCircle className="size-4" /> Analiză nouă
             </Link>
@@ -78,11 +78,11 @@ function AcpListPage() {
                 <Link
                   data-tour="acp-saved-row" to="/app/acp/$id"
                   params={{ id: a.id }}
-                  className="flex flex-wrap items-center gap-3 px-5 py-3.5 transition-colors hover:bg-muted/50"
+                  className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors hover:bg-muted sm:flex-nowrap sm:px-5"
                 >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{a.title}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0 flex-1 basis-full sm:basis-auto">
+                    <p className="truncate text-sm font-semibold">{a.title}</p>
+                    <p className="text-[13px] text-muted-foreground tabular-nums">
                       {new Date(a.created_at).toLocaleDateString("ro-RO")} ·{" "}
                       {a.comparables_count} comparabile
                       {a.median_price_per_sqm
@@ -91,7 +91,7 @@ function AcpListPage() {
                     </p>
                   </div>
                   {a.estimated_value ? (
-                    <span className="text-sm font-semibold">
+                    <span className="text-sm font-bold tabular-nums">
                       {formatMoney(a.estimated_value, "EUR")}
                     </span>
                   ) : null}

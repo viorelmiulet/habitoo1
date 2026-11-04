@@ -34,7 +34,7 @@ export function SectionCard({
     <Panel asChild>
       <section data-tour={dataTour} className={cn("overflow-hidden rounded-card", className)}>
         {title || action ? (
-          <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3.5">
+          <header className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3.5 sm:px-5">
             {Icon ? <Icon className="size-[18px] shrink-0 text-navy-muted" /> : null}
             <div className="min-w-0 flex-1">
               {title ? <h2 className="truncate text-base font-bold">{title}</h2> : null}
@@ -45,7 +45,7 @@ export function SectionCard({
             {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
           </header>
         ) : null}
-        <div className={cn(!flush && "p-5", bodyClassName)}>{children}</div>
+        <div className={cn(!flush && "p-4 sm:p-5", bodyClassName)}>{children}</div>
       </section>
     </Panel>
   );
