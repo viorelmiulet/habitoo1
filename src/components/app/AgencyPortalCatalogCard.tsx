@@ -7,6 +7,7 @@ import { toast } from "@/components/ui/sonner";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { FacebookCatalogCard } from "@/components/app/FacebookCatalogCard";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/app/StatusBadge";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { useCurrentUser } from "@/hooks/use-session";
@@ -149,7 +150,19 @@ export function AgencyPortalCatalogCard() {
                 <div data-portal-statuses className="flex flex-wrap min-w-0 items-center gap-2 sm:ml-auto sm:justify-end">
                     {item.id === "zup" ? (
                       <>
-                        <span className="text-sm">{item.connectionStatus === "connected" ? "Conectat" : item.connectionStatus === "error" ? "Eroare" : "Deconectat"}</span>
+                        <StatusBadge
+                          className="h-7 text-[13px]"
+                          tone={
+                            item.connectionStatus === "connected"
+                              ? "success"
+                              : item.connectionStatus === "error"
+                                ? "danger"
+                                : "neutral"
+                          }
+                          dot
+                        >
+                          {item.connectionStatus === "connected" ? "Conectat" : item.connectionStatus === "error" ? "Eroare" : "Deconectat"}
+                        </StatusBadge>
                         <Button className="h-auto min-h-11 w-full whitespace-normal text-center" disabled={busy || zupAction.isPending || item.zupConfigured !== true} onClick={() => connect.mutate("zup")}>
                           {item.zupConfigured !== true ? ZUP_MISSING_MESSAGE : item.zupConnected ? "Reconectează contul ZUP" : "Conectează contul ZUP"}
                         </Button>
@@ -157,19 +170,13 @@ export function AgencyPortalCatalogCard() {
                       </>
                     ) : state.key === "connected" ? (
                       <>
-                        <span className="inline-flex items-center gap-2 text-sm font-medium">
-                          <span
-                            aria-hidden
-                            className={
-                              state.tone === "success"
-                                ? "size-2 rounded-full bg-success"
-                                : state.tone === "danger"
-                                  ? "size-2 rounded-full bg-destructive"
-                                  : "size-2 rounded-full bg-muted-foreground"
-                            }
-                          />
+                        <StatusBadge
+                          className="h-7 text-[13px]"
+                          tone={state.tone === "muted" ? "neutral" : state.tone}
+                          dot
+                        >
                           {state.label}
-                        </span>
+                        </StatusBadge>
                         <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
                           <Link to="/app/portaluri/$portalId" params={{ portalId: item.id }} data-portal-settings>
                             Setări portal
