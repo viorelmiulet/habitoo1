@@ -316,7 +316,7 @@ function CollaborationPage() {
           </div>
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <p className="text-sm font-medium" aria-live="polite">{totalOffers} oferte</p>
-            <Tabs value={view} onValueChange={(v) => changeView(v as typeof view)} className="shrink-0">
+            <Tabs value={view} onValueChange={(v) => changeView(v as PartnerOfferView)} className="shrink-0">
               <TabsList variant="segmented" aria-label="Afișare oferte">
                 <TabsTrigger value="cards" className="min-h-10"><LayoutGrid className="size-4" />Carduri</TabsTrigger>
                 <TabsTrigger value="list" className="min-h-10"><List className="size-4" />Listă</TabsTrigger>
@@ -439,7 +439,7 @@ function ProposalList({
           <StatusBadge tone={statusTone[p.status]} dot>
             {COLLAB_STATUS_LABELS[p.status]}
           </StatusBadge>
-          <Button size="sm" variant="outline" onClick={() => onOpen(p.id)}>
+          <Button size="sm" variant="outline" className="h-11 rounded-[10px] max-sm:w-full sm:h-10" onClick={() => onOpen(p.id)}>
             <MessageCircle className="size-4" /> Mesaje ({p.messageCount})
           </Button>
         </li>
