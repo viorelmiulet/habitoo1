@@ -114,7 +114,7 @@ function PortalSettingsPage() {
           <LaCheieCard organizationId={organizationId} />
           <PortalSlotsCard organizationId={organizationId} />
 
-          <section className="panel">
+          <section className="panel rounded-[14px]">
             <header className="space-y-3 border-b border-border px-5 py-4">
               <div>
                 <h2 className="text-sm font-semibold tracking-wide uppercase">

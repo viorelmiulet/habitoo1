@@ -72,19 +72,19 @@ export function PortalActivationRequestsCard({
   const pendingCount = (requests.data ?? []).filter((r) => r.status === "pending").length;
 
   return (
-    <section className="panel">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+    <section className="panel rounded-[14px]">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-5">
         <div>
-          <h2 className="flex items-center gap-2 text-sm font-semibold tracking-wide uppercase">
+          <h2 className="flex items-center gap-2 text-base font-bold">
             Cereri de activare portal
-            {pendingCount > 0 ? <Badge variant="destructive">{pendingCount}</Badge> : null}
+            {pendingCount > 0 ? <Badge className="border-transparent bg-gold text-navy">{pendingCount}</Badge> : null}
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             Cererile trimise de administratorii de agenție. Activarea se face mai jos, pe agenția
             selectată.
           </p>
         </div>
-        <Button size="sm" variant="outline" onClick={() => setShowAll((v) => !v)}>
+        <Button variant="outline" className="h-11 w-full rounded-[10px] sm:h-10 sm:w-auto" onClick={() => setShowAll((v) => !v)}>
           {showAll ? "Doar în așteptare" : "Toate cererile"}
         </Button>
       </header>
@@ -102,10 +102,10 @@ export function PortalActivationRequestsCard({
       ) : (
         <ul className="divide-y divide-border">
           {(requests.data ?? []).map((r) => (
-            <li key={r.id} className="space-y-2 px-5 py-4 text-sm">
+            <li key={r.id} className="min-h-[52px] space-y-2 px-4 py-3 text-sm sm:px-5">
               <div className="flex flex-wrap items-center gap-2">
                 <PortalLogoStack portalId={r.portalId} name={r.portalName} size={32} />
-                <span className="font-medium">{r.portalName}</span>
+                <span className="text-sm font-semibold">{r.portalName}</span>
                 <span className="text-muted-foreground">·</span>
                 <span className="truncate">{r.organizationName}</span>
                 {r.status === "pending" ? (

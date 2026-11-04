@@ -418,7 +418,7 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                     <PortalLogoStack
                       portalId={item.portal.id}
                       name={name}
-                      size={40}
+                      size={32}
                       className="shrink-0"
                     />
                     <Checkbox
@@ -481,7 +481,7 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                 <PortalLogoStack
                   portalId={item.portal.id}
                   name={portalDisplayName(item.portal.id)}
-                  size={40}
+                  size={32}
                   className="shrink-0"
                 />
                 <div className="min-w-0 flex-1">
