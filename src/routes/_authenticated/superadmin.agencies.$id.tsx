@@ -80,7 +80,6 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
             </div>
           </div>
         </div>
-        <AgencyHeaderActions org={org} />
       </header>
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -161,6 +160,10 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
           </DetailCard>
         ) : null}
       </div>
+
+      <section data-danger-actions className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <AgencyHeaderActions org={org} />
+      </section>
     </div>
   );
 }

@@ -136,21 +136,21 @@ export function AgencyHeaderActions({ org }: { org: Org }) {
   const superadminOrgs = useQuery({ queryKey: ["superadmin", "superadmin-orgs"], queryFn: () => fetchSuperadminOrgs() });
   const block = organizationDeletionBlock(org.id, me?.profile?.organization_id, superadminOrgs.data ?? []);
   const deleteBtn = (
-    <Button variant="ghost" className="h-11 text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={block !== null || !superadminOrgs.data} onClick={() => setDeleting(true)}>
+    <Button variant="destructive" className="h-11 w-full sm:w-auto" disabled={block !== null || !superadminOrgs.data} onClick={() => setDeleting(true)}>
       <Trash2 className="mr-1.5 size-4" />Șterge
     </Button>
   );
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Button variant="outline" className="h-11" onClick={() => setImporting(true)}><FileUp className="mr-1.5 size-4" />Importă proprietăți</Button>
-      <Button variant="outline" className="h-11" onClick={() => setEditing(true)}><Pencil className="mr-1.5 size-4" />Editează datele</Button>
+    <div className="grid gap-2 sm:flex sm:flex-wrap sm:items-center">
+      <Button variant="outline" className="h-11 w-full sm:w-auto" onClick={() => setImporting(true)}><FileUp className="mr-1.5 size-4" />Importă proprietăți</Button>
+      <Button variant="outline" className="h-11 w-full sm:w-auto" onClick={() => setEditing(true)}><Pencil className="mr-1.5 size-4" />Editează datele</Button>
       {org.archived_at ? (
-        <Button variant="outline" className="h-11" disabled={setArchived.isPending} onClick={() => setArchived.mutate({ id: org.id, archived: false })}><ArchiveRestore className="mr-1.5 size-4" />Reactivează</Button>
+        <Button variant="outline" className="h-11 w-full sm:w-auto" disabled={setArchived.isPending} onClick={() => setArchived.mutate({ id: org.id, archived: false })}><ArchiveRestore className="mr-1.5 size-4" />Reactivează</Button>
       ) : (
-        <Button variant="outline" className="h-11" disabled={setArchived.isPending} onClick={() => setArchiving(true)}><Archive className="mr-1.5 size-4" />Arhivează</Button>
+        <Button variant="destructive" className="h-11 w-full sm:w-auto" disabled={setArchived.isPending} onClick={() => setArchiving(true)}><Archive className="mr-1.5 size-4" />Arhivează</Button>
       )}
       {block ? (
-        <TooltipProvider><Tooltip><TooltipTrigger asChild><span tabIndex={0} aria-label={block}>{deleteBtn}</span></TooltipTrigger><TooltipContent>{block}</TooltipContent></Tooltip></TooltipProvider>
+        <TooltipProvider><Tooltip><TooltipTrigger asChild><span tabIndex={0} aria-label={block} className="grid sm:inline-flex">{deleteBtn}</span></TooltipTrigger><TooltipContent>{block}</TooltipContent></Tooltip></TooltipProvider>
       ) : deleteBtn}
 
       {editing ? <AgencyDetailsDialog org={org as never} onClose={() => setEditing(false)} /> : null}

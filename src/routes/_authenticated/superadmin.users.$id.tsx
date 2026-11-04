@@ -62,7 +62,6 @@ function UserDetail({ user, users, organizations }: { user: PlatformUser; users:
             </div>
           </div>
         </div>
-        <UserAdminActions user={user} users={users} organizations={organizations} />
       </header>
       <div className="grid gap-6 xl:grid-cols-2">
         <DetailCard title="Profil">
@@ -91,6 +90,10 @@ function UserDetail({ user, users, organizations }: { user: PlatformUser; users:
           </dl>
         </DetailCard>
       </div>
+
+      <section data-danger-actions className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <UserAdminActions user={user} users={users} organizations={organizations} />
+      </section>
     </div>
   );
 }

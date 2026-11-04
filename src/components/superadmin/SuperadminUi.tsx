@@ -18,7 +18,7 @@ export function SummaryCard({ label, value, tone = "neutral" }: { label: string;
     <div className="relative overflow-hidden rounded-[14px] border border-border bg-card p-4">
       <span className={cn("absolute inset-y-0 left-0 w-1", toneBar[tone])} aria-hidden />
       <p className="text-2xl font-semibold tabular-nums text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-[13px] text-muted-foreground">{label}</p>
     </div>
   );
 }
@@ -50,7 +50,7 @@ export function DetailCard({ title, description, children, className }: { title:
 export function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid min-w-0 gap-0.5 py-2 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4">
-      <dt className="text-xs text-muted-foreground sm:text-sm">{label}</dt>
+      <dt className="text-[13px] text-muted-foreground">{label}</dt>
       <dd className="min-w-0 break-words text-sm text-foreground">{children ?? "—"}</dd>
     </div>
   );
