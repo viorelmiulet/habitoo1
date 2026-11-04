@@ -360,7 +360,7 @@ export function PropertyMediaManager({
                             <EyeOff className="size-3" />
                           </span>
                         ) : null}
-                        <div className="flex flex-wrap items-center justify-between gap-0.5 border-t border-border p-1 sm:justify-start sm:gap-1 sm:p-2 [&>button]:max-sm:size-11">
+                        <div className="grid grid-cols-4 items-center border-t border-border sm:flex sm:flex-wrap sm:gap-1 sm:p-2 [&>button]:max-sm:h-11 [&>button]:max-sm:w-full [&>button]:max-sm:min-w-0 [&>button]:max-sm:rounded-none [&>button]:max-sm:px-0">
                           <Button
                             size="sm"
                             variant="ghost"
