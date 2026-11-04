@@ -39,6 +39,7 @@ import { normalizeListPageSize, type ListPageSize } from "@/lib/list-page-size";
 import { ListPagination, PageSizeSelect } from "@/components/app/ListPagination";
 import { useListState } from "@/hooks/use-list-state";
 import { useCurrentUser } from "@/hooks/use-session";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { geographyKey } from "@/lib/private-listing-geography";
 
 const searchSchema = z.object({
@@ -307,6 +308,7 @@ function PrivateListingsPage() {
   const toggleDraftRoom = (r: number) =>
     patch({ camere: draft.camere.includes(r) ? draft.camere.filter((x) => x !== r) : [...draft.camere, r] });
 
+  const isMobile = useIsMobile();
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const extendedCount = [
     search.oras, selectedZones.length ? "x" : "", source, search.id, search.camere, search.q,
@@ -434,7 +436,7 @@ function PrivateListingsPage() {
           <Button
             type="button"
             variant="outline"
-            data-tour="map-filters-toggle"
+            data-tour={isMobile ? undefined : "map-filters-toggle"}
             aria-expanded={extendedOpen}
             onClick={() => setExtendedOpen((v) => !v)}
           >
@@ -444,13 +446,18 @@ function PrivateListingsPage() {
               <span className="text-xs text-muted-foreground">+{extendedCount} filtre</span>
             ) : null}
           </Button>
-          <Button data-tour="map-search" type="submit">
+          <Button data-tour={isMobile ? undefined : "map-search"} type="submit">
             <Search className="size-4" /> Căutare
           </Button>
           </div>
-          <Button type="button" variant="outline" data-tour="map-filters-toggle" className="h-11 w-full rounded-[10px] sm:hidden" onClick={() => setFiltersSheetOpen(true)}>
-            <SlidersHorizontal className="size-4" /> Filtre ({mobileFilterCount})
-          </Button>
+          <div className="grid grid-cols-2 gap-2 sm:hidden">
+            <Button type="button" variant="outline" data-tour={isMobile ? "map-filters-toggle" : undefined} className="h-11 w-full rounded-[10px]" onClick={() => setFiltersSheetOpen(true)}>
+              <SlidersHorizontal className="size-4" /> Filtre ({mobileFilterCount})
+            </Button>
+            <Button type="submit" data-tour={isMobile ? "map-search" : undefined} className="h-11 w-full rounded-[10px]">
+              <Search className="size-4" /> Căutare
+            </Button>
+          </div>
         </div>
 
         {extendedOpen ? (
@@ -520,7 +527,7 @@ function PrivateListingsPage() {
               <Button type="button" variant="outline" onClick={() => setExtendedOpen(false)}>
                 Închide filtre <ChevronUp className="size-4" />
               </Button>
-              <Button data-tour="map-search" type="submit">
+              <Button type="submit">
                 <Search className="size-4" /> Căutare
               </Button>
             </div>

@@ -56,7 +56,7 @@ export function InventoryEditor({
             </Button>
           );
                 return (
-                  <TableRow key={`${index}-${item.name}`} className="h-12 hover:bg-transparent">
+                  <TableRow key={index} className="h-12 hover:bg-transparent">
                     <TableCell className="min-w-[150px]">{name}</TableCell>
                     <TableCell className="w-[88px]">{qty}</TableCell>
                     <TableCell className="w-[150px]">{cond}</TableCell>
@@ -90,7 +90,7 @@ export function InventoryEditor({
               </Button>
             );
           return (
-            <div key={`${index}-${item.name}`} className="grid min-w-0 gap-2 rounded-[12px] border border-border bg-card p-3">
+            <div key={index} className="grid min-w-0 gap-2 rounded-[12px] border border-border bg-card p-3">
               <div className="flex items-start gap-2"><div className="min-w-0 flex-1">{name}</div>{del}</div>
               <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-2">{qty}{cond}</div>
               {loc}

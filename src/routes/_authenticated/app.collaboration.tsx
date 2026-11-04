@@ -790,7 +790,7 @@ function ThreadDialog({ id, onClose }: { id: string | null; onClose: () => void 
               )}
             </div>
 
-            <div className="space-y-2 bg-card max-sm:sticky max-sm:bottom-[7rem] max-sm:z-10 max-sm:pt-2">
+            <div className="space-y-2 bg-card max-sm:sticky max-sm:bottom-[calc(4rem+env(safe-area-inset-bottom))] max-sm:z-10 max-sm:pt-2">
               <Label htmlFor="collab-reply">Mesaj nou</Label>
               <Textarea
                 id="collab-reply"
