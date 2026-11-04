@@ -590,18 +590,18 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
   color: var(--color-navy-foreground);
   border-color: color-mix(in oklab, var(--color-navy-foreground) 15%, transparent);
 }
-  .mk-page-hero h1:not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) { color: var(--color-on-navy); font-size: 32px; line-height: 1.12; }
-  @media (min-width: 1024px) { .mk-page-hero h1:not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) { font-size: 44px; } }
-  .mk-page-hero :where(.text-navy, .text-foreground, h2, h3):not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel, .bg-gold, .bg-gold-tint) *, .bg-gold-tint) { color: var(--color-on-navy); }
-  .mk-page-hero :where(.text-muted-foreground, p):not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel, .bg-gold, .bg-gold-tint) *, .bg-gold-tint, .text-gold, .text-gold-dark, .text-primary) { color: var(--color-navy-foreground); }
-  .mk-page-hero .text-gold-dark:not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel, .bg-gold-tint) *, .bg-gold-tint) { color: var(--color-gold); }
-  .mk-page-hero .bg-primary\/8:not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) {
+  .mk-page-hero h1:not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) { color: var(--color-on-navy); font-size: 32px; line-height: 1.12; }
+  @media (min-width: 1024px) { .mk-page-hero h1:not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) { font-size: 44px; } }
+  .mk-page-hero :where(.text-navy, .text-foreground, h2, h3):not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel, .bg-gold, .bg-gold-tint) *, .bg-gold-tint) { color: var(--color-on-navy); }
+  .mk-page-hero :where(.text-muted-foreground, p):not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel, .bg-gold, .bg-gold-tint) *, .bg-gold-tint, .text-gold, .text-gold-dark, .text-primary) { color: var(--color-navy-foreground); }
+  .mk-page-hero .text-gold-dark:not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel, .bg-gold-tint) *, .bg-gold-tint) { color: var(--color-gold); }
+  .mk-page-hero .bg-primary\/8:not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) {
     border-color: color-mix(in oklab, var(--color-gold) 35%, transparent);
     background-color: color-mix(in oklab, var(--color-gold) 12%, transparent);
     color: var(--color-gold);
   }
   .mk-page-hero :where(a, button).bg-navy { background-color: var(--color-gold); color: var(--color-navy); }
-  .mk-page-hero :where(a, button).border-input:not(:where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) {
+  .mk-page-hero :where(a, button).border-input:not(.mk-page-hero :where(.bg-card, .bg-background, .bg-surface, .bg-popover, .panel) *) {
     border-color: color-mix(in oklab, var(--color-navy-foreground) 35%, transparent);
     background-color: transparent;
     color: var(--color-on-navy);
