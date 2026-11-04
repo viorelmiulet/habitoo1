@@ -23,6 +23,7 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { InventoryEditor } from "@/components/app/contracts/InventoryEditor";
 import { ContractBodyPreview } from "@/components/app/contracts/ContractBodyPreview";
 import { gdprNoticeAttached } from "@/lib/contracts/gdpr-notice";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -265,30 +266,41 @@ function ContractDetailPage() {
                     Salvează inventarul
                   </Button>
                 </div>
-              ) : <div className="overflow-x-auto">
-                <table className="w-full min-w-[620px] text-left text-xs">
-                  <thead className="text-muted-foreground">
-                    <tr className="border-b border-border">
-                      <th className="pb-2 font-medium">Denumire</th>
-                      <th className="pb-2 font-medium">Cant.</th>
-                      <th className="pb-2 font-medium">Stare</th>
-                      <th className="pb-2 font-medium">Locație</th>
-                      <th className="pb-2 font-medium">Observații</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inventoryItems.map((item, index) => (
-                      <tr key={`${item.name}-${index}`} className="border-b border-border/60 last:border-0">
-                        <td className="py-2 pr-3 font-medium">{item.name}</td>
-                        <td className="py-2 pr-3">{item.quantity}</td>
-                        <td className="py-2 pr-3">{item.condition}</td>
-                        <td className="py-2 pr-3">{item.location || "—"}</td>
-                        <td className="py-2">{item.notes || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>}
+              ) : <>
+                <div className="hidden overflow-hidden rounded-[14px] border border-border md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead>Denumire</TableHead>
+                        <TableHead>Cant.</TableHead>
+                        <TableHead>Stare</TableHead>
+                        <TableHead>Locație</TableHead>
+                        <TableHead>Observații</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {inventoryItems.map((item, index) => (
+                        <TableRow key={`${item.name}-${index}`} className="h-12">
+                          <TableCell className="font-semibold">{item.name}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.condition}</TableCell>
+                          <TableCell>{item.location || "—"}</TableCell>
+                          <TableCell>{item.notes || "—"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <ul className="space-y-2 md:hidden">
+                  {inventoryItems.map((item, index) => (
+                    <li key={`${item.name}-${index}`} className="min-h-12 min-w-0 rounded-[12px] border border-border bg-card p-3">
+                      <p className="text-sm font-semibold break-words">{item.name}</p>
+                      <p className="text-[13px] text-muted-foreground break-words">{item.quantity} · {item.condition}{item.location ? ` · ${item.location}` : ""}</p>
+                      {item.notes ? <p className="text-[13px] text-muted-foreground break-words">{item.notes}</p> : null}
+                    </li>
+                  ))}
+                </ul>
+              </>}
             </SectionCard>
           ) : null}
 
