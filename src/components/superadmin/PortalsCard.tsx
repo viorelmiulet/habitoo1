@@ -44,7 +44,7 @@ import {
   testPortalConnection,
   type PortalHubItem,
 } from "@/lib/portals.functions";
-import { portalGridState, type PortalGridTone } from "@/lib/portals/grid-state";
+import { portalGridState } from "@/lib/portals/grid-state";
 import {
   revokeStoriaAuthorization,
   startStoriaAuthorization,
@@ -100,13 +100,6 @@ function ImobiliareSubscriptionBadge({ organizationId }: { organizationId: strin
     </StatusBadge>
   );
 }
-
-/** Punctul colorat din linia de stare a cardului din grilă. */
-const GRID_DOT_CLASS: Record<PortalGridTone, string> = {
-  success: "bg-success",
-  danger: "bg-destructive",
-  muted: "bg-muted-foreground/50",
-};
 
 export function PortalsCard({ organizationId, onSelectedChange }: { organizationId: string; onSelectedChange?: (portalId: string) => void }) {
   const hubKey = ["portal-hub", organizationId] as const;
