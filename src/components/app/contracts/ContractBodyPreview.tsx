@@ -1,7 +1,7 @@
 import { contractBodyBlocks } from "@/lib/contracts/viewing-table";
 
 export function ContractBodyPreview({ body }: { body: string }) {
-  return <div data-tour="contract-body" className="max-h-[620px] overflow-auto text-sm leading-relaxed">
+  return <div data-tour="contract-body" className="max-h-[620px] overflow-auto text-[15px] leading-[1.6]">
     {contractBodyBlocks(body).map((block, index) => block.type === "text" ?
       <pre key={index} className="whitespace-pre-wrap">{block.text}</pre> :
       <div key={index} className="my-4 overflow-x-auto">

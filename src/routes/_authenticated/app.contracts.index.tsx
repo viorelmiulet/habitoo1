@@ -83,19 +83,19 @@ function ContractsPage() {
         }
       />
 
-      <div data-tour="contracts-filters" className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[220px] flex-1">
+      <div data-tour="contracts-filters" className="grid grid-cols-1 gap-2 rounded-[14px] border border-border bg-card p-4 sm:flex sm:flex-wrap sm:items-center sm:gap-3 sm:p-3">
+        <div className="relative min-w-0 flex-1 sm:min-w-[220px]">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             data-tour="contracts-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Caută după titlu…"
-            className="pl-9"
+            className="h-10 rounded-[10px] pl-9"
           />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger data-tour="contracts-status" className="w-[200px]">
+          <SelectTrigger data-tour="contracts-status" className="h-10 w-full rounded-[10px] sm:w-[200px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -108,13 +108,13 @@ function ContractsPage() {
           </SelectContent>
         </Select>
         <Select value={kind} onValueChange={(value) => persisted.set("kind", value)}>
-          <SelectTrigger aria-label="Tip contract" className="w-[240px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label="Tip contract" className="h-10 w-full rounded-[10px] sm:w-[240px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toate tipurile</SelectItem>
             {CONTRACT_KINDS.map((value) => <SelectItem key={value} value={value}>{contractKindLabels[value]}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button variant="ghost" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
+        <Button variant="link" className="h-11 justify-start px-1 text-sm font-semibold text-gold-dark sm:h-10" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
       </div>
 
       <SectionCard title="Documente" flush>
@@ -137,21 +137,22 @@ function ContractsPage() {
                 <Link
                   to="/app/contracts/$id"
                   params={{ id: c.id }}
-                  className="flex flex-wrap items-center gap-3 px-5 py-3.5 transition-colors hover:bg-muted/50"
+                  className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors hover:bg-muted sm:flex-nowrap sm:px-5"
                 >
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <FileSignature className="size-4" />
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{c.number ? `${c.number} · ` : ""}{c.docNumber != null ? `${printedContractNumber(c.docSeries, c.docNumber)} · ` : ""}{c.title}</p>
-                    <p className="truncate text-xs text-muted-foreground">
+                  <div className="min-w-0 flex-1 basis-[calc(100%-3rem)] sm:basis-auto">
+                    <p className="truncate text-sm font-semibold">{c.title}</p>
+                    {c.number || c.docNumber != null ? <p className="truncate text-[13px] text-muted-foreground">{[c.number, c.docNumber != null ? printedContractNumber(c.docSeries, c.docNumber) : null].filter(Boolean).join(" · ")}</p> : null}
+                    <p className="truncate text-[13px] text-muted-foreground">
                       {contractKindLabels[c.kind] ?? c.kind}
                       {c.clientName ? ` · ${c.clientName}` : ""}
                       {c.propertyTitle ? ` · ${c.propertyTitle}` : ""} ·{" "}
                       {formatDateTime(c.createdAt)}
                     </p>
                   </div>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[13px] text-muted-foreground max-sm:ml-12">
                     {c.partiesSigned}/{c.partiesTotal} semnături
                   </span>
                   <StatusBadge dot tone={contractStatusTone[c.status] ?? "neutral"}>
