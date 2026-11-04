@@ -237,7 +237,7 @@ function CrmAgentPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
         <Card>
-          <CardContent className="space-y-4 py-6">
+          <CardContent className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
             <div data-tour="ai-crm-examples" className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((suggestion) => (
                 <Button
@@ -265,8 +265,8 @@ function CrmAgentPage() {
                     key={`${entry.role}-${index}`}
                     className={
                       entry.role === "user"
-                        ? "rounded-md bg-muted p-3 text-sm"
-                        : "rounded-md border p-3 text-sm"
+                        ? "ml-auto max-w-[85%] rounded-[14px] bg-navy p-3 text-[15px] text-on-navy [&_.text-muted-foreground]:text-on-navy/75"
+                        : "max-w-[92%] rounded-[14px] bg-muted p-3 text-[15px]"
                     }
                   >
                     <p className="mb-1 text-xs uppercase text-muted-foreground">
@@ -300,11 +300,11 @@ function CrmAgentPage() {
               ) : null}
 
               {error ? (
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3 rounded-[12px] bg-danger-tint p-3">
                   <p className="text-sm text-destructive">{error}</p>
                   {lastQuestion ? (
                     <Button
-                      size="sm"
+                      className="h-10 rounded-[10px]"
                       variant="outline"
                       disabled={busy}
                       onClick={() => {
@@ -319,7 +319,7 @@ function CrmAgentPage() {
               ) : null}
             </div>
 
-            <div className="space-y-2">
+            <div className="sticky bottom-0 z-10 -mx-4 space-y-2 border-t border-border bg-card px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:p-0">
               <Textarea data-tour="ai-crm-input"
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
@@ -333,7 +333,7 @@ function CrmAgentPage() {
                 }}
               />
               <div className="flex justify-end">
-                <Button data-tour="ai-crm-submit" onClick={() => submit(input)} disabled={busy || input.trim() === ""}>
+                <Button data-tour="ai-crm-submit" className="h-11 w-full sm:h-10 sm:w-auto" onClick={() => submit(input)} disabled={busy || input.trim() === ""}>
                   {askMutation.isPending ? "Se trimite…" : "Trimite"}
                 </Button>
               </div>
@@ -341,7 +341,7 @@ function CrmAgentPage() {
           </CardContent>
         </Card>
 
-        <Card data-tour="ai-crm-history" className="h-fit">
+        <Card data-tour="ai-crm-history" className="h-fit rounded-[14px]">
           <CardHeader>
             <CardTitle className="text-base">Istoric cereri</CardTitle>
           </CardHeader>
@@ -351,7 +351,7 @@ function CrmAgentPage() {
             ) : (
               (runs.data ?? []).map((run) => (
                 <div key={run.id} className="space-y-1 border-b pb-2 last:border-0">
-                  <p className="truncate font-medium">{run.question}</p>
+                  <p className="truncate text-sm font-semibold">{run.question}</p>
                   <p className="text-xs text-muted-foreground">
                     {run.status === "suspended"
                       ? "Așteaptă aprobare"
@@ -364,7 +364,7 @@ function CrmAgentPage() {
                   </p>
                   {run.status === "suspended" ? (
                     <Button
-                      size="sm"
+                      className="h-10 rounded-[10px]"
                       variant="outline"
                       disabled={busy}
                       onClick={() => setPending(run)}

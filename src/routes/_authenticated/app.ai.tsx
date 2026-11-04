@@ -138,7 +138,7 @@ function AiPage() {
         </Card>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
-          <Card data-tour="assistant-conversations" className="h-fit">
+          <Card data-tour="assistant-conversations" className="h-fit rounded-[14px]">
             <CardHeader>
               <CardTitle className="text-base">Conversații</CardTitle>
             </CardHeader>
@@ -174,7 +174,7 @@ function AiPage() {
           </Card>
 
           <Card>
-            <CardContent className="space-y-4 py-6">
+            <CardContent className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
               <div data-tour="assistant-response" className="space-y-3">
                 {shown.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
@@ -186,8 +186,8 @@ function AiPage() {
                       key={`${entry.role}-${index}`}
                       className={
                         entry.role === "user"
-                          ? "rounded-md bg-muted p-3 text-sm"
-                          : "rounded-md border p-3 text-sm"
+                          ? "ml-auto max-w-[85%] rounded-[14px] bg-navy p-3 text-[15px] text-on-navy [&_.text-muted-foreground]:text-on-navy/75"
+                          : "max-w-[92%] rounded-[14px] bg-muted p-3 text-[15px]"
                       }
                     >
                       <p className="mb-1 text-xs uppercase text-muted-foreground">
@@ -217,10 +217,10 @@ function AiPage() {
                   <p className="text-sm text-muted-foreground">Habitoo AI analizează datele…</p>
                 ) : null}
                 {error ? (
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3 rounded-[12px] bg-danger-tint p-3">
                     <p className="text-sm text-destructive">{error}</p>
                     {lastMessage ? (
-                      <Button size="sm" variant="outline" onClick={retry} disabled={busy}>
+                      <Button variant="outline" className="h-10 rounded-[10px]" onClick={retry} disabled={busy}>
                         Încearcă din nou
                       </Button>
                     ) : null}
@@ -228,7 +228,7 @@ function AiPage() {
                 ) : null}
               </div>
 
-              <div className="space-y-2">
+              <div className="sticky bottom-0 z-10 -mx-4 space-y-2 border-t border-border bg-card px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:p-0">
                 <Textarea data-tour="assistant-input"
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
@@ -243,7 +243,7 @@ function AiPage() {
                   }}
                 />
                 <div className="flex justify-end">
-                  <Button data-tour="assistant-submit" onClick={submit} disabled={busy || input.trim() === ""}>
+                  <Button data-tour="assistant-submit" className="h-11 w-full sm:h-10 sm:w-auto" onClick={submit} disabled={busy || input.trim() === ""}>
                     {busy ? "Se trimite…" : "Trimite"}
                   </Button>
                 </div>

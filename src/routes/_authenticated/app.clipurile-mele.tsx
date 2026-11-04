@@ -37,27 +37,27 @@ function ClipsPage() {
   return <div data-tour="clips-page" className="space-y-6">
     <PageHeader title="Clipurile mele" />
     <p className="text-sm text-muted-foreground">{data.total} {data.total === 1 ? "clip" : "clipuri"}</p>
-    {data.items.length === 0 ? <EmptyState icon={Film} title="Niciun clip înregistrat" /> : <ul className="divide-y divide-border">
-      {data.items.map((clip) => <li data-tour="clip-item" key={clip.id} className="grid min-w-0 gap-3 py-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    {data.items.length === 0 ? <EmptyState icon={Film} title="Niciun clip înregistrat" /> : <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {data.items.map((clip) => <li data-tour="clip-item" key={clip.id} className="panel grid min-w-0 content-start gap-3 rounded-[14px] p-4 sm:p-5">
         <div className="min-w-0 space-y-1">
-          <p className="font-medium break-words">{clip.property_reference ? `${clip.property_reference} · ` : ""}{clip.property_title}</p>
-          <p className="text-xs text-muted-foreground break-all">{clip.file_name}</p>
-          <p className="text-xs text-muted-foreground">{formatDateTime(clip.created_at)} · {VIDEO_FORMATS[clip.format as keyof typeof VIDEO_FORMATS].label} · {formatDuration(clip.duration_sec)}</p>
-          {clip.property_id ? <Button asChild variant="link" className="h-auto p-0"><Link to="/app/properties/$id" params={{ id: clip.property_id }}>Proprietate</Link></Button> : null}
+          <p className="text-[15px] font-bold break-words">{clip.property_reference ? `${clip.property_reference} · ` : ""}{clip.property_title}</p>
+          <p className="text-[13px] text-muted-foreground break-all">{clip.file_name}</p>
+          <p className="text-[13px] text-muted-foreground">{formatDateTime(clip.created_at)} · {VIDEO_FORMATS[clip.format as keyof typeof VIDEO_FORMATS].label} · {formatDuration(clip.duration_sec)}</p>
+          {clip.property_id ? <Button asChild variant="link" className="h-auto p-0 text-sm font-semibold text-gold-dark"><Link to="/app/properties/$id" params={{ id: clip.property_id }}>Proprietate</Link></Button> : null}
         </div>
-        <div data-tour="clip-music" className="flex min-w-0 items-start gap-2">
-          <Music2 className="mt-1 size-4 shrink-0 text-primary" aria-hidden />
-          <div className="min-w-0 space-y-1"><p className="font-medium break-words">{clipMusicLabel(clip)}</p>
+        <div data-tour="clip-music" className="flex min-w-0 items-start gap-2 border-t border-border pt-3">
+          <Music2 className="mt-1 size-4 shrink-0 text-gold-dark" aria-hidden />
+          <div className="min-w-0 space-y-1"><p className="text-sm font-semibold break-words">{clipMusicLabel(clip)}</p>
             {clip.music_style || clip.music_artist ? <p className="text-sm text-muted-foreground">{[clip.music_style, clip.music_artist].filter(Boolean).join(" · ")}</p> : null}
-            {clip.music_license ? <p className="text-xs text-muted-foreground break-words">{clip.music_license}</p> : null}
+            {clip.music_license ? <p className="text-[13px] text-muted-foreground break-words">{clip.music_license}</p> : null}
           </div>
         </div>
       </li>)}
     </ul>}
     <nav aria-label="Paginare clipuri" className="flex items-center justify-between gap-3">
-      <Button asChild variant="outline" disabled={page <= 1}><Link to="/app/clipurile-mele" search={{ page: Math.max(1, page - 1) }} disabled={page <= 1}><ChevronLeft className="size-4" />Înapoi</Link></Button>
+      <Button asChild variant="outline" className="h-11 rounded-[10px] sm:h-10" disabled={page <= 1}><Link to="/app/clipurile-mele" search={{ page: Math.max(1, page - 1) }} disabled={page <= 1}><ChevronLeft className="size-4" />Înapoi</Link></Button>
       <span className="text-sm tabular-nums">{page} / {pages}</span>
-      <Button asChild variant="outline" disabled={page >= pages}><Link to="/app/clipurile-mele" search={{ page: page + 1 }} disabled={page >= pages}>Înainte<ChevronRight className="size-4" /></Link></Button>
+      <Button asChild variant="outline" className="h-11 rounded-[10px] sm:h-10" disabled={page >= pages}><Link to="/app/clipurile-mele" search={{ page: page + 1 }} disabled={page >= pages}>Înainte<ChevronRight className="size-4" /></Link></Button>
     </nav>
   </div>;
 }
