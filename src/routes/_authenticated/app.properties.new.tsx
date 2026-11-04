@@ -16,7 +16,8 @@ import {
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
-import { FormSection } from "@/components/app/FormSection";
+import { FORM_ACTIONS_BAR, FormSection } from "@/components/app/FormSection";
+import { formInvalidHintHandlers } from "@/lib/form-invalid-hints";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
