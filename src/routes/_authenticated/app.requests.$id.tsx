@@ -352,7 +352,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
         }
       />
 
-      <div className="panel space-y-4 p-4 sm:p-5">
+      <div className="space-y-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-3">
           <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
             <Target className="size-5" aria-hidden />
@@ -435,7 +435,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
       </div>
 
       {contact ? (
-        <div className="panel flex flex-wrap items-center gap-4 p-4 sm:p-5">
+        <div className="flex min-w-0 flex-wrap items-center gap-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
           <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
             {(contact.first_name?.[0] ?? "?").toUpperCase()}
             {(contact.last_name?.[0] ?? "").toUpperCase()}
@@ -482,7 +482,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
           </div>
         </div>
       ) : (
-        <div className="panel flex flex-wrap items-center gap-4 p-4 sm:p-5">
+        <div className="flex min-w-0 flex-wrap items-center gap-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
           <span className="grid size-11 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
             <User className="size-5" aria-hidden />
           </span>
@@ -491,7 +491,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
       )}
 
       <Tabs defaultValue="overview">
-        <TabsList data-tour="request-tabs" className="flex-wrap">
+        <TabsList data-tour="request-tabs">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger data-tour="request-tab-matching" value="matching">Proprietăți compatibile ({matches.length})</TabsTrigger>
           <TabsTrigger data-tour="request-tab-leads" value="leads">Lead-uri ({leads.length})</TabsTrigger>
@@ -502,7 +502,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
         <TabsContent value="overview" className="space-y-6">
           {editing ? (
             <form
-              className="panel space-y-4 p-5"
+              className="space-y-4 rounded-[14px] border border-border bg-card p-4 sm:p-5"
               onSubmit={(e) => {
                 e.preventDefault();
                 save.mutate();
@@ -652,7 +652,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                   onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))}
                 />
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end max-sm:[&>*]:h-11 max-sm:[&>*]:w-full">
                 <Button type="button" variant="outline" onClick={() => setEditing(false)}>
                   Anulează
                 </Button>
@@ -662,7 +662,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
               </div>
             </form>
           ) : (
-            <div className="panel space-y-6 p-5">
+            <div className="space-y-6 rounded-[14px] border border-border bg-card p-4 sm:p-5">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   {
@@ -726,7 +726,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                 </div>
               ) : null}
               {request.notes ? (
-                <div className="rounded-xl border border-border bg-muted/40 p-4 text-sm">
+                <div className="rounded-[12px] border border-border bg-muted p-4 text-sm">
                   <p className="font-medium">Note</p>
                   <p className="mt-1 whitespace-pre-line text-muted-foreground">{request.notes}</p>
                 </div>
@@ -736,7 +736,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
         </TabsContent>
 
         <TabsContent data-tour="request-matches" value="matching">
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             <div className="border-b border-border px-5 py-5 sm:px-6">
               <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
                 Cerere → Proprietăți potrivite
@@ -768,7 +768,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                 {matches.map(({ property, match }) => (
                   <li
                     key={property.id}
-                    className="flex items-start gap-4 px-5 py-5 text-sm transition-colors hover:bg-surface sm:px-6"
+                    className="flex min-h-[52px] min-w-0 items-start gap-3 px-4 py-4 text-sm transition-colors hover:bg-muted sm:gap-4 sm:px-6"
                   >
                     <PropertyThumb
                       propertyId={property.id}
@@ -777,7 +777,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                       className="size-20 rounded-2xl sm:size-24"
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-2 sm:flex-nowrap">
                         <div className="min-w-0">
                           <Link
                             to="/app/properties/$id"
@@ -863,7 +863,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
         </TabsContent>
 
         <TabsContent value="leads">
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             {leads.length === 0 ? (
               <EmptyState title="Niciun lead legat de această cerere" />
             ) : (
@@ -879,7 +879,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                   return (
                     <li
                       key={l.id}
-                      className="flex items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface"
+                      className="flex min-h-[52px] min-w-0 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-sm transition-colors hover:bg-muted sm:flex-nowrap sm:px-5"
                     >
                       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                         {initials || "?"}
@@ -900,7 +900,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
         </TabsContent>
 
         <TabsContent value="activities">
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             {activities.length === 0 ? (
               <EmptyState title="Nicio activitate înregistrată" />
             ) : (
@@ -908,7 +908,7 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                 {activities.map((a) => (
                   <li
                     key={a.id}
-                    className="flex items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface"
+                    className="flex min-h-[52px] min-w-0 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-sm transition-colors hover:bg-muted sm:flex-nowrap sm:px-5"
                   >
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                       <CalendarClock className="size-4" aria-hidden />
