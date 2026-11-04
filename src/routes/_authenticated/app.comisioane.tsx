@@ -245,7 +245,7 @@ function CommissionsPage() {
         actions={<Button data-tour="commission-new-open" onClick={openNew}><Plus className="size-4" /> Adaugă comision</Button>}
       />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "lista" | "rapoarte")}>
         <TabsList>
           {([["lista", "Comisioane"], ["rapoarte", "Rapoarte"]] as const).map(([key, label]) => (
             <TabsTrigger key={key} value={key} data-tour={`commissions-${key === "lista" ? "list" : "reports"}-tab`}>
@@ -426,7 +426,7 @@ function FormSelect({ label, value, onChange, options }: { label: string; value:
     <div>
       <Label>{label}</Label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectTrigger className="h-10 rounded-[10px]"><SelectValue /></SelectTrigger>
         <SelectContent>
           {options.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
         </SelectContent>
