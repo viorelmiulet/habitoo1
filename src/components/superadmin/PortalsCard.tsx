@@ -437,13 +437,13 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                   </div>
                   <h3 className="mt-3 text-[17px] leading-6 font-bold break-words">{name}</h3>
                   <div data-portal-statuses className="mt-1 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground">
-                      <span
-                        aria-hidden
-                        className={cn("size-2 shrink-0 rounded-full", GRID_DOT_CLASS[state.tone])}
-                      />
+                    <StatusBadge
+                      className="h-7 text-[13px]"
+                      tone={state.tone === "muted" ? "neutral" : state.tone}
+                      dot
+                    >
                       {state.label}
-                    </span>
+                    </StatusBadge>
                   </div>
                 </div>
               );
