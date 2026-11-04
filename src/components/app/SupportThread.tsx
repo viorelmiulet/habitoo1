@@ -106,14 +106,14 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
   const t = ticket.data;
 
   return (
-    <div className="space-y-4 rounded-xl border border-border bg-surface p-4">
+    <div className="min-w-0 space-y-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
             {SUPPORT_CATEGORY_LABELS[t.category] ?? t.category}
             {staff && t.organizationName ? ` · ${t.organizationName}` : ""}
           </p>
-          <h3 className="truncate text-base font-semibold">{t.subject}</h3>
+          <h3 className="truncate text-base font-bold">{t.subject}</h3>
           <p className="text-xs text-muted-foreground">
             Deschis de {t.createdByName ?? "utilizator"} · {formatDateTime(t.createdAt)}
             {staff && t.contextPath ? ` · pagina: ${t.contextPath}` : ""}
@@ -123,7 +123,7 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
           <SupportStatusBadge status={t.status} />
           {staff ? (
             <Select value={t.status} onValueChange={(v) => status.mutate(v as SupportStatus)}>
-              <SelectTrigger className="h-8 w-40" aria-label="Schimbă statusul">
+              <SelectTrigger className="h-11 w-40 sm:h-9" aria-label="Schimbă statusul">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -160,11 +160,11 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
               </p>
               <p
                 className={cn(
-                  "mt-1 max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap",
+                  "mt-1 max-w-[85%] break-words rounded-[14px] px-3 py-2 text-sm whitespace-pre-wrap",
                   m.isInternalNote
                     ? "border border-dashed border-warning/50 bg-warning/10 text-warning-foreground"
                     : mine
-                      ? "bg-primary/8"
+                      ? "bg-navy text-navy-foreground"
                       : "bg-muted",
                 )}
               >
@@ -176,7 +176,7 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
       </ol>
 
       {t.canReply || staff ? (
-        <div className="space-y-2">
+        <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-4 space-y-2 border-t border-border bg-card px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:p-0 lg:bottom-0">
           <Label htmlFor={`reply-${ticketId}`}>Răspuns</Label>
           <Textarea
             id={`reply-${ticketId}`}
@@ -196,7 +196,7 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
             ) : (
               <span />
             )}
-            <Button onClick={() => send.mutate()} disabled={send.isPending}>
+            <Button className="h-11 w-full sm:h-10 sm:w-auto" onClick={() => send.mutate()} disabled={send.isPending}>
               {send.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
