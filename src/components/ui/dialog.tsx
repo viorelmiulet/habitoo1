@@ -29,6 +29,10 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+// Padding classes that change the mobile padding (unprefixed or max-sm:) make the footer non-full-bleed.
+const hasMobilePaddingOverride = (className?: string) =>
+  /(^|\s)(max-sm:)?!?p[xytblrse]?-/.test(className ?? "");
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
@@ -37,6 +41,7 @@ const DialogContent = React.forwardRef<
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
+      data-dialog-pad={hasMobilePaddingOverride(className) ? "custom" : "default"}
       onInteractOutside={(event) => {
         if (event.target instanceof Element && event.target.closest("[data-guide]")) {
           event.preventDefault();
@@ -68,7 +73,7 @@ DialogHeader.displayName = "DialogHeader";
 const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2 max-sm:sticky max-sm:-bottom-6 max-sm:z-10 max-sm:-mx-6 max-sm:-mb-6 max-sm:border-t max-sm:border-border max-sm:bg-card max-sm:px-6 max-sm:pb-6 max-sm:pt-3 max-sm:[&>*]:w-full", className)}
+      "dialog-footer flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2 max-sm:[&>*]:w-full", className)}
     {...props}
   />
 );
