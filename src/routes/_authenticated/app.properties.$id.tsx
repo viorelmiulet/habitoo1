@@ -955,12 +955,12 @@ function PropertyDetailContent() {
         </div>
 
         <TabsContent value="agent" className="space-y-6">
-          <section className="panel px-5 py-[18px]">
+          <section className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-sans text-base font-bold">Agent</h2>
               {user?.isAdmin && property ? <Button size="sm" variant="outline" onClick={() => setReassignOpen(true)}>Schimbă agentul</Button> : null}
             </div>
-            {responsibleAgent ? <div className="mt-4 flex items-center gap-3"><UserAvatar name={responsibleAgent.full_name} path={responsibleAgent.avatar_url} className="size-11" /><div className="min-w-0"><p className="truncate text-sm font-bold">{responsibleAgent.full_name}</p><p className="truncate text-xs text-muted-foreground">{[responsibleAgent.job_title, responsibleAgent.phone].filter(Boolean).join(" · ") || "Agent"}</p></div></div> : <p className="mt-3 text-xs text-muted-foreground">Niciun agent asignat.</p>}
+            {responsibleAgent ? <div className="mt-4 flex items-center gap-3"><UserAvatar name={responsibleAgent.full_name} path={responsibleAgent.avatar_url} className="size-11 shrink-0" /><div className="min-w-0"><p className="truncate text-sm font-semibold">{responsibleAgent.full_name}</p><p className="truncate text-[13px] text-muted-foreground">{[responsibleAgent.job_title, responsibleAgent.phone].filter(Boolean).join(" · ") || "Agent"}</p></div></div> : <p className="mt-3 text-xs text-muted-foreground">Niciun agent asignat.</p>}
           </section>
           {user?.isAdmin && property ? (
             <ReassignPropertiesDialog
@@ -992,7 +992,7 @@ function PropertyDetailContent() {
           }}>
               <FormSection title="Localizare">
                 <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,552px)_minmax(0,1fr)]">
-                <div className="min-w-0 space-y-3 [&>div]:grid [&>div]:min-w-0 [&>div]:gap-x-3 [&>div]:gap-y-1 [&>div]:space-y-0 sm:[&>div]:grid-cols-[120px_minmax(0,420px)] [&_label]:self-center [&_label]:text-left [&_input]:h-9 [&_select]:h-9 [&>div>p]:min-w-0 sm:[&>div>p]:col-start-2 [&>div>div]:min-w-0">
+                <div className="min-w-0 space-y-3 [&>div]:grid [&>div]:min-w-0 [&>div]:gap-x-3 [&>div]:gap-y-1 [&>div]:space-y-0 sm:[&>div]:grid-cols-[120px_minmax(0,420px)] [&_label]:self-center [&_label]:text-left [&_input]:h-10 [&_select]:h-10 [&>div>p]:min-w-0 sm:[&>div>p]:col-start-2 [&>div>div]:min-w-0">
                   <LocationPicker
                     showDistrictHint={false}
                     idPrefix="edit"
@@ -1052,9 +1052,9 @@ function PropertyDetailContent() {
                 </div>
               </FormSection>
 
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Anulează</Button>
-              <Button type="submit" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setEditing(false)}>Anulează</Button>
+              <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
           </form> : <FormSection title="Localizare">
             <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,552px)_minmax(0,1fr)]">
@@ -1070,7 +1070,7 @@ function PropertyDetailContent() {
             </dl>
             <div className="min-w-0 space-y-3">
             <p className="text-sm font-medium">Poziția pe hartă</p>
-            {mapCoords ? <PropertyMapClient lat={mapCoords.lat} lng={mapCoords.lng} precise={mapCoords.precise} seed={property.id} className="h-[420px] w-full overflow-hidden rounded-[4px] border border-border" /> : <div className="flex h-[420px] items-center justify-center rounded-[4px] border border-border bg-muted text-sm text-muted-foreground">Nu există coordonate GPS pentru această proprietate.</div>}
+            {mapCoords ? <PropertyMapClient lat={mapCoords.lat} lng={mapCoords.lng} precise={mapCoords.precise} seed={property.id} className="h-[300px] w-full overflow-hidden rounded-[12px] border border-border sm:h-[420px]" /> : <div className="flex h-[300px] items-center justify-center rounded-[12px] border border-border bg-muted p-4 text-center sm:h-[420px] text-sm text-muted-foreground">Nu există coordonate GPS pentru această proprietate.</div>}
             {mapCoords && !mapCoords.precise ? <p className="text-xs text-muted-foreground">Hartă estimativă — zonă de aproximativ {APPROX_RADIUS_M} m.</p> : null}
             </div>
             </div>
@@ -1094,9 +1094,9 @@ function PropertyDetailContent() {
                 onDescription={(v) => setDraft((d) => ({ ...d, description: v }))}
               />
 
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Anulează</Button>
-              <Button type="submit" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setEditing(false)}>Anulează</Button>
+              <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
           </form> : <FormSection title="Descriere și Titlu">
             <h2 className="font-sans text-lg font-bold">{property.title || "—"}</h2>
@@ -1122,12 +1122,12 @@ function PropertyDetailContent() {
               </FormSection>
               </div>
 
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Anulează</Button>
-              <Button type="submit" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setEditing(false)}>Anulează</Button>
+              <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
           </form> : <FormSection title="Tranzacție și preț">
-            <dl className="space-y-1.5">
+            <dl className="space-y-3 sm:space-y-1.5">
               {[
                 ["Preț vânzare", salePrice ? formatMoney(salePrice, property.sale_currency ?? property.currency ?? "EUR") : ""],
                 ["Preț / m²", pricePerSqm ? `${formatNumber(pricePerSqm)} €/m²` : ""],
@@ -1135,7 +1135,7 @@ function PropertyDetailContent() {
                 ["Negociabil", property.negotiable ? "Da" : "Nu"],
                 ["Comision", property.commission ?? ""],
                 ["Colaborare", property.collaboration ? (property.collab_commission_percent ? `Da · ${property.collab_commission_percent}%` : "Da") : "Nu"],
-              ].map(([label, value]) => <div key={label} className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3 text-[15px]"><dt className="text-right">{label}</dt><dd className="min-w-0 break-words">{value || "—"}</dd></div>)}
+              ].map(([label, value]) => <div key={label} className="grid grid-cols-1 gap-x-3 gap-y-0.5 text-[15px] sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"><dt className="text-[13px] text-muted-foreground sm:text-right sm:text-[15px] sm:text-foreground">{label}</dt><dd className="min-w-0 break-words">{value || "—"}</dd></div>)}
             </dl>
           </FormSection>}
         </TabsContent>
@@ -1314,7 +1314,7 @@ function PropertyDetailContent() {
 
 
         <TabsContent value="matching">
-          <div className="panel overflow-hidden">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             {matches.length === 0 ? (
               <EmptyState
                 icon={Sparkles}
@@ -1326,18 +1326,18 @@ function PropertyDetailContent() {
                 {matches.map(({ request, match }) => (
                   <li
                     key={request.id}
-                    className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm"
+                    className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 text-sm sm:flex-nowrap sm:px-5"
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{request.title}</p>
-                      <p className="truncate text-xs text-muted-foreground">
+                    <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
+                      <p className="truncate font-semibold">{request.title}</p>
+                      <p className="truncate text-[13px] text-muted-foreground">
                         {match.reasons.join(" · ") || "Potrivire parțială"}
                       </p>
                     </div>
                     <StatusBadge tone={matchTone(match.score)}>
                       {match.score}% · {matchLabel(match.score)}
                     </StatusBadge>
-                    <Button variant="outline" size="sm" asChild>
+                    <Button variant="outline" size="sm" className="ml-auto h-10 rounded-[10px]" asChild>
                       <Link to="/app/requests">Vezi cererea</Link>
                     </Button>
                   </li>
@@ -1345,24 +1345,24 @@ function PropertyDetailContent() {
               </ul>
             )}
           </div>
-          <div className="panel mt-4 overflow-hidden">
-            <p className="border-b border-border px-5 py-3 text-sm font-semibold">Lead-uri compatibile ({leadMatches.length})</p>
+          <div className="mt-4 overflow-hidden rounded-[14px] border border-border bg-card">
+            <p className="border-b border-border px-4 py-3 text-base font-bold sm:px-5">Lead-uri compatibile ({leadMatches.length})</p>
             {leadMatches.length === 0 ? (
-              <p className="px-5 py-4 text-sm text-muted-foreground">Niciun lead de pe alte proprietăți nu se potrivește.</p>
+              <p className="px-4 py-4 text-[13px] text-muted-foreground sm:px-5">Niciun lead de pe alte proprietăți nu se potrivește.</p>
             ) : (
               <ul className="divide-y divide-border">
                 {leadMatches.map(({ key, lead, source, match }) => (
-                  <li key={key} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">Lead: {lead.name} · din {source.reference}</p>
-                      <p className="truncate text-xs text-muted-foreground">
+                  <li key={key} className="flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 text-sm sm:flex-nowrap sm:px-5">
+                    <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
+                      <p className="truncate font-semibold">Lead: {lead.name} · din {source.reference}</p>
+                      <p className="truncate text-[13px] text-muted-foreground">
                         {match.reasons.join(" · ") || "Potrivire parțială"}
                       </p>
                     </div>
                     <StatusBadge tone={matchTone(match.score)}>
                       {match.score}% · {matchLabel(match.score)}
                     </StatusBadge>
-                    <Button variant="outline" size="sm" asChild>
+                    <Button variant="outline" size="sm" className="ml-auto h-10 rounded-[10px]" asChild>
                       <Link to="/app/leads" search={{ lead: lead.id } as never}>Deschide lead</Link>
                     </Button>
                   </li>
@@ -1424,16 +1424,16 @@ function PropertyDetailContent() {
         </TabsContent>
 
         <TabsContent value="history">
-          <div className="panel overflow-hidden">
-            {data?.activities.filter(a => ["Ofertă trimisă", "Ofertă trimisă colaboratorului"].includes(a.title)).map(a => <div key={a.id} className="border-b border-border px-5 py-3 text-sm"><p className="font-medium">{a.title}</p><p className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)} · {a.description}</p></div>)}
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
+            {data?.activities.filter(a => ["Ofertă trimisă", "Ofertă trimisă colaboratorului"].includes(a.title)).map(a => <div key={a.id} className="min-h-[52px] border-b border-border px-4 py-2.5 text-sm sm:px-5"><p className="font-semibold">{a.title}</p><p className="break-words text-[13px] text-muted-foreground">{formatDateTime(a.starts_at)} · {a.description}</p></div>)}
             {(data?.audit.length ?? 0) === 0 && !data?.activities.some(a => ["Ofertă trimisă", "Ofertă trimisă colaboratorului"].includes(a.title)) ? (
               <EmptyState title="Niciun eveniment în istoric" />
             ) : (
               <ul className="divide-y divide-border">
                 {data?.audit.filter(a => !["Ofertă trimisă", "Ofertă trimisă colaboratorului"].includes(a.action) || !data.activities.some(activity => activity.title === a.action)).map((a) => (
-                  <li key={a.id} className="px-5 py-3 text-sm">
-                    <p className="font-medium">{a.action}</p>
-                    <p className="text-xs text-muted-foreground">{formatDateTime(a.created_at)}</p>
+                  <li key={a.id} className="min-h-[52px] px-4 py-2.5 text-sm sm:px-5">
+                    <p className="font-semibold">{a.action}</p>
+                    <p className="text-[13px] text-muted-foreground">{formatDateTime(a.created_at)}</p>
                   </li>
                 ))}
               </ul>
