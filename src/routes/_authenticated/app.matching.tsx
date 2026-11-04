@@ -415,25 +415,13 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
         }
       />
 
-      <div data-tour="matching-filters" className="panel space-y-4 p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            variant={mode === "request-to-property" ? "default" : "outline"}
-            onClick={() => setMode("request-to-property")}
-          >
-            Cerere → Proprietăți
-          </Button>
-          <Button
-            size="sm"
-            variant={mode === "property-to-request" ? "default" : "outline"}
-            data-tour="matching-direction"
-            aria-pressed={mode === "property-to-request"}
-            onClick={() => setMode("property-to-request")}
-          >
-            Proprietate → Clienți
-          </Button>
-        </div>
+      <div data-tour="matching-filters" className="min-w-0 space-y-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
+          <TabsList variant="segmented" className="w-full sm:w-auto">
+            <TabsTrigger value="request-to-property" className="min-h-10 flex-1 sm:flex-none">Cerere → Proprietăți</TabsTrigger>
+            <TabsTrigger value="property-to-request" data-tour="matching-direction" className="min-h-10 flex-1 sm:flex-none">Proprietate → Clienți</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {mode === "request-to-property" ? (
@@ -544,7 +532,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-          <div data-tour="matching-score" className="flex min-w-56 flex-1 items-center gap-3">
+          <div data-tour="matching-score" className="flex min-w-0 flex-1 items-center gap-3 sm:min-w-56">
             <Label className="whitespace-nowrap text-xs">Scor minim: {minScore}%</Label>
             <Slider
               value={[minScore]}
@@ -596,7 +584,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
           />
         </div>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
           {items.map((item) => {
             if (item.t === "lead") {
               const lr = item.row;
@@ -617,8 +605,8 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
             const text = shareText(row.request, row.property);
             const tone = matchTone(row.match.score);
             return (
-              <article data-tour="matching-result" key={row.key} className="panel flex flex-col gap-4 p-5">
-                <div className="flex items-start justify-between gap-4">
+              <article data-tour="matching-result" key={row.key} className="flex min-w-0 flex-col gap-4 overflow-hidden rounded-[14px] border border-border bg-card p-4 sm:p-5">
+                <div className="flex min-w-0 items-start justify-between gap-3">
                   <div className="min-w-0 flex-1 space-y-1">
                     <Link
                       to="/app/requests/$id"
@@ -627,7 +615,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                     >
                       {row.request.title}
                     </Link>
-                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <p className="flex min-w-0 items-center gap-1.5 text-[13px] text-muted-foreground">
                       <ArrowRight className="size-3.5 shrink-0" aria-hidden />
                       <Link
                         to="/app/properties/$id"
@@ -637,7 +625,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                         {row.property.title}
                       </Link>
                     </p>
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2 pt-1">
                       <StatusBadge tone={propertyStatusTone[row.property.status]}>
                         {propertyStatusLabels[row.property.status]}
                       </StatusBadge>
@@ -648,50 +636,31 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                     </div>
                   </div>
 
-                  <div
-                    className={`grid size-16 shrink-0 place-items-center rounded-2xl text-center ${
-                      tone === "success"
-                        ? "bg-success/12 text-success"
-                        : tone === "warning"
-                          ? "bg-warning/18 text-warning-foreground"
-                          : tone === "info"
-                            ? "bg-info/12 text-info"
-                            : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    <div>
-                      <p className="text-lg leading-none font-semibold tabular-nums">
-                        {row.match.score}%
-                      </p>
-                      <p className="mt-1 text-[10px] leading-none opacity-80">
-                        {matchLabel(row.match.score)}
-                      </p>
-                    </div>
-                  </div>
+                  <StatusBadge tone={tone === "info" ? "info" : tone === "success" ? "success" : tone === "warning" ? "warning" : "neutral"} className="shrink-0 tabular-nums">{row.match.score}% · {matchLabel(row.match.score)}</StatusBadge>
                 </div>
 
                 {row.match.reasons.length > 0 || row.match.misses.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex min-w-0 flex-wrap gap-x-3 gap-y-1">
                     {row.match.reasons.map((r) => (
                       <span
                         key={`ok-${r}`}
-                        className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success"
+                        className="inline-flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground"
                       >
-                        <Check className="size-3" aria-hidden /> {r}
+                        <Check className="size-3.5 shrink-0 text-success" aria-hidden /> {r}
                       </span>
                     ))}
                     {row.match.misses.map((m) => (
                       <span
                         key={`no-${m}`}
-                        className="inline-flex items-center gap-1 rounded-md bg-destructive/8 px-2 py-0.5 text-[11px] font-medium text-destructive"
+                        className="inline-flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground"
                       >
-                        <X className="size-3" aria-hidden /> {m}
+                        <X className="size-3.5 shrink-0 text-destructive" aria-hidden /> {m}
                       </span>
                     ))}
                   </div>
                 ) : null}
 
-                <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
+                <div className="mt-auto flex min-w-0 flex-wrap items-center gap-1.5 border-t border-border pt-3 max-sm:[&_button]:min-h-11 max-sm:[&_a]:min-h-11">
                   <Button
                     size="sm"
                     variant={row.saved ? "secondary" : "default"}
@@ -811,8 +780,8 @@ function LeadMatchCard({
   const tone = matchTone(row.match.score);
   const phone = (row.lead.phone ?? "").replace(/[^0-9]/g, "");
   return (
-    <article data-tour="matching-result" className="panel flex flex-col gap-4 p-5">
-      <div className="flex items-start justify-between gap-4">
+    <article data-tour="matching-result" className="flex min-w-0 flex-col gap-4 overflow-hidden rounded-[14px] border border-border bg-card p-4 sm:p-5">
+      <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
           <Link
             to="/app/leads"
@@ -821,7 +790,7 @@ function LeadMatchCard({
           >
             Lead: {row.lead.name} · din {row.source.reference}
           </Link>
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <p className="flex min-w-0 items-center gap-1.5 text-[13px] text-muted-foreground">
             <ArrowRight className="size-3.5 shrink-0" aria-hidden />
             <Link
               to="/app/properties/$id"
@@ -831,7 +800,7 @@ function LeadMatchCard({
               {row.property.title}
             </Link>
           </p>
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 pt-1">
             <StatusBadge tone={propertyStatusTone[row.property.status]}>
               {propertyStatusLabels[row.property.status]}
             </StatusBadge>
@@ -840,38 +809,23 @@ function LeadMatchCard({
             </span>
           </div>
         </div>
-        <div
-          className={`grid size-16 shrink-0 place-items-center rounded-2xl text-center ${
-            tone === "success"
-              ? "bg-success/12 text-success"
-              : tone === "warning"
-                ? "bg-warning/18 text-warning-foreground"
-                : tone === "info"
-                  ? "bg-info/12 text-info"
-                  : "bg-muted text-muted-foreground"
-          }`}
-        >
-          <div>
-            <p className="text-lg leading-none font-semibold tabular-nums">{row.match.score}%</p>
-            <p className="mt-1 text-[10px] leading-none opacity-80">{matchLabel(row.match.score)}</p>
-          </div>
-        </div>
+        <StatusBadge tone={tone === "info" ? "info" : tone === "success" ? "success" : tone === "warning" ? "warning" : "neutral"} className="shrink-0 tabular-nums">{row.match.score}% · {matchLabel(row.match.score)}</StatusBadge>
       </div>
       {row.match.reasons.length > 0 || row.match.misses.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex min-w-0 flex-wrap gap-x-3 gap-y-1">
           {row.match.reasons.map((r) => (
-            <span key={`ok-${r}`} className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
-              <Check className="size-3" aria-hidden /> {r}
+            <span key={`ok-${r}`} className="inline-flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground">
+              <Check className="size-3.5 shrink-0 text-success" aria-hidden /> {r}
             </span>
           ))}
           {row.match.misses.map((m) => (
-            <span key={`no-${m}`} className="inline-flex items-center gap-1 rounded-md bg-destructive/8 px-2 py-0.5 text-[11px] font-medium text-destructive">
-              <X className="size-3" aria-hidden /> {m}
+            <span key={`no-${m}`} className="inline-flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground">
+              <X className="size-3.5 shrink-0 text-destructive" aria-hidden /> {m}
             </span>
           ))}
         </div>
       ) : null}
-      <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
+      <div className="mt-auto flex min-w-0 flex-wrap items-center gap-1.5 border-t border-border pt-3 max-sm:[&_button]:min-h-11 max-sm:[&_a]:min-h-11">
         <Button size="sm" asChild>
           <Link to="/app/leads" search={{ lead: row.lead.id } as never}>
             <ExternalLink className="mr-1 size-3.5" /> Deschide lead
@@ -922,17 +876,17 @@ function ActiveLeadsMatches({
   if (leads.length === 0)
     return <div className="panel p-6 text-sm text-muted-foreground">Niciun lead activ cu proprietate asociată.</div>;
   return (
-    <ul className="panel divide-y divide-border">
+    <ul className="divide-y divide-border overflow-hidden rounded-[14px] border border-border bg-card">
       {leads.map((lead) => {
         const source = sourceById?.get(lead.property_id as string) ?? null;
         const matches = source ? computeLeadMatches(source, properties) : [];
         const open = openId === lead.id;
         return (
-          <li key={lead.id} className="p-4">
+          <li key={lead.id} className="min-h-[52px] p-4">
             <div className="flex flex-wrap items-center gap-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{lead.name}</p>
-                <p className="text-xs text-muted-foreground">din {source?.reference ?? "—"}</p>
+                <p className="text-[13px] text-muted-foreground">din {source?.reference ?? "—"}</p>
               </div>
               <Button size="sm" variant={open ? "default" : "outline"} aria-expanded={open} onClick={() => setOpenId(open ? null : lead.id)}>
                 Potriviri ({matches.length})
