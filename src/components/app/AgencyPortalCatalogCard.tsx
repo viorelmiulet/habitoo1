@@ -71,9 +71,9 @@ export function AgencyPortalCatalogCard() {
 
   return (
     <section className="panel">
-      <header className="border-b border-border px-5 py-4">
-        <h2 className="text-sm font-semibold tracking-wide uppercase">Portaluri imobiliare</h2>
-        <p className="text-xs text-muted-foreground">
+      <header className="space-y-1 border-b border-border px-4 py-4 sm:px-5">
+        <h2 className="text-base font-bold text-foreground">Portaluri imobiliare</h2>
+        <p className="text-[13px] text-muted-foreground">
           Cere activarea portalurilor de care ai nevoie: pe pagina fiecărui portal introduci datele de acces și îl activezi singur.
         </p>
       </header>
@@ -90,7 +90,7 @@ export function AgencyPortalCatalogCard() {
           />
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 lg:grid-cols-3">
+        <ul className="divide-y divide-border">
           {agencyGridItems(catalog.data ?? []).map((item) => {
             const state = agencyPortalCardState(item);
             if (item.id === "facebook_catalog") {
@@ -99,7 +99,7 @@ export function AgencyPortalCatalogCard() {
                   key={item.id}
                   data-portal-card={item.id}
                   data-portal-state={item.connectionStatus}
-                  className="rounded-xl border border-border bg-surface p-4 md:col-span-2 lg:col-span-3"
+                  className="min-w-0 px-4 py-3 sm:px-5"
                 >
                   <FacebookCatalogCard portalList />
                 </li>
@@ -110,17 +110,17 @@ export function AgencyPortalCatalogCard() {
                 key={item.id}
                 data-portal-card={item.id}
                 data-portal-state={state.key}
-                className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
+                className="flex min-h-14 min-w-0 flex-col gap-3 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:px-5"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3 sm:flex-1">
                   <PortalLogoStack
                     portalId={item.id}
                     name={item.displayName}
-                    size={40}
+                    size={32}
                     className="shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[17px] leading-6 font-bold break-words">{item.displayName}</p>
+                    <p className="text-[15px] leading-6 font-semibold break-words">{item.displayName}</p>
                   </div>
                 </div>
                 {isKeyRequestPortal(item.id) ? (
@@ -146,7 +146,7 @@ export function AgencyPortalCatalogCard() {
                     ) : null}
                   </div>
                 ) : null}
-                <div data-portal-statuses className="mt-auto flex flex-wrap items-center gap-2 pt-1">
+                <div data-portal-statuses className="flex min-w-0 flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
                     {item.id === "zup" ? (
                       <>
                         <span className="text-sm">{item.connectionStatus === "connected" ? "Conectat" : item.connectionStatus === "error" ? "Eroare" : "Deconectat"}</span>
