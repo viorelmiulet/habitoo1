@@ -239,7 +239,7 @@ function AgencyPortalSetupBody({ portalId, organizationId }: { portalId: string;
         ) : null}
 
         {isKeyRequestPortal(s.id) ? (
-          <div className="space-y-2 rounded-lg border border-border p-3 text-sm">
+          <div className="min-w-0 space-y-2 rounded-[12px] border border-border p-4 text-sm">
             <p className="text-muted-foreground">
               Cheia API este emisă de {keyRequestLabel(s.id)}, de obicei în aceeași zi lucrătoare, și ajunge pe emailul administratorului.
             </p>
@@ -321,7 +321,7 @@ function AgencyPortalSetupBody({ portalId, organizationId }: { portalId: string;
             ) : null}
 
             {s.feedUrl ? (
-              <div className="space-y-2 rounded-lg border border-border p-3 text-xs">
+              <div className="min-w-0 space-y-2 rounded-[12px] border border-border p-4 text-xs">
                 <p className="text-sm font-medium">Acces al portalului la ofertele tale</p>
                 {[s.feedUrl, s.feedUrlCsv].filter((u): u is string => Boolean(u)).map((u) => (
                   <div key={u} className="flex items-center justify-between gap-3">
@@ -334,7 +334,7 @@ function AgencyPortalSetupBody({ portalId, organizationId }: { portalId: string;
             ) : null}
 
             {s.usesHabitooKey ? (
-              <div className="space-y-2 rounded-lg border border-border p-3 text-sm" data-habitoo-keys>
+              <div className="min-w-0 space-y-2 rounded-[12px] border border-border p-4 text-sm" data-habitoo-keys>
                 <p className="font-medium">Cheia Habitoo pentru {s.displayName}</p>
                 {s.keys.length ? (
                   <ul className="divide-y divide-border">
