@@ -124,6 +124,7 @@ function MarketDataCenterPage() {
   const persisted = useFilterList("market-data", user?.userId, marketListDefaults, urlSearch,
     (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
   const filters = persisted.state;
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const setFilters = (next: typeof filters | ((previous: typeof filters) => typeof filters)) => {
     const value = typeof next === "function" ? next(filters) : next;
     void navigate({ search: { ...urlSearch, ...value, page: 1 }, replace: true, resetScroll: false });

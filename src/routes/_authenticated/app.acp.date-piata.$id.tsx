@@ -19,12 +19,12 @@ export const Route = createFileRoute("/_authenticated/app/acp/date-piata/$id")({
     </SuperadminGate>
   ),
   errorComponent: () => (
-    <div className="rounded-xl border border-border p-6 text-sm text-muted-foreground">
+    <div className="rounded-[14px] border border-border bg-card p-4 text-sm text-muted-foreground sm:p-5">
       Oferta de piață nu a putut fi încărcată.
     </div>
   ),
   notFoundComponent: () => (
-    <div className="rounded-xl border border-border p-6 text-sm text-muted-foreground">
+    <div className="rounded-[14px] border border-border bg-card p-4 text-sm text-muted-foreground sm:p-5">
       Oferta de piață nu a fost găsită.
     </div>
   ),
@@ -100,10 +100,10 @@ function MarketListingDetailPage() {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-6">
           <SectionCard title="Informații normalizate" icon={MapPin}>
-            <div className="mb-4 aspect-[16/9] w-full overflow-hidden rounded-xl border border-border bg-muted">
+            <div className="mb-4 aspect-[16/9] w-full overflow-hidden rounded-[10px] border border-border bg-muted">
               {listing.imageUrl ? (
                 <img
                   src={listing.imageUrl}
@@ -193,7 +193,7 @@ function MarketListingDetailPage() {
           </SectionCard>
 
           <SectionCard title="Istoricul prețului și al statusului" icon={History}>
-            <div className="grid gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div>
                 <p className="text-xs uppercase text-muted-foreground">Preț inițial</p>
                 <p className="text-lg font-semibold">
@@ -233,7 +233,7 @@ function MarketListingDetailPage() {
               {snapshots.map((snapshot) => (
                 <li
                   key={snapshot.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
+                  className="flex min-h-[52px] flex-wrap items-center justify-between gap-2 rounded-[12px] border border-border px-3 py-2 text-sm tabular-nums"
                 >
                   <span className="font-medium">
                     {CHANGE_LABEL[snapshot.changeType] ?? snapshot.changeType}
@@ -261,7 +261,7 @@ function MarketListingDetailPage() {
           <SectionCard title="Surse" icon={Layers}>
             <ul className="space-y-3">
               {sources.map((source) => (
-                <li key={source.id} className="rounded-lg border border-border p-3 text-sm">
+                <li key={source.id} className="rounded-[12px] border border-border p-3 text-sm">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium">{source.sourceName}</span>
                     {source.isPrimary ? <Badge variant="secondary">principală</Badge> : null}
@@ -294,7 +294,7 @@ function MarketListingDetailPage() {
                     key={sibling.id}
                     to="/app/acp/date-piata/$id"
                     params={{ id: sibling.id }}
-                    className="block rounded-lg border border-border px-3 py-2 text-sm hover:border-primary/40"
+                    className="block min-h-11 rounded-[12px] border border-border px-3 py-2 text-sm hover:border-gold/50"
                   >
                     {sibling.sourceName} ·{" "}
                     {sibling.price ? formatMoney(sibling.price, sibling.currency ?? "EUR") : "—"} ·{" "}
