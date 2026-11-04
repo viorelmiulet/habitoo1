@@ -271,9 +271,9 @@ export function PropertyPromotionTab({
               </div>
               <div className="flex-1">
                 <h3 className="text-base font-bold">{c.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{c.text}</p>
+                <p className="mt-1 text-[13px] text-muted-foreground">{c.text}</p>
               </div>
-              <Button variant={c.key === "poster" ? "default" : "outline"} onClick={c.onClick} disabled={c.disabled}>{c.action}</Button>
+              <Button variant={c.key === "poster" ? "default" : "outline"} className="h-10 w-full rounded-[10px]" onClick={c.onClick} disabled={c.disabled}>{c.action}</Button>
               {c.footer}
             </div>
           ))}
