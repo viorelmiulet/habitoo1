@@ -176,12 +176,13 @@ export function CommissionReports({
       </div>
       <Dialog open={!!pdf} onOpenChange={open => { if (!open) setPdf(null); }}><DialogContent><DialogHeader><DialogTitle>Raport pregătit</DialogTitle></DialogHeader><p className="break-all text-sm">{pdf?.filename}</p><Button onClick={() => { if (pdf) void deliverCommissionFile(pdf.blob, pdf.filename).catch(toastError); }}><Download className="size-4" />Descarcă PDF</Button></DialogContent></Dialog>
       {data.error ? <p role="alert" className="text-destructive">Nu am putut încărca raportul și cursurile BNR. <Button variant="outline" onClick={() => void data.refetch()}>Reîncearcă</Button></p> : null}
-      <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-[14px] border border-border bg-card p-4 sm:p-5">
         <div className="flex flex-wrap gap-1">
           {presets.map((p) => (
             <Button
               key={p.key}
               size="sm"
+              className="h-11 rounded-[10px] sm:h-10"
               variant={preset === p.key ? "default" : "outline"}
               onClick={() => setPreset(p.key)}
             >
@@ -202,7 +203,7 @@ export function CommissionReports({
           </>
         ) : null}
         {isAdmin ? (
-          <div className="min-w-48">
+          <div className="w-full sm:w-auto sm:min-w-48">
             <Label>Agent</Label>
             <Select value={agent} onValueChange={setAgent}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -325,7 +326,7 @@ function KpiWithLastYear({
 }) {
   return (
     <div className="space-y-1">
-      <KpiCard label={label} value={value} trend={trend} trendLabel="vs. perioada anterioară" tone={tone} loading={loading} />
+      <KpiCard size="stat" className="rounded-[14px] border border-border bg-card p-4 sm:p-5" label={label} value={value} trend={trend} trendLabel="vs. perioada anterioară" tone={tone} loading={loading} />
       <p className="px-1 text-xs text-muted-foreground">{previous}</p>
       <p className="px-1 text-xs text-muted-foreground">{lastYear}</p>
     </div>

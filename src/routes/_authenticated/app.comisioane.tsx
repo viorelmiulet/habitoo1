@@ -22,6 +22,10 @@ import { formatMoney } from "@/lib/format";
 import { useFilterList } from "@/hooks/use-list-state";
 import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SlidersHorizontal } from "lucide-react";
 import {
   COMMISSION_CURRENCIES,
   canEditCommission,
@@ -79,6 +83,7 @@ function CommissionsPage() {
     (next) => { void navigate({ to: "/app/comisioane", search: next, replace: true, resetScroll: false }); });
   const filters = persisted.state;
   const setFilters = (value: typeof filters) => { void navigate({ to: "/app/comisioane", search: { ...search, ...value }, replace: true, resetScroll: false }); };
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CommissionForm>(() => emptyCommissionForm(""));
@@ -217,37 +222,9 @@ function CommissionsPage() {
   };
   const set = <K extends keyof CommissionForm>(k: K, v: CommissionForm[K]) => setForm((f) => ({ ...f, [k]: v }));
 
-  return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Comisioane"
-        description={isAdmin ? "Toate comisioanele agenției." : "Comisioanele tale."}
-        actions={<Button data-tour="commission-new-open" onClick={openNew}><Plus className="size-4" /> Adaugă comision</Button>}
-      />
-
-      <div className="flex gap-1 border-b border-border">
-        {([["lista", "Comisioane"], ["rapoarte", "Rapoarte"]] as const).map(([key, label]) => (
-          <button
-            key={key}
-            data-tour={`commissions-${key === "lista" ? "list" : "reports"}-tab`}
-            type="button"
-            onClick={() => setTab(key)}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
-              tab === key
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {tab === "rapoarte" ? (
-        <CommissionReports orgId={orgId} userId={userId} agencyName={user?.organization?.name ?? "Agenție"} isAdmin={isAdmin} profiles={refs.data?.profiles ?? []} currency={currency} onCurrencyChange={setCurrency} />
-      ) : (
-      <>
-      <div className="grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-3 lg:grid-cols-6">
+  const activeFilterCount = [filters.from, filters.to, isAdmin && filters.agent !== ALL, filters.kind !== ALL, filters.ptype !== ALL, filters.status !== ALL].filter(Boolean).length;
+  const renderFilterFields = () => (
+    <>
         <div><Label>De la</Label><Input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} /></div>
         <div><Label>Până la</Label><Input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} /></div>
         {isAdmin ? (
@@ -257,45 +234,117 @@ function CommissionsPage() {
         <FilterSelect label="Tranzacție" value={filters.kind} onChange={(v) => setFilters({ ...filters, kind: v })} options={Object.entries(transactionLabels)} />
         <FilterSelect label="Tip proprietate" value={filters.ptype} onChange={(v) => setFilters({ ...filters, ptype: v })} options={Object.entries(propertyTypeLabels)} />
         <FilterSelect label="Stare" value={filters.status} onChange={(v) => setFilters({ ...filters, status: v })} options={Object.entries(commissionStatusLabels)} />
+    </>
+  );
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        title="Comisioane"
+        description={isAdmin ? "Toate comisioanele agenției." : "Comisioanele tale."}
+        actions={<Button data-tour="commission-new-open" onClick={openNew}><Plus className="size-4" /> Adaugă comision</Button>}
+      />
+
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <TabsList>
+          {([["lista", "Comisioane"], ["rapoarte", "Rapoarte"]] as const).map(([key, label]) => (
+            <TabsTrigger key={key} value={key} data-tour={`commissions-${key === "lista" ? "list" : "reports"}-tab`}>
+              {label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+      {tab === "rapoarte" ? (
+        <CommissionReports orgId={orgId} userId={userId} agencyName={user?.organization?.name ?? "Agenție"} isAdmin={isAdmin} profiles={refs.data?.profiles ?? []} currency={currency} onCurrencyChange={setCurrency} />
+      ) : (
+      <>
+      <div className="rounded-[14px] border border-border bg-card p-4 sm:hidden">
+        <Button type="button" variant="outline" className="h-11 w-full rounded-[10px]" onClick={() => setFiltersOpen(true)}>
+          <SlidersHorizontal className="size-4" /> Filtre ({activeFilterCount})
+        </Button>
       </div>
+      <div className="hidden gap-3 rounded-[14px] border border-border bg-card p-5 sm:grid sm:grid-cols-3 lg:grid-cols-6">
+        {renderFilterFields()}
+      </div>
+      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto">
+          <SheetHeader><SheetTitle>Filtre</SheetTitle></SheetHeader>
+          <div className="grid gap-3 px-4 py-2">{renderFilterFields()}</div>
+          <SheetFooter className="flex-col gap-2">
+            <Button className="h-11 w-full" onClick={() => setFiltersOpen(false)}>Aplică</Button>
+            <Button variant="outline" className="h-11 w-full" onClick={persisted.reset}>Resetează</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       <div data-tour="commissions-export" className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
+        <Button variant="link" size="sm" className="h-11 px-1 text-sm font-semibold text-gold-dark sm:h-10" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
         <CommissionCurrencySelect value={currency} onChange={setCurrency} />
         <CommissionExportButton prepare={prepareExport} disabled={list.isFetching || !!list.error || !orgId} />
       </div>
-      {list.error ? <p role="alert" className="text-destructive">Nu am putut încărca comisioanele și cursurile BNR. <Button variant="outline" size="sm" onClick={() => void list.refetch()}>Reîncearcă</Button></p> : null}
+      {list.error ? <p role="alert" className="rounded-[12px] border border-destructive/40 bg-danger-tint p-3 text-sm text-destructive">Nu am putut încărca comisioanele și cursurile BNR. <Button variant="outline" size="sm" onClick={() => void list.refetch()}>Reîncearcă</Button></p> : null}
       {rows.length === 0 && !list.isLoading ? (
         <EmptyState title="Niciun comision" description="Adaugă primul comision pentru o tranzacție încheiată." />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border text-left text-xs text-muted-foreground">
-              <tr>
-                <th className="p-3">Data</th>
-                {isAdmin ? <th className="p-3">Agent</th> : null}
-                <th className="p-3">Tranzacție</th>
-                <th className="p-3">Proprietate / zonă</th>
-                <th className="p-3 text-right">Comision agenție</th>
-                <th className="p-3 text-right">Suma agentului</th>
-                <th className="p-3">Stare</th>
-                <th className="p-3" />
-              </tr>
-            </thead>
-            <tbody>
+        <div className="overflow-hidden rounded-[14px] border border-border bg-card">
+          <ul className="divide-y divide-border sm:hidden">
+            {rows.map((r) => {
+              const p = r.property_id ? props.get(r.property_id) : null;
+              const editable = canEditCommission(r, userId, isAdmin);
+              return (
+                <li key={r.id} className="space-y-2 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{p ? `${p.reference ?? ""} ${p.title ?? ""}`.trim() : r.location_text ?? "—"}</p>
+                    <p className="truncate text-[13px] text-muted-foreground">{r.transaction_date} · {transactionLabels[r.transaction_kind]} · {propertyTypeLabels[r.property_type] ?? r.property_type}{isAdmin ? ` · ${names.get(r.agent_id) ?? "—"}` : ""}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[13px]">
+                    <div><p className="text-muted-foreground">Comision agenție</p><p className="text-sm font-semibold tabular-nums">{formatMoney(convertCommissionAmount(Number(r.agency_commission), r.currency, currency, r.ron_to_eur_rate), currency)}</p></div>
+                    <div><p className="text-muted-foreground">Suma agentului</p><p className="text-sm font-semibold tabular-nums">{formatMoney(convertCommissionAmount(Number(r.agent_amount), r.currency, currency, r.ron_to_eur_rate), currency)}</p></div>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <StatusBadge tone={statusTone[r.status] ?? "neutral"}>{commissionStatusLabels[r.status]}</StatusBadge>
+                    {editable ? (
+                      <div className="flex">
+                        <Button size="icon" variant="ghost" className="size-11" aria-label="Modifică" onClick={() => openEdit(r)}><Pencil className="size-4" /></Button>
+                        <Button size="icon" variant="ghost" className="size-11" aria-label="Șterge" onClick={() => setDeleteId(r.id)}><Trash2 className="size-4" /></Button>
+                      </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title="Alocat de admin — doar citire"><Lock className="size-3" /> Alocat</span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          <div className="hidden sm:block">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                {isAdmin ? <TableHead>Agent</TableHead> : null}
+                <TableHead>Tranzacție</TableHead>
+                <TableHead>Proprietate / zonă</TableHead>
+                <TableHead className="text-right">Comision agenție</TableHead>
+                <TableHead className="text-right">Suma agentului</TableHead>
+                <TableHead>Stare</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {rows.map((r) => {
                 const p = r.property_id ? props.get(r.property_id) : null;
                 const editable = canEditCommission(r, userId, isAdmin);
                 return (
-                  <tr key={r.id} className="border-b border-border last:border-0">
-                    <td className="p-3 whitespace-nowrap">{r.transaction_date}</td>
-                    {isAdmin ? <td className="p-3">{names.get(r.agent_id) ?? "—"}</td> : null}
-                    <td className="p-3">{transactionLabels[r.transaction_kind]} · {propertyTypeLabels[r.property_type] ?? r.property_type}</td>
-                    <td className="p-3">{p ? `${p.reference ?? ""} ${p.title ?? ""}`.trim() : r.location_text ?? "—"}</td>
-                    <td className="p-3 text-right whitespace-nowrap">{formatMoney(convertCommissionAmount(Number(r.agency_commission), r.currency, currency, r.ron_to_eur_rate), currency)}</td>
-                    <td className="p-3 text-right whitespace-nowrap">{formatMoney(convertCommissionAmount(Number(r.agent_amount), r.currency, currency, r.ron_to_eur_rate), currency)}</td>
-                    <td className="p-3"><StatusBadge tone={statusTone[r.status] ?? "neutral"}>{commissionStatusLabels[r.status]}</StatusBadge></td>
-                    <td className="p-3 text-right whitespace-nowrap">
+                  <TableRow key={r.id}>
+                    <TableCell className="whitespace-nowrap">{r.transaction_date}</TableCell>
+                    {isAdmin ? <TableCell>{names.get(r.agent_id) ?? "—"}</TableCell> : null}
+                    <TableCell>{transactionLabels[r.transaction_kind]} · {propertyTypeLabels[r.property_type] ?? r.property_type}</TableCell>
+                    <TableCell>{p ? `${p.reference ?? ""} ${p.title ?? ""}`.trim() : r.location_text ?? "—"}</TableCell>
+                    <TableCell className="text-right whitespace-nowrap tabular-nums">{formatMoney(convertCommissionAmount(Number(r.agency_commission), r.currency, currency, r.ron_to_eur_rate), currency)}</TableCell>
+                    <TableCell className="text-right whitespace-nowrap tabular-nums">{formatMoney(convertCommissionAmount(Number(r.agent_amount), r.currency, currency, r.ron_to_eur_rate), currency)}</TableCell>
+                    <TableCell><StatusBadge tone={statusTone[r.status] ?? "neutral"}>{commissionStatusLabels[r.status]}</StatusBadge></TableCell>
+                    <TableCell className="text-right whitespace-nowrap">
                       {editable ? (
                         <>
                           <Button size="icon" variant="ghost" aria-label="Modifică" onClick={() => openEdit(r)}><Pencil className="size-4" /></Button>
@@ -304,13 +353,14 @@ function CommissionsPage() {
                       ) : (
                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title="Alocat de admin — doar citire"><Lock className="size-3" /> Alocat</span>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-          <div className="flex flex-wrap gap-6 border-t border-border p-3 text-sm">
+            </TableBody>
+          </Table>
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-border p-4 text-[13px] tabular-nums">
             <span className="text-muted-foreground">{rows.length} comisioane (fără cele anulate în totaluri)</span>
             <span><strong>{currency}:</strong> agenție {formatMoney(totals.agencyEur, currency)} · agenți {formatMoney(totals.agentEur, currency)} · încasat {formatMoney(totals.collectedEur, currency)} · de încasat {formatMoney(totals.pendingEur, currency)}</span>
           </div>

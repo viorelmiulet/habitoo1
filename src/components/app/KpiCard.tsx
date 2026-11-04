@@ -31,6 +31,7 @@ export function KpiCard({
   to,
   loading = false,
   className,
+  size = "default",
 }: {
   label: string;
   value: string | number;
@@ -43,18 +44,20 @@ export function KpiCard({
   to?: LinkProps["to"];
   loading?: boolean;
   className?: string;
+  /** Opt-in: etichetă 13px și valoare 26px/800, ca cifrele din stilul nou. */
+  size?: "default" | "stat";
 }) {
   const body = (
     <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <p className={cn("truncate text-muted-foreground", size === "stat" ? "text-[13px]" : "text-xs font-medium tracking-wide uppercase")}>
             {label}
           </p>
           {loading ? (
             <Skeleton className="mt-2.5 h-7 w-20" />
           ) : (
-            <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+            <p className={cn("mt-2 tracking-tight tabular-nums", size === "stat" ? "text-[26px] leading-tight font-extrabold" : "text-2xl font-semibold")}>{value}</p>
           )}
           {loading ? (
             <Skeleton className="mt-2 h-3 w-24" />
