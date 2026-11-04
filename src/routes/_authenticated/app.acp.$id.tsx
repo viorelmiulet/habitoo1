@@ -73,11 +73,11 @@ function Kpi({
   strong?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+    <div className="min-w-0 rounded-[14px] border border-border bg-card p-4 sm:p-5">
+      <p className="text-[13px] text-muted-foreground">
         {label}
       </p>
-      <p className={cn("mt-1 font-semibold", strong ? "text-xl text-primary" : "text-lg")}>
+      <p className={cn("mt-1 font-extrabold tabular-nums", strong ? "text-[26px] leading-tight text-primary" : "text-xl")}>
         {value}
       </p>
       {hint ? <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p> : null}
@@ -114,9 +114,9 @@ function ComparableRow({
     timeAdjustment: comparable.timeAdjustment,
   });
   return (
-    <li className={cn("px-5 py-4", !comparable.isSelected && "bg-muted/30", review?.verdict === "suspect" && comparable.isSelected && "bg-warning/10")}>
-      <div className="flex flex-wrap items-start gap-4">
-        <div className="size-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+    <li className={cn("min-w-0 px-4 py-4 sm:px-5", !comparable.isSelected && "bg-muted/30", review?.verdict === "suspect" && comparable.isSelected && "bg-warning/10")}>
+      <div className="flex min-w-0 flex-wrap items-start gap-3 sm:flex-nowrap sm:gap-4">
+        <div className="size-16 shrink-0 overflow-hidden rounded-[10px] border border-border bg-muted sm:size-20">
           {comparable.imageUrl ? (
             <img
               src={comparable.imageUrl}
@@ -132,9 +132,9 @@ function ComparableRow({
           )}
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="min-w-0 truncate text-sm font-medium">{comparable.title}</p>
+        <div className="min-w-0 flex-1 basis-[calc(100%-5rem)] sm:basis-auto">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <p className="min-w-0 truncate text-sm font-semibold">{comparable.title}</p>
             <StatusBadge tone={tierTone(comparable.tier)}>
               {ACP_TIER_LABELS[comparable.tier] ?? comparable.tier}
             </StatusBadge>
@@ -147,7 +147,7 @@ function ComparableRow({
               </StatusBadge>
             ) : null}
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
             {comparable.sourceName}
             {comparable.locationLabel ? ` · ${comparable.locationLabel}` : ""}
           </p>
@@ -178,8 +178,8 @@ function ComparableRow({
           ) : null}
         </div>
 
-        <div className="w-40 shrink-0 text-right">
-          <p className="text-sm font-semibold">
+        <div className="text-left tabular-nums max-sm:ml-[4.75rem] sm:w-40 sm:shrink-0 sm:text-right">
+          <p className="text-base font-bold">
             {formatMoney(comparable.adjustedPrice ?? s.price, s.currency ?? currency)}
           </p>
           <p className="text-xs text-muted-foreground">
@@ -192,13 +192,13 @@ function ComparableRow({
           ) : null}
         </div>
 
-        <div className="w-24 shrink-0 text-right">
-          <p className="text-lg font-semibold">{comparable.similarityScore}</p>
+        <div className="ml-auto shrink-0 text-right tabular-nums sm:ml-0 sm:w-24">
+          <p className="text-lg font-bold">{comparable.similarityScore}</p>
           <p className="text-[11px] text-muted-foreground">scor / 100</p>
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2 max-sm:[&>button]:h-11">
         <Button data-tour="acp-adjustments-toggle" aria-expanded={open} variant="ghost" size="sm" onClick={() => setOpen((v) => !v)}>
           <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
           Detalii scor și ajustări
@@ -220,7 +220,7 @@ function ComparableRow({
       </div>
 
       {open ? (
-        <div className="mt-3 grid gap-4 rounded-xl border border-border bg-muted/40 p-4 sm:grid-cols-2">
+        <div className="mt-3 grid gap-4 rounded-[12px] border border-border bg-muted p-4 sm:grid-cols-2">
           <div>
             <p className="text-xs font-semibold uppercase text-muted-foreground">Scoruri</p>
             <ul className="mt-2 space-y-1 text-xs">
@@ -290,14 +290,14 @@ function PriceChart({ analysis }: { analysis: AcpAnalysisView }) {
         const value = c.adjustedPricePerSqm!;
         return (
           <div key={c.id} className="flex items-center gap-3">
-            <span className="w-40 shrink-0 truncate text-xs text-muted-foreground">{c.title}</span>
-            <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
+            <span className="w-24 shrink-0 truncate text-xs text-muted-foreground sm:w-40">{c.title}</span>
+            <div className="h-3 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-primary/70"
+                className="h-full rounded-full bg-chart-3"
                 style={{ width: `${Math.max(4, (value / max) * 100)}%` }}
               />
             </div>
-            <span className="w-24 shrink-0 text-right text-xs font-medium">
+            <span className="w-20 shrink-0 text-right text-xs font-medium tabular-nums sm:w-24">
               {formatMoney(value, currency)}
             </span>
           </div>
@@ -442,7 +442,7 @@ function AcpDetailPage() {
       />
 
       {analysis.errorMessage ? (
-        <div className="flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm">
+        <div className="flex items-start gap-3 rounded-[12px] border border-destructive/40 bg-danger-tint p-4 text-sm">
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
           <p>{analysis.errorMessage}</p>
         </div>
@@ -451,7 +451,7 @@ function AcpDetailPage() {
       {analysis.sanityCheck ? (
         <div
           role="alert"
-          className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm"
+          className="flex items-start gap-3 rounded-[12px] border border-gold/40 bg-gold-tint p-4 text-sm"
         >
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
           <div className="space-y-1">
@@ -649,7 +649,7 @@ function AcpDetailPage() {
           {analysis.marketQueryContexts.map((context) => (
             <div
               key={`${context.sourceKey}-${context.capturedAt}`}
-              className="mt-4 rounded-xl border border-border bg-muted/40 p-4"
+              className="mt-4 rounded-[12px] border border-border bg-muted p-4"
             >
               <p className="text-xs font-semibold uppercase text-muted-foreground">
                 {context.title}
@@ -688,7 +688,7 @@ function AcpDetailPage() {
               </li>
             ))}
           </ol>
-          <div className="mt-4 rounded-xl border border-border bg-muted/40 p-4">
+          <div className="mt-4 rounded-[12px] border border-border bg-muted p-4">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
               <Info className="size-3.5" aria-hidden /> Ponderi și praguri
             </p>

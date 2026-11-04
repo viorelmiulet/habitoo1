@@ -187,17 +187,17 @@ function Distribution({
   }
   const max = Math.max(...buckets.map((b) => b.count), 1);
   return (
-    <div className="rounded-xl border border-border p-4">
-      <p className="text-xs font-medium text-muted-foreground uppercase">{title}</p>
+    <div className="min-w-0 rounded-[12px] border border-border p-4">
+      <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
       <ul className="mt-3 space-y-2">
         {buckets.map((bucket) => (
-          <li key={bucket.key} className="grid grid-cols-[minmax(0,7rem)_1fr_auto] items-center gap-2">
+          <li key={bucket.key} className="grid grid-cols-[minmax(0,5.5rem)_minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[minmax(0,7rem)_minmax(0,1fr)_auto]">
             <span className="truncate text-xs text-muted-foreground">
               {formatLabel ? formatLabel(bucket) : bucket.label}
             </span>
             <span className="h-2 rounded-full bg-muted" aria-hidden>
               <span
-                className="block h-2 rounded-full bg-primary"
+                className="block h-2 rounded-full bg-chart-3"
                 style={{ width: `${Math.max(2, (bucket.count / max) * 100)}%` }}
               />
             </span>

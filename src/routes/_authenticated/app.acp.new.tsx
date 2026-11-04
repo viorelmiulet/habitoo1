@@ -168,7 +168,7 @@ function NewAcpPage() {
             </div>
 
             {subject ? (
-              <dl data-tour="acp-subject" className="mt-5 grid grid-cols-2 gap-4 rounded-xl border border-border bg-muted/40 p-4 text-sm sm:grid-cols-4">
+              <dl data-tour="acp-subject" className="mt-5 grid grid-cols-1 gap-4 rounded-[12px] border border-border bg-muted p-4 text-sm min-[400px]:grid-cols-2 sm:grid-cols-4">
                 {[
                   ["Camere", subject.rooms ?? "—"],
                   ["Suprafață utilă", subject.usableArea ? `${subject.usableArea} mp` : "—"],
@@ -183,10 +183,10 @@ function NewAcpPage() {
                   ],
                 ].map(([label, value]) => (
                   <div key={String(label)}>
-                    <dt className="text-[11px] tracking-wide text-muted-foreground uppercase">
+                    <dt className="text-xs text-muted-foreground">
                       {label}
                     </dt>
-                    <dd className="mt-0.5 font-medium">{String(value)}</dd>
+                    <dd className="mt-0.5 font-semibold tabular-nums">{String(value)}</dd>
                   </div>
                 ))}
               </dl>
@@ -202,7 +202,7 @@ function NewAcpPage() {
               {SOURCES.map((source) => (
                 <li
                   key={source.type}
-                  className="flex items-start gap-3 rounded-xl border border-border p-4"
+                  className="flex min-h-[52px] items-start gap-3 rounded-[12px] border border-border p-4"
                 >
                   <Checkbox
                     id={`src-${source.type}`}
@@ -221,7 +221,7 @@ function NewAcpPage() {
                       <source.icon className="size-4 text-muted-foreground" />
                       {source.name}
                     </Label>
-                    <p className="mt-1 text-xs text-muted-foreground">{source.description}</p>
+                    <p className="mt-1 text-[13px] text-muted-foreground">{source.description}</p>
                   </div>
                   {!source.available ? (
                     <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
@@ -234,9 +234,9 @@ function NewAcpPage() {
 
           </SectionCard>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center max-sm:sticky max-sm:bottom-[calc(4rem+env(safe-area-inset-bottom))] max-sm:z-20 max-sm:-mx-4 max-sm:border-t max-sm:border-border max-sm:bg-card max-sm:px-4 max-sm:py-3">
             <Button
-              data-tour="acp-create" size="lg"
+              data-tour="acp-create" size="lg" className="w-full sm:w-auto"
               disabled={!selected || create.isPending}
               onClick={() => create.mutate(undefined)}
             >
