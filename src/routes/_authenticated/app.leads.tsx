@@ -16,7 +16,10 @@ import {
   Users,
   X,
   Trash2,
+  Pencil,
+  AlertCircle,
 } from "lucide-react";
+import { resolveMobileStage, stageChangeAction } from "@/lib/lead-pipeline";
 import { DeleteLeadDialog, canDeleteLead } from "@/components/app/DeleteLeadDialog";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
@@ -188,6 +191,16 @@ function LeadsPage() {
   const [lostReasonFree, setLostReasonFree] = useState("");
   const [activityOpen, setActivityOpen] = useState(false);
   const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
+  // Etapa aleasă pe telefon: doar în memorie, nu în URL.
+  const [mobileStage, setMobileStage] = useState<LeadStage | null>(null);
+  const [isPhone, setIsPhone] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 639px)");
+    const sync = () => setIsPhone(mql.matches);
+    sync();
+    mql.addEventListener("change", sync);
+    return () => mql.removeEventListener("change", sync);
+  }, []);
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["leads", orgId],
@@ -478,24 +491,33 @@ function LeadsPage() {
     },
   });
 
-  const handleDrop = (stage: LeadStage) => {
-    if (!dragId) return;
-    const lead = leads.find((l) => l.id === dragId);
-    setDragId(null);
-    if (!lead || lead.stage === stage) return;
-    if (stage === "lost") {
+  /** Mutare comună pentru tragere și selectorul „Etapă” din panou. */
+  const requestStageChange = (lead: Lead, stage: LeadStage) => {
+    const action = stageChangeAction(lead.stage, stage);
+    if (action === "none") return;
+    if (action === "ask-lost-reason") {
       setLostDialog({ lead });
       setLostReason(leadLostReasons[0]);
       setLostReasonFree("");
       return;
     }
     moveStage.mutate({ lead, stage });
+    setDetailLead((d) => (d && d.id === lead.id ? { ...d, stage } : d));
+  };
+
+  const handleDrop = (stage: LeadStage) => {
+    if (!dragId) return;
+    const lead = leads.find((l) => l.id === dragId);
+    setDragId(null);
+    if (!lead) return;
+    requestStageChange(lead, stage);
   };
 
   const confirmLost = () => {
     if (!lostDialog) return;
     const reason = lostReason === "Altul" ? lostReasonFree || "Altul" : lostReason;
     moveStage.mutate({ lead: lostDialog.lead, stage: "lost", lostReasonValue: reason });
+    setDetailLead((d) => (d && d.id === lostDialog.lead.id ? { ...d, stage: "lost" } : d));
     setLostDialog(null);
   };
 
@@ -528,6 +550,7 @@ function LeadsPage() {
 
   const isOverdue = (lead: Lead) =>
     lead.next_followup_at ? new Date(lead.next_followup_at).getTime() < Date.now() : false;
+  const activeMobileStage = resolveMobileStage(mobileStage, columns, visible);
 
   const iconBtn = "inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted sm:size-8";
   const renderLeadCard = (l: Lead) => {
