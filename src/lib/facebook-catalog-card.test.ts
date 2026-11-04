@@ -51,7 +51,7 @@ describe("acces și token", () => {
 
   it("fila Promovare e doar pentru admin (agentul nu o vede)", () => {
     expect(visibleSettingsTabs({ role: "agent", isAdmin: false })).not.toContain("promotion");
-    expect(settings).toMatch(/user\?\.isAdmin \? \(\s*<TabsContent value="promotion"/);
+    expect(settings).toMatch(/user\?\.isAdmin \? \(\s*<TabsContent[^>]*value="promotion"/);
   });
   it("serverul verifică rolul și nu citește tokenul/prefixul existent", () => {
     expect(fn).toContain('rpc("is_org_admin")');

@@ -146,7 +146,7 @@ export function AgencyPortalCatalogCard() {
                     ) : null}
                   </div>
                 ) : null}
-                <div data-portal-statuses className="flex min-w-0 flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
+                <div data-portal-statuses className="flex flex-wrap min-w-0 items-center gap-2 sm:ml-auto sm:justify-end">
                     {item.id === "zup" ? (
                       <>
                         <span className="text-sm">{item.connectionStatus === "connected" ? "Conectat" : item.connectionStatus === "error" ? "Eroare" : "Deconectat"}</span>
