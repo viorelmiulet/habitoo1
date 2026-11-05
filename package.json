@@ -67,6 +67,7 @@
     "embla-carousel-react": "^8.6.0",
     "exceljs": "^4.4.0",
     "fast-png": "^8.0.0",
+    "fast-xml-parser": "^5.12.0",
     "fflate": "^0.8.3",
     "html2canvas-pro": "^2.5.2",
     "input-otp": "^1.4.2",

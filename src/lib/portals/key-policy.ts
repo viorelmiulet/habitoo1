@@ -28,6 +28,11 @@ export function assertPortalKeyAllowed(
       "Locuit.ro nu folosește chei pe agenție. Agenția intră în indexul Locuit.ro după activarea portalului.",
     );
   }
+  if (definition.id === "bazaruldecase") {
+    throw new Error(
+      "BazarulDeCase.ro nu folosește chei pe agenție. Agenția intră în indexul BazarulDeCase.ro după activarea portalului.",
+    );
+  }
   if (definition.id === "imobiliareplus") {
     throw new Error(
       "Imobiliare+ nu folosește chei pe agenție. Agenția intră în indexul Imobiliare+ după activarea portalului.",

@@ -17,7 +17,7 @@ export const CLICKIMOB_INDEX_HEADERS: Record<string, string> = {
   "cache-control": "no-cache, must-revalidate",
 };
 
-export type IndexPortal = "clickimob" | "imobli" | "locuit" | "imobiliareplus" | "imove";
+export type IndexPortal = "clickimob" | "imobli" | "locuit" | "imobiliareplus" | "imove" | "bazaruldecase";
 export const INDEX_PORTALS = {
   clickimob: { prefix: CLICKIMOB_TOKEN_PREFIX, secret: "CLICKIMOB_INDEX_KEY", version: CLICKIMOB_INDEX_VERSION },
   imobli: { prefix: "hbim_", secret: "IMOBLI_INDEX_KEY", version: "habitoo-imobli-index/1.0" },
@@ -25,12 +25,20 @@ export const INDEX_PORTALS = {
   imobiliareplus: { prefix: "hbip_", secret: "IMOBILIAREPLUS_INDEX_KEY", version: "habitoo-imobiliareplus-index/1.0" },
   // iMove citește feedul propriu (format iMove), nu /sites/v1; tokenul e acceptat doar acolo.
   imove: { prefix: "hbmv_", secret: "IMOVE_INDEX_KEY", version: "habitoo-imove-index/1.0", feedPath: "/api/public/portal/v1/imove/feed" },
+  // BazarulDeCase.ro: feedul JSON /sites/v1 și, din același token, feedul XML Kyero v3.
+  bazaruldecase: { prefix: "hbbc_", secret: "BAZARULDECASE_INDEX_KEY", version: "habitoo-bazaruldecase-index/1.0", xmlPath: "/api/public/portal/v1/bazaruldecase/feed.xml" },
 } as const;
 
 /** Calea feedului per agenție indicată în index; implicit feedul generic /sites/v1. */
 export function indexFeedPath(portal: IndexPortal): string {
   const cfg = INDEX_PORTALS[portal];
   return "feedPath" in cfg ? cfg.feedPath : "/api/public/sites/v1";
+}
+
+/** URL-ul absolut al feedului XML (Kyero) al agenției, cu tokenul în `?token=`; null dacă portalul nu are XML. */
+export function indexXmlUrl(portal: IndexPortal, baseUrl: string, token: string): string | null {
+  const cfg = INDEX_PORTALS[portal];
+  return "xmlPath" in cfg ? `${baseUrl.replace(/\/$/, "")}${cfg.xmlPath}?token=${encodeURIComponent(token)}` : null;
 }
 
 /** Portalurile al căror token de index deschide DOAR feedul lor dedicat. */
@@ -86,6 +94,8 @@ export type ClickimobIndexAgency = {
   inactive_since: string | null;
   updated_at: string;
   feed: { base_url: string; token: string };
+  /** Doar BazarulDeCase.ro: feedul XML Kyero v3 al agenției. */
+  kyero_xml_url?: string;
 };
 
 export type ClickimobIndex = {

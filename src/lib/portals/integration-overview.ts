@@ -5,6 +5,7 @@ import { SITE_URL } from "@/components/marketing/public-head";
 export const INTEGRATION_SECTIONS = ["Portaluri din România", "Portaluri internaționale", "Reclame"] as const;
 
 const summaries: Record<string, string> = {
+  bazaruldecase: "Activezi fără cheie, bifezi ofertele, iar BazarulDeCase.ro le preia automat.",
   locuit: "Activezi fără cheie, bifezi ofertele, iar portalul le preia automat.",
   imobli: "Activezi singur, alegi ofertele, iar portalul le preia automat.",
   imobiliareplus: "Activezi fără cheie, bifezi ofertele, iar Imobiliare+ le preia automat.",

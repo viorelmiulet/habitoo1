@@ -24,6 +24,7 @@ import {
   clickimobAgencyContact,
   clickimobFeedToken,
   indexFeedPath,
+  indexXmlUrl,
   verifyClickimobIndexKey,
   type ClickimobIndex,
   type ClickimobIndexAgency,
@@ -190,10 +191,11 @@ export async function handlePortalIndex(
     const body: ClickimobIndex = {
       version: INDEX_PORTALS[portal].version,
       generated_at: now.toISOString(),
-      agencies: agencies.map((a) => ({
-        ...a,
-        feed: { base_url: `${baseUrl}${indexFeedPath(portal)}`, token: clickimobFeedToken(a.id, secret, portal) },
-      })),
+      agencies: agencies.map((a) => {
+        const token = clickimobFeedToken(a.id, secret, portal);
+        const xml = indexXmlUrl(portal, baseUrl, token);
+        return { ...a, feed: { base_url: `${baseUrl}${indexFeedPath(portal)}`, token }, ...(xml ? { kyero_xml_url: xml } : {}) };
+      }),
     };
     await deps.log({ ...base, organizationId: null, status: 200, items: body.agencies.length });
     return new Response(JSON.stringify(body), { status: 200, headers: { ...CLICKIMOB_INDEX_HEADERS } });
