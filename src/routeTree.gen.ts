@@ -180,6 +180,7 @@ import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './rout
 import { Route as ApiPublicPortalV1VdiLeadsRouteImport } from './routes/api/public/portal/v1/vdi/leads'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
+import { Route as ApiPublicPortalV1HouseraOauthCallbackRouteImport } from './routes/api/public/portal/v1/housera.oauth.callback'
 import { Route as ApiPublicPortalV1OlxOauthCallbackRouteImport } from './routes/api/public/portal/v1/olx.oauth.callback'
 import { Route as ApiPublicPortalV1StoriaOauthCallbackRouteImport } from './routes/api/public/portal/v1/storia.oauth.callback'
 import { Route as ApiPublicPortalV1ZupOauthCallbackRouteImport } from './routes/api/public/portal/v1/zup.oauth.callback'
@@ -1138,6 +1139,12 @@ const ApiPublicSitesV1PropertiesIdRoute =
     path: '/$id',
     getParentRoute: () => ApiPublicSitesV1PropertiesRoute,
   } as any)
+const ApiPublicPortalV1HouseraOauthCallbackRoute =
+  ApiPublicPortalV1HouseraOauthCallbackRouteImport.update({
+    id: '/api/public/portal/v1/housera/oauth/callback',
+    path: '/api/public/portal/v1/housera/oauth/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1OlxOauthCallbackRoute =
   ApiPublicPortalV1OlxOauthCallbackRouteImport.update({
     id: '/api/public/portal/v1/olx/oauth/callback',
@@ -1340,6 +1347,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/portal/v1/housera/oauth/callback': typeof ApiPublicPortalV1HouseraOauthCallbackRoute
   '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
   '/api/public/portal/v1/zup/oauth/callback': typeof ApiPublicPortalV1ZupOauthCallbackRoute
@@ -1513,6 +1521,7 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/portal/v1/housera/oauth/callback': typeof ApiPublicPortalV1HouseraOauthCallbackRoute
   '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
   '/api/public/portal/v1/zup/oauth/callback': typeof ApiPublicPortalV1ZupOauthCallbackRoute
@@ -1692,6 +1701,7 @@ export interface FileRoutesById {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/portal/v1/housera/oauth/callback': typeof ApiPublicPortalV1HouseraOauthCallbackRoute
   '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
   '/api/public/portal/v1/zup/oauth/callback': typeof ApiPublicPortalV1ZupOauthCallbackRoute
@@ -1871,6 +1881,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/portal/v1/housera/oauth/callback'
     | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
     | '/api/public/portal/v1/zup/oauth/callback'
@@ -2044,6 +2055,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/portal/v1/housera/oauth/callback'
     | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
     | '/api/public/portal/v1/zup/oauth/callback'
@@ -2222,6 +2234,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/portal/v1/housera/oauth/callback'
     | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
     | '/api/public/portal/v1/zup/oauth/callback'
@@ -2334,6 +2347,7 @@ export interface RootRouteChildren {
   ApiPublicPortalV1StoriaNotificationsRoute: typeof ApiPublicPortalV1StoriaNotificationsRoute
   ApiPublicPortalV1VdiLeadsRoute: typeof ApiPublicPortalV1VdiLeadsRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
+  ApiPublicPortalV1HouseraOauthCallbackRoute: typeof ApiPublicPortalV1HouseraOauthCallbackRoute
   ApiPublicPortalV1OlxOauthCallbackRoute: typeof ApiPublicPortalV1OlxOauthCallbackRoute
   ApiPublicPortalV1StoriaOauthCallbackRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRoute
   ApiPublicPortalV1ZupOauthCallbackRoute: typeof ApiPublicPortalV1ZupOauthCallbackRoute
@@ -3540,6 +3554,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1PropertiesIdRouteImport
       parentRoute: typeof ApiPublicSitesV1PropertiesRoute
     }
+    '/api/public/portal/v1/housera/oauth/callback': {
+      id: '/api/public/portal/v1/housera/oauth/callback'
+      path: '/api/public/portal/v1/housera/oauth/callback'
+      fullPath: '/api/public/portal/v1/housera/oauth/callback'
+      preLoaderRoute: typeof ApiPublicPortalV1HouseraOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/olx/oauth/callback': {
       id: '/api/public/portal/v1/olx/oauth/callback'
       path: '/api/public/portal/v1/olx/oauth/callback'
@@ -3943,6 +3964,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicPortalV1StoriaNotificationsRoute,
   ApiPublicPortalV1VdiLeadsRoute: ApiPublicPortalV1VdiLeadsRoute,
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
+  ApiPublicPortalV1HouseraOauthCallbackRoute:
+    ApiPublicPortalV1HouseraOauthCallbackRoute,
   ApiPublicPortalV1OlxOauthCallbackRoute:
     ApiPublicPortalV1OlxOauthCallbackRoute,
   ApiPublicPortalV1StoriaOauthCallbackRoute:
