@@ -39,14 +39,17 @@ it("Clienți restrâns oferă Contacte și Cereri, iar Contracte e pagină propr
   const trigger = document.querySelector<HTMLButtonElement>('button[aria-label="Clienți"]');
   expect(trigger).not.toBeNull();
   expect(trigger?.getAttribute("data-tour")).toBe("group:Clienți");
-  expect(trigger?.getAttribute("data-nav-targets")).toBe("nav:/app/contacts nav:/app/requests nav:/app/contracts");
+  expect(trigger?.getAttribute("data-nav-targets")).toBe("nav:/app/contacts nav:/app/requests");
   expect(trigger?.className).toContain("bg-sidebar-accent");
+  const contracts = document.querySelector<HTMLAnchorElement>('nav a[href="/app/contracts"]');
+  expect(contracts?.getAttribute("data-tour")).toBe("nav:/app/contracts");
+  expect(contracts?.hasAttribute("data-nav-row")).toBe(true);
   await act(async () => {
     trigger?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
   });
   const items = [...document.querySelectorAll<HTMLAnchorElement>('[role="menuitem"]')];
-  expect(items.map(item => item.getAttribute("href"))).toEqual(["/app/contacts", "/app/requests", "/app/contracts"]);
-  expect(items.map(item => item.textContent)).toEqual(["Contacte", "Cereri3", "Contracte"]);
+  expect(items.map(item => item.getAttribute("href"))).toEqual(["/app/contacts", "/app/requests"]);
+  expect(items.map(item => item.textContent)).toEqual(["Contacte", "Cereri3"]);
   expect(items[1]?.getAttribute("aria-current")).toBe("page");
   await act(async () => items[1]?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
   expect(onNavigate).toHaveBeenCalledOnce();
