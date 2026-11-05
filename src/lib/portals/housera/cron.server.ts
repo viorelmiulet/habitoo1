@@ -19,6 +19,7 @@ async function connections(admin: Admin): Promise<Conn[]> {
 async function clientFor(c: Conn) {
   const { decryptPortalCredential } = await import("../crypto.server");
   const key = decryptPortalCredential(c.portal_credentials_encrypted!);
+  if (!key) throw new Error("Cheia Housera a agenției nu poate fi citită.");
   return createHouseraClient({
     key, baseUrl: houseraBaseUrl(process.env),
     onUnauthorized: async () => (await import("./store.server")).markHouseraReconnect(c.organization_id),
