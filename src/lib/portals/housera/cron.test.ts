@@ -75,7 +75,7 @@ function fakeClient() {
 }
 
 const rowsFor = (publishStatus: string) => ({
-  portal_connections: [{ id: "c1", organization_id: ORG, portal_credentials_encrypted: "enc", settings: {} }],
+  portal_connections: [{ id: "c1", organization_id: ORG, portal: "housera", status: "connected", portal_credentials_encrypted: "enc", settings: {} }],
   portal_listings: [{ id: "L1", organization_id: ORG, portal: "housera", property_id: "p1", status: "published", portal_offers: [offer()] }],
   portal_publications: [{ organization_id: ORG, portal_key: "housera", enabled: true, property_id: "p1" }],
   properties: [{ id: "p1", status: "active", publish_status: publishStatus, deleted_at: null }],
