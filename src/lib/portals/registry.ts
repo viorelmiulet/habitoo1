@@ -546,6 +546,22 @@ export const PORTALS: PortalDefinition[] = [
   },
 
   {
+    id: "housera",
+    activation: "oauth",
+    display_name: "Housera.ro",
+    description: "Conectarea contului Housera al agenției. Publicarea nu este încă disponibilă.",
+    logo: "HS",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    authentication: ["oauth"],
+    capabilities: ["test_connection"],
+    configuration_schema: { fields: [] },
+    website: "https://housera.ro",
+    docs: "https://api.housera.ro",
+    notes: "Etapa 1: configurare, client HTTP și testul conexiunii. Cheia de conexiune a agenției (<id>|hsr_test_… sau <id>|hsr_live_…) se păstrează criptat. Fără publicare și fără conectare OAuth încă.",
+  },
+
+  {
     id: "olx_direct",
     activation: "oauth",
     display_name: "OLX.ro (cont prepaid)",
