@@ -47,6 +47,28 @@ const CONTENT: Record<string, Content> = {
       { q: "Cum scot o ofertă de pe Locuit.ro?", a: "Debifezi Locuit.ro pentru oferta respectivă în Habitoo. Aceasta nu mai este inclusă în lista disponibilă portalului și se retrage la următoarea citire. Proprietatea poate rămâne în portofoliul agenției; nu trebuie să o ștergi pentru a opri afișarea pe Locuit.ro." },
     ],
   },
+  bazaruldecase: {
+    slug: "bazaruldecase",
+    name: "BazarulDeCase.ro",
+    description: "Ofertele agenției ajung pe BazarulDeCase.ro din Habitoo CRM prin feed: activezi singur portalul, bifezi anunțurile, iar cele debifate se retrag automat, fără cheie.",
+    intro: [
+      "BazarulDeCase.ro preia automat ofertele agenției din Habitoo, printr-un feed citit periodic de portal. Administratorul activează integrarea, iar agenții aleg proprietățile pe care vor să le afișeze prin bifarea portalului. Textele, prețurile și pozele rămân în Habitoo, fără să le copiezi separat pe portal.",
+      "Activarea nu cere nicio cheie și nu depinde de aprobarea echipei Habitoo. După activare, agenția apare în lista citită de BazarulDeCase.ro, iar portalul poate prelua ofertele selectate. Simpla activare nu înseamnă publicarea întregului portofoliu: agenția decide ce proprietăți include.",
+      "Când modifici o ofertă bifată, BazarulDeCase.ro preia varianta actualizată la următoarea citire a feedului, de obicei o dată pe zi. Dacă debifezi oferta, aceasta dispare din feed și portalul o retrage la următoarea preluare. Afișarea, actualizarea și retragerea nu sunt instantanee.",
+    ],
+    activation: "Administratorul agenției intră în Setări → Portaluri și activează singur BazarulDeCase.ro, fără intervenția echipei Habitoo. Nu trebuie să aștepte aprobare și nu completează nicio cheie sau parolă. După activare, agenții bifează BazarulDeCase.ro la ofertele pe care vor să le afișeze.",
+    notes: [
+      "Nu ai nevoie de nicio cheie pentru activarea BazarulDeCase.ro în Habitoo.",
+      "BazarulDeCase.ro preia doar ofertele selectate pentru el, nu toate proprietățile agenției.",
+      "Ofertele noi, modificările și retragerile apar la următoarea citire a feedului făcută de portal.",
+    ],
+    faq: [
+      { q: "Cine poate activa BazarulDeCase.ro?", a: "Administratorul agenției activează singur portalul din Setări → Portaluri. Nu trebuie să solicite aprobarea echipei Habitoo și nu are nevoie de nicio cheie. După activare, agenții aleg ofertele prin bifarea BazarulDeCase.ro în fișa proprietății." },
+      { q: "Cum ajung ofertele pe BazarulDeCase.ro?", a: "Portalul citește periodic feedul agenției din Habitoo, de obicei zilnic, și importă ofertele bifate. Ofertele noi și modificările de preț, descriere sau poze sunt preluate la următoarea citire. Nu trebuie să copiezi din nou anunțul." },
+      { q: "Cum scot o ofertă de pe BazarulDeCase.ro?", a: "Debifezi BazarulDeCase.ro pentru oferta respectivă în Habitoo. Oferta dispare din feed și portalul o retrage la următoarea citire. Proprietatea poate rămâne în portofoliul agenției; nu trebuie să o ștergi." },
+    ],
+    website: { href: "https://bazaruldecase.ro", label: "bazaruldecase.ro" },
+  },
   imobli: {
     slug: "imobli",
     name: "Imobli.ro",
