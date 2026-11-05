@@ -1,5 +1,5 @@
 import { deselectedErrorHidden } from "@/lib/portals/deselect-cleanup";
-import { HOUSERA_VIEW_LABEL } from "@/lib/portals/housera/status-view";
+import { HOUSERA_PENDING_SENTENCE, HOUSERA_VIEW_LABEL, houseraPendingView } from "@/lib/portals/housera/status-view";
 import { portalCanPublish } from "@/lib/portals/registry";
 import { UNCONFIRMED_UPDATE_NOTE } from "@/lib/portals/transient-failure";
 /**
