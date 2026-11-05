@@ -133,15 +133,19 @@ export async function notifyAgentOfStoriaMessage(
     body: string | null;
     messageKey: string;
     inApp: boolean;
+    /** Implicit Storia.ro; refolosit de alte portaluri (ex. Housera.ro). */
+    portalLabel?: string;
+    keyPrefix?: string;
   },
 ): Promise<void> {
   if (!input.assignedTo) return;
-  const title = `Mesaj nou din Storia.ro de la ${input.senderName}`;
+  const prefix = input.keyPrefix ?? "storia-message";
+  const title = `Mesaj nou din ${input.portalLabel ?? "Storia.ro"} de la ${input.senderName}`;
   const text = `${input.senderName} a scris pentru „${input.propertyTitle}”:\n\n${input.body ?? "(fără text)"}`;
   if (input.inApp) {
     await admin.from("notifications").upsert(
       {
-        id: await stableId(["storia-message", input.organizationId, input.messageKey, input.assignedTo]),
+        id: await stableId([prefix, input.organizationId, input.messageKey, input.assignedTo]),
         organization_id: input.organizationId,
         user_id: input.assignedTo,
         type: "lead",
@@ -164,7 +168,7 @@ export async function notifyAgentOfStoriaMessage(
       to: [agent.email],
       subject: title.slice(0, 180),
       text: `${text}\n\nDeschide lead-ul în Habitoo CRM: https://crm.habitoo.ro/app/leads`,
-      sendKey: `storia-message:${input.messageKey}`,
+      sendKey: `${prefix}:${input.messageKey}`,
     });
   } catch (error) {
     console.error("[storia] emailul către agent a eșuat", error);
