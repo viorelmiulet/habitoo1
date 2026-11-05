@@ -57,7 +57,7 @@ describe("client", () => {
   it("401 marks reconnect with the reconnect message", async () => {
     const onUnauthorized = vi.fn();
     const { c } = client([res(401, { code: "unauthenticated", detail: "secret detail" })], { onUnauthorized });
-    const e = await c.request("account/listings").catch((x) => x);
+    const e = (await c.request("account/listings").catch((x: HouseraError) => x)) as HouseraError;
     expect(e).toBeInstanceOf(HouseraError);
     expect(e.message).toBe(HOUSERA_RECONNECT_MESSAGE);
     expect(onUnauthorized).toHaveBeenCalledOnce();
@@ -72,13 +72,13 @@ describe("client", () => {
   it("409 listing_busy gives up after 3 retries", async () => {
     const busy = () => res(409, { code: "listing_busy" });
     const { c, fetch } = client([busy(), busy(), busy(), busy()]);
-    const e = await c.request("x").catch((x) => x);
+    const e = (await c.request("x").catch((x: HouseraError) => x)) as HouseraError;
     expect(e.kind).toBe("busy");
     expect(fetch).toHaveBeenCalledTimes(4);
   });
   it("422 returns only codes and field names", async () => {
     const { c } = client([res(422, { errors: [{ pointer: "/title", code: "min", detail: "Titlul e prea scurt" }, { pointer: "/floor", code: "floor_above_total", detail: "Etajul 5…" }] })]);
-    const e = await c.request("x").catch((x) => x);
+    const e = (await c.request("x").catch((x: HouseraError) => x)) as HouseraError;
     expect(e.kind).toBe("validation");
     expect(e.codes).toEqual(["min", "floor_above_total"]);
     expect(e.fields).toEqual(["title", "floor"]);
@@ -92,13 +92,13 @@ describe("client", () => {
   });
   it("429 twice fails as rate limited", async () => {
     const { c } = client([res(429, {}, { "Retry-After": "2" }), res(429, {}, { "Retry-After": "2" })]);
-    expect((await c.request("x").catch((x) => x)).kind).toBe("rate_limited");
+    expect(((await c.request("x").catch((x: HouseraError) => x)) as HouseraError).kind).toBe("rate_limited");
   });
   it("5xx and timeout are temporary", async () => {
-    expect((await client([res(503, {})]).c.request("x").catch((x) => x)).kind).toBe("temporary");
+    expect(((await client([res(503, {})]).c.request("x").catch((x: HouseraError) => x)) as HouseraError).kind).toBe("temporary");
     const fetch = vi.fn(async () => { throw new DOMException("t", "TimeoutError"); });
     const c = createHouseraClient({ key: KEY, baseUrl: BASE, fetch: fetch as never, sleep: async () => {} });
-    expect((await c.request("x").catch((x) => x)).kind).toBe("temporary");
+    expect(((await c.request("x").catch((x: HouseraError) => x)) as HouseraError).kind).toBe("temporary");
   });
   it("slows down when X-RateLimit-Remaining is low", async () => {
     const { c, sleep } = client([res(200, {}, { "X-RateLimit-Remaining": "3" }), res(200, {})]);
