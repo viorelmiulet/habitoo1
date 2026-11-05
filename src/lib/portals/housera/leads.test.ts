@@ -138,7 +138,7 @@ describe("cereri Housera → lead-uri", () => {
 
   it("403 missing_ability → marcaj „fără drept leads:read”", async () => {
     const { admin, t } = fakeDb(seed());
-    const { c } = client({ "leads/lead_1": json({ error: { code: "missing_ability" } }, 403) });
+    const { c } = client({ "leads/lead_1": json({ code: "missing_ability", ability: "leads:read" }, 403) });
     await ingestPulledHouseraEvent(admin, "org", ev("e1", "lead.created"), { client: c, now });
     expect(t.portal_webhook_events![0]!.process_note).toBe(HOUSERA_NO_LEADS_READ);
     expect(t.leads ?? []).toHaveLength(0);
