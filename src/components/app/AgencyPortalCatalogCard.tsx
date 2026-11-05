@@ -184,7 +184,7 @@ export function AgencyPortalCatalogCard() {
                         </Button>
                       </>
                     ) : state.key === "oauth" ? (
-                      <Button className="h-11 w-full sm:w-auto" disabled={busy} onClick={() => connect.mutate(item.id)}>
+                      <Button className="h-11 w-full sm:w-auto" disabled={busy || item.id === "housera"} onClick={() => connect.mutate(item.id)}>
                         {state.buttonLabel}
                       </Button>
                     ) : (

@@ -691,7 +691,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
                 selected: null,
                 excluded: null,
               },
-        oauth: portal.authentication.includes("oauth")
+        oauth: portal.authentication.includes("oauth") && portal.id !== "housera"
           ? {
               appConfigured: portal.id === "zup" ? zupConfigured(process.env) : portal.id === "olx_direct" ? olxAppReady : storiaAppReady,
               connected: Boolean(row?.portal_credentials_encrypted),
