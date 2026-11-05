@@ -227,6 +227,8 @@ export function QuickAdd({ variant = "topbar" }: { variant?: "topbar" | "mobile-
   const [leadOpen, setLeadOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   const [viewingOpen, setViewingOpen] = useState(false);
+  const [contractOpen, setContractOpen] = useState(false);
+  const [contractMounted, setContractMounted] = useState(false);
 
   return (
     <>
@@ -267,6 +269,14 @@ export function QuickAdd({ variant = "topbar" }: { variant?: "topbar" | "mobile-
           >
             <Target className="size-4" /> Cerere
           </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              setContractMounted(true);
+              setContractOpen(true);
+            }}
+          >
+            <FileSignature className="size-4" /> Contract
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setActivityOpen(true)}>
             <CalendarPlus className="size-4" /> Activitate
           </DropdownMenuItem>
@@ -278,6 +288,11 @@ export function QuickAdd({ variant = "topbar" }: { variant?: "topbar" | "mobile-
 
       <ContactSheet open={contactOpen} onOpenChange={setContactOpen} />
       <LeadSheet open={leadOpen} onOpenChange={setLeadOpen} />
+      {contractMounted ? (
+        <Suspense fallback={null}>
+          <NewContractDialog open={contractOpen} onOpenChange={setContractOpen} />
+        </Suspense>
+      ) : null}
       <ActivityDialog
         open={activityOpen}
         onOpenChange={setActivityOpen}
