@@ -10,7 +10,14 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import {
+  STALE_EVENT,
+  handleStaleVersion,
+  installStaleChunkHandler,
+  isChunkLoadError,
+  setIntendedHref,
+} from "@/lib/stale-chunk-reload";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -50,7 +57,62 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: ErrorComponentProps) {
+function NewVersionNotice() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <p className="text-base font-semibold text-foreground">A apărut o versiune nouă a aplicației.</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Reîncarcă
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function StaleVersionBanner() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const on = () => setShow(true);
+    window.addEventListener(STALE_EVENT, on);
+    return () => window.removeEventListener(STALE_EVENT, on);
+  }, []);
+  if (!show) return null;
+  return (
+    <div role="alert" className="fixed inset-x-0 top-0 z-[100] flex flex-wrap items-center justify-center gap-3 border-b border-border bg-card px-4 py-3 text-sm text-card-foreground shadow-md">
+      <span className="font-semibold">A apărut o versiune nouă a aplicației.</span>
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      >
+        Reîncarcă
+      </button>
+    </div>
+  );
+}
+
+function ErrorComponent(props: ErrorComponentProps) {
+  if (isChunkLoadError(props.error)) return <StaleChunkError />;
+  return <GenericErrorComponent {...props} />;
+}
+
+function StaleChunkError() {
+  const router = useRouter();
+  const [action, setAction] = useState<"pending" | "message">("pending");
+  useEffect(() => {
+    const target = router.state.location.href;
+    const res = handleStaleVersion(target ? window.location.origin + target : undefined);
+    if (res === "message") setAction("message");
+  }, [router]);
+  return action === "message" ? <NewVersionNotice /> : null;
+}
+
+function GenericErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -166,12 +228,20 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const neutral = useRouterState({ select: state => state.location.pathname.startsWith('/o/') });
+  const router = useRouter();
+  useEffect(() => {
+    installStaleChunkHandler();
+    return router.subscribe("onBeforeLoad", (e) => {
+      setIntendedHref(window.location.origin + e.toLocation.href);
+    });
+  }, [router]);
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster position="top-right" richColors />
+      <StaleVersionBanner />
       {!neutral && <PublicTrackers />}
     </QueryClientProvider>
   );
