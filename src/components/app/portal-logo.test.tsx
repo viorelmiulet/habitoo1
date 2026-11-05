@@ -17,3 +17,18 @@ describe("logo-ul portalului OLX.ro (cont prepaid)", () => {
     expect(portalLogoIds("olx_direct")).toEqual(["olx_direct"]);
   });
 });
+
+describe("logo-ul portalului Housera.ro", () => {
+  it("are logo local, deci cardul nu afișează inițialele", () => {
+    expect(hasPortalLogo("housera")).toBe(true);
+    const html = renderToStaticMarkup(
+      <PortalLogo portalId="housera" name="Housera.ro" size={40} alt="Housera.ro" />,
+    );
+    expect(html).toContain("<img");
+    expect(html).not.toContain(">HS<");
+  });
+
+  it("nu afișează și alt logo alături de Housera", () => {
+    expect(portalLogoIds("housera")).toEqual(["housera"]);
+  });
+});
