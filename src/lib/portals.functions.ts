@@ -2214,7 +2214,10 @@ import {
   type PortalSelectionState,
 } from "@/lib/portals/portal-state";
 
+import { houseraWithdrawnView, type HouseraView } from "@/lib/portals/housera/status-view";
+
 export type PropertyPortalCell = {
+  houseraView?: HouseraView;
   imobiliareMode?: ImobiliarePublicationMode;
   imobiliareConfirmedMode?: ImobiliarePublicationMode;
   portalId: string;
@@ -2556,6 +2559,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
             imobiliareMode: pub?.imobiliare_mode === "imoradar_only" ? "imoradar_only" as const : "combined" as const,
             imobiliareConfirmedMode: listing?.imobiliare_mode === "imoradar_only" ? "imoradar_only" as const : "combined" as const,
           } : {}),
+          ...(portal.id === "housera" ? { houseraView: houseraWithdrawnView(listingStatus, parsePortalOffers(listing?.portal_offers), listing?.external_id) } : {}),
           portalName: portalDisplayName(portal.id),
           logo: portal.logo,
           availability: portal.status,
