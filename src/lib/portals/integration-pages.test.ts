@@ -3,7 +3,7 @@ import { INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD, integrationPageText, inte
 import { integrationJsonLd } from "./integration-jsonld";
 import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
-const SLUGS = ["storia", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook", "imo24", "zonata", "homedirect", "imopedia", "ofera", "zup", "imobli", "locuit", "bazaruldecase", "imobiliareplus"];
+const SLUGS = ["storia", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook", "imo24", "zonata", "homedirect", "imopedia", "ofera", "zup", "imobli", "locuit", "bazaruldecase", "imobiliareplus", "vumsi", "housera"];
 
 describe("pagini integrări", () => {
   it("câte o pagină pentru fiecare slug cerut", () => {
@@ -30,7 +30,7 @@ describe("pagini integrări", () => {
   });
   it("lead-urile apar doar unde Habitoo le preia", () => {
     const withLeads = INTEGRATION_PAGES.filter((p) => p.canDo.some((t) => t.includes("lead"))).map((p) => p.portalId).sort();
-    expect(withLeads).toEqual(["properstar", "storia", "vdi"]);
+    expect(withLeads).toEqual(["housera", "properstar", "storia", "vdi"]);
   });
   it("sitemap conține paginile cu lastmod", () => {
     expect(INTEGRATION_PAGES_LASTMOD).toBe("2026-10-29");
