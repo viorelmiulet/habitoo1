@@ -613,6 +613,7 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                       </div>
                     </dl>
 
+                    {item.portal.id === "housera" ? null : (
                     <dl className="grid gap-3 rounded-lg border border-border p-3 text-sm sm:grid-cols-3">
                       <div>
                         <dt className="text-muted-foreground">Oferte în feed</dt>
@@ -638,6 +639,7 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                         </dd>
                       </div>
                     </dl>
+                    )}
 
                     {item.connection.lastSyncError ? (
                       <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
@@ -894,7 +896,7 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                     <FeedDocDownloadButton portalId={item.portal.id} organizationId={organizationId} />
 
 
-                    {item.oauth || item.indexOnly ? null : (
+                    {item.oauth || item.indexOnly || item.portal.id === "housera" ? null : (
                       <div className="space-y-2 rounded-lg border border-border p-3">
                         <p className="text-sm font-medium">Acces al portalului la ofertele tale</p>
                         <div className="flex items-center justify-between gap-3 text-xs">

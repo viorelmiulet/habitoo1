@@ -6,7 +6,7 @@ import type { ListingOutcome, ListingRef, PortalAdapter, PortalContext, PortalFa
 import { withdrawHousera } from "../housera/withdraw";
 import type { PortalErrorCode } from "../errors";
 import type { PortalOffer } from "../imobiliare/offer-links";
-import { HOUSERA_MISSING_MESSAGE, houseraBaseUrl, houseraConfigured } from "../housera/config";
+import { HOUSERA_MISSING_MESSAGE, HOUSERA_TEST_OK_MESSAGE, houseraBaseUrl, houseraConfigured } from "../housera/config";
 import { createHouseraClient, HouseraError, type HouseraErrorKind } from "../housera/client.server";
 import type { HouseraMapResult } from "../housera/mapper";
 import { houseraPortalStatus, publishHousera, sortKeysDeep, type HouseraClientLike } from "../housera/publish";
@@ -37,6 +37,8 @@ export type HouseraAdapterDeps = {
   key?: (organizationId: string) => Promise<string | null>;
   client?: (key: string, organizationId: string) => HouseraClientLike;
 };
+
+export const HOUSERA_NO_KEY_MESSAGE = "Agenția nu are o cheie de conexiune Housera. Conectează contul Housera.";
 
 const L = () => import("../housera/listing.server");
 
@@ -99,8 +101,17 @@ export function createHouseraAdapter(deps: HouseraAdapterDeps = {}): PortalAdapt
       const ok = houseraConfigured(env());
       return { ok: true, data: { configured: ok, live: false, detail: ok ? "Conectează contul Housera." : HOUSERA_MISSING_MESSAGE } };
     },
-    async testConnection() {
-      return { ok: true, data: { configured: houseraConfigured(env()), live: false, detail: "Testează conexiunea din SuperAdmin → Portaluri → Housera.ro." } };
+    async testConnection(ctx) {
+      try {
+        if (!houseraConfigured(env())) return { ok: false, code: "CONFIG_ERROR", message: HOUSERA_MISSING_MESSAGE, detail: "housera_not_configured" };
+        const key = ctx.portalCredential ?? (await d.key(ctx.organizationId));
+        if (!key) return { ok: false, code: "AUTH_ERROR", message: HOUSERA_NO_KEY_MESSAGE, detail: "housera_no_key" };
+        await d.client(key, ctx.organizationId).requestMeta("account/listings", { query: { fields: "code,status", per_page: 1 } });
+        return { ok: true, data: { configured: true, live: true, detail: HOUSERA_TEST_OK_MESSAGE } };
+      } catch (e) {
+        if (e instanceof HouseraError) return toFail(e);
+        return { ok: false, code: "PORTAL_ERROR", message: "Conexiunea Housera nu a putut fi verificată.", detail: null };
+      }
     },
     publishListing: (ctx, ref) => upsert(ctx, ref, "publish"),
     updateListing: (ctx, ref) => upsert(ctx, ref, "update"),
