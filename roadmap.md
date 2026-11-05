@@ -464,3 +464,8 @@
 - [x] habitoo-mark-light.png publicat ca asset separat, folosit doar de logo-ul din meniul restrâns (72px)
 - [x] Test: meniul restrâns afișează iconița nouă, nu /favicon.png; 14 teste de meniu trec; build OK
 - [x] Verificare vizuală în cont: favicon servit identic, iconița cream & aur pe bleumarin fără casetă albă
+
+## Contracte ca rând separat în meniu
+- [x] Contracte scos din grupul „Clienți" și mutat ca rând propriu în meniul lateral (toate rolurile)
+- [x] Teste de meniu actualizate: 15 trec; build OK
+- [x] Verificat în cont: desktop, meniu restrâns 72px și telefon 390px, fără derulare orizontală
