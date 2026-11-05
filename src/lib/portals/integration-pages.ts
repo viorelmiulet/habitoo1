@@ -8,7 +8,7 @@ import { isKeyRequestPortal } from "./imospot-key-request";
 export const INTEGRATION_PAGES_LASTMOD = "2026-10-29";
 
 /** Portaluri unde Habitoo preia efectiv mesajele ca lead-uri (webhook/parser în cod). */
-const LEAD_PORTALS = new Set(["storia", "vdi", "properstar"]);
+const LEAD_PORTALS = new Set(["storia", "vdi", "properstar", "housera"]);
 
 type Content = {
   slug: string;
@@ -68,6 +68,51 @@ const CONTENT: Record<string, Content> = {
       { q: "Cum scot o ofertă de pe BazarulDeCase.ro?", a: "Debifezi BazarulDeCase.ro pentru oferta respectivă în Habitoo. Oferta dispare din lista pentru portal și portalul o retrage la următoarea citire. Proprietatea poate rămâne în portofoliul agenției; nu trebuie să o ștergi." },
     ],
     website: { href: "https://bazaruldecase.ro", label: "bazaruldecase.ro" },
+  },
+  vumsi: {
+    slug: "vumsi",
+    name: "Vumsi.com",
+    description: "Publici anunțurile agenției pe Vumsi.com direct din Habitoo CRM: activare aprobată de echipa Habitoo, fără chei, cu poze, actualizări și retragere.",
+    intro: [
+      "Habitoo trimite anunțurile agenției direct pe Vumsi.com, prin contul de partener Habitoo. Nu ai de creat sau de completat chei ori parole: după activare, publici din fișa proprietății, cu aceleași date pe care le folosești și pentru celelalte portaluri.",
+      "O proprietate disponibilă atât pentru vânzare, cât și pentru închiriere devine două anunțuri separate pe Vumsi.com, unul pentru fiecare tranzacție. Fiecare anunț poate avea până la 20 de poze, în ordinea din Habitoo. Anunțurile conturilor noi trec mai întâi prin verificarea făcută de Vumsi.",
+      "Modificările de preț, descriere sau poze se trimit când salvezi și publici din nou. Dacă debifezi Vumsi.com, anunțul se retrage, iar mai târziu îl poți republica. Integrarea nu trimite promovări plătite și nu preia mesajele clienților de pe Vumsi.com.",
+    ],
+    activation: "Administratorul agenției cere activarea Vumsi.com din Setări → Portaluri, iar echipa Habitoo o aprobă. Nu completează nicio cheie sau parolă, pentru că Habitoo folosește contul său de partener. După aprobare, agenții bifează Vumsi.com la anunțurile pe care vor să le publice.",
+    notes: [
+      "Nu ai nevoie de chei sau parole pentru Vumsi.com.",
+      "Vânzarea și închirierea devin două anunțuri separate, cu până la 20 de poze fiecare.",
+      "Promovările plătite și mesajele clienților nu trec prin această integrare.",
+    ],
+    faq: [
+      { q: "Cine activează Vumsi.com?", a: "Administratorul agenției cere activarea din Setări → Portaluri, iar echipa Habitoo o aprobă. Nu trebuie să introduci nicio cheie sau parolă. După aprobare, agenții aleg anunțurile prin bifarea Vumsi.com în fila Publicare a proprietății." },
+      { q: "Cum ajung anunțurile pe Vumsi.com?", a: "Bifezi Vumsi.com și apeși Publică, iar Habitoo trimite anunțul direct, cu textul, prețul și pozele din fișa proprietății. Anunțurile conturilor noi pot trece mai întâi prin verificarea Vumsi. Modificările se trimit la următoarea salvare." },
+      { q: "Cum retrag un anunț de pe Vumsi.com?", a: "Debifezi Vumsi.com pentru proprietatea respectivă, iar Habitoo retrage anunțul. Proprietatea rămâne în portofoliul agenției, iar anunțul poate fi republicat oricând bifezi din nou portalul și apeși Publică." },
+    ],
+    website: { href: "https://vumsi.com", label: "vumsi.com" },
+  },
+  housera: {
+    slug: "housera",
+    name: "Housera.ro",
+    description: "Conectezi contul Housera.ro la Habitoo CRM dintr-un click: publici, actualizezi și retragi anunțuri, iar cererile clienților ajung ca lead-uri, cu mesaje.",
+    intro: [
+      "Agenția își conectează contul Housera.ro cu un singur click, din Setări → Portaluri, aprobând accesul direct în Housera. Conectarea o face titularul sau administratorul agenției. După aceea, Habitoo publică, actualizează și retrage anunțurile, fără să le introduci din nou pe portal.",
+      "O proprietate de vânzare și de închiriere devine două anunțuri separate, cu până la 100 de poze fiecare. Anunțurile noi trec prin moderarea Housera, iar rezultatul apare în Habitoo, pe fiecare proprietate. Disponibilitatea anunțurilor active se confirmă automat, iar Vândut sau Închiriat se transmite și pe Housera.",
+      "Cererile clienților de pe Housera.ro, adică mesajele, cererile de apel și cele de vizionare, ajung ca lead-uri în Habitoo, împreună cu mesajele lor. Agenții primesc anunțurile pe contul lor de pe Housera dacă folosesc acolo același email ca în Habitoo.",
+    ],
+    activation: "Titularul sau administratorul agenției intră în Setări → Portaluri, apasă butonul de conectare și aprobă accesul în contul Housera.ro. Nu copiezi nicio cheie sau parolă în Habitoo. După conectare, agenții bifează Housera.ro la anunțurile pe care vor să le publice.",
+    notes: [
+      "Conectarea o face titularul sau administratorul contului Housera al agenției.",
+      "Anunțurile noi trec prin moderarea Housera, iar rezultatul apare în Habitoo.",
+      "Agenții cu același email în Housera și în Habitoo primesc anunțurile pe contul lor.",
+    ],
+    faq: [
+      { q: "Cine conectează Housera.ro?", a: "Titularul sau administratorul agenției, din Setări → Portaluri, cu un singur click și aprobarea accesului în Housera. Nu trebuie copiate chei sau parole. După conectare, agenții publică din fila Publicare a fiecărei proprietăți." },
+      { q: "Ce se întâmplă la moderare?", a: "Anunțurile noi sunt verificate de Housera înainte să apară public. În Habitoo vezi pe proprietate că anunțul este în moderare, apoi că a fost publicat sau, dacă a fost respins, motivul primit de la Housera." },
+      { q: "Cum ajung cererile clienților?", a: "Mesajele, cererile de apel și cererile de vizionare de pe Housera.ro devin lead-uri în Habitoo, legate de proprietatea potrivită, iar mesajele noi se adaugă pe același lead. Agentul responsabil primește o notificare." },
+      { q: "Cum retrag un anunț de pe Housera.ro?", a: "Debifezi Housera.ro pentru proprietate, iar Habitoo retrage anunțul. Când marchezi proprietatea Vândut sau Închiriat, starea se transmite automat pe Housera." },
+    ],
+    website: { href: "https://housera.ro", label: "housera.ro" },
   },
   imobli: {
     slug: "imobli",
