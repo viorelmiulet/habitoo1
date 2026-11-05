@@ -191,3 +191,30 @@ describe("Housera adapter", () => {
     expect(r.ok && r.data.offers?.[0]).toMatchObject({ status: "active", etag: `"v4"` });
   });
 });
+
+describe("Housera testConnection", () => {
+  it("cheie validă → live: true și mesajul de reușită", async () => {
+    const { adapter, calls } = setup(() => json(200, { data: [] }));
+    const r = await adapter.testConnection(ctx());
+    expect(r).toEqual({ ok: true, data: { configured: true, live: true, detail: "Cheie validă · contul Housera răspunde" } });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].method).toBe("GET");
+    expect(calls[0].url).toContain("account/listings");
+    expect(calls[0].url).toContain("fields=code%2Cstatus");
+  });
+  it("fără cheie → eroare de conectare", async () => {
+    const adapter = createHouseraAdapter({ env, key: async () => null, client: () => { throw new Error("nu trebuie apelat"); } });
+    const r = await adapter.testConnection({ ...ctx(), portalCredential: null });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.message).toBe("Agenția nu are o cheie de conexiune Housera. Conectează contul Housera.");
+  });
+  it("401 → reconectare necesară", async () => {
+    const { adapter } = setup(() => json(401, { error: { code: "unauthorized" } }));
+    const r = await adapter.testConnection(ctx());
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.code).toBe("AUTH_ERROR");
+    expect(r.message.toLowerCase()).toContain("reconect");
+  });
+});
