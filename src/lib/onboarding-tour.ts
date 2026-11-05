@@ -53,7 +53,7 @@ const guideDefinitions: GuideDefinition[] = [
     { id: "today", title: "Ce ai de făcut", text: "Mai jos găsești activitățile și lucrurile care cer atenție. Administratorul vede și situația echipei.", selector: '[data-tour="dashboard-work"]' },
     { id: "menu", title: "Deschide meniul", text: "Arată-mi unde sunt principalele zone.", mode: "show", show: "menu", selector: '[data-tour="main-navigation"]' },
     { id: "portfolio", title: "Portofoliul", text: "Apasă Portofoliu ca să vezi proprietățile și adăugarea unui anunț.", mode: "do", selector: '[data-tour="group:Portofoliu"]', event: "click", hint: "Apasă rândul Portofoliu din meniu.", confirmation: "Ai găsit portofoliul." },
-    { id: "clients", title: "Clienții tăi", text: "Contacte, Cereri, Lead-uri și Contracte sunt grupate aici.", mode: "show", show: "clients", selector: '[data-tour="group:Clienți"]' },
+    { id: "clients", title: "Clienții tăi", text: "Contacte, Cereri, Lead-uri și Contracte sunt pagini separate în meniu.", mode: "show", show: "clients", selector: '[data-tour="group:Clienți"]' },
     { id: "network", title: "Rețea și anunțuri", text: "Colaborare te leagă de parteneri. Anunțuri particulari te ajută să găsești oferte de la proprietari.", selector: '[data-tour="nav:/app/collaboration"]', fallbackNote: "Găsești aceste zone în meniu: Rețea și Anunțuri." },
     { id: "help", title: "Ghidul continuă cu tine", text: "Fiecare pagină va avea propriul ghid la prima deschidere. Primele disponibile sunt Proprietăți și Adaugă proprietate. Din Ghid le reiei și controlezi pornirea automată.", selector: '[data-tour="guide-menu"]' },
   ]},

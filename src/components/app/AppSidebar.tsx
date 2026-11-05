@@ -87,8 +87,8 @@ export const agencyNav: NavGroup[] = [
   { title: "Clienți", collapsible: true, items: [
     { label: "Contacte", to: "/app/contacts", icon: UserRound },
     { label: "Cereri", to: "/app/requests", icon: Target },
-    { label: "Contracte", to: "/app/contracts", icon: FileSignature },
   ] },
+  { items: [{ label: "Contracte", to: "/app/contracts", icon: FileSignature }] },
   { title: "Calendar", collapsible: true, items: [
     { label: "Calendar", to: "/app/calendar", icon: CalendarDays },
     { label: "Activități", to: "/app/activities", icon: ListChecks },
