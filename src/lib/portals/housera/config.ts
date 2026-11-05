@@ -36,6 +36,30 @@ export function houseraKeyMode(key: string): "test" | "live" | null {
   return m ? (m[1] as "test" | "live") : null;
 }
 
+export const HOUSERA_APPROVAL_NOTE =
+  "Aprobarea trebuie dată de titularul sau de un administrator al agenției în Housera; altfel conexiunea vede doar anunțurile celui care aprobă.";
+export const HOUSERA_DISCONNECT_NOTE =
+  "Deconectarea șterge cheia din Habitoo. Revocarea completă se face în Housera, din Setări → API → Aplicații conectate.";
+
+/** Avertisment „Reconectează Housera” cu 14 zile înainte de expirare. */
+export function houseraExpiresSoon(expiresAt: string | null | undefined, nowMs: number): boolean {
+  if (!expiresAt) return false;
+  const t = new Date(expiresAt).getTime();
+  return Number.isFinite(t) && t - nowMs <= 14 * 86_400_000;
+}
+
+export type HouseraOAuthInfo = { connectedAt: string | null; expiresAt: string | null; scopes: string[] };
+export function houseraOAuthInfo(settings: unknown): HouseraOAuthInfo | null {
+  const o = settings && typeof settings === "object" ? (settings as Record<string, unknown>)["oauth"] : null;
+  if (!o || typeof o !== "object") return null;
+  const r = o as Record<string, unknown>;
+  return {
+    connectedAt: typeof r["connected_at"] === "string" ? r["connected_at"] : null,
+    expiresAt: typeof r["expires_at"] === "string" ? r["expires_at"] : null,
+    scopes: Array.isArray(r["scopes"]) ? r["scopes"].filter((s): s is string => typeof s === "string") : [],
+  };
+}
+
 /** Doar ultimele 4 caractere sunt vizibile. */
 export function maskHouseraKey(key: string | null | undefined): string | null {
   const k = key?.trim();

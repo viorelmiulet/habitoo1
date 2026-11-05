@@ -14,12 +14,50 @@ async function requireSuperadmin(context: unknown, organizationId: string) {
   if (!org) throw new Error("Agenția nu a fost găsită.");
 }
 
+type AdminCtx = Ctx & { supabase: { rpc(name: "is_org_admin"): PromiseLike<{ data: boolean | null }>; from(name: "profiles"): { select(c: string): { eq(c: string, v: string): { maybeSingle(): PromiseLike<{ data: { organization_id: string | null } | null }> } } } } };
+/** agency_admin al propriei agenții sau SuperAdmin pentru orice agenție. */
+async function requireAgencyAdminOrSuperadmin(context: unknown, organizationId: string) {
+  const c = context as AdminCtx;
+  const { data: superadmin } = await c.supabase.rpc("is_superadmin");
+  if (superadmin === true) return requireSuperadmin(context, organizationId);
+  const { data: admin } = await c.supabase.rpc("is_org_admin");
+  const { data: profile } = await c.supabase.from("profiles").select("organization_id").eq("id", c.userId).maybeSingle();
+  if (admin !== true || profile?.organization_id !== organizationId) throw new Error("Acces refuzat: poți conecta Housera doar pentru agenția ta.");
+}
+
+export const startHouseraConnect = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => orgSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAgencyAdminOrSuperadmin(context, data.organizationId);
+    const { houseraConfigured } = await import("./housera/config");
+    if (!houseraConfigured(process.env)) throw new Error(HOUSERA_MISSING_MESSAGE);
+    const { loadHouseraConnection, houseraOAuthDependencies } = await import("./housera/store.server");
+    const row = await loadHouseraConnection(data.organizationId);
+    if (row?.activated !== true) throw new Error("Activează mai întâi Housera pentru agenție.");
+    const { startHouseraAuthorization } = await import("./housera/oauth.server");
+    const { deps } = await houseraOAuthDependencies();
+    return { url: await startHouseraAuthorization(data.organizationId, context.userId, deps) };
+  });
+
+export const disconnectHousera = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => orgSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAgencyAdminOrSuperadmin(context, data.organizationId);
+    const { clearHouseraKey } = await import("./housera/store.server");
+    await clearHouseraKey(data.organizationId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("portal_operation_logs").insert({ organization_id: data.organizationId, portal: "housera", operation: "disconnect", success: true, actor_id: context.userId });
+    return { ok: true as const };
+  });
+
 export const getHouseraAgencyStatus = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((d: unknown) => orgSchema.parse(d))
   .handler(async ({ data, context }) => {
     await requireSuperadmin(context, data.organizationId);
-    const { houseraConfigured, houseraEnv, maskHouseraKey } = await import("./housera/config");
+    const { houseraConfigured, houseraEnv, maskHouseraKey, houseraOAuthInfo } = await import("./housera/config");
     const { loadHouseraConnection, loadHouseraKey } = await import("./housera/store.server");
     const row = await loadHouseraConnection(data.organizationId);
     const key = row?.portal_credentials_encrypted ? await loadHouseraKey(data.organizationId) : null;
@@ -27,6 +65,8 @@ export const getHouseraAgencyStatus = createServerFn({ method: "POST" })
       configured: houseraConfigured(process.env),
       env: houseraEnv(process.env),
       keyMask: maskHouseraKey(key),
+      activated: row?.activated === true,
+      oauth: houseraOAuthInfo(row?.settings),
       reconnectRequired: (row?.settings as Record<string, unknown> | null)?.["reconnect_required"] === true,
       lastError: row?.last_sync_error ?? null,
       lastCheckedAt: row?.last_sync_at ?? null,

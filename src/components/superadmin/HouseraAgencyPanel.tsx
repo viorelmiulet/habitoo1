@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getHouseraAgencyStatus, saveHouseraSandboxKey, testHouseraConnection } from "@/lib/portals/housera.functions";
 import { HOUSERA_MISSING_MESSAGE } from "@/lib/portals/housera/config";
+import { HouseraConnectionControls, useHouseraCallbackToast } from "@/components/app/HouseraConnectionControls";
 
 export function HouseraAgencyPanel({ organizationId }: { organizationId: string }) {
+  useHouseraCallbackToast();
   const qc = useQueryClient();
   const load = useServerFn(getHouseraAgencyStatus);
   const save = useServerFn(saveHouseraSandboxKey);
@@ -33,6 +35,14 @@ export function HouseraAgencyPanel({ organizationId }: { organizationId: string 
     <div className="w-full space-y-3 rounded-[14px] border border-border bg-card p-4 sm:p-5">
       {!s.configured ? <p className="rounded-xl bg-gold-tint p-3 text-sm">{HOUSERA_MISSING_MESSAGE}</p> : null}
       {s.reconnectRequired && s.lastError ? <p role="alert" className="rounded-xl bg-danger-tint p-3 text-sm text-destructive">{s.lastError}</p> : null}
+      <HouseraConnectionControls
+        organizationId={organizationId}
+        configured={s.configured && s.activated}
+        connected={Boolean(s.oauth?.connectedAt)}
+        oauth={s.oauth}
+        onChanged={() => void qc.invalidateQueries({ queryKey: qk })}
+      />
+      {s.configured && !s.activated ? <p className="text-[13px] text-muted-foreground">Activează Housera pentru agenție înainte de conectare.</p> : null}
       {s.env === "staging" ? (
         <div className="space-y-2">
           <Label htmlFor="housera-sandbox-key">Cheie de conexiune (sandbox)</Label>

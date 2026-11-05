@@ -1653,6 +1653,13 @@
       "when": 1793693220921,
       "tag": "0235_contracts_c7_gdpr_notice",
       "breakpoints": true
+    },
+    {
+      "idx": 236,
+      "version": "7",
+      "when": 1793887073586,
+      "tag": "0236_housera_oauth_verifier",
+      "breakpoints": true
     }
   ]
 }
