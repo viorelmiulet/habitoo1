@@ -4,7 +4,7 @@
  * Doar citiri la Housera (`GET leads/{id}`, `GET leads/{id}/messages`).
  * Jurnalul nu conține niciodată date de contact.
  */
-import type { HouseraEvent } from "./events";
+import { houseraOfferFilter, type HouseraEvent } from "./events";
 import type { HouseraClientLike } from "./publish";
 import { HouseraError } from "./client.server";
 

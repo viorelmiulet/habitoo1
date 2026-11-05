@@ -3,7 +3,7 @@
  * (deduplicare după `external_event_id`), rutarea către agenție, aplicarea pe
  * `portal_listings` și notificarea agentului responsabil. Folosit de webhook și de cronuri.
  */
-import { applyHouseraEffect, houseraEventConnection, houseraEventEffect, type HouseraEvent, type HouseraListingRow } from "./events";
+import { applyHouseraEffect, houseraOfferFilter, houseraEventConnection, houseraEventEffect, type HouseraEvent, type HouseraListingRow } from "./events";
 import { parsePortalOffers } from "../imobiliare/offer-links";
 import type { HouseraLeadDeps } from "./leads.server";
 
