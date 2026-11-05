@@ -97,8 +97,8 @@ export async function runHouseraAvailabilityCron(nowMs = Date.now(), deps: House
     const rowOf = (l: HouseraAccountListing) => byCode.get(l.code) ?? (l.externalRef ? byRef.get(l.externalRef) : undefined);
     try {
       const r = await runHouseraAvailability({
-        client: await clientFor(c), nowMs,
-        eligible: (l) => { const row = rowOf(l); return !!row && row.status !== "withdrawn" && enabled.has(row.property_id) && active.has(row.property_id); },
+        client: await clientForConn(c), nowMs,
+        eligible: (l) => { const row = rowOf(l); return !!row && row.status !== "withdrawn" && enabled.has(row.property_id) && publishable.has(row.property_id); },
         reconcile: async (l) => {
           const row = rowOf(l);
           if (!row) return false;
