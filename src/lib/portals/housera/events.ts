@@ -26,7 +26,7 @@ export function houseraEventConnection(e: HouseraEvent): string | null {
   return null;
 }
 
-export const HOUSERA_DEFERRED_NOTE = "neprocesat (H7)";
+export const HOUSERA_DEFERRED_NOTE = "neprocesat";
 export const HOUSERA_UNCONFIRMED_WARNING = "Housera a scos anunțul din căutare: disponibilitatea nu a fost confirmată.";
 export const HOUSERA_EDITED_WARNING = "Anunțul a fost editat în Housera; la următoarea salvare în Habitoo se retrimite varianta din Habitoo.";
 

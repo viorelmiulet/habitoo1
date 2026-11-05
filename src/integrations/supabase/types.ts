@@ -6868,6 +6868,54 @@ export type Database = {
           },
         ]
       }
+      portal_lead_links: {
+        Row: {
+          created_at: string
+          external_lead_id: string
+          id: string
+          last_message_id: string | null
+          lead_id: string | null
+          organization_id: string
+          portal: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          external_lead_id: string
+          id?: string
+          last_message_id?: string | null
+          lead_id?: string | null
+          organization_id: string
+          portal: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          external_lead_id?: string
+          id?: string
+          last_message_id?: string | null
+          lead_id?: string | null
+          organization_id?: string
+          portal?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_lead_links_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_lead_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_listing_versions: {
         Row: {
           accepted_version: string | null
