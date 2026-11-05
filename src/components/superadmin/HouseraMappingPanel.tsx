@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Eye, RefreshCw } from "lucide-react";
+import { Eye, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  getHouseraSchemaStatus, listHouseraPreviewProperties, previewHouseraMapping, refreshHouseraSchemaNow,
+  getHouseraAgencyStatus, getHouseraSchemaStatus, listHouseraPreviewProperties, previewHouseraMapping, refreshHouseraSchemaNow, validateHouseraListing,
 } from "@/lib/portals/housera.functions";
 
 /** SuperAdmin → Portaluri → Housera: nomenclator + previzualizarea mapării (fără apel către Housera). */
@@ -17,7 +17,11 @@ export function HouseraMappingPanel({ organizationId }: { organizationId: string
   const refresh = useServerFn(refreshHouseraSchemaNow);
   const listProps = useServerFn(listHouseraPreviewProperties);
   const preview = useServerFn(previewHouseraMapping);
+  const validate = useServerFn(validateHouseraListing);
+  const loadAgency = useServerFn(getHouseraAgencyStatus);
   const [propertyId, setPropertyId] = useState("");
+  const agency = useQuery({ queryKey: ["housera-agency-key", organizationId], queryFn: () => loadAgency({ data: { organizationId } }) });
+  const hasKey = !!agency.data?.keyMask;
   const status = useQuery({ queryKey: ["housera-schema"], queryFn: () => loadStatus() });
   const props = useQuery({ queryKey: ["housera-preview-props", organizationId], queryFn: () => listProps({ data: { organizationId } }) });
   const refreshM = useMutation({
@@ -27,6 +31,10 @@ export function HouseraMappingPanel({ organizationId }: { organizationId: string
   });
   const previewM = useMutation({
     mutationFn: () => preview({ data: { organizationId, propertyId } }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const validateM = useMutation({
+    mutationFn: () => validate({ data: { organizationId, propertyId } }),
     onError: (e: Error) => toast.error(e.message),
   });
   const s = status.data;
@@ -63,7 +71,24 @@ export function HouseraMappingPanel({ organizationId }: { organizationId: string
           <Button type="button" className="w-full sm:w-auto" disabled={!propertyId || previewM.isPending} onClick={() => previewM.mutate()}>
             <Eye className="mr-2 size-4" />Previzualizează maparea
           </Button>
+          {hasKey ? (
+            <Button type="button" variant="outline" className="w-full sm:w-auto" disabled={!propertyId || validateM.isPending} onClick={() => validateM.mutate()}>
+              <ShieldCheck className="mr-2 size-4" />Validează la Housera
+            </Button>
+          ) : null}
         </div>
+        {validateM.data ? (
+          <div className="space-y-2">
+            {validateM.data.map((v) => (
+              <div key={v.externalRef} className="space-y-2 rounded-xl border border-border p-3">
+                <p className="text-sm font-semibold">Housera · {v.transaction === "sale" ? "Vânzare" : "Închiriere"} · <span className="font-mono text-[13px]">{v.externalRef}</span></p>
+                {v.valid ? <p className="text-sm text-success">Housera: anunțul trece regulile de publicare.</p> : null}
+                {v.errors.length ? <Issues title="Erori Housera" items={v.errors} danger /> : null}
+                {v.warnings.length ? <Issues title="Avertismente Housera" items={v.warnings} /> : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
         {previewM.data ? (
           <div className="space-y-3">
             {previewM.data.listings.length === 0 && previewM.data.errors.length ? <Issues title="Erori blocante" items={previewM.data.errors} danger /> : null}

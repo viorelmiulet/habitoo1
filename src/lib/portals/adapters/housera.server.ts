@@ -1,0 +1,119 @@
+/**
+ * Adaptor Housera.ro (cheia agenției din H1/H2): publicare/actualizare per
+ * tranzacție cu PUT listings/ref/{ref} și poze. Retragerea vine în pasul următor.
+ */
+import type { ListingOutcome, ListingRef, PortalAdapter, PortalContext, PortalFail, PortalResult } from "../adapter";
+import { notSupported } from "../adapter";
+import type { PortalErrorCode } from "../errors";
+import type { PortalOffer } from "../imobiliare/offer-links";
+import { HOUSERA_MISSING_MESSAGE, houseraBaseUrl, houseraConfigured } from "../housera/config";
+import { createHouseraClient, HouseraError, type HouseraErrorKind } from "../housera/client.server";
+import type { HouseraMapResult } from "../housera/mapper";
+import { houseraPortalStatus, publishHousera, sortKeysDeep, type HouseraClientLike } from "../housera/publish";
+
+export const HOUSERA_WITHDRAW_LATER = "Retragerea de pe Housera vine în pasul următor.";
+
+const KIND_CODE: Record<HouseraErrorKind, PortalErrorCode> = {
+  unauthorized: "AUTH_ERROR",
+  validation: "VALIDATION_ERROR",
+  busy: "PORTAL_ERROR",
+  rate_limited: "RATE_LIMIT",
+  temporary: "PORTAL_ERROR",
+  refused: "INVALID_REQUEST",
+};
+
+function toFail(e: unknown): PortalFail {
+  if (e instanceof HouseraError) {
+    const detail = [`housera_kind=${e.kind}`, e.code ? `code=${e.code}` : null, e.codes.length ? `codes=${e.codes.join(",")}` : null, e.fields.length ? `fields=${e.fields.join(",")}` : null].filter(Boolean).join(" ");
+    return { ok: false, code: KIND_CODE[e.kind], message: e.message, detail, httpStatus: e.status };
+  }
+  return { ok: false, code: "PORTAL_ERROR", message: "Publicarea pe Housera nu a putut fi finalizată.", detail: null };
+}
+
+export type HouseraAdapterDeps = {
+  env?: Record<string, string | undefined>;
+  mapping?: (organizationId: string, propertyId: string) => Promise<HouseraMapResult>;
+  photos?: (organizationId: string, propertyId: string) => Promise<{ urls: string[]; warnings: string[] }>;
+  stored?: (organizationId: string, propertyId: string) => Promise<PortalOffer[]>;
+  key?: (organizationId: string) => Promise<string | null>;
+  client?: (key: string, organizationId: string) => HouseraClientLike;
+};
+
+const L = () => import("../housera/listing.server");
+
+export function createHouseraAdapter(deps: HouseraAdapterDeps = {}): PortalAdapter {
+  const env = () => deps.env ?? process.env;
+  const d = {
+    mapping: deps.mapping ?? (async (o: string, p: string) => (await L()).loadHouseraMapping(o, p, null)),
+    photos: deps.photos ?? (async (o: string, p: string) => (await L()).loadHouseraPhotoUrls(o, p)),
+    stored: deps.stored ?? (async (o: string, p: string) => (await L()).loadHouseraStoredOffers(o, p)),
+    key: deps.key ?? (async (o: string) => (await import("../housera/store.server")).loadHouseraKey(o)),
+    client: deps.client ?? ((key: string, o: string) => createHouseraClient({
+      key, baseUrl: houseraBaseUrl(env()),
+      onUnauthorized: async () => (await import("../housera/store.server")).markHouseraReconnect(o),
+    })),
+  };
+
+  async function upsert(ctx: PortalContext, ref: ListingRef, action: "publish" | "update"): Promise<PortalResult<ListingOutcome>> {
+    try {
+      if (!houseraConfigured(env())) return { ok: false, code: "CONFIG_ERROR", message: HOUSERA_MISSING_MESSAGE, detail: "housera_not_configured" };
+      const mapped = await d.mapping(ctx.organizationId, ref.propertyId);
+      if (mapped.errors.length || !mapped.listings.length) {
+        return { ok: false, code: "VALIDATION_ERROR", message: `Anunțul nu poate fi trimis la Housera: ${mapped.errors.join(" ")}`, detail: "housera_mapping_errors" };
+      }
+      const photos = await d.photos(ctx.organizationId, ref.propertyId);
+      const refs = mapped.listings.map((l) => l.externalRef);
+      if (!ctx.allowLiveRequests) {
+        const plan = mapped.listings.map((l) => `PUT listings/ref/${l.externalRef} (${Object.keys(sortKeysDeep(l.payload)).length} câmpuri)`);
+        return { ok: true, data: {
+          externalId: refs.join(","), live: false, processed: 0,
+          detail: `housera_dry_run action=${action} listings=${refs.length} photos=${Math.min(photos.urls.length, 100)}`,
+          message: `Trimiterile reale către Housera sunt oprite. S-ar trimite: ${plan.join("; ")}, apoi ${Math.min(photos.urls.length, 100)} poze.`,
+        } };
+      }
+      const key = ctx.portalCredential ?? (await d.key(ctx.organizationId));
+      if (!key) return { ok: false, code: "AUTH_ERROR", message: "Agenția nu are o cheie de conexiune Housera. Conectează contul Housera.", detail: "housera_no_key" };
+      const stored = await d.stored(ctx.organizationId, ref.propertyId).catch(() => [] as PortalOffer[]);
+      const r = await publishHousera({ drafts: mapped.listings, stored, photoUrls: photos.urls, client: d.client(key, ctx.organizationId) });
+      const status = houseraPortalStatus(r.offers);
+      const warnings = [...mapped.warnings, ...photos.warnings, ...r.warnings];
+      const withUrl = r.offers.filter((o) => o.url.startsWith("https://"));
+      return { ok: true, data: {
+        externalId: r.offers.map((o) => o.id).join(","),
+        live: true,
+        processed: r.offers.length,
+        detail: `housera_${action} listings=${r.offers.length} unchanged=${r.unchanged.length} photos_sent=${r.photosSent.length}`,
+        message: status === "pending" ? "Anunțul a fost trimis la Housera și este în moderare." : r.unchanged.length === r.offers.length ? "Housera: anunțul era deja la zi." : "Anunțul a fost actualizat pe Housera.",
+        portalStatus: status,
+        publicUrl: withUrl[0]?.url ?? null,
+        offers: r.offers,
+        mediaWarning: warnings.length ? warnings.join(" · ") : null,
+      } };
+    } catch (e) {
+      return toFail(e);
+    }
+  }
+
+  return {
+    id: "housera",
+    async getStatus() {
+      const ok = houseraConfigured(env());
+      return { ok: true, data: { configured: ok, live: false, detail: ok ? "Conectează contul Housera." : HOUSERA_MISSING_MESSAGE } };
+    },
+    async testConnection() {
+      return { ok: true, data: { configured: houseraConfigured(env()), live: false, detail: "Testează conexiunea din SuperAdmin → Portaluri → Housera.ro." } };
+    },
+    publishListing: (ctx, ref) => upsert(ctx, ref, "publish"),
+    updateListing: (ctx, ref) => upsert(ctx, ref, "update"),
+    async withdrawListing() {
+      return { ...notSupported("withdraw"), message: HOUSERA_WITHDRAW_LATER };
+    },
+    async sync(ctx, refs) {
+      let processed = 0, failed = 0;
+      for (const ref of refs) { const r = await upsert(ctx, ref, "update"); if (r.ok) processed++; else failed++; }
+      return { ok: true, data: { processed, failed } };
+    },
+  };
+}
+
+export const houseraAdapter = createHouseraAdapter();

@@ -160,17 +160,37 @@ export const previewHouseraMapping = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => orgSchema.extend({ propertyId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireSuperadmin(context, data.organizationId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { loadHouseraSchema, refreshHouseraSchema } = await import("./housera/taxonomy.server");
-    const { mapPropertyToHousera } = await import("./housera/mapper");
-    const { data: p } = await supabaseAdmin.from("properties").select("*")
-      .eq("id", data.propertyId).eq("organization_id", data.organizationId).is("deleted_at", null).maybeSingle();
-    if (!p) throw new Error("Proprietatea nu a fost găsită.");
-    const cached = (await loadHouseraSchema(process.env)) ?? (await refreshHouseraSchema(process.env, context.userId)).cached;
-    let agentEmail: string | null = null;
-    if (p.assigned_to) {
-      const { data: prof } = await supabaseAdmin.from("profiles").select("email").eq("id", p.assigned_to).maybeSingle();
-      agentEmail = prof?.email ?? null;
+    const { loadHouseraMapping } = await import("./housera/listing.server");
+    return loadHouseraMapping(data.organizationId, data.propertyId, context.userId);
+  });
+
+/** H4: POST listings/validate (Housera nu salvează nimic). Doar coduri/câmpuri/avertismente. */
+export const validateHouseraListing = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => orgSchema.extend({ propertyId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireSuperadmin(context, data.organizationId);
+    const { houseraBaseUrl, houseraConfigured } = await import("./housera/config");
+    if (!houseraConfigured(process.env)) throw new Error(HOUSERA_MISSING_MESSAGE);
+    const { loadHouseraKey, markHouseraReconnect } = await import("./housera/store.server");
+    const key = await loadHouseraKey(data.organizationId);
+    if (!key) throw new Error("Agenția nu are o cheie de conexiune Housera.");
+    const { loadHouseraMapping } = await import("./housera/listing.server");
+    const { createHouseraClient, HouseraError } = await import("./housera/client.server");
+    const { sortKeysDeep, houseraWarningsText } = await import("./housera/publish");
+    const mapped = await loadHouseraMapping(data.organizationId, data.propertyId, context.userId);
+    const client = createHouseraClient({ key, baseUrl: houseraBaseUrl(process.env), onUnauthorized: () => markHouseraReconnect(data.organizationId) });
+    const results: Array<{ externalRef: string; transaction: string; valid: boolean; errors: string[]; warnings: string[] }> = [];
+    for (const l of mapped.listings) {
+      try {
+        const r = await client.request<{ valid?: boolean; errors?: unknown; warnings?: unknown } | null>("listings/validate", { method: "POST", body: sortKeysDeep(l.payload) });
+        const errs = Array.isArray(r?.errors) ? (r!.errors as Array<Record<string, unknown>>).map((e) => `${String(e.code ?? "eroare")}${typeof e.pointer === "string" ? ` (${e.pointer.replace(/^\/+/, "")})` : ""}`) : [];
+        results.push({ externalRef: l.externalRef, transaction: l.transaction, valid: r?.valid === true && errs.length === 0, errors: errs, warnings: houseraWarningsText(r?.warnings) });
+      } catch (e) {
+        if (e instanceof HouseraError && e.kind === "validation") {
+          results.push({ externalRef: l.externalRef, transaction: l.transaction, valid: false, errors: e.fields.length ? e.fields.map((f, i) => `${e.codes[i] ?? e.codes[0] ?? "invalid"} (${f})`) : e.codes, warnings: [] });
+        } else throw new Error(e instanceof HouseraError ? e.message : "Validarea Housera nu a putut fi făcută.");
+      }
     }
-    return mapPropertyToHousera(p, cached.schema, { agentEmail });
+    return results;
   });

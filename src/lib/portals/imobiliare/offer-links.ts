@@ -10,6 +10,12 @@ export type PortalOffer = {
   url: string;
   /** Eticheta site-ului, când un portal are mai multe site-uri (ex. Romimo/Publi24). */
   label?: string;
+  /** Housera: versiunea anunțului (`If-Match` la următoarea editare). */
+  etag?: string;
+  /** Housera: starea raportată (`pending`, `active`, ...). */
+  status?: string;
+  /** Housera: hash-ul ultimei liste de poze trimise. */
+  photos_hash?: string;
 };
 
 export function imobiliareOfferUrl(id: string): string {
