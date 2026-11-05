@@ -7093,6 +7093,7 @@ export type Database = {
       }
       portal_oauth_states: {
         Row: {
+          code_verifier_encrypted: string | null
           consumed_at: string | null
           created_at: string
           created_by: string | null
@@ -7103,6 +7104,7 @@ export type Database = {
           state_hash: string
         }
         Insert: {
+          code_verifier_encrypted?: string | null
           consumed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -7113,6 +7115,7 @@ export type Database = {
           state_hash: string
         }
         Update: {
+          code_verifier_encrypted?: string | null
           consumed_at?: string | null
           created_at?: string
           created_by?: string | null

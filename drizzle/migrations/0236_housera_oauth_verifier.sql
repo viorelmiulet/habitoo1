@@ -1,0 +1,1 @@
+ALTER TABLE public.portal_oauth_states ADD COLUMN IF NOT EXISTS code_verifier_encrypted text;
