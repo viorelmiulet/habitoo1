@@ -10,6 +10,13 @@ beforeAll(() => {
   // jsdom nu are URL.createObjectURL; miniaturile nu sunt verificate aici.
   URL.createObjectURL = () => "blob:mock";
   URL.revokeObjectURL = () => {};
+  // jsdom nu are matchMedia; panoul îl folosește pentru detecția dispozitivelor tactile.
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  })) as unknown as typeof window.matchMedia;
 });
 
 function render() {
