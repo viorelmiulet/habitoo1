@@ -118,3 +118,59 @@ export const testHouseraConnection = createServerFn({ method: "POST" })
       return { ok: false as const, message };
     }
   });
+
+// ---------- H3: nomenclator și previzualizarea mapării (fără apeluri de scriere) ----------
+async function requirePlatformSuperadmin(context: unknown) {
+  const { data } = await (context as Ctx).supabase.rpc("is_superadmin");
+  if (data !== true) throw new Error("Acces refuzat: doar SuperAdmin.");
+}
+
+export const getHouseraSchemaStatus = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }) => {
+    await requirePlatformSuperadmin(context);
+    const { loadHouseraSchema } = await import("./housera/taxonomy.server");
+    const c = await loadHouseraSchema(process.env);
+    return c ? { synced: true as const, env: c.env, fetchedAt: c.fetchedAt, version: c.schema.version ?? null, featureCount: c.schema.features.length, affected: c.affected } : { synced: false as const };
+  });
+
+export const refreshHouseraSchemaNow = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }) => {
+    await requirePlatformSuperadmin(context);
+    const { refreshHouseraSchema } = await import("./housera/taxonomy.server");
+    const r = await refreshHouseraSchema(process.env, context.userId);
+    return { status: r.status, affected: r.cached.affected };
+  });
+
+export const listHouseraPreviewProperties = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => orgSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await requireSuperadmin(context, data.organizationId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin.from("properties").select("id, title, reference")
+      .eq("organization_id", data.organizationId).is("deleted_at", null)
+      .order("updated_at", { ascending: false }).limit(200);
+    return (rows ?? []).map((r) => ({ id: r.id, label: `${r.reference ? `${r.reference} · ` : ""}${r.title}` }));
+  });
+
+export const previewHouseraMapping = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => orgSchema.extend({ propertyId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireSuperadmin(context, data.organizationId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { loadHouseraSchema, refreshHouseraSchema } = await import("./housera/taxonomy.server");
+    const { mapPropertyToHousera } = await import("./housera/mapper");
+    const { data: p } = await supabaseAdmin.from("properties").select("*")
+      .eq("id", data.propertyId).eq("organization_id", data.organizationId).is("deleted_at", null).maybeSingle();
+    if (!p) throw new Error("Proprietatea nu a fost găsită.");
+    const cached = (await loadHouseraSchema(process.env)) ?? (await refreshHouseraSchema(process.env, context.userId)).cached;
+    let agentEmail: string | null = null;
+    if (p.assigned_to) {
+      const { data: prof } = await supabaseAdmin.from("profiles").select("email").eq("id", p.assigned_to).maybeSingle();
+      agentEmail = prof?.email ?? null;
+    }
+    return mapPropertyToHousera(p, cached.schema, { agentEmail });
+  });
