@@ -125,10 +125,69 @@ describe("Housera adapter", () => {
     expect(JSON.parse(photoCall.body!)).toEqual({ photos: [{ url: "https://crm.habitoo.ro/media/a.jpg" }, { url: "https://crm.habitoo.ro/media/b.jpg" }] });
   });
 
-  it("retragerea nu este încă suportată", async () => {
-    const { adapter } = setup(() => json(200, {}));
+  const offer = (tx: "sale" | "rent", id: string): PortalOffer => ({ transaction: tx, reference: `HB-p1-${tx}`, id, url: `https://staging.housera.ro/a/${id}`, etag: `"v1"`, status: "active" });
+  const state = (code: string, status: string, etag = `"v2"`) => ({ data: { code, status, etag } });
+  const writes = (calls: Call[]) => calls.filter((c) => c.method !== "GET");
+
+  it("activ + vândut → sold", async () => {
+    const { adapter, calls } = setup((c) => (c.method === "GET" ? json(200, state("S1", "active")) : json(200, state("S1", "sold", `"v3"`))), { stored: [offer("sale", "S1")] });
+    const r = await adapter.withdrawListing(ctx(), { propertyId: "p1", externalId: null, withdrawReason: "status_sold" });
+    expect(r.ok).toBe(true);
+    expect(calls[0].url).toContain("account/listings/S1");
+    expect(writes(calls).map((c) => `${c.method} ${c.url.split("/v1/")[1]}`)).toEqual(["POST listings/S1/sold"]);
+    if (r.ok) expect(r.data.offers?.[0]).toMatchObject({ status: "sold", etag: `"v3"` });
+  });
+
+  it("pending + debifare → DELETE și oferta scoasă", async () => {
+    const { adapter, calls } = setup((c) => (c.method === "GET" ? json(200, state("S1", "pending")) : new Response(null, { status: 204 })), { stored: [offer("sale", "S1")] });
+    const r = await adapter.withdrawListing(ctx(), { propertyId: "p1", externalId: null, withdrawReason: "user" });
+    expect(writes(calls).map((c) => `${c.method} ${c.url.split("/v1/")[1]}`)).toEqual(["DELETE listings/S1"]);
+    expect(r.ok && r.data.offers).toEqual([]);
+    expect(r.ok && r.data.replacedReferences).toEqual(["HB-p1-sale"]);
+  });
+
+  it("activ + debifare → pause", async () => {
+    const { adapter, calls } = setup((c) => (c.method === "GET" ? json(200, state("S1", "active")) : json(200, state("S1", "paused"))), { stored: [offer("sale", "S1")] });
     const r = await adapter.withdrawListing(ctx(), { propertyId: "p1", externalId: null });
-    expect(!r.ok && r.code).toBe("NOT_SUPPORTED");
-    expect(!r.ok && r.message).toBe("Retragerea de pe Housera vine în pasul următor.");
+    expect(writes(calls).map((c) => `${c.method} ${c.url.split("/v1/")[1]}`)).toEqual(["POST listings/S1/pause"]);
+    expect(r.ok && r.data.offers?.[0].status).toBe("paused");
+  });
+
+  it("deja pe pauză → zero scrieri", async () => {
+    const { adapter, calls } = setup(() => json(200, state("S1", "paused")), { stored: [offer("sale", "S1")] });
+    const r = await adapter.withdrawListing(ctx(), { propertyId: "p1", externalId: null });
+    expect(r.ok).toBe(true);
+    expect(writes(calls)).toHaveLength(0);
+  });
+
+  it("409 listing_action_refused când e deja în starea dorită → reușită", async () => {
+    const { adapter } = setup((c, n) => (c.method === "POST" ? json(409, { code: "listing_action_refused" }) : json(200, state("S1", n === 1 ? "active" : "paused"))), { stored: [offer("sale", "S1")] });
+    const r = await adapter.withdrawListing(ctx(), { propertyId: "p1", externalId: null });
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.data.offers?.[0].status).toBe("paused");
+  });
+
+  it("404 → reușită cu avertisment", async () => {
+    const { adapter, calls } = setup(() => json(404, { code: "not_found" }), { stored: [offer("sale", "S1")] });
+    const r = await adapter.withdrawListing(ctx(), { propertyId: "p1", externalId: null });
+    expect(r.ok).toBe(true);
+    expect(writes(calls)).toHaveLength(0);
+    expect(r.ok && r.data.mediaWarning).toContain("nu mai există pe Housera");
+    expect(r.ok && r.data.replacedReferences).toEqual(["HB-p1-sale"]);
+  });
+
+  it("vânzare + închiriere cu motiv vândut → sold pe vânzare, pause pe închiriere", async () => {
+    const { adapter, calls } = setup((c) => (c.method === "GET" ? json(200, state("X", "active")) : json(200, state("X", c.url.endsWith("/sold") ? "sold" : "paused"))), { stored: [offer("sale", "S1"), offer("rent", "R1")] });
+    const r = await adapter.withdrawListing(ctx(), { propertyId: "p1", externalId: null, withdrawReason: "status_sold" });
+    expect(r.ok).toBe(true);
+    expect(writes(calls).map((c) => `${c.method} ${c.url.split("/v1/")[1]}`)).toEqual(["POST listings/S1/sold", "POST listings/R1/pause"]);
+  });
+
+  it("republicarea unui anunț pe pauză → resume", async () => {
+    const stored = [{ ...offer("sale", "S1"), status: "paused" }];
+    const { adapter, calls } = setup((c) => (c.url.endsWith("/resume") ? json(200, state("S1", "active", `"v4"`)) : c.url.includes("/photos") ? json(202, {}) : json(200, written("S1", "paused"), { "X-Housera-Unchanged": "true" })), { stored });
+    const r = await adapter.updateListing(ctx(), { propertyId: "p1", externalId: null });
+    expect(calls.some((c) => c.method === "POST" && c.url.endsWith("listings/S1/resume"))).toBe(true);
+    expect(r.ok && r.data.offers?.[0]).toMatchObject({ status: "active", etag: `"v4"` });
   });
 });
