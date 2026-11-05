@@ -128,10 +128,3 @@ export function houseraConnectionPatch(t: HouseraTokens, prevSettings: Record<st
     settings,
   };
 }
-
-/** Avertisment „Reconectează Housera” cu 14 zile înainte de expirare. */
-export function houseraExpiresSoon(expiresAt: string | null | undefined, nowMs: number): boolean {
-  if (!expiresAt) return false;
-  const t = new Date(expiresAt).getTime();
-  return Number.isFinite(t) && t - nowMs <= 14 * 86_400_000;
-}

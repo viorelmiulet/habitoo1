@@ -13,6 +13,7 @@
 import { homedirectKeyMissing } from "@/lib/portals/homedirect/config";
 import { oferaConfigured } from "@/lib/portals/ofera/config";
 import { zupConfigured } from "@/lib/portals/zup/config";
+import { houseraConfigured, houseraOAuthInfo, type HouseraOAuthInfo } from "@/lib/portals/housera/config";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -101,6 +102,9 @@ export type AgencyPortalCatalogItem = {
   companyDataMissing: string[];
   zupConfigured?: boolean;
   zupConnected?: boolean;
+  houseraConfigured?: boolean;
+  houseraConnected?: boolean;
+  houseraOAuth?: HouseraOAuthInfo | null;
 };
 
 /** Catalogul platformei, cu statusul agenției din sesiune. READ-ONLY. */
@@ -182,6 +186,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
           })
         : null;
       return {
+        ...(p.id === "housera" ? { houseraConfigured: houseraConfigured(process.env), houseraConnected: Boolean(row?.portal_credentials_encrypted), houseraOAuth: houseraOAuthInfo((row as { settings?: unknown } | undefined)?.settings) } : {}),
         ...(p.id === "zup" ? { zupConfigured: zupConfigured(process.env), zupConnected: Boolean(row?.portal_credentials_encrypted) } : {}),
         companyDataMissing: keyMissing.get(p.id) ?? [],
         activation: portalActivationMode(p.id),
