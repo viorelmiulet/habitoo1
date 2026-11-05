@@ -6,12 +6,14 @@
 import type { PortalOffer } from "../imobiliare/offer-links";
 import { HouseraError, type HouseraRequest, type HouseraResponse } from "./client.server";
 import type { HouseraListingDraft } from "./mapper";
+import { reactivateHousera } from "./withdraw";
 
 export type HouseraClientLike = {
   requestMeta<T = unknown>(path: string, req?: HouseraRequest): Promise<HouseraResponse<T>>;
 };
 
 export const HOUSERA_MAX_PHOTOS = 100;
+export const HOUSERA_REF_REUSE_MESSAGE = "Housera nu permite refolosirea referinței; contactează suportul.";
 
 /** Chei sortate recursiv: același anunț → exact același corp JSON. */
 export function sortKeysDeep<T>(value: T): T {
@@ -78,6 +80,10 @@ async function upsertOne(client: HouseraClientLike, draft: HouseraListingDraft, 
   try {
     return await put(prev?.etag ?? null);
   } catch (e) {
+    if (e instanceof HouseraError && e.status === 409 && e.code === "duplicate_listing" && e.existing?.external_ref === draft.externalRef) {
+      // Referința a fost ștearsă anterior (DELETE); nu reîncercăm.
+      throw new HouseraError("refused", HOUSERA_REF_REUSE_MESSAGE, 409, e.code, [], [], e.existing);
+    }
     if (!(e instanceof HouseraError) || e.status !== 412 || e.code !== "listing_changed_meanwhile") throw e;
     // Habitoo câștigă: recitim versiunea curentă și retrimitem o singură dată.
     if (!prev?.id) throw new HouseraError("refused", "Anunțul s-a schimbat pe Housera și nu are cod salvat în Habitoo.", 412, e.code);
@@ -107,7 +113,7 @@ export async function publishHousera(input: HouseraPublishInput): Promise<Houser
     if (res.headers.get("X-Housera-Unchanged") === "true") unchanged.push(draft.externalRef);
     const label = draft.transaction === "sale" ? "Vânzare" : "Închiriere";
     for (const w of houseraWarningsText(res.data?.warnings)) warnings.push(input.drafts.length > 1 ? `${label}: ${w}` : w);
-    const offer: PortalOffer = {
+    let offer: PortalOffer = {
       transaction: draft.transaction,
       reference: draft.externalRef,
       id: code,
@@ -116,6 +122,7 @@ export async function publishHousera(input: HouseraPublishInput): Promise<Houser
       ...((str(data.status) ?? prev?.status) ? { status: (str(data.status) ?? prev?.status)! } : {}),
       ...(prev?.photos_hash ? { photos_hash: prev.photos_hash } : {}),
     };
+    offer = await reactivateHousera(input.client, offer);
     if (photosHash && photosHash !== prev?.photos_hash) {
       await input.client.requestMeta(`listings/${encodeURIComponent(code)}/photos`, {
         method: "PUT",

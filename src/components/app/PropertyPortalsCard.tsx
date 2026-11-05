@@ -1,4 +1,5 @@
 import { deselectedErrorHidden } from "@/lib/portals/deselect-cleanup";
+import { HOUSERA_VIEW_LABEL } from "@/lib/portals/housera/status-view";
 import { portalCanPublish } from "@/lib/portals/registry";
 import { UNCONFIRMED_UPDATE_NOTE } from "@/lib/portals/transient-failure";
 /**
@@ -933,6 +934,8 @@ export const PropertyPortalsCard = forwardRef<
               const stateView =
                 cell.portalId === "vumsi" && cell.selected && vumsiView && !(latestOperationFailedFor(cell.portalId) && vumsiView.pill !== "error")
                   ? { label: vumsiView.label, pill: vumsiView.pill as StatusPillState }
+                  : cell.portalId === "housera" && cell.houseraView
+                  ? { label: HOUSERA_VIEW_LABEL[cell.houseraView], pill: "inactive" as StatusPillState }
                   : cell.portalId === "olx_direct" && cell.state === "syncing"
                   ? { label: "În moderare OLX", pill: "pending" as StatusPillState }
                   : cell.portalId === "zonata" && cell.state === "syncing"

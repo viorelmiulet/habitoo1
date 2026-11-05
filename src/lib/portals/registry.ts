@@ -554,7 +554,7 @@ export const PORTALS: PortalDefinition[] = [
     status: "available",
     directions: ["habitoo_to_portal"],
     authentication: ["oauth"],
-    capabilities: ["test_connection"],
+    capabilities: ["test_connection", "withdraw_listing"],
     configuration_schema: { fields: [] },
     website: "https://housera.ro",
     docs: "https://api.housera.ro",
