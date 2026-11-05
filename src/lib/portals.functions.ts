@@ -1577,6 +1577,7 @@ export async function executeListingAction(input: {
       } : {}),
       ...(definition.id === "imo24" ? { actorId } : {}),
       ...(definition.id === "ofera" ? { oferaIntent: input.oferaIntent, withdrawReason: input.withdrawReason } : {}),
+      ...(definition.id === "housera" ? { withdrawReason: input.withdrawReason } : {}),
     };
     result =
       action === "publish"

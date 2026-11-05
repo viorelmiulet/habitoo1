@@ -1,9 +1,9 @@
 /**
  * Adaptor Housera.ro (cheia agenției din H1/H2): publicare/actualizare per
- * tranzacție cu PUT listings/ref/{ref} și poze. Retragerea vine în pasul următor.
+ * tranzacție cu PUT listings/ref/{ref} și poze; retragere/pauză/vândut după starea reală.
  */
 import type { ListingOutcome, ListingRef, PortalAdapter, PortalContext, PortalFail, PortalResult } from "../adapter";
-import { notSupported } from "../adapter";
+import { withdrawHousera } from "../housera/withdraw";
 import type { PortalErrorCode } from "../errors";
 import type { PortalOffer } from "../imobiliare/offer-links";
 import { HOUSERA_MISSING_MESSAGE, houseraBaseUrl, houseraConfigured } from "../housera/config";
@@ -11,7 +11,6 @@ import { createHouseraClient, HouseraError, type HouseraErrorKind } from "../hou
 import type { HouseraMapResult } from "../housera/mapper";
 import { houseraPortalStatus, publishHousera, sortKeysDeep, type HouseraClientLike } from "../housera/publish";
 
-export const HOUSERA_WITHDRAW_LATER = "Retragerea de pe Housera vine în pasul următor.";
 
 const KIND_CODE: Record<HouseraErrorKind, PortalErrorCode> = {
   unauthorized: "AUTH_ERROR",
@@ -105,8 +104,31 @@ export function createHouseraAdapter(deps: HouseraAdapterDeps = {}): PortalAdapt
     },
     publishListing: (ctx, ref) => upsert(ctx, ref, "publish"),
     updateListing: (ctx, ref) => upsert(ctx, ref, "update"),
-    async withdrawListing() {
-      return { ...notSupported("withdraw"), message: HOUSERA_WITHDRAW_LATER };
+    async withdrawListing(ctx, ref) {
+      try {
+        if (!houseraConfigured(env())) return { ok: false, code: "CONFIG_ERROR", message: HOUSERA_MISSING_MESSAGE, detail: "housera_not_configured" };
+        const stored = await d.stored(ctx.organizationId, ref.propertyId);
+        if (!stored.length) return { ok: true, data: { externalId: null, live: false, processed: 0, portalStatus: "withdrawn", detail: "housera_withdraw nothing_stored", message: "Anunțul nu este publicat pe Housera." } };
+        if (!ctx.allowLiveRequests) return { ok: true, data: { externalId: ref.externalId, live: false, processed: 0, detail: `housera_withdraw_dry_run reason=${ref.withdrawReason ?? "user"} listings=${stored.length}`, message: "Trimiterile reale către Housera sunt oprite; nimic nu a fost retras." } };
+        const key = ctx.portalCredential ?? (await d.key(ctx.organizationId));
+        if (!key) return { ok: false, code: "AUTH_ERROR", message: "Agenția nu are o cheie de conexiune Housera. Conectează contul Housera.", detail: "housera_no_key" };
+        const r = await withdrawHousera({ stored, reason: ref.withdrawReason ?? null, client: d.client(key, ctx.organizationId) });
+        const withUrl = r.offers.filter((o) => o.url.startsWith("https://"));
+        return { ok: true, data: {
+          externalId: r.offers.map((o) => o.id).join(",") || null,
+          live: true,
+          processed: stored.length,
+          portalStatus: "withdrawn",
+          detail: `housera_withdraw reason=${ref.withdrawReason ?? "user"} writes=${r.writes} removed=${r.removed.length}`,
+          message: r.writes ? "Anunțul a fost retras de pe Housera." : "Housera: anunțul era deja retras.",
+          publicUrl: withUrl[0]?.url ?? null,
+          offers: r.offers,
+          replacedReferences: r.removed,
+          mediaWarning: r.warnings.length ? r.warnings.join(" · ") : null,
+        } };
+      } catch (e) {
+        return toFail(e);
+      }
     },
     async sync(ctx, refs) {
       let processed = 0, failed = 0;
