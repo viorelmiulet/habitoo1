@@ -24,6 +24,7 @@ export type HouseraMapperProperty = {
   county: string | null;
   district: string | null;
   street: string | null;
+  address?: string | null;
   street_number: string | null;
   postal_code: string | null;
   price: number | null;
@@ -229,6 +230,41 @@ export function houseraAffectedCodes(schema: HouseraSchema) {
   };
 }
 
+// ---------- Strada din adresă ----------
+const STREET_TYPES: Array<[RegExp, string]> = [
+  [/^str(ada)?\.?$/i, "Strada"],
+  [/^(bd|bdul|b-dul|bld|bulevardul)\.?$/i, "Bulevardul"],
+  [/^(șos|sos|ș-sea|șoseaua|soseaua)\.?$/i, "Șoseaua"],
+  [/^(cal|calea)\.?$/i, "Calea"],
+  [/^(al|aleea)\.?$/i, "Aleea"],
+  [/^(int|intr|intrarea)\.?$/i, "Intrarea"],
+  [/^(spl|splaiul)\.?$/i, "Splaiul"],
+  [/^(prel|prelungirea)\.?$/i, "Prelungirea"],
+];
+const capWord = (w: string) => w.split("-").map((x) => (x ? x[0].toLocaleUpperCase("ro") + x.slice(1).toLocaleLowerCase("ro") : x)).join("-");
+export const HOUSERA_STREET_NUMBER = /^[A-Za-z0-9](?:[A-Za-z0-9 ./,-]*[A-Za-z0-9])?$/;
+
+/** Pur: „Str. Mihai Eminescu nr. 5, Sector 1” → { street: "Strada Mihai Eminescu", number: "5" }. */
+export function streetFromAddress(address: string | null | undefined): { street: string | null; number: string | null } {
+  const head = (address ?? "").split(",")[0].replace(/\s+/g, " ").trim();
+  if (!head) return { street: null, number: null };
+  let rest = head;
+  let number: string | null = null;
+  const m = rest.match(/^(.*?)(?:\s+(?:nr\.?|num[ăa]r(?:ul)?)\s*|\s+)(\d+[A-Za-z]?(?:\s*\/\s*\d+[A-Za-z]?)?(?:\s*(?:bis|[A-Za-z]))?)$/i);
+  if (m && m[1].trim()) { rest = m[1].trim(); number = m[2].replace(/\s*\/\s*/, "/").trim(); }
+  rest = rest.replace(/\s+(?:nr\.?|num[ăa]r(?:ul)?)$/i, "").trim();
+  const words = rest.split(" ").filter(Boolean);
+  let prefix: string | null = null;
+  if (words.length > 1 || (words.length === 1 && !STREET_TYPES.some(([r]) => r.test(words[0])))) {
+    const hit = STREET_TYPES.find(([r]) => r.test(words[0]));
+    if (hit) { prefix = hit[1]; words.shift(); }
+  }
+  const name = words.map(capWord).join(" ");
+  if (!name || !/[\p{L}]/u.test(name)) return { street: null, number: null };
+  const street = (prefix ? `${prefix} ${name}` : name).slice(0, 100);
+  return { street, number };
+}
+
 // ---------- Mapare ----------
 export function mapPropertyToHousera(
   p: HouseraMapperProperty,
@@ -310,10 +346,18 @@ function mapOne(p: HouseraMapperProperty, schema: HouseraSchema, ctx: { agentEma
   const city = txt(p.city);
   if (!city) errors.push("Orașul lipsește."); else payload["city"] = city;
   const landClass = type === "land" ? landClassification(p) : null;
-  const street = txt(p.street);
+  let street = txt(p.street);
+  let sn = txt(p.street_number);
+  if (!street) {
+    const parsed = streetFromAddress(p.address);
+    if (parsed.street) {
+      street = parsed.street;
+      if (!sn) sn = parsed.number;
+      warnings.push(`Strada a fost preluată din adresă: «${parsed.street}» nr. «${parsed.number ?? "—"}». Verifică.`);
+    }
+  }
   if (street) payload["street"] = street.slice(0, 100);
   else if (!(type === "land" && landClass === "outside_built_up_area")) errors.push("Strada lipsește.");
-  const sn = txt(p.street_number);
   if (sn) { if (/^[A-Za-z0-9](?:[A-Za-z0-9 ./,-]*[A-Za-z0-9])?$/.test(sn) && sn.length <= 16) payload["street_number"] = sn; else warnings.push("Numărul străzii nu respectă formatul Housera și a fost omis."); }
   put("county", txt(p.county));
   put("area", txt(p.district));
