@@ -25,7 +25,7 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
-it("Clienți restrâns oferă Contacte, Cereri și Contracte și închide meniul la navigare", async () => {
+it("Clienți restrâns oferă Contacte și Cereri, iar Contracte e pagină proprie", async () => {
   const host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);

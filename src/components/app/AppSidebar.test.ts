@@ -7,11 +7,12 @@ const paths = (admin: boolean) => agencyNavFor(admin).flatMap(g => g.items.map(i
 describe("meniul lateral compact", () => {
   it("păstrează ordinea celor trei secțiuni și grupurile", () => {
     expect(agencyNav.map(g => g.title ?? g.items[0]?.label)).toEqual([
-      "Acasă", "Proprietăți", "Lead-uri", "Clienți", "Calendar", "Matching",
+      "Acasă", "Proprietăți", "Lead-uri", "Clienți", "Contracte", "Calendar", "Matching",
       "Colaborare", "Anunțuri particulari", "ACP", "Asistent AI", "Comisioane", "Rapoarte", "Setări",
     ]);
     expect(agencyNav.filter(g => g.section).map(g => g.section)).toEqual(["Creștere", "Agenție"]);
-    expect(agencyNav.find(g => g.title === "Clienți")?.items.map(i => i.to)).toEqual(["/app/contacts", "/app/requests", "/app/contracts"]);
+    expect(agencyNav.find(g => g.title === "Clienți")?.items.map(i => i.to)).toEqual(["/app/contacts", "/app/requests"]);
+    expect(agencyNav.find(g => !g.title && g.items.some(i => i.to === "/app/contracts"))?.items.map(i => i.to)).toEqual(["/app/contracts"]);
     expect(agencyNav.find(g => g.title === "Calendar")?.items.map(i => i.to)).toEqual(["/app/calendar", "/app/activities"]);
     expect(agencyNav.find(g => g.title === "Rapoarte")?.items.map(i => i.to)).toEqual(["/app/reports", "/app/goals"]);
   });

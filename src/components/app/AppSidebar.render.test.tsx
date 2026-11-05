@@ -67,7 +67,7 @@ describe("meniul lateral randat", () => {
     });
     it(`rol ${admin ? "admin" : "agent"}: restrâns are o singură intrare per grup`, () => {
       renderSidebar(agencyNavFor(admin), true);
-      expect(document.querySelectorAll("nav [data-nav-row]")).toHaveLength(13);
+      expect(document.querySelectorAll("nav [data-nav-row]")).toHaveLength(14);
       expect(document.querySelector('nav button[aria-label="Proprietăți"]')).not.toBeNull();
       expect(document.querySelector('nav a[href="/app/properties/new"]')).toBeNull();
       expect(document.querySelector('nav button[aria-label="Setări"]')).not.toBeNull();
