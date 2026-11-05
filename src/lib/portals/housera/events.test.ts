@@ -42,7 +42,7 @@ function fakeDb(offers: PortalOffer[]) {
       let payload: Record<string, unknown> = {};
       const chain = () => q;
       Object.assign(q, {
-        select: chain, eq: (k: string, v: unknown) => { q._filters.push([k, v]); return q; }, contains: (k: string, v: unknown) => { q._filters.push([`@${k}`, v]); return q; },
+        select: chain, eq: (k: string, v: unknown) => { q._filters.push([k, v]); return q; }, contains: (k: string, v: unknown) => { if (typeof v !== "string") throw new Error("contains needs a JSON string"); q._filters.push([`@${k}`, JSON.parse(v)]); return q; },
         limit: chain, order: chain, lt: chain,
         insert: (row: Record<string, unknown>) => { op = "insert"; payload = row; return q; },
         update: (p: Record<string, unknown>) => { op = "update"; payload = p; return q; },

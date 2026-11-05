@@ -4,7 +4,7 @@
  * Doar citiri la Housera (`GET leads/{id}`, `GET leads/{id}/messages`).
  * Jurnalul nu conține niciodată date de contact.
  */
-import type { HouseraEvent } from "./events";
+import { houseraOfferFilter, type HouseraEvent } from "./events";
 import type { HouseraClientLike } from "./publish";
 import { HouseraError } from "./client.server";
 
@@ -75,11 +75,11 @@ async function defaultClient(orgId: string): Promise<HouseraClientLike | null> {
 const UUID = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-(sale|rent)$/i;
 
 async function matchProperty(admin: Admin, orgId: string, lead: HouseraLead) {
-  const byOffer = async (f: Record<string, string>) => {
-    const { data } = await admin.from("portal_listings").select("property_id").eq("portal", "housera").eq("organization_id", orgId).contains("portal_offers", [f]).limit(1).maybeSingle();
+  const byOffer = async (field: "id" | "reference", value: string) => {
+    const { data } = await admin.from("portal_listings").select("property_id").eq("portal", "housera").eq("organization_id", orgId).contains("portal_offers", houseraOfferFilter(field, value)).limit(1).maybeSingle();
     return (data?.property_id as string | undefined) ?? null;
   };
-  let propertyId = (lead.listingCode ? await byOffer({ id: lead.listingCode }) : null) ?? (lead.externalRef ? await byOffer({ reference: lead.externalRef }) : null);
+  let propertyId = (lead.listingCode ? await byOffer("id", lead.listingCode) : null) ?? (lead.externalRef ? await byOffer("reference", lead.externalRef) : null);
   if (!propertyId && lead.externalRef) propertyId = lead.externalRef.match(UUID)?.[1]?.toLowerCase() ?? null;
   if (!propertyId) return { propertyId: null, assignedTo: null, title: null };
   const { data } = await admin.from("properties").select("id, title, assigned_to").eq("id", propertyId).eq("organization_id", orgId).maybeSingle();
@@ -185,9 +185,11 @@ async function importMessages(ctx: Ctx, externalId: string, leadId: string) {
   }
   let saved = 0;
   let lastIn: { id: string; body: string | null } | null = null;
+  let cursor: string | null = null;
   for (let page = 0; page < 10; page++) {
     const query: Record<string, string | number> = {};
-    if (after) query["after"] = after;
+    if (cursor) query["cursor"] = cursor;
+    else if (after) query["after"] = after;
     const r = await ctx.client.requestMeta<unknown>(`leads/${encodeURIComponent(externalId)}/messages`, { query });
     const o = obj(r.data);
     const list = (Array.isArray(r.data) ? r.data : Array.isArray(o["data"]) ? o["data"] : []) as unknown[];
@@ -213,7 +215,9 @@ async function importMessages(ctx: Ctx, externalId: string, leadId: string) {
         lastIn = { id, body };
       }
     }
-    if (!obj(o["meta"])["next"] && !o["has_more"]) break;
+    const meta = obj(o["meta"]);
+    cursor = str(meta["next_cursor"]);
+    if (!cursor && !meta["next"] && !o["has_more"]) break;
   }
   await admin.from("portal_lead_links").update({ last_message_id: after, updated_at: now.toISOString() })
     .eq("portal", "housera").eq("organization_id", orgId).eq("external_lead_id", externalId);
