@@ -86,10 +86,11 @@ export async function runHouseraAvailabilityCron(nowMs = Date.now(), deps: House
     const listings = (rows ?? []) as Row[];
     const enabled = new Set(((pubs ?? []) as Array<{ property_id: string }>).map((p) => p.property_id));
     const propIds = listings.map((l) => l.property_id);
+    // Confirmarea se face doar pentru proprietăți active ȘI publicate în Habitoo.
     const { data: props } = propIds.length
-      ? await admin.from("properties").select("id").in("id", propIds).eq("status", "active").is("deleted_at", null)
+      ? await admin.from("properties").select("id").in("id", propIds).eq("status", "active").eq("publish_status", "published").is("deleted_at", null)
       : { data: [] };
-    const active = new Set(((props ?? []) as Array<{ id: string }>).map((p) => p.id));
+    const publishable = new Set(((props ?? []) as Array<{ id: string }>).map((p) => p.id));
     const byCode = new Map<string, Row>();
     const byRef = new Map<string, Row>();
     for (const l of listings) for (const o of parsePortalOffers(l.portal_offers)) { byCode.set(o.id, l); byRef.set(o.reference, l); }
