@@ -1,0 +1,74 @@
+/**
+ * Construcția feedului XML Kyero pentru BazarulDeCase.ro (server-only).
+ * Aceleași oferte ca feedul JSON al portalului: agenția din token, oferte publicate,
+ * nearhivate, cu status public și bifate pentru BazarulDeCase.ro.
+ */
+import { feedUrlsForRequest } from "@/lib/site-feed/config";
+import { FEED_PUBLIC_STATUSES, feedImageUrl, isImageFeedEligible, type PropertyImageRow, type PropertyRow } from "@/lib/site-feed/mapper";
+import { publicCoords } from "@/lib/geo";
+import { BAZARULDECASE_PORTAL, kyeroDocument, kyeroProperties } from "./kyero";
+
+export type KyeroFeedBuild = { xml: string; properties: number; offers: number; warnings: string[] };
+
+const amenities = (p: PropertyRow) => [
+  ...new Set([
+    ...(p.features ?? []), ...(p.additional_spaces ?? []), ...(p.kitchen_features ?? []), ...(p.metering ?? []),
+    ...(p.appliances ?? []), ...(p.building_amenities ?? []), ...(p.street_arrangement ?? []),
+    ...(((p as unknown as { views?: string[] }).views) ?? []), ...(p.misc_features ?? []), ...(p.cooling_systems ?? []),
+  ]),
+];
+
+export async function buildBazarulKyeroFeed(input: { organizationId: string; requestUrl: URL | string }): Promise<KyeroFeedBuild> {
+  const url = typeof input.requestUrl === "string" ? new URL(input.requestUrl) : input.requestUrl;
+  const { baseUrl } = feedUrlsForRequest(url);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { data: pubs } = await supabaseAdmin.from("portal_publications").select("property_id")
+    .eq("organization_id", input.organizationId).eq("portal_key", BAZARULDECASE_PORTAL).eq("enabled", true);
+  const selectedIds = [...new Set((pubs ?? []).map((r) => r.property_id))];
+  if (!selectedIds.length) return { xml: kyeroDocument([]), properties: 0, offers: 0, warnings: [] };
+
+  const rows: PropertyRow[] = [];
+  for (let i = 0; i < selectedIds.length; i += 300) {
+    const { data } = await supabaseAdmin.from("properties").select("*")
+      .eq("organization_id", input.organizationId).in("id", selectedIds.slice(i, i + 300))
+      .eq("publish_status", "published").is("deleted_at", null).in("status", [...FEED_PUBLIC_STATUSES]);
+    rows.push(...((data ?? []) as PropertyRow[]));
+  }
+  rows.sort((a, b) => (b.updated_at ?? "").localeCompare(a.updated_at ?? ""));
+  const ids = rows.map((r) => r.id);
+  const agentIds = [...new Set(rows.map((r) => r.assigned_to).filter((v): v is string => !!v))];
+
+  const images: PropertyImageRow[] = [];
+  for (let i = 0; i < ids.length; i += 300) {
+    const { data } = await supabaseAdmin.from("property_images").select("*")
+      .eq("organization_id", input.organizationId).in("property_id", ids.slice(i, i + 300))
+      .eq("include_in_publish", true).eq("is_confidential", false);
+    images.push(...((data ?? []) as PropertyImageRow[]));
+  }
+  const { data: agents } = agentIds.length
+    ? await supabaseAdmin.from("profiles").select("id, email, phone").in("id", agentIds)
+    : { data: [] as Array<{ id: string; email: string | null; phone: string | null }> };
+  const agentById = new Map((agents ?? []).map((a) => [a.id, a]));
+  const imagesBy = new Map<string, PropertyImageRow[]>();
+  for (const img of images.filter(isImageFeedEligible)) imagesBy.set(img.property_id, [...(imagesBy.get(img.property_id) ?? []), img]);
+
+  const xml: string[] = [];
+  const warnings: string[] = [];
+  for (const p of rows) {
+    const imgs = (imagesBy.get(p.id) ?? [])
+      .sort((a, b) => (a.is_primary === b.is_primary ? (a.position ?? 0) - (b.position ?? 0) : a.is_primary ? -1 : 1))
+      .map((img) => feedImageUrl(baseUrl, img.id))
+      .filter((u) => u.startsWith("https://") || !/^https?:/.test(u) || url.protocol === "http:");
+    const c = publicCoords(p);
+    const r = kyeroProperties({
+      property: { ...p, features: amenities(p) },
+      images: imgs,
+      agent: p.assigned_to ? agentById.get(p.assigned_to) ?? null : null,
+      coords: c ? { lat: c.lat, lng: c.lng } : null,
+    });
+    xml.push(...r.xml);
+    warnings.push(...r.warnings);
+  }
+  return { xml: kyeroDocument(xml), properties: xml.length, offers: rows.length, warnings };
+}
