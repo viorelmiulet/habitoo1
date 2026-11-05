@@ -12,7 +12,7 @@ export type FeedAuthOk = {
   tokenId: string;
   tokenPrefix: string;
   /** Din ce credențial a venit cererea: tokenul de site sau o cheie de portal. */
-  source: "site_token" | "portal_key" | "clickimob_index" | "imobli_index" | "locuit_index" | "imobiliareplus_index" | "imove_index";
+  source: "site_token" | "portal_key" | "clickimob_index" | "imobli_index" | "locuit_index" | "imobiliareplus_index" | "imove_index" | "bazaruldecase_index";
   /**
    * Portalul care citește feedul, când cererea vine cu o cheie de portal.
    * `null` = token de site (feedul propriu al agenției, fără filtrare pe portal).
@@ -76,7 +76,7 @@ export function readTokenFromRequest(request: Request): string | null {
   return alt?.trim() || null;
 }
 
-const INDEX_TOKEN_PREFIX = { clickimob: "hbci_", imobli: "hbim_", locuit: "hblo_", imobiliareplus: "hbip_", imove: "hbmv_" } as const;
+const INDEX_TOKEN_PREFIX = { clickimob: "hbci_", imobli: "hbim_", locuit: "hblo_", imobiliareplus: "hbip_", imove: "hbmv_", bazaruldecase: "hbbc_" } as const;
 
 function tokenPrefixOf(token: string | null): string | null {
   if (!token) return null;
@@ -86,6 +86,7 @@ function tokenPrefixOf(token: string | null): string | null {
   if (prefix.startsWith("hbci_")) return /^hbci_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
   if (prefix.startsWith("hbim_")) return /^hbim_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
   if (prefix.startsWith("hblo_")) return /^hblo_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
+  if (prefix.startsWith("hbbc_")) return /^hbbc_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
   if (prefix.startsWith("hbmv_")) return /^hbmv_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
   // Cheile emise pentru portaluri: <portal>_portal_<8 hex>
   return /_portal_[0-9a-f]{8}$/.test(prefix) ? prefix : null;
@@ -153,7 +154,7 @@ export type FeedAuthOptions = {
    * respinge tokenurile de index ale celorlalte portaluri. Tokenul acestui
    * portal nu deschide alte feeduri.
    */
-  indexPortal?: "imove";
+  indexPortal?: "imove" | "bazaruldecase";
 };
 
 export async function authenticateFeedRequest(

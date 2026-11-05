@@ -7,7 +7,7 @@ import baseDoc from "../../../docs/feed-portaluri-habitoo.md?raw";
 import imobiliareplusDoc from "../../../docs/feed-imobiliareplus.md?raw";
 import { INDEX_PORTALS, type IndexPortal } from "@/lib/portals/clickimob/index-feed";
 
-export const FEED_DOC_PORTALS = ["imobiliareplus", "imobli", "locuit", "clickimob"] as const satisfies readonly IndexPortal[];
+export const FEED_DOC_PORTALS = ["imobiliareplus", "imobli", "locuit", "clickimob", "bazaruldecase"] as const satisfies readonly IndexPortal[];
 export type FeedDocPortal = (typeof FEED_DOC_PORTALS)[number];
 
 export const FEED_DOC_NAMES: Record<FeedDocPortal, string> = {
@@ -15,6 +15,7 @@ export const FEED_DOC_NAMES: Record<FeedDocPortal, string> = {
   imobli: "Imobli.ro",
   locuit: "Locuit.ro",
   clickimob: "ClickImob",
+  bazaruldecase: "BazarulDeCase.ro",
 };
 
 export function isFeedDocPortal(id: string): id is FeedDocPortal {

@@ -58,8 +58,7 @@ export async function buildBazarulKyeroFeed(input: { organizationId: string; req
   for (const p of rows) {
     const imgs = (imagesBy.get(p.id) ?? [])
       .sort((a, b) => (a.is_primary === b.is_primary ? (a.position ?? 0) - (b.position ?? 0) : a.is_primary ? -1 : 1))
-      .map((img) => feedImageUrl(baseUrl, img.id))
-      .filter((u) => u.startsWith("https://") || !/^https?:/.test(u) || url.protocol === "http:");
+      .map((img) => feedImageUrl(baseUrl, img.id));
     const c = publicCoords(p);
     const r = kyeroProperties({
       property: { ...p, features: amenities(p) },

@@ -18,7 +18,7 @@ import {
 } from "../adapter";
 import { toPortalError } from "../errors";
 
-export function createIndexFeedAdapter(portal: "clickimob" | "imobli" | "locuit" | "imobiliareplus", name: string): PortalAdapter {
+export function createIndexFeedAdapter(portal: "clickimob" | "imobli" | "locuit" | "imobiliareplus" | "bazaruldecase", name: string): PortalAdapter {
 /** Diagnoza feedului pentru o ofertă: ce va citi portalul, în realitate. */
 async function diagnose(ctx: PortalContext, ref: ListingRef): Promise<ListingDiagnostics> {
   const { inspectFeedMedia, inspectFeedProperty } = await import("../feed-inspect.server");
@@ -35,6 +35,12 @@ async function diagnose(ctx: PortalContext, ref: ListingRef): Promise<ListingDia
     notes.push("Nu este setată o imagine principală.");
   }
   if (property.visible && !property.agentId) notes.push("Oferta nu are agent asignat.");
+  if (portal === "bazaruldecase") {
+    const { kyeroType } = await import("../bazaruldecase/kyero");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin.from("properties").select("property_type").eq("id", ref.propertyId).eq("organization_id", ctx.organizationId).maybeSingle();
+    if (row && !kyeroType(row.property_type)) notes.push(`Tipul „${row.property_type}” nu are corespondent Kyero: oferta lipsește din feedul XML BazarulDeCase.ro.`);
+  }
 
   return {
     feedVisible: property.visible,
@@ -262,4 +268,5 @@ return adapter;
 export const clickimobAdapter = createIndexFeedAdapter("clickimob", "ClickImob");
 export const imobliAdapter = createIndexFeedAdapter("imobli", "Imobli");
 export const locuitAdapter = createIndexFeedAdapter("locuit", "Locuit.ro");
+export const bazaruldecaseAdapter = createIndexFeedAdapter("bazaruldecase", "BazarulDeCase.ro");
 export const imobiliareplusAdapter = createIndexFeedAdapter("imobiliareplus", "Imobiliare+");
