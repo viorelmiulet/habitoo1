@@ -222,7 +222,7 @@ const MAPPED_FIELDS = [
 /** Codurile din maparea noastră care apar în `retired` / `withdrawn`. */
 export function houseraAffectedCodes(schema: HouseraSchema) {
   const mine = houseraMappingCodes();
-  const has = (kind: string, code: string) => mine.some((m) => m.code === code && (m.kind === kind || (kind === "feature" && m.kind === "feature")));
+  const has = (kind: string, code: string) => mine.some((m) => m.code === code && m.kind === kind);
   return {
     retired: (schema.retired ?? []).filter((r) => has(r.kind, r.code)),
     withdrawn: (schema.withdrawn ?? []).filter((w) => has(w.kind, w.code)),
