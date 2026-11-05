@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, CalendarPlus, Eye, Flame, Plus, Target, UserRound } from "lucide-react";
+import { Building2, CalendarPlus, Eye, FileSignature, Flame, Plus, Target, UserRound } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,10 @@ import { useCurrentUser } from "@/hooks/use-session";
 import { contactTypeLabels } from "@/lib/labels";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { announceGuideContext } from '@/lib/onboarding-tour';
+
+const NewContractDialog = lazy(() =>
+  import("@/components/app/contracts/NewContractDialog").then((m) => ({ default: m.NewContractDialog })),
+);
 
 function ContactSheet({
   open,
@@ -223,6 +227,8 @@ export function QuickAdd({ variant = "topbar" }: { variant?: "topbar" | "mobile-
   const [leadOpen, setLeadOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   const [viewingOpen, setViewingOpen] = useState(false);
+  const [contractOpen, setContractOpen] = useState(false);
+  const [contractMounted, setContractMounted] = useState(false);
 
   return (
     <>
@@ -263,6 +269,14 @@ export function QuickAdd({ variant = "topbar" }: { variant?: "topbar" | "mobile-
           >
             <Target className="size-4" /> Cerere
           </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              setContractMounted(true);
+              setContractOpen(true);
+            }}
+          >
+            <FileSignature className="size-4" /> Contract
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setActivityOpen(true)}>
             <CalendarPlus className="size-4" /> Activitate
           </DropdownMenuItem>
@@ -274,6 +288,11 @@ export function QuickAdd({ variant = "topbar" }: { variant?: "topbar" | "mobile-
 
       <ContactSheet open={contactOpen} onOpenChange={setContactOpen} />
       <LeadSheet open={leadOpen} onOpenChange={setLeadOpen} />
+      {contractMounted ? (
+        <Suspense fallback={null}>
+          <NewContractDialog open={contractOpen} onOpenChange={setContractOpen} />
+        </Suspense>
+      ) : null}
       <ActivityDialog
         open={activityOpen}
         onOpenChange={setActivityOpen}
