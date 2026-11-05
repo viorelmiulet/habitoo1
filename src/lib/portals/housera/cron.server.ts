@@ -5,6 +5,7 @@ import { houseraAdmin, ingestPulledHouseraEvent, retryHouseraEvents } from "./ev
 import { pullHouseraEvents, runHouseraAvailability, type HouseraAccountListing } from "./sync";
 import { houseraListingStatus } from "./events";
 import { parsePortalOffers } from "../imobiliare/offer-links";
+import type { HouseraClientLike } from "./publish";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
@@ -68,9 +69,13 @@ export async function runHouseraEventsCron() {
 
 type Row = { id: string; property_id: string; status: string; portal_offers: unknown };
 
-export async function runHouseraAvailabilityCron(nowMs = Date.now()) {
+/** Doar pentru teste: admin și client injectate. */
+export type HouseraCronDeps = { admin?: Admin; clientFor?: (c: Conn) => Promise<HouseraClientLike> };
+
+export async function runHouseraAvailabilityCron(nowMs = Date.now(), deps: HouseraCronDeps = {}) {
   if (!houseraConfigured(process.env)) return { ok: true, skipped: "not_configured" };
-  const admin = await houseraAdmin();
+  const admin = deps.admin ?? (await houseraAdmin());
+  const clientForConn = deps.clientFor ?? clientFor;
   const out: Array<Record<string, unknown>> = [];
   for (const c of await connections(admin)) {
     const org = c.organization_id;
@@ -81,18 +86,19 @@ export async function runHouseraAvailabilityCron(nowMs = Date.now()) {
     const listings = (rows ?? []) as Row[];
     const enabled = new Set(((pubs ?? []) as Array<{ property_id: string }>).map((p) => p.property_id));
     const propIds = listings.map((l) => l.property_id);
+    // Confirmarea se face doar pentru proprietăți active ȘI publicate în Habitoo.
     const { data: props } = propIds.length
-      ? await admin.from("properties").select("id").in("id", propIds).eq("status", "active").is("deleted_at", null)
+      ? await admin.from("properties").select("id").in("id", propIds).eq("status", "active").eq("publish_status", "published").is("deleted_at", null)
       : { data: [] };
-    const active = new Set(((props ?? []) as Array<{ id: string }>).map((p) => p.id));
+    const publishable = new Set(((props ?? []) as Array<{ id: string }>).map((p) => p.id));
     const byCode = new Map<string, Row>();
     const byRef = new Map<string, Row>();
     for (const l of listings) for (const o of parsePortalOffers(l.portal_offers)) { byCode.set(o.id, l); byRef.set(o.reference, l); }
     const rowOf = (l: HouseraAccountListing) => byCode.get(l.code) ?? (l.externalRef ? byRef.get(l.externalRef) : undefined);
     try {
       const r = await runHouseraAvailability({
-        client: await clientFor(c), nowMs,
-        eligible: (l) => { const row = rowOf(l); return !!row && row.status !== "withdrawn" && enabled.has(row.property_id) && active.has(row.property_id); },
+        client: await clientForConn(c), nowMs,
+        eligible: (l) => { const row = rowOf(l); return !!row && row.status !== "withdrawn" && enabled.has(row.property_id) && publishable.has(row.property_id); },
         reconcile: async (l) => {
           const row = rowOf(l);
           if (!row) return false;
