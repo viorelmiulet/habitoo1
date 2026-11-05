@@ -112,6 +112,7 @@ import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/p
 import { Route as ApiPublicCronAcpEnrichRouteImport } from './routes/api/public/cron/acp-enrich'
 import { Route as ApiPublicCronChatEmailRouteImport } from './routes/api/public/cron/chat-email'
 import { Route as ApiPublicCronCommissionRatesRouteImport } from './routes/api/public/cron/commission-rates'
+import { Route as ApiPublicCronHouseraSchemaRouteImport } from './routes/api/public/cron/housera-schema'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
 import { Route as ApiPublicCronListingImagesRouteImport } from './routes/api/public/cron/listing-images'
@@ -749,6 +750,12 @@ const ApiPublicCronCommissionRatesRoute =
     path: '/api/public/cron/commission-rates',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronHouseraSchemaRoute =
+  ApiPublicCronHouseraSchemaRouteImport.update({
+    id: '/api/public/cron/housera-schema',
+    path: '/api/public/cron/housera-schema',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronLacheieResendRoute =
   ApiPublicCronLacheieResendRouteImport.update({
     id: '/api/public/cron/lacheie-resend',
@@ -1271,6 +1278,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/acp-enrich': typeof ApiPublicCronAcpEnrichRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
+  '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
@@ -1445,6 +1453,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/acp-enrich': typeof ApiPublicCronAcpEnrichRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
+  '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
@@ -1625,6 +1634,7 @@ export interface FileRoutesById {
   '/api/public/cron/acp-enrich': typeof ApiPublicCronAcpEnrichRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
+  '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
@@ -1805,6 +1815,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/acp-enrich'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
+    | '/api/public/cron/housera-schema'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/listing-images'
@@ -1979,6 +1990,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/acp-enrich'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
+    | '/api/public/cron/housera-schema'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/listing-images'
@@ -2158,6 +2170,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/acp-enrich'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
+    | '/api/public/cron/housera-schema'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/listing-images'
@@ -2285,6 +2298,7 @@ export interface RootRouteChildren {
   ApiPublicCronAcpEnrichRoute: typeof ApiPublicCronAcpEnrichRoute
   ApiPublicCronChatEmailRoute: typeof ApiPublicCronChatEmailRoute
   ApiPublicCronCommissionRatesRoute: typeof ApiPublicCronCommissionRatesRoute
+  ApiPublicCronHouseraSchemaRoute: typeof ApiPublicCronHouseraSchemaRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
   ApiPublicCronListingImagesRoute: typeof ApiPublicCronListingImagesRoute
@@ -3076,6 +3090,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/commission-rates'
       fullPath: '/api/public/cron/commission-rates'
       preLoaderRoute: typeof ApiPublicCronCommissionRatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/housera-schema': {
+      id: '/api/public/cron/housera-schema'
+      path: '/api/public/cron/housera-schema'
+      fullPath: '/api/public/cron/housera-schema'
+      preLoaderRoute: typeof ApiPublicCronHouseraSchemaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/lacheie-resend': {
@@ -3888,6 +3909,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronAcpEnrichRoute: ApiPublicCronAcpEnrichRoute,
   ApiPublicCronChatEmailRoute: ApiPublicCronChatEmailRoute,
   ApiPublicCronCommissionRatesRoute: ApiPublicCronCommissionRatesRoute,
+  ApiPublicCronHouseraSchemaRoute: ApiPublicCronHouseraSchemaRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
   ApiPublicCronListingImagesRoute: ApiPublicCronListingImagesRoute,

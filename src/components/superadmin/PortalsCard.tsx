@@ -63,6 +63,7 @@ import { revokeOlxAuthorization, startOlxAuthorization } from "@/lib/portals/olx
 import { startZupAuthorization, revokeZupAuthorization } from "@/lib/portals/zup.functions";
 import { ZUP_MISSING_MESSAGE } from "@/lib/portals/zup/config";
 import { HouseraAgencyPanel } from "./HouseraAgencyPanel";
+import { HouseraMappingPanel } from "./HouseraMappingPanel";
 import {
   getStoriaTaxonomyState,
   refreshStoriaTaxonomy,
@@ -1066,7 +1067,7 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                       {item.portal.id === "vumsi" ? <VumsiNomenclaturePanel /> : null}
                       {item.portal.id === "vumsi" ? <VumsiMappingPanel /> : null}
                       {item.portal.id === "zup" ? <ZupNomenclaturePanel organizationId={organizationId} /> : null}
-                      {item.portal.id === "housera" ? <HouseraAgencyPanel organizationId={organizationId} /> : null}
+                      {item.portal.id === "housera" ? <><HouseraAgencyPanel organizationId={organizationId} /><HouseraMappingPanel organizationId={organizationId} /></> : null}
                       {item.supportsFeedPreview ? (
                         <Button
                           type="button"
