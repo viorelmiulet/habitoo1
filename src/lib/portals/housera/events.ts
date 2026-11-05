@@ -26,6 +26,11 @@ export function houseraEventConnection(e: HouseraEvent): string | null {
   return null;
 }
 
+/** Filtru jsonb pentru `.contains("portal_offers", …)`: șir JSON, nu array JS (supabase-js serializează array-urile ca literal Postgres `{…}`). */
+export function houseraOfferFilter(field: "id" | "reference", value: string): string {
+  return JSON.stringify([{ [field]: value }]);
+}
+
 export const HOUSERA_DEFERRED_NOTE = "neprocesat";
 export const HOUSERA_UNCONFIRMED_WARNING = "Housera a scos anunțul din căutare: disponibilitatea nu a fost confirmată.";
 export const HOUSERA_EDITED_WARNING = "Anunțul a fost editat în Housera; la următoarea salvare în Habitoo se retrimite varianta din Habitoo.";

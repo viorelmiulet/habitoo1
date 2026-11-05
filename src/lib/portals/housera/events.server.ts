@@ -81,13 +81,13 @@ async function notifyAgent(admin: Admin, orgId: string, propertyId: string, even
 }
 
 async function findListingRow(admin: Admin, orgId: string | null, code: string | null, ref: string | null) {
-  const pick = async (filter: Record<string, string>) => {
-    let q = admin.from("portal_listings").select("id, organization_id, property_id, status, portal_offers, public_url, last_error, last_warning, published_at").eq("portal", "housera").contains("portal_offers", [filter]);
+  const pick = async (field: "id" | "reference", value: string) => {
+    let q = admin.from("portal_listings").select("id, organization_id, property_id, status, portal_offers, public_url, last_error, last_warning, published_at").eq("portal", "housera").contains("portal_offers", houseraOfferFilter(field, value));
     if (orgId) q = q.eq("organization_id", orgId);
     const { data } = await q.limit(1).maybeSingle();
     return data as (HouseraListingRow & { id: string; organization_id: string; property_id: string }) | null;
   };
-  return (code ? await pick({ id: code }) : null) ?? (ref ? await pick({ reference: ref }) : null);
+  return (code ? await pick("id", code) : null) ?? (ref ? await pick("reference", ref) : null);
 }
 
 /** Aplică evenimentul; întoarce nota de procesare. Aruncă la eroare de DB (se reia). */
