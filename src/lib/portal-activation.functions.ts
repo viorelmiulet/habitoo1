@@ -117,7 +117,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
     const [{ data: connections }, { data: requests }, { data: catalogTokens }, { data: catalogLogs }] = await Promise.all([
       admin
         .from("portal_connections")
-        .select("portal, activated, external_account_id, portal_credentials_encrypted, last_sync_error, last_sync_status")
+        .select("portal, activated, external_account_id, portal_credentials_encrypted, last_sync_error, last_sync_status, settings")
         .eq("organization_id", organizationId),
       admin
         .from("portal_activation_requests")

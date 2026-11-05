@@ -19,9 +19,11 @@ import { startStoriaAuthorization } from "@/lib/portals/storia.functions";
 import { startOlxAuthorization } from "@/lib/portals/olx.functions";
 import { startZupAuthorization, revokeZupAuthorization, testZupAuthorization } from "@/lib/portals/zup.functions";
 import { ZUP_MISSING_MESSAGE } from "@/lib/portals/zup/config";
+import { HouseraConnectionControls, useHouseraCallbackToast } from "@/components/app/HouseraConnectionControls";
 import { agencyGridItems, agencyPortalCardState } from "@/lib/portals/grid-state";
 
 export function AgencyPortalCatalogCard() {
+  useHouseraCallbackToast();
   useEffect(() => {
     const result = new URLSearchParams(window.location.search).get("zup");
     if (result === "connected") toast.success("Contul ZUP al agenției a fost conectat.");
@@ -148,7 +150,16 @@ export function AgencyPortalCatalogCard() {
                   </div>
                 ) : null}
                 <div data-portal-statuses className="flex flex-wrap min-w-0 items-center gap-2 sm:ml-auto sm:justify-end">
-                    {item.id === "zup" ? (
+                    {item.id === "housera" && organizationId ? (
+                      <HouseraConnectionControls
+                        organizationId={organizationId}
+                        configured={item.houseraConfigured === true}
+                        connected={item.houseraConnected === true}
+                        oauth={item.houseraOAuth}
+                        beforeConnect={() => runActivate({ data: { portalId: "housera" } })}
+                        onChanged={() => void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] })}
+                      />
+                    ) : item.id === "zup" ? (
                       <>
                         <StatusBadge
                           className="h-7 text-[13px]"
@@ -184,7 +195,7 @@ export function AgencyPortalCatalogCard() {
                         </Button>
                       </>
                     ) : state.key === "oauth" ? (
-                      <Button className="h-11 w-full sm:w-auto" disabled={busy || item.id === "housera"} onClick={() => connect.mutate(item.id)}>
+                      <Button className="h-11 w-full sm:w-auto" disabled={busy} onClick={() => connect.mutate(item.id)}>
                         {state.buttonLabel}
                       </Button>
                     ) : (
