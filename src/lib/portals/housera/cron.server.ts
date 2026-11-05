@@ -5,6 +5,7 @@ import { houseraAdmin, ingestPulledHouseraEvent, retryHouseraEvents } from "./ev
 import { pullHouseraEvents, runHouseraAvailability, type HouseraAccountListing } from "./sync";
 import { houseraListingStatus } from "./events";
 import { parsePortalOffers } from "../imobiliare/offer-links";
+import type { HouseraClientLike } from "./publish";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
@@ -68,9 +69,13 @@ export async function runHouseraEventsCron() {
 
 type Row = { id: string; property_id: string; status: string; portal_offers: unknown };
 
-export async function runHouseraAvailabilityCron(nowMs = Date.now()) {
+/** Doar pentru teste: admin și client injectate. */
+export type HouseraCronDeps = { admin?: Admin; clientFor?: (c: Conn) => Promise<HouseraClientLike> };
+
+export async function runHouseraAvailabilityCron(nowMs = Date.now(), deps: HouseraCronDeps = {}) {
   if (!houseraConfigured(process.env)) return { ok: true, skipped: "not_configured" };
-  const admin = await houseraAdmin();
+  const admin = deps.admin ?? (await houseraAdmin());
+  const clientForConn = deps.clientFor ?? clientFor;
   const out: Array<Record<string, unknown>> = [];
   for (const c of await connections(admin)) {
     const org = c.organization_id;
