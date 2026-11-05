@@ -407,7 +407,7 @@ function QaPanelPage() {
 
               {credentials ? (
                 <div className="mt-4 rounded-[12px] border border-gold/40 bg-gold-tint p-3">
-                  <p className="text-xs font-semibold text-warning-foreground dark:text-warning-text">
+                  <p className="text-xs font-semibold text-warning-foreground">
                     Parole afișate o singură dată – nu sunt stocate nicăieri. Copiază-le acum.
                   </p>
                   <ul className="mt-2 space-y-2">

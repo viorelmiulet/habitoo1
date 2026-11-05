@@ -235,7 +235,7 @@
   --success: #6FCF9F;
   --success-foreground: #12352A;
   --warning: #D6A85A;
-  --warning-foreground: #2B2416;
+  --warning-foreground: var(--gold-dark);
   --warning-text: var(--gold-dark);
   --info: #9AA7B4;
   --info-foreground: #182A39;
