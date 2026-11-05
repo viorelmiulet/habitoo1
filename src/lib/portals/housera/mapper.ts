@@ -245,6 +245,19 @@ const capWord = (w: string) => w.split("-").map((x) => (x ? x[0].toLocaleUpperCa
 export const HOUSERA_STREET_NUMBER = /^[A-Za-z0-9](?:[A-Za-z0-9 ./,-]*[A-Za-z0-9])?$/;
 
 /** Pur: „Str. Mihai Eminescu nr. 5, Sector 1” → { street: "Strada Mihai Eminescu", number: "5" }. */
+/** Normalizează orașul/județul/zona pentru București (comparare fără diacritice/majuscule). Doar în mapare. */
+export function normalizeHouseraLocality(city: string | null | undefined, county: string | null | undefined, district: string | null | undefined): { city: string | null; county: string | null; area: string | null } {
+  const fold = (v: string) => v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  const c = txt(city), k = txt(county), d = txt(district);
+  const kOut = k && fold(k) === "bucuresti" ? "București" : k;
+  if (!c) return { city: null, county: kOut, area: d };
+  const f = fold(c).replace(/\./g, ". ").replace(/\s+/g, " ").trim();
+  const m = /^(?:(?:municipiul|mun\.) )?(?:bucuresti)?(?: ?,? ?(?:sector|sectorul) (\d))?$/.exec(f);
+  const isBuc = !!m && (f.includes("bucuresti") || !!m[1]);
+  if (!isBuc) return { city: c, county: kOut, area: d };
+  return { city: "București", county: "București", area: d ?? (m![1] ? `Sector ${m![1]}` : null) };
+}
+
 export function streetFromAddress(address: string | null | undefined): { street: string | null; number: string | null } {
   const head = (address ?? "").split(",")[0].replace(/\s+/g, " ").trim();
   if (!head) return { street: null, number: null };
@@ -343,7 +356,8 @@ function mapOne(p: HouseraMapperProperty, schema: HouseraSchema, ctx: { agentEma
   const lat = num(p.lat), lng = num(p.lng);
   if (lat === null || lng === null || Math.abs(lat) > 90 || Math.abs(lng) > 180 || (lat === 0 && lng === 0)) errors.push("Coordonatele (latitudine/longitudine) lipsesc.");
   else { payload["latitude"] = lat; payload["longitude"] = lng; }
-  const city = txt(p.city);
+  const loc = normalizeHouseraLocality(p.city, p.county, p.district);
+  const city = loc.city;
   if (!city) errors.push("Orașul lipsește."); else payload["city"] = city;
   const landClass = type === "land" ? landClassification(p) : null;
   let street = txt(p.street);
@@ -359,8 +373,8 @@ function mapOne(p: HouseraMapperProperty, schema: HouseraSchema, ctx: { agentEma
   if (street) payload["street"] = street.slice(0, 100);
   else if (!(type === "land" && landClass === "outside_built_up_area")) errors.push("Strada lipsește.");
   if (sn) { if (/^[A-Za-z0-9](?:[A-Za-z0-9 ./,-]*[A-Za-z0-9])?$/.test(sn) && sn.length <= 16) payload["street_number"] = sn; else warnings.push("Numărul străzii nu respectă formatul Housera și a fost omis."); }
-  put("county", txt(p.county));
-  put("area", txt(p.district));
+  put("county", loc.county);
+  put("area", loc.area);
   const pc = txt(p.postal_code);
   if (pc) { if (/^\d{6}$/.test(pc)) put("postal_code", pc); else warnings.push("Codul poștal nu are 6 cifre și a fost omis."); }
   put("country", "RO");
