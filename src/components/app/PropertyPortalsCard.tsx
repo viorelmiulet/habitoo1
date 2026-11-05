@@ -935,7 +935,7 @@ export const PropertyPortalsCard = forwardRef<
                 cell.portalId === "vumsi" && cell.selected && vumsiView && !(latestOperationFailedFor(cell.portalId) && vumsiView.pill !== "error")
                   ? { label: vumsiView.label, pill: vumsiView.pill as StatusPillState }
                   : cell.portalId === "housera" && cell.houseraView
-                  ? { label: HOUSERA_VIEW_LABEL[cell.houseraView], pill: (cell.houseraView === "sold" ? "published" : "inactive") as StatusPillState }
+                  ? { label: HOUSERA_VIEW_LABEL[cell.houseraView], pill: "inactive" as StatusPillState }
                   : cell.portalId === "olx_direct" && cell.state === "syncing"
                   ? { label: "În moderare OLX", pill: "pending" as StatusPillState }
                   : cell.portalId === "zonata" && cell.state === "syncing"
