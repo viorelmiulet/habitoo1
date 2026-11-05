@@ -473,6 +473,59 @@ export function AppSidebar({
           const active = group.items.some((item) => item.to === activePath);
           const GroupIcon = group.items[0]?.icon;
 
+          if (expandable && title && collapsed && GroupIcon) {
+            const badge = badges?.[String(group.items[0]?.to)];
+            return (
+              <div key={title} className="mb-1">
+                {group.section ? <div className="mx-2 my-2 h-px bg-sidebar-border" aria-hidden /> : null}
+                <DropdownMenu>
+                  <CollapsedTip collapsed label={title}>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        aria-label={title}
+                        data-tour={`group:${title === "Proprietăți" ? "Portofoliu" : title}`}
+                        data-nav-targets={group.items.map((item) => `nav:${String(item.to)}`).join(" ")}
+                        data-nav-row
+                        className={cn(
+                          "relative mx-auto flex size-11 justify-center border-0 px-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&_svg]:size-5 [&_svg]:stroke-[1.75]",
+                          active && "bg-sidebar-accent font-bold text-sidebar-accent-foreground",
+                        )}
+                      >
+                        <GroupIcon className={cn(active && "text-sidebar-primary")} aria-hidden />
+                        {badge ? <span className="absolute top-0 right-0 flex h-5 min-w-5 items-center justify-center rounded-pill bg-gold px-1 text-[10px] font-semibold text-gold-foreground">{badge > 99 ? "99+" : badge}</span> : null}
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </CollapsedTip>
+                  <DropdownMenuContent side="right" align="start" sideOffset={10} className="w-60">
+                    <DropdownMenuLabel>{title}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {group.items.map((item) => {
+                      const itemActive = item.to === activePath;
+                      const itemBadge = badges?.[String(item.to)];
+                      return (
+                        <DropdownMenuItem key={String(item.to)} asChild>
+                          <Link
+                            to={item.to}
+                            activeOptions={{ exact: item.exact }}
+                            aria-current={itemActive ? "page" : undefined}
+                            onClick={onNavigate}
+                            className={cn(itemActive && "bg-accent font-semibold text-accent-foreground")}
+                          >
+                            <item.icon aria-hidden />
+                            <span>{item.label}</span>
+                            {itemBadge ? <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-pill bg-gold px-1 text-[10px] font-semibold text-gold-foreground">{itemBadge > 99 ? "99+" : itemBadge}</span> : null}
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            );
+          }
+
           if (expandable && title && !collapsed && GroupIcon) {
             const contentId = `sidebar-group-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
             return (
@@ -519,9 +572,7 @@ export function AppSidebar({
               ) : title && collapsed && !expandable ? (
                 <div className="mx-2 my-2 h-px bg-sidebar-border" aria-hidden />
               ) : null}
-              <ul className="space-y-0.5">{collapsed && expandable && group.items[0]
-                ? renderItem({ ...group.items[0], label: title ?? group.items[0].label }, false, title)
-                : group.items.map((item) => renderItem(item))}</ul>
+              <ul className="space-y-0.5">{group.items.map((item) => renderItem(item))}</ul>
             </div>
           );
         })}

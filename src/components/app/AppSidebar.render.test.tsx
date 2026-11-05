@@ -65,13 +65,12 @@ describe("meniul lateral randat", () => {
       expect(document.querySelector('[href="/app/settings"]')?.textContent).toBe(admin ? "Setări agenție" : "Profilul meu");
       expect(document.querySelector('[data-tour="nav:/app/leads"]')).not.toBeNull();
     });
-    it(`rol ${admin ? "admin" : "agent"}: restrâns are o singură legătură per grup`, () => {
+    it(`rol ${admin ? "admin" : "agent"}: restrâns are o singură intrare per grup`, () => {
       renderSidebar(agencyNavFor(admin), true);
-      const links = [...document.querySelectorAll("nav a")].map(a => a.getAttribute("href"));
-      expect(links).toHaveLength(13);
-      expect(links).toContain("/app/properties");
-      expect(links).not.toContain("/app/properties/new");
-      expect(links).toContain("/app/settings");
+      expect(document.querySelectorAll("nav [data-nav-row]")).toHaveLength(13);
+      expect(document.querySelector('nav button[aria-label="Proprietăți"]')).not.toBeNull();
+      expect(document.querySelector('nav a[href="/app/properties/new"]')).toBeNull();
+      expect(document.querySelector('nav button[aria-label="Setări"]')).not.toBeNull();
       expect(document.querySelector('[data-tour="group:Portofoliu"]')?.textContent).toBe("");
     });
   }
