@@ -72,7 +72,7 @@ const CONTENT: Record<string, Content> = {
   vumsi: {
     slug: "vumsi",
     name: "Vumsi.com",
-    description: "Publici anunțurile agenției pe Vumsi.com direct din Habitoo CRM: activare aprobată de echipa Habitoo, fără chei, cu poze, actualizări și retragere dintr-un click.",
+    description: "Publici anunțurile agenției pe Vumsi.com direct din Habitoo CRM: activare aprobată de echipa Habitoo, fără chei, cu poze, actualizări și retragere.",
     intro: [
       "Habitoo trimite anunțurile agenției direct pe Vumsi.com, prin contul de partener Habitoo. Nu ai de creat sau de completat chei ori parole: după activare, publici din fișa proprietății, cu aceleași date pe care le folosești și pentru celelalte portaluri.",
       "O proprietate disponibilă atât pentru vânzare, cât și pentru închiriere devine două anunțuri separate pe Vumsi.com, unul pentru fiecare tranzacție. Fiecare anunț poate avea până la 20 de poze, în ordinea din Habitoo. Anunțurile conturilor noi trec mai întâi prin verificarea făcută de Vumsi.",
@@ -94,7 +94,7 @@ const CONTENT: Record<string, Content> = {
   housera: {
     slug: "housera",
     name: "Housera.ro",
-    description: "Conectezi contul Housera.ro la Habitoo CRM dintr-un click: publici, actualizezi și retragi anunțurile, iar cererile clienților ajung ca lead-uri, cu mesajele lor.",
+    description: "Conectezi contul Housera.ro la Habitoo CRM dintr-un click: publici, actualizezi și retragi anunțuri, iar cererile clienților ajung ca lead-uri, cu mesaje.",
     intro: [
       "Agenția își conectează contul Housera.ro cu un singur click, din Setări → Portaluri, aprobând accesul direct în Housera. Conectarea o face titularul sau administratorul agenției. După aceea, Habitoo publică, actualizează și retrage anunțurile, fără să le introduci din nou pe portal.",
       "O proprietate de vânzare și de închiriere devine două anunțuri separate, cu până la 100 de poze fiecare. Anunțurile noi trec prin moderarea Housera, iar rezultatul apare în Habitoo, pe fiecare proprietate. Disponibilitatea anunțurilor active se confirmă automat, iar Vândut sau Închiriat se transmite și pe Housera.",
