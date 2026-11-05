@@ -11,6 +11,7 @@ import imobliLogo from "@/assets/portals/imobli.png.asset.json";
 import locuitLogo from "@/assets/portals/locuit.png.asset.json";
 import facebookLogo from "@/assets/portals/facebook.svg";
 import homedirectLogo from "@/assets/portals/homedirect.png";
+import houseraLogo from "@/assets/portals/housera.png.asset.json";
 import homepitchLogo from "@/assets/portals/homepitch.png";
 import imobiliareRoLogo from "@/assets/portals/imobiliare_ro.png";
 import imospotLogo from "@/assets/portals/imospot.png";
@@ -45,6 +46,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   imo24: imo24Logo,
   imopedia: imopediaLogo,
   homedirect: homedirectLogo,
+  housera: (houseraLogo as { url: string }).url,
   homepitch: homepitchLogo,
   imobiliare_ro: imobiliareRoLogo,
   storia: storiaLogo,
