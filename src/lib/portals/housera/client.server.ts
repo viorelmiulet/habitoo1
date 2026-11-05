@@ -14,6 +14,8 @@ export class HouseraError extends Error {
     public code: string | null = null,
     public codes: string[] = [],
     public fields: string[] = [],
+    /** Doar la `409 duplicate_listing`: anunțul existent (cod public + ref). */
+    public existing: { code: string; external_ref: string | null } | null = null,
   ) {
     super(message);
     this.name = "HouseraError";
@@ -30,7 +32,8 @@ export type HouseraClientDeps = {
   onUnauthorized?: () => Promise<void> | void;
 };
 
-export type HouseraRequest = { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; query?: Record<string, string | number>; body?: unknown };
+export type HouseraRequest = { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; query?: Record<string, string | number>; body?: unknown; headers?: Record<string, string> };
+export type HouseraResponse<T> = { status: number; headers: Headers; data: T };
 
 const BUSY_RETRIES = 3;
 const BUSY_DELAY_MS = 1_500;
@@ -77,6 +80,7 @@ export function createHouseraClient(deps: HouseraClientDeps) {
     for (const [k, v] of Object.entries(req.query ?? {})) url.searchParams.set(k, String(v));
     const headers: Record<string, string> = { Authorization: `Bearer ${deps.key}`, Accept: "application/json" };
     if (req.body !== undefined) headers["Content-Type"] = "application/json";
+    for (const [k, v] of Object.entries(req.headers ?? {})) if (k.toLowerCase() !== "authorization") headers[k] = v;
     try {
       const res = await doFetch(url.toString(), {
         method: req.method ?? "GET",
@@ -94,12 +98,16 @@ export function createHouseraClient(deps: HouseraClientDeps) {
   }
 
   async function request<T = unknown>(path: string, req: HouseraRequest = {}): Promise<T> {
+    return (await requestMeta<T>(path, req)).data;
+  }
+
+  async function requestMeta<T = unknown>(path: string, req: HouseraRequest = {}): Promise<HouseraResponse<T>> {
     let rateRetried = false;
     let busyRetries = 0;
     for (;;) {
       const res = await once(path, req);
       if (res.status >= 200 && res.status < 300) {
-        return (res.status === 204 ? null : await readJson(res)) as T;
+        return { status: res.status, headers: res.headers, data: (res.status === 204 ? null : await readJson(res)) as T };
       }
       if (res.status >= 300 && res.status < 400) {
         throw new HouseraError("temporary", "Housera a răspuns cu o redirecționare neașteptată.", res.status, "redirect");
@@ -120,11 +128,16 @@ export function createHouseraClient(deps: HouseraClientDeps) {
       }
       if (res.status === 422) throw validationError(body);
       if (res.status >= 500) throw new HouseraError("temporary", "Housera este temporar indisponibil. Încearcă din nou mai târziu.", res.status, code);
+      if (res.status === 409 && code === "duplicate_listing") {
+        const ex = body?.["existing"] as Record<string, unknown> | undefined;
+        const existing = ex && typeof ex["code"] === "string" ? { code: ex["code"] as string, external_ref: typeof ex["external_ref"] === "string" ? (ex["external_ref"] as string) : null } : null;
+        throw new HouseraError("refused", `Ai deja un anunț Housera pentru această proprietate${existing ? ` (cod ${existing.code}${existing.external_ref ? `, ref ${existing.external_ref}` : ""})` : ""}. Nu s-a creat un duplicat.`, 409, code, [], [], existing);
+      }
       throw new HouseraError("refused", `Housera a refuzat cererea (${res.status}${code ? ` ${code}` : ""}).`, res.status, code);
     }
   }
 
-  return { request };
+  return { request, requestMeta };
 }
 
 /** Doar pentru teste. */
