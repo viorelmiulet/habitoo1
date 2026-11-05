@@ -112,6 +112,8 @@ import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/p
 import { Route as ApiPublicCronAcpEnrichRouteImport } from './routes/api/public/cron/acp-enrich'
 import { Route as ApiPublicCronChatEmailRouteImport } from './routes/api/public/cron/chat-email'
 import { Route as ApiPublicCronCommissionRatesRouteImport } from './routes/api/public/cron/commission-rates'
+import { Route as ApiPublicCronHouseraAvailabilityRouteImport } from './routes/api/public/cron/housera-availability'
+import { Route as ApiPublicCronHouseraEventsRouteImport } from './routes/api/public/cron/housera-events'
 import { Route as ApiPublicCronHouseraSchemaRouteImport } from './routes/api/public/cron/housera-schema'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
@@ -172,6 +174,7 @@ import { Route as ApiPublicFeedProperstarAgencyOfficeIdRouteImport } from './rou
 import { Route as ApiPublicFeedProperstarChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/properstar/[index]/$indexKey'
 import { Route as ApiPublicHomepitchV1AgentsMeRouteImport } from './routes/api/public/homepitch/v1/agents.me'
 import { Route as ApiPublicHomepitchV1PropertiesIdRouteImport } from './routes/api/public/homepitch/v1/properties.$id'
+import { Route as ApiPublicPortalV1HouseraWebhookRouteImport } from './routes/api/public/portal/v1/housera.webhook'
 import { Route as ApiPublicPortalV1ImoveFeedRouteImport } from './routes/api/public/portal/v1/imove.feed'
 import { Route as ApiPublicPortalV1ImoveFeedDotcsvRouteImport } from './routes/api/public/portal/v1/imove.feed[.]csv'
 import { Route as ApiPublicPortalV1ImoveFeedDotjsonRouteImport } from './routes/api/public/portal/v1/imove.feed[.]json'
@@ -750,6 +753,18 @@ const ApiPublicCronCommissionRatesRoute =
     path: '/api/public/cron/commission-rates',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronHouseraAvailabilityRoute =
+  ApiPublicCronHouseraAvailabilityRouteImport.update({
+    id: '/api/public/cron/housera-availability',
+    path: '/api/public/cron/housera-availability',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronHouseraEventsRoute =
+  ApiPublicCronHouseraEventsRouteImport.update({
+    id: '/api/public/cron/housera-events',
+    path: '/api/public/cron/housera-events',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronHouseraSchemaRoute =
   ApiPublicCronHouseraSchemaRouteImport.update({
     id: '/api/public/cron/housera-schema',
@@ -1093,6 +1108,12 @@ const ApiPublicHomepitchV1PropertiesIdRoute =
     path: '/$id',
     getParentRoute: () => ApiPublicHomepitchV1PropertiesRoute,
   } as any)
+const ApiPublicPortalV1HouseraWebhookRoute =
+  ApiPublicPortalV1HouseraWebhookRouteImport.update({
+    id: '/api/public/portal/v1/housera/webhook',
+    path: '/api/public/portal/v1/housera/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1ImoveFeedRoute =
   ApiPublicPortalV1ImoveFeedRouteImport.update({
     id: '/api/public/portal/v1/imove/feed',
@@ -1278,6 +1299,8 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/acp-enrich': typeof ApiPublicCronAcpEnrichRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
+  '/api/public/cron/housera-availability': typeof ApiPublicCronHouseraAvailabilityRoute
+  '/api/public/cron/housera-events': typeof ApiPublicCronHouseraEventsRoute
   '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
@@ -1346,6 +1369,7 @@ export interface FileRoutesByFullPath {
   '/api/public/feed/properstar/index/$indexKey': typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
   '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
+  '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
@@ -1453,6 +1477,8 @@ export interface FileRoutesByTo {
   '/api/public/cron/acp-enrich': typeof ApiPublicCronAcpEnrichRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
+  '/api/public/cron/housera-availability': typeof ApiPublicCronHouseraAvailabilityRoute
+  '/api/public/cron/housera-events': typeof ApiPublicCronHouseraEventsRoute
   '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
@@ -1521,6 +1547,7 @@ export interface FileRoutesByTo {
   '/api/public/feed/properstar/index/$indexKey': typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
   '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
+  '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
@@ -1634,6 +1661,8 @@ export interface FileRoutesById {
   '/api/public/cron/acp-enrich': typeof ApiPublicCronAcpEnrichRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
+  '/api/public/cron/housera-availability': typeof ApiPublicCronHouseraAvailabilityRoute
+  '/api/public/cron/housera-events': typeof ApiPublicCronHouseraEventsRoute
   '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
@@ -1702,6 +1731,7 @@ export interface FileRoutesById {
   '/api/public/feed/properstar/index/$indexKey': typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
   '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
+  '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
@@ -1815,6 +1845,8 @@ export interface FileRouteTypes {
     | '/api/public/cron/acp-enrich'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
+    | '/api/public/cron/housera-availability'
+    | '/api/public/cron/housera-events'
     | '/api/public/cron/housera-schema'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
@@ -1883,6 +1915,7 @@ export interface FileRouteTypes {
     | '/api/public/feed/properstar/index/$indexKey'
     | '/api/public/homepitch/v1/agents/me'
     | '/api/public/homepitch/v1/properties/$id'
+    | '/api/public/portal/v1/housera/webhook'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
@@ -1990,6 +2023,8 @@ export interface FileRouteTypes {
     | '/api/public/cron/acp-enrich'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
+    | '/api/public/cron/housera-availability'
+    | '/api/public/cron/housera-events'
     | '/api/public/cron/housera-schema'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
@@ -2058,6 +2093,7 @@ export interface FileRouteTypes {
     | '/api/public/feed/properstar/index/$indexKey'
     | '/api/public/homepitch/v1/agents/me'
     | '/api/public/homepitch/v1/properties/$id'
+    | '/api/public/portal/v1/housera/webhook'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
@@ -2170,6 +2206,8 @@ export interface FileRouteTypes {
     | '/api/public/cron/acp-enrich'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
+    | '/api/public/cron/housera-availability'
+    | '/api/public/cron/housera-events'
     | '/api/public/cron/housera-schema'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
@@ -2238,6 +2276,7 @@ export interface FileRouteTypes {
     | '/api/public/feed/properstar/index/$indexKey'
     | '/api/public/homepitch/v1/agents/me'
     | '/api/public/homepitch/v1/properties/$id'
+    | '/api/public/portal/v1/housera/webhook'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
@@ -2298,6 +2337,8 @@ export interface RootRouteChildren {
   ApiPublicCronAcpEnrichRoute: typeof ApiPublicCronAcpEnrichRoute
   ApiPublicCronChatEmailRoute: typeof ApiPublicCronChatEmailRoute
   ApiPublicCronCommissionRatesRoute: typeof ApiPublicCronCommissionRatesRoute
+  ApiPublicCronHouseraAvailabilityRoute: typeof ApiPublicCronHouseraAvailabilityRoute
+  ApiPublicCronHouseraEventsRoute: typeof ApiPublicCronHouseraEventsRoute
   ApiPublicCronHouseraSchemaRoute: typeof ApiPublicCronHouseraSchemaRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
@@ -2354,6 +2395,7 @@ export interface RootRouteChildren {
   ApiPublicFeedProperstarAgencyOfficeIdRoute: typeof ApiPublicFeedProperstarAgencyOfficeIdRoute
   ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
   ApiPublicHomepitchV1AgentsMeRoute: typeof ApiPublicHomepitchV1AgentsMeRoute
+  ApiPublicPortalV1HouseraWebhookRoute: typeof ApiPublicPortalV1HouseraWebhookRoute
   ApiPublicPortalV1ImoveFeedRoute: typeof ApiPublicPortalV1ImoveFeedRoute
   ApiPublicPortalV1ImoveFeedDotcsvRoute: typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   ApiPublicPortalV1ImoveFeedDotjsonRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
@@ -3092,6 +3134,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronCommissionRatesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/housera-availability': {
+      id: '/api/public/cron/housera-availability'
+      path: '/api/public/cron/housera-availability'
+      fullPath: '/api/public/cron/housera-availability'
+      preLoaderRoute: typeof ApiPublicCronHouseraAvailabilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/housera-events': {
+      id: '/api/public/cron/housera-events'
+      path: '/api/public/cron/housera-events'
+      fullPath: '/api/public/cron/housera-events'
+      preLoaderRoute: typeof ApiPublicCronHouseraEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/housera-schema': {
       id: '/api/public/cron/housera-schema'
       path: '/api/public/cron/housera-schema'
@@ -3512,6 +3568,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHomepitchV1PropertiesIdRouteImport
       parentRoute: typeof ApiPublicHomepitchV1PropertiesRoute
     }
+    '/api/public/portal/v1/housera/webhook': {
+      id: '/api/public/portal/v1/housera/webhook'
+      path: '/api/public/portal/v1/housera/webhook'
+      fullPath: '/api/public/portal/v1/housera/webhook'
+      preLoaderRoute: typeof ApiPublicPortalV1HouseraWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/imove/feed': {
       id: '/api/public/portal/v1/imove/feed'
       path: '/api/public/portal/v1/imove/feed'
@@ -3909,6 +3972,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronAcpEnrichRoute: ApiPublicCronAcpEnrichRoute,
   ApiPublicCronChatEmailRoute: ApiPublicCronChatEmailRoute,
   ApiPublicCronCommissionRatesRoute: ApiPublicCronCommissionRatesRoute,
+  ApiPublicCronHouseraAvailabilityRoute: ApiPublicCronHouseraAvailabilityRoute,
+  ApiPublicCronHouseraEventsRoute: ApiPublicCronHouseraEventsRoute,
   ApiPublicCronHouseraSchemaRoute: ApiPublicCronHouseraSchemaRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
@@ -3977,6 +4042,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute:
     ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute,
   ApiPublicHomepitchV1AgentsMeRoute: ApiPublicHomepitchV1AgentsMeRoute,
+  ApiPublicPortalV1HouseraWebhookRoute: ApiPublicPortalV1HouseraWebhookRoute,
   ApiPublicPortalV1ImoveFeedRoute: ApiPublicPortalV1ImoveFeedRoute,
   ApiPublicPortalV1ImoveFeedDotcsvRoute: ApiPublicPortalV1ImoveFeedDotcsvRoute,
   ApiPublicPortalV1ImoveFeedDotjsonRoute:

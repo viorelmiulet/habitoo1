@@ -42,10 +42,9 @@ export const Route = createFileRoute("/api/public/portal/v1/housera/webhook")({
         });
         let parsed: unknown = null;
         try { parsed = JSON.parse(rawBody); } catch { parsed = null; }
-        let event = parseHouseraEvent(parsed);
+        const event = parseHouseraEvent(parsed);
         // `webhook-id` = `id` din corp; altfel nu are încredere.
         const valid = sig.valid && !!event && event.id === id;
-        if (!valid) event = event ?? null;
         const headers = { "webhook-id": id ?? "", "webhook-timestamp": timestamp ?? "", "user-agent": request.headers.get("user-agent") ?? "" };
 
         const orgId = valid && event ? await ev.resolveHouseraOrganization(admin, event) : null;

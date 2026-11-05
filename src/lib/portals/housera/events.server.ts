@@ -104,6 +104,13 @@ export async function applyHouseraEvent(admin: Admin, orgId: string | null, e: H
 /** Procesează rândul salvat și îl marchează; eșecurile rămân `processed=false`. */
 export async function processHouseraEventRow(admin: Admin, rowId: string, orgId: string | null, e: HouseraEvent, attempts: number): Promise<boolean> {
   try {
+    // `connection` prezent, dar necunoscut: nu ghicim agenția.
+    if (!orgId && houseraEventConnection(e)) {
+      await admin.from("portal_webhook_events").update({
+        processed: true, process_note: "conexiune necunoscută", attempts: attempts + 1, last_attempt_at: new Date().toISOString(), next_attempt_at: null,
+      }).eq("id", rowId);
+      return true;
+    }
     const r = await applyHouseraEvent(admin, orgId, e);
     const unknownConn = !orgId && !r.organizationId;
     await admin.from("portal_webhook_events").update({
