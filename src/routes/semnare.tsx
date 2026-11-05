@@ -185,7 +185,7 @@ function Notice({
     <div className="space-y-2 text-center">
       <div className={tone === "warning" ? "mx-auto w-fit dark:rounded-full dark:bg-gold-tint dark:p-2.5" : "mx-auto w-fit"}>
         <Icon
-          className={`size-10 ${tone === "success" ? "text-success" : "text-warning-foreground dark:text-warning"}`}
+          className={`size-10 ${tone === "success" ? "text-success" : "text-warning-foreground"}`}
         />
       </div>
       <h1 className="text-lg font-semibold">{title}</h1>

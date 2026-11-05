@@ -47,7 +47,7 @@ const NEW_DAYS = 7;
 /** Badge-ul din colțul imaginii: un singur badge, în ordinea de importanță. */
 function cornerBadge(p: PropertyCardRow): { label: string; tone: string } | null {
   if (p.status === "reserved")
-    return { label: "Rezervat", tone: "bg-warning text-warning-foreground" };
+    return { label: "Rezervat", tone: "bg-warning text-gold-foreground" };
   const exclusive = (p.tags ?? []).some((t) => t.toLowerCase().includes("exclusiv"));
   if (exclusive) return { label: "Exclusivitate", tone: "bg-primary text-primary-foreground" };
   const ageDays = (Date.now() - new Date(p.created_at).getTime()) / 86_400_000;
