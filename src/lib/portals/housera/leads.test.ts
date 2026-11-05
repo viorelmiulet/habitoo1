@@ -44,7 +44,7 @@ function fakeDb(seed: Record<string, Row[]>) {
         is: (k: string, v: unknown) => { f.push((r) => (r[k] ?? null) === v); return q; },
         ilike: (k: string, v: string) => { f.push((r) => String(r[k] ?? "").toLowerCase() === v.toLowerCase()); return q; },
         not: (k: string, o: string, v: string) => { const list = v.replace(/[()]/g, "").split(","); f.push((r) => !(o === "in" && list.includes(String(r[k])))); return q; },
-        contains: (k: string, v: Row[]) => { f.push((r) => ((r[k] as Row[]) ?? []).some((o) => Object.entries(v[0]!).every(([a, b]) => o[a] === b))); return q; },
+        contains: (k: string, s: unknown) => { if (typeof s !== "string") throw new Error("contains needs a JSON string"); const v = JSON.parse(s) as Row[]; f.push((r) => ((r[k] as Row[]) ?? []).some((o) => Object.entries(v[0]!).every(([a, b]) => o[a] === b))); return q; },
         insert: (p: Row) => { op = "insert"; payload = p; return q; },
         update: (p: Row) => { op = "update"; payload = p; return q; },
         upsert: (p: Row) => { op = "upsert"; payload = p; return q; },
