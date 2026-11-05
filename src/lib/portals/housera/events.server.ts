@@ -5,6 +5,9 @@
  */
 import { applyHouseraEffect, houseraEventConnection, houseraEventEffect, type HouseraEvent, type HouseraListingRow } from "./events";
 import { parsePortalOffers } from "../imobiliare/offer-links";
+import type { HouseraLeadDeps } from "./leads.server";
+
+const LEAD_TYPES = new Set(["lead.created", "lead.updated", "lead.message_received"]);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
@@ -88,7 +91,13 @@ async function findListingRow(admin: Admin, orgId: string | null, code: string |
 }
 
 /** Aplică evenimentul; întoarce nota de procesare. Aruncă la eroare de DB (se reia). */
-export async function applyHouseraEvent(admin: Admin, orgId: string | null, e: HouseraEvent, nowIso = new Date().toISOString()): Promise<{ note: string; organizationId: string | null }> {
+export async function applyHouseraEvent(admin: Admin, orgId: string | null, e: HouseraEvent, nowIso = new Date().toISOString(), deps: HouseraLeadDeps = {}): Promise<{ note: string; organizationId: string | null }> {
+  if (LEAD_TYPES.has(e.type)) {
+    // Fără agenție nu avem cheia cu care să citim cererea.
+    if (!orgId) return { note: "conexiune necunoscută", organizationId: null };
+    const { processHouseraLeadEvent } = await import("./leads.server");
+    return { note: await processHouseraLeadEvent(admin, orgId, e, deps), organizationId: orgId };
+  }
   const effect = houseraEventEffect(e);
   if (effect.kind !== "listing") return { note: effect.note, organizationId: orgId };
   const row = await findListingRow(admin, orgId, effect.code, effect.externalRef);
@@ -102,7 +111,7 @@ export async function applyHouseraEvent(admin: Admin, orgId: string | null, e: H
 }
 
 /** Procesează rândul salvat și îl marchează; eșecurile rămân `processed=false`. */
-export async function processHouseraEventRow(admin: Admin, rowId: string, orgId: string | null, e: HouseraEvent, attempts: number): Promise<boolean> {
+export async function processHouseraEventRow(admin: Admin, rowId: string, orgId: string | null, e: HouseraEvent, attempts: number, deps: HouseraLeadDeps = {}): Promise<boolean> {
   try {
     // `connection` prezent, dar necunoscut: nu ghicim agenția.
     if (!orgId && houseraEventConnection(e)) {
@@ -111,12 +120,13 @@ export async function processHouseraEventRow(admin: Admin, rowId: string, orgId:
       }).eq("id", rowId);
       return true;
     }
-    const r = await applyHouseraEvent(admin, orgId, e);
+    const r = await applyHouseraEvent(admin, orgId, e, undefined, deps);
     const unknownConn = !orgId && !r.organizationId;
+    const conn = unknownConn && (r.note === "anunț necunoscut" || r.note === "conexiune necunoscută");
     await admin.from("portal_webhook_events").update({
       processed: true,
       organization_id: r.organizationId,
-      process_note: unknownConn && r.note === "anunț necunoscut" ? "conexiune necunoscută" : r.note,
+      process_note: conn ? "conexiune necunoscută" : r.note,
       attempts: attempts + 1, last_attempt_at: new Date().toISOString(), next_attempt_at: null,
     }).eq("id", rowId);
     return true;
@@ -131,13 +141,13 @@ export async function processHouseraEventRow(admin: Admin, rowId: string, orgId:
 }
 
 /** Salvează (cu deduplicare) și procesează un eveniment din `GET events`. */
-export async function ingestPulledHouseraEvent(admin: Admin, orgId: string, e: HouseraEvent): Promise<boolean> {
+export async function ingestPulledHouseraEvent(admin: Admin, orgId: string, e: HouseraEvent, deps: HouseraLeadDeps = {}): Promise<boolean> {
   const rec = await recordHouseraEvent(admin, {
     organizationId: orgId, event: e, rawBody: null, headers: {}, method: "PULL",
     signature: { present: false, valid: true, note: "GET events (cheia agenției)" }, processNote: "recuperat",
   });
   if (rec.duplicate || !rec.id) return false;
-  await processHouseraEventRow(admin, rec.id, orgId, e, 0);
+  await processHouseraEventRow(admin, rec.id, orgId, e, 0, deps);
   return true;
 }
 

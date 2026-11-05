@@ -238,14 +238,13 @@ export async function processHouseraLeadEvent(admin: Admin, orgId: string, e: Ho
   if (!client) return "agenția nu are cheie Housera";
   const ctx: Ctx = { admin, orgId, client, now };
   try {
-    let link = await loadLink(admin, orgId, externalId);
+    const link = await loadLink(admin, orgId, externalId);
     if (e.type === "lead.message_received") {
       const leadId = link?.lead_id ?? (await importLead(ctx, e, externalId, null));
       const n = await importMessages(ctx, externalId, leadId);
       return `${e.type} aplicat (${n} mesaje)`;
     }
     await importLead(ctx, e, externalId, link);
-    link = null;
     return `${e.type} aplicat`;
   } catch (err) {
     if (err instanceof HouseraError && err.status === 403 && err.code === "missing_ability") {
