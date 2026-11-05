@@ -2,11 +2,10 @@
  * C6 — panoul unic de scanare a actului, folosit în „Document nou” și pe fișa clientului.
  * Imaginile sunt comprimate în browser și trimise doar scannerului C4; nu se păstrează.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, Loader2, RotateCcw, ShieldCheck, X } from "lucide-react";
+import { Camera, ImagePlus, Loader2, RotateCcw, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { scanContactIdentity } from "@/lib/contracts/identity-scan.functions";
@@ -40,6 +39,28 @@ export function IdScanPanel({
   const [docType, setDocType] = useState<ScanDocType | "auto">("auto");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // „Fotografiază” apare doar pe dispozitive tactile; detectat după montare, ca SSR-ul să rămână stabil.
+  const [isTouch, setIsTouch] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const certPhotoInputRef = useRef<HTMLInputElement>(null);
+  const certUploadInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const update = () => setIsTouch(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // Miniaturile trăiesc doar în browser; URL-urile se eliberează la eliminare și la demontare.
+  const [previews, setPreviews] = useState<string[]>([]);
+  useEffect(() => {
+    const urls = files.map((f) => URL.createObjectURL(f));
+    setPreviews(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, [files]);
 
   function addFiles(list: FileList | null) {
     const picked = Array.from(list ?? []);
@@ -49,6 +70,15 @@ export function IdScanPanel({
     }
     setError(null);
     setFiles((prev) => [...prev, ...picked].slice(0, 2));
+  }
+
+  function pickCertificate(list: FileList | null) {
+    const f = list?.[0] ?? null;
+    if (f && f.size > MAX_FILE_BYTES) {
+      setError("Certificatul poate avea cel mult 10 MB.");
+      return;
+    }
+    setCertificate(f);
   }
 
   async function run() {
@@ -78,33 +108,57 @@ export function IdScanPanel({
   }
 
   const showCertificate = docType === "auto" || docType === "cei";
+  const photosFull = files.length >= 2;
 
   return (
     <div className="min-w-0 space-y-3 rounded-md border border-border bg-muted/30 p-3 text-sm" data-testid="id-scan-panel">
-      <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-        <div className="min-w-0 space-y-1.5">
-          <Label htmlFor={`${idPrefix}-doctype`}>Tipul actului</Label>
-          <Select value={docType} onValueChange={(v) => setDocType(v as ScanDocType | "auto")}>
-            <SelectTrigger id={`${idPrefix}-doctype`}><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="auto">Detectare automată</SelectItem>
-              {SCAN_DOC_TYPES.map((t) => <SelectItem key={t} value={t}>{SCAN_DOC_TYPE_LABELS[t]}</SelectItem>)}
-            </SelectContent>
-          </Select>
+      <div className="min-w-0 space-y-1">
+        <p className="flex items-center gap-2 text-base font-bold text-foreground">
+          <Camera className="size-4 shrink-0" aria-hidden /> Scanează actul de identitate
+        </p>
+        <p className="text-[13px] text-muted-foreground">Fotografiază actul sau încarcă o poză; datele se completează automat.</p>
+      </div>
+      <div className="min-w-0 space-y-1.5">
+        <Label htmlFor={`${idPrefix}-doctype`}>Tipul actului</Label>
+        <Select value={docType} onValueChange={(v) => setDocType(v as ScanDocType | "auto")}>
+          <SelectTrigger id={`${idPrefix}-doctype`}><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">Detectare automată</SelectItem>
+            {SCAN_DOC_TYPES.map((t) => <SelectItem key={t} value={t}>{SCAN_DOC_TYPE_LABELS[t]}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="min-w-0 space-y-2">
+        <p className="text-sm font-medium">Fotografii act ({files.length}/2: față, verso)</p>
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
+          {isTouch ? (
+            <Button type="button" variant="outline" className="min-h-11 w-full sm:w-auto"
+              disabled={photosFull || busy} onClick={() => photoInputRef.current?.click()}>
+              <Camera className="size-4" /> Fotografiază actul
+            </Button>
+          ) : null}
+          <Button type="button" variant="outline" className="min-h-11 w-full sm:w-auto"
+            disabled={photosFull || busy} onClick={() => uploadInputRef.current?.click()}>
+            <ImagePlus className="size-4" /> Încarcă o poză
+          </Button>
         </div>
-        <div className="min-w-0 space-y-1.5">
-          <Label htmlFor={`${idPrefix}-files`}>Fotografii act ({files.length}/2: față, verso)</Label>
-          <Input id={`${idPrefix}-files`} type="file" accept="image/*" capture="environment"
-            disabled={files.length >= 2 || busy} className="min-w-0"
-            onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
-        </div>
+        <input ref={photoInputRef} id={`${idPrefix}-photo`} type="file" accept="image/*" capture="environment" multiple
+          disabled={photosFull || busy} className="hidden" aria-label="Fotografiază actul"
+          onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+        <input ref={uploadInputRef} id={`${idPrefix}-upload`} type="file" accept="image/*" multiple
+          disabled={photosFull || busy} className="hidden" aria-label="Încarcă o poză"
+          onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
       </div>
       {files.length ? (
-        <ul className="space-y-1 text-xs text-muted-foreground">
+        <ul className="flex flex-wrap gap-2">
           {files.map((f, i) => (
-            <li key={i} className="flex min-w-0 items-center gap-2">
-              <span className="truncate">{i === 0 ? "Față" : "Verso"}: {f.name}</span>
-              <button type="button" className="shrink-0 rounded p-1 hover:bg-muted" aria-label={`Elimină ${i === 0 ? "fața" : "versoul"}`}
+            <li key={i} className="flex min-w-0 items-center gap-2 rounded-[10px] border border-border bg-card p-1.5">
+              {previews[i] ? (
+                <img src={previews[i]} alt="" className="size-11 shrink-0 rounded-lg object-cover" />
+              ) : null}
+              <span className="min-w-0 text-xs font-semibold">{i === 0 ? "Față" : "Verso"}</span>
+              <button type="button" className="flex size-11 shrink-0 items-center justify-center rounded-lg hover:bg-muted sm:size-8"
+                aria-label={`Elimină ${i === 0 ? "fața" : "versoul"}`}
                 onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}>
                 <X className="size-3.5" />
               </button>
@@ -113,14 +167,35 @@ export function IdScanPanel({
         </ul>
       ) : null}
       {showCertificate ? (
-        <div className="min-w-0 space-y-1.5">
-          <Label htmlFor={`${idPrefix}-cert`}>Certificat de atestare a domiciliului (pentru CEI, opțional)</Label>
-          <Input id={`${idPrefix}-cert`} type="file" accept="image/*,application/pdf" disabled={busy} className="min-w-0"
-            onChange={(e) => {
-              const f = e.target.files?.[0] ?? null;
-              if (f && f.size > MAX_FILE_BYTES) { setError("Certificatul poate avea cel mult 10 MB."); e.target.value = ""; return; }
-              setCertificate(f);
-            }} />
+        <div className="min-w-0 space-y-2">
+          <p className="text-sm font-medium">Certificat de atestare a domiciliului (pentru CEI, opțional)</p>
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
+            {isTouch ? (
+              <Button type="button" variant="outline" className="min-h-11 w-full sm:w-auto"
+                disabled={busy} onClick={() => certPhotoInputRef.current?.click()}>
+                <Camera className="size-4" /> Fotografiază certificatul
+              </Button>
+            ) : null}
+            <Button type="button" variant="outline" className="min-h-11 w-full sm:w-auto"
+              disabled={busy} onClick={() => certUploadInputRef.current?.click()}>
+              <ImagePlus className="size-4" /> Încarcă certificatul
+            </Button>
+          </div>
+          <input ref={certPhotoInputRef} id={`${idPrefix}-cert-photo`} type="file" accept="image/*" capture="environment"
+            disabled={busy} className="hidden" aria-label="Fotografiază certificatul"
+            onChange={(e) => { pickCertificate(e.target.files); e.target.value = ""; }} />
+          <input ref={certUploadInputRef} id={`${idPrefix}-cert-upload`} type="file" accept="image/*,application/pdf"
+            disabled={busy} className="hidden" aria-label="Încarcă certificatul"
+            onChange={(e) => { pickCertificate(e.target.files); e.target.value = ""; }} />
+          {certificate ? (
+            <p className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+              <span className="truncate">{certificate.name}</span>
+              <button type="button" className="flex size-11 shrink-0 items-center justify-center rounded-lg hover:bg-muted sm:size-8"
+                aria-label="Elimină certificatul" onClick={() => setCertificate(null)}>
+                <X className="size-3.5" />
+              </button>
+            </p>
+          ) : null}
         </div>
       ) : null}
       <p className="text-xs text-muted-foreground">{FRAMING_HINTS[docType]}</p>
