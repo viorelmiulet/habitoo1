@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, CalendarPlus, Eye, Flame, Plus, Target, UserRound } from "lucide-react";
+import { Building2, CalendarPlus, Eye, FileSignature, Flame, Plus, Target, UserRound } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,10 @@ import { useCurrentUser } from "@/hooks/use-session";
 import { contactTypeLabels } from "@/lib/labels";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { announceGuideContext } from '@/lib/onboarding-tour';
+
+const NewContractDialog = lazy(() =>
+  import("@/components/app/contracts/NewContractDialog").then((m) => ({ default: m.NewContractDialog })),
+);
 
 function ContactSheet({
   open,
