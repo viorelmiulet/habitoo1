@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { houseraAffectedCodes, mapPropertyToHousera, stripHouseraContacts, type HouseraMapperProperty } from "./mapper";
+import { houseraAffectedCodes, mapPropertyToHousera, streetFromAddress, stripHouseraContacts, type HouseraMapperProperty } from "./mapper";
 import type { HouseraSchema } from "./schema";
 import { fetchHouseraSchema } from "./taxonomy.server";
 
@@ -129,5 +129,33 @@ describe("nomenclator", () => {
   });
   it("stripHouseraContacts păstrează prețuri și ani", () => {
     expect(stripHouseraContacts("Construit în 1985, preț 125.000 EUR").removed).toEqual([]);
+  });
+});
+
+describe("streetFromAddress (H3.1)", () => {
+  it.each([
+    ["tineretului 79", "Tineretului", "79"],
+    ["tineretului nr 13", "Tineretului", "13"],
+    ["tineretului 35 bis", "Tineretului", "35 bis"],
+    ["Str. Mihai Eminescu nr. 5, Sector 1", "Strada Mihai Eminescu", "5"],
+    ["Bd. Iuliu Maniu 7A", "Bulevardul Iuliu Maniu", "7A"],
+  ])("%s", (address, street, number) => {
+    expect(streetFromAddress(address)).toEqual({ street, number });
+    const r = mapPropertyToHousera(prop({ street: null, street_number: null, address }), schema, { agentEmail: null });
+    expect(r.listings[0].payload.street).toBe(street);
+    expect(r.listings[0].payload.street_number).toBe(number);
+    expect(r.warnings).toContain(`Strada a fost preluată din adresă: «${street}» nr. «${number}». Verifică.`);
+  });
+
+  it("adresă goală → eroarea rămâne", () => {
+    const r = mapPropertyToHousera(prop({ street: null, street_number: null, address: "" }), schema, { agentEmail: null });
+    expect(r.errors).toContain("Strada lipsește.");
+  });
+
+  it("street completat → adresa nu se folosește", () => {
+    const r = mapPropertyToHousera(prop({ address: "Bd. Iuliu Maniu 7A" }), schema, { agentEmail: null });
+    expect(r.listings[0].payload.street).toBe("Strada Vasile Lupu");
+    expect(r.listings[0].payload.street_number).toBe("12");
+    expect(r.warnings.some((w) => w.startsWith("Strada a fost preluată"))).toBe(false);
   });
 });
