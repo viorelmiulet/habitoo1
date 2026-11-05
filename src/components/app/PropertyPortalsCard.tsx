@@ -936,6 +936,8 @@ export const PropertyPortalsCard = forwardRef<
                   ? { label: vumsiView.label, pill: vumsiView.pill as StatusPillState }
                   : cell.portalId === "housera" && cell.houseraView
                   ? { label: HOUSERA_VIEW_LABEL[cell.houseraView], pill: "inactive" as StatusPillState }
+                  : houseraPendingView(cell.portalId, cell.state)
+                  ? houseraPendingView(cell.portalId, cell.state)!
                   : cell.portalId === "olx_direct" && cell.state === "syncing"
                   ? { label: "În moderare OLX", pill: "pending" as StatusPillState }
                   : cell.portalId === "zonata" && cell.state === "syncing"
@@ -963,7 +965,9 @@ export const PropertyPortalsCard = forwardRef<
                         : vumsiView.status === 1
                           ? "Anunțul a ajuns la Vumsi și așteaptă moderarea."
                           : stateSentence({ ...cell, state: vumsiView.pill === "published" ? "published" : cell.state === "syncing" ? "withdrawn" : cell.state }, value)
-                      : stateSentence(cell, value);
+                      : houseraPendingView(cell.portalId, cell.state)
+                        ? HOUSERA_PENDING_SENTENCE
+                        : stateSentence(cell, value);
 
               return (
                 <li key={cell.portalId} className="min-w-0">
