@@ -55,7 +55,7 @@ function prop(over: Record<string, unknown> = {}) {
     ...over,
   } as Parameters<typeof kyeroProperties>[0]["property"];
 }
-const parse = (xml: string) => new XMLParser({ ignoreAttributes: false, isArray: (n) => n === "property" }).parse(xml).root;
+const parse = (xml: string) => new XMLParser({ ignoreAttributes: false, numberParseOptions: { leadingZeros: false, hex: false }, isArray: (n) => n === "property" }).parse(xml).root;
 const call = (route: typeof Route, url: string) =>
   (route.options.server!.handlers as { GET: (c: { request: Request }) => Promise<Response> }).GET({ request: new Request(url) });
 const tok = (org = ORG, portal: "bazaruldecase" | "imove" = "bazaruldecase", key = KEY) => clickimobFeedToken(properstarEntityId("hb", org), key, portal);
@@ -72,6 +72,7 @@ describe("XML Kyero v3", () => {
     const p = parse(xml).property[0];
     expect(parse(xml).kyero.feed_version).toBe(3);
     expect(p).toMatchObject({ id: "11111111-2222-4333-8444-555555555555-sale", date: "2026-07-01 12:30:05", ref: "HB-1001", price: 120000, currency: "EUR", price_freq: "sale", new_build: 1, type: "Apartment", town: "București", province: "București", country: "Romania", location_detail: "Drumul Taberei", beds: 2, pool: 1, notes: "Habitoo HB-1001", email: "ana@ag.ro", contact_number: "0040722123456" });
+    expect(xml).toContain("<contact_number>0040722123456</contact_number>");
     expect(p.energy_rating).toEqual({ consumption: "A", emissions: "X" });
     expect(p.surface_area.built).toBe(55);
     expect(p.images.image["@_id"]).toBe("1");
