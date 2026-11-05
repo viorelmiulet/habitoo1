@@ -15,17 +15,25 @@ const availableIds = new Set([...PORTALS, ...PROMOTION_CATALOGS]
 const coveredIds = new Set(PORTAL_GROUPS
   .filter((group) => availableIds.has(group.primary))
   .flatMap((group) => group.covers));
-const NOT_YET_PUBLIC = new Set(["vumsi"]);
 const available = [...PORTALS, ...PROMOTION_CATALOGS]
-  .filter((portal) => availableIds.has(portal.id) || coveredIds.has(portal.id))
-  .filter((portal) => !NOT_YET_PUBLIC.has(portal.id));
+  .filter((portal) => availableIds.has(portal.id) || coveredIds.has(portal.id));
 
-describe("Vumsi is not public yet", () => {
-  it("has no public page, card, homepage logo or sitemap URL", () => {
-    expect(integrationSlugFor("vumsi")).toBeNull();
-    expect(INTEGRATION_OVERVIEW.some((item) => item.logoIds.includes("vumsi"))).toBe(false);
-    expect(homepageIds.has("vumsi")).toBe(false);
-    expect(sitemap).not.toContain("vumsi");
+describe("Vumsi is public", () => {
+  it("has a public page, card, homepage logo and sitemap URL", () => {
+    expect(integrationSlugFor("vumsi")).toBe("vumsi");
+    expect(INTEGRATION_OVERVIEW.some((item) => item.logoIds.includes("vumsi"))).toBe(true);
+    expect(homepageIds.has("vumsi")).toBe(true);
+    expect(sitemap).toContain(`<loc>${BLOG_SITE_URL}/integrari/vumsi</loc>`);
+  });
+});
+
+describe("BazarulDeCase.ro is public", () => {
+  it("has a public page, card, homepage logo and sitemap URL", () => {
+    expect(integrationSlugFor("bazaruldecase")).toBe("bazaruldecase");
+    expect(integrationPageBySlug("bazaruldecase")?.announcement).toBeUndefined();
+    expect(INTEGRATION_OVERVIEW.some((item) => item.logoIds.includes("bazaruldecase"))).toBe(true);
+    expect(homepageIds.has("bazaruldecase")).toBe(true);
+    expect(sitemap).toContain(`<loc>${BLOG_SITE_URL}/integrari/bazaruldecase</loc>`);
   });
 });
 describe("Imobiliare+ is public", () => {
