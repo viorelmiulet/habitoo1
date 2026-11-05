@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { houseraOfferFilter } from "./events";
-import { processHouseraEventRow } from "./events.server";
 
 describe("houseraOfferFilter", () => {
   it("întoarce exact JSON-ul pentru jsonb @>", () => {
