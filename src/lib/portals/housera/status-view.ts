@@ -14,3 +14,11 @@ export const HOUSERA_VIEW_LABEL: Record<Exclude<HouseraView, null>, string> = {
   sold: "Vândut",
   deleted: "Șters",
 };
+
+/** Housera „pending” (moderare) apare în celulă ca state `syncing`. */
+export const HOUSERA_PENDING_LABEL = "În moderare Housera";
+export const HOUSERA_PENDING_SENTENCE = "Anunțul a ajuns la Housera și așteaptă moderarea.";
+
+export function houseraPendingView(portalId: string, state: string): { label: string; pill: "pending" } | null {
+  return portalId === "housera" && state === "syncing" ? { label: HOUSERA_PENDING_LABEL, pill: "pending" } : null;
+}
