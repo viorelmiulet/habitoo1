@@ -130,7 +130,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { q: "Ce tipuri de cereri pot înregistra?", a: "Cumpărare, închiriere și investiție. Pentru fiecare completezi criteriile proprietății: buget, zone, camere, suprafață și tip. Ai astfel scopul căutării și detaliile ei la un loc." },
       { q: "De ce să nu păstrez criteriile doar în note?", a: "Pentru că doar criteriile din câmpurile cererii sunt comparate cu proprietățile. O notă nu poate aduce oferte potrivite. Cu criterii clare, vezi imediat ce trebuie actualizat după un apel." },
       { q: "Pot vedea de ce o proprietate se potrivește?", a: "Da. Fiecare rezultat are un scor și motive: ce criterii sunt îndeplinite și unde apar diferențe. Ai argumente concrete pentru discuția cu clientul." },
-      { q: "Cererea rămâne legată de client?", a: "Da. Cererea este legată de contact și de lead-urile lui. Ajungi într-un click la istoricul persoanei sau la evoluția discuției." }
+      { q: "Cererea rămâne legată de client?", a: "Da. Cererea este legată de contact și de lead-urile lui. Ajungi într-un click la istoricul persoanei sau la evoluția discuției. Dacă același client are mai multe căutări, de exemplu o închiriere acum și o cumpărare mai târziu, le ții ca cereri separate, fiecare cu criteriile ei." }
     ],
     related: ["contacte", "proprietati", "lead-uri", "potriviri-automate"]
   },
@@ -162,7 +162,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { q: "Care sunt etapele disponibile?", a: "Nou, Contactat, Calificat, Vizionare, Ofertă, Negociere, Tranzacție, Câștigat și Pierdut. Istoricul păstrează fiecare schimbare, așa că vezi oricând drumul complet al unui lead." },
       { q: "Pot lucra fără să trag cardurile?", a: "Da. Ai și vederea de listă, cu filtre, iar etapa se poate alege dintr-o selecție. Pe telefon așa schimbi etapa. Coloanele și lista arată aceleași lead-uri." },
       { q: "De pe ce portaluri intră lead-uri?", a: "De pe Storia/OLX, Housera, VDI și Properstar, dacă agenția are conexiunea activă și drepturile necesare pe portal. Detaliile fiecăruia sunt pe pagina Integrări." },
-      { q: "Ce verific înainte să continui un lead?", a: "Etapa, agentul responsabil, istoricul și legăturile cu clientul, cererea și proprietatea. Citești notele și ultimele activități. Apoi suni știind exact de unde continui." }
+      { q: "Ce verific înainte să continui un lead?", a: "Etapa, agentul responsabil, istoricul și legăturile cu clientul, cererea și proprietatea. Citești notele și ultimele activități. Apoi suni știind exact de unde continui. Dacă lead-ul a venit de pe un portal, vezi și mesajul trimis de client acolo, ca să răspunzi exact la ce a întrebat." }
     ],
     related: ["contacte", "cereri", "potriviri-automate", "integrari"]
   },
@@ -194,7 +194,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { q: "Pot căuta atât proprietăți, cât și clienți?", a: "Da. Ai ambele sensuri: Cerere → Proprietăți și Proprietate → Clienți. Alegi punctul de pornire după ce lucrezi în acel moment." },
       { q: "Ce criterii intră în potrivire?", a: "Tranzacția, bugetul, orașul și zona, camerele, suprafața, tipul proprietății și facilitățile cerute. Rezultatele folosesc datele completate în aplicație, așa că merită să le ții la zi." },
       { q: "Scorul înseamnă că un client va cumpăra?", a: "Nu. Scorul arată cât de bine se potrivesc criteriile cu oferta. Interesul real îl afli din discuția cu clientul. Motivele te ajută să pregătești acea discuție." },
-      { q: "Ce se întâmplă după modificarea cererii?", a: "Potrivirile se recalculează din noile criterii. Deschizi rezultatele și vezi imediat selecția actualizată, fără să refaci căutarea." }
+      { q: "Ce se întâmplă după modificarea cererii?", a: "Potrivirile se recalculează din noile criterii. Deschizi rezultatele și vezi imediat selecția actualizată, fără să refaci căutarea. La fel se întâmplă când actualizezi prețul sau caracteristicile unei proprietăți: lista clienților potriviți se schimbă odată cu ea." }
     ],
     related: ["cereri", "proprietati", "contacte", "lead-uri"]
   }
