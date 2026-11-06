@@ -9,8 +9,6 @@ import {
   CalendarDays,
   ClipboardList,
   Lightbulb,
-  Megaphone,
-  NotebookPen,
   Plus,
   UserRound,
   Users,

@@ -54,7 +54,7 @@ function SuperadminNewsPage() {
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Noutatea a fost salvată."); setDraft(null); refresh(); },
-    onError: toastError,
+    onError: (e) => toastError(e),
   });
 
   const toggle = useMutation({
@@ -65,7 +65,7 @@ function SuperadminNewsPage() {
       return publish;
     },
     onSuccess: (p) => { toast.success(p ? "Noutatea e publicată." : "Noutatea a fost retrasă."); refresh(); },
-    onError: toastError,
+    onError: (e) => toastError(e),
   });
 
   return (
