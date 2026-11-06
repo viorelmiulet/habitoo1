@@ -23,7 +23,7 @@ function db(links: Row[]) {
     },
   };
 }
-const link = (o: Row = {}): Row => ({ id: "k1", portal: "housera", organization_id: "org", external_lead_id: "lead_1", lead_id: "L", status_desired: "offer", status_sent: null, status_remote: "new", ...o });
+const link = (o: Row = {}): Row => ({ id: "k1", portal: "housera", organization_id: "org", external_lead_id: "lead_1", lead_id: "L", status_desired: "offer", status_sent: null, status_remote: "new", environment: "staging", ...o });
 
 describe("H11 etapa lead → Housera", () => {
   it("maparea completă a etapelor", () => {
