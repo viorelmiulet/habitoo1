@@ -97,7 +97,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { q: "Care este diferența dintre contact și lead?", a: "Contactul este persoana. Lead-ul este o discuție comercială cu ea și etapa în care se află. Un client poate avea mai multe lead-uri, toate vizibile din fișa lui." },
       { q: "Unde păstrez ce caută clientul?", a: "Într-o cerere legată de contact, cu buget, zone și celelalte criterii. Așa Habitoo îți poate arăta proprietățile potrivite. Notele rămân pentru contextul discuției." }
     ],
-    related: ["cereri", "lead-uri", "proprietati", "potriviri-automate"]
+    related: ["proprietati", "cereri", "lead-uri", "potriviri-automate"]
   },
   {
     slug: "cereri",
@@ -129,7 +129,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { q: "Pot vedea de ce o proprietate se potrivește?", a: "Da. Fiecare rezultat are un scor și motive: ce criterii sunt îndeplinite și unde apar diferențe. Ai argumente concrete pentru discuția cu clientul." },
       { q: "Cererea rămâne legată de client?", a: "Da. Cererea este legată de contact și de lead-urile lui. Ajungi într-un click la istoricul persoanei sau la evoluția discuției." }
     ],
-    related: ["contacte", "potriviri-automate", "lead-uri", "proprietati"]
+    related: ["contacte", "proprietati", "lead-uri", "potriviri-automate"]
   },
   {
     slug: "lead-uri",
@@ -160,7 +160,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { q: "De pe ce portaluri intră lead-uri?", a: "De pe Storia/OLX, Housera, VDI și Properstar, dacă agenția are conexiunea activă și drepturile necesare pe portal. Detaliile fiecăruia sunt pe pagina Integrări." },
       { q: "Ce verific înainte să continui un lead?", a: "Etapa, agentul responsabil, istoricul și legăturile cu clientul, cererea și proprietatea. Citești notele și ultimele activități. Apoi suni știind exact de unde continui." }
     ],
-    related: ["contacte", "cereri", "activitati", "integrari"]
+    related: ["contacte", "cereri", "potriviri-automate", "integrari"]
   },
   {
     slug: "potriviri-automate",
