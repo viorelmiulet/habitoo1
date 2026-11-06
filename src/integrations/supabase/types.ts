@@ -8544,6 +8544,7 @@ export type Database = {
           external_id: string | null
           features: string[]
           finish_state: string | null
+          flood_risk: boolean | null
           floor: number | null
           floor_finishes: string[]
           floor_label: string | null
@@ -8567,6 +8568,7 @@ export type Database = {
           key_in_agency: boolean
           kitchen_features: string[]
           kitchens: number | null
+          land_classification: string | null
           land_surface: number | null
           last_activity_at: string | null
           lat: number | null
@@ -8679,6 +8681,7 @@ export type Database = {
           external_id?: string | null
           features?: string[]
           finish_state?: string | null
+          flood_risk?: boolean | null
           floor?: number | null
           floor_finishes?: string[]
           floor_label?: string | null
@@ -8702,6 +8705,7 @@ export type Database = {
           key_in_agency?: boolean
           kitchen_features?: string[]
           kitchens?: number | null
+          land_classification?: string | null
           land_surface?: number | null
           last_activity_at?: string | null
           lat?: number | null
@@ -8814,6 +8818,7 @@ export type Database = {
           external_id?: string | null
           features?: string[]
           finish_state?: string | null
+          flood_risk?: boolean | null
           floor?: number | null
           floor_finishes?: string[]
           floor_label?: string | null
@@ -8837,6 +8842,7 @@ export type Database = {
           key_in_agency?: boolean
           kitchen_features?: string[]
           kitchens?: number | null
+          land_classification?: string | null
           land_surface?: number | null
           last_activity_at?: string | null
           lat?: number | null
@@ -12101,6 +12107,7 @@ export type Database = {
           external_id: string | null
           features: string[]
           finish_state: string | null
+          flood_risk: boolean | null
           floor: number | null
           floor_finishes: string[]
           floor_label: string | null
@@ -12124,6 +12131,7 @@ export type Database = {
           key_in_agency: boolean
           kitchen_features: string[]
           kitchens: number | null
+          land_classification: string | null
           land_surface: number | null
           last_activity_at: string | null
           lat: number | null
