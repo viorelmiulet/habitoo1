@@ -296,4 +296,47 @@ describe("eroare doar la poze", () => {
     expect(calls).toContain(`POST /listings/${LU}/images/`);
     expect(calls).toContain(`POST /listings/${LU}/publish/`);
   });
+
+  it("o parte din poze ajung → anunț publicat, cu mesajul despre poze în rezultat", async () => {
+    let img = 0;
+    const { adapter, calls } = setup((m, p) => {
+      if (p.startsWith("/listings/by-external-id/")) return json(404, { errors: "nu" });
+      if (m === "POST" && p === "/listings/") return json(201, { uuid: LU, status: 3 });
+      if (p.endsWith("/images/")) {
+        img += 1;
+        return img === 1 ? json(201, { id: 7 }) : new Response("<!DOCTYPE html><title>Error 500</title>", { status: 500, headers: { "Content-Type": "text/html" } });
+      }
+      if (p.endsWith("/publish/")) return json(200, { uuid: LU, status: 2, url: "https://vumsi.com/a/1", expires_at: "2026-12-01T00:00:00Z" });
+      return json(500, {});
+    });
+    const r = await adapter.publishListing(ctx, { propertyId: "p1" } as never);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.data.portalStatus).toBe("published");
+      expect(r.data.message).toContain("Pozele nu au ajuns la Vumsi – se reîncearcă la următoarea salvare");
+      expect(r.data.message).not.toContain("nicio poză nu a ajuns");
+    }
+    expect(calls).toContain(`POST /listings/${LU}/publish/`);
+  });
+
+  it("nicio poză nu ajunge, anunț deja publicat → rămâne publicat, cu mesajul despre poze", async () => {
+    const stored: VumsiStored[] = [{
+      external_id: "HBT-p1-V", transaction: "sale", vumsi_uuid: LU, status: 2,
+      public_url: "https://vumsi.com/a/1", expires_at: null, images: [], status_checked_at: null, deleted_at: null,
+    }];
+    const { adapter, calls } = setup((m, p) => {
+      if (p.startsWith("/listings/by-external-id/")) return json(200, { uuid: LU, status: 2 });
+      if (p.endsWith("/images/")) return new Response("<!DOCTYPE html><title>Error 500</title>", { status: 500, headers: { "Content-Type": "text/html" } });
+      if (p.endsWith("/publish/")) return json(200, { uuid: LU, status: 2 });
+      return json(200, { uuid: LU, status: 2 });
+    }, stored);
+    const r = await adapter.updateListing(ctx, { propertyId: "p1" } as never);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.data.portalStatus).toBe("published");
+      expect(r.data.message).toContain("Pozele nu au ajuns la Vumsi – se reîncearcă la următoarea salvare");
+      expect(r.data.message).not.toContain("nicio poză nu a ajuns");
+    }
+    expect(calls.some((c) => c.includes("/unpublish/") || c.startsWith("DELETE"))).toBe(false);
+  });
 });
