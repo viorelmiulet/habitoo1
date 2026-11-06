@@ -55,6 +55,7 @@ import { leadStageLabels, leadStages } from "@/lib/labels";
 import { leadLostReasons, logAudit } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
 import { PortalLogo, hasPortalLogo } from "@/components/app/PortalLogo";
+import { HouseraReplyBox, HouseraRetryButton } from "@/components/app/HouseraReplyBox";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { cn } from "@/lib/utils";
@@ -307,7 +308,7 @@ function LeadsPage() {
           .select("*")
           .eq("lead_id", detailLead!.id)
           .gt("expires_at", new Date().toISOString())
-          .order("sent_at", { ascending: false }),
+          .order("sent_at", { ascending: true }),
       ]);
       return {
         events: events.data ?? [],
@@ -1294,10 +1295,22 @@ function LeadsPage() {
                         className="rounded-xl border border-border bg-card p-4 shadow-sm"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-sm font-semibold">{m.sender_name ?? "Contact"}</p>
-                          <StatusBadge tone="neutral">
-                            Sursa: {m.portal === "storia" ? "Storia.ro" : m.portal}
-                          </StatusBadge>
+                          <p className="text-sm font-semibold">
+                            {m.direction === "out" ? "Tu" : (m.sender_name ?? "Contact")}
+                          </p>
+                          {m.direction === "out" ? (
+                            <StatusBadge tone={m.delivery_status === "sent" ? "success" : m.delivery_status === "failed" ? "danger" : "neutral"}>
+                              {m.delivery_status === "sent"
+                                ? "Trimis"
+                                : m.delivery_status === "failed"
+                                  ? "Netrimis"
+                                  : (m.delivery_error ?? "Se trimite")}
+                            </StatusBadge>
+                          ) : (
+                            <StatusBadge tone="neutral">
+                              Sursa: {m.portal === "storia" ? "Storia.ro" : m.portal === "housera" ? "Housera.ro" : m.portal}
+                            </StatusBadge>
+                          )}
                         </div>
                         <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
                           {m.sent_at ? formatDateTime(m.sent_at) : "Dată necunoscută"}
@@ -1311,6 +1324,12 @@ function LeadsPage() {
                             Mesajul nu are conținut text.
                           </p>
                         )}
+                        {m.direction === "out" && m.delivery_status === "failed" ? (
+                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs text-destructive">{m.delivery_error}</p>
+                            <HouseraRetryButton leadId={detailLead.id} messageId={m.id} />
+                          </div>
+                        ) : null}
                         <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
                           {m.sender_phone ? (
                             <a className="hover:text-foreground" href={`tel:${m.sender_phone}`}>
@@ -1334,6 +1353,7 @@ function LeadsPage() {
                       </p>
                     ) : null}
                   </ul>
+                  <HouseraReplyBox leadId={detailLead.id} />
                   <p className="mt-3 text-[11px] text-muted-foreground">
                     Mesajele primite din portaluri se păstrează 180 de zile, apoi se șterg automat.
                   </p>
