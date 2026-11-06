@@ -5,6 +5,7 @@ import { ExternalLink, Megaphone } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getHomeEurRate } from "@/lib/home-eur-rate.functions";
+import { getRealEstateNews, REAL_ESTATE_FEED_SOURCE } from "@/lib/home-real-estate-news.functions";
 import { cn } from "@/lib/utils";
 
 type News = { id: string; title: string; body: string; link_url: string | null; published_at: string | null };
@@ -43,6 +44,8 @@ export function HabitooNewsCard({ className }: { className?: string }) {
 
   const fetchRate = useServerFn(getHomeEurRate);
   const rate = useQuery({ queryKey: ["home", "eur-rate"], queryFn: () => fetchRate(), staleTime: 0, refetchOnMount: "always" }).data;
+  const fetchFeed = useServerFn(getRealEstateNews);
+  const feed = useQuery({ queryKey: ["home", "real-estate-news"], queryFn: () => fetchFeed(), staleTime: 15 * 60_000 }).data ?? [];
   const news = data?.news ?? [];
   const diff = rate && rate.previous ? rate.rate - rate.previous : null;
   const rateItem = rate ? (
@@ -72,7 +75,21 @@ export function HabitooNewsCard({ className }: { className?: string }) {
         <h2 className="truncate">Noutăți Habitoo</h2>
       </div>
       {rateItem}
-      {news.length === 0 && !rateItem ? (
+      {feed.length > 0 ? (
+        <ul className="mb-2 space-y-2">
+          {feed.map((f) => (
+            <li key={f.link} className="rounded-xl border border-border p-3">
+              <a href={f.link} target="_blank" rel="noopener noreferrer" className="group block">
+                <span className="block text-sm font-medium group-hover:underline">{f.title}</span>
+                <span className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                  {fmt(f.date)} · {REAL_ESTATE_FEED_SOURCE} <ExternalLink className="size-3" aria-hidden />
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {news.length === 0 && !rateItem && feed.length === 0 ? (
         <div className="flex flex-col items-center py-4 text-center">
           <span className="grid size-11 place-items-center rounded-full bg-muted text-muted-foreground">
             <Megaphone className="size-5" aria-hidden />
