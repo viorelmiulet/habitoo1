@@ -57,7 +57,8 @@ function related(slug: string): { name: string; href: string } | null {
 
 function FeaturePageView() {
   const { slug } = Route.useLoaderData();
-  const page = featurePageBySlug(slug)!;
+  const page = featurePageBySlug(slug);
+  if (!page) throw notFound();
   const links = page.related.map(related).filter((x): x is { name: string; href: string } => !!x);
   return (
     <PublicLayout>
