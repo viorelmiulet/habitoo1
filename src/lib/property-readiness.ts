@@ -26,6 +26,7 @@ export type PropertyIssueCode =
   | "no_coords"
   | "no_location"
   | "portal_withdrawn"
+  | "portal_rejected"
   | "unpublished";
 
 export type PropertyIssue = {
