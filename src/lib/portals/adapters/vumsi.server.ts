@@ -134,9 +134,19 @@ export function createVumsiAdapter(deps: VumsiAdapterDeps = {}): PortalAdapter {
       // Anunțul există la Vumsi: pozele care nu au ajuns devin avertisment, anunțul se publică
       // cu cele încărcate; următoarea salvare trimite doar pozele lipsă.
       const imgReasons = [...pics.warnings, ...(img.ok ? img.warnings : [`${VUMSI_IMAGES_PENDING_MESSAGE}${img.fail.message ? ` (${img.fail.message})` : ""}.`])];
-      if (img.ok) for (const w of img.warnings) if (!notes.includes(w)) notes.push(w);
-      else notes.push(`${VUMSI_IMAGES_PENDING_MESSAGE}.`);
+      if (img.ok) {
+        for (const w of img.warnings) if (!notes.includes(w)) notes.push(w);
+      } else {
+        notes.push(`${VUMSI_IMAGES_PENDING_MESSAGE}.`);
+      }
       mediaWarnings.push(photoWarning(img.images.length, pics.images.length, imgReasons));
+      // Fără nicio poză ajunsă la Vumsi: anunțul nou nu se publică; cel deja publicat rămâne.
+      const wasPublished = vumsiStatusInfo(state.status).portalStatus === "published";
+      if (img.images.length === 0) {
+        if (!wasPublished) notes.push(VUMSI_NO_IMAGES_MESSAGE);
+        done.push(`${VUMSI_TX_LABEL[tx]} (${up.action === "created" ? "creat" : "actualizat"}, ${vumsiStatusInfo(state.status).label.toLowerCase()})`);
+        continue;
+      }
       const pub = await publishVumsiListing(call, up.uuid, state.status);
       if (!pub.ok) { await save(); return vumsiToPortalFail(pub.fail, prefix); }
       state.status = pub.status;
