@@ -1,82 +1,19 @@
 /**
  * Dashboard ADMIN AGENȚIE — „unde pierdem”.
  *
- * Focus pe blocaje: pipeline segmentat pe agent, portofoliu incomplet,
- * portaluri cu erori, conversie lună/lună și limita de agenți a planului.
+ * Analizele (pipeline, portofolii, portaluri, conversie, echipă) sunt în
+ * Rapoarte → „Echipă și portofoliu” (TeamPortfolioReport).
  */
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  AlertTriangle,
-  ArrowDownRight,
-  ArrowUpRight,
-  Building2,
-  Handshake,
-  Minus,
-  Plug,
-  Rocket,
-  TrendingUp,
-  Users,
-} from "lucide-react";
-import { AgentPortfolioList } from "@/components/app/AgentPortfolioList";
+import { Rocket } from "lucide-react";
 import { SectionCard } from "@/components/app/SectionCard";
-import { EmptyState } from "@/components/app/EmptyState";
-import { StatusBadge } from "@/components/app/StatusBadge";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
-import { PortalLogo } from "@/components/app/PortalLogo";
-import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
 import { useCurrentUser } from "@/hooks/use-session";
-import { relativeDays } from "@/lib/format";
-import { leadStageLabels } from "@/lib/labels";
-import { STALE_PROPERTY_DAYS } from "@/lib/property-readiness";
 import { getManagerDashboard } from "@/lib/dashboard.functions";
-
-function Delta({ current, previous }: { current: number; previous: number }) {
-  if (previous === 0) {
-    if (current === 0) {
-      return (
-        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-          <Minus className="size-3" /> fără date luna trecută
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1 text-xs text-success">
-        <ArrowUpRight className="size-3" /> nou față de luna trecută
-      </span>
-    );
-  }
-  const pct = Math.round(((current - previous) / previous) * 100);
-  if (pct === 0) {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-        <Minus className="size-3" /> 0%
-      </span>
-    );
-  }
-  const up = pct > 0;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 text-xs tabular-nums ${up ? "text-success" : "text-destructive"}`}
-    >
-      {up ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
-      {up ? "+" : ""}
-      {pct}%
-    </span>
-  );
-}
 
 export function ManagerDashboard() {
   const { data: user } = useCurrentUser();
@@ -91,10 +28,7 @@ export function ManagerDashboard() {
   });
 
   const data = dashboard.data;
-  const stages = (data?.stageTotals ?? []).map((s) => s.stage);
   const brandNew = data && data.totals.properties === 0 && data.totals.leads === 0;
-  const limitReached =
-    data && data.team.limit !== null ? data.team.activeAgents >= data.team.limit : false;
 
 
   return (
@@ -152,7 +86,6 @@ export function ManagerDashboard() {
               </ol>
             </SectionCard>
           ) : null}
-
         </>
       )}
     </>
