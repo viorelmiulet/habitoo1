@@ -7,6 +7,7 @@
 import { houseraOfferFilter, type HouseraEvent } from "./events";
 import type { HouseraClientLike } from "./publish";
 import { HouseraError } from "./client.server";
+import { activeHouseraEnv } from "./config";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
