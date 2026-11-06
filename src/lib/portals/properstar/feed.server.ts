@@ -73,7 +73,7 @@ function splitName(fullName: string | null | undefined): {
 /**
  * Logo-ul agenției: link public permanent (redirect), ca în celelalte indexuri —
  * nu un URL semnat temporar. Fără logo încărcat și fără adresă externă https:
- * nil, iar elementul `Logo` lipsește din feed.
+ * nimic nu se trimite, iar elementul `Logo` lipsește din feed.
  */
 function agencyLogoUrl(
   org: { id: string; logo_path?: string | null; logo_url?: string | null },
