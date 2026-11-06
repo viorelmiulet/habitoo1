@@ -27,6 +27,7 @@ import { Container, Eyebrow, Section, SectionHeading } from "@/components/market
 import { DashboardMock } from "@/components/marketing/mockups/DashboardMock";
 import { homeIdentityJsonLd } from "@/components/marketing/structured-data";
 import { publicHead } from "@/components/marketing/public-head";
+import { publicPortalCount } from "@/lib/portals/integration-pages";
 import { getCurrentHostname } from "@/lib/current-host";
 import { isCrmHostname } from "@/lib/host";
 
@@ -203,7 +204,7 @@ function HomePage() {
                 <span className="text-gold">tranzacții închise.</span>
               </h1>
               <p className="mt-6 max-w-xl text-base leading-relaxed text-navy-foreground sm:text-lg">
-                Anunțuri, clienți și lead-uri într-un singur loc, simplu de folosit de prima zi.
+                Anunțuri, clienți și lead-uri într-un singur loc: introduci proprietatea o dată și o publici pe {publicPortalCount()} portaluri, mai multe decât în orice alt CRM imobiliar din România.
               </p>
               <div className="mt-7 grid grid-cols-2 gap-2 sm:mt-9 sm:flex sm:gap-3">
                 <Button asChild size="lg" className="h-12 rounded-full px-3 text-sm shadow-raised sm:px-7 sm:text-base">
