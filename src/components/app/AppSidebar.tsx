@@ -22,9 +22,6 @@ import {
   ChevronDown,
   HelpCircle,
   LogOut,
-  Monitor,
-  Moon,
-  Sun,
   PanelLeftClose,
   PanelLeftOpen,
   PlusCircle,
@@ -58,8 +55,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
