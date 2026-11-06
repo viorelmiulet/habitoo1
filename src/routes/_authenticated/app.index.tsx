@@ -9,7 +9,7 @@ import { ShellLoading } from "@/components/app/LoadingState";
 import { useCurrentUser } from "@/hooks/use-session";
 import { AgentDashboard } from "@/components/app/dashboard/AgentDashboard";
 import { ManagerDashboard } from "@/components/app/dashboard/ManagerDashboard";
-import { DashboardOverview } from "@/components/app/dashboard/DashboardOverview";
+import { HomeDashboard } from "@/components/app/dashboard/HomeDashboard";
 import { appHead } from "@/components/app/app-head";
 import { dashboardHomeFor } from "@/lib/superadmin-status";
 
@@ -31,8 +31,10 @@ function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <DashboardOverview organizationId={user.organization?.id} firstName={firstName} />
-      <div data-tour="dashboard-work">{user.role === "agent" ? <AgentDashboard /> : <ManagerDashboard />}</div>
+      <HomeDashboard organizationId={user.organization?.id} firstName={firstName} />
+      <div data-tour="dashboard-work" className="space-y-6">
+        {user.role === "agent" ? <AgentDashboard /> : <ManagerDashboard />}
+      </div>
     </div>
   );
 }
