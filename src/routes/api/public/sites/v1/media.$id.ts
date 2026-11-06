@@ -6,12 +6,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { isPropertyFeedEligible } from "@/lib/site-feed/mapper";
 import { watermarkFromOrg } from "@/lib/watermark";
 
-const SIGNED_URL_TTL = 60 * 60 * 24; // 24h
 
 export const Route = createFileRoute("/api/public/sites/v1/media/$id")({
   server: {
     handlers: {
-      GET: async ({ params }) => {
+      GET: async ({ params, request }) => {
+        const { parseImageParams } = await import("@/lib/site-feed/image-params");
+        const resize = parseImageParams(new URL(request.url).searchParams);
         // Acceptăm și forma `{id}.jpg`: unele portaluri (iMove) validează
         // extensia imaginii din URL înainte de a o descărca.
         const id = String(params.id ?? "").replace(/\.(jpe?g|png|webp)$/i, "");
@@ -57,10 +58,9 @@ export const Route = createFileRoute("/api/public/sites/v1/media/$id")({
               const { ensureWatermarkedPath } = await import("@/lib/watermark.server");
               path = (await ensureWatermarkedPath(supabaseAdmin, image.storage_path, cfg)) ?? path;
             }
-            const { data: signed } = await supabaseAdmin.storage
-              .from("property-media")
-              .createSignedUrl(path, SIGNED_URL_TTL);
-            if (signed?.signedUrl) target = signed.signedUrl;
+            const { signed } = await import("@/lib/site-feed/media-redirect.server");
+            const url = await signed(supabaseAdmin, "property-media", path, resize);
+            if (url) target = url;
           }
           if (!target) return new Response("Not found", { status: 404 });
 

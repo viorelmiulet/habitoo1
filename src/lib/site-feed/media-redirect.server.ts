@@ -1,5 +1,6 @@
 /** Redirect-uri publice pentru poza agentului și logo-ul agenției (fără token). */
 import { httpsUrlOrNull } from "@/lib/site-feed/mapper";
+import { storageTransform, type ImageParams } from "@/lib/site-feed/image-params";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SIGNED_URL_TTL = 60 * 60 * 24;
@@ -23,12 +24,20 @@ async function loadDb(db?: Db): Promise<Db> {
   return (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 }
 
-async function signed(db: Db, bucket: string, path: string): Promise<string | null> {
+/** Cu parametri: varianta redimensionată; la orice eșec, originalul. */
+export async function signed(db: Db, bucket: string, path: string, params?: ImageParams | null): Promise<string | null> {
+  if (params) {
+    try {
+      const { data, error } = await db.storage.from(bucket).createSignedUrl(path, SIGNED_URL_TTL, { transform: storageTransform(params) });
+      const url = !error ? httpsUrlOrNull(data?.signedUrl ?? null) : null;
+      if (url) return url;
+    } catch { /* revenim la original */ }
+  }
   const { data } = await db.storage.from(bucket).createSignedUrl(path, SIGNED_URL_TTL);
   return httpsUrlOrNull(data?.signedUrl ?? null);
 }
 
-export async function agentPhotoRedirect(rawId: unknown, dbIn?: Db): Promise<Response> {
+export async function agentPhotoRedirect(rawId: unknown, dbIn?: Db, params?: ImageParams | null): Promise<Response> {
   const id = parseMediaId(rawId);
   if (!id) return notFound();
   try {
@@ -40,7 +49,7 @@ export async function agentPhotoRedirect(rawId: unknown, dbIn?: Db): Promise<Res
       .maybeSingle();
     const raw = profile?.avatar_url?.trim();
     if (!profile || profile.is_active !== true || !raw) return notFound();
-    const target = httpsUrlOrNull(raw) ?? (await signed(db, "avatars", raw));
+    const target = httpsUrlOrNull(raw) ?? (await signed(db, "avatars", raw, params));
     return target ? redirect(target) : notFound();
   } catch (error) {
     console.error("[site-feed] agent photo redirect failed", error);
@@ -48,7 +57,7 @@ export async function agentPhotoRedirect(rawId: unknown, dbIn?: Db): Promise<Res
   }
 }
 
-export async function agencyLogoRedirect(rawId: unknown, dbIn?: Db): Promise<Response> {
+export async function agencyLogoRedirect(rawId: unknown, dbIn?: Db, params?: ImageParams | null): Promise<Response> {
   const id = parseMediaId(rawId);
   if (!id) return notFound();
   try {
@@ -61,7 +70,7 @@ export async function agencyLogoRedirect(rawId: unknown, dbIn?: Db): Promise<Res
     if (!org) return notFound();
     const path = org.logo_path?.trim();
     const target =
-      (path ? await signed(db, "agency-logos", path) : null) ?? httpsUrlOrNull(org.logo_url);
+      (path ? await signed(db, "agency-logos", path, params) : null) ?? httpsUrlOrNull(org.logo_url);
     return target ? redirect(target) : notFound();
   } catch (error) {
     console.error("[site-feed] agency logo redirect failed", error);
