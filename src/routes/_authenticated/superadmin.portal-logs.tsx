@@ -14,6 +14,8 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -37,6 +39,7 @@ type Search = {
   status?: "success" | "error";
   period?: "today" | "7d" | "30d";
   ref?: string;
+  completare?: boolean;
 };
 
 const str = (v: unknown) => (typeof v === "string" && v !== "" ? v : undefined);
@@ -55,6 +58,7 @@ export const Route = createFileRoute("/_authenticated/superadmin/portal-logs")({
       ...(status === "success" || status === "error" ? { status } : {}),
       ...(period === "today" || period === "7d" || period === "30d" ? { period } : {}),
       ...(str(s.ref) ? { ref: str(s.ref) } : {}),
+      ...(s.completare === true || s.completare === "1" ? { completare: true } : {}),
     };
   },
   component: PortalLogsPage,
@@ -87,6 +91,7 @@ function PortalLogsPage() {
           status: search.status,
           period: search.period,
           reference: search.ref,
+          includeListingErrors: search.completare === true,
         },
       }),
   });
@@ -154,6 +159,15 @@ function PortalLogsPage() {
             className="h-10"
           />
         </form>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Switch
+          id="show-listing-errors"
+          checked={search.completare === true}
+          onCheckedChange={(v) => set({ completare: v ? true : undefined })}
+        />
+        <Label htmlFor="show-listing-errors" className="text-sm">Arată și erorile de completare a anunțurilor</Label>
       </div>
 
       <div className="panel overflow-hidden rounded-[14px]">

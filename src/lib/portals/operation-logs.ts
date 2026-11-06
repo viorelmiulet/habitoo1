@@ -17,6 +17,8 @@ export const portalLogsFilterSchema = z.object({
   status: z.enum(["success", "error"]).optional(),
   period: z.enum(PORTAL_LOG_PERIODS).optional(),
   reference: z.string().trim().min(1).max(60).optional(),
+  /** Implicit ascunse în jurnalul SuperAdmin. */
+  includeListingErrors: z.boolean().optional(),
 });
 export type PortalLogsFilter = z.infer<typeof portalLogsFilterSchema>;
 

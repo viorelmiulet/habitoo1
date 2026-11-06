@@ -16,15 +16,14 @@ export function WeekBlock({ week, loading }: { week: SuperadminWeek | undefined;
         <h2 className="text-base font-bold">Ultimele 7 zile</h2>
         <span className="text-[13px] text-muted-foreground">comparat cu săptămâna anterioară</span>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {loading || !week ? (
-          [0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28 rounded-[14px]" />)
+          [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-28 rounded-[14px]" />)
         ) : (
           <>
             <WeekCard featured label="Agenții active" value={formatNumber(week.activeAgencies)} hint={`${formatNumber(week.paidAgencies)} plătite · ${formatNumber(week.trialAgencies)} în trial`} />
             <WeekCard label="Utilizatori activi" value={`${formatNumber(week.activeUsers)} din ${formatNumber(week.totalUsers)}`} hint="autentificați în ultimele 7 zile" />
             <DeltaCard label="Proprietăți noi" current={week.newProperties} previous={week.newPropertiesPrev} />
-            <DeltaCard label="Lead-uri primite" current={week.newLeads} previous={week.newLeadsPrev} />
             <WeekCard label="Operațiuni pe portaluri" value={formatNumber(week.portalSuccess)} hint={portalOpsHint(week.portalSuccess, week.portalFailed)} />
           </>
         )}

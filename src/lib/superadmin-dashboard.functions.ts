@@ -8,7 +8,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   classifyExpiry,
-  groupBlockedPublishing,
   termLabel,
   type SubscriptionAlert,
   type SuperadminTodo,
@@ -16,6 +15,7 @@ import {
 import { AGENCY_ROW_LIMIT, buildAgencyRowsFrom, type AgencyRow } from "@/lib/superadmin-agencies";
 import { buildPortalCardsFrom, type PortalCard } from "@/lib/superadmin-portals";
 import { WEEK_PORTAL_OPERATIONS, isActiveLogin, type SuperadminWeek } from "@/lib/superadmin-week";
+import { PLATFORM_ERROR_CODE_FILTER, countPlatformPublicationErrors } from "@/lib/portal-error-class";
 
 type AuthContext = {
   supabase: {
@@ -67,12 +67,11 @@ async function buildTodo(admin: Admin): Promise<SuperadminTodo> {
   if (orgErr) throw new Error(`Interogările dashboardului au eșuat — organizații: ${orgErr.message}`);
   const orgs = orgRows ?? [];
   const demoIds = orgs.filter((o) => o.is_demo).map((o) => o.id);
-  const nameOf = new Map(orgs.map((o) => [o.id, o.name]));
   // Rândurile fără agenție (ex. cereri de înscriere noi) rămân incluse.
   const notDemo = <T extends { or: (f: string) => T }>(q: T): T =>
     demoIds.length ? q.or(`organization_id.is.null,organization_id.not.in.(${demoIds.join(",")})`) : q;
 
-  const [reg, subs, act, tick, conns, pubs] = await Promise.all([
+  const [reg, subs, act, tick, conns] = await Promise.all([
     notDemo(admin.from("agency_registration_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
     notDemo(admin.from("subscription_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
     notDemo(admin.from("portal_activation_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
@@ -84,17 +83,9 @@ async function buildTodo(admin: Admin): Promise<SuperadminTodo> {
         .eq("activated", true)
         .or("status.eq.error,last_sync_status.eq.error"),
     ),
-    notDemo(
-      admin
-        .from("portal_publications")
-        .select("organization_id,property_id,portal_key,last_error")
-        .eq("enabled", true)
-        .eq("status", "error")
-        .neq("portal_key", "facebook_catalog"),
-    ),
   ]);
   const failed = (
-    [["cereri de înscriere", reg], ["cereri de abonament", subs], ["activări portal", act], ["tichete", tick], ["conexiuni", conns], ["publicări", pubs]] as [string, { error: { message: string } | null }][]
+    [["cereri de înscriere", reg], ["cereri de abonament", subs], ["activări portal", act], ["tichete", tick], ["conexiuni", conns]] as [string, { error: { message: string } | null }][]
   ).filter(([, r]) => r.error);
   if (failed.length) {
     throw new Error(`Interogările dashboardului au eșuat — ${failed.map(([l, r]) => `${l}: ${r.error?.message}`).join(" | ")}`);
@@ -149,10 +140,8 @@ async function buildTodo(admin: Admin): Promise<SuperadminTodo> {
     },
     expiring: alerts.filter((a) => a.kind === "expiring").sort((x, y) => x.daysLeft - y.daysLeft).map(strip),
     expired: alerts.filter((a) => a.kind === "expired").sort((x, y) => x.daysLeft - y.daysLeft).map(strip),
-    blocked: groupBlockedPublishing(
-      (pubs.data ?? []) as { organization_id: string; property_id: string; portal_key: string; last_error: string | null }[],
-      (id) => nameOf.get(id) ?? "—",
-    ),
+    // Anunțurile nepublicabile țin de munca agențiilor, nu de platformă.
+    blocked: [],
   };
 }
 
@@ -169,13 +158,13 @@ async function buildWeek(admin: Admin, lastLogin: Map<string, string | null>): P
     demoIds.length ? q.or(`organization_id.is.null,organization_id.not.in.(${demoIds.join(",")})`) : q;
   const realOrg = <T extends { not: (c: string, o: string, v: string) => T; filter: (c: string, o: string, v: string) => T }>(q: T): T =>
     demoIds.length ? q.not("organization_id", "in", `(${demoIds.join(",")})`) : q;
-  const count = (t: "properties" | "leads", from: string, to?: string) => {
-    let q = admin.from(t).select("id", { count: "exact", head: true }).is("deleted_at", null).gte("created_at", from);
+  const count = (from: string, to?: string) => {
+    let q = admin.from("properties").select("id", { count: "exact", head: true }).is("deleted_at", null).gte("created_at", from);
     if (to) q = q.lt("created_at", to);
     return realOrg(q);
   };
-  const ops = (success: boolean) =>
-    notDemo(
+  const ops = (success: boolean) => {
+    const q = notDemo(
       admin
         .from("portal_operation_logs")
         .select("id", { count: "exact", head: true })
@@ -183,17 +172,18 @@ async function buildWeek(admin: Admin, lastLogin: Map<string, string | null>): P
         .eq("success", success)
         .gte("created_at", since),
     );
+    // Eșecurile de completare a anunțului nu intră în rata platformei.
+    return success ? q : q.or(PLATFORM_ERROR_CODE_FILTER);
+  };
 
-  const [props, propsPrev, leads, leadsPrev, okOps, badOps, members] = await Promise.all([
-    count("properties", since),
-    count("properties", prev, since),
-    count("leads", since),
-    count("leads", prev, since),
+  const [props, propsPrev, okOps, badOps, members] = await Promise.all([
+    count(since),
+    count(prev, since),
     ops(true),
     ops(false),
     realOrg(admin.from("profiles").select("id").not("organization_id", "is", null)),
   ]);
-  const failed = ([["proprietăți", props], ["proprietăți anterioare", propsPrev], ["lead-uri", leads], ["lead-uri anterioare", leadsPrev], ["operațiuni reușite", okOps], ["operațiuni eșuate", badOps], ["utilizatori", members]] as [string, { error: { message: string } | null }][]).filter(([, r]) => r.error);
+  const failed = ([["proprietăți", props], ["proprietăți anterioare", propsPrev], ["operațiuni reușite", okOps], ["operațiuni eșuate", badOps], ["utilizatori", members]] as [string, { error: { message: string } | null }][]).filter(([, r]) => r.error);
   if (failed.length) throw new Error(`Interogările dashboardului au eșuat — ${failed.map(([l, r]) => `${l}: ${r.error?.message}`).join(" | ")}`);
 
   const ids = (members.data ?? []).map((m) => m.id);
@@ -207,8 +197,6 @@ async function buildWeek(admin: Admin, lastLogin: Map<string, string | null>): P
     totalUsers: ids.length,
     newProperties: props.count ?? 0,
     newPropertiesPrev: propsPrev.count ?? 0,
-    newLeads: leads.count ?? 0,
-    newLeadsPrev: leadsPrev.count ?? 0,
     portalSuccess: okOps.count ?? 0,
     portalFailed: badOps.count ?? 0,
   };
@@ -233,18 +221,16 @@ async function buildAgencyRows(admin: Admin, lastLogin: Map<string, string | nul
     .select("id,name,plan,is_demo,status,archived_at,is_trial,subscription_term,subscription_expires_at");
   if (error) throw new Error(`Interogările dashboardului au eșuat — agenții: ${error.message}`);
   const orgs = (orgRows ?? []).filter((o) => !o.is_demo && o.status === "active" && !o.archived_at);
-  const since30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
   const head = { count: "exact" as const, head: true };
   const stats = await Promise.all(
     orgs.map(async (o) => {
-      const [props, leads, conns, errs, members] = await Promise.all([
+      const [props, conns, errs, members] = await Promise.all([
         admin.from("properties").select("id", head).eq("organization_id", o.id).eq("status", "active").is("deleted_at", null),
-        admin.from("leads").select("id", head).eq("organization_id", o.id).is("deleted_at", null).gte("created_at", since30),
         admin.from("portal_connections").select("id", head).eq("organization_id", o.id).eq("activated", true),
-        admin.from("portal_publications").select("id", head).eq("organization_id", o.id).eq("enabled", true).eq("status", "error").neq("portal_key", "facebook_catalog"),
+        admin.from("portal_publications").select("last_error").eq("organization_id", o.id).eq("enabled", true).eq("status", "error").neq("portal_key", "facebook_catalog"),
         admin.from("profiles").select("id").eq("organization_id", o.id),
       ]);
-      const bad = [props, leads, conns, errs, members].find((r) => r.error);
+      const bad = [props, conns, errs, members].find((r) => r.error);
       if (bad?.error) throw new Error(`Interogările dashboardului au eșuat — agenții: ${bad.error.message}`);
       const ids = (members.data ?? []).map((m) => m.id);
       return {
@@ -256,9 +242,8 @@ async function buildAgencyRows(admin: Admin, lastLogin: Map<string, string | nul
         expiresAt: o.subscription_expires_at,
         users: ids.length,
         activeProperties: props.count ?? 0,
-        leads30: leads.count ?? 0,
         portals: conns.count ?? 0,
-        errors: errs.count ?? 0,
+        errors: countPlatformPublicationErrors(errs.data ?? []),
         lastLoginAt: ids.map((id) => lastLogin.get(id) ?? null).filter((x): x is string => !!x).sort().at(-1) ?? null,
       };
     }),
@@ -289,14 +274,14 @@ async function buildPortalCards(admin: Admin): Promise<PortalCard[]> {
   const counted = await Promise.all(
     [...agencies.entries()].map(async ([portal, orgs]) => {
       const q = (status: string) => {
-        let x = admin.from("portal_publications").select("id", head).eq("portal_key", portal).eq("enabled", true).eq("status", status);
+        let x = admin.from("portal_publications").select(status === "error" ? "last_error" : "id", status === "error" ? undefined : head).eq("portal_key", portal).eq("enabled", true).eq("status", status);
         if (demoIds.length) x = x.not("organization_id", "in", `(${demoIds.join(",")})`);
         return x;
       };
       const [ok, bad] = await Promise.all([q("synced"), q("error")]);
       const e = ok.error ?? bad.error;
       if (e) throw new Error(`Interogările dashboardului au eșuat — publicări: ${e.message}`);
-      return { portal, agencies: orgs.size, published: ok.count ?? 0, errors: bad.count ?? 0 };
+      return { portal, agencies: orgs.size, published: ok.count ?? 0, errors: countPlatformPublicationErrors((bad.data ?? []) as unknown as { last_error: string | null }[]) };
     }),
   );
   return buildPortalCardsFrom(counted);

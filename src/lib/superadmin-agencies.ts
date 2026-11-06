@@ -17,8 +17,8 @@ export type AgencyStats = {
   expiresAt: string | null;
   users: number;
   activeProperties: number;
-  leads30: number;
   portals: number;
+  /** Doar erori de platformă. */
   errors: number;
   lastLoginAt: string | null;
 };

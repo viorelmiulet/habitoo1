@@ -1,3 +1,4 @@
+import { HIDE_LISTING_ERRORS_FILTER } from "@/lib/portal-error-class";
 import {
   PORTAL_LOGS_PAGE_SIZE,
   logSummary,
@@ -68,6 +69,7 @@ export async function queryPortalLogs(
   if (filter.status) q = q.eq("success", filter.status === "success");
   if (filter.period) q = q.gte("created_at", periodStart(filter.period, now));
   if (propertyIds) q = q.in("property_id", propertyIds);
+  if (!filter.includeListingErrors) q = q.or(HIDE_LISTING_ERRORS_FILTER);
   const { data: rows, count, error } = await q
     .order("created_at", { ascending: false })
     .range(from, from + PORTAL_LOGS_PAGE_SIZE - 1);

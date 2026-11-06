@@ -10,9 +10,8 @@ export type SuperadminWeek = {
   totalUsers: number;
   newProperties: number;
   newPropertiesPrev: number;
-  newLeads: number;
-  newLeadsPrev: number;
   portalSuccess: number;
+  /** Doar eșecurile de platformă; erorile de completare a anunțului nu intră. */
   portalFailed: number;
 };
 

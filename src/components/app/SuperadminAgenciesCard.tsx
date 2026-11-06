@@ -25,11 +25,11 @@ export function AgenciesCard({ rows, loading }: { rows: AgencyRow[] | undefined;
         <p className="px-5 py-4 text-sm text-muted-foreground">Nicio agenție activă.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] text-sm">
+          <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                {["Agenție", "Abonament", "Expiră", "Utiliz.", "Proprietăți", "Lead-uri 30z", "Portaluri", "Erori", "Ultima logare"].map((h, i) => (
-                  <th key={h} className={cn("px-4 py-2.5 font-semibold whitespace-nowrap", i >= 3 && i <= 7 && "text-right")}>{h}</th>
+                {["Agenție", "Abonament", "Expiră", "Utiliz.", "Proprietăți", "Portaluri", "Erori", "Ultima logare"].map((h, i) => (
+                  <th key={h} className={cn("px-4 py-2.5 font-semibold whitespace-nowrap", i >= 3 && i <= 6 && "text-right")}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -70,7 +70,6 @@ export function AgenciesCard({ rows, loading }: { rows: AgencyRow[] | undefined;
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{formatNumber(r.users)}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{formatNumber(r.activeProperties)}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{formatNumber(r.leads30)}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{formatNumber(r.portals)}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">
                       {r.errors > 0 ? <span className={cn(pill, "bg-danger-tint text-destructive")}>{formatNumber(r.errors)}</span> : "0"}
