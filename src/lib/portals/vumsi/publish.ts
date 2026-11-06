@@ -11,6 +11,7 @@ import type { VumsiCompanyPayload, VumsiListingBody, VumsiTransaction, VumsiUser
 
 export const VUMSI_STATUS_TTL_MS = 60_000;
 export const VUMSI_IMAGES_PENDING_MESSAGE = "Pozele nu au ajuns la Vumsi – se reîncearcă la următoarea salvare";
+export const VUMSI_NO_IMAGES_MESSAGE = "Anunțul nu a fost publicat, pentru că nicio poză nu a ajuns la Vumsi. Se reîncearcă la următoarea salvare.";
 
 export type VumsiCall = <T>(method: VumsiMethod, path: string, opts?: { json?: unknown; form?: FormData; query?: Record<string, string | number> }) =>
   Promise<{ ok: true; status: number; data: T } | VumsiCallFail>;
