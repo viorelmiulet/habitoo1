@@ -3,6 +3,7 @@ import { parseHouseraEvent } from "./events";
 import { ingestPulledHouseraEvent } from "./events.server";
 import { createHouseraClient, resetHouseraRateState } from "./client.server";
 import { HOUSERA_NO_LEADS_READ } from "./leads.server";
+import { sendEmail } from "@/lib/mailgun.server";
 
 vi.mock("@/lib/mailgun.server", () => ({ sendEmail: vi.fn(async () => ({ ok: true })) }));
 
@@ -165,5 +166,44 @@ describe("cereri Housera → lead-uri", () => {
     expect(t.portal_webhook_events![0]!.process_note).toBe(HOUSERA_NO_LEADS_READ);
     expect(t.leads ?? []).toHaveLength(0);
     expect(t.notifications!.some((x) => x.user_id === "boss")).toBe(true);
+  });
+});
+
+describe("H12 notificări Housera", () => {
+  const mail = vi.mocked(sendEmail);
+  const msgs = (after: string, list: Row[]) => client({ [`leads/lead_1/messages?after=${after}`]: json({ data: list }) });
+
+  it("lead nou → notificare în aplicație + email la agentul responsabil, link la lead", async () => {
+    mail.mockClear();
+    const { admin, t } = fakeDb(seed());
+    const { c } = client({ "leads/lead_1": json(LEAD) });
+    await ingestPulledHouseraEvent(admin, "org", ev("e1", "lead.created"), { client: c, now });
+    expect(t.notifications!.filter((n) => n.user_id === "agent-x")).toHaveLength(1);
+    expect(mail).toHaveBeenCalledTimes(1);
+    expect(mail.mock.calls[0]![0]).toMatchObject({ to: ["ana@agentie.ro"] });
+    expect(String(mail.mock.calls[0]![0].text)).toContain(`/app/leads?lead=${t.leads![0]!.id}`);
+    expect(String(mail.mock.calls[0]![0].subject)).toContain("Housera.ro");
+  });
+
+  it("mesaj nou → notificare; mesaj propriu → nimic; două mesaje rapide → un singur email", async () => {
+    const { admin, t } = fakeDb(seed());
+    const { c } = client({ "leads/lead_1": json(LEAD) });
+    await ingestPulledHouseraEvent(admin, "org", ev("e1", "lead.created"), { client: c, now: () => new Date("2026-11-05T19:00:00Z") });
+    t.portal_lead_links![0]!.last_message_id = "m0";
+    t.portal_lead_links![0]!.last_email_notified_at = null;
+    mail.mockClear();
+    const before = t.notifications!.length;
+
+    const { c: own } = msgs("m0", [{ id: "m1", direction: "out", body: "Răspunsul nostru", created_at: "2026-11-05T19:50:00Z" }]);
+    await ingestPulledHouseraEvent(admin, "org", ev("e2", "lead.message_received", { message_id: "m1" }), { client: own, now });
+    expect(t.notifications!.length).toBe(before);
+    expect(mail).not.toHaveBeenCalled();
+
+    const { c: c1 } = msgs("m1", [{ id: "m2", direction: "in", body: "Se poate sâmbătă?", created_at: "2026-11-05T19:55:00Z" }]);
+    await ingestPulledHouseraEvent(admin, "org", ev("e3", "lead.message_received", { message_id: "m2" }), { client: c1, now });
+    const { c: c2 } = msgs("m2", [{ id: "m3", direction: "in", body: "Sau duminică.", created_at: "2026-11-05T19:56:00Z" }]);
+    await ingestPulledHouseraEvent(admin, "org", ev("e4", "lead.message_received", { message_id: "m3" }), { client: c2, now: () => new Date("2026-11-05T20:03:00Z") });
+    expect(t.notifications!.length - before).toBe(2);
+    expect(mail).toHaveBeenCalledTimes(1);
   });
 });
