@@ -46,11 +46,11 @@ describe("De rezolvat", () => {
   });
 
   it("numără cardurile și listează categoriile la zero", () => {
-    const todo = { counts: { ...zero, openTickets: 2 }, expiring: [], expired: [], blocked: [{ organizationId: "a", organizationName: "A", listings: 1, portals: 1, total: 1, notPublishable: 1, other: 0 }] };
+    const todo = { counts: { ...zero, openTickets: 2 }, expiring: [], expired: [], blocked: [{ organizationId: "a", organizationName: "A", listings: 1, portals: 1, total: 1, notPublishable: 1, other: 0 }], brokenConnections: [] };
     expect(todoItemCount(todo)).toBe(2);
     expect(zeroCategories(todo.counts)).not.toContain("Tichete de suport");
     expect(zeroCategories(todo.counts)).toHaveLength(4);
-    expect(todoItemCount({ counts: zero, expiring: [], expired: [], blocked: [] })).toBe(0);
+    expect(todoItemCount({ counts: zero, expiring: [], expired: [], blocked: [], brokenConnections: [] })).toBe(0);
   });
 
   it("subtitlul și acordul numeralelor", () => {

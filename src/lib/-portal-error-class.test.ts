@@ -6,7 +6,6 @@ import {
   classifyPublicationError,
   countPlatformPublicationErrors,
 } from "@/lib/portal-error-class";
-import { portalsSubtitle } from "@/lib/superadmin-portals";
 
 describe("classifyPortalErrorCode — coduri găsite în portal_operation_logs", () => {
   it.each([
@@ -53,8 +52,9 @@ describe("agregarea de pe dashboard", () => {
     );
     expect(HIDE_LISTING_ERRORS_FILTER.startsWith("success.eq.true,")).toBe(true);
   });
-  it("fără erori de platformă: „Toate conexiunile funcționează”", () => {
-    expect(portalsSubtitle(0, [{ portal: "romimo", agencies: 2, published: 10, errors: 0 }])).toBe("Toate conexiunile funcționează");
-    expect(portalsSubtitle(1, [{ portal: "romimo", agencies: 2, published: 10, errors: 0 }])).toBe("1 conexiune cu eroare");
+  it("sloturile depășite țin de agenție, nu de platformă", () => {
+    expect(classifyPortalErrorCode("SLOTS_EXCEEDED")).toBe("agency");
+    expect(classifyPortalErrorCode(null, "Ai atins limita de anunțuri din pachet.")).toBe("agency");
+    expect(classifyPublicationError("Nu mai sunt sloturi disponibile")).toBe("agency");
   });
 });
