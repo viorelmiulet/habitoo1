@@ -1,4 +1,5 @@
-import { pickAgencyLogoUrl, signAgencyLogos } from "@/lib/portals/agency-logo";
+import { agencyLogoFeedUrl, httpsUrlOrNull } from "@/lib/site-feed/mapper";
+import { CRM_URL } from "@/lib/host";
 /**
  * Indexul ClickImob (server-only):
  *   GET /api/public/feed/clickimob/index/{CLICKIMOB_INDEX_KEY}.json
@@ -123,13 +124,9 @@ export async function listPortalIndexedAgencies(now: Date, portal: IndexPortal):
   if (firstError) throw new Error(firstError.message);
 
   const orgRows = orgs.data ?? [];
-  const signedLogos = await signAgencyLogos(
-    supabaseAdmin as never,
-    orgRows.map((o) => o.logo_path),
-  );
   const { agencies, changes } = selectClickimobAgencies(
     {
-      orgs: orgRows.map((o) => ({ ...o, logo_url: pickAgencyLogoUrl(o, signedLogos) })),
+      orgs: orgRows.map((o) => ({ ...o, logo_url: indexLogoUrl(o) })),
       connections: connections.data ?? [],
       selectedOrgs: (pubs.data ?? []).map((p) => p.organization_id),
       states: states.data ?? [],
@@ -204,4 +201,9 @@ export async function handlePortalIndex(
     await deps.log({ ...base, organizationId: null, status: 500, detail: "internal_error" });
     return new Response(null, { status: 500 });
   }
+}
+
+/** Link permanent spre logo (redirect public), nu URL semnat temporar. */
+export function indexLogoUrl(o: { id: string; logo_path?: string | null; logo_url?: string | null }): string | null {
+  return agencyLogoFeedUrl(o.id, Boolean(o.logo_path?.trim()) || Boolean(httpsUrlOrNull(o.logo_url ?? null)), CRM_URL);
 }
