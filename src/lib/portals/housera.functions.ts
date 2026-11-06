@@ -221,7 +221,7 @@ export const getHouseraReadiness = createServerFn({ method: "POST" })
       clientKeys: houseraConfigured(process.env),
       webhookSecret: Boolean(process.env["HOUSERA_WEBHOOK_SECRET"]?.trim()),
       webhookResponds,
-      schemaEnv: schema?.env ?? null,
+      schemaEnv: schema ? (schema.env === "production" ? "production" : "staging") : null,
       connections: ((conns ?? []) as Array<{ status: string | null; settings: Record<string, unknown> | null; portal_credentials_encrypted: string | null }>)
         .map((c) => ({ status: c.status, settings: c.settings, hasKey: !!c.portal_credentials_encrypted })),
     });
