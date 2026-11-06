@@ -1,7 +1,7 @@
 /**
  * Dashboard ADMIN AGENȚIE — „unde pierdem”.
  *
- * Analizele (pipeline, portofolii, portaluri, conversie, echipă) sunt în
+ * Pe Acasă rămâne doar „Primii pași” pentru agenții noi. Analizele sunt în
  * Rapoarte → „Echipă și portofoliu” (TeamPortfolioReport).
  */
 import { Link } from "@tanstack/react-router";
@@ -11,7 +11,6 @@ import { Rocket } from "lucide-react";
 import { SectionCard } from "@/components/app/SectionCard";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
-import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-session";
 import { getManagerDashboard } from "@/lib/dashboard.functions";
 
@@ -33,25 +32,6 @@ export function ManagerDashboard() {
 
   return (
     <>
-      <div className="flex flex-col gap-x-6 gap-y-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 sm:flex-1">
-          <h2 className="text-xl font-bold text-balance break-words">
-            {data?.organizationName || user?.organization?.name || "Agenția mea"}
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Unde se blochează fluxul: pipeline pe agenți, portofoliu, portaluri și conversie.
-          </p>
-        </div>
-        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 [&>*]:max-w-full sm:w-auto sm:justify-end">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/app/reports">Rapoarte</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link to="/app/properties/new">Adaugă proprietate</Link>
-          </Button>
-        </div>
-      </div>
-
       {dashboard.isLoading ? (
         <div className="panel p-6">
           <InlineLoading label="Se încarcă dashboardul…" />
