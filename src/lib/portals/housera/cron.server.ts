@@ -54,6 +54,8 @@ export async function runHouseraEventsCron() {
       saved = r.cursor;
       const { drainHouseraReplies } = await import("./replies.server");
       await drainHouseraReplies(admin, c.organization_id, client).catch(() => 0);
+      const { syncHouseraLeadStatuses } = await import("./lead-status.server");
+      await syncHouseraLeadStatuses(admin, c.organization_id, client).catch(() => null);
       out.push({ organizationId: c.organization_id, fetched: r.fetched, fresh: r.fresh });
       await log(admin, c.organization_id, "sync_events", true, `evenimente: ${r.fetched}, noi: ${r.fresh}, duplicate: ${r.duplicates}`, { ms: Date.now() - started });
     } catch (e) {
