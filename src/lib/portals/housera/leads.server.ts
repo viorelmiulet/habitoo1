@@ -188,8 +188,19 @@ async function importLead(ctx: Ctx, e: HouseraEvent, externalId: string, link: A
     ...(lead.status ? { status_remote: lead.status } : {}),
   }, { onConflict: "portal,organization_id,external_lead_id" });
   if (error) throw new Error("Legătura cererii Housera nu a putut fi salvată.");
+  const { notifyHouseraLead } = await import("./notify.server");
+  await notifyHouseraLead(admin, {
+    organizationId: orgId, assignedTo: r.created ? assignedTo : await leadAssignee(admin, r.leadId), leadId: r.leadId, externalLeadId: externalId,
+    propertyTitle: prop.title ?? "cererea Housera", senderName: name, body: lead.message, messageKey: `lead:${externalId}:${when}`,
+    inApp: !r.created, now,
+  });
   await log(admin, orgId, "lead_import", true, externalId, r.created ? "lead creat" : "atașat la lead existent");
   return r.leadId;
+}
+
+async function leadAssignee(admin: Admin, leadId: string): Promise<string | null> {
+  const { data } = await admin.from("leads").select("assigned_to").eq("id", leadId).maybeSingle();
+  return (data?.assigned_to as string | null | undefined) ?? null;
 }
 
 async function importMessages(ctx: Ctx, externalId: string, leadId: string) {
@@ -243,12 +254,12 @@ async function importMessages(ctx: Ctx, externalId: string, leadId: string) {
   await admin.from("portal_lead_links").update({ last_message_id: after, updated_at: now.toISOString() })
     .eq("portal", "housera").eq("organization_id", orgId).eq("external_lead_id", externalId);
   if (lastIn) {
-    const { notifyAgentOfStoriaMessage } = await import("../storia/messages.server");
-    await notifyAgentOfStoriaMessage(admin, {
-      organizationId: orgId, assignedTo: (leadRow?.assigned_to as string | null) ?? null, propertyTitle, leadId,
-      senderName: (leadRow?.name as string | null) ?? "Client Housera", body: lastIn.body, messageKey: lastIn.id, inApp: true,
-      portalLabel: SOURCE, keyPrefix: "housera-message",
+    const { notifyHouseraLead } = await import("./notify.server");
+    await notifyHouseraLead(admin, {
+      organizationId: orgId, assignedTo: (leadRow?.assigned_to as string | null) ?? null, leadId, externalLeadId: externalId, propertyTitle,
+      senderName: (leadRow?.name as string | null) ?? "Client Housera", body: lastIn.body, messageKey: lastIn.id, inApp: true, now,
     });
+
   }
   await log(admin, orgId, "lead_message", true, externalId, `mesaje noi: ${saved}`);
   return saved;
