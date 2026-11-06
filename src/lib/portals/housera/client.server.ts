@@ -2,7 +2,7 @@
  * Client HTTP Housera (server-only). Fără loguri cu cheia; erorile poartă
  * doar coduri și nume de câmpuri, niciodată textul complet al portalului.
  */
-import { HOUSERA_RECONNECT_MESSAGE, HOUSERA_TIMEOUT_MS } from "./config";
+import { HOUSERA_ANTIBOT_MESSAGE, HOUSERA_RECONNECT_MESSAGE, HOUSERA_TIMEOUT_MS, HOUSERA_USER_AGENT } from "./config";
 
 export type HouseraErrorKind = "unauthorized" | "validation" | "busy" | "rate_limited" | "temporary" | "refused";
 
@@ -78,9 +78,9 @@ export function createHouseraClient(deps: HouseraClientDeps) {
     if (wait) await sleep(wait);
     const url = new URL(path.replace(/^\/+/, ""), deps.baseUrl);
     for (const [k, v] of Object.entries(req.query ?? {})) url.searchParams.set(k, String(v));
-    const headers: Record<string, string> = { Authorization: `Bearer ${deps.key}`, Accept: "application/json" };
+    const headers: Record<string, string> = { Authorization: `Bearer ${deps.key}`, Accept: "application/json", "User-Agent": HOUSERA_USER_AGENT };
     if (req.body !== undefined) headers["Content-Type"] = "application/json";
-    for (const [k, v] of Object.entries(req.headers ?? {})) if (k.toLowerCase() !== "authorization") headers[k] = v;
+    for (const [k, v] of Object.entries(req.headers ?? {})) if (k.toLowerCase() !== "authorization" && k.toLowerCase() !== "user-agent") headers[k] = v;
     try {
       const res = await doFetch(url.toString(), {
         method: req.method ?? "GET",
@@ -113,6 +113,8 @@ export function createHouseraClient(deps: HouseraClientDeps) {
         throw new HouseraError("temporary", "Housera a răspuns cu o redirecționare neașteptată.", res.status, "redirect");
       }
       const body = await readJson(res);
+      // 403 fără JSON = pagina de protecție anti-bot: temporar, se reia.
+      if (res.status === 403 && !body) throw new HouseraError("temporary", HOUSERA_ANTIBOT_MESSAGE, 403, "antibot");
       const code = typeof body?.["code"] === "string" ? (body["code"] as string) : null;
       if (res.status === 401) {
         await deps.onUnauthorized?.();

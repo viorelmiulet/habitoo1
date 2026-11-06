@@ -3,6 +3,9 @@ export type HouseraEnv = "staging" | "production";
 
 export const HOUSERA_CALLBACK = "https://crm.habitoo.ro/api/public/portal/v1/housera/oauth/callback";
 export const HOUSERA_TIMEOUT_MS = 30_000;
+/** Antet trimis la toate cererile către Housera. */
+export const HOUSERA_USER_AGENT = "Habitoo-CRM/1.0 (+https://www.habitoo.ro)";
+export const HOUSERA_ANTIBOT_MESSAGE = "Housera a refuzat temporar cererea. Reîncercăm automat.";
 export const HOUSERA_MISSING_MESSAGE = "Integrarea Housera nu este configurată la nivel de platformă";
 export const HOUSERA_RECONNECT_MESSAGE =
   "Conexiunea Housera a expirat sau a fost revocată. Reconectează agenția.";

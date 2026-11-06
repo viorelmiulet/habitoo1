@@ -80,7 +80,7 @@ export type HouseraEffect =
 export function houseraEventEffect(e: HouseraEvent): HouseraEffect {
   const d = e.data;
   const [group] = e.type.split(".");
-  if (e.type === "webhook.test") return { kind: "log", note: "webhook.test" };
+  if (e.type === "webhook.test") return { kind: "log", note: "test primit" };
   if (group === "lead" || group === "viewing" || group === "partnership" || group === "complex") return { kind: "deferred", note: HOUSERA_DEFERRED_NOTE };
   const base = { kind: "listing" as const, code: str(d["code"]), externalRef: str(d["external_ref"]) };
   const status = str(d["status"]);
