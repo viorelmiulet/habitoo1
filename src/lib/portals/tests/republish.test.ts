@@ -1,7 +1,8 @@
 /** Republicarea anunțurilor deja publicate — fără apeluri reale la portaluri. */
 import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
-import { effectiveRepublishScope, selectRepublishPairs, staggerRepublishPairs } from "../republish";
+import { countByPortal, effectiveRepublishScope, locallyBlockedPairs, selectRepublishPairs, staggerRepublishPairs } from "../republish";
+import { republishCountText } from "@/components/app/PortalRepublishDialog";
 import { runRepublishJob } from "../republish.server";
 
 const base = {
@@ -89,5 +90,66 @@ describe("republicarea anunțurilor", () => {
     expect(src).toContain('"23505"');
     const migration = readFileSync("drizzle/migrations/0152_portal_republish_batches.sql", "utf8");
     expect(migration).toContain("portal_republish_batches_one_active ON public.portal_republish_batches (organization_id) WHERE status = 'running'");
+  });
+});
+
+describe("R2: reîncercarea selecțiilor respinse", () => {
+  const props = [
+    { id: "studio", status: "active", deleted_at: null, assigned_to: "agent-1" },
+    { id: "off", status: "active", deleted_at: null, assigned_to: "agent-1" },
+    { id: "live", status: "active", deleted_at: null, assigned_to: "agent-1" },
+    { id: "pulled", status: "active", deleted_at: null, assigned_to: "agent-1" },
+    { id: "local", status: "active", deleted_at: null, assigned_to: "agent-1" },
+    { id: "auto", status: "active", deleted_at: null, assigned_to: "agent-1" },
+  ];
+  const input = {
+    scope: "all" as const, userId: "agent-1", portalFilter: null,
+    activePortals: new Set(["homedirect", "clickimob"]), properties: props,
+    listings: [
+      { property_id: "live", portal: "homedirect", status: "published", external_id: "H1" },
+      { property_id: "pulled", portal: "homedirect", status: "withdrawn", external_id: null },
+    ],
+    publications: [
+      { property_id: "studio", portal_key: "homedirect", enabled: true, status: "error" },
+      { property_id: "off", portal_key: "homedirect", enabled: false, status: "error" },
+      { property_id: "live", portal_key: "homedirect", enabled: true, status: "synced" },
+      { property_id: "pulled", portal_key: "homedirect", enabled: true, status: "error" },
+      { property_id: "local", portal_key: "homedirect", enabled: true, status: "error" },
+      { property_id: "auto", portal_key: "clickimob", enabled: true, status: "error" },
+    ],
+    locallyBlocked: locallyBlockedPairs([
+      { property_id: "local", portal: "homedirect", success: false, error_code: "VALIDATION_ERROR", http_status: null },
+      { property_id: "studio", portal: "homedirect", success: false, error_code: "VALIDATION_ERROR", http_status: 400 },
+    ]),
+  };
+
+  it("selectat cu publicare respinsă → reîncercat; deselectat, retras, blocat local și preluare automată → excluse", () => {
+    const out = selectRepublishPairs(input);
+    expect(out.retry).toEqual([{ propertyId: "studio", portalId: "homedirect" }]);
+    expect(out.queued).toEqual([{ propertyId: "live", portalId: "homedirect" }]);
+    expect(out.autoPull).toEqual([]);
+  });
+
+  it("rezumatul pe portal numără separat", () => {
+    expect(countByPortal(selectRepublishPairs(input).retry)).toEqual({ homedirect: 1 });
+    expect(republishCountText(2, 25)).toBe("2 anunțuri + 25 de reîncercat");
+    expect(republishCountText(1, 0)).toBe("1 anunț");
+  });
+
+  const jobAdmin = (rows: Record<string, unknown>) => ({ from: (t: string) => { const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: rows[t] }) }; return q; } });
+  const job = { organization_id: "org", property_id: "studio", portal_key: "homedirect", requested_by: "agent-1" };
+
+  it("worker: selecția respinsă pleacă o dată ca publicare nouă; publicatul rămâne update", async () => {
+    const execute = vi.fn(async (_i: { action: string }) => ({ ok: false, message: "HomeDirect a respins datele trimise." }));
+    const failed = await runRepublishJob(jobAdmin({ properties: props[0], portal_listings: null, portal_publications: input.publications[0] }), job, execute, { retryFailed: true });
+    expect(execute.mock.calls[0]![0]).toMatchObject({ action: "publish" });
+    expect(failed.action).toBe("blocked");
+    execute.mockClear();
+    await runRepublishJob(jobAdmin({ properties: props[2], portal_listings: input.listings[0], portal_publications: input.publications[2] }), { ...job, property_id: "live" }, execute, { retryFailed: true });
+    expect(execute.mock.calls[0]![0]).toMatchObject({ action: "update" });
+    execute.mockClear();
+    const contact = await runRepublishJob(jobAdmin({ properties: props[0], portal_listings: null, portal_publications: input.publications[0] }), job, execute);
+    expect(contact.action).toBe("skipped");
+    expect(execute).not.toHaveBeenCalled();
   });
 });

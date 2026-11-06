@@ -105,7 +105,7 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-xl flex-col gap-4 overflow-hidden rounded-[18px] bg-card p-4 sm:w-full sm:p-6">
         <DialogHeader className="shrink-0 pr-6">
           <DialogTitle className="font-display">Republică anunțurile</DialogTitle>
-          <DialogDescription>Retrimite pe portaluri anunțurile deja publicate, cu datele actuale. Nu publică nimic nou, nu retrage și nu folosește promovări plătite.</DialogDescription>
+          <DialogDescription>Retrimite pe portaluri anunțurile deja publicate, cu datele actuale, și reîncearcă o dată anunțurile selectate a căror publicare a fost respinsă. Nu retrage și nu folosește promovări plătite.</DialogDescription>
         </DialogHeader>
         {batch ? (
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 text-sm">
@@ -137,11 +137,11 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
               <div className="rounded-2xl border border-border p-3">
                 <p className="font-semibold">{preview.listings} anunțuri pe {preview.portals} portaluri vor fi republicate</p>
                 <ul className="mt-2 space-y-1">
-                  {preview.perPortal.filter((p) => p.queued > 0).map((p) => (
-                    <li key={p.portalId} className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1">{p.name}</span><span className="shrink-0 text-right tabular-nums">{p.queued} anunțuri</span></li>
+                  {preview.perPortal.filter((p) => p.queued > 0 || (p.retry ?? 0) > 0).map((p) => (
+                    <li key={p.portalId} className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1">{p.name}</span><span className="shrink-0 text-right tabular-nums">{republishCountText(p.queued, p.retry ?? 0)}</span></li>
                   ))}
                 </ul>
-                {(() => { const auto = preview.perPortal.filter((p) => p.queued === 0 && p.autoPull > 0); return auto.length ? <p className="mt-2 border-t border-border pt-2 text-xs text-muted-foreground">Se actualizează automat la următoarea preluare: {auto.map((p) => `${p.name} (${p.autoPull})`).join(", ")}</p> : null; })()}
+                {(() => { const auto = preview.perPortal.filter((p) => p.queued === 0 && (p.retry ?? 0) === 0 && p.autoPull > 0); return auto.length ? <p className="mt-2 border-t border-border pt-2 text-xs text-muted-foreground">Se actualizează automat la următoarea preluare: {auto.map((p) => `${p.name} (${p.autoPull})`).join(", ")}</p> : null; })()}
               </div>
             ) : null}
             {mutation.error ? <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 font-medium text-destructive">{startErrorText(mutation.error)}</p> : null}
@@ -156,6 +156,13 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
       </DialogContent>
     </Dialog>
   );
+}
+
+/** „2 anunțuri + 25 de reîncercat” — Romanian numeral agreement. */
+export function republishCountText(queued: number, retry: number): string {
+  const de = (n: number) => (n % 100 === 0 && n > 0) || n % 100 >= 20 ? "de " : "";
+  const main = queued === 1 ? "1 anunț" : `${queued} ${de(queued)}anunțuri`;
+  return retry > 0 ? `${main} + ${retry} ${de(retry)}reîncercat` : main;
 }
 
 export function startErrorText(error: unknown): string {

@@ -13,7 +13,7 @@ export const REPUBLISH_PORTAL_SPACING_MS = 3_000;
 export type RepublishScope = "mine" | "all";
 export type RepublishProperty = { id: string; status: string | null; deleted_at: string | null; assigned_to: string | null };
 export type RepublishListing = { property_id: string; portal: string; status: string | null; external_id: string | null };
-export type RepublishPublication = { property_id: string; portal_key: string; enabled: boolean | null };
+export type RepublishPublication = { property_id: string; portal_key: string; enabled: boolean | null; status?: string | null; withdrawn_at?: string | null };
 export type RepublishPair = { propertyId: string; portalId: string };
 
 /** Agentul simplu nu are altă opțiune decât propriile anunțuri. */
@@ -25,6 +25,16 @@ export function isPublishedPair(listing: RepublishListing | undefined, publicati
   return Boolean(
     listing && listing.external_id && (listing.status === "published" || listing.status === "updated") && publication?.enabled === true,
   );
+}
+
+/**
+ * Selected for the portal, last publish attempt failed, never went live and not withdrawn by the agent.
+ * Retried as a fresh publish (create), never as an update.
+ */
+export function isRetryFailedPair(listing: RepublishListing | undefined, publication: RepublishPublication | undefined): boolean {
+  if (!publication || publication.enabled !== true || publication.status !== "error" || publication.withdrawn_at) return false;
+  if (!listing) return true;
+  return !listing.external_id && listing.status !== "withdrawn" && listing.status !== "published" && listing.status !== "updated";
 }
 
 export function isRepublishableProperty(property: RepublishProperty | undefined): boolean {
@@ -39,26 +49,48 @@ export function selectRepublishPairs(input: {
   properties: RepublishProperty[];
   listings: RepublishListing[];
   publications: RepublishPublication[];
-}): { queued: RepublishPair[]; autoPull: RepublishPair[] } {
+  /** Pairs whose last failure came from our own data check (never reached the portal). */
+  locallyBlocked?: Set<string>;
+}): { queued: RepublishPair[]; autoPull: RepublishPair[]; retry: RepublishPair[] } {
   const byId = new Map(input.properties.map((p) => [p.id, p]));
   const pubs = new Map(input.publications.map((p) => [`${p.property_id}|${p.portal_key}`, p]));
+  const lists = new Map<string, RepublishListing>();
+  for (const l of input.listings) { const k = `${l.property_id}|${l.portal}`; if (!lists.has(k)) lists.set(k, l); }
   const queued: RepublishPair[] = [];
   const autoPull: RepublishPair[] = [];
-  const seen = new Set<string>();
-  for (const listing of input.listings) {
-    const key = `${listing.property_id}|${listing.portal}`;
-    if (seen.has(key)) continue;
-    const property = byId.get(listing.property_id);
+  const retry: RepublishPair[] = [];
+  const keys = [...new Set([...lists.keys(), ...pubs.keys()])];
+  for (const key of keys) {
+    const [propertyId, portalId] = key.split("|") as [string, string];
+    const property = byId.get(propertyId);
     if (!isRepublishableProperty(property)) continue;
     if (input.scope === "mine" && property!.assigned_to !== input.userId) continue;
-    if (input.portalFilter && !input.portalFilter.includes(listing.portal)) continue;
-    if (!input.activePortals.has(listing.portal)) continue;
-    if (!isPublishedPair(listing, pubs.get(key))) continue;
-    seen.add(key);
-    const pair = { propertyId: listing.property_id, portalId: listing.portal };
-    (AUTO_PULL_PORTALS.has(listing.portal) ? autoPull : queued).push(pair);
+    if (input.portalFilter && !input.portalFilter.includes(portalId)) continue;
+    if (!input.activePortals.has(portalId)) continue;
+    const listing = lists.get(key);
+    const publication = pubs.get(key);
+    const pair = { propertyId, portalId };
+    if (isPublishedPair(listing, publication)) {
+      (AUTO_PULL_PORTALS.has(portalId) ? autoPull : queued).push(pair);
+    } else if (!AUTO_PULL_PORTALS.has(portalId) && !input.locallyBlocked?.has(key) && isRetryFailedPair(listing, publication)) {
+      retry.push(pair);
+    }
   }
-  return { queued, autoPull };
+  return { queued, autoPull, retry };
+}
+
+/** Latest log per pair: a failure that never reached the portal (no HTTP status) and was our data check. */
+export function locallyBlockedPairs(logs: { property_id: string | null; portal: string; success: boolean; error_code: string | null; http_status: number | null }[]): Set<string> {
+  const seen = new Set<string>();
+  const out = new Set<string>();
+  for (const log of logs) { // newest first
+    if (!log.property_id) continue;
+    const key = `${log.property_id}|${log.portal}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (!log.success && log.http_status == null && log.error_code === "VALIDATION_ERROR") out.add(key);
+  }
+  return out;
 }
 
 export function countByPortal(pairs: RepublishPair[]): Record<string, number> {

@@ -34,9 +34,9 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
             const { runContactUpdateJob } = await import("@/lib/portals/contact-update.server");
             return runContactUpdateJob(supabaseAdmin, job, input => executeListingAction(input));
           }
-          // Republicare: doar retrimiterea anunțului existent, niciodată publish/withdraw.
+          // Republicare: retrimite anunțul existent; selecțiile respinse se reîncearcă o dată ca publicare nouă.
           if (job.operation === "republish") {
-            return runRepublishJob(supabaseAdmin, job, (input) => executeListingAction(input));
+            return runRepublishJob(supabaseAdmin, job, (input) => executeListingAction(input), { retryFailed: true });
           }
           // imoradar24 (acțiune unică): doar `promote_imoradar = true`, fără republicare.
           if (job.operation === "imoradar") {
