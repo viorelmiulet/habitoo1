@@ -148,7 +148,7 @@ const CONTENT: Record<string, Content> = {
     activation: "Administratorul agenției intră în Setări → Portaluri și activează singur Imobiliare+, fără aprobarea echipei Habitoo. Nu completează nicio cheie sau parolă. După activare, agenții bifează Imobiliare+ la ofertele pe care vor să le afișeze.",
     notes: [
       "Nu ai nevoie de nicio cheie pentru activarea Imobiliare+ în Habitoo.",
-      "Habitoo nu percepe niciun cost pentru integrarea cu Imobiliare+.",
+      "Habitoo nu percepe niciun cost pentru integrarea cu Imobiliare+. Publicarea pe Imobiliare+ este gratuită în primele 6 luni; după aceea, Imobiliare+ le propune agențiilor un abonament.",
       "Imobiliare+ preia doar ofertele bifate, nu întregul portofoliu al agenției.",
       "Ofertele noi, modificările și retragerile ajung la următoarea citire făcută de portal.",
     ],
@@ -156,6 +156,7 @@ const CONTENT: Record<string, Content> = {
       { q: "Cum activez Imobiliare+?", a: "Administratorul agenției activează singur Imobiliare+ din Setări → Portaluri. Nu are de introdus nicio cheie și nu așteaptă aprobare. După activare, agenții aleg ofertele prin bifarea portalului în fișa proprietății." },
       { q: "Când apar modificările pe Imobiliare+?", a: "Imobiliare+ preia automat ofertele bifate și modificările lor la următoarea citire. Nu trebuie să apeși nimic în plus după ce salvezi oferta în Habitoo." },
       { q: "Cum retrag o ofertă de pe Imobiliare+?", a: "Debifezi Imobiliare+ pentru oferta respectivă sau o marchezi vândută ori închiriată. Oferta nu mai este disponibilă portalului și se retrage la următoarea citire." },
+      { q: "Costă publicarea pe Imobiliare+?", a: "Habitoo nu percepe niciun cost pentru integrarea cu Imobiliare+. Publicarea pe Imobiliare+ este gratuită în primele 6 luni; după aceea, Imobiliare+ le propune agențiilor un abonament. Dacă agenția nu continuă, Imobiliare+ oprește preluarea și retrage anunțurile; ele pot fi preluate din nou oricând." },
     ],
   },
   imo24: {
