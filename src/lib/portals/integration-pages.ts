@@ -148,8 +148,7 @@ const CONTENT: Record<string, Content> = {
     activation: "Administratorul agenției intră în Setări → Portaluri și activează singur Imobiliare+, fără aprobarea echipei Habitoo. Nu completează nicio cheie sau parolă. După activare, agenții bifează Imobiliare+ la ofertele pe care vor să le afișeze.",
     notes: [
       "Nu ai nevoie de nicio cheie pentru activarea Imobiliare+ în Habitoo.",
-      "Habitoo nu percepe niciun cost pentru integrarea cu Imobiliare+.",
-      "Publicarea pe Imobiliare+ este gratuită în primele 6 luni; după aceea, Imobiliare+ le propune agențiilor un abonament.",
+      "Habitoo nu percepe niciun cost pentru integrarea cu Imobiliare+. Publicarea pe Imobiliare+ este gratuită în primele 6 luni; după aceea, Imobiliare+ le propune agențiilor un abonament.",
       "Imobiliare+ preia doar ofertele bifate, nu întregul portofoliu al agenției.",
       "Ofertele noi, modificările și retragerile ajung la următoarea citire făcută de portal.",
     ],
