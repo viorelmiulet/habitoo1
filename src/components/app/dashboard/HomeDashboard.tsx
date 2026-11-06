@@ -211,7 +211,7 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard label="Proprietăți active" metric={data.metrics.properties} icon={Building2} to="/app/properties" now={now} />
             <MetricCard label="Cereri active" metric={data.metrics.requests} icon={ClipboardList} to="/app/requests" now={now} />
-            <MetricCard label="Lead-uri" metric={data.metrics.leads} icon={Users} to="/app/leads" now={now} />
+            <MetricCard label="Lead-uri deschise" metric={data.metrics.leads} icon={Users} to="/app/leads" now={now} />
             <MetricCard label="Contacte" metric={data.metrics.contacts} icon={UserRound} to="/app/contacts" now={now} />
           </div>
 

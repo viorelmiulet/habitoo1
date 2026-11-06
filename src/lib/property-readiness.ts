@@ -110,6 +110,8 @@ export function computePropertyIssues(input: ReadinessInput): PropertyIssue[] {
         label: `Retrasă de pe ${pub.portalKey}`,
         severity: "warning",
       });
+    } else if (pub.status === "error") {
+      issues.push({ code: "portal_rejected", label: `Respins de ${pub.portalKey}`, severity: "danger" });
     }
   }
 
