@@ -23,6 +23,7 @@ import {
   readListing,
   syncVumsiImages,
   VUMSI_IMAGES_PENDING_MESSAGE,
+  VUMSI_NO_IMAGES_MESSAGE,
   upsertVumsiListing,
   vumsiStatusDue,
   vumsiStatusInfo,
