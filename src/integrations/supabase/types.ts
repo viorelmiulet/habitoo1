@@ -7065,13 +7065,18 @@ export type Database = {
       }
       portal_messages: {
         Row: {
+          attempts: number
           body: string | null
           conversation_id: string | null
           created_at: string
+          delivery_error: string | null
+          delivery_status: string | null
+          direction: string
           expires_at: string
           external_message_id: string | null
           id: string
           lead_id: string | null
+          next_attempt_at: string | null
           organization_id: string
           portal: string
           property_id: string | null
@@ -7079,16 +7084,22 @@ export type Database = {
           sender_name: string | null
           sender_phone: string | null
           sent_at: string
+          sent_by: string | null
           updated_at: string
         }
         Insert: {
+          attempts?: number
           body?: string | null
           conversation_id?: string | null
           created_at?: string
+          delivery_error?: string | null
+          delivery_status?: string | null
+          direction?: string
           expires_at?: string
           external_message_id?: string | null
           id?: string
           lead_id?: string | null
+          next_attempt_at?: string | null
           organization_id: string
           portal: string
           property_id?: string | null
@@ -7096,16 +7107,22 @@ export type Database = {
           sender_name?: string | null
           sender_phone?: string | null
           sent_at?: string
+          sent_by?: string | null
           updated_at?: string
         }
         Update: {
+          attempts?: number
           body?: string | null
           conversation_id?: string | null
           created_at?: string
+          delivery_error?: string | null
+          delivery_status?: string | null
+          direction?: string
           expires_at?: string
           external_message_id?: string | null
           id?: string
           lead_id?: string | null
+          next_attempt_at?: string | null
           organization_id?: string
           portal?: string
           property_id?: string | null
@@ -7113,6 +7130,7 @@ export type Database = {
           sender_name?: string | null
           sender_phone?: string | null
           sent_at?: string
+          sent_by?: string | null
           updated_at?: string
         }
         Relationships: [
