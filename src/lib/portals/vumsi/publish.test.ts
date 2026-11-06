@@ -261,7 +261,7 @@ describe("formatul pozelor Vumsi", () => {
 });
 
 describe("eroare doar la poze", () => {
-  it("fără publish, fără status refuzat, mesaj de reîncercare; a doua salvare reîncearcă doar pozele", async () => {
+  it("nicio poză nu ajunge, anunț nou → nepublicat, mesaj clar; a doua salvare reîncearcă doar pozele", async () => {
     let imgFail = true;
     const store: VumsiStored[] = [];
     const calls: string[] = [];
@@ -283,7 +283,10 @@ describe("eroare doar la poze", () => {
     });
     const r1 = await adapter.publishListing(ctx, { propertyId: "p1" } as never);
     expect(r1.ok).toBe(true);
-    if (r1.ok) { expect(r1.data.portalStatus).toBe("pending"); expect(r1.data.message).toContain("Pozele nu au ajuns la Vumsi – se reîncearcă la următoarea salvare"); }
+    if (r1.ok) {
+      expect(r1.data.portalStatus).not.toBe("published");
+      expect(r1.data.message).toContain("Anunțul nu a fost publicat, pentru că nicio poză nu a ajuns la Vumsi. Se reîncearcă la următoarea salvare.");
+    }
     expect(calls.some((c) => c.endsWith("/publish/"))).toBe(false);
     expect(calls.filter((c) => c === "POST /listings/")).toHaveLength(1);
     imgFail = false; calls.length = 0;
