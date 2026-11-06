@@ -2,9 +2,16 @@ import { Link } from "@tanstack/react-router";
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPortalDefinition } from "@/lib/portals/registry";
-import { agenciesLabel, errorsPill, portalsSubtitle, publishedLabel, type PortalCard } from "@/lib/superadmin-portals";
+import { agenciesLabel, publishedLabel, type PortalCard } from "@/lib/superadmin-portals";
+import { connectionsLabel, portalHealthLabel, type PortalHealthState } from "@/lib/portal-connection-health";
 import type { SuperadminTodo } from "@/lib/superadmin-todo";
 import { cn } from "@/lib/utils";
+
+const stateCls: Record<PortalHealthState, string> = {
+  ok: "bg-success/15 text-success",
+  agencies: "bg-gold-tint text-gold-dark",
+  integration: "bg-danger-tint text-destructive",
+};
 
 export function PortalsSection({ portals, todo, loading }: { portals: PortalCard[] | undefined; todo: SuperadminTodo | undefined; loading: boolean }) {
   return (
@@ -17,7 +24,7 @@ export function PortalsSection({ portals, todo, loading }: { portals: PortalCard
           </Link>
         </div>
         {todo && portals ? (
-          <p className="text-[13px] text-muted-foreground">{portalsSubtitle(todo.counts.failingConnections, portals)}</p>
+          <p className="text-[13px] text-muted-foreground">{connectionsLabel(todo.counts.failingConnections)}</p>
         ) : null}
       </header>
       <div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -28,7 +35,6 @@ export function PortalsSection({ portals, todo, loading }: { portals: PortalCard
         ) : (
           portals.map((p) => {
             const name = getPortalDefinition(p.portal)?.display_name ?? p.portal;
-            const pill = errorsPill(p.errors);
             return (
               <div key={p.portal} className="flex min-w-0 items-center gap-3 rounded-xl border border-border p-3">
                 <PortalLogo portalId={p.portal} name={name} className="size-9 shrink-0" />
@@ -41,10 +47,10 @@ export function PortalsSection({ portals, todo, loading }: { portals: PortalCard
                 <span
                   className={cn(
                     "shrink-0 rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap",
-                    pill.tone === "error" ? "bg-danger-tint text-destructive" : "bg-success/15 text-success",
+                    stateCls[p.state],
                   )}
                 >
-                  {pill.text}
+                  {portalHealthLabel(p.state, p.failingAgencies)}
                 </span>
               </div>
             );

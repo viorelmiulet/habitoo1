@@ -36,7 +36,7 @@ describe("Cardul Agenții", () => {
   });
 
   it("sortare: roșu, auriu, apoi proprietăți descrescător", () => {
-    const base = { plan: "basic", isTrial: false, term: null, expiresAt: null, users: 1, portals: 0, errors: 0 };
+    const base = { plan: "basic", isTrial: false, term: null, expiresAt: null, users: 1, portals: 0, connectionErrors: 0 };
     const rows = buildAgencyRowsFrom(
       [
         { ...base, id: "g1", name: "G1", activeProperties: 5, lastLoginAt: iso(NOW - DAY) },

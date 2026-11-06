@@ -45,6 +45,8 @@ export type SuperadminTodo = {
   expiring: SubscriptionAlert[];
   expired: SubscriptionAlert[];
   blocked: BlockedPublishing[];
+  /** Conexiunile care nu funcționează: agenția și portalul fiecăreia. */
+  brokenConnections: { organizationId: string; organizationName: string; portal: string }[];
 };
 
 /** Eroarea portalului care înseamnă că anunțul nu e publicat în CRM. */
@@ -113,7 +115,7 @@ export const COUNT_LABELS: Record<keyof TodoCounts, string> = {
   pendingSubscriptionRequests: "Cereri de abonament",
   pendingPortalActivations: "Activări portal",
   openTickets: "Tichete de suport",
-  failingConnections: "Erori de sincronizare",
+  failingConnections: "Conexiuni de portal",
 };
 
 /** Numărul de carduri afișate (= lucruri de rezolvat). */

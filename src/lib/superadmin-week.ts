@@ -10,9 +10,6 @@ export type SuperadminWeek = {
   totalUsers: number;
   newProperties: number;
   newPropertiesPrev: number;
-  portalSuccess: number;
-  /** Doar eșecurile de platformă; erorile de completare a anunțului nu intră. */
-  portalFailed: number;
 };
 
 export type DeltaTone = "up" | "down" | "flat";
