@@ -14,7 +14,7 @@ import {
 } from "@/lib/superadmin-todo";
 import { AGENCY_ROW_LIMIT, buildAgencyRowsFrom, type AgencyRow } from "@/lib/superadmin-agencies";
 import { buildPortalCardsFrom, type PortalCard } from "@/lib/superadmin-portals";
-import { WEEK_PORTAL_OPERATIONS, isActiveLogin, type SuperadminWeek } from "@/lib/superadmin-week";
+import { isActiveLogin, type SuperadminWeek } from "@/lib/superadmin-week";
 import { isConnectionError, portalHealth } from "@/lib/portal-connection-health";
 
 type AuthContext = {
@@ -190,8 +190,6 @@ async function buildWeek(admin: Admin, lastLogin: Map<string, string | null>): P
   if (error) throw new Error(`Interogările dashboardului au eșuat — organizații: ${error.message}`);
   const orgs = orgRows ?? [];
   const demoIds = orgs.filter((o) => o.is_demo).map((o) => o.id);
-  const notDemo = <T extends { or: (f: string) => T }>(q: T): T =>
-    demoIds.length ? q.or(`organization_id.is.null,organization_id.not.in.(${demoIds.join(",")})`) : q;
   const realOrg = <T extends { not: (c: string, o: string, v: string) => T; filter: (c: string, o: string, v: string) => T }>(q: T): T =>
     demoIds.length ? q.not("organization_id", "in", `(${demoIds.join(",")})`) : q;
   const count = (from: string, to?: string) => {

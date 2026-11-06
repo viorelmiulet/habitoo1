@@ -18,8 +18,8 @@ export type AgencyStats = {
   users: number;
   activeProperties: number;
   portals: number;
-  /** Doar erori de platformă. */
-  errors: number;
+  /** Conexiuni de portal care nu funcționează (doar erori de conectare). */
+  connectionErrors: number;
   lastLoginAt: string | null;
 };
 
