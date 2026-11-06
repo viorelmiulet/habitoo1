@@ -4,3 +4,4 @@
 - Topbar supplies optional trigger classes to shared support and notification controls; PageHeader owns responsive title/action alignment. Why: shell styling must not change dialogs, page content, or controls used elsewhere.
 - Home page: HomeDashboard owns the single h1 greeting and shared sections (caller-RLS reads in use-home-dashboard); AgentDashboard/ManagerDashboard add only role-specific extras below, without their own headers; agency analytics live in Reports. Why: one h1 per page and one shared home layout for every role.
 - Property form validation hints render via HintedForm context read by Input/Textarea by id; no direct DOM insertion. Why: avoid React reconciliation errors.
+- Home news/notes cards read their own tables with caller RLS (news: published-only for users, superadmin-only writes; reads/notes: owner-only). Why: no admin/superadmin access to personal data.
