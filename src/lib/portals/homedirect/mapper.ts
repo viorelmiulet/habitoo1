@@ -20,7 +20,7 @@ import type { HomedirectLocation } from "./locations.server";
 export const HOMEDIRECT_TITLE_MAX = 150;
 
 export type HomedirectTransaction = "buy" | "rent";
-export type HomedirectPropertyKind = "apartment" | "studio" | "house" | "land" | "office";
+export type HomedirectPropertyKind = "apartment" | "house" | "land" | "office";
 
 export type HomedirectPostData = {
   title: string;
@@ -81,10 +81,10 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export function homedirectPropertyKind(type: string | null | undefined):
-  { property: HomedirectPropertyKind; officeSubtype?: "office" | "commercial" | "industrial" } | null {
+  { property: HomedirectPropertyKind; studio?: true; officeSubtype?: "office" | "commercial" | "industrial" } | null {
   switch ((type ?? "").trim().toLowerCase()) {
     case "apartment": return { property: "apartment" };
-    case "studio": return { property: "studio" };
+    case "studio": return { property: "apartment", studio: true };
     case "house": case "villa": return { property: "house" };
     case "land": return { property: "land" };
     case "office": return { property: "office", officeSubtype: "office" };
@@ -274,7 +274,7 @@ export function mapPropertyToHomedirect(p: Row, ctx: HomedirectMapContext): Home
   if (landClass) shared.landClassification = landClass;
 
   if (kind.property !== "land") {
-    const rooms = kind.property === "studio" ? 1 : intOrNull(p.rooms);
+    const rooms = kind.studio ? 1 : intOrNull(p.rooms);
     if (rooms !== null && rooms > 0) shared.bedroom = rooms;
     const baths = intOrNull(p.bathrooms);
     if (baths !== null && baths > 0) shared.bathroom = baths;
@@ -284,7 +284,7 @@ export function mapPropertyToHomedirect(p: Row, ctx: HomedirectMapContext): Home
     const total = intOrNull(p.building_floors);
     if (total !== null && total >= 0 && (floor?.number == null || total >= floor.number)) shared.totalFloors = String(total);
 
-    const layout = kind.property === "studio" ? "studio" : LAYOUT[normalizeLabel(p.layout)];
+    const layout = kind.studio ? "studio" : LAYOUT[normalizeLabel(p.layout)];
     if (layout) shared.layout = layout;
 
     const yearRaw = intOrNull(p.build_year);

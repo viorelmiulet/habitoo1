@@ -195,3 +195,21 @@ describe("resolveHomedirectLocation", () => {
     expect(calls).toHaveLength(0);
   });
 });
+
+describe("HD1 garsonieră", () => {
+  it("garsoniera pleacă drept apartment cu layout studio și bedroom 1", () => {
+    const d = ok(mapPropertyToHomedirect(apt({ property_type: "studio", rooms: 1, layout: null }), ctx())).bodies[0]!.request.postData;
+    expect(d).toMatchObject({ property: "apartment", layout: "studio", bedroom: 1 });
+  });
+  it("apartamentul rămâne neschimbat", () => {
+    const d = ok(mapPropertyToHomedirect(apt(), ctx())).bodies[0]!.request.postData;
+    expect(d).toMatchObject({ property: "apartment", bedroom: 2 });
+    expect(d.layout).not.toBe("studio");
+  });
+  it("niciun tip Habitoo nu produce property studio", async () => {
+    const { homedirectPropertyKind } = await import("./mapper");
+    for (const t of ["apartment", "studio", "house", "villa", "land", "office", "commercial", "industrial"]) {
+      expect(homedirectPropertyKind(t as never)?.property).not.toBe("studio");
+    }
+  });
+});
