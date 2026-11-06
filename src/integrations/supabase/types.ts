@@ -10501,6 +10501,24 @@ export type Database = {
           },
         ]
       }
+      user_notes: {
+        Row: {
+          content: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
