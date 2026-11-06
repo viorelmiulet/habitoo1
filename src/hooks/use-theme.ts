@@ -17,7 +17,7 @@ function readPreference(): ThemePreference {
 
 function resolve(pref: ThemePreference): "light" | "dark" {
   if (pref !== "system") return pref;
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return "light";
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
@@ -65,10 +65,10 @@ export function useApplyTheme() {
       root.style.colorScheme = mode;
     };
     apply();
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    mql.addEventListener("change", apply);
+    const mql = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+    mql?.addEventListener("change", apply);
     return () => {
-      mql.removeEventListener("change", apply);
+      mql?.removeEventListener("change", apply);
       root.classList.remove("dark");
       root.style.colorScheme = "";
     };
