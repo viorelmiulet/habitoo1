@@ -20,19 +20,6 @@ export type HomeProperty = {
   createdAt: string;
 };
 
-export type HomeRequest = {
-  id: string;
-  title: string;
-  kind: string;
-  propertyType: string | null;
-  budgetMin: number | null;
-  budgetMax: number | null;
-  currency: string;
-  status: string;
-  agent: string | null;
-  createdAt: string;
-};
-
 export type HomeLead = {
   id: string;
   name: string;
@@ -49,7 +36,6 @@ export type HomeDashboardData = {
   metrics: { properties: HomeMetric; requests: HomeMetric; leads: HomeMetric; contacts: HomeMetric };
   stages: { stage: (typeof HOME_STAGES)[number]; count: number }[];
   latestProperties: HomeProperty[];
-  latestRequests: HomeRequest[];
   latestLeads: HomeLead[];
   today: HomeActivity[];
 };
@@ -81,7 +67,7 @@ export function useHomeDashboard(organizationId?: string | null) {
       const contacts = () =>
         supabase.from("contacts").select("created_at", { count: "exact" }).eq("organization_id", org);
 
-      const [p, r, l, c, latestP, latestR, latestL, today, profiles, ...stageRes] = await Promise.all([
+      const [p, r, l, c, latestP, latestL, today, profiles, ...stageRes] = await Promise.all([
         props().gte("created_at", since).limit(5000),
         reqs().gte("created_at", since).limit(5000),
         leads().gte("created_at", since).limit(5000),
@@ -90,9 +76,6 @@ export function useHomeDashboard(organizationId?: string | null) {
           .select("id,title,status,assigned_to,created_at,price,currency,sale_price,sale_currency,rent_price,rent_currency")
           .eq("organization_id", org).is("deleted_at", null)
           .order("created_at", { ascending: false }).limit(5),
-        supabase.from("requests")
-          .select("id,title,kind,property_type,budget_min,budget_max,currency,status,assigned_to,created_at")
-          .eq("organization_id", org).order("created_at", { ascending: false }).limit(5),
         supabase.from("leads").select("id,name,source,property_id,stage,assigned_to,created_at")
           .eq("organization_id", org).is("deleted_at", null)
           .order("created_at", { ascending: false }).limit(5),
@@ -136,18 +119,6 @@ export function useHomeDashboard(organizationId?: string | null) {
           title: x.title,
           price: x.sale_price ?? x.rent_price ?? x.price ?? null,
           currency: x.sale_currency ?? x.rent_currency ?? x.currency ?? "EUR",
-          status: x.status,
-          agent: x.assigned_to ? (names.get(x.assigned_to) ?? null) : null,
-          createdAt: x.created_at,
-        })),
-        latestRequests: (latestR.data ?? []).map((x) => ({
-          id: x.id,
-          title: x.title,
-          kind: x.kind,
-          propertyType: x.property_type,
-          budgetMin: x.budget_min,
-          budgetMax: x.budget_max,
-          currency: x.currency || "EUR",
           status: x.status,
           agent: x.assigned_to ? (names.get(x.assigned_to) ?? null) : null,
           createdAt: x.created_at,

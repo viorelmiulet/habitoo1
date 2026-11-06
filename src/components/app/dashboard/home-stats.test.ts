@@ -31,3 +31,18 @@ describe("Acasă — comparația cu luna trecută", () => {
     expect(series[12]).toBe(1);
   });
 });
+
+import { leadSourceLabel, relativeTime } from "./home-stats";
+describe("ultimele lead-uri", () => {
+  const now = new Date("2026-11-06T12:00:00Z");
+  it("timp relativ", () => {
+    expect(relativeTime("2026-11-06T10:00:00Z", now)).toBe("acum 2 ore");
+    expect(relativeTime("2026-11-06T11:55:00Z", now)).toBe("acum 5 minute");
+    expect(relativeTime("2026-11-05T11:00:00Z", now)).toBe("ieri");
+  });
+  it("sursa", () => {
+    expect(leadSourceLabel(null)).toBe("Site");
+    expect(leadSourceLabel("site")).toBe("Site");
+    expect(leadSourceLabel("Storia.ro")).toBe("Storia.ro");
+  });
+});

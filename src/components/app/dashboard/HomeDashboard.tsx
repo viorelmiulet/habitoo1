@@ -19,8 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HOME_STAGES, useHomeDashboard, type HomeMetric } from "@/hooks/use-home-dashboard";
 import { formatMoney, formatTime, relativeDays } from "@/lib/format";
-import { leadStageLabels, propertyStatusLabels, propertyStatusTone, propertyTypeLabels, requestKindLabels } from "@/lib/labels";
-import { requestStatusLabels, requestStatusTone } from "@/lib/crm";
+import { leadStageLabels, propertyStatusLabels, propertyStatusTone } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { tipOfTheDay } from "./daily-tips";
 import { DailyNoteCard } from "./DailyNoteCard";
@@ -131,13 +130,6 @@ function MetricCard({
       </div>
     </Link>
   );
-}
-
-function budgetLabel(min: number | null, max: number | null, currency: string) {
-  if (min && max) return `${formatMoney(min, currency)} – ${formatMoney(max, currency)}`;
-  if (max) return `până la ${formatMoney(max, currency)}`;
-  if (min) return `de la ${formatMoney(min, currency)}`;
-  return "Buget nespecificat";
 }
 
 export function HomeDashboard({ organizationId, firstName }: { organizationId?: string | null; firstName: string }) {
