@@ -108,6 +108,19 @@ async function insertMessage(admin: Admin, row: Record<string, unknown>): Promis
   return (data?.id as string | undefined) ?? null;
 }
 
+/** Mesajul nostru întors de Housera: îl legăm de rândul existent, fără dublură. */
+async function claimOwnReply(admin: Admin, orgId: string, externalLeadId: string, houseraId: string, body: string | null): Promise<boolean> {
+  const ext = `housera:msg:${houseraId}`;
+  const { data: rows } = await admin.from("portal_messages").select("id, external_message_id, body")
+    .eq("portal", "housera").eq("organization_id", orgId).eq("conversation_id", `housera:${externalLeadId}`).eq("direction", "out");
+  const list = (rows ?? []) as Array<{ id: string; external_message_id: string | null; body: string | null }>;
+  if (list.some((r) => r.external_message_id === ext)) return true;
+  const mine = list.find((r) => !r.external_message_id && (r.body ?? "").trim() === (body ?? "").trim());
+  if (!mine) return false;
+  await admin.from("portal_messages").update({ external_message_id: ext }).eq("id", mine.id);
+  return true;
+}
+
 async function appendNote(admin: Admin, orgId: string, leadId: string, note: string, nowIso: string) {
   const { data } = await admin.from("leads").select("notes").eq("id", leadId).maybeSingle();
   await admin.from("leads").update({ last_interaction_at: nowIso, notes: [data?.notes, note].filter(Boolean).join("\n---\n").slice(0, 8000) }).eq("id", leadId);
@@ -202,7 +215,9 @@ async function importMessages(ctx: Ctx, externalId: string, leadId: string) {
       const body = str(m["body"]) ?? str(m["text"]) ?? str(m["message"]);
       const sentAt = str(m["created_at"]) ?? now.toISOString();
       const incoming = m["direction"] === "in";
+      if (!incoming && (await claimOwnReply(admin, orgId, externalId, id, body))) continue;
       const rowId = await insertMessage(admin, {
+        direction: incoming ? "in" : "out",
         organization_id: orgId, portal: "housera", property_id: leadRow?.property_id ?? null, lead_id: leadId,
         external_message_id: `housera:msg:${id}`, conversation_id: `housera:${externalId}`,
         sender_name: incoming ? leadRow?.name ?? null : null, body, sent_at: sentAt,
