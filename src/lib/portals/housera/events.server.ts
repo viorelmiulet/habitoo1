@@ -24,9 +24,13 @@ export async function houseraAdmin(): Promise<Admin> {
 export async function resolveHouseraOrganization(admin: Admin, e: HouseraEvent): Promise<string | null> {
   const conn = houseraEventConnection(e);
   if (!conn) return null;
-  const { data } = await admin.from("portal_connections").select("organization_id")
-    .eq("portal", "housera").eq("external_account_id", conn).limit(1).maybeSingle();
-  return (data?.organization_id as string | undefined) ?? null;
+  const { data } = await admin.from("portal_connections").select("organization_id, settings")
+    .eq("portal", "housera").eq("external_account_id", conn);
+  // Doar conexiunea din mediul activ: un id de conexiune de test nu se potrivește în producție.
+  const { activeHouseraEnv, houseraConnectionEnv } = await import("./config");
+  const env = activeHouseraEnv();
+  const row = ((data ?? []) as Array<{ organization_id: string; settings: unknown }>).find((r) => houseraConnectionEnv(r.settings) === env);
+  return row?.organization_id ?? null;
 }
 
 export type RecordInput = {
