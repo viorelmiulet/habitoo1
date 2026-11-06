@@ -3,7 +3,7 @@
  * Pur, cu dependențe injectate. Codul, verifier-ul și cheia nu ajung niciodată în loguri.
  */
 import { createHash, randomBytes } from "node:crypto";
-import { HOUSERA_CALLBACK, HOUSERA_MISSING_MESSAGE, HOUSERA_TIMEOUT_MS, HOUSERA_USER_AGENT, houseraBaseUrl, houseraConfigured, houseraConsentUrl, houseraEnv, houseraKeyMode } from "./config";
+import { houseraConnectionEnv, HOUSERA_CALLBACK, HOUSERA_MISSING_MESSAGE, HOUSERA_TIMEOUT_MS, HOUSERA_USER_AGENT, houseraBaseUrl, houseraConfigured, houseraConsentUrl, houseraEnv, houseraKeyMode } from "./config";
 
 type Env = Record<string, string | undefined>;
 export type HouseraState = { organizationId: string; createdBy: string | null; verifierEncrypted: string | null };
@@ -113,9 +113,14 @@ export async function exchangeHouseraCode(code: string, verifier: string, d: Hou
 }
 
 /** Patch pentru portal_connections (cheia doar criptată). */
-export function houseraConnectionPatch(t: HouseraTokens, prevSettings: Record<string, unknown>, encrypt: (v: string) => string, nowIso: string) {
+export function houseraConnectionPatch(t: HouseraTokens, prevSettings: Record<string, unknown>, encrypt: (v: string) => string, nowIso: string, env: Env = process.env) {
   const settings = { ...prevSettings };
+  const nextEnv = houseraEnv(env);
   delete settings["reconnect_required"];
+  delete settings["housera_env_mismatch"];
+  // Cursorul de evenimente aparține mediului; la schimbare pornim de la zero.
+  if (houseraConnectionEnv(prevSettings) !== nextEnv) delete settings["housera_events_cursor"];
+  settings["housera_env"] = nextEnv;
   settings["oauth"] = { connected_at: nowIso, expires_at: t.expires_at, scopes: t.scopes, connection_id: t.connection_id };
   return {
     portal_credentials_encrypted: encrypt(t.access_token),

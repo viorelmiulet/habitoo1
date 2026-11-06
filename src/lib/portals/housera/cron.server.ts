@@ -1,5 +1,6 @@
 /** Cronurile Housera: recuperarea evenimentelor (15 min) și disponibilitatea (zilnic). */
-import { houseraBaseUrl, houseraConfigured } from "./config";
+import { houseraBaseUrl, houseraConfigured, houseraEnv, splitHouseraOffers } from "./config";
+import { houseraConnectionUsable, reconcileHouseraEnvironment } from "./environment";
 import { createHouseraClient } from "./client.server";
 import { houseraAdmin, ingestPulledHouseraEvent, retryHouseraEvents } from "./events.server";
 import { pullHouseraEvents, runHouseraAvailability, type HouseraAccountListing } from "./sync";
@@ -11,10 +12,11 @@ import type { HouseraClientLike } from "./publish";
 type Admin = any;
 type Conn = { id: string; organization_id: string; portal_credentials_encrypted: string | null; settings: Record<string, unknown> | null };
 
-async function connections(admin: Admin): Promise<Conn[]> {
+/** Doar conexiunile din mediul activ (`HOUSERA_ENV`), fără reconectare cerută. */
+export async function connections(admin: Admin, env = houseraEnv(process.env)): Promise<Conn[]> {
   const { data } = await admin.from("portal_connections").select("id, organization_id, portal_credentials_encrypted, settings")
     .eq("portal", "housera").eq("status", "connected").not("portal_credentials_encrypted", "is", null);
-  return ((data ?? []) as Conn[]).filter((c) => !(c.settings ?? {})["reconnect_required"]);
+  return ((data ?? []) as Conn[]).filter((c) => houseraConnectionUsable(c.settings, env));
 }
 
 async function clientFor(c: Conn) {
@@ -36,17 +38,19 @@ async function log(admin: Admin, orgId: string, operation: string, success: bool
   }).then(() => undefined, () => undefined);
 }
 
-export async function runHouseraEventsCron() {
-  const admin = await houseraAdmin();
-  const retried = await retryHouseraEvents(admin);
+export async function runHouseraEventsCron(deps: HouseraCronDeps = {}) {
+  const admin = deps.admin ?? (await houseraAdmin());
+  const clientForConn = deps.clientFor ?? clientFor;
+  const retried = deps.admin ? { attempted: 0, succeeded: 0 } : await retryHouseraEvents(admin);
   if (!houseraConfigured(process.env)) return { ok: true, skipped: "not_configured", retried };
+  await reconcileHouseraEnvironment(admin, houseraEnv(process.env));
   const out: Array<{ organizationId: string; fetched: number; fresh: number; error?: string }> = [];
   for (const c of await connections(admin)) {
     const started = Date.now();
     const cursor = typeof c.settings?.["housera_events_cursor"] === "string" ? (c.settings["housera_events_cursor"] as string) : null;
     let saved = cursor;
     try {
-      const client = await clientFor(c);
+      const client = await clientForConn(c);
       const r = await pullHouseraEvents({
         client, cursor,
         handle: async (e) => { const fresh = await ingestPulledHouseraEvent(admin, c.organization_id, e); saved = e.id; return fresh; },
@@ -81,7 +85,9 @@ export async function runHouseraAvailabilityCron(nowMs = Date.now(), deps: House
   const admin = deps.admin ?? (await houseraAdmin());
   const clientForConn = deps.clientFor ?? clientFor;
   const out: Array<Record<string, unknown>> = [];
-  for (const c of await connections(admin)) {
+  const env = houseraEnv(process.env);
+  await reconcileHouseraEnvironment(admin, env);
+  for (const c of await connections(admin, env)) {
     const org = c.organization_id;
     const [{ data: rows }, { data: pubs }] = await Promise.all([
       admin.from("portal_listings").select("id, property_id, status, portal_offers").eq("organization_id", org).eq("portal", "housera"),
@@ -97,7 +103,7 @@ export async function runHouseraAvailabilityCron(nowMs = Date.now(), deps: House
     const publishable = new Set(((props ?? []) as Array<{ id: string }>).map((p) => p.id));
     const byCode = new Map<string, Row>();
     const byRef = new Map<string, Row>();
-    for (const l of listings) for (const o of parsePortalOffers(l.portal_offers)) { byCode.set(o.id, l); byRef.set(o.reference, l); }
+    for (const l of listings) for (const o of splitHouseraOffers(parsePortalOffers(l.portal_offers), env).active) { byCode.set(o.id, l); byRef.set(o.reference, l); }
     const rowOf = (l: HouseraAccountListing) => byCode.get(l.code) ?? (l.externalRef ? byRef.get(l.externalRef) : undefined);
     try {
       const r = await runHouseraAvailability({
@@ -107,7 +113,8 @@ export async function runHouseraAvailabilityCron(nowMs = Date.now(), deps: House
           const row = rowOf(l);
           if (!row) return false;
           const offers = parsePortalOffers(row.portal_offers);
-          const o = offers.find((x) => x.id === l.code) ?? offers.find((x) => x.reference === l.externalRef);
+          const mine = splitHouseraOffers(offers, env).active;
+          const o = mine.find((x) => x.id === l.code) ?? mine.find((x) => x.reference === l.externalRef);
           if (!o) return false;
           if ((l.status ?? o.status) === o.status && (l.etag ?? o.etag) === o.etag) return true;
           if (l.status) o.status = l.status;

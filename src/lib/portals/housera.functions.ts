@@ -194,3 +194,35 @@ export const validateHouseraListing = createServerFn({ method: "POST" })
     }
     return results;
   });
+
+/** SuperAdmin → Portaluri → Housera: mediul activ și lista „Pregătire producție” (fără apeluri către Housera). */
+export const getHouseraReadiness = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }) => {
+    const { data: sa } = await (context as unknown as Ctx).supabase.rpc("is_superadmin");
+    if (sa !== true) throw new Error("Acces refuzat: doar SuperAdmin.");
+    const { houseraConfigured, houseraEnv, HOUSERA_CALLBACK } = await import("./housera/config");
+    const { houseraReadiness, reconcileHouseraEnvironment } = await import("./housera/environment");
+    const { loadHouseraSchema } = await import("./housera/taxonomy.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const env = houseraEnv(process.env);
+    await reconcileHouseraEnvironment(supabaseAdmin, env);
+    const { data: conns } = await supabaseAdmin.from("portal_connections").select("status, settings, portal_credentials_encrypted").eq("portal", "housera");
+    const schema = await loadHouseraSchema(process.env).catch(() => null);
+    // Receptorul nostru (GET de sănătate), nu un apel către Housera.
+    let webhookResponds: boolean | null = null;
+    try {
+      const url = HOUSERA_CALLBACK.replace(/oauth\/callback$/, "webhook");
+      const r = await fetch(url, { method: "GET", signal: AbortSignal.timeout(5000) });
+      webhookResponds = r.ok;
+    } catch { webhookResponds = false; }
+    return houseraReadiness({
+      env,
+      clientKeys: houseraConfigured(process.env),
+      webhookSecret: Boolean(process.env["HOUSERA_WEBHOOK_SECRET"]?.trim()),
+      webhookResponds,
+      schemaEnv: schema ? (schema.env === "production" ? "production" : "staging") : null,
+      connections: ((conns ?? []) as Array<{ status: string | null; settings: Record<string, unknown> | null; portal_credentials_encrypted: string | null }>)
+        .map((c) => ({ status: c.status, settings: c.settings, hasKey: !!c.portal_credentials_encrypted })),
+    });
+  });

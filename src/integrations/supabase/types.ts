@@ -6871,6 +6871,7 @@ export type Database = {
       portal_lead_links: {
         Row: {
           created_at: string
+          environment: string
           external_lead_id: string
           id: string
           last_email_notified_at: string | null
@@ -6887,6 +6888,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          environment?: string
           external_lead_id: string
           id?: string
           last_email_notified_at?: string | null
@@ -6903,6 +6905,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          environment?: string
           external_lead_id?: string
           id?: string
           last_email_notified_at?: string | null

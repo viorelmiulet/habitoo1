@@ -6,7 +6,7 @@ import type { ListingOutcome, ListingRef, PortalAdapter, PortalContext, PortalFa
 import { withdrawHousera } from "../housera/withdraw";
 import type { PortalErrorCode } from "../errors";
 import type { PortalOffer } from "../imobiliare/offer-links";
-import { HOUSERA_MISSING_MESSAGE, HOUSERA_TEST_OK_MESSAGE, houseraBaseUrl, houseraConfigured } from "../housera/config";
+import { HOUSERA_MISSING_MESSAGE, HOUSERA_TEST_OK_MESSAGE, houseraBaseUrl, houseraConfigured, houseraEnv, splitHouseraOffers } from "../housera/config";
 import { createHouseraClient, HouseraError, type HouseraErrorKind } from "../housera/client.server";
 import type { HouseraMapResult } from "../housera/mapper";
 import { houseraPortalStatus, publishHousera, sortKeysDeep, type HouseraClientLike } from "../housera/publish";
@@ -75,7 +75,7 @@ export function createHouseraAdapter(deps: HouseraAdapterDeps = {}): PortalAdapt
       const key = ctx.portalCredential ?? (await d.key(ctx.organizationId));
       if (!key) return { ok: false, code: "AUTH_ERROR", message: "Agenția nu are o cheie de conexiune Housera. Conectează contul Housera.", detail: "housera_no_key" };
       const stored = await d.stored(ctx.organizationId, ref.propertyId).catch(() => [] as PortalOffer[]);
-      const r = await publishHousera({ drafts: mapped.listings, stored, photoUrls: photos.urls, client: d.client(key, ctx.organizationId) });
+      const r = await publishHousera({ drafts: mapped.listings, stored, photoUrls: photos.urls, client: d.client(key, ctx.organizationId), env: houseraEnv(env()) });
       const status = houseraPortalStatus(r.offers);
       const warnings = [...mapped.warnings, ...photos.warnings, ...r.warnings];
       const withUrl = r.offers.filter((o) => o.url.startsWith("https://"));
@@ -87,7 +87,7 @@ export function createHouseraAdapter(deps: HouseraAdapterDeps = {}): PortalAdapt
         message: status === "pending" ? "Anunțul a fost trimis la Housera și este în moderare." : r.unchanged.length === r.offers.length ? "Housera: anunțul era deja la zi." : "Anunțul a fost actualizat pe Housera.",
         portalStatus: status,
         publicUrl: withUrl[0]?.url ?? null,
-        offers: r.offers,
+        offers: [...r.offers, ...r.retained],
         mediaWarning: warnings.length ? warnings.join(" · ") : null,
       } };
     } catch (e) {
@@ -118,7 +118,8 @@ export function createHouseraAdapter(deps: HouseraAdapterDeps = {}): PortalAdapt
     async withdrawListing(ctx, ref) {
       try {
         if (!houseraConfigured(env())) return { ok: false, code: "CONFIG_ERROR", message: HOUSERA_MISSING_MESSAGE, detail: "housera_not_configured" };
-        const stored = await d.stored(ctx.organizationId, ref.propertyId);
+        const all = await d.stored(ctx.organizationId, ref.propertyId);
+        const { active: stored, other: retained } = splitHouseraOffers(all, houseraEnv(env()));
         if (!stored.length) return { ok: true, data: { externalId: null, live: false, processed: 0, portalStatus: "withdrawn", detail: "housera_withdraw nothing_stored", message: "Anunțul nu este publicat pe Housera." } };
         if (!ctx.allowLiveRequests) return { ok: true, data: { externalId: ref.externalId, live: false, processed: 0, detail: `housera_withdraw_dry_run reason=${ref.withdrawReason ?? "user"} listings=${stored.length}`, message: "Trimiterile reale către Housera sunt oprite; nimic nu a fost retras." } };
         const key = ctx.portalCredential ?? (await d.key(ctx.organizationId));
@@ -133,7 +134,7 @@ export function createHouseraAdapter(deps: HouseraAdapterDeps = {}): PortalAdapt
           detail: `housera_withdraw reason=${ref.withdrawReason ?? "user"} writes=${r.writes} removed=${r.removed.length}`,
           message: r.writes ? "Anunțul a fost retras de pe Housera." : "Housera: anunțul era deja retras.",
           publicUrl: withUrl[0]?.url ?? null,
-          offers: r.offers,
+          offers: [...r.offers, ...retained],
           replacedReferences: r.removed,
           mediaWarning: r.warnings.length ? r.warnings.join(" · ") : null,
         } };

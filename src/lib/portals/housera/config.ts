@@ -18,6 +18,29 @@ export function houseraEnv(env: Env): HouseraEnv {
   return env["HOUSERA_ENV"]?.trim().toLowerCase() === "production" ? "production" : "staging";
 }
 
+/** Mediul activ curent (server). */
+export function activeHouseraEnv(): HouseraEnv {
+  return houseraEnv(typeof process !== "undefined" ? process.env : {});
+}
+
+/** Datele fără mediu salvat sunt din perioada de test (staging). */
+export function houseraDataEnv(v: unknown): HouseraEnv {
+  return v === "production" ? "production" : "staging";
+}
+
+/** Mediul în care a fost făcută conexiunea (`settings.housera_env`). */
+export function houseraConnectionEnv(settings: unknown): HouseraEnv {
+  const s = settings && typeof settings === "object" ? (settings as Record<string, unknown>) : {};
+  return houseraDataEnv(s["housera_env"]);
+}
+
+/** Ofertele mediului activ și cele păstrate doar pentru istoric. */
+export function splitHouseraOffers<T extends { env?: string }>(offers: T[], env: HouseraEnv): { active: T[]; other: T[] } {
+  const active: T[] = [], other: T[] = [];
+  for (const o of offers) (houseraDataEnv(o.env) === env ? active : other).push(o);
+  return { active, other };
+}
+
 export function houseraBaseUrl(env: Env): string {
   return houseraEnv(env) === "production" ? "https://housera.ro/api/v1/" : "https://staging.housera.ro/api/v1/";
 }

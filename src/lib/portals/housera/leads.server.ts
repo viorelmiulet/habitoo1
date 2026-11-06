@@ -7,6 +7,7 @@
 import { houseraOfferFilter, type HouseraEvent } from "./events";
 import type { HouseraClientLike } from "./publish";
 import { HouseraError } from "./client.server";
+import { activeHouseraEnv } from "./config";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
@@ -96,7 +97,7 @@ async function agentByEmail(admin: Admin, orgId: string, email: string | null): 
 
 async function loadLink(admin: Admin, orgId: string, externalId: string) {
   const { data } = await admin.from("portal_lead_links").select("id, lead_id, last_message_id")
-    .eq("portal", "housera").eq("organization_id", orgId).eq("external_lead_id", externalId).maybeSingle();
+    .eq("portal", "housera").eq("organization_id", orgId).eq("external_lead_id", externalId).eq("environment", activeHouseraEnv()).maybeSingle();
   return data as { id: string; lead_id: string | null; last_message_id: string | null } | null;
 }
 
@@ -184,9 +185,9 @@ async function importLead(ctx: Ctx, e: HouseraEvent, externalId: string, link: A
   });
   if (r.created && lead.price) await admin.from("leads").update({ value: lead.price }).eq("id", r.leadId);
   const { error } = await admin.from("portal_lead_links").upsert({
-    organization_id: orgId, portal: "housera", external_lead_id: externalId, lead_id: r.leadId, updated_at: nowIso,
+    organization_id: orgId, portal: "housera", external_lead_id: externalId, lead_id: r.leadId, updated_at: nowIso, environment: activeHouseraEnv(),
     ...(lead.status ? { status_remote: lead.status } : {}),
-  }, { onConflict: "portal,organization_id,external_lead_id" });
+  }, { onConflict: "portal,organization_id,external_lead_id,environment" });
   if (error) throw new Error("Legătura cererii Housera nu a putut fi salvată.");
   const { notifyHouseraLead } = await import("./notify.server");
   await notifyHouseraLead(admin, {
@@ -252,7 +253,7 @@ async function importMessages(ctx: Ctx, externalId: string, leadId: string) {
     if (!cursor && !meta["next"] && !o["has_more"]) break;
   }
   await admin.from("portal_lead_links").update({ last_message_id: after, updated_at: now.toISOString() })
-    .eq("portal", "housera").eq("organization_id", orgId).eq("external_lead_id", externalId);
+    .eq("portal", "housera").eq("organization_id", orgId).eq("external_lead_id", externalId).eq("environment", activeHouseraEnv());
   if (lastIn) {
     const { notifyHouseraLead } = await import("./notify.server");
     await notifyHouseraLead(admin, {

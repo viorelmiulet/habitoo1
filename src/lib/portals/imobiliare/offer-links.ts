@@ -16,6 +16,8 @@ export type PortalOffer = {
   status?: string;
   /** Housera: hash-ul ultimei liste de poze trimise. */
   photos_hash?: string;
+  /** Housera: mediul în care a fost creată oferta (`staging`/`production`). */
+  env?: "staging" | "production";
 };
 
 export function imobiliareOfferUrl(id: string): string {

@@ -137,10 +137,14 @@ export type HouseraListingRow = { status: string; portal_offers: PortalOffer[]; 
 export type HouseraListingPatch = Partial<HouseraListingRow> & { last_event_at: string };
 
 /** Aplică efectul pe rând; `null` = oferta nu a fost găsită. */
-export function applyHouseraEffect(row: HouseraListingRow, effect: Extract<HouseraEffect, { kind: "listing" }>, nowIso: string): HouseraListingPatch | null {
+export function applyHouseraEffect(row: HouseraListingRow, effect: Extract<HouseraEffect, { kind: "listing" }>, nowIso: string, env?: "staging" | "production"): HouseraListingPatch | null {
   const offers = row.portal_offers.map((o) => ({ ...o }));
-  const i = findHouseraOffer(offers, effect.code, effect.externalRef);
-  if (i < 0) return null;
+  // Doar ofertele mediului activ; cele din celălalt mediu rămân neatinse (istoric).
+  const inEnv = (o: PortalOffer) => !env || (o.env === "production" ? "production" : "staging") === env;
+  const mine = offers.filter(inEnv);
+  const j = findHouseraOffer(mine, effect.code, effect.externalRef);
+  if (j < 0) return null;
+  const i = offers.indexOf(mine[j]!);
   if (effect.remove) offers.splice(i, 1);
   else {
     const o = offers[i]!;
@@ -148,7 +152,7 @@ export function applyHouseraEffect(row: HouseraListingRow, effect: Extract<House
     if (effect.etag) o.etag = effect.etag;
     if (effect.url && effect.url.startsWith("https://")) o.url = effect.url;
   }
-  const status = houseraListingStatus(offers, row.status);
+  const status = houseraListingStatus(env ? offers.filter(inEnv) : offers, row.status);
   const patch: HouseraListingPatch = { portal_offers: offers, status, last_event_at: nowIso };
   if (effect.url && effect.url.startsWith("https://")) patch.public_url = effect.url;
   if (effect.lastError !== undefined) patch.last_error = effect.lastError;

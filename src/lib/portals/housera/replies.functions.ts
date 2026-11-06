@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
+import { activeHouseraEnv } from "./config";
 
 type Ctx = { supabase: any; userId: string }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -12,7 +13,7 @@ async function replyAccess(ctx: Ctx, leadId: string) {
   const canSend = lead.assigned_to === ctx.userId || isAdmin === true;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: link } = await supabaseAdmin.from("portal_lead_links").select("external_lead_id")
-    .eq("portal", "housera").eq("organization_id", lead.organization_id).eq("lead_id", leadId).maybeSingle();
+    .eq("portal", "housera").eq("organization_id", lead.organization_id).eq("lead_id", leadId).eq("environment", activeHouseraEnv()).maybeSingle();
   if (!link) return { lead, linked: false, canSend: false, reconnect: false, admin: supabaseAdmin, externalLeadId: null as string | null };
   const { data: conn } = await supabaseAdmin.from("portal_connections").select("status, settings, portal_credentials_encrypted")
     .eq("portal", "housera").eq("organization_id", lead.organization_id).maybeSingle();
