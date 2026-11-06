@@ -15,7 +15,7 @@ import {
 import { AGENCY_ROW_LIMIT, buildAgencyRowsFrom, type AgencyRow } from "@/lib/superadmin-agencies";
 import { buildPortalCardsFrom, type PortalCard } from "@/lib/superadmin-portals";
 import { isActiveLogin, type SuperadminWeek } from "@/lib/superadmin-week";
-import { isConnectionError, portalHealth } from "@/lib/portal-connection-health";
+import { connectionFailureKind, portalHealth } from "@/lib/portal-connection-health";
 
 type AuthContext = {
   supabase: {
@@ -59,9 +59,9 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
 
 type Admin = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
 
-type ConnHealth = { id: string; organizationId: string; organizationName: string; portal: string; broken: boolean };
+type ConnHealth = { id: string; organizationId: string; organizationName: string; portal: string; broken: boolean; configMissing: boolean };
 
-/** Starea fiecărei conexiuni activate (agenții non-demo): doar erori de conectare. */
+/** Starea fiecărei conexiuni activate (agenții non-demo): erori de conectare sau de configurare a platformei. */
 async function loadConnectionHealth(admin: Admin): Promise<ConnHealth[]> {
   const { data: orgRows, error } = await admin.from("organizations").select("id,name,is_demo");
   if (error) throw new Error(`Interogările dashboardului au eșuat — organizații: ${error.message}`);
@@ -84,17 +84,19 @@ async function loadConnectionHealth(admin: Admin): Promise<ConnHealth[]> {
           .order("created_at", { ascending: false })
           .limit(3);
         if (oErr) throw new Error(`Interogările dashboardului au eșuat — operații: ${oErr.message}`);
+        const kind = connectionFailureKind({
+          status: c.status,
+          lastSyncStatus: c.last_sync_status,
+          lastSyncError: c.last_sync_error,
+          recentOps: (ops ?? []).map((o) => ({ success: o.success, errorCode: o.error_code, httpStatus: o.http_status, errorMessage: o.error_message })),
+        });
         return {
           id: c.id,
           organizationId: c.organization_id,
           organizationName: orgs.get(c.organization_id) ?? "—",
           portal: c.portal,
-          broken: isConnectionError({
-            status: c.status,
-            lastSyncStatus: c.last_sync_status,
-            lastSyncError: c.last_sync_error,
-            recentOps: (ops ?? []).map((o) => ({ success: o.success, errorCode: o.error_code, httpStatus: o.http_status, errorMessage: o.error_message })),
-          }),
+          broken: kind !== null,
+          configMissing: kind === "config",
         };
       }),
   );
@@ -177,7 +179,7 @@ async function buildTodo(admin: Admin, health: ConnHealth[]): Promise<Superadmin
     expired: alerts.filter((a) => a.kind === "expired").sort((x, y) => x.daysLeft - y.daysLeft).map(strip),
     // Anunțurile nepublicabile țin de munca agențiilor, nu de platformă.
     blocked: [],
-    brokenConnections: broken.map((h) => ({ organizationId: h.organizationId, organizationName: h.organizationName, portal: h.portal })),
+    brokenConnections: broken.map((h) => ({ organizationId: h.organizationId, organizationName: h.organizationName, portal: h.portal, configMissing: h.configMissing })),
   };
 }
 
@@ -274,11 +276,12 @@ async function buildPortalCards(admin: Admin, health: ConnHealth[]): Promise<Por
   const { data: orgRows, error } = await admin.from("organizations").select("id,is_demo");
   if (error) throw new Error(`Interogările dashboardului au eșuat — organizații: ${error.message}`);
   const demoIds = (orgRows ?? []).filter((o) => o.is_demo).map((o) => o.id);
-  const byPortal = new Map<string, { orgs: Set<string>; failing: Set<string> }>();
+  const byPortal = new Map<string, { orgs: Set<string>; failing: Set<string>; config: Set<string> }>();
   for (const h of health) {
-    const g = byPortal.get(h.portal) ?? { orgs: new Set<string>(), failing: new Set<string>() };
+    const g = byPortal.get(h.portal) ?? { orgs: new Set<string>(), failing: new Set<string>(), config: new Set<string>() };
     g.orgs.add(h.organizationId);
     if (h.broken) g.failing.add(h.organizationId);
+    if (h.configMissing) g.config.add(h.organizationId);
     byPortal.set(h.portal, g);
   }
   const head = { count: "exact" as const, head: true };
@@ -289,7 +292,7 @@ async function buildPortalCards(admin: Admin, health: ConnHealth[]): Promise<Por
       const { count, error: e } = await q;
       if (e) throw new Error(`Interogările dashboardului au eșuat — publicări: ${e.message}`);
       const failing = g.failing.size;
-      return { portal, agencies: g.orgs.size, published: count ?? 0, failingAgencies: failing, state: portalHealth(g.orgs.size, failing) };
+      return { portal, agencies: g.orgs.size, published: count ?? 0, failingAgencies: failing, state: portalHealth(g.orgs.size, failing, false, g.config.size > 0) };
     }),
   );
   return buildPortalCardsFrom(counted);

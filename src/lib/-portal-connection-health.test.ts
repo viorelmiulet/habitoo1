@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { connectionsLabel, isConnectionError, portalHealth, portalHealthLabel, type RecentOp } from "@/lib/portal-connection-health";
+import {
+  connectionsLabel,
+  connectionFailureKind,
+  isConnectionError,
+  isPlatformConfigError,
+  portalHealth,
+  portalHealthLabel,
+  type RecentOp,
+} from "@/lib/portal-connection-health";
 
 const ok: RecentOp = { success: true, errorCode: null, httpStatus: 200 };
 const timeout: RecentOp = { success: false, errorCode: "TIMEOUT", httpStatus: null };
@@ -49,5 +57,66 @@ describe("portalHealth", () => {
   it("subtitlu", () => {
     expect(connectionsLabel(0)).toBe("Toate conexiunile funcționează");
     expect(connectionsLabel(2)).toBe("2 conexiuni cu eroare");
+  });
+});
+
+describe("configurare platformă lipsă (SA1.2)", () => {
+  const serverKey = "Cheia CRM HomeDirect nu este configurată pe server.";
+
+  it("mesaj „nu este configurată pe server” → conexiune în eroare, motiv configurare", () => {
+    const c = conn({ lastSyncStatus: "error", lastSyncError: serverKey });
+    expect(isConnectionError(c)).toBe(true);
+    expect(connectionFailureKind(c)).toBe("config");
+    expect(isPlatformConfigError(c)).toBe(true);
+  });
+
+  it("CONFIG_ERROR la ultima operație → conexiune în eroare, motiv configurare", () => {
+    const c = conn({ recentOps: [{ success: false, errorCode: "CONFIG_ERROR", httpStatus: null, errorMessage: "Integrarea nu este configurată complet." }] });
+    expect(isConnectionError(c)).toBe(true);
+    expect(connectionFailureKind(c)).toBe("config");
+  });
+
+  it("credențiale Ofera lipsă de pe server → motiv configurare", () => {
+    const c = conn({ lastSyncStatus: "error", lastSyncError: "Credențialele Ofera nu sunt configurate pe server." });
+    expect(connectionFailureKind(c)).toBe("config");
+  });
+
+  it("not_configured fără mesaj despre server → nu e eroare", () => {
+    const c = conn({ status: "not_configured" });
+    expect(isConnectionError(c)).toBe(false);
+    expect(connectionFailureKind(c)).toBeNull();
+    expect(isPlatformConfigError(c)).toBe(false);
+  });
+
+  it("rând real HomeDirect: not_configured, fără last_sync_status, cu mesaj despre server → configurare", () => {
+    const c = conn({ status: "not_configured", lastSyncStatus: null, lastSyncError: serverKey, recentOps: [{ success: true, errorCode: null, httpStatus: null }] });
+    expect(isPlatformConfigError(c)).toBe(true);
+    expect(connectionFailureKind(c)).toBe("config");
+    expect(isConnectionError(c)).toBe(true);
+  });
+
+  it("cheia care lipsește ține de agenție (fără „pe server”) → nu e configurare de platformă", () => {
+    const c = conn({
+      lastSyncStatus: "error",
+      lastSyncError: "Lipsește cheia ZonaTa a agenției.",
+      recentOps: [{ success: false, errorCode: "INVALID_REQUEST", httpStatus: 422, errorMessage: "Lipsește cheia ZonaTa a agenției." }],
+    });
+    expect(isPlatformConfigError(c)).toBe(false);
+    expect(connectionFailureKind(c)).not.toBe("config");
+  });
+
+  it("configurare lipsă → „Integrarea nu funcționează”, indiferent câte agenții are portalul", () => {
+    const state = portalHealth(3, 1, false, true);
+    expect(state).toBe("integration");
+    expect(portalHealthLabel(state, 1)).toBe("Integrarea nu funcționează");
+    expect(portalHealth(1, 1, false, true)).toBe("integration");
+    expect(portalHealth(3, 1, false, false)).toBe("agencies");
+  });
+
+  it("autentificare expirată rămâne motiv de conectare, nu de configurare", () => {
+    const c = conn({ status: "expired" });
+    expect(connectionFailureKind(c)).toBe("connection");
+    expect(isPlatformConfigError(c)).toBe(false);
+    expect(portalHealthLabel(portalHealth(3, 1), 1)).toBe("1 agenție cu eroare de conectare");
   });
 });
