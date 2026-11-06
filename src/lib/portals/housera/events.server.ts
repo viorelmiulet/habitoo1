@@ -155,10 +155,9 @@ export async function ingestPulledHouseraEvent(admin: Admin, orgId: string, e: H
   });
   if (rec.duplicate) {
     // Venit pe webhook cu `connection` necunoscut: acum știm agenția, îl reluăm.
-    const { data: prev } = await admin.from("portal_webhook_events").select("id, attempts")
-      .eq("portal", "housera").eq("external_event_id", e.id).is("organization_id", null)
-      .eq("process_note", "conexiune necunoscută").maybeSingle();
-    if (!prev) return false;
+    const { data: prev } = await admin.from("portal_webhook_events").select("id, attempts, organization_id, process_note")
+      .eq("portal", "housera").eq("external_event_id", e.id).maybeSingle();
+    if (!prev || prev.organization_id || prev.process_note !== "conexiune necunoscută") return false;
     await admin.from("portal_webhook_events").update({ organization_id: orgId }).eq("id", prev.id as string);
     await processHouseraEventRow(admin, prev.id as string, orgId, e, (prev.attempts as number) ?? 0, deps);
     return true;
