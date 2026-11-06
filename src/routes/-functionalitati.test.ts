@@ -7,6 +7,11 @@ const EXPECTED_PAGES = [
   ["cereri", "Cererile clienților, transformate în criterii clare", "evidență cereri clienți imobiliare"],
   ["lead-uri", "Pipeline-ul de vânzări al agenției, de la primul contact la tranzacție", "pipeline vânzări imobiliare"],
   ["potriviri-automate", "Potriviri automate între cereri și proprietăți", "matching proprietăți clienți"],
+  ["activitati", "Tot ce ai de făcut, legat de client și de proprietate", "program activități agent imobiliar"],
+  ["calendar", "Vizionările și întâlnirile echipei, într-o singură agendă", "calendar agenție imobiliară"],
+  ["obiective", "Ținte clare pentru fiecare agent, cu progres vizibil", "obiective agenți imobiliari"],
+  ["ecran-de-start", "Un ecran de start diferit pentru fiecare rol", "dashboard CRM imobiliar"],
+  ["rapoarte", "Cifrele agenției, fără export manual", "rapoarte agenție imobiliară"],
 ] as const;
 
 function decode(text: string) {
