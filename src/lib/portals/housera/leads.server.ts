@@ -38,7 +38,7 @@ export function parseHouseraLead(raw: unknown, fallbackId: string): HouseraLead 
     id: str(d["id"]) ?? (typeof d["id"] === "number" ? String(d["id"]) : fallbackId),
     source: str(d["source"]), name: str(c["name"]), phone: str(c["phone"]), email: str(c["email"])?.toLowerCase() ?? null,
     message: str(d["message"]), price: Number.isFinite(price) && price > 0 ? price : null,
-    listingCode: str(l["code"]), externalRef: str(l["external_ref"]), agentEmail: str(obj(d["agent"])["email"])?.toLowerCase() ?? null,
+    status: str(d["status"]), listingCode: str(l["code"]), externalRef: str(l["external_ref"]), agentEmail: str(obj(d["agent"])["email"])?.toLowerCase() ?? null,
   };
 }
 
@@ -157,6 +157,10 @@ async function importLead(ctx: Ctx, e: HouseraEvent, externalId: string, link: A
   };
 
   if (link?.lead_id) {
+    if (e.type === "lead.updated") {
+      const { noteHouseraRemoteStatus } = await import("./lead-status.server");
+      await noteHouseraRemoteStatus(admin, orgId, externalId, lead.status);
+    }
     const rowId = await insertMessage(admin, { ...msg, lead_id: link.lead_id });
     if (rowId) await appendNote(admin, orgId, link.lead_id, note, nowIso);
     await log(admin, orgId, "lead_import", true, externalId, rowId ? "notă adăugată" : "deja importat");
@@ -180,6 +184,7 @@ async function importLead(ctx: Ctx, e: HouseraEvent, externalId: string, link: A
   if (r.created && lead.price) await admin.from("leads").update({ value: lead.price }).eq("id", r.leadId);
   const { error } = await admin.from("portal_lead_links").upsert({
     organization_id: orgId, portal: "housera", external_lead_id: externalId, lead_id: r.leadId, updated_at: nowIso,
+    ...(lead.status ? { status_remote: lead.status } : {}),
   }, { onConflict: "portal,organization_id,external_lead_id" });
   if (error) throw new Error("Legătura cererii Housera nu a putut fi salvată.");
   await log(admin, orgId, "lead_import", true, externalId, r.created ? "lead creat" : "atașat la lead existent");

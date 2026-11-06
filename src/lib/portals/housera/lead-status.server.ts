@@ -39,7 +39,7 @@ export async function syncHouseraLeadStatuses(admin: Admin, orgId: string, clien
       skipped++; continue;
     }
     try {
-      await client.requestMeta(`leads/${encodeURIComponent(l.external_lead_id)}`, { method: "PATCH", body: { status: want }, noRateRetry: true } as never);
+      await client.requestMeta(`leads/${encodeURIComponent(l.external_lead_id)}`, { method: "PATCH", body: { status: want }, noRateRetry: true });
       await admin.from("portal_lead_links").update({
         status_desired: null, status_sent: want, status_remote: want, status_sync_error: null, status_synced_at: nowIso,
       }).eq("id", l.id);
