@@ -340,8 +340,8 @@ export const FEATURE_PAGES: FeaturePage[] = [
       "Administratorul vede agenția în ansamblu. Agentul înțelege de unde vin clienții lui și unde se opresc. Toți pornesc de la aceleași date, introduse o singură dată. Deciziile despre surse de clienți, portofoliu și echipă devin mai simple."
     ],
     benefits: [
-      { title: "Portofoliul, pe stări", text: "Vezi câte proprietăți sunt active, rezervate, vândute sau închiriate. Știi ce ai de oferit și unde ai nevoie de proprietăți noi." },
-      { title: "De unde vin clienții", text: "Raportul surselor arată ce canale aduc lead-uri. Vezi ce merită păstrat și unde să pui mai mult efort." },
+      { title: "Portofoliul, pe stări", text: "Vezi câte proprietăți sunt active, rezervate, vândute sau închiriate. Știi ce ai de oferit și unde ai nevoie de proprietăți noi. Planifici din timp prospectarea." },
+      { title: "De unde vin clienții", text: "Raportul surselor arată ce canale aduc lead-uri. Vezi ce merită păstrat și unde să pui mai mult efort. Bugetul de promovare merge acolo unde aduce clienți." },
       { title: "Unde se opresc vânzările", text: "Numărul de lead-uri pe fiecare etapă îți arată unde rămân clienții. Știi exact ce parte a procesului trebuie îmbunătățită." },
       { title: "Activitatea echipei", text: "Vezi activitățile pe săptămâni și un tabel pe agenți. Discuțiile cu echipa pornesc de la cifre reale, nu de la estimări." },
       { title: "Descarci tabelele", text: "Fiecare raport se descarcă într-un fișier pe care îl deschizi în Excel. Îl trimiți mai departe sau îl păstrezi pentru ședința lunară." }
@@ -403,7 +403,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     intro: [
       "O agenție crește cu fiecare coleg nou. Dar fără reguli clare, apar întrebări: cine se ocupă de client, cine poate muta o proprietate, cine vede cifrele. Habitoo este un CRM pentru echipa agenției imobiliare, în care fiecare are rolul și locul lui.",
       "Inviți colegii prin email, iar ei intră direct în agenția ta. Există două roluri: administrator de agenție și agent. Fiecare proprietate și fiecare lead are un agent responsabil.",
-      "Agentul lucrează liniștit pe clienții și proprietățile lui. Administratorul vede toată agenția și decide cum se împarte munca. Toată lumea știe cine răspunde de ce. Mai puține neînțelegeri, mai puțini clienți pierduți între colegi și o agenție mai ușor de condus."
+      "Agentul lucrează liniștit pe clienții și proprietățile lui. Administratorul vede toată agenția și decide cum se împarte munca. Toată lumea știe cine răspunde de ce, iar clienții nu mai cad între colegi. Echipa lucrează mai repede, cu mai puține întrebări. Mai puține neînțelegeri, mai puțini clienți pierduți între colegi și o agenție mai ușor de condus."
     ],
     benefits: [
       { title: "Inviți colegii în câteva secunde", text: "Trimiți invitația pe email, din pagina echipei. Vezi cine a acceptat și cine mai are invitația deschisă. Echipa se formează fără complicații." },
@@ -436,7 +436,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     intro: [
       "Agentul imobiliar stă puțin la birou. Vizionările, întâlnirile cu proprietarii și apelurile se întâmplă pe drum. Cu Habitoo ai CRM-ul imobiliar pe telefon, cu tot ce îți trebuie între două întâlniri.",
       "Deschizi Habitoo în browserul telefonului și te autentifici cu același cont. Jos ai o bară cu Acasă, Proprietăți, Lead-uri și butonul plus. Ecranele se așază pe lățimea telefonului, cu butoane ușor de apăsat.",
-      "Notezi clientul nou chiar la vizionare. Fotografiezi actul de identitate pentru contract. Schimbi etapa lead-ului imediat după discuție. Totul ajunge pe loc la colegi. Lucrezi la fel de bine pe teren ca la birou, iar seara nu mai ai nimic de recopiat."
+      "Notezi clientul nou chiar la vizionare. Fotografiezi actul de identitate pentru contract. Schimbi etapa lead-ului imediat după discuție. Totul ajunge pe loc la colegi. Când te întorci la birou, nu ai nimic de recuperat. Iar clientul vede un agent organizat, care răspunde repede. Lucrezi la fel de bine pe teren ca la birou, iar seara nu mai ai nimic de recopiat."
     ],
     benefits: [
       { title: "Adaugi rapid cu butonul plus", text: "Din bara de jos adaugi un contact, un lead, o cerere, un contract, o activitate sau o vizionare. Câteva câmpuri și ai terminat. Nu mai notezi pe hârtie ca să copiezi seara." },
@@ -454,7 +454,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { q: "Trebuie să instalez o aplicație?", a: "Nu. Habitoo funcționează în browserul telefonului, cu același cont ca pe calculator. Nu există, deocamdată, o aplicație separată în magazinele de aplicații." },
       { q: "Ce pot face de pe telefon?", a: "Adaugi contacte, lead-uri, cereri, contracte, activități și vizionări. Schimbi etapa lead-urilor, îți vezi agenda și cauți orice client sau proprietate. Ai la tine tot ce îți trebuie între două întâlniri." },
       { q: "Pot fotografia actul de identitate cu telefonul?", a: "Da. La contract alegi fotografierea actului, iar camera telefonului se deschide. Datele se completează automat și le verifici înainte de a merge mai departe. Poți și încărca o poză făcută mai devreme, dacă preferi." },
-      { q: "Colegii văd imediat ce adaug?", a: "Da. Tot ce salvezi pe telefon ajunge în aceeași agenție. Colegii văd lead-ul actualizat sau vizionarea nouă fără să le mai spui tu. Nu mai trimiți mesaje separate ca să anunți ce s-a schimbat." }
+      { q: "Colegii văd imediat ce adaug?", a: "Da. Tot ce salvezi pe telefon ajunge în aceeași agenție. Colegii văd lead-ul actualizat sau vizionarea nouă fără să le mai spui tu. Administratorul vede și el situația la zi, pe ecranul de start. Nu mai trimiți mesaje separate ca să anunți ce s-a schimbat." }
     ],
     related: ["dashboard", "lead-uri", "contracte", "calendar", "activitati"]
   }
