@@ -67,10 +67,11 @@ import { leadFormForProperty, leadMatchesPropertyFilter } from "@/lib/lead-prope
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
   head: () => { const title = "Habitoo CRM — lead-uri"; const description = "Pipeline de lead-uri al agenției, cu filtre pe agent, sursă, campanie și etapă."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
-  validateSearch: (search: Record<string, unknown>): ReturnType<typeof validateListSearch<typeof leadListDefaults>> & { proprietate?: string; lead?: string } => {
-    const result: ReturnType<typeof validateListSearch<typeof leadListDefaults>> & { proprietate?: string; lead?: string } = validateListSearch(leadListDefaults, search);
+  validateSearch: (search: Record<string, unknown>): ReturnType<typeof validateListSearch<typeof leadListDefaults>> & { proprietate?: string; lead?: string; deschise?: boolean } => {
+    const result: ReturnType<typeof validateListSearch<typeof leadListDefaults>> & { proprietate?: string; lead?: string; deschise?: boolean } = validateListSearch(leadListDefaults, search);
     if (typeof search.lead === "string" && search.lead) result.lead = search.lead;
     if (typeof search.proprietate === "string" && search.proprietate) result.proprietate = search.proprietate;
+    if (search.deschise === true || search.deschise === "1" || search.deschise === 1) result.deschise = true;
     return result;
   },
   component: LeadsPage,
@@ -164,10 +165,11 @@ function LeadsPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { data: user } = useCurrentUser();
   const persisted = useFilterList("leads", user?.userId, leadListDefaults, urlSearch,
-    (next) => { void navigate({ search: { ...next, proprietate: propertyFilter, lead: urlSearch.lead }, replace: true, resetScroll: false }); });
+    (next) => { void navigate({ search: { ...next, proprietate: propertyFilter, lead: urlSearch.lead, deschise: urlSearch.deschise }, replace: true, resetScroll: false }); });
   const stageParam = (leadStages as readonly string[]).includes(persisted.state.stage) ? persisted.state.stage : "";
   // Etapa primită din dashboard restrânge board-ul la o singură coloană.
-  const columns = stageParam ? [stageParam as LeadStage] : allColumns;
+  // „Lead-uri deschise” de pe Acasă ascunde coloanele Câștigat și Pierdut.
+  const columns = stageParam ? [stageParam as LeadStage] : urlSearch.deschise ? allColumns.filter((s) => s !== "won" && s !== "lost") : allColumns;
 
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();

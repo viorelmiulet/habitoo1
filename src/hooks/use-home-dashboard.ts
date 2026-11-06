@@ -65,6 +65,8 @@ export function useHomeDashboard(organizationId?: string | null) {
       const leads = () =>
         supabase.from("leads").select("created_at", { count: "exact" })
           .eq("organization_id", org).is("deleted_at", null);
+      // Totalul „Lead-uri deschise” exclude Câștigat/Pierdut; „+N azi” și luna trecută rămân pe lead-urile noi.
+      const openLeads = () => leads().not("stage", "in", "(won,lost)");
       const contacts = () =>
         supabase.from("contacts").select("created_at", { count: "exact" }).eq("organization_id", org);
 
@@ -93,7 +95,7 @@ export function useHomeDashboard(organizationId?: string | null) {
 
       // Totalurile vin din numărători separate (fără limita de rânduri).
       const [pt, rt, lt, ct] = await Promise.all([
-        props().limit(1), reqs().limit(1), leads().limit(1), contacts().limit(1),
+        props().limit(1), reqs().limit(1), openLeads().limit(1), contacts().limit(1),
       ]);
 
       const names = new Map((profiles.data ?? []).map((x) => [x.id, x.full_name as string | null]));
