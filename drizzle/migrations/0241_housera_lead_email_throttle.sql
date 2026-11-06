@@ -1,0 +1,1 @@
+ALTER TABLE public.portal_lead_links ADD COLUMN IF NOT EXISTS last_email_notified_at timestamptz;

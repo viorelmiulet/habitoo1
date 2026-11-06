@@ -1688,6 +1688,13 @@
       "when": 1793981833696,
       "tag": "0240_housera_lead_status_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 241,
+      "version": "7",
+      "when": 1793981999084,
+      "tag": "0241_housera_lead_email_throttle",
+      "breakpoints": true
     }
   ]
 }
