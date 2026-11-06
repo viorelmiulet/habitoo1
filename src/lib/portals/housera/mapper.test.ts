@@ -30,7 +30,7 @@ const schema: HouseraSchema = {
     ["energy_certificate", { type: "code", types: ["apartment", "house"], values: [{ code: "a" }, { code: "b" }] }],
     ["condition", { type: "code", types: ["apartment", "house"], values: [{ code: "renovated" }] }],
     ["flood_risk", { type: "boolean", types: ["house", "land"] }],
-    ["land_classification", { type: "code", types: ["land"], values: [{ code: "inside_built_up_area" }] }],
+    ["land_classification", { type: "code", types: ["land"], values: [{ code: "inside_built_up_area" }, { code: "outside_built_up_area" }] }],
   ]),
   features: [
     { code: "elevator", types: ["apartment"] },
@@ -94,8 +94,26 @@ describe("mapPropertyToHousera", () => {
 
   it("casă fără flood_risk → eroare blocantă", () => {
     const r = mapPropertyToHousera(prop({ property_type: "house", category: "Vilă", land_surface: 300, floor: null }), schema, { agentEmail: "a@b.ro" });
-    expect(r.errors).toContain("Declarația de risc de inundație lipsește (Habitoo nu are acest câmp).");
+    expect(r.errors).toContain("Declarația de risc de inundație lipsește: completează «Zonă cu risc de inundație» în fișa proprietății.");
     expect(r.listings[0].payload).not.toHaveProperty("flood_risk");
+  });
+
+  it("casă cu flood_risk=false → trimis, fără eroare", () => {
+    const r = mapPropertyToHousera(prop({ property_type: "house", category: "Vilă", land_surface: 300, floor: null, flood_risk: false }), schema, { agentEmail: "a@b.ro" });
+    expect(r.listings[0].payload["flood_risk"]).toBe(false);
+    expect(r.errors.some((e) => e.includes("inundație"))).toBe(false);
+  });
+
+  it("teren extravilan fără stradă → fără eroare de stradă", () => {
+    const r = mapPropertyToHousera(prop({ property_type: "land", category: "Construcții", land_surface: 1000, floor: null, street: null, street_number: null, flood_risk: false, land_classification: "extravilan" }), schema, { agentEmail: "a@b.ro" });
+    expect(r.errors).not.toContain("Strada lipsește.");
+    expect(r.listings[0].payload["land_classification"]).toBe("outside_built_up_area");
+  });
+
+  it("teren fără încadrare declarată, categorie intravilan → inside_built_up_area", () => {
+    const r = mapPropertyToHousera(prop({ property_type: "land", category: "Construcții, Intravilan", land_surface: 1000, floor: null, flood_risk: true, land_classification: null }), schema, { agentEmail: "a@b.ro" });
+    expect(r.listings[0].payload["land_classification"]).toBe("inside_built_up_area");
+    expect(r.listings[0].payload["flood_risk"]).toBe(true);
   });
 
   it("fără coordonate → eroare blocantă", () => {
