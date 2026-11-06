@@ -111,8 +111,8 @@ export async function handleSiteContact(admin: Admin, auth: ContactAuth, input: 
     if (r.created) await admin.from("leads").update({ contact_id: contactId }).eq("id", r.leadId);
     if (input.message_id) {
       await admin.from("portal_lead_links").upsert({
-        organization_id: auth.organizationId, portal: auth.portal, external_lead_id: input.message_id, lead_id: r.leadId, updated_at: nowIso,
-      }, { onConflict: "portal,organization_id,external_lead_id" });
+        organization_id: auth.organizationId, portal: auth.portal, external_lead_id: input.message_id, lead_id: r.leadId, updated_at: nowIso, environment: "",
+      }, { onConflict: "portal,organization_id,external_lead_id,environment" });
     }
     return { status: r.created ? 201 : 200, data: { lead_id: r.leadId, contact_id: contactId, deduplicated: !r.created } };
   }

@@ -7,6 +7,7 @@ import type { PortalOffer } from "../imobiliare/offer-links";
 import { HouseraError, type HouseraRequest, type HouseraResponse } from "./client.server";
 import type { HouseraListingDraft } from "./mapper";
 import { reactivateHousera } from "./withdraw";
+import { splitHouseraOffers } from "./config";
 
 export type HouseraClientLike = {
   requestMeta<T = unknown>(path: string, req?: HouseraRequest): Promise<HouseraResponse<T>>;
@@ -61,10 +62,14 @@ export type HouseraPublishInput = {
   stored: PortalOffer[];
   photoUrls: string[];
   client: HouseraClientLike;
+  /** Mediul activ; ofertele din alt mediu sunt păstrate, dar nu se folosesc (fără If-Match/coduri). */
+  env?: "staging" | "production";
 };
 
 export type HouseraPublishResult = {
   offers: PortalOffer[];
+  /** Ofertele din celălalt mediu, păstrate neschimbate pentru istoric. */
+  retained: PortalOffer[];
   warnings: string[];
   unchanged: string[];
   photosSent: string[];
@@ -104,8 +109,10 @@ export async function publishHousera(input: HouseraPublishInput): Promise<Houser
   if (input.photoUrls.length > HOUSERA_MAX_PHOTOS) warnings.push(`Housera acceptă maximum ${HOUSERA_MAX_PHOTOS} poze; restul nu au fost trimise.`);
   if (!urls.length) warnings.push("Nicio poză publicabilă: lista de poze Housera nu a fost modificată.");
 
+  const env = input.env ?? "staging";
+  const { active, other } = splitHouseraOffers(input.stored, env);
   for (const draft of input.drafts) {
-    const prev = input.stored.find((o) => o.reference === draft.externalRef);
+    const prev = active.find((o) => o.reference === draft.externalRef);
     const res = await upsertOne(input.client, draft, prev);
     const data = res.data?.data ?? {};
     const code = str(data.code) ?? prev?.id ?? null;
@@ -121,6 +128,7 @@ export async function publishHousera(input: HouseraPublishInput): Promise<Houser
       ...((str(data.etag) ?? str(res.headers.get("ETag")) ?? prev?.etag) ? { etag: (str(data.etag) ?? str(res.headers.get("ETag")) ?? prev?.etag)! } : {}),
       ...((str(data.status) ?? prev?.status) ? { status: (str(data.status) ?? prev?.status)! } : {}),
       ...(prev?.photos_hash ? { photos_hash: prev.photos_hash } : {}),
+      env,
     };
     offer = await reactivateHousera(input.client, offer);
     if (photosHash && photosHash !== prev?.photos_hash) {
@@ -133,7 +141,7 @@ export async function publishHousera(input: HouseraPublishInput): Promise<Houser
     }
     offers.push(offer);
   }
-  return { offers, warnings, unchanged, photosSent };
+  return { offers, retained: other, warnings, unchanged, photosSent };
 }
 
 /** `pending`/`draft` → „În moderare”; altfel starea se deduce din acțiune. */

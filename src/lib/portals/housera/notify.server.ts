@@ -4,6 +4,7 @@
  * Email: maximum unul la 10 minute per lead (`portal_lead_links.last_email_notified_at`).
  */
 import { notifyAgentOfStoriaMessage } from "../storia/messages.server";
+import { activeHouseraEnv } from "./config";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
@@ -26,7 +27,7 @@ export async function notifyHouseraLead(admin: Admin, input: {
   if (!recipients.length) return;
 
   const { data: link } = await admin.from("portal_lead_links").select("id, last_email_notified_at")
-    .eq("portal", "housera").eq("organization_id", input.organizationId).eq("external_lead_id", input.externalLeadId).maybeSingle();
+    .eq("portal", "housera").eq("organization_id", input.organizationId).eq("external_lead_id", input.externalLeadId).eq("environment", activeHouseraEnv()).maybeSingle();
   const last = link?.last_email_notified_at ? Date.parse(link.last_email_notified_at as string) : 0;
   const email = !last || input.now.getTime() - last >= HOUSERA_EMAIL_GROUP_MS;
   if (email && link?.id) await admin.from("portal_lead_links").update({ last_email_notified_at: input.now.toISOString() }).eq("id", link.id);

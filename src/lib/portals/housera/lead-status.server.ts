@@ -4,6 +4,7 @@
  * Housera trimite în fundal și reîncearcă la eșec. Sens invers: doar notă.
  */
 import type { HouseraClientLike } from "./publish";
+import { activeHouseraEnv } from "./config";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
@@ -29,7 +30,7 @@ type Link = { id: string; organization_id: string; external_lead_id: string; lea
 export async function syncHouseraLeadStatuses(admin: Admin, orgId: string, client: HouseraClientLike, nowIso = new Date().toISOString()) {
   const { data } = await admin.from("portal_lead_links")
     .select("id, organization_id, external_lead_id, lead_id, status_desired, status_sent, status_remote")
-    .eq("portal", "housera").eq("organization_id", orgId).not("status_desired", "is", null).limit(50);
+    .eq("portal", "housera").eq("organization_id", orgId).eq("environment", activeHouseraEnv()).not("status_desired", "is", null).limit(50);
   let sent = 0, skipped = 0, failed = 0;
   for (const l of (data ?? []) as Link[]) {
     const want = l.status_desired!;
@@ -56,7 +57,7 @@ export async function syncHouseraLeadStatuses(admin: Admin, orgId: string, clien
 export async function noteHouseraRemoteStatus(admin: Admin, orgId: string, externalId: string, status: string | null): Promise<boolean> {
   if (!status) return false;
   const { data } = await admin.from("portal_lead_links").select("id, lead_id, status_sent, status_remote")
-    .eq("portal", "housera").eq("organization_id", orgId).eq("external_lead_id", externalId).maybeSingle();
+    .eq("portal", "housera").eq("organization_id", orgId).eq("external_lead_id", externalId).eq("environment", activeHouseraEnv()).maybeSingle();
   const l = data as { id: string; lead_id: string | null; status_sent: string | null; status_remote: string | null } | null;
   if (!l?.lead_id || l.status_remote === status) return false;
   await admin.from("portal_lead_links").update({ status_remote: status }).eq("id", l.id);

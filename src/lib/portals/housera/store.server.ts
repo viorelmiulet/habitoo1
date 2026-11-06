@@ -31,6 +31,9 @@ export async function loadHouseraConnection(organizationId: string): Promise<Hou
 export async function loadHouseraKey(organizationId: string): Promise<string | null> {
   const row = await loadHouseraConnection(organizationId);
   if (!row?.portal_credentials_encrypted) return null;
+  // Cheile din celălalt mediu (test ↔ producție) nu se folosesc.
+  const { activeHouseraEnv, houseraConnectionEnv } = await import("./config");
+  if (houseraConnectionEnv(row.settings) !== activeHouseraEnv()) return null;
   const { decryptPortalCredential } = await import("../crypto.server");
   return decryptPortalCredential(row.portal_credentials_encrypted);
 }
@@ -41,6 +44,10 @@ export async function saveHouseraKey(organizationId: string, key: string, actor:
   const row = await loadHouseraConnection(organizationId);
   const settings = { ...(row?.settings ?? {}) };
   delete settings["reconnect_required"];
+  delete settings["housera_env_mismatch"];
+  const { activeHouseraEnv, houseraConnectionEnv } = await import("./config");
+  if (houseraConnectionEnv(settings) !== activeHouseraEnv()) delete settings["housera_events_cursor"];
+  settings["housera_env"] = activeHouseraEnv();
   const patch = {
     portal_credentials_encrypted: encryptPortalCredential(key),
     authentication_mode: "oauth",
