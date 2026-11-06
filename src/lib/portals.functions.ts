@@ -1,3 +1,4 @@
+import { currentPartnerKeyError } from "@/lib/portals/partner-key-status";
 import { imobiliarePromotionChangesSchema, imobiliarePublicationModeSchema, imobiliarePortalDecidesSlots, type ImobiliarePublicationMode, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
 import { HOMEDIRECT_KEY_MISSING_MESSAGE, homedirectKeyMissing } from "@/lib/portals/homedirect/config";
 import { OFERA_MISSING_MESSAGE, oferaConfigured, oferaProviderId } from "@/lib/portals/ofera/config";
@@ -591,7 +592,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
       const storedSettings = (row?.settings ?? {}) as Record<string, unknown>;
       const settings =
         portal.id === "lacheie" ? normalizeLaCheiePortalSettings(storedSettings) : storedSettings;
-      const storedLastError = row?.last_sync_error ?? null;
+      const storedLastError = currentPartnerKeyError(portal.id, row?.last_sync_error ?? null);
       const lastError =
         portal.id === "lacheie" && isLegacyLaCheieTestEnvironmentError(storedLastError)
           ? null

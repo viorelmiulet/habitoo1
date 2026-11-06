@@ -1,3 +1,4 @@
+import { currentPartnerKeyError } from "@/lib/portals/partner-key-status";
 /**
  * Dashboardul Superadmin: o singură interogare agregată pentru „ce arde în
  * platformă”. Totul rulează server-side, exclusiv pentru superadmin, cu
@@ -87,7 +88,7 @@ async function loadConnectionHealth(admin: Admin): Promise<ConnHealth[]> {
         const kind = connectionFailureKind({
           status: c.status,
           lastSyncStatus: c.last_sync_status,
-          lastSyncError: c.last_sync_error,
+          lastSyncError: currentPartnerKeyError(c.portal, c.last_sync_error),
           recentOps: (ops ?? []).map((o) => ({ success: o.success, errorCode: o.error_code, httpStatus: o.http_status, errorMessage: o.error_message })),
         });
         return {
