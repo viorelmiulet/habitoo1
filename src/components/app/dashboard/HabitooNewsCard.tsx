@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, Megaphone } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { getHomeEurRate } from "@/lib/home-eur-rate.functions";
 import { cn } from "@/lib/utils";
 
 type News = { id: string; title: string; body: string; link_url: string | null; published_at: string | null };
@@ -39,7 +41,23 @@ export function HabitooNewsCard({ className }: { className?: string }) {
     qc.invalidateQueries({ queryKey: ["home", "habitoo-news"] });
   }
 
+  const fetchRate = useServerFn(getHomeEurRate);
+  const rate = useQuery({ queryKey: ["home", "eur-rate"], queryFn: () => fetchRate(), staleTime: 60 * 60_000 }).data;
   const news = data?.news ?? [];
+  const diff = rate && rate.previous ? rate.rate - rate.previous : null;
+  const rateItem = rate ? (
+    <div className="mb-2 flex items-center justify-between gap-3 rounded-xl bg-gold-tint/60 p-3 text-sm">
+      <div className="min-w-0">
+        <p className="font-semibold">Curs BNR: 1 EUR = {rate.rate.toLocaleString("ro-RO", { minimumFractionDigits: 4, maximumFractionDigits: 4 })} lei</p>
+        <p className="text-xs text-muted-foreground">Cursul oficial din {fmt(rate.day)}</p>
+      </div>
+      {diff !== null ? (
+        <span className={cn("shrink-0 text-xs font-medium", diff > 0 ? "text-destructive" : diff < 0 ? "text-success" : "text-muted-foreground")}>
+          {diff === 0 ? "neschimbat" : `${diff > 0 ? "+" : "−"}${Math.abs(diff).toLocaleString("ro-RO", { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`}
+        </span>
+      ) : null}
+    </div>
+  ) : null;
   return (
     <section className={className}>
       <div className="mb-4 flex items-center gap-2 text-base font-semibold">
@@ -48,14 +66,15 @@ export function HabitooNewsCard({ className }: { className?: string }) {
         </span>
         <h2 className="truncate">Noutăți Habitoo</h2>
       </div>
-      {news.length === 0 ? (
+      {rateItem}
+      {news.length === 0 && !rateItem ? (
         <div className="flex flex-col items-center py-4 text-center">
           <span className="grid size-11 place-items-center rounded-full bg-muted text-muted-foreground">
             <Megaphone className="size-5" aria-hidden />
           </span>
           <p className="mt-3 text-sm font-medium">Nicio noutate momentan.</p>
         </div>
-      ) : (
+      ) : news.length === 0 ? null : (
         <ul className="space-y-2">
           {news.map((n) => {
             const unread = !data?.read.has(n.id);
