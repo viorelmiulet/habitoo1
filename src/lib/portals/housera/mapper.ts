@@ -14,6 +14,8 @@ export type HouseraMapperProperty = {
   property_type: string | null;
   category: string | null;
   destination?: string | null;
+  flood_risk?: boolean | null;
+  land_classification?: string | null;
   for_sale: boolean;
   for_rent: boolean;
   title: string | null;
@@ -134,6 +136,9 @@ export function houseraTypeFor(p: HouseraMapperProperty): { type: string; subtyp
 }
 
 function landClassification(p: HouseraMapperProperty): string | null {
+  const own = norm(p.land_classification);
+  if (own === "intravilan") return "inside_built_up_area";
+  if (own === "extravilan") return "outside_built_up_area";
   const cats = categoryTokens(p);
   if (cats.includes("intravilan")) return "inside_built_up_area";
   if (cats.includes("extravilan")) return "outside_built_up_area";
@@ -431,11 +436,12 @@ function mapOne(p: HouseraMapperProperty, schema: HouseraSchema, ctx: { agentEma
 
   // Obligatorii pe care Habitoo nu le are: nu inventăm.
   if (houseraFieldApplies(schema, "flood_risk", type, tx) && ["land", "house", "warehouse"].includes(type)) {
-    errors.push("Declarația de risc de inundație lipsește (Habitoo nu are acest câmp).");
+    if (typeof p.flood_risk === "boolean") payload["flood_risk"] = p.flood_risk;
+    else errors.push("Declarația de risc de inundație lipsește: completează «Zonă cu risc de inundație» în fișa proprietății.");
   }
   if (type === "land") {
     if (landClass) put("land_classification", code("land_classification", landClass));
-    else errors.push("Încadrarea terenului (intravilan/extravilan) lipsește: completează categoria.");
+    else errors.push("Încadrarea terenului lipsește: completează «Încadrare teren» (Intravilan / Extravilan) în fișa proprietății.");
   }
 
   // Dotări

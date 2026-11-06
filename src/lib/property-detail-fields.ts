@@ -47,6 +47,8 @@ export const PROPERTY_DETAIL_FIELDS = [
   "has_ground_floor",
   "has_attic",
   "has_loft",
+  "flood_risk",
+  "land_classification",
   // Utilități
   "utilities",
   "heating_systems",

@@ -194,6 +194,55 @@ function BoolField({
   );
 }
 
+/** Tipurile la care se declară riscul de inundație (case/vile, terenuri, hale). */
+export const FLOOD_RISK_TYPES = ["house", "villa", "land", "industrial"];
+
+function DeclarationFields({ ctx, type }: { ctx: FieldCtx; type: string }) {
+  const showFlood = FLOOD_RISK_TYPES.includes(type);
+  const showLand = type === "land";
+  if (!showFlood && !showLand) return null;
+  const flood = ctx.str("flood_risk");
+  const floodValue = flood === "true" ? "yes" : flood === "false" ? "no" : NONE;
+  return (
+    <div className="space-y-1 border-t border-border pt-3">
+      {showFlood && (
+        <FormRow compact htmlFor={`${ctx.idPrefix}-flood_risk`} label="Zonă cu risc de inundație">
+          <Select
+            value={floodValue}
+            onValueChange={(v) => ctx.setField("flood_risk", v === "yes" ? true : v === "no" ? false : null)}
+          >
+            <SelectTrigger id={`${ctx.idPrefix}-flood_risk`} className={CONTROL}>
+              <SelectValue placeholder="Nedeclarat" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>Nedeclarat</SelectItem>
+              <SelectItem value="yes">Da</SelectItem>
+              <SelectItem value="no">Nu</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormRow>
+      )}
+      {showLand && (
+        <FormRow compact htmlFor={`${ctx.idPrefix}-land_classification`} label="Încadrare teren">
+          <Select
+            value={ctx.str("land_classification") || NONE}
+            onValueChange={(v) => ctx.setField("land_classification", v === NONE ? null : v)}
+          >
+            <SelectTrigger id={`${ctx.idPrefix}-land_classification`} className={CONTROL}>
+              <SelectValue placeholder="Nedeclarat" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>Nedeclarat</SelectItem>
+              <SelectItem value="intravilan">Intravilan</SelectItem>
+              <SelectItem value="extravilan">Extravilan</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormRow>
+      )}
+    </div>
+  );
+}
+
 export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Props) {
   const valueRef = useRef(value);
   valueRef.current = value;
@@ -302,6 +351,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           <BoolField ctx={ctx} field="has_loft" label="Pod" />
           </div>
         </fieldset>
+        <DeclarationFields ctx={ctx} type={ctx.str("property_type")} />
       </FormSection>
       </div>
       </div>
