@@ -218,15 +218,15 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Istoric care rămâne", text: "Activitățile finalizate nu dispar. Rămân în istoricul clientului, al proprietății și al lead-ului. Oricine preia discuția știe exact de unde continuă." }
     ],
     steps: [
-      { title: "Creezi activitatea din fișă", text: "Pornești din proprietate, contact sau lead și alegi tipul: apel, întâlnire, vizionare, sarcină, email, follow-up sau notă." },
-      { title: "Stabilești termenul și responsabilul", text: "Alegi data, ora și agentul care se ocupă. Activitățile cu termen apar automat și în calendar." },
-      { title: "Lucrezi din lista de activități", text: "Filtrezi după tip, stare, agent sau perioadă. Vezi ce urmează azi și ce a rămas restant. Poți schimba starea mai multor activități deodată." },
-      { title: "Marchezi ca finalizat", text: "După apel sau vizionare, marchezi activitatea ca finalizată. Ea intră în istoric, iar tu programezi imediat pasul următor." }
+      { title: "Creezi activitatea din fișă", text: "Pornești din proprietate, contact sau lead și alegi tipul: apel, întâlnire, vizionare, sarcină, email, follow-up sau notă. Nu mai cauți fișa a doua oară, pentru că pornești chiar din locul în care lucrezi." },
+      { title: "Stabilești termenul și responsabilul", text: "Alegi data, ora și agentul care se ocupă. Activitățile cu termen apar automat și în calendar. Așa vezi dintr-o privire și ziua ta, și programul colegilor cu care împarți clienții." },
+      { title: "Lucrezi din lista de activități", text: "Filtrezi după tip, stare, agent sau perioadă. Vezi ce urmează azi și ce a rămas restant. Poți schimba starea mai multor activități deodată. Începi dimineața cu o listă clară și o închizi seara fără restanțe ascunse." },
+      { title: "Marchezi ca finalizat", text: "După apel sau vizionare, marchezi activitatea ca finalizată. Ea intră în istoric, iar tu programezi imediat pasul următor. Clientul primește revenirea promisă, iar tu nu mai depinzi de memorie." }
     ],
     faq: [
-      { q: "Ce tipuri de activități pot adăuga?", a: "Apeluri, întâlniri, vizionări, sarcini, emailuri, follow-up-uri și note. Tipul te ajută să filtrezi lista și să recunoști dintr-o privire ce ai de făcut." },
-      { q: "Unde văd activitățile unui client?", a: "În fișa contactului, lângă cererile, lead-urile și proprietățile lui. Aceleași activități apar și în fișa proprietății sau a lead-ului de care sunt legate." },
-      { q: "Ce se întâmplă cu activitățile finalizate?", a: "Rămân în istoric. Nu le ștergi ca să faci ordine, ci le marchezi ca finalizate. Lista activităților planificate rămâne scurtă, iar evidența discuțiilor se păstrează." },
+      { q: "Ce tipuri de activități pot adăuga?", a: "Apeluri, întâlniri, vizionări, sarcini, emailuri, follow-up-uri și note. Tipul te ajută să filtrezi lista și să recunoști dintr-o privire ce ai de făcut. Fiecare activitate păstrează legătura cu fișa din care a pornit." },
+      { q: "Unde văd activitățile unui client?", a: "În fișa contactului, lângă cererile, lead-urile și proprietățile lui. Aceleași activități apar și în fișa proprietății sau a lead-ului de care sunt legate. Din oricare dintre ele, ai același istoric complet." },
+      { q: "Ce se întâmplă cu activitățile finalizate?", a: "Rămân în istoric. Nu le ștergi ca să faci ordine, ci le marchezi ca finalizate. Lista activităților planificate rămâne scurtă, iar evidența discuțiilor se păstrează. Când revii peste o lună la același client, găsești tot ce s-a întâmplat." },
       { q: "Pot vedea și activitățile colegilor?", a: "Da, lista se poate filtra după agent. Așa vezi cine are o vizionare programată sau o revenire de făcut și împărțiți mai ușor munca în echipă." }
     ],
     related: ["calendar", "contacte", "lead-uri", "proprietati", "dashboard"]
@@ -241,7 +241,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     intro: [
       "În imobiliare, programul se mută des. Un client amână, un proprietar cere altă oră, un coleg are nevoie de cheie. Cu Habitoo ai un calendar al vizionărilor imobiliare comun pentru toată agenția, unde vezi fiecare întâlnire la locul ei.",
       "Nu completezi nimic de două ori. Vizionările programate din proprietate sau din lead apar automat în calendar, alături de apeluri, întâlniri și sarcini cu termen. Agenda zilei te așteaptă pe ecranul de start, imediat ce intri în aplicație.",
-      "Agentul își planifică săptămâna în câteva minute. Administratorul vede cum sunt împărțite vizionările între colegi. Toată lumea lucrează după același program."
+      "Agentul își planifică săptămâna în câteva minute. Administratorul vede cum sunt împărțite vizionările între colegi. Toată lumea lucrează după același program. Mai puține suprapuneri, mai puține telefoane de verificare și mai mult timp pentru clienți."
     ],
     benefits: [
       { title: "O agendă pentru tot ce ai programat", text: "Vizionări, întâlniri, apeluri și sarcini apar în același loc. Nu mai compari liste separate. Știi dintr-o privire dacă mai ai loc pentru o vizionare nouă." },
@@ -250,15 +250,15 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Muți programarea cu un gest", text: "O vizionare s-a amânat? O tragi pe altă zi sau la altă oră. Programarea se actualizează pentru toată echipa." }
     ],
     steps: [
-      { title: "Programezi din fișă", text: "Din proprietate sau din lead programezi o vizionare, cu dată, oră și agent. Ea apare imediat în calendar." },
-      { title: "Alegi vederea", text: "Deschizi calendarul pe zi, săptămână sau lună. Alegi dacă vezi doar programul tău sau pe al agenției." },
-      { title: "Pornești ziua de pe ecranul de start", text: "Agenda de azi apare imediat după autentificare. Vezi ce urmează fără să deschizi calendarul complet." },
-      { title: "Închizi activitatea după întâlnire", text: "Marchezi vizionarea ca finalizată. Ea rămâne în istoricul proprietății și al clientului, iar tu programezi pasul următor." }
+      { title: "Programezi din fișă", text: "Din proprietate sau din lead programezi o vizionare, cu dată, oră și agent. Ea apare imediat în calendar. Clientul și proprietatea rămân legate de programare, deci ai detaliile la un click." },
+      { title: "Alegi vederea", text: "Deschizi calendarul pe zi, săptămână sau lună. Alegi dacă vezi doar programul tău sau pe al agenției. Treci ușor de la o vedere la alta, după ce ai de organizat." },
+      { title: "Pornești ziua de pe ecranul de start", text: "Agenda de azi apare imediat după autentificare. Vezi ce urmează fără să deschizi calendarul complet. Pornești ziua știind unde trebuie să ajungi și la ce oră." },
+      { title: "Închizi activitatea după întâlnire", text: "Marchezi vizionarea ca finalizată. Ea rămâne în istoricul proprietății și al clientului, iar tu programezi pasul următor. Istoricul rămâne complet pentru tine și pentru colegi." }
     ],
     faq: [
-      { q: "Ce apare în calendar?", a: "Activitățile cu termen: vizionări, întâlniri, apeluri, sarcini și reveniri. Le creezi din fișa proprietății, a contactului sau a lead-ului ori din lista de activități, iar calendarul le pune singur pe ziua lor." },
-      { q: "Pot vedea programul colegilor?", a: "Da. Calendarul poate afișa activitățile întregii agenții, iar filtrul pe agent îți arată programul unui singur coleg. Evitați suprapunerile și împărțiți corect vizionările." },
-      { q: "Trebuie să deschid calendarul în fiecare dimineață?", a: "Nu neapărat. Agenda de azi apare pe ecranul de start. Deschizi calendarul complet doar când vrei să vezi alte zile sau toată săptămâna." },
+      { q: "Ce apare în calendar?", a: "Activitățile cu termen: vizionări, întâlniri, apeluri, sarcini și reveniri. Le creezi din fișa proprietății, a contactului sau a lead-ului ori din lista de activități, iar calendarul le pune singur pe ziua lor. Nu introduci nimic de două ori." },
+      { q: "Pot vedea programul colegilor?", a: "Da. Calendarul poate afișa activitățile întregii agenții, iar filtrul pe agent îți arată programul unui singur coleg. Evitați suprapunerile și împărțiți corect vizionările. Administratorul vede pe loc cum sunt împărțite vizionările." },
+      { q: "Trebuie să deschid calendarul în fiecare dimineață?", a: "Nu neapărat. Agenda de azi apare pe ecranul de start. Deschizi calendarul complet doar când vrei să vezi alte zile sau toată săptămâna. Agenda de pe ecranul de start se bazează pe aceleași date ca și calendarul." },
       { q: "Ce fac dacă o vizionare se mută?", a: "O tragi pe noua zi sau oră ori schimbi data în activitate. Vizionarea rămâne legată de aceeași proprietate și de același client, deci istoricul nu se pierde, iar colegii văd imediat programul nou." }
     ],
     related: ["activitati", "proprietati", "lead-uri", "dashboard"]
@@ -273,7 +273,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     intro: [
       "O țintă te ajută doar dacă știi, în timpul lunii, cât de aproape ești de ea. Dacă afli rezultatul abia la final, e prea târziu să schimbi ceva. Cu Habitoo stabilești obiectivele agenților imobiliari pe fiecare lună și vezi progresul pe tot parcursul ei.",
       "Alegi ținte pentru lead-uri, vizionări, proprietăți noi, tranzacții sau comision. Le stabilești pentru un agent sau pentru toată agenția. Progresul nu se completează de mână: se calculează din ce lucrează echipa în aplicație.",
-      "Discuția despre rezultate pornește de la cifre, nu de la impresii. Agentul știe ce mai are de făcut până la final de lună. Agenția vede din timp unde e nevoie de sprijin."
+      "Discuția despre rezultate pornește de la cifre, nu de la impresii. Agentul știe ce mai are de făcut până la final de lună. Agenția vede din timp unde e nevoie de sprijin. Iar fiecare agent are o direcție clară pentru fiecare zi de lucru."
     ],
     benefits: [
       { title: "Ținte pe care le înțelege toată lumea", text: "Fiecare obiectiv are un tip, o valoare și o lună. Agentul știe exact ce urmărește. Toată echipa citește aceleași cifre." },
@@ -282,15 +282,15 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Comisionul, ca țintă clară", text: "Un obiectiv de comision îți arată cât mai ai până la suma propusă. Știi dacă luna merge în direcția bună. Evidența detaliată a comisioanelor rămâne în secțiunea dedicată." }
     ],
     steps: [
-      { title: "Stabilești obiectivul", text: "Alegi luna, tipul obiectivului și valoarea țintă. Îl atribui unui agent sau îl lași la nivelul agenției." },
-      { title: "Lucrezi ca de obicei", text: "Adaugi proprietăți, programezi vizionări și muți lead-urile pe etape. Nu ai nimic în plus de completat." },
-      { title: "Urmărești progresul", text: "Deschizi pagina de obiective și vezi cât s-a realizat din fiecare țintă. Dacă rămâi în urmă la jumătatea lunii, afli la timp." },
-      { title: "Ajustezi pentru luna următoare", text: "Pornind de la ce s-a realizat, stabilești ținte noi, realiste, pentru fiecare agent și pentru agenție." }
+      { title: "Stabilești obiectivul", text: "Alegi luna, tipul obiectivului și valoarea țintă. Îl atribui unui agent sau îl lași la nivelul agenției. Ținta e vizibilă pentru toată lumea din momentul în care o salvezi." },
+      { title: "Lucrezi ca de obicei", text: "Adaugi proprietăți, programezi vizionări și muți lead-urile pe etape. Nu ai nimic în plus de completat. Fiecare proprietate nouă sau vizionare făcută contează automat pentru obiectiv." },
+      { title: "Urmărești progresul", text: "Deschizi pagina de obiective și vezi cât s-a realizat din fiecare țintă. Dacă rămâi în urmă la jumătatea lunii, afli la timp. Ai timp să-ți reorganizezi agenda și să recuperezi." },
+      { title: "Ajustezi pentru luna următoare", text: "Pornind de la ce s-a realizat, stabilești ținte noi, realiste, pentru fiecare agent și pentru agenție. Fiecare lună pornește de la cifre reale, nu de la estimări." }
     ],
     faq: [
-      { q: "Pentru ce pot stabili obiective?", a: "Pentru lead-uri, vizionări, proprietăți noi, tranzacții sau comision. Fiecare obiectiv are o lună și o valoare țintă, iar progresul se raportează la ea." },
-      { q: "Trebuie să introduc progresul de mână?", a: "Nu. Progresul se calculează din datele din aplicație. Când adaugi o proprietate, faci o vizionare sau câștigi o tranzacție, cifra obiectivului ține cont de ele." },
-      { q: "Pot avea obiective și pentru toată agenția?", a: "Da. Un obiectiv poate fi al unui agent sau al agenției. Așa urmărești în paralel ținta echipei și contribuția fiecărui coleg." },
+      { q: "Pentru ce pot stabili obiective?", a: "Pentru lead-uri, vizionări, proprietăți noi, tranzacții sau comision. Fiecare obiectiv are o lună și o valoare țintă, iar progresul se raportează la ea. Alegi tipul care contează cel mai mult pentru luna respectivă." },
+      { q: "Trebuie să introduc progresul de mână?", a: "Nu. Progresul se calculează din datele din aplicație. Când adaugi o proprietate, faci o vizionare sau câștigi o tranzacție, cifra obiectivului ține cont de ele. Cifra se actualizează pe măsură ce echipa lucrează." },
+      { q: "Pot avea obiective și pentru toată agenția?", a: "Da. Un obiectiv poate fi al unui agent sau al agenției. Așa urmărești în paralel ținta echipei și contribuția fiecărui coleg. Fiecare agent își vede contribuția la rezultatul echipei." },
       { q: "Obiectivele înlocuiesc evidența comisioanelor?", a: "Nu. Obiectivul arată progresul față de ținta lunii. Sumele, împărțirea pe agenți și exporturile se țin în secțiunea de comisioane. Cele două se completează." }
     ],
     related: ["rapoarte", "dashboard", "activitati", "comisioane-agenti-imobiliari"]
@@ -305,7 +305,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     intro: [
       "Primul ecran al dimineții trebuie să-ți spună ce ai de făcut, nu să te plimbe prin meniuri. În Habitoo, dashboard-ul agenției imobiliare se schimbă după rolul tău. Agentul își vede ziua, iar administratorul vede toată agenția.",
       "Sus găsești indicatorii principali: proprietăți active, lead-uri noi din ultimele 30 de zile, vizionările de azi și tranzacțiile câștigate. Dedesubt, agenda zilei și proprietățile adăugate recent. Restul ecranului e construit pentru rolul tău.",
-      "Deschizi aplicația și știi imediat ce urmează. Pornești de aici spre fișa de care ai nevoie, fără să pierzi timp căutând."
+      "Deschizi aplicația și știi imediat ce urmează. Pornești de aici spre fișa de care ai nevoie, fără să pierzi timp căutând. Mai puțin timp pierdut, mai multe apeluri făcute la timp și o zi mai bine organizată."
     ],
     benefits: [
       { title: "Agentul își vede ziua", text: "Vezi ce ai de făcut azi, pipeline-ul tău și portofoliul tău. Anunțurile care au nevoie de atenție apar separat. La fel și propunerile de colaborare în așteptare." },
@@ -314,16 +314,16 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Adăugare rapidă și căutare globală", text: "Din orice ecran adaugi un contact, un lead, o cerere, un contract, o activitate sau o vizionare. Căutarea globală găsește clientul sau proprietatea în câteva secunde." }
     ],
     steps: [
-      { title: "Intri în aplicație", text: "După autentificare ajungi direct pe ecranul potrivit rolului tău. Nu trebuie să configurezi nimic." },
-      { title: "Citești agenda și indicatorii", text: "Vezi vizionările și întâlnirile de azi, cifrele principale și pipeline-ul pe scurt." },
-      { title: "Treci la lucru din același loc", text: "Deschizi activitatea, lead-ul sau proprietatea care te interesează. Adaugi tot ce apare pe parcurs cu butonul de adăugare rapidă." },
-      { title: "Revii între întâlniri", text: "Te întorci pe ecranul de start ca să vezi ce a rămas din ziua ta și ce s-a schimbat în agenție." }
+      { title: "Intri în aplicație", text: "După autentificare ajungi direct pe ecranul potrivit rolului tău. Nu trebuie să configurezi nimic. Ajungi direct la informațiile de care ai nevoie în acea zi." },
+      { title: "Citești agenda și indicatorii", text: "Vezi vizionările și întâlnirile de azi, cifrele principale și pipeline-ul pe scurt. Știi în câteva secunde ce urmează și ce e prioritar." },
+      { title: "Treci la lucru din același loc", text: "Deschizi activitatea, lead-ul sau proprietatea care te interesează. Adaugi tot ce apare pe parcurs cu butonul de adăugare rapidă. Nu pierzi timp navigând înapoi doar ca să notezi un client nou." },
+      { title: "Revii între întâlniri", text: "Te întorci pe ecranul de start ca să vezi ce a rămas din ziua ta și ce s-a schimbat în agenție. Cifrele se bazează pe datele actuale din aplicație." }
     ],
     faq: [
-      { q: "De ce văd altceva decât colegul meu?", a: "Ecranul de start depinde de rol. Agentul își vede ziua, pipeline-ul și portofoliul propriu. Administratorul vede agenția pe agenți, portalurile și echipa." },
-      { q: "Ce indicatori apar?", a: "Proprietățile active, lead-urile noi din ultimele 30 de zile, vizionările de azi și tranzacțiile câștigate în ultimele 30 de zile. Pentru analize detaliate, pe perioadă și agent, folosești rapoartele." },
-      { q: "Pot căuta un client fără să părăsesc ecranul?", a: "Da. Căutarea globală și adăugarea rapidă sunt disponibile din orice ecran. Găsești un client, o proprietate sau un lead și îl deschizi direct." },
-      { q: "Ce vede administratorul agenției?", a: "Pipeline-ul pe agenți, portofoliile fiecăruia, sănătatea portofoliului, portalurile și conversia din ultima lună. Pentru detalii pe fiecare agent, deschide rapoartele sau pagina echipei." }
+      { q: "De ce văd altceva decât colegul meu?", a: "Ecranul de start depinde de rol. Agentul își vede ziua, pipeline-ul și portofoliul propriu. Administratorul vede agenția pe agenți, portalurile și echipa. Fiecare primește informațiile cu care lucrează zilnic, fără să le caute." },
+      { q: "Ce indicatori apar?", a: "Proprietățile active, lead-urile noi din ultimele 30 de zile, vizionările de azi și tranzacțiile câștigate în ultimele 30 de zile. Pentru analize detaliate, pe perioadă și agent, folosești rapoartele. Fiecare cifră duce la lista de înregistrări din spatele ei." },
+      { q: "Pot căuta un client fără să părăsesc ecranul?", a: "Da. Căutarea globală și adăugarea rapidă sunt disponibile din orice ecran. Găsești un client, o proprietate sau un lead și îl deschizi direct. Nu mai treci prin meniuri pentru o informație rapidă." },
+      { q: "Ce vede administratorul agenției?", a: "Pipeline-ul pe agenți, portofoliile fiecăruia, sănătatea portofoliului, portalurile și conversia din ultima lună. Pentru detalii pe fiecare agent, deschide rapoartele sau pagina echipei. Așa afli repede unde se blochează vânzările și cine are nevoie de sprijin." }
     ],
     related: ["calendar", "rapoarte", "lead-uri", "echipa-si-roluri"]
   },
@@ -337,7 +337,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     intro: [
       "Deciziile bune pornesc de la cifre corecte. Dacă le aduni la final de lună din tabele separate, pierzi timp și greșești ușor. În Habitoo, rapoartele agenției imobiliare se calculează din ce lucrați zilnic în aplicație.",
       "Vezi portofoliul pe stări, lead-urile pe surse și pe etape, activitatea pe săptămâni și rezultatele fiecărui agent. Alegi perioada și agentul, iar cifrele se schimbă pe loc.",
-      "Administratorul vede agenția în ansamblu. Agentul înțelege de unde vin clienții lui și unde se opresc. Toți pornesc de la aceleași date, introduse o singură dată."
+      "Administratorul vede agenția în ansamblu. Agentul înțelege de unde vin clienții lui și unde se opresc. Toți pornesc de la aceleași date, introduse o singură dată. Deciziile despre surse de clienți, portofoliu și echipă devin mai simple."
     ],
     benefits: [
       { title: "Portofoliul, pe stări", text: "Vezi câte proprietăți sunt active, rezervate, vândute sau închiriate. Știi ce ai de oferit și unde ai nevoie de proprietăți noi." },
@@ -347,16 +347,16 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Descarci tabelele", text: "Fiecare raport se descarcă într-un fișier pe care îl deschizi în Excel. Îl trimiți mai departe sau îl păstrezi pentru ședința lunară." }
     ],
     steps: [
-      { title: "Lucrezi în aplicație", text: "Adaugi proprietăți, înregistrezi lead-urile cu sursa lor și finalizezi activități. Aceste date sunt baza rapoartelor." },
-      { title: "Alegi perioada și agentul", text: "Luna aceasta, ultimele 3 sau 6 luni, ultimul an sau un interval ales de tine. Poți restrânge la un agent sau la o sursă de lead-uri." },
-      { title: "Citești cifrele", text: "Treci prin portofoliu, surse, etape, activitate și agenți. Fiecare grafic arată situația din perioada aleasă." },
-      { title: "Descarci ce îți trebuie", text: "Salvezi tabelul de care ai nevoie și îl folosești la ședință sau la planificarea lunii următoare." }
+      { title: "Lucrezi în aplicație", text: "Adaugi proprietăți, înregistrezi lead-urile cu sursa lor și finalizezi activități. Aceste date sunt baza rapoartelor. Nu completezi nimic separat pentru rapoarte." },
+      { title: "Alegi perioada și agentul", text: "Luna aceasta, ultimele 3 sau 6 luni, ultimul an sau un interval ales de tine. Poți restrânge la un agent sau la o sursă de lead-uri. Poți compara ușor două perioade sau doi agenți." },
+      { title: "Citești cifrele", text: "Treci prin portofoliu, surse, etape, activitate și agenți. Fiecare grafic arată situația din perioada aleasă. Vezi imediat ce merge bine și ce trebuie schimbat." },
+      { title: "Descarci ce îți trebuie", text: "Salvezi tabelul de care ai nevoie și îl folosești la ședință sau la planificarea lunii următoare. Așa urmărești luna de luna dacă schimbările au avut efect." }
     ],
     faq: [
-      { q: "Ce rapoarte am la dispoziție?", a: "Proprietăți pe stări, lead-uri pe surse și pe etape, activitatea pe săptămâni și un tabel pe agenți. Pentru comisioane există o secțiune separată, cu rapoarte și exporturi proprii." },
-      { q: "Pot filtra după perioadă și agent?", a: "Da. Alegi luna aceasta, ultimele 3 sau 6 luni, ultimul an sau un interval propriu. Poți vedea toată agenția sau un singur agent și poți filtra lead-urile după sursă." },
-      { q: "Pot descărca rapoartele?", a: "Da. Fiecare tabel se descarcă separat, într-un fișier care se deschide în Excel sau în orice program de calcul tabelar." },
-      { q: "Trebuie să pregătesc datele înainte?", a: "Nu. Rapoartele folosesc datele pe care le introduci oricum. Cu cât completezi mai atent sursa lead-urilor și stările proprietăților, cu atât cifrele spun mai mult." }
+      { q: "Ce rapoarte am la dispoziție?", a: "Proprietăți pe stări, lead-uri pe surse și pe etape, activitatea pe săptămâni și un tabel pe agenți. Pentru comisioane există o secțiune separată, cu rapoarte și exporturi proprii. Toate pornesc de la aceleași date, introduse o singură dată." },
+      { q: "Pot filtra după perioadă și agent?", a: "Da. Alegi luna aceasta, ultimele 3 sau 6 luni, ultimul an sau un interval propriu. Poți vedea toată agenția sau un singur agent și poți filtra lead-urile după sursă. Cifrele se schimbă pe loc când alegi alt filtru." },
+      { q: "Pot descărca rapoartele?", a: "Da. Fiecare tabel se descarcă separat, într-un fișier care se deschide în Excel sau în orice program de calcul tabelar. Îl poți trimite colegilor sau îl poți păstra pentru ședința lunară." },
+      { q: "Trebuie să pregătesc datele înainte?", a: "Nu. Rapoartele folosesc datele pe care le introduci oricum. Cu cât completezi mai atent sursa lead-urilor și stările proprietăților, cu atât cifrele spun mai mult. Rapoartele devin mai utile pe măsură ce echipa lucrează consecvent în aplicație." }
     ],
     related: ["dashboard", "obiective", "lead-uri", "comisioane-agenti-imobiliari"]
   },
@@ -370,7 +370,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     intro: [
       "Un contract scris de mână la fiecare vizionare costă timp și aduce greșeli. Numele greșit, CNP-ul incomplet, adresa copiată prost. Cu Habitoo, contractele agenției imobiliare se completează din datele pe care le ai deja în aplicație.",
       "Ai cinci tipuri de documente: contract de închiriere, de reprezentare exclusivă, de comision, de comodat și de vizionare. Datele agenției, ale agentului, ale clientului și ale proprietății intră singure în text.",
-      "Fotografiezi actul de identitate al clientului, iar datele lui se completează automat. Apoi trimiți fiecărei părți un link de semnare. Contractul semnat rămâne în aplicație, gata de descărcat."
+      "Fotografiezi actul de identitate al clientului, iar datele lui se completează automat. Apoi trimiți fiecărei părți un link de semnare. Contractul semnat rămâne în aplicație, gata de descărcat. Mai puțin timp pierdut cu hârtiile și mai mult timp pentru client."
     ],
     benefits: [
       { title: "Cinci tipuri de contract, gata de folosit", text: "Închiriere, reprezentare exclusivă, comision, comodat și vizionare. Alegi tipul potrivit și pornești de la un text complet. Nu mai cauți ultimul model folosit." },
@@ -380,16 +380,16 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Numerotare și evidență", text: "Contractele primesc numere pe fiecare an și tip. Toate stau într-o listă comună, cu stare și dată. Găsești oricând documentul de care ai nevoie." }
     ],
     steps: [
-      { title: "Alegi tipul de contract", text: "Pornești din lista de contracte sau din butonul de adăugare rapidă și alegi documentul potrivit." },
-      { title: "Legi clientul și proprietatea", text: "Datele lor intră în text. Pentru client, fotografiezi sau încarci actul de identitate și verifici ce s-a completat." },
-      { title: "Trimiți la semnare", text: "Creezi linkurile de semnare pentru fiecare parte. Nota de informare privind datele personale se atașează la final." },
-      { title: "Păstrezi contractul semnat", text: "După semnare, contractul rămâne în aplicație, cu data semnării, și îl descarci oricând." }
+      { title: "Alegi tipul de contract", text: "Pornești din lista de contracte sau din butonul de adăugare rapidă și alegi documentul potrivit. Ai în față un text complet, gata de completat." },
+      { title: "Legi clientul și proprietatea", text: "Datele lor intră în text. Pentru client, fotografiezi sau încarci actul de identitate și verifici ce s-a completat. Scrii mai puțin și eviți greșelile de copiere a datelor." },
+      { title: "Trimiți la semnare", text: "Creezi linkurile de semnare pentru fiecare parte. Nota de informare privind datele personale se atașează la final. Vezi în fișa contractului cine a semnat și cine mai are de semnat." },
+      { title: "Păstrezi contractul semnat", text: "După semnare, contractul rămâne în aplicație, cu data semnării, și îl descarci oricând. Nu mai cauți hârtii prin dosare când ai nevoie de un document." }
     ],
     faq: [
-      { q: "Ce tipuri de contract pot genera?", a: "Contract de închiriere, de reprezentare exclusivă, de comision, de comodat și de vizionare. Fiecare pornește de la un text complet, completat cu datele din aplicație." },
-      { q: "Cum se completează datele clientului?", a: "Fotografiezi actul de identitate cu telefonul sau încarci o poză. Datele se completează automat. Le verifici înainte de a trimite contractul, pentru că o poză neclară poate fi citită greșit." },
-      { q: "Cum semnează clientul?", a: "Primește un link de semnare și semnează direct pe ecran. În fișa contractului vezi cine a semnat și cine mai are de semnat." },
-      { q: "Unde găsesc contractele semnate?", a: "În lista de contracte, fiecare cu numărul, tipul, starea și data semnării. Le deschizi și le descarci oricând ai nevoie." }
+      { q: "Ce tipuri de contract pot genera?", a: "Contract de închiriere, de reprezentare exclusivă, de comision, de comodat și de vizionare. Fiecare pornește de la un text complet, completat cu datele din aplicație. Alegi tipul potrivit și pornești imediat." },
+      { q: "Cum se completează datele clientului?", a: "Fotografiezi actul de identitate cu telefonul sau încarci o poză. Datele se completează automat. Le verifici înainte de a trimite contractul, pentru că o poză neclară poate fi citită greșit. Datele agenției, ale agentului și ale proprietății intră și ele automat." },
+      { q: "Cum semnează clientul?", a: "Primește un link de semnare și semnează direct pe ecran. În fișa contractului vezi cine a semnat și cine mai are de semnat. Nu e nevoie să vă întâlniți doar pentru semnătură." },
+      { q: "Unde găsesc contractele semnate?", a: "În lista de contracte, fiecare cu numărul, tipul, starea și data semnării. Le deschizi și le descarci oricând ai nevoie. Ai toată evidența contractelor agenției într-un singur loc." }
     ],
     related: ["contacte", "proprietati", "aplicatie-mobil", "comisioane-agenti-imobiliari"]
   },
@@ -403,7 +403,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     intro: [
       "O agenție crește cu fiecare coleg nou. Dar fără reguli clare, apar întrebări: cine se ocupă de client, cine poate muta o proprietate, cine vede cifrele. Habitoo este un CRM pentru echipa agenției imobiliare, în care fiecare are rolul și locul lui.",
       "Inviți colegii prin email, iar ei intră direct în agenția ta. Există două roluri: administrator de agenție și agent. Fiecare proprietate și fiecare lead are un agent responsabil.",
-      "Agentul lucrează liniștit pe clienții și proprietățile lui. Administratorul vede toată agenția și decide cum se împarte munca. Toată lumea știe cine răspunde de ce."
+      "Agentul lucrează liniștit pe clienții și proprietățile lui. Administratorul vede toată agenția și decide cum se împarte munca. Toată lumea știe cine răspunde de ce. Mai puține neînțelegeri, mai puțini clienți pierduți între colegi și o agenție mai ușor de condus."
     ],
     benefits: [
       { title: "Inviți colegii în câteva secunde", text: "Trimiți invitația pe email, din pagina echipei. Vezi cine a acceptat și cine mai are invitația deschisă. Echipa se formează fără complicații." },
@@ -413,16 +413,16 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Comisioane cu reguli clare", text: "Fiecare agent își vede comisioanele. Administratorul vede toată agenția și poate aloca sume. Alocările lui nu pot fi modificate de agenți." }
     ],
     steps: [
-      { title: "Inviți echipa", text: "Din pagina echipei trimiți invitații pe email. Colegii își creează contul și intră direct în agenție." },
-      { title: "Atribui proprietățile și lead-urile", text: "Alegi agentul responsabil pentru fiecare ofertă și fiecare client potențial. Administratorul mută proprietățile când e nevoie." },
-      { title: "Fiecare lucrează pe partea lui", text: "Agentul își vede ziua, pipeline-ul și portofoliul. Administratorul urmărește agenția în ansamblu." },
-      { title: "Urmărești rezultatele", text: "Folosești rapoartele și obiectivele pentru a vedea activitatea fiecărui agent și a agenției." }
+      { title: "Inviți echipa", text: "Din pagina echipei trimiți invitații pe email. Colegii își creează contul și intră direct în agenție. Nu e nevoie de configurări complicate pentru fiecare coleg nou." },
+      { title: "Atribui proprietățile și lead-urile", text: "Alegi agentul responsabil pentru fiecare ofertă și fiecare client potențial. Administratorul mută proprietățile când e nevoie. Fiecare client are de la început pe cineva care răspunde de el." },
+      { title: "Fiecare lucrează pe partea lui", text: "Agentul își vede ziua, pipeline-ul și portofoliul. Administratorul urmărește agenția în ansamblu. Nimeni nu se încurcă în munca celuilalt." },
+      { title: "Urmărești rezultatele", text: "Folosești rapoartele și obiectivele pentru a vedea activitatea fiecărui agent și a agenției. Discuțiile cu echipa pornesc de la cifre reale." }
     ],
     faq: [
-      { q: "Ce roluri există?", a: "Administrator de agenție și agent. Administratorul gestionează echipa și vede toată agenția. Agentul lucrează cu proprietățile, clienții și activitățile lui." },
-      { q: "Cum adaug un coleg?", a: "Din pagina echipei trimiți o invitație pe email. Colegul își creează contul și intră direct în agenția ta. Vezi în listă invitațiile încă neacceptate." },
-      { q: "Cine poate muta o proprietate la alt agent?", a: "Doar administratorul agenției. La mutare, datele de contact se actualizează pe portalurile pe care proprietatea este publicată." },
-      { q: "Unde văd toată echipa?", a: "În pagina echipei. Acolo vezi colegii activi și inactivi, invitațiile încă neacceptate și agenții care nu au completat telefonul. Fiecare coleg are și o pagină proprie." }
+      { q: "Ce roluri există?", a: "Administrator de agenție și agent. Administratorul gestionează echipa și vede toată agenția. Agentul lucrează cu proprietățile, clienții și activitățile lui. Fiecare vede ecranul potrivit rolului lui." },
+      { q: "Cum adaug un coleg?", a: "Din pagina echipei trimiți o invitație pe email. Colegul își creează contul și intră direct în agenția ta. Vezi în listă invitațiile încă neacceptate. Echipa se formează în câteva minute." },
+      { q: "Cine poate muta o proprietate la alt agent?", a: "Doar administratorul agenției. La mutare, datele de contact se actualizează pe portalurile pe care proprietatea este publicată. Așa se păstrează regulile agenției și datele corecte pe portaluri." },
+      { q: "Unde văd toată echipa?", a: "În pagina echipei. Acolo vezi colegii activi și inactivi, invitațiile încă neacceptate și agenții care nu au completat telefonul. Fiecare coleg are și o pagină proprie. Ai o imagine clară a echipei în orice moment." }
     ],
     related: ["dashboard", "obiective", "rapoarte", "comisioane-agenti-imobiliari", "colaborare-intre-agentii"]
   },
@@ -436,7 +436,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     intro: [
       "Agentul imobiliar stă puțin la birou. Vizionările, întâlnirile cu proprietarii și apelurile se întâmplă pe drum. Cu Habitoo ai CRM-ul imobiliar pe telefon, cu tot ce îți trebuie între două întâlniri.",
       "Deschizi Habitoo în browserul telefonului și te autentifici cu același cont. Jos ai o bară cu Acasă, Proprietăți, Lead-uri și butonul plus. Ecranele se așază pe lățimea telefonului, cu butoane ușor de apăsat.",
-      "Notezi clientul nou chiar la vizionare. Fotografiezi actul de identitate pentru contract. Schimbi etapa lead-ului imediat după discuție. Totul ajunge pe loc la colegi."
+      "Notezi clientul nou chiar la vizionare. Fotografiezi actul de identitate pentru contract. Schimbi etapa lead-ului imediat după discuție. Totul ajunge pe loc la colegi. Lucrezi la fel de bine pe teren ca la birou, iar seara nu mai ai nimic de recopiat."
     ],
     benefits: [
       { title: "Adaugi rapid cu butonul plus", text: "Din bara de jos adaugi un contact, un lead, o cerere, un contract, o activitate sau o vizionare. Câteva câmpuri și ai terminat. Nu mai notezi pe hârtie ca să copiezi seara." },
@@ -445,16 +445,16 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Agenda zilei, mereu la tine", text: "Pe ecranul de start vezi vizionările și întâlnirile de azi. Calendarul complet e la un click. Știi unde trebuie să ajungi și la ce oră." }
     ],
     steps: [
-      { title: "Deschizi Habitoo pe telefon", text: "Intri din browserul telefonului cu contul tău. Nu ai nimic de instalat." },
-      { title: "Verifici agenda", text: "Ecranul de start îți arată ce ai azi. Deschizi vizionarea și vezi proprietatea și clientul." },
-      { title: "Notezi pe loc", text: "Cu butonul plus adaugi contactul, cererea sau următoarea vizionare. Pentru contract, fotografiezi actul de identitate." },
-      { title: "Actualizezi lead-ul", text: "Alegi etapa nouă și adaugi o notă. Totul e salvat înainte să pleci de la întâlnire." }
+      { title: "Deschizi Habitoo pe telefon", text: "Intri din browserul telefonului cu contul tău. Nu ai nimic de instalat. Același cont, aceleași date ca pe calculator." },
+      { title: "Verifici agenda", text: "Ecranul de start îți arată ce ai azi. Deschizi vizionarea și vezi proprietatea și clientul. Ai toate detaliile întâlnirii înainte să suni la ușă." },
+      { title: "Notezi pe loc", text: "Cu butonul plus adaugi contactul, cererea sau următoarea vizionare. Pentru contract, fotografiezi actul de identitate. Nu mai amâni notițele până ajungi la birou." },
+      { title: "Actualizezi lead-ul", text: "Alegi etapa nouă și adaugi o notă. Totul e salvat înainte să pleci de la întâlnire. Colegii văd imediat unde ai ajuns cu clientul." }
     ],
     faq: [
-      { q: "Trebuie să instalez o aplicație?", a: "Nu. Habitoo funcționează în browserul telefonului, cu același cont ca pe calculator. Nu există, deocamdată, o aplicație separată în magazinele de aplicații." },
-      { q: "Ce pot face de pe telefon?", a: "Adaugi contacte, lead-uri, cereri, contracte, activități și vizionări. Schimbi etapa lead-urilor, îți vezi agenda și cauți orice client sau proprietate." },
-      { q: "Pot fotografia actul de identitate cu telefonul?", a: "Da. La contract alegi fotografierea actului, iar camera telefonului se deschide. Datele se completează automat și le verifici înainte de a merge mai departe." },
-      { q: "Colegii văd imediat ce adaug?", a: "Da. Tot ce salvezi pe telefon ajunge în aceeași agenție. Colegii văd lead-ul actualizat sau vizionarea nouă fără să le mai spui tu." }
+      { q: "Trebuie să instalez o aplicație?", a: "Nu. Habitoo funcționează în browserul telefonului, cu același cont ca pe calculator. Nu există, deocamdată, o aplicație separată în magazinele de aplicații. Îl poți adăuga pe ecranul telefonului din meniul browserului, ca să-l deschizi mai repede." },
+      { q: "Ce pot face de pe telefon?", a: "Adaugi contacte, lead-uri, cereri, contracte, activități și vizionări. Schimbi etapa lead-urilor, îți vezi agenda și cauți orice client sau proprietate. Ai la tine tot ce îți trebuie între două întâlniri." },
+      { q: "Pot fotografia actul de identitate cu telefonul?", a: "Da. La contract alegi fotografierea actului, iar camera telefonului se deschide. Datele se completează automat și le verifici înainte de a merge mai departe. Poți și încărca o poză făcută mai devreme, dacă preferi." },
+      { q: "Colegii văd imediat ce adaug?", a: "Da. Tot ce salvezi pe telefon ajunge în aceeași agenție. Colegii văd lead-ul actualizat sau vizionarea nouă fără să le mai spui tu. Nu mai trimiți mesaje separate ca să anunți ce s-a schimbat." }
     ],
     related: ["dashboard", "lead-uri", "contracte", "calendar", "activitati"]
   }
