@@ -169,6 +169,7 @@ export const superadminNav: NavGroup[] = [
       { label: "Funcții AI", to: "/superadmin/ai-features", icon: Bot },
       { label: "Email", to: "/superadmin/mail", icon: Mail },
       { label: "Blog", to: "/superadmin/blog", icon: Newspaper },
+      { label: "Noutăți", to: "/superadmin/noutati", icon: Megaphone },
       { label: "Muzică video", to: "/superadmin/muzica", icon: Music2 },
       { label: "Suport", to: "/superadmin/support", icon: LifeBuoy },
       { label: "Nomenclator localități", to: "/superadmin/nomenclator", icon: MapPin },
