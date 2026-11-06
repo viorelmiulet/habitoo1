@@ -22,6 +22,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import { AgentGoalsCard } from "@/components/app/dashboard/AgentGoalsCard";
 import { AgentPortfolioList } from "@/components/app/AgentPortfolioList";
 import { SectionCard } from "@/components/app/SectionCard";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -247,6 +248,8 @@ export function AgentDashboard() {
               </div>
             )}
           </SectionCard>
+
+          <AgentGoalsCard userId={user?.userId} />
 
           {/* Secțiunea 3 — Anunțuri cu probleme */}
           <SectionCard
