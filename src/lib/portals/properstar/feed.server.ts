@@ -1,4 +1,3 @@
-import { pickAgencyLogoUrl, signAgencyLogos } from "@/lib/portals/agency-logo";
 /**
  * Construcția feedului XML Properstar (server-only).
  *
@@ -17,6 +16,8 @@ import { feedUrlsForRequest } from "@/lib/site-feed/config";
 
 import {
   FEED_PUBLIC_STATUSES,
+  agencyLogoFeedUrl,
+  httpsUrlOrNull,
   type PropertyImageRow,
   type PropertyRow,
 } from "@/lib/site-feed/mapper";
@@ -67,6 +68,19 @@ function splitName(fullName: string | null | undefined): {
   if (!parts.length) return { firstName: null, lastName: null };
   if (parts.length === 1) return { firstName: parts[0] ?? null, lastName: null };
   return { firstName: parts[0] ?? null, lastName: parts.slice(1).join(" ") };
+}
+
+/**
+ * Logo-ul agenției: link public permanent (redirect), ca în celelalte indexuri —
+ * nu un URL semnat temporar. Fără logo încărcat și fără adresă externă https:
+ * nimic nu se trimite, iar elementul `Logo` lipsește din feed.
+ */
+function agencyLogoUrl(
+  org: { id: string; logo_path?: string | null; logo_url?: string | null },
+  baseUrl: string,
+): string | null {
+  const hasLogo = Boolean(org.logo_path?.trim()) || Boolean(httpsUrlOrNull(org.logo_url ?? null));
+  return agencyLogoFeedUrl(org.id, hasLogo, baseUrl);
 }
 
 /**
@@ -170,7 +184,6 @@ export async function buildProperstarFeed(input: {
   const capped = allRows.length > PROPERSTAR_MAX_ADVERTS;
   const rows = allRows.slice(0, PROPERSTAR_MAX_ADVERTS);
 
-  const signedLogos = await signAgencyLogos(supabaseAdmin as never, [organization?.logo_path]);
   const office: ProperstarOffice = {
     officeId: organization?.id ?? input.organizationId,
     officeName: organization?.name ?? null,
@@ -180,7 +193,7 @@ export async function buildProperstarFeed(input: {
     address: organization?.material_address ?? null,
     postalCode: organization?.postal_code ?? null,
     city: organization?.city ?? null,
-    logo: organization ? pickAgencyLogoUrl(organization, signedLogos) : null,
+    logo: organization ? agencyLogoUrl(organization, baseUrl) : null,
   };
 
   const ids = rows.map((r) => r.id);
