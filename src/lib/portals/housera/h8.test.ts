@@ -25,11 +25,11 @@ describe("Housera H8", () => {
   it("403 fără JSON → temporar; 403 cu JSON → refuz", async () => {
     resetHouseraRateState();
     const html = vi.fn(async () => new Response("<html>challenge</html>", { status: 403, headers: { "Content-Type": "text/html" } }));
-    const e1 = await createHouseraClient({ key: "1|hsr_test_abcdefgh", baseUrl: "https://x/", fetch: html as unknown as typeof fetch }).request("me").catch((e) => e);
+    const e1 = await createHouseraClient({ key: "1|hsr_test_abcdefgh", baseUrl: "https://x/", fetch: html as unknown as typeof fetch }).request("me").catch((e: HouseraError) => e);
     expect(e1).toBeInstanceOf(HouseraError);
     expect([e1.kind, e1.message]).toEqual(["temporary", "Housera a refuzat temporar cererea. Reîncercăm automat."]);
     const js = vi.fn(async () => json(403, { code: "forbidden" }));
-    const e2 = await createHouseraClient({ key: "1|hsr_test_abcdefgh", baseUrl: "https://x/", fetch: js as unknown as typeof fetch }).request("me").catch((e) => e);
+    const e2 = await createHouseraClient({ key: "1|hsr_test_abcdefgh", baseUrl: "https://x/", fetch: js as unknown as typeof fetch }).request("me").catch((e: HouseraError) => e);
     expect(e2.kind).toBe("refused");
   });
 
