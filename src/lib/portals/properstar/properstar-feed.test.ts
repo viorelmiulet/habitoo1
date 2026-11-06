@@ -16,6 +16,7 @@ import {
   properstarPublicPhoto,
   PROPERSTAR_ID_MAX_LENGTH,
 } from "./mapper";
+import { CRM_URL } from "@/lib/host";
 
 /* ------------------------------ fixtures in-memory ------------------------------ */
 
@@ -547,6 +548,26 @@ describe("conformitatea cu specificația", () => {
     for (const match of xml.matchAll(/<Photo>([^<]+)<\/Photo>/g)) {
       expect(match[1]).toMatch(/^https:\/\//);
     }
+  });
+
+  it("logo-ul agenției este linkul permanent, nu un URL semnat", async () => {
+    const permanent = `${CRM_URL}/api/public/sites/v1/media/agency/${ORG}`;
+
+    // Rezervă: adresă externă https, fără fișier încărcat.
+    const { xml } = await build();
+    expect(xml).toContain(`<Logo>${permanent}</Logo>`);
+    expect(xml).not.toContain("cdn.habitoo.ro/logo.png");
+
+    // Logo încărcat în bucketul privat: tot linkul permanent pleacă, nu un URL semnat.
+    db.organizations = [{ ...db.organizations[0]!, logo_url: null, logo_path: "org-1/logo.png" }];
+    const uploaded = await build();
+    expect(uploaded.xml).toContain(`<Logo>${permanent}</Logo>`);
+    expect(uploaded.xml).not.toContain("org-1/logo.png");
+
+    // Fără logo încărcat și fără adresă externă: elementul lipsește cu totul.
+    db.organizations = [{ ...db.organizations[0]!, logo_url: null, logo_path: null }];
+    const without = await build();
+    expect(without.xml).not.toContain("<Logo>");
   });
 
   it("PublicationDate este ISO 8601 în UTC", async () => {
