@@ -117,6 +117,28 @@ describe("cereri Housera → lead-uri", () => {
     expect(t.lead_events).toHaveLength(2);
   });
 
+  it("H11: lead.updated cu alt status → notă „Etapa pe Housera”, etapa Habitoo neschimbată", async () => {
+    const { admin, t } = fakeDb(seed());
+    const { c } = client({ "leads/lead_1": json({ data: { ...LEAD.data, status: "new" } }) });
+    await ingestPulledHouseraEvent(admin, "org", ev("e1", "lead.created"), { client: c, now });
+    t.leads![0]!.stage = "negotiation";
+    const { c: c2 } = client({ "leads/lead_1": json({ data: { ...LEAD.data, status: "viewing" } }) });
+    await ingestPulledHouseraEvent(admin, "org", ev("e2", "lead.updated", {}, "2026-11-05T19:30:00+00:00"), { client: c2, now });
+    expect(t.leads![0]!.stage).toBe("negotiation");
+    const notes = (t.lead_events ?? []).map((e) => e.note).filter((n) => String(n).startsWith("Etapa pe Housera"));
+    expect(notes).toEqual(["Etapa pe Housera: vizionare"]);
+  });
+
+  it("H11: ecoul propriei schimbări → fără notă", async () => {
+    const { admin, t } = fakeDb(seed());
+    const { c } = client({ "leads/lead_1": json({ data: { ...LEAD.data, status: "new" } }) });
+    await ingestPulledHouseraEvent(admin, "org", ev("e1", "lead.created"), { client: c, now });
+    Object.assign(t.portal_lead_links![0]!, { status_sent: "offer", status_remote: "new" });
+    const { c: c2 } = client({ "leads/lead_1": json({ data: { ...LEAD.data, status: "offer" } }) });
+    await ingestPulledHouseraEvent(admin, "org", ev("e2", "lead.updated", {}, "2026-11-05T19:30:00+00:00"), { client: c2, now });
+    expect((t.lead_events ?? []).some((e) => String(e.note).startsWith("Etapa pe Housera"))).toBe(false);
+  });
+
   it("lead.message_received cu două mesaje noi → două rânduri, last_message_id, o notificare", async () => {
     const { admin, t } = fakeDb(seed());
     const { c } = client({ "leads/lead_1": json(LEAD) });
