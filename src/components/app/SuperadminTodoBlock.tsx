@@ -10,6 +10,7 @@ import {
   type SuperadminTodo,
 } from "@/lib/superadmin-todo";
 import { cn } from "@/lib/utils";
+import { SERVER_CONFIG_LABEL } from "@/lib/portal-connection-health";
 import { portalDisplayName } from "@/lib/portals/registry";
 
 const connectionsTitle = (n: number) =>
@@ -62,6 +63,7 @@ function TodoContent({ todo }: { todo: SuperadminTodo }) {
                   <span className="min-w-0">
                     <span className="font-semibold">{b.organizationName}</span>
                     <span className="text-muted-foreground"> · {portalDisplayName(b.portal)}</span>
+                    {b.configMissing && <span className="font-semibold text-destructive"> · {SERVER_CONFIG_LABEL}</span>}
                   </span>
                   <Link className={actionCls} to="/superadmin/portals" search={{ org: b.organizationId }}>Deschide conexiunea</Link>
                 </li>
