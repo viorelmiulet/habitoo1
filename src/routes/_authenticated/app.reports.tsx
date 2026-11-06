@@ -42,6 +42,8 @@ import { downloadCsv } from "@/lib/crm";
 import { formatMoney } from "@/lib/format";
 import { leadStageLabels, propertyStatusLabels, transactionLabels } from "@/lib/labels";
 import { appHead } from "@/components/app/app-head";
+import { TeamPortfolioReport } from "@/components/app/dashboard/TeamPortfolioReport";
+import { useCurrentUser } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/_authenticated/app/reports")({
   head: () => { const title = "Habitoo CRM — rapoarte"; const description = "Rapoarte despre portofoliu, lead-uri și activitatea echipei, cu filtre de perioadă."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -79,6 +81,9 @@ function weekKey(date: Date) {
 }
 
 function ReportsPage() {
+  const { data: user } = useCurrentUser();
+  const isAgencyAdmin = !!user?.isAdmin;
+  const [view, setView] = useState<"summary" | "team">("summary");
   const [period, setPeriod] = useState<PeriodOption>("6months");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -202,6 +207,22 @@ function ReportsPage() {
         title="Rapoarte"
         description="Performanța portofoliului, a lead-urilor și a echipei."
       />
+
+      {isAgencyAdmin ? (
+        <Tabs value={view} onValueChange={(v) => setView(v as "summary" | "team")}>
+          <div className="max-w-full overflow-x-auto [scrollbar-width:none]">
+            <TabsList className="w-max">
+              <TabsTrigger value="summary">Rezumat</TabsTrigger>
+              <TabsTrigger value="team">Echipă și portofoliu</TabsTrigger>
+            </TabsList>
+          </div>
+        </Tabs>
+      ) : null}
+
+      {isAgencyAdmin && view === "team" ? (
+        <TeamPortfolioReport />
+      ) : (
+      <>
 
       <div data-tour="reports-filters" className="panel flex flex-wrap items-end gap-3 rounded-[14px] p-4 sm:p-5">
         <div className="w-full min-w-0 space-y-1">
@@ -552,6 +573,8 @@ function ReportsPage() {
           </Table>
         )}
       </div>
+      </>
+      )}
     </>
   );
 }
