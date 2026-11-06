@@ -10,6 +10,10 @@ import {
   type SuperadminTodo,
 } from "@/lib/superadmin-todo";
 import { cn } from "@/lib/utils";
+import { portalDisplayName } from "@/lib/portals/registry";
+
+const connectionsTitle = (n: number) =>
+  n === 1 ? "1 conexiune de portal nu funcționează" : `${n} ${n >= 20 ? "de " : ""}conexiuni de portal nu funcționează`;
 
 type CountTo = "/superadmin/agencies" | "/superadmin/cereri-abonament" | "/superadmin/portals" | "/superadmin/support";
 
@@ -49,11 +53,20 @@ function TodoContent({ todo }: { todo: SuperadminTodo }) {
         {c.openTickets > 0 && <CountCard icon={LifeBuoy} n={c.openTickets} label="tichete de suport deschise sau în lucru" to="/superadmin/support" />}
         {todo.expiring.map((a) => <SubscriptionCard key={a.organizationId} alert={a} />)}
         {todo.expired.map((a) => <SubscriptionCard key={a.organizationId} alert={a} />)}
-        {c.failingConnections > 0 && (
+        {todo.brokenConnections.length > 0 && (
           <AccentCard tone="error">
-            <CardTitle icon={Unplug}>{formatNumber(c.failingConnections)} {c.failingConnections === 1 ? "conexiune de portal are" : "conexiuni de portal au"} eroare de sincronizare</CardTitle>
-            <p className="text-[13px] text-muted-foreground">Conexiuni activate pentru agenții.</p>
-            <Actions><Link className={actionCls} to="/superadmin/portals">Portaluri</Link></Actions>
+            <CardTitle icon={Unplug}>{connectionsTitle(todo.brokenConnections.length)}</CardTitle>
+            <ul className="space-y-1.5 text-[13px]">
+              {todo.brokenConnections.map((b) => (
+                <li key={`${b.organizationId}:${b.portal}`} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  <span className="min-w-0">
+                    <span className="font-semibold">{b.organizationName}</span>
+                    <span className="text-muted-foreground"> · {portalDisplayName(b.portal)}</span>
+                  </span>
+                  <Link className={actionCls} to="/superadmin/portals" search={{ org: b.organizationId }}>Deschide conexiunea</Link>
+                </li>
+              ))}
+            </ul>
           </AccentCard>
         )}
       </div>

@@ -28,7 +28,7 @@ export function AgenciesCard({ rows, loading }: { rows: AgencyRow[] | undefined;
           <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                {["Agenție", "Abonament", "Expiră", "Utiliz.", "Proprietăți", "Portaluri", "Erori", "Ultima logare"].map((h, i) => (
+                {["Agenție", "Abonament", "Expiră", "Utiliz.", "Proprietăți", "Portaluri", "Conexiuni", "Ultima logare"].map((h, i) => (
                   <th key={h} className={cn("px-4 py-2.5 font-semibold whitespace-nowrap", i >= 3 && i <= 6 && "text-right")}>{h}</th>
                 ))}
               </tr>
@@ -72,7 +72,7 @@ export function AgenciesCard({ rows, loading }: { rows: AgencyRow[] | undefined;
                     <td className="px-4 py-2.5 text-right tabular-nums">{formatNumber(r.activeProperties)}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{formatNumber(r.portals)}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">
-                      {r.errors > 0 ? <span className={cn(pill, "bg-danger-tint text-destructive")}>{formatNumber(r.errors)}</span> : "0"}
+                      {r.connectionErrors > 0 ? <span className={cn(pill, "bg-danger-tint text-destructive")}>{formatNumber(r.connectionErrors)} cu eroare</span> : "OK"}
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
                       {login.main}
