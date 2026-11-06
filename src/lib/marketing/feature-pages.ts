@@ -415,6 +415,155 @@ export const FEATURE_PAGES: FeaturePage[] = [
       "lead-uri"
     ]
   }
+  ,{
+    slug: "activitati",
+    name: "Activități",
+    category: "Echipă și organizare",
+    title: "Program activități agent imobiliar | Habitoo CRM",
+    description: "Program activități agent imobiliar: apeluri, întâlniri, vizionări și sarcini legate de client și proprietate, cu termen, responsabil și stare clară.",
+    h1: "Tot ce ai de făcut, legat de client și de proprietate",
+    intro: [
+      "Ziua unui agent imobiliar înseamnă apeluri, vizionări, întâlniri cu proprietari, emailuri și revenirile promise clienților. Când le ții în carnete, în telefon sau în memorie, una dintre ele se pierde exact când contează. În Habitoo, fiecare lucru de făcut devine o activitate cu termen, responsabil și stare, legată de clientul, proprietatea sau lead-ul la care se referă.",
+      "Poți înregistra apeluri, întâlniri, vizionări, sarcini, emailuri, reveniri și note. Le creezi direct din fișa proprietății, a contactului sau a lead-ului, astfel încât legătura se face de la început. Când termini, marchezi activitatea ca finalizată, iar ea rămâne în istoric, unde o regăsești oricând deschizi din nou fișa."
+    ],
+    benefits: [
+      { title: "Fiecare activitate are context", text: "O vizionare este legată de proprietate și de client, iar un apel este legat de lead-ul pe care îl urmărești. Când deschizi fișa, vezi ce s-a întâmplat înainte și ce urmează, fără să cauți prin mesaje sau notițe separate." },
+      { title: "Termen, responsabil și stare", text: "Stabilești când trebuie făcută activitatea și cine se ocupă de ea. Starea îți arată ce este deschis și ce este finalizat, așa că știi în fiecare moment ce ai de făcut azi și ce ai rămas dator să închizi." },
+      { title: "Un centru pentru toate activitățile", text: "Toate activitățile tale apar într-un singur loc, unde le filtrezi după tip și stare. Vezi doar vizionările, doar apelurile sau doar sarcinile restante, fără să deschizi pe rând fiecare client sau fiecare proprietate." },
+      { title: "Istoric care rămâne", text: "Activitățile finalizate nu dispar. Rămân în istoricul clientului, al proprietății și al lead-ului, astfel încât tu sau un coleg puteți vedea ce discuții, vizite și reveniri au existat înainte de următorul pas." }
+    ],
+    steps: [
+      { title: "Creezi activitatea din fișă", text: "Din proprietate, contact sau lead, adaugi rapid o activitate. Alegi tipul, de exemplu apel, vizionare sau întâlnire, iar legătura cu fișa din care pornești se face automat." },
+      { title: "Stabilești termenul și responsabilul", text: "Completezi data, agentul care se ocupă și, dacă e nevoie, o descriere scurtă. Activitățile programate apar și în calendar, alături de celelalte întâlniri ale tale." },
+      { title: "Urmărești ce ai de făcut", text: "În centrul de activități filtrezi după tip și stare. Vezi ce ai deschis, ce urmează și ce ai amânat, ca să-ți organizezi ziua pornind de la o listă clară." },
+      { title: "Marchezi ca finalizat", text: "După apel sau vizionare, marchezi activitatea ca finalizată. Ea rămâne în istoric, iar tu poți adăuga imediat următoarea activitate pentru același client." }
+    ],
+    faq: [
+      { q: "Ce tipuri de activități pot adăuga?", a: "Poți adăuga apeluri, întâlniri, vizionări, sarcini, emailuri, reveniri și note. Fiecare are termen, responsabil și stare, iar tipul te ajută să filtrezi lista atunci când vrei să vezi doar un anumit fel de activitate." },
+      { q: "Unde văd activitățile unui client?", a: "Le vezi în fișa contactului, alături de cererile, lead-urile și proprietățile lui. Aceleași activități apar și în fișa proprietății sau a lead-ului la care sunt legate, așa că istoricul este disponibil din oricare dintre ele." },
+      { q: "Ce se întâmplă cu activitățile finalizate?", a: "Rămân în istoric. Nu le ștergi ca să faci ordine, ci le marchezi ca finalizate. Așa păstrezi evidența discuțiilor și a vizitelor, iar lista activităților deschise rămâne scurtă și ușor de urmărit." }
+    ],
+    related: ["calendar", "contacte", "lead-uri", "proprietati", "obiective"]
+  },
+  {
+    slug: "calendar",
+    name: "Calendar",
+    category: "Echipă și organizare",
+    title: "Calendar agenție imobiliară pentru vizionări | Habitoo CRM",
+    description: "Calendar agenție imobiliară cu vizionările și întâlnirile echipei într-o singură agendă, pe zile și săptămâni, pentru fiecare agent sau toată agenția.",
+    h1: "Vizionările și întâlnirile echipei, într-o singură agendă",
+    intro: [
+      "Într-o agenție imobiliară, programul se schimbă des: un client mută vizionarea, un proprietar cere o întâlnire, un coleg are nevoie de cheie. Când fiecare agent își ține agenda separat, suprapunerile și uitările apar ușor. În Habitoo, calendarul arată activitățile programate pe zile și săptămâni, pentru un agent sau pentru toată agenția.",
+      "Calendarul nu este o listă separată pe care o completezi a doua oară. Vizionările programate din proprietate sau din lead și celelalte activități cu termen apar automat în el. Iar agenda zilei curente o vezi direct pe ecranul de start, imediat după ce intri în aplicație."
+    ],
+    benefits: [
+      { title: "O singură agendă pentru tot ce ai programat", text: "Vizionările, întâlnirile, apelurile și sarcinile cu termen apar în același calendar. Nu mai compari mai multe liste ca să afli ce ai de făcut mâine sau dacă mai ai loc pentru o vizionare nouă." },
+      { title: "Vedere pe zi și pe săptămână", text: "Alegi vederea zilnică atunci când vrei detaliile unei zile aglomerate și vederea săptămânală când îți planifici întâlnirile. Treci ușor de la una la alta, în funcție de ce trebuie să organizezi." },
+      { title: "Agenda ta sau a întregii agenții", text: "Vezi doar activitățile tale sau pe cele ale echipei. Așa afli cine este disponibil, cine are deja vizionări în aceeași zi și cum este împărțită munca, fără să suni pe fiecare coleg." },
+      { title: "Legat de proprietate și de client", text: "O vizionare din calendar duce la proprietatea și la clientul pentru care a fost programată. Înainte de întâlnire deschizi fișa și verifici detaliile, istoricul și ce ai discutat ultima dată." }
+    ],
+    steps: [
+      { title: "Programezi din fișă", text: "Din proprietate sau din lead programezi o vizionare ori o întâlnire, cu dată, oră și agent responsabil. Activitatea apare imediat în calendar, fără să o introduci a doua oară." },
+      { title: "Alegi vederea", text: "Deschizi calendarul pe zi sau pe săptămână și alegi dacă vezi doar programul tău sau pe al întregii agenții. Fiecare activitate are tipul ei, ca să o recunoști ușor." },
+      { title: "Pornești ziua de pe ecranul de start", text: "Când intri în aplicație, agenda de azi apare pe ecranul de start. Vezi pe loc ce vizionări și întâlniri urmează, fără să deschizi calendarul complet." },
+      { title: "Închizi activitatea după întâlnire", text: "După vizionare, marchezi activitatea ca finalizată. Ea rămâne în istoricul proprietății și al clientului, iar tu poți programa următorul pas din aceeași fișă." }
+    ],
+    faq: [
+      { q: "Ce apare în calendar?", a: "Apar activitățile programate cu termen: vizionări, întâlniri, apeluri, sarcini și reveniri. Le creezi din fișa proprietății, a contactului sau a lead-ului ori din centrul de activități, iar calendarul le afișează automat pe zilele lor." },
+      { q: "Pot vedea programul colegilor?", a: "Da, calendarul poate afișa activitățile întregii agenții, nu doar pe ale tale. Astfel vezi cine are vizionări într-o anumită zi și poți organiza mai ușor întâlnirile echipei, fără suprapuneri inutile." },
+      { q: "Trebuie să deschid calendarul în fiecare dimineață?", a: "Nu neapărat. Agenda zilei curente apare pe ecranul de start, imediat după autentificare. Deschizi calendarul complet doar când vrei să vezi alte zile sau întreaga săptămână." }
+    ],
+    related: ["activitati", "proprietati", "lead-uri", "ecran-de-start"]
+  },
+  {
+    slug: "obiective",
+    name: "Obiective",
+    category: "Echipă și organizare",
+    title: "Obiective agenți imobiliari, cu progres real | Habitoo CRM",
+    description: "Obiective agenți imobiliari stabilite lunar pentru lead-uri, vizionări, proprietăți noi, tranzacții sau comision, cu progres calculat din activitatea reală.",
+    h1: "Ținte clare pentru fiecare agent, cu progres vizibil",
+    intro: [
+      "O țintă lunară funcționează doar dacă știi, pe parcursul lunii, cât de aproape ești de ea. Când progresul se calculează la final, în tabele completate de mână, e deja prea târziu să schimbi ceva. În Habitoo, stabilești obiective lunare pentru lead-uri, vizionări, proprietăți noi, tranzacții sau comision, iar progresul se vede pe tot parcursul lunii.",
+      "Obiectivele pot fi stabilite pe agent și pe agenție. Progresul nu se introduce manual: se calculează din activitatea reală înregistrată în aplicație, adică din lead-urile, vizionările, proprietățile și tranzacțiile pe care le lucrezi zilnic. Obiectivele apar pe ecranul de start și în rapoarte."
+    ],
+    benefits: [
+      { title: "Ținte pe care le înțelege toată lumea", text: "Fiecare obiectiv are un tip, o valoare și o lună. Agentul știe exact ce urmărește, de exemplu un anumit număr de vizionări sau de proprietăți noi, iar agenția vede aceleași cifre, fără interpretări diferite." },
+      { title: "Progres din munca reală", text: "Progresul se calculează din ce ai înregistrat în aplicație. Nu mai completezi separat un tabel cu rezultatele lunii, iar cifra afișată corespunde lead-urilor, vizionărilor și tranzacțiilor pe care le-ai lucrat efectiv." },
+      { title: "Vizibil în fiecare zi", text: "Obiectivele apar pe ecranul de start, lângă agenda și lead-urile tale. Vezi cât mai ai până la țintă de fiecare dată când intri în aplicație, nu doar la ședința de la sfârșitul lunii." },
+      { title: "Pe agent și pe agenție", text: "Poți urmări atât ținta fiecărui agent, cât și pe cea a întregii agenții. În rapoarte vezi activitatea și obiectivele agenților împreună, ca să înțelegi unde merge bine și unde e nevoie de sprijin." }
+    ],
+    steps: [
+      { title: "Stabilești obiectivul lunar", text: "Alegi tipul obiectivului, de exemplu lead-uri, vizionări, proprietăți noi, tranzacții sau comision, și valoarea pe care vrei să o atingi în luna respectivă, pentru un agent sau pentru agenție." },
+      { title: "Lucrezi ca de obicei", text: "Adaugi proprietăți, programezi vizionări și muți lead-urile pe etape. Nu ai nimic în plus de completat pentru obiective, pentru că progresul se calculează din aceste date." },
+      { title: "Urmărești progresul", text: "Pe ecranul de start vezi cât ai realizat din fiecare obiectiv. Dacă rămâi în urmă la jumătatea lunii, afli la timp și îți poți reorganiza agenda." },
+      { title: "Analizezi în rapoarte", text: "În rapoarte compari obiectivele cu activitatea agenților. Folosești aceste cifre la discuțiile cu echipa și la stabilirea țintelor pentru luna următoare." }
+    ],
+    faq: [
+      { q: "Pentru ce pot stabili obiective?", a: "Poți stabili obiective lunare pentru lead-uri, vizionări, proprietăți noi, tranzacții sau comision. Fiecare obiectiv are o valoare țintă, iar progresul se raportează la aceasta pe parcursul lunii." },
+      { q: "Trebuie să introduc progresul de mână?", a: "Nu. Progresul se calculează din activitatea reală din aplicație. Când adaugi o proprietate, finalizezi o vizionare sau închizi o tranzacție, cifra obiectivului ține cont de aceste date." },
+      { q: "Unde văd obiectivele?", a: "Le vezi pe ecranul de start, alături de agenda și lead-urile tale, și în rapoarte, unde apar împreună cu activitatea agenților. Așa le urmărești zilnic și le analizezi la sfârșitul lunii." }
+    ],
+    related: ["rapoarte", "ecran-de-start", "activitati", "comisioane-agenti-imobiliari"]
+  },
+  {
+    slug: "ecran-de-start",
+    name: "Ecran de start",
+    category: "Analize și documente",
+    title: "Dashboard CRM imobiliar pentru fiecare rol | Habitoo CRM",
+    description: "Dashboard CRM imobiliar diferit pentru agent și administrator: agenda de azi, lead-uri, obiective și indicatorii agenției, din primul ecran al aplicației.",
+    h1: "Un ecran de start diferit pentru fiecare rol",
+    intro: [
+      "Primul ecran pe care îl vezi dimineața ar trebui să-ți spună ce ai de făcut, nu să te trimită prin cinci meniuri. În Habitoo, ecranul de start se adaptează rolului tău. Agentul își vede agenda, lead-urile și obiectivele, iar administratorul vede întreaga agenție și activitatea echipei.",
+      "Pe același ecran găsești indicatorii principali: proprietăți active, lead-uri noi, cereri și vizionări. Vezi agenda de azi și pipeline-ul pe scurt, iar de oriunde din aplicație poți adăuga rapid o înregistrare nouă sau poți căuta un client, o proprietate ori un lead."
+    ],
+    benefits: [
+      { title: "Ce contează pentru rolul tău", text: "Agentul nu este încărcat cu cifrele întregii agenții, iar administratorul nu trebuie să deschidă pe rând contul fiecărui agent. Fiecare vede de la început informațiile cu care lucrează în mod obișnuit." },
+      { title: "Indicatori dintr-o privire", text: "Proprietățile active, lead-urile noi, cererile și vizionările apar ca cifre pe ecranul de start. Înțelegi rapid cum arată portofoliul și volumul de lucru, fără să construiești singur un raport." },
+      { title: "Agenda și pipeline-ul pe scurt", text: "Vezi activitățile programate pentru azi și un rezumat al lead-urilor pe etape. Știi ce întâlniri urmează și ce clienți așteaptă un pas următor, înainte de primul apel al zilei." },
+      { title: "Adăugare rapidă și căutare globală", text: "Din orice ecran poți adăuga o proprietate, un contact sau o activitate și poți căuta în toată aplicația. Nu pierzi timp navigând înapoi doar ca să notezi un client nou." }
+    ],
+    steps: [
+      { title: "Intri în aplicație", text: "După autentificare ajungi direct pe ecranul de start potrivit rolului tău. Nu trebuie să alegi nimic sau să configurezi singur ce informații apar." },
+      { title: "Verifici agenda și indicatorii", text: "Citești agenda de azi, cifrele principale și pipeline-ul pe scurt. Agentul își vede și obiectivele, iar administratorul vede activitatea echipei." },
+      { title: "Treci la lucru din același loc", text: "Deschizi direct activitatea, lead-ul sau proprietatea care te interesează. Folosești adăugarea rapidă și căutarea globală pentru tot ce apare pe parcursul zilei." }
+    ],
+    faq: [
+      { q: "De ce văd altceva decât colegul meu?", a: "Ecranul de start depinde de rol. Agentul își vede agenda, lead-urile și obiectivele, iar administratorul vede întreaga agenție și activitatea echipei. Fiecare primește informațiile cu care lucrează zilnic." },
+      { q: "Ce indicatori apar?", a: "Apar proprietățile active, lead-urile noi, cererile și vizionările, alături de agenda de azi și de pipeline-ul pe scurt. Pentru analize mai detaliate, cum ar fi sursele lead-urilor, folosești rapoartele." },
+      { q: "Pot căuta un client fără să părăsesc ecranul?", a: "Da. Căutarea globală este disponibilă din orice ecran, la fel ca adăugarea rapidă. Găsești un client, o proprietate sau un lead și îl deschizi direct, fără să treci prin meniuri." }
+    ],
+    related: ["calendar", "obiective", "rapoarte", "lead-uri"]
+  },
+  {
+    slug: "rapoarte",
+    name: "Rapoarte",
+    category: "Analize și documente",
+    title: "Rapoarte agenție imobiliară, fără calcule | Habitoo CRM",
+    description: "Rapoarte agenție imobiliară despre portofoliu, surse de lead-uri, etapele vânzării și activitatea agenților, calculate din datele pe care le lucrezi zilnic.",
+    h1: "Cifrele agenției, fără export manual",
+    intro: [
+      "Ca să iei decizii bune, ai nevoie de cifre corecte despre portofoliu, clienți și echipă. Când le aduni din tabele separate, la sfârșitul lunii, pierzi timp și riști greșeli. În Habitoo, rapoartele se calculează din datele pe care tu și colegii voștri le lucrați zilnic în aplicație.",
+      "Vezi proprietățile pe status și pe tip, sursele lead-urilor și numărul lor pe fiecare etapă a vânzării, precum și activitatea și obiectivele agenților. Nu exporți date ca să le prelucrezi în altă parte: deschizi rapoartele și citești situația agenției așa cum este în acel moment."
+    ],
+    benefits: [
+      { title: "Portofoliul, pe status și pe tip", text: "Vezi câte proprietăți sunt active, rezervate, în negociere, vândute sau închiriate și cum se împart pe tipuri. Înțelegi ce ai de oferit clienților și unde ai nevoie de proprietăți noi." },
+      { title: "De unde vin clienții", text: "Raportul surselor îți arată de unde au venit lead-urile. Vezi ce canale aduc cei mai mulți clienți potențiali și unde merită să îți concentrezi efortul în lunile următoare." },
+      { title: "Unde se opresc vânzările", text: "Numărul de lead-uri pe fiecare etapă, de la primul contact la tranzacție, arată unde rămân clienții. Dacă multe lead-uri se opresc după vizionare, știi ce parte a procesului trebuie îmbunătățită." },
+      { title: "Activitatea și obiectivele echipei", text: "Vezi activitatea fiecărui agent alături de obiectivele lui. Discuțiile cu echipa pornesc de la aceleași cifre, calculate din munca reală, nu din estimări sau din tabele completate de mână." }
+    ],
+    steps: [
+      { title: "Lucrezi în aplicație", text: "Adaugi proprietăți, înregistrezi lead-urile cu sursa lor, le muți pe etape și finalizezi activități. Aceste date sunt baza rapoartelor, fără să completezi altceva." },
+      { title: "Deschizi rapoartele", text: "Alegi raportul care te interesează: portofoliu, surse de lead-uri, etapele vânzării sau activitatea agenților. Cifrele sunt calculate din datele existente în acel moment." },
+      { title: "Iei decizii", text: "Folosești rapoartele pentru a stabili unde cauți proprietăți noi, ce surse de clienți păstrezi și cum ajuți agenții care au nevoie de sprijin." }
+    ],
+    faq: [
+      { q: "Ce rapoarte am la dispoziție?", a: "Ai rapoarte despre proprietăți pe status și pe tip, despre sursele lead-urilor și numărul lor pe etape, precum și despre activitatea și obiectivele agenților. Pentru comisioane există o secțiune separată, cu rapoarte și exporturi proprii." },
+      { q: "Trebuie să pregătesc datele înainte?", a: "Nu. Rapoartele folosesc datele pe care le introduci oricum în aplicație. Cu cât completezi mai atent sursa lead-urilor, stările proprietăților și activitățile, cu atât cifrele sunt mai utile." },
+      { q: "Cifrele sunt actuale?", a: "Rapoartele se calculează din informațiile existente în aplicație atunci când le deschizi. Dacă un coleg schimbă starea unei proprietăți sau mută un lead pe altă etapă, modificarea se reflectă în cifre." }
+    ],
+    related: ["ecran-de-start", "obiective", "lead-uri", "comisioane-agenti-imobiliari"]
+  }
+
 ];
 
 export const FEATURES_LASTMOD = "2026-11-06";
@@ -460,7 +609,7 @@ const PAGE_ENTRIES: FeatureEntry[] = FEATURE_PAGES.map((p) => ({
 }));
 
 /** Subiectele pot avea un slug public diferit de cheia secțiunii. */
-const SECTION_PAGE_SLUGS: Record<string, string> = { matching: "potriviri-automate" };
+const SECTION_PAGE_SLUGS: Record<string, string> = { matching: "potriviri-automate", dashboard: "ecran-de-start" };
 
 export function featurePageForSection(key: string): FeaturePage | null {
   return featurePageBySlug(SECTION_PAGE_SLUGS[key] ?? key);
