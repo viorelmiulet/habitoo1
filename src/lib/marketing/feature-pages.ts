@@ -44,7 +44,8 @@ export const FEATURE_PAGES: FeaturePage[] = [
     h1: "Gestiunea proprietăților agenției, într-o singură fișă",
     intro: [
       "Un program de gestiune a proprietăților imobiliare trebuie să-ți dea răspunsul în câteva secunde, nu după zece minute de căutat prin dosare și mesaje. În Habitoo, fiecare proprietate are o singură fișă. Acolo găsești datele ofertei, fotografiile, proprietarul și tot ce ai programat pentru ea.",
-      "Completezi o dată tipul, tranzacția, prețul, suprafața, camerele, etajul, anul, zona, facilitățile și descrierea. Din aceeași fișă pregătești prezentarea pentru client și publici anunțul pe portaluri. Câștigi timp, iar portofoliul rămâne în ordine chiar și când lucrezi cu zeci de oferte în paralel."
+      "Completezi o dată tipul, tranzacția, prețul, suprafața, camerele, etajul, anul, zona, facilitățile și descrierea. Din aceeași fișă pregătești prezentarea pentru client și publici anunțul pe portaluri. Câștigi timp, iar portofoliul rămâne în ordine chiar și când lucrezi cu zeci de oferte în paralel.",
+      "Pentru agenție, asta înseamnă un portofoliu comun, pe care fiecare agent îl găsește la fel de ușor. Pentru tine, înseamnă mai puțin timp pierdut cu căutări și mai mult timp pentru clienți. Când proprietarul sună să întrebe ce mai e nou, deschizi fișa și îi răspunzi pe loc: ce stare are oferta, ce vizionări au fost și pe ce portaluri apare anunțul."
     ],
     benefits: [
       { title: "Toate datele ofertei, la un click", text: "Caracteristicile, localizarea, facilitățile și descrierea stau împreună. Proprietarul este legat direct de ofertă. Înainte de un apel sau de o vizionare, ai totul în față." },
@@ -76,7 +77,8 @@ export const FEATURE_PAGES: FeaturePage[] = [
     h1: "Toți clienții agenției, cu istoricul complet",
     intro: [
       "Un CRM pentru clienții agenției imobiliare înseamnă mai mult decât o agendă de telefoane. În Habitoo, deschizi fișa unui client și vezi imediat ce caută, ce proprietăți deține, în ce discuții este implicat și ce ai vorbit ultima dată. Suni pregătit, nu din memorie.",
-      "Lucrezi cu proprietari, cumpărători, chiriași, investitori și parteneri, toți în aceeași listă. Tipul și sursa te ajută să o organizezi. Când aceeași persoană vinde un apartament și caută altul, vezi ambele situații în fișa ei, fără confuzii."
+      "Lucrezi cu proprietari, cumpărători, chiriași, investitori și parteneri, toți în aceeași listă. Tipul și sursa te ajută să o organizezi. Când aceeași persoană vinde un apartament și caută altul, vezi ambele situații în fișa ei, fără confuzii.",
+      "Câștigul se vede în fiecare zi. Nu mai cauți numărul unui proprietar prin mesaje vechi și nu mai uiți ce i-ai promis unui cumpărător. Iar când un coleg preia un client, găsește în fișă tot ce are nevoie ca să continue discuția fără să o ia de la zero. Clientul are parte de aceeași atenție, oricine îi răspunde."
     ],
     benefits: [
       { title: "Fiecare relație, cu tipul ei", text: "Alegi dacă persoana este proprietar, cumpărător, chiriaș, investitor sau partener. Filtrezi lista după tip și ajungi direct la oamenii de care ai nevoie acum." },
@@ -108,7 +110,8 @@ export const FEATURE_PAGES: FeaturePage[] = [
     h1: "Cererile clienților, transformate în criterii clare",
     intro: [
       "Evidența cererilor clienților te ajută doar dacă poți lucra cu ea, nu doar s-o recitești. În Habitoo, ce îți spune clientul devine criterii clare: buget, zone, camere, suprafață și tip de proprietate. Pe baza lor vezi imediat ofertele potrivite din portofoliu.",
-      "Înregistrezi cereri de cumpărare, închiriere și investiție. Fiecare cerere este legată de contact și de lead-urile lui. Așa ai mereu împreună persoana, ce caută și unde ați ajuns cu discuția. Nicio cerere nu se mai pierde într-un caiet."
+      "Înregistrezi cereri de cumpărare, închiriere și investiție. Fiecare cerere este legată de contact și de lead-urile lui. Așa ai mereu împreună persoana, ce caută și unde ați ajuns cu discuția. Nicio cerere nu se mai pierde într-un caiet.",
+      "Diferența se simte când apare o ofertă nouă. În loc să-ți amintești cine căuta un apartament cu două camere în zona respectivă, deschizi potrivirile și vezi lista clienților. Suni primul, înaintea altor agenți. Iar când clientul te sună după două săptămâni, știi exact ce ți-a cerut, cât vrea să cheltuiască și ce i-ai propus deja."
     ],
     benefits: [
       { title: "Criterii clare în locul notițelor", text: "Bugetul, zonele, camerele, suprafața și tipul au fiecare câmpul lor. Nu mai interpretezi un text scris în grabă. Când clientul se răzgândește, schimbi doar criteriul respectiv." },
@@ -140,7 +143,8 @@ export const FEATURE_PAGES: FeaturePage[] = [
     h1: "Pipeline-ul de vânzări al agenției, de la primul contact la tranzacție",
     intro: [
       "Un pipeline de vânzări imobiliare îți arată unde ești cu fiecare client, nu doar câți clienți ai. În Habitoo, urmărești fiecare lead de la primul mesaj până la tranzacție. Știi mereu cine așteaptă un telefon, cine a văzut proprietatea și cine e aproape de semnare.",
-      "Ai nouă etape: Nou, Contactat, Calificat, Vizionare, Ofertă, Negociere, Tranzacție, Câștigat și Pierdut. Lucrezi pe coloane sau în listă, cu filtre. Iar cererile primite de pe portalurile conectate intră singure ca lead-uri, așa că niciun client nu rămâne fără răspuns."
+      "Ai nouă etape: Nou, Contactat, Calificat, Vizionare, Ofertă, Negociere, Tranzacție, Câștigat și Pierdut. Lucrezi pe coloane sau în listă, cu filtre. Iar cererile primite de pe portalurile conectate intră singure ca lead-uri, așa că niciun client nu rămâne fără răspuns.",
+      "Pentru tine, pipeline-ul înseamnă o zi organizată: vezi dintr-o privire ce discuții stau pe loc și ce clienți sunt aproape de decizie. Pentru agenție, înseamnă o imagine clară a vânzărilor din echipă. Știi câte discuții sunt la vizionare, câte la ofertă și câte se apropie de tranzacție. Iar istoricul păstrat la fiecare lead face ca preluarea unui client de către un coleg să fie simplă."
     ],
     benefits: [
       { title: "Etape pentru tot drumul vânzării", text: "Muți lead-ul din etapă în etapă, pe măsură ce discuția avansează. La final alegi Câștigat sau Pierdut. Fiecare schimbare rămâne în istoric." },
@@ -171,7 +175,8 @@ export const FEATURE_PAGES: FeaturePage[] = [
     h1: "Potriviri automate între cereri și proprietăți",
     intro: [
       "Potrivirea proprietăților cu clienții îți ia ore când o faci de mână. În Habitoo, o vezi imediat: pentru o cerere, proprietățile potrivite; pentru o proprietate, clienții care caută ceva asemănător. Totul pornind de la datele pe care le ai deja în aplicație.",
-      "Fiecare potrivire are un scor și motive explicate. Se compară tranzacția, bugetul, orașul și zona, camerele, suprafața, tipul și facilitățile cerute. Când schimbi o cerere sau o ofertă, rezultatele se recalculează singure."
+      "Fiecare potrivire are un scor și motive explicate. Se compară tranzacția, bugetul, orașul și zona, camerele, suprafața, tipul și facilitățile cerute. Când schimbi o cerere sau o ofertă, rezultatele se recalculează singure.",
+      "Câștigul este dublu. Clientul primește mai repede propuneri care chiar se potrivesc cu ce a cerut. Tu nu mai pierzi timp cu oferte nepotrivite și nu mai uiți de cumpărătorul care căuta exact proprietatea abia intrată în portofoliu. Când preiei o exclusivitate nouă, știi din primele minute câți clienți din baza agenției ar putea fi interesați și pe cine să suni primul. Iar motivele afișate lângă fiecare scor îți dau argumente concrete pentru apel."
     ],
     benefits: [
       { title: "De la o cerere la proprietăți", text: "Deschizi cererea și vezi ofertele potrivite din portofoliu. Le parcurgi în ordinea scorului. În câteva minute ai selecția pentru client." },
