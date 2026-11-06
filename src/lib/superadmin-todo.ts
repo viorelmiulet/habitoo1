@@ -45,8 +45,8 @@ export type SuperadminTodo = {
   expiring: SubscriptionAlert[];
   expired: SubscriptionAlert[];
   blocked: BlockedPublishing[];
-  /** Conexiunile care nu funcționează: agenția și portalul fiecăreia. */
-  brokenConnections: { organizationId: string; organizationName: string; portal: string }[];
+  /** Conexiunile care nu funcționează: agenția, portalul și dacă lipsește configurarea pe server. */
+  brokenConnections: { organizationId: string; organizationName: string; portal: string; configMissing: boolean }[];
 };
 
 /** Eroarea portalului care înseamnă că anunțul nu e publicat în CRM. */
