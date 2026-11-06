@@ -38,12 +38,13 @@ export async function handleSiteContact(admin: Admin, auth: ContactAuth, input: 
   const nowIso = now.toISOString();
 
   // Proprietatea: `id` sau `idstr` (referința din feed), doar în agenția din token.
-  let property: { id: string; assigned_to: string | null; title: string | null } | null = null;
+  type Prop = { id: string; assigned_to: string | null; title: string | null };
+  let property: Prop | null = null;
   if (input.id || input.idstr) {
     const q = admin.from("properties").select("id, assigned_to, title").eq("organization_id", auth.organizationId);
     const { data } = await (input.id ? q.eq("id", input.id) : q.eq("reference", input.idstr!)).maybeSingle();
     if (!data) return { status: 404, message: "Property not found." };
-    property = data as typeof property;
+    property = data as Prop;
   }
   const propertyId = property?.id ?? null;
 

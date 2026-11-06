@@ -18,7 +18,7 @@ function fakeDb(seed: Record<string, Row[]>) {
     let limit = Infinity;
     const run = () => {
       if (op === "insert" || op === "upsert") {
-        const row = { id: `id-${++n}`, ...payload! };
+        const row: Row = { id: `id-${++n}`, ...payload! };
         if (op === "upsert") {
           const i = t[table]!.findIndex((r) => r["portal"] === row["portal"] && r["organization_id"] === row["organization_id"] && r["external_lead_id"] === row["external_lead_id"]);
           if (i >= 0) { t[table]![i] = { ...t[table]![i], ...payload! }; return [t[table]![i]!]; }
