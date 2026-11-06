@@ -299,7 +299,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     slug: "dashboard",
     name: "Ecran de start",
     category: "Analize și documente",
-    title: "Dashboard agenție imobiliară pentru fiecare rol | Habitoo CRM",
+    title: "Dashboard agenție imobiliară, pe roluri | Habitoo CRM",
     description: "Dashboard agenție imobiliară diferit pentru agent și administrator: agenda de azi, pipeline-ul, portofoliul și indicatorii agenției, din primul ecran.",
     h1: "Un ecran de start pentru fiecare rol din agenție",
     intro: [
@@ -422,7 +422,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { q: "Ce roluri există?", a: "Administrator de agenție și agent. Administratorul gestionează echipa și vede toată agenția. Agentul lucrează cu proprietățile, clienții și activitățile lui." },
       { q: "Cum adaug un coleg?", a: "Din pagina echipei trimiți o invitație pe email. Colegul își creează contul și intră direct în agenția ta. Vezi în listă invitațiile încă neacceptate." },
       { q: "Cine poate muta o proprietate la alt agent?", a: "Doar administratorul agenției. La mutare, datele de contact se actualizează pe portalurile pe care proprietatea este publicată." },
-      { q: "Ce se întâmplă când un agent pleacă?", a: "Administratorul îl poate face inactiv și îi poate muta proprietățile la alți colegi. Istoricul clienților și al activităților rămâne în agenție." }
+      { q: "Unde văd toată echipa?", a: "În pagina echipei. Acolo vezi colegii activi și inactivi, invitațiile încă neacceptate și agenții care nu au completat telefonul. Fiecare coleg are și o pagină proprie." }
     ],
     related: ["dashboard", "obiective", "rapoarte", "comisioane-agenti-imobiliari", "colaborare-intre-agentii"]
   },

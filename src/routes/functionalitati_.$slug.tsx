@@ -1,11 +1,11 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { CtaBand } from "@/components/marketing/CtaBand";
 import { FaqSection, faqPageJsonLd } from "@/components/marketing/FaqSection";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section } from "@/components/marketing/Section";
 import { publicHead, SITE_URL } from "@/components/marketing/public-head";
-import { featureEntryByKey, featurePageBySlug, type FeaturePage } from "@/lib/marketing/feature-pages";
+import { FEATURE_PAGE_ALIASES, featureEntryByKey, featurePageBySlug, type FeaturePage } from "@/lib/marketing/feature-pages";
 import { integrationPageBySlug } from "@/lib/portals/integration-pages";
 
 function featureJsonLd(page: FeaturePage) {
@@ -25,6 +25,8 @@ function featureJsonLd(page: FeaturePage) {
 
 export const Route = createFileRoute("/functionalitati_/$slug")({
   loader: ({ params }) => {
+    const alias = FEATURE_PAGE_ALIASES[params.slug];
+    if (alias) throw redirect({ to: "/functionalitati/$slug", params: { slug: alias }, statusCode: 301 });
     const page = featurePageBySlug(params.slug);
     if (!page) throw notFound();
     return { slug: page.slug };

@@ -7,11 +7,14 @@ const EXPECTED_PAGES = [
   ["cereri", "Cererile clienților, transformate în criterii clare", "evidență cereri clienți imobiliare"],
   ["lead-uri", "Pipeline-ul de vânzări al agenției, de la primul contact la tranzacție", "pipeline vânzări imobiliare"],
   ["potriviri-automate", "Potriviri automate între cereri și proprietăți", "matching proprietăți clienți"],
-  ["activitati", "Tot ce ai de făcut, legat de client și de proprietate", "program activități agent imobiliar"],
-  ["calendar", "Vizionările și întâlnirile echipei, într-o singură agendă", "calendar agenție imobiliară"],
-  ["obiective", "Ținte clare pentru fiecare agent, cu progres vizibil", "obiective agenți imobiliari"],
-  ["ecran-de-start", "Un ecran de start diferit pentru fiecare rol", "dashboard CRM imobiliar"],
-  ["rapoarte", "Cifrele agenției, fără export manual", "rapoarte agenție imobiliară"],
+  ["activitati", "Toate activitățile agenției, legate de client și proprietate", "activități agenție imobiliară"],
+  ["calendar", "Vizionările și întâlnirile echipei, într-o singură agendă", "calendar vizionări imobiliare"],
+  ["obiective", "Obiective lunare pentru fiecare agent, cu progres real", "obiective agenți imobiliari"],
+  ["dashboard", "Un ecran de start pentru fiecare rol din agenție", "dashboard agenție imobiliară"],
+  ["rapoarte", "Cifrele agenției, fără calcule de mână", "rapoarte agenție imobiliară"],
+  ["contracte", "Contractele agenției, generate și semnate din CRM", "contracte agenție imobiliară"],
+  ["echipa-si-roluri", "Toată echipa agenției, cu drepturi clare pentru fiecare rol", "CRM pentru echipa agenției imobiliare"],
+  ["aplicatie-mobil", "Habitoo pe telefon, la vizionare și pe teren", "CRM imobiliar pe telefon"],
 ] as const;
 
 function decode(text: string) {
@@ -65,6 +68,18 @@ describe("/functionalitati", () => {
     for (const f of page.faq) expect(html).toContain(f.a);
     expect(page.related.length).toBeGreaterThanOrEqual(3);
     expect(page.related.length).toBeLessThanOrEqual(5);
+  });
+  it("adresa veche a ecranului de start trimite la /functionalitati/dashboard", async () => {
+    const res = await fetch("http://localhost:8080/functionalitati/ecran-de-start", { redirect: "manual" });
+    expect([301, 302, 307, 308]).toContain(res.status);
+    expect(res.headers.get("location") ?? "").toContain("/functionalitati/dashboard");
+  });
+  it("paginile noi au categoria cerută", () => {
+    const cat = Object.fromEntries(FEATURE_PAGES.map((p) => [p.slug, p.category]));
+    for (const s of ["activitati", "calendar", "obiective", "echipa-si-roluri", "aplicatie-mobil"]) expect(cat[s]).toBe("Echipă și organizare");
+    for (const s of ["dashboard", "rapoarte", "contracte"]) expect(cat[s]).toBe("Analize și documente");
+    const known = new Set([...FEATURE_PAGES.map((p) => p.slug), ...FEATURE_ENTRIES.map((e) => e.key)]);
+    for (const p of FEATURE_PAGES) for (const r of p.related) expect(known.has(r), `${p.slug} → ${r}`).toBe(true);
   });
   it("un slug necunoscut dă 404", async () => {
     const res = await fetch("http://localhost:8080/functionalitati/functie-inexistenta");
