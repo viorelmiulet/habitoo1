@@ -40,10 +40,16 @@ vi.mock("@/hooks/use-session", () => ({
     },
   }),
 }));
+vi.mock("@/hooks/use-home-dashboard", () => ({
+  HOME_STAGES: [],
+  useHomeDashboard: () => ({ data: undefined, isLoading: true }),
+}));
+vi.mock("@/components/app/PropertyThumb", () => ({ PropertyThumb: () => null, usePropertyCovers: () => () => ({}) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: {} } }));
 
 import { AgentDashboard } from "./AgentDashboard";
 import { ManagerDashboard } from "./ManagerDashboard";
+import { HomeDashboard } from "./HomeDashboard";
 
 let root: ReturnType<typeof createRoot> | null = null;
 
@@ -60,22 +66,21 @@ afterEach(() => {
   root = null;
 });
 
-describe("antetul secțiunilor de dashboard", () => {
-  it("agent: niciun h1, un h2 „Ziua ta” cu aceleași acțiuni", () => {
-    render(<AgentDashboard />);
-    expect(document.querySelectorAll("h1")).toHaveLength(0);
-    const h2 = document.querySelector("h2");
-    expect(h2?.textContent).toBe("Ziua ta");
-    expect(document.querySelector('a[href="/app/calendar"]')).not.toBeNull();
-    expect(document.querySelector('a[href="/app/properties/new"]')).not.toBeNull();
+describe("pagina Acasă", () => {
+  it("un singur h1 cu salutul și butoanele rapide", () => {
+    render(<HomeDashboard organizationId="o1" firstName="Ana" />);
+    const h1 = document.querySelectorAll("h1");
+    expect(h1).toHaveLength(1);
+    expect(h1[0].textContent).toMatch(/^Bună (dimineața|ziua|seara), Ana!$/);
+    expect(document.body.textContent).toContain("Iată ce se întâmplă azi în agenția ta.");
+    expect(document.querySelector('a[href="/app/properties/new"]')?.textContent).toContain("Adaugă proprietate");
+    expect(document.querySelector('a[href="/app/requests"]')?.textContent).toContain("Adaugă cerere");
   });
 
-  it("admin: niciun h1, un h2 cu numele agenției și aceleași acțiuni", () => {
+  it("extrasele pe rol nu adaugă alte titluri de pagină", () => {
+    render(<AgentDashboard />);
+    expect(document.querySelectorAll("h1")).toHaveLength(0);
     render(<ManagerDashboard />);
     expect(document.querySelectorAll("h1")).toHaveLength(0);
-    const h2 = document.querySelector("h2");
-    expect(h2?.textContent).toBe("MVA Imobiliare");
-    expect(document.querySelector('a[href="/app/reports"]')).not.toBeNull();
-    expect(document.querySelector('a[href="/app/properties/new"]')).not.toBeNull();
   });
 });
