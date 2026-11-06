@@ -88,6 +88,13 @@ describe("configurare platformă lipsă (SA1.2)", () => {
     expect(isPlatformConfigError(c)).toBe(false);
   });
 
+  it("rând real HomeDirect: not_configured, fără last_sync_status, cu mesaj despre server → configurare", () => {
+    const c = conn({ status: "not_configured", lastSyncStatus: null, lastSyncError: serverKey, recentOps: [{ success: true, errorCode: null, httpStatus: null }] });
+    expect(isPlatformConfigError(c)).toBe(true);
+    expect(connectionFailureKind(c)).toBe("config");
+    expect(isConnectionError(c)).toBe(true);
+  });
+
   it("cheia care lipsește ține de agenție (fără „pe server”) → nu e configurare de platformă", () => {
     const c = conn({
       lastSyncStatus: "error",

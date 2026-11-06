@@ -64,10 +64,11 @@ function isNoResponse(op: RecentOp): boolean {
  * Problemă a platformei Habitoo, nu a agenției: configurarea lipsește de pe
  * server. `status: "not_configured"` singur NU înseamnă eroare — poate fi
  * agenția care nu și-a completat datele; contează doar mesajul despre server
- * sau `CONFIG_ERROR` la ultima operație.
+ * (păstrat în `last_sync_error`, chiar fără `last_sync_status`) sau
+ * `CONFIG_ERROR` la ultima operație.
  */
 export function isPlatformConfigError(c: ConnectionHealthInput): boolean {
-  if (c.lastSyncStatus === "error" && isServerConfigMessage(c.lastSyncError)) return true;
+  if (isServerConfigMessage(c.lastSyncError)) return true;
   const latest = c.recentOps[0];
   if (!latest || latest.success) return false;
   if (latest.errorCode && CONFIG_CODES.has(latest.errorCode)) return true;
