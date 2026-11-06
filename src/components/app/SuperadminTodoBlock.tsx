@@ -4,8 +4,6 @@ import type { LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import {
-  anunturiLabel,
-  blockedDetail,
   todoItemCount,
   zeroCategories,
   type SubscriptionAlert,
@@ -58,16 +56,6 @@ function TodoContent({ todo }: { todo: SuperadminTodo }) {
             <Actions><Link className={actionCls} to="/superadmin/portals">Portaluri</Link></Actions>
           </AccentCard>
         )}
-        {todo.blocked.map((b) => (
-          <AccentCard key={b.organizationId} tone="error">
-            <CardTitle icon={AlertTriangle}>{anunturiLabel(b.listings)} nu pot fi publicate · {b.organizationName}</CardTitle>
-            <p className="text-[13px] text-muted-foreground">{blockedDetail(b)}</p>
-            <Actions>
-              <Link className={actionCls} to="/superadmin/portal-logs" search={{ org: b.organizationId, status: "error" }}>Jurnal portaluri</Link>
-              <Link className={actionCls} to="/superadmin/agencies/$id" params={{ id: b.organizationId }}>Deschide agenția</Link>
-            </Actions>
-          </AccentCard>
-        ))}
       </div>
       {zeros.length > 0 && (
         <p className="flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
