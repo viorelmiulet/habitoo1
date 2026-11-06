@@ -25,6 +25,7 @@ import { leadStageLabels, propertyStatusLabels, propertyStatusTone, propertyType
 import { requestStatusLabels, requestStatusTone } from "@/lib/crm";
 import { cn } from "@/lib/utils";
 import { tipOfTheDay } from "./daily-tips";
+import { DailyNoteCard } from "./DailyNoteCard";
 import { greetingFor } from "./greeting";
 import { dailyAdditions, monthComparison, trendLabel } from "./home-stats";
 
@@ -207,10 +208,7 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
               <CardTitle icon={Megaphone} title="Noutăți Habitoo" />
               <EmptyNote icon={Megaphone} title="Nicio noutate momentan." />
             </section>
-            <section className={cn(CARD, "min-w-0")}>
-              <CardTitle icon={NotebookPen} title="Notița zilei" />
-              <EmptyNote icon={NotebookPen} title="Nicio notiță încă." />
-            </section>
+            <DailyNoteCard className={cn(CARD, "min-w-0")} />
           </div>
 
           {/* 3. Cifre */}
