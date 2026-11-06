@@ -97,7 +97,7 @@ export async function exchangeHouseraCode(code: string, verifier: string, d: Hou
   try {
     res = await (d.fetch ?? fetch)(new URL("oauth/token", houseraBaseUrl(d.env)).toString(), {
       method: "POST", body, redirect: "manual", signal: AbortSignal.timeout(HOUSERA_TIMEOUT_MS),
-      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json", "User-Agent": HOUSERA_USER_AGENT },
     });
   } catch {
     throw new HouseraOAuthError("timeout", "Housera nu a răspuns la timp. Reia conectarea.");

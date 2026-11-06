@@ -113,6 +113,13 @@ export async function applyHouseraEvent(admin: Admin, orgId: string | null, e: H
 /** Procesează rândul salvat și îl marchează; eșecurile rămân `processed=false`. */
 export async function processHouseraEventRow(admin: Admin, rowId: string, orgId: string | null, e: HouseraEvent, attempts: number, deps: HouseraLeadDeps = {}): Promise<boolean> {
   try {
+    // `webhook.test`: doar confirmare, fără agenție și fără efecte.
+    if (e.type === "webhook.test") {
+      await admin.from("portal_webhook_events").update({
+        processed: true, process_note: "test primit", attempts: attempts + 1, last_attempt_at: new Date().toISOString(), next_attempt_at: null,
+      }).eq("id", rowId);
+      return true;
+    }
     // `connection` prezent, dar necunoscut: nu ghicim agenția.
     if (!orgId && houseraEventConnection(e)) {
       await admin.from("portal_webhook_events").update({
@@ -146,7 +153,17 @@ export async function ingestPulledHouseraEvent(admin: Admin, orgId: string, e: H
     organizationId: orgId, event: e, rawBody: null, headers: {}, method: "PULL",
     signature: { present: false, valid: true, note: "GET events (cheia agenției)" }, processNote: "recuperat",
   });
-  if (rec.duplicate || !rec.id) return false;
+  if (rec.duplicate) {
+    // Venit pe webhook cu `connection` necunoscut: acum știm agenția, îl reluăm.
+    const { data: prev } = await admin.from("portal_webhook_events").select("id, attempts")
+      .eq("portal", "housera").eq("external_event_id", e.id).is("organization_id", null)
+      .eq("process_note", "conexiune necunoscută").maybeSingle();
+    if (!prev) return false;
+    await admin.from("portal_webhook_events").update({ organization_id: orgId }).eq("id", prev.id as string);
+    await processHouseraEventRow(admin, prev.id as string, orgId, e, (prev.attempts as number) ?? 0, deps);
+    return true;
+  }
+  if (!rec.id) return false;
   await processHouseraEventRow(admin, rec.id, orgId, e, 0, deps);
   return true;
 }
