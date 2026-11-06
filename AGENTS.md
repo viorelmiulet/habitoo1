@@ -66,3 +66,4 @@
 - `market_listings` retention runs only in `market_listings_lifecycle()` (nightly cron): unseen 14 days → inactive with `disappeared_at`, `last_seen_at` older than 365 days → deleted; ingestion never deletes and ignores observations older than the stored `last_seen_at`. ACP v5 weights inactive offers by age. Why: one place for retention, idempotent historical imports.
 - ACP PDF reports render only the version snapshot (extras in `snapshot.report`); photos/OSM tiles fall back to placeholders; appendix opt-in; demand counts (`report/demand*.ts`) are computed at generation, partner-only numbers, frozen. Why: reproducible, private.
 
+- SuperAdmin portal error counts (dashboard, agency errors, portal badges, operation success rate, portal log default) exclude listing-completion errors via `src/lib/portal-error-class.ts`; unknown codes count as platform; agency views stay unfiltered. Why: SuperAdmin monitors the platform, not agency data entry.
