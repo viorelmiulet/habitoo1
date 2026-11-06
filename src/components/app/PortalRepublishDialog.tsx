@@ -102,20 +102,20 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-xl flex-col gap-4 overflow-hidden rounded-[18px] bg-card p-4 sm:grid sm:max-h-none sm:w-full sm:overflow-visible sm:p-6">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-xl flex-col gap-4 overflow-hidden rounded-[18px] bg-card p-4 sm:w-full sm:p-6">
         <DialogHeader className="shrink-0 pr-6">
           <DialogTitle className="font-display">Republică anunțurile</DialogTitle>
           <DialogDescription>Retrimite pe portaluri anunțurile deja publicate, cu datele actuale. Nu publică nimic nou, nu retrage și nu folosește promovări plătite.</DialogDescription>
         </DialogHeader>
         {batch ? (
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto text-sm sm:overflow-visible">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 text-sm">
             <p className="font-semibold">{batch.status === "done" ? "Republicare terminată" : "Republicare în curs…"}</p>
             <p>{batch.succeeded} reușite · {batch.failed} erori · {batch.skipped} sărite{batch.pending ? ` · ${batch.pending} în așteptare` : ""} (din {batch.total})</p>
             {batch.errors.length ? <section><p className="font-semibold text-destructive">Erori</p><ul className="max-h-40 space-y-1 overflow-auto">{batch.errors.map((e, i) => <li key={i}>{e.listing} · {e.portal}: {e.message}</li>)}</ul></section> : null}
             {batch.skippedItems.length ? <section><p className="font-semibold">Sărite</p><ul className="max-h-40 space-y-1 overflow-auto text-muted-foreground">{batch.skippedItems.map((e, i) => <li key={i}>{e.listing} · {e.portal}: {e.message}</li>)}</ul></section> : null}
           </div>
         ) : (
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto text-sm sm:overflow-visible">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1 text-sm">
             {preview?.canChooseScope ? (
               <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Ce anunțuri">
                 {([["mine", "Anunțurile mele"], ["all", "Toate anunțurile agenției"]] as const).map(([value, text]) => (
@@ -137,21 +137,31 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
               <div className="rounded-2xl border border-border p-3">
                 <p className="font-semibold">{preview.listings} anunțuri pe {preview.portals} portaluri vor fi republicate</p>
                 <ul className="mt-2 space-y-1">
-                  {preview.perPortal.map((p) => (
-                    <li key={p.portalId} className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1">{p.name}</span><span className="max-w-[60%] text-right tabular-nums">{p.queued > 0 ? `${p.queued} anunțuri` : <>{p.autoPull} anunțuri<span className="block text-xs text-muted-foreground">se actualizează automat la următoarea preluare</span></>}</span></li>
+                  {preview.perPortal.filter((p) => p.queued > 0).map((p) => (
+                    <li key={p.portalId} className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1">{p.name}</span><span className="shrink-0 text-right tabular-nums">{p.queued} anunțuri</span></li>
                   ))}
                 </ul>
+                {(() => { const auto = preview.perPortal.filter((p) => p.queued === 0 && p.autoPull > 0); return auto.length ? <p className="mt-2 border-t border-border pt-2 text-xs text-muted-foreground">Se actualizează automat la următoarea preluare: {auto.map((p) => `${p.name} (${p.autoPull})`).join(", ")}</p> : null; })()}
               </div>
             ) : null}
+            {mutation.error ? <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 font-medium text-destructive">{startErrorText(mutation.error)}</p> : null}
             {preview?.activeBatchId ? <p className="font-semibold text-destructive">O republicare rulează deja pentru agenție.</p> : null}
           </div>
         )}
         <DialogFooter className="shrink-0 gap-2 sm:gap-0">
           {batch?.status === "done" ? <Button variant="outline" className="w-full sm:w-auto" onClick={onDismiss}>Republicare nouă</Button> : null}
           <Button variant="outline" className="w-full sm:w-auto" onClick={onClose}>Închide</Button>
-          {!batch ? <Button disabled={blocked} className="w-full sm:w-auto" onClick={() => mutation.mutate()}>Republică</Button> : null}
+          {!batch ? <Button disabled={blocked} className="w-full sm:w-auto" onClick={() => mutation.mutate()}>{mutation.isPending ? "Se pornește…" : "Republică"}</Button> : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
+}
+
+export function startErrorText(error: unknown): string {
+  const msg = error instanceof Error ? error.message : typeof error === "string" ? error : "";
+  if (/republish_running|rulează deja|23505/i.test(msg)) return "O republicare rulează deja pentru agenție. Așteaptă să se termine, apoi încearcă din nou.";
+  if (/Nu există anunțuri/i.test(msg)) return msg;
+  if (/^[A-ZĂÂÎȘȚ][^{}<>]*[.!]$/.test(msg) && !/[_]|fetch|HTTP|status|error/i.test(msg)) return msg;
+  return "Republicarea nu a putut fi pornită. Încearcă din nou peste câteva minute; dacă problema continuă, anunță-ne.";
 }

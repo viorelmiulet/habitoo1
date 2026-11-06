@@ -34,3 +34,9 @@ it('closes after start, displays progress, reopens errors and restores a complet
   expect(mock.start).toHaveBeenCalledTimes(1);
   await act(async()=>root.unmount());client.clear();host.remove();vi.unstubAllGlobals();
 });
+import { startErrorText } from './PortalRepublishDialog';
+it('explains start failures in plain words', () => {
+  expect(startErrorText(new Error('republish_running'))).toMatch(/rulează deja/);
+  expect(startErrorText(new Error('Failed to fetch'))).toMatch(/nu a putut fi pornită/);
+  expect(startErrorText(new Error('Nu există anunțuri publicate de republicat.'))).toBe('Nu există anunțuri publicate de republicat.');
+});
