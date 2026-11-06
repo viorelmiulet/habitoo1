@@ -46,3 +46,21 @@ export function trendLabel(current: number, previous: number): Trend {
     ? { text: `+${pct}% față de luna trecută`, tone: "up" }
     : { text: `${pct}% față de luna trecută`, tone: "down" };
 }
+
+/** Timp relativ scurt: „acum 5 minute”, „acum 2 ore”, „ieri”, „acum 3 zile”. */
+export function relativeTime(value: string, now: Date = new Date()): string {
+  const min = Math.max(0, Math.floor((now.getTime() - new Date(value).getTime()) / 60_000));
+  if (min < 1) return "chiar acum";
+  if (min < 60) return min === 1 ? "acum un minut" : `acum ${min} ${min % 100 >= 20 || min % 100 === 0 ? "de " : ""}minute`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return h === 1 ? "acum o oră" : `acum ${h} ${h >= 20 ? "de " : ""}ore`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return "ieri";
+  return `acum ${d} ${d % 100 >= 20 || d % 100 === 0 ? "de " : ""}zile`;
+}
+
+/** Sursa lead-ului pentru afișare: lipsă sau „site” → „Site”. */
+export function leadSourceLabel(source: string | null | undefined): string {
+  const s = (source ?? "").trim();
+  return !s || s.toLowerCase() === "site" ? "Site" : s;
+}
