@@ -191,7 +191,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Citești scorul și motivele", text: "Compari rezultatele, clarifici diferențele cu clientul și propui vizionările. Când criteriile se schimbă, revii la potrivirile recalculate." }
     ],
     faq: [
-      { q: "Pot căuta atât proprietăți, cât și clienți?", a: "Da. Ai ambele sensuri: Cerere → Proprietăți și Proprietate → Clienți. Alegi punctul de pornire după ce lucrezi în acel moment." },
+      { q: "Pot căuta atât proprietăți, cât și clienți?", a: "Da. Ai ambele sensuri: Cerere → Proprietăți și Proprietate → Clienți. Alegi punctul de pornire după ce lucrezi în acel moment. Dimineața poți porni de la cererile noi, iar când intră o ofertă în portofoliu, pornești de la ea și vezi pe cine să suni." },
       { q: "Ce criterii intră în potrivire?", a: "Tranzacția, bugetul, orașul și zona, camerele, suprafața, tipul proprietății și facilitățile cerute. Rezultatele folosesc datele completate în aplicație, așa că merită să le ții la zi." },
       { q: "Scorul înseamnă că un client va cumpăra?", a: "Nu. Scorul arată cât de bine se potrivesc criteriile cu oferta. Interesul real îl afli din discuția cu clientul. Motivele te ajută să pregătești acea discuție." },
       { q: "Ce se întâmplă după modificarea cererii?", a: "Potrivirile se recalculează din noile criterii. Deschizi rezultatele și vezi imediat selecția actualizată, fără să refaci căutarea. La fel se întâmplă când actualizezi prețul sau caracteristicile unei proprietăți: lista clienților potriviți se schimbă odată cu ea." }
