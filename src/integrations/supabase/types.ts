@@ -6877,6 +6877,11 @@ export type Database = {
           lead_id: string | null
           organization_id: string
           portal: string
+          status_desired: string | null
+          status_remote: string | null
+          status_sent: string | null
+          status_sync_error: string | null
+          status_synced_at: string | null
           updated_at: string
         }
         Insert: {
@@ -6887,6 +6892,11 @@ export type Database = {
           lead_id?: string | null
           organization_id: string
           portal: string
+          status_desired?: string | null
+          status_remote?: string | null
+          status_sent?: string | null
+          status_sync_error?: string | null
+          status_synced_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -6897,6 +6907,11 @@ export type Database = {
           lead_id?: string | null
           organization_id?: string
           portal?: string
+          status_desired?: string | null
+          status_remote?: string | null
+          status_sent?: string | null
+          status_sync_error?: string | null
+          status_synced_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -11684,6 +11699,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      housera_lead_status_for_stage: {
+        Args: { _stage: string }
+        Returns: string
       }
       impersonation_expire_stale: { Args: never; Returns: undefined }
       impersonation_preview_by_token: {
