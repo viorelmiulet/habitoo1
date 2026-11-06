@@ -36,384 +36,167 @@ export type FeaturePage = {
 /** Pagini dedicate. Conținutul se adaugă pe rând. */
 export const FEATURE_PAGES: FeaturePage[] = [
   {
-    "slug": "proprietati",
-    "name": "Proprietăți",
-    "category": "Portofoliu și publicare",
-    "title": "Program gestiune proprietăți imobiliare | Habitoo CRM",
-    "description": "Program gestiune proprietăți imobiliare pentru agenția ta: fișe complete, fotografii ordonate, filtre salvate și publicare pe portaluri din același loc.",
-    "h1": "Gestiunea proprietăților agenției, într-o singură fișă",
-    "intro": [
-      "Într-un program gestiune proprietăți imobiliare, ai nevoie să găsești rapid atât oferta, cât și contextul ei. În Habitoo, lucrezi cu o fișă pentru fiecare proprietate: păstrezi datele de prezentare, fotografiile, proprietarul și activitățile legate de ofertă. Când revii după o discuție sau înaintea unei vizionări, deschizi aceeași fișă și verifici informațiile existente.",
-      "Completezi tipul proprietății, tranzacția, prețul, suprafața, camerele, etajul, anul, zona, facilitățile și descrierea. Legi oferta de proprietar și urmărești starea ei în portofoliu. Pentru prezentare și publicare folosești datele din această fișă, fără să construiești o evidență paralelă pentru fiecare loc în care vrei să apară anunțul."
+    slug: "proprietati",
+    name: "Proprietăți",
+    category: "Portofoliu și publicare",
+    title: "Program gestiune proprietăți imobiliare | Habitoo CRM",
+    description: "Program gestiune proprietăți imobiliare pentru agenția ta: fișe complete, fotografii ordonate, filtre salvate și publicare pe portaluri din același loc.",
+    h1: "Gestiunea proprietăților agenției, într-o singură fișă",
+    intro: [
+      "Un program de gestiune a proprietăților imobiliare trebuie să-ți dea răspunsul în câteva secunde, nu după zece minute de căutat prin dosare și mesaje. În Habitoo, fiecare proprietate are o singură fișă. Acolo găsești datele ofertei, fotografiile, proprietarul și tot ce ai programat pentru ea.",
+      "Completezi o dată tipul, tranzacția, prețul, suprafața, camerele, etajul, anul, zona, facilitățile și descrierea. Din aceeași fișă pregătești prezentarea pentru client și publici anunțul pe portaluri. Câștigi timp, iar portofoliul rămâne în ordine chiar și când lucrezi cu zeci de oferte în paralel.",
+      "Pentru agenție, asta înseamnă un portofoliu comun, pe care fiecare agent îl găsește la fel de ușor. Pentru tine, înseamnă mai puțin timp pierdut cu căutări și mai mult timp pentru clienți. Când proprietarul sună să întrebe ce mai e nou, deschizi fișa și îi răspunzi pe loc: ce stare are oferta, ce vizionări au fost și pe ce portaluri apare anunțul."
     ],
-    "benefits": [
-      {
-        "title": "Datele ofertei, păstrate împreună",
-        "text": "Verifici caracteristicile proprietății înainte să o propui unui client. Tipul, tranzacția, suprafețele și localizarea îți arată ce prezinți, iar facilitățile și descrierea completează informațiile. Legătura cu proprietarul păstrează oferta în contextul relației cu acel contact. Actualizezi fișa când primești informații noi, în loc să te bazezi pe o notă mai veche."
-      },
-      {
-        "title": "Fotografii în ordinea aleasă de tine",
-        "text": "Încarci imaginile în galeria proprietății și le reordonezi pentru prezentare. Prima fotografie devine fotografia principală, astfel încât alegi imaginea care reprezintă oferta în listă. Poți verifica întreaga galerie din proprietate și păstrezi împreună imaginile și datele pe care le vei folosi atunci când pregătești anunțul pentru publicare."
-      },
-      {
-        "title": "Stări care reflectă situația proprietății",
-        "text": "Urmărești oferta prin stările draft, activ, rezervat, în negociere, vândut, închiriat, expirat și arhivat. Schimbi starea în funcție de situația reală, nu pentru a înlocui o notă. Astfel, când cauți o proprietate sau revii la portofoliu, vezi dacă mai este disponibilă ori dacă discuția a avansat."
-      },
-      {
-        "title": "Căutare și vederi pentru portofoliul tău",
-        "text": "Cauți proprietăți și restrângi lista prin filtre. Sortezi rezultatele și salvezi vederile pe care le folosești frecvent, ca să revii la aceeași selecție. Adaugi ofertele importante la favorite și poți filtra după ele. Lucrezi astfel cu proprietățile relevante pentru discuția curentă, fără să parcurgi de fiecare dată întregul portofoliu."
-      },
-      {
-        "title": "Activități și publicare din aceeași fișă",
-        "text": `Programezi activități și vizionări din proprietate, păstrând legătura cu oferta despre care discuți. Din fila Publicare alegi portalurile active ale agenției și urmărești rezultatul trimiterii. Habitoo are integrări cu ${portalsLabel(publicPortalCount())} imobiliare; pagina integrărilor îți arată separat ce permite fiecare portal și cum îl activezi pentru agenție.`
-      }
+    benefits: [
+      { title: "Toate datele ofertei, la un click", text: "Caracteristicile, localizarea, facilitățile și descrierea stau împreună. Proprietarul este legat direct de ofertă. Înainte de un apel sau de o vizionare, ai totul în față." },
+      { title: "Fotografii în ordinea aleasă de tine", text: "Încarci imaginile în galerie și le reordonezi cum vrei. Prima fotografie devine poza principală. Alegi tu imaginea care vinde oferta." },
+      { title: "Starea reală a fiecărei proprietăți", text: "Folosești stările draft, activ, rezervat, în negociere, vândut, închiriat, expirat și arhivat. Dintr-o privire știi ce mai poți propune și ce este deja în discuție." },
+      { title: "Găsești rapid oferta potrivită", text: "Cauți, filtrezi și sortezi lista. Salvezi vederile pe care le folosești des și marchezi favoritele. Revii la aceeași selecție fără să o refaci de fiecare dată." },
+      { title: "Activități și publicare din aceeași fișă", text: `Programezi apeluri și vizionări direct din proprietate. Din fila Publicare alegi portalurile active ale agenției și urmărești rezultatul. Habitoo are integrări cu ${portalsLabel(publicPortalCount())} imobiliare.` }
     ],
-    "steps": [
-      {
-        "title": "Completezi proprietatea",
-        "text": "Introduci datele ofertei și legi proprietarul. Verifici tranzacția, localizarea și caracteristicile înainte de a folosi fișa în discuțiile cu clienții. Descrierea și facilitățile rămân alături de câmpurile principale, pentru a putea reveni la ele când pregătești prezentarea."
-      },
-      {
-        "title": "Pregătești galeria",
-        "text": "Încarci fotografiile, verifici imaginile și le așezi în ordinea dorită. Pui prima fotografia pe care vrei să o folosești ca imagine principală. Când revii la proprietate, galeria rămâne parte din aceeași fișă, nu o colecție separată de datele ofertei."
-      },
-      {
-        "title": "Organizezi lucrul cu oferta",
-        "text": "Alegi starea potrivită și folosești filtrele, vederile salvate sau favoritele pentru a regăsi proprietatea. Când stabilești o discuție ori o vizionare, creezi activitatea din fișă. Păstrezi astfel legătura dintre ceea ce ai de făcut și proprietatea implicată."
-      },
-      {
-        "title": "Alegi unde publici",
-        "text": "Deschizi fila Publicare și selectezi portalurile disponibile agenției. Verifici starea publicării în Habitoo și consulți pagina integrărilor pentru modul de actualizare și retragere. La vânzare, închiriere sau arhivare, retragerea urmează regulile portalurilor, fără republicare automată."
-      }
+    steps: [
+      { title: "Completezi proprietatea", text: "Introduci datele ofertei și legi proprietarul. Descrierea și facilitățile stau lângă câmpurile principale, gata pentru prezentare." },
+      { title: "Pregătești galeria", text: "Încarci fotografiile și le așezi în ordinea dorită. Pui pe primul loc imaginea care vrei să reprezinte oferta." },
+      { title: "Organizezi lucrul cu oferta", text: "Alegi starea potrivită și programezi vizionările din fișă. Folosești filtrele, vederile salvate și favoritele ca să revii rapid la ea." },
+      { title: "Alegi unde publici", text: "Deschizi fila Publicare și bifezi portalurile dorite. La vânzare, închiriere sau arhivare, anunțurile se retrag după regulile fiecărui portal, fără republicare automată." }
     ],
-    "faq": [
-      {
-        "q": "Ce informații păstrez în fișa proprietății?",
-        "a": "Păstrezi tipul, tranzacția, prețul, suprafața, camerele, etajul, anul, zona, facilitățile, descrierea și proprietarul, alături de fotografii și activități. Când deschizi oferta, folosești aceste informații împreună, fără să cauți caracteristicile într-o evidență și imaginile în alta."
-      },
-      {
-        "q": "Cum aleg fotografia principală?",
-        "a": "Reordonezi fotografiile în galerie și așezi pe prima poziție imaginea dorită. Prima fotografie este principală. Poți verifica ordinea înainte de publicare, astfel încât prezentarea ofertei să pornească de la imaginea pe care ai ales-o pentru proprietate."
-      },
-      {
-        "q": "Pot reveni la filtrele pe care le folosesc des?",
-        "a": "Da. Salvezi vederi pentru lista proprietăților și revii la selecțiile tale. Favoritele te ajută să păstrezi la îndemână anumite oferte. Căutarea, filtrele și sortarea rămân disponibile atunci când vrei să restrângi sau să schimbi lista."
-      },
-      {
-        "q": "Unde verific portalurile disponibile?",
-        "a": "Deschizi pagina Integrări pentru lista portalurilor și detaliile fiecăruia. În proprietate alegi unde publici dintre portalurile active ale agenției. Nu presupui că toate funcționează identic: verifici pe pagina dedicată cum se activează, cum se actualizează și cum se retrage anunțul."
-      }
+    faq: [
+      { q: "Ce informații păstrez în fișa proprietății?", a: "Tipul, tranzacția, prețul, suprafața, camerele, etajul, anul, zona, facilitățile, descrierea și proprietarul. Lângă ele ai fotografiile și activitățile legate de ofertă. Totul într-un singur loc." },
+      { q: "Cum aleg fotografia principală?", a: "Muți imaginea dorită pe prima poziție din galerie. Prima fotografie este cea principală. Verifici ordinea înainte de publicare și oferta pornește mereu cu cea mai bună imagine." },
+      { q: "Pot reveni la filtrele pe care le folosesc des?", a: "Da. Salvezi vederi pentru lista de proprietăți și le deschizi oricând. Favoritele îți țin la îndemână ofertele cu care lucrezi acum. Căutarea și sortarea rămân mereu disponibile." },
+      { q: "Unde văd ce permite fiecare portal?", a: "Pe pagina Integrări găsești lista portalurilor și detaliile fiecăruia. Acolo vezi cum se activează, cum se actualizează și cum se retrage un anunț. În proprietate alegi apoi dintre portalurile active ale agenției." }
     ],
-    "related": [
-      "contacte",
-      "cereri",
-      "potriviri-automate",
-      "integrari"
-    ]
+    related: ["contacte", "cereri", "potriviri-automate", "integrari"]
   },
   {
-    "slug": "contacte",
-    "name": "Contacte",
-    "category": "Clienți și vânzări",
-    "title": "CRM clienți agenție imobiliară | Habitoo CRM",
-    "description": "CRM clienți agenție imobiliară: păstrezi contacte, surse, cereri, lead-uri, proprietăți, activități și note, cu legături directe în fișa fiecărui client.",
-    "h1": "Toți clienții agenției, cu istoricul complet",
-    "intro": [
-      "Când cauți un CRM clienți agenție imobiliară, ai nevoie de mai mult decât o listă de numere de telefon. În Habitoo, deschizi fișa contactului și vezi relația cu agenția: ce caută, ce proprietăți deține, ce discuții urmărești și ce activități ai înregistrat. Revii la client cu informațiile deja păstrate în aplicație, nu doar cu amintirea ultimei conversații.",
-      "Lucrezi cu proprietari, cumpărători, chiriași, investitori și parteneri. Folosești tipul și sursa contactului pentru a organiza lista, iar legăturile către cereri, lead-uri și proprietăți păstrează contextul. Când aceeași persoană este implicată în mai multe discuții, urmărești fiecare legătură din fișa ei, fără să confunzi clientul cu o singură ofertă sau cerere."
+    slug: "contacte",
+    name: "Contacte",
+    category: "Clienți și vânzări",
+    title: "CRM clienți agenție imobiliară | Habitoo CRM",
+    description: "CRM clienți agenție imobiliară: păstrezi contacte, surse, cereri, lead-uri, proprietăți, activități și note, cu legături directe în fișa fiecărui client.",
+    h1: "Toți clienții agenției, cu istoricul complet",
+    intro: [
+      "Un CRM pentru clienții agenției imobiliare înseamnă mai mult decât o agendă de telefoane. În Habitoo, deschizi fișa unui client și vezi imediat ce caută, ce proprietăți deține, în ce discuții este implicat și ce ai vorbit ultima dată. Suni pregătit, nu din memorie.",
+      "Lucrezi cu proprietari, cumpărători, chiriași, investitori și parteneri, toți în aceeași listă. Tipul și sursa te ajută să o organizezi. Când aceeași persoană vinde un apartament și caută altul, vezi ambele situații în fișa ei, fără confuzii.",
+      "Câștigul se vede în fiecare zi. Nu mai cauți numărul unui proprietar prin mesaje vechi și nu mai uiți ce i-ai promis unui cumpărător. Iar când un coleg preia un client, găsește în fișă tot ce are nevoie ca să continue discuția fără să o ia de la zero. Clientul are parte de aceeași atenție, oricine îi răspunde."
     ],
-    "benefits": [
-      {
-        "title": "Tipuri de contact pentru relații diferite",
-        "text": "Alegi tipul potrivit relației pe care o ai cu persoana: proprietar, cumpărător, chiriaș, investitor sau partener. Folosești aceste tipuri pentru segmentare și filtrare. Când revii la listă, poți căuta categoria relevantă pentru activitatea ta, fără să deduci rolul fiecăruia numai din notele pe care le-ai scris."
-      },
-      {
-        "title": "Sursa contactului rămâne vizibilă",
-        "text": "Păstrezi proveniența contactului și filtrezi lista după sursă. Poți deosebi o recomandare de un contact venit de pe un portal sau dintr-o discuție telefonică. Informația despre sursă rămâne alături de client, astfel încât continui relația cunoscând contextul în care a început, fără să îl reconstruiești din conversații separate."
-      },
-      {
-        "title": "Cereri și lead-uri legate de client",
-        "text": "Din fișa contactului ajungi direct la cererile și lead-urile asociate. Cererea îți arată criteriile de căutare, iar lead-ul păstrează etapa discuției. Nu înlocuiești una cu cealaltă: le consulți împreună pentru a vedea atât ce dorește clientul, cât și unde ai ajuns cu el în procesul de vânzare."
-      },
-      {
-        "title": "Proprietăți și activități în același context",
-        "text": "Vezi proprietățile deținute și activitățile legate de contact. Când discuți cu un proprietar, poți ajunge la oferta lui; când pregătești o vizionare, păstrezi legătura cu clientul. Activitățile și vizionările din fișă te ajută să urmărești ce ai programat și ce ai înregistrat deja în relația respectivă."
-      },
-      {
-        "title": "Note pentru continuarea discuțiilor",
-        "text": "Adaugi note la contact pentru informațiile care nu țin de criteriile unei cereri sau de caracteristicile unei proprietăți. Le consulți la următoarea discuție, alături de activități și legăturile existente. Astfel, separi observațiile despre relație de datele ofertelor și poți reveni la context fără să cauți o notă în fiecare modul."
-      }
+    benefits: [
+      { title: "Fiecare relație, cu tipul ei", text: "Alegi dacă persoana este proprietar, cumpărător, chiriaș, investitor sau partener. Filtrezi lista după tip și ajungi direct la oamenii de care ai nevoie acum." },
+      { title: "Știi de unde a venit fiecare client", text: "Sursa contactului rămâne în fișă și poți filtra după ea. Deosebești imediat o recomandare de o cerere venită de pe un portal. Continui discuția știind cum a început." },
+      { title: "Cereri și lead-uri, legate de client", text: "Din fișă ajungi direct la cererile și lead-urile persoanei. Cererea îți spune ce caută, lead-ul îți arată unde ai ajuns cu ea. Ai tabloul complet înainte de fiecare apel." },
+      { title: "Proprietăți și activități în același loc", text: "Vezi proprietățile pe care le deține clientul și activitățile legate de el. De la un proprietar ajungi într-un click la oferta lui. Nicio vizionare programată nu se pierde." },
+      { title: "Note pentru discuția următoare", text: "Notezi ce nu încape într-o cerere sau într-o fișă de proprietate. La următoarea discuție, notele te așteaptă lângă istoric. Clientul simte că îl cunoști." }
     ],
-    "steps": [
-      {
-        "title": "Adaugi contactul și proveniența",
-        "text": "Completezi datele clientului, alegi tipul de contact și păstrezi sursa. Verifici informațiile înainte să le folosești în discuții. În fișă poți păstra și informațiile despre acordul clientului, separat de tipul lui și de motivul pentru care a contactat agenția."
-      },
-      {
-        "title": "Legi cererile și proprietățile",
-        "text": "Asociezi contactului cererea care descrie ce caută sau proprietatea pe care o deține. Folosești legăturile directe pentru a deschide informațiile respective. Nu treci criteriile doar într-o notă, dacă vrei să le folosești apoi pentru potriviri cu portofoliul."
-      },
-      {
-        "title": "Înregistrezi activitățile și notele",
-        "text": "Din fișa contactului poți crea o activitate, o vizionare sau o cerere. Păstrezi notele relevante despre discuție și revii la ele când pregătești următorul contact. Informațiile rămân legate de persoană, chiar dacă lucrezi în paralel cu mai multe proprietăți."
-      },
-      {
-        "title": "Revii la client cu istoricul la îndemână",
-        "text": "Cauți contactul sau restrângi lista prin filtre, apoi deschizi fișa. Verifici cererile, lead-urile, proprietățile și activitățile asociate înainte să continui discuția. Folosești aceeași evidență pentru a urmări relația, în loc să tratezi fiecare revenire ca pe un contact nou."
-      }
+    steps: [
+      { title: "Adaugi contactul", text: "Completezi datele clientului, alegi tipul și păstrezi sursa. În fișă notezi și acordul clientului, separat de restul informațiilor." },
+      { title: "Legi cererile și proprietățile", text: "Asociezi cererea care descrie ce caută sau proprietatea pe care o deține. Criteriile din cerere sunt folosite apoi la potrivirile cu portofoliul." },
+      { title: "Înregistrezi activitățile și notele", text: "Din fișa contactului creezi o activitate, o vizionare sau o cerere nouă. Tot ce adaugi rămâne legat de persoană." },
+      { title: "Revii la client cu istoricul la îndemână", text: "Cauți contactul, deschizi fișa și vezi tot ce s-a întâmplat. Fiecare revenire continuă discuția de unde ai lăsat-o." }
     ],
-    "faq": [
-      {
-        "q": "Pot păstra proprietari și cumpărători în aceeași listă?",
-        "a": "Da. Folosești tipurile de contact pentru a deosebi proprietarii, cumpărătorii, chiriașii, investitorii și partenerii. Filtrezi lista după tip când ai nevoie de o selecție anume, iar fiecare contact își păstrează propria fișă și propriile legături."
-      },
-      {
-        "q": "Ce găsesc în istoricul clientului?",
-        "a": "Consulți activitățile, vizionările și notele, alături de cereri, lead-uri și proprietățile deținute. Deschizi legăturile directe pentru detaliile fiecărei discuții sau oferte. Istoricul te ajută să continui relația folosind informațiile pe care le-ai înregistrat deja."
-      },
-      {
-        "q": "Care este diferența dintre contact și lead?",
-        "a": "Contactul reprezintă persoana și contextul relației cu agenția. Lead-ul urmărește o discuție comercială și etapa ei. Din fișa contactului ajungi la lead-urile asociate, fără să reduci întreaga relație cu clientul la starea unei singure discuții."
-      },
-      {
-        "q": "Unde păstrez ce caută clientul?",
-        "a": "Folosești o cerere legată de contact pentru buget, zone și celelalte criterii. Notele rămân potrivite pentru contextul discuției. Când criteriile sunt într-o cerere, le poți folosi pentru potrivirile cu proprietățile, iar din contact revii direct la acea cerere."
-      }
+    faq: [
+      { q: "Pot păstra proprietari și cumpărători în aceeași listă?", a: "Da. Tipurile de contact deosebesc proprietarii, cumpărătorii, chiriașii, investitorii și partenerii. Filtrezi după tip când ai nevoie de o selecție anume. Fiecare contact are fișa lui." },
+      { q: "Ce găsesc în istoricul clientului?", a: "Activitățile, vizionările și notele, alături de cereri, lead-uri și proprietățile deținute. Deschizi orice legătură pentru detalii. Ai toată relația cu agenția pe un singur ecran." },
+      { q: "Care este diferența dintre contact și lead?", a: "Contactul este persoana. Lead-ul este o discuție comercială cu ea și etapa în care se află. Un client poate avea mai multe lead-uri, toate vizibile din fișa lui." },
+      { q: "Unde păstrez ce caută clientul?", a: "Într-o cerere legată de contact, cu buget, zone și celelalte criterii. Așa Habitoo îți poate arăta proprietățile potrivite. Notele rămân pentru contextul discuției." }
     ],
-    "related": [
-      "proprietati",
-      "cereri",
-      "lead-uri",
-      "potriviri-automate"
-    ]
+    related: ["proprietati", "cereri", "lead-uri", "potriviri-automate"]
   },
   {
-    "slug": "cereri",
-    "name": "Cereri",
-    "category": "Clienți și vânzări",
-    "title": "Evidență cereri clienți imobiliare | Habitoo CRM",
-    "description": "Evidență cereri clienți imobiliare cu buget, zone, camere și suprafață: organizezi criteriile, verifici potrivirile și păstrezi legătura cu fiecare contact.",
-    "h1": "Cererile clienților, transformate în criterii clare",
-    "intro": [
-      "O evidență cereri clienți imobiliare îți este utilă atunci când poți folosi informațiile din discuție, nu doar să le recitești. În Habitoo, păstrezi cererea în câmpuri separate: tipul căutării, bugetul, zonele, camerele, suprafața și tipul proprietății. Revii la aceste criterii când verifici portofoliul sau când clientul îți spune că dorește altceva.",
-      "Lucrezi cu cereri de cumpărare, închiriere și investiție. Legi cererea de contact și consulți lead-urile asociate, ca să păstrezi împreună persoana, nevoia și discuția comercială. Potrivirile folosesc criteriile cererii pentru a compara proprietățile disponibile în aplicație. Tu verifici rezultatele și decizi ce oferte sunt relevante pentru conversația cu acel client."
+    slug: "cereri",
+    name: "Cereri",
+    category: "Clienți și vânzări",
+    title: "Evidență cereri clienți imobiliare | Habitoo CRM",
+    description: "Evidență cereri clienți imobiliare cu buget, zone, camere și suprafață: organizezi criteriile, verifici potrivirile și păstrezi legătura cu fiecare contact.",
+    h1: "Cererile clienților, transformate în criterii clare",
+    intro: [
+      "Evidența cererilor clienților te ajută doar dacă poți lucra cu ea, nu doar s-o recitești. În Habitoo, ce îți spune clientul devine criterii clare: buget, zone, camere, suprafață și tip de proprietate. Pe baza lor vezi imediat ofertele potrivite din portofoliu.",
+      "Înregistrezi cereri de cumpărare, închiriere și investiție. Fiecare cerere este legată de contact și de lead-urile lui. Așa ai mereu împreună persoana, ce caută și unde ați ajuns cu discuția. Nicio cerere nu se mai pierde într-un caiet.",
+      "Diferența se simte când apare o ofertă nouă. În loc să-ți amintești cine căuta un apartament cu două camere în zona respectivă, deschizi potrivirile și vezi lista clienților. Suni primul, înaintea altor agenți. Iar când clientul te sună după două săptămâni, știi exact ce ți-a cerut, cât vrea să cheltuiască și ce i-ai propus deja."
     ],
-    "benefits": [
-      {
-        "title": "Criterii separate, nu doar o notă",
-        "text": "Completezi bugetul, zonele, camerele, suprafața și tipul proprietății în câmpurile cererii. Informațiile nu rămân amestecate într-un text liber pe care trebuie să îl interpretezi la fiecare revenire. Poți verifica fiecare criteriu în parte și îl poți modifica atunci când clientul își clarifică sau schimbă preferințele."
-      },
-      {
-        "title": "Tipul căutării, stabilit de la început",
-        "text": "Alegi dacă urmărești cumpărare, închiriere sau investiție. Păstrezi acest context alături de criteriile proprietății, astfel încât să nu confunzi două căutări cu bugete sau zone asemănătoare. Tipul cererii face parte din evidență și te ajută să continui discuția pornind de la nevoia exprimată de client."
-      },
-      {
-        "title": "Potriviri pentru cererea selectată",
-        "text": "Deschizi potrivirile calculate pentru cerere și vezi proprietățile comparate cu criteriile ei. Scorul și motivele îți arată de ce o ofertă este relevantă sau unde apar diferențe. Nu tratezi rezultatul ca pe o decizie a clientului: îl folosești pentru a selecta proprietățile despre care merită să discuți."
-      },
-      {
-        "title": "Legătura cu persoana și discuția",
-        "text": "Cererea rămâne asociată contactului și lead-urilor relevante. Din aceste legături poți trece de la criterii la persoana care le-a formulat și la etapa discuției comerciale. Separi astfel ceea ce caută clientul de evoluția negocierii, fără să pierzi legătura dintre cele două informații din aplicație."
-      },
-      {
-        "title": "O listă pe care o poți restrânge",
-        "text": "Filtrezi cererile după tip, stare, prioritate, agent sau oraș. Alegi selecția de care ai nevoie înainte să deschizi o cerere și să verifici criteriile ei. Când lucrezi cu mai mulți clienți, lista îți permite să revii la cererile relevante fără să parcurgi fiecare fișă de contact."
-      }
+    benefits: [
+      { title: "Criterii clare în locul notițelor", text: "Bugetul, zonele, camerele, suprafața și tipul au fiecare câmpul lor. Nu mai interpretezi un text scris în grabă. Când clientul se răzgândește, schimbi doar criteriul respectiv." },
+      { title: "Scopul căutării, de la început", text: "Alegi cumpărare, închiriere sau investiție. Două căutări cu bugete asemănătoare nu se mai amestecă. Știi exact ce fel de ofertă propui." },
+      { title: "Proprietăți potrivite pentru fiecare cerere", text: "Deschizi potrivirile calculate pentru cerere. Fiecare ofertă are un scor și motive explicate. Alegi rapid ce merită propus clientului." },
+      { title: "Legată de client și de discuție", text: "Din cerere ajungi la contact și la lead-urile lui. Vezi ce caută persoana și cât de avansată este negocierea. Totul fără să rescrii nimic." },
+      { title: "O listă pe care o restrângi ușor", text: "Filtrezi cererile după tip, stare, prioritate, agent sau oraș. Ajungi direct la clienții cu care lucrezi azi. Nu mai deschizi fișă după fișă." }
     ],
-    "steps": [
-      {
-        "title": "Pornești de la discuția cu clientul",
-        "text": "Clarifici dacă cererea este pentru cumpărare, închiriere sau investiție și o legi de contact. Păstrezi cererea ca o evidență a nevoii exprimate, nu ca o ofertă. Clientul și criteriile lui rămân conectate chiar dacă discuți ulterior despre mai multe proprietăți."
-      },
-      {
-        "title": "Completezi criteriile de căutare",
-        "text": "Introduci bugetul, zonele, camerele, suprafața și tipul proprietății. Verifici ce este important pentru client și păstrezi informațiile în câmpurile cererii. Pentru contextul conversației poți folosi notele contactului, fără să înlocuiești cu ele criteriile necesare comparării ofertelor."
-      },
-      {
-        "title": "Verifici proprietățile potrivite",
-        "text": "Consulți potrivirile pentru cererea ta și citești motivele asociate scorului. Compari datele ofertelor cu limitele și preferințele clientului. Alegi ce discuți mai departe pe baza informațiilor reale ale proprietăților, fără să presupui că un scor confirmă acceptarea unei oferte."
-      },
-      {
-        "title": "Actualizezi cererea când nevoia se schimbă",
-        "text": "Modifici criteriile atunci când clientul schimbă bugetul, zona sau caracteristicile căutate. Potrivirile se calculează din datele actualizate, iar cererea își păstrează legătura cu contactul. Revii și la lead-urile asociate pentru a urmări etapa discuției despre ofertele selectate."
-      }
+    steps: [
+      { title: "Pornești de la discuția cu clientul", text: "Stabilești dacă e cumpărare, închiriere sau investiție și legi cererea de contact. Din acest moment, nevoia clientului are un loc al ei." },
+      { title: "Completezi criteriile", text: "Introduci bugetul, zonele, camerele, suprafața și tipul proprietății. Contextul discuției îl lași în notele contactului." },
+      { title: "Verifici proprietățile potrivite", text: "Deschizi potrivirile și citești motivele fiecărui scor. Alegi ofertele pe care le propui și programezi vizionările." },
+      { title: "Actualizezi când se schimbă ceva", text: "Clientul schimbă bugetul sau zona? Modifici cererea, iar potrivirile se recalculează. Urmărești apoi discuția în lead." }
     ],
-    "faq": [
-      {
-        "q": "Ce tipuri de cereri pot înregistra?",
-        "a": "Poți înregistra cumpărare, închiriere și investiție. Alegi tipul cererii și completezi criteriile proprietății, precum bugetul, zonele, camerele și suprafața. Păstrezi astfel atât scopul căutării, cât și caracteristicile pe care vrei să le verifici în portofoliu."
-      },
-      {
-        "q": "De ce să nu păstrez criteriile doar în note?",
-        "a": "Câmpurile cererii sunt folosite pentru compararea cu proprietățile. O notă păstrează contextul discuției, dar nu înlocuiește bugetul sau zonele completate separat. Când criteriile sunt structurate, verifici mai ușor ce ai înregistrat și ce trebuie actualizat după o nouă conversație."
-      },
-      {
-        "q": "Pot vedea de ce o proprietate se potrivește?",
-        "a": "Da. Rezultatele au scor și motive explicate, astfel încât să vezi criteriile îndeplinite și diferențele. Le folosești pentru a pregăti discuția cu clientul. Potrivirea nu confirmă o tranzacție și nu înlocuiește verificarea informațiilor ofertei sau preferința exprimată de persoană."
-      },
-      {
-        "q": "Cererea rămâne legată de client?",
-        "a": "Da. Cererea are legătură cu contactul și cu lead-urile asociate. Poți reveni la persoană pentru istoricul relației sau la lead pentru evoluția discuției. Criteriile rămân în cerere, astfel încât nu trebuie să le rescrii în fiecare loc."
-      }
+    faq: [
+      { q: "Ce tipuri de cereri pot înregistra?", a: "Cumpărare, închiriere și investiție. Pentru fiecare completezi criteriile proprietății: buget, zone, camere, suprafață și tip. Ai astfel scopul căutării și detaliile ei la un loc." },
+      { q: "De ce să nu păstrez criteriile doar în note?", a: "Pentru că doar criteriile din câmpurile cererii sunt comparate cu proprietățile. O notă nu poate aduce oferte potrivite. Cu criterii clare, vezi imediat ce trebuie actualizat după un apel." },
+      { q: "Pot vedea de ce o proprietate se potrivește?", a: "Da. Fiecare rezultat are un scor și motive: ce criterii sunt îndeplinite și unde apar diferențe. Ai argumente concrete pentru discuția cu clientul." },
+      { q: "Cererea rămâne legată de client?", a: "Da. Cererea este legată de contact și de lead-urile lui. Ajungi într-un click la istoricul persoanei sau la evoluția discuției. Dacă același client are mai multe căutări, de exemplu o închiriere acum și o cumpărare mai târziu, le ții ca cereri separate, fiecare cu criteriile ei." }
     ],
-    "related": [
-      "contacte",
-      "proprietati",
-      "lead-uri",
-      "potriviri-automate"
-    ]
+    related: ["contacte", "proprietati", "lead-uri", "potriviri-automate"]
   },
   {
-    "slug": "lead-uri",
-    "name": "Lead-uri",
-    "category": "Clienți și vânzări",
-    "title": "Pipeline vânzări imobiliare | Habitoo CRM",
-    "description": "Pipeline vânzări imobiliare cu nouă etape, coloane și listă: urmărești lead-urile, istoricul și agentul responsabil, inclusiv cererile venite de pe portaluri.",
-    "h1": "Pipeline-ul de vânzări al agenției, de la primul contact la tranzacție",
-    "intro": [
-      "Un pipeline vânzări imobiliare îți arată unde ai ajuns cu fiecare discuție, nu doar câte contacte ai în listă. În Habitoo, urmărești lead-ul din momentul în care apare până când discuția se încheie. Folosești etapa pentru situația curentă și istoricul pentru schimbările, notele și activitățile pe care le-ai păstrat pe parcurs.",
-      "Ai nouă etape: Nou, Contactat, Calificat, Vizionare, Ofertă, Negociere, Tranzacție, Câștigat și Pierdut. Lucrezi pe coloane sau într-o listă cu filtre și verifici agentul atribuit fiecărui lead. Legăturile cu persoana, cererea și proprietatea îți permit să revii la datele discuției înainte să faci următorul pas, fără să confunzi etapa cu detaliile căutării."
+    slug: "lead-uri",
+    name: "Lead-uri",
+    category: "Clienți și vânzări",
+    title: "Pipeline vânzări imobiliare | Habitoo CRM",
+    description: "Pipeline vânzări imobiliare cu nouă etape, coloane și listă: urmărești lead-urile, istoricul și agentul responsabil, inclusiv cererile venite de pe portaluri.",
+    h1: "Pipeline-ul de vânzări al agenției, de la primul contact la tranzacție",
+    intro: [
+      "Un pipeline de vânzări imobiliare îți arată unde ești cu fiecare client, nu doar câți clienți ai. În Habitoo, urmărești fiecare lead de la primul mesaj până la tranzacție. Știi mereu cine așteaptă un telefon, cine a văzut proprietatea și cine e aproape de semnare.",
+      "Ai nouă etape: Nou, Contactat, Calificat, Vizionare, Ofertă, Negociere, Tranzacție, Câștigat și Pierdut. Lucrezi pe coloane sau în listă, cu filtre. Iar cererile primite de pe portalurile conectate intră singure ca lead-uri, așa că niciun client nu rămâne fără răspuns.",
+      "Pentru tine, pipeline-ul înseamnă o zi organizată: vezi dintr-o privire ce discuții stau pe loc și ce clienți sunt aproape de decizie. Pentru agenție, înseamnă o imagine clară a vânzărilor din echipă. Știi câte discuții sunt la vizionare, câte la ofertă și câte se apropie de tranzacție. Iar istoricul păstrat la fiecare lead face ca preluarea unui client de către un coleg să fie simplă."
     ],
-    "benefits": [
-      {
-        "title": "Etape pentru întreaga discuție comercială",
-        "text": "Muți lead-ul prin Nou, Contactat, Calificat, Vizionare, Ofertă, Negociere și Tranzacție, după evoluția reală a discuției. La final folosești Câștigat sau Pierdut. Nu trebuie să păstrezi situația doar într-o notă: etapa rămâne vizibilă în evidență, iar istoricul îți arată schimbările pe care le-ai făcut."
-      },
-      {
-        "title": "Coloane și listă pentru moduri diferite de lucru",
-        "text": "Pe calculator tragi cardul în coloana etapei potrivite. Poți folosi și lista, cu filtre pentru etapă, agent, sursă sau căutare. Pe telefon schimbi etapa prin selecție. Alegi vederea potrivită momentului: coloanele pentru distribuția discuțiilor, lista când vrei să restrângi selecția și să găsești un anumit lead."
-      },
-      {
-        "title": "Istoric și agent atribuit",
-        "text": "Verifici istoricul complet al lead-ului, cu schimbările, notele și activitățile înregistrate. Vezi agentul atribuit și urmărești discuția în contextul responsabilității lui. Când revii la un lead, consulți ce s-a întâmplat înainte, în loc să deduci întreaga evoluție numai din numele coloanei în care se află acum."
-      },
-      {
-        "title": "Legături cu datele pe care le folosești",
-        "text": "Din lead ajungi la contact, cerere și proprietate, atunci când sunt asociate. Contactul îți arată persoana, cererea descrie criteriile, iar proprietatea păstrează oferta. Folosești aceste legături pentru a pregăti o discuție, o ofertă sau o vizionare fără să rescrii în lead toate informațiile deja existente în celelalte fișe."
-      },
-      {
-        "title": "Cereri de pe portaluri, aduse în evidență",
-        "text": "Cererile primite prin integrările compatibile pot intra automat ca lead-uri. Habitoo preia cereri de pe Storia/OLX, Housera, VDI și Properstar, în condițiile conexiunii agenției. Verifici detaliile fiecărui portal pe pagina Integrări, apoi urmărești cererea în aceeași evidență în care lucrezi și cu celelalte discuții comerciale."
-      }
+    benefits: [
+      { title: "Etape pentru tot drumul vânzării", text: "Muți lead-ul din etapă în etapă, pe măsură ce discuția avansează. La final alegi Câștigat sau Pierdut. Fiecare schimbare rămâne în istoric." },
+      { title: "Coloane sau listă, cum lucrezi tu", text: "Pe calculator tragi cardul în coloana potrivită. În listă filtrezi după etapă, agent, sursă sau căutare. Pe telefon schimbi etapa dintr-o selecție." },
+      { title: "Istoric complet și agent responsabil", text: "Vezi toate schimbările, notele și activitățile lead-ului. Știi cine se ocupă de el. Preiei o discuție fără să întrebi pe nimeni ce s-a întâmplat." },
+      { title: "Legat de client, cerere și proprietate", text: "Din lead ajungi direct la contact, la cererea lui și la proprietatea discutată. Pregătești o ofertă sau o vizionare fără să rescrii informațiile." },
+      { title: "Cererile de pe portaluri intră singure", text: "Cererile primite pe Storia/OLX, Housera, VDI și Properstar devin automat lead-uri, pentru agențiile conectate. Le lucrezi în același loc cu restul clienților. Nicio cerere pierdută." }
     ],
-    "steps": [
-      {
-        "title": "Deschizi lead-ul și verifici contextul",
-        "text": "Consulți sursa, agentul atribuit și legăturile disponibile. Verifici cine este clientul și despre ce discută cu agenția. Pentru lead-urile venite de pe portaluri, citești informațiile preluate înainte să continui conversația, fără să presupui că cererea este deja calificată."
-      },
-      {
-        "title": "Alegi etapa potrivită",
-        "text": "Muți cardul sau selectezi etapa care corespunde situației reale. Folosești Contactat după contact, Vizionare pentru discuțiile ajunse la această etapă și celelalte stări în funcție de evoluție. Nu schimbi etapa pentru a înlocui o notă despre ceea ce ai aflat."
-      },
-      {
-        "title": "Păstrezi activitățile și observațiile",
-        "text": "Înregistrezi activitățile și notele relevante pentru lead. Revii la istoric înainte de următoarea discuție și verifici datele din cerere sau proprietate. Etapa îți arată unde ai ajuns, iar informațiile înregistrate îți păstrează contextul pentru continuarea relației cu clientul."
-      },
-      {
-        "title": "Urmărești rezultatul discuției",
-        "text": "Filtrezi coloanele sau lista pentru lead-urile care te interesează și actualizezi starea când discuția avansează. La încheiere alegi Câștigat sau Pierdut, conform rezultatului real. Păstrezi istoricul în fișă pentru a putea verifica ulterior parcursul, nu doar rezultatul final."
-      }
+    steps: [
+      { title: "Deschizi lead-ul", text: "Vezi sursa, agentul responsabil și legăturile cu clientul, cererea și proprietatea. Pentru lead-urile de pe portaluri, citești mesajul primit înainte să suni." },
+      { title: "Muți lead-ul în etapa potrivită", text: "Tragi cardul sau alegi etapa care descrie situația reală. Notezi ce ai aflat și programezi următoarea activitate." },
+      { title: "Duci discuția până la capăt", text: "Filtrezi lead-urile care cer atenție și le actualizezi pe măsură ce avansează. La final alegi Câștigat sau Pierdut, iar parcursul rămâne în istoric." }
     ],
-    "faq": [
-      {
-        "q": "Care sunt etapele disponibile?",
-        "a": "Ai Nou, Contactat, Calificat, Vizionare, Ofertă, Negociere, Tranzacție, Câștigat și Pierdut. Alegi etapa după evoluția discuției cu clientul. Istoricul păstrează schimbările înregistrate, astfel încât poți verifica parcursul unui lead chiar după ce ai mutat cardul în altă coloană."
-      },
-      {
-        "q": "Pot lucra fără să trag cardurile?",
-        "a": "Da. Ai și vedere de listă cu filtre, iar etapa poate fi selectată. Pe telefon folosești selecția etapei. Coloanele și lista reprezintă aceeași evidență, astfel încât alegi modul de lucru potrivit fără să creezi un alt lead pentru aceeași discuție."
-      },
-      {
-        "q": "De pe ce portaluri pot intra lead-uri?",
-        "a": "Integrările care preiau cereri includ Storia/OLX, Housera, VDI și Properstar. Funcționarea depinde de conexiunea agenției și de drepturile necesare pe portal. Pagina Integrări îți arată detaliile fiecăruia; nu presupui că orice portal din listă transmite automat cereri către Habitoo."
-      },
-      {
-        "q": "Ce verific înainte să continui un lead?",
-        "a": "Verifici agentul, etapa, istoricul și legăturile cu contactul, cererea și proprietatea. Citești notele și activitățile existente pentru a înțelege contextul. Folosești aceste date pentru următoarea discuție, fără să interpretezi simpla prezență a lead-ului ca pe o tranzacție confirmată."
-      }
+    faq: [
+      { q: "Care sunt etapele disponibile?", a: "Nou, Contactat, Calificat, Vizionare, Ofertă, Negociere, Tranzacție, Câștigat și Pierdut. Istoricul păstrează fiecare schimbare, așa că vezi oricând drumul complet al unui lead." },
+      { q: "Pot lucra fără să trag cardurile?", a: "Da. Ai și vederea de listă, cu filtre, iar etapa se poate alege dintr-o selecție. Pe telefon așa schimbi etapa. Coloanele și lista arată aceleași lead-uri." },
+      { q: "De pe ce portaluri intră lead-uri?", a: "De pe Storia/OLX, Housera, VDI și Properstar, dacă agenția are conexiunea activă și drepturile necesare pe portal. Detaliile fiecăruia sunt pe pagina Integrări." },
+      { q: "Ce verific înainte să continui un lead?", a: "Etapa, agentul responsabil, istoricul și legăturile cu clientul, cererea și proprietatea. Citești notele și ultimele activități. Apoi suni știind exact de unde continui. Dacă lead-ul a venit de pe un portal, vezi și mesajul trimis de client acolo, ca să răspunzi exact la ce a întrebat." }
     ],
-    "related": [
-      "contacte",
-      "cereri",
-      "potriviri-automate",
-      "integrari"
-    ]
+    related: ["contacte", "cereri", "potriviri-automate", "integrari"]
   },
   {
-    "slug": "potriviri-automate",
-    "name": "Potriviri automate",
-    "category": "Clienți și vânzări",
-    "title": "Matching proprietăți clienți | Habitoo CRM",
-    "description": "Matching proprietăți clienți în ambele sensuri: compari cereri și oferte după criterii, cu scor și motive explicate, recalculate din informațiile actualizate.",
-    "h1": "Potriviri automate între cereri și proprietăți",
-    "intro": [
-      "Cu matching proprietăți clienți, pornești de la informațiile pe care le-ai păstrat deja în aplicație. În Habitoo, verifici proprietățile potrivite pentru o cerere sau clienții care caută o proprietate. Nu începi fiecare selecție de la o listă goală: compari criteriile cererii cu datele ofertelor și citești rezultatele înainte să alegi despre ce discuți.",
-      "Fiecare potrivire vine cu un scor și motive explicate. Verifici tranzacția, bugetul, orașul și zona, camerele, suprafața, tipul proprietății și facilitățile cerute. Rezultatul descrie apropierea dintre datele din aplicație, nu intenția confirmată a clientului și nici rezultatul unei negocieri. Tu păstrezi decizia despre ofertele prezentate și verifici informațiile înaintea discuției."
+    slug: "potriviri-automate",
+    name: "Potriviri automate",
+    category: "Clienți și vânzări",
+    title: "Matching proprietăți clienți | Habitoo CRM",
+    description: "Matching proprietăți clienți în ambele sensuri: compari cereri și oferte după criterii, cu scor și motive explicate, recalculate din informațiile actualizate.",
+    h1: "Potriviri automate între cereri și proprietăți",
+    intro: [
+      "Potrivirea proprietăților cu clienții îți ia ore când o faci de mână. În Habitoo, o vezi imediat: pentru o cerere, proprietățile potrivite; pentru o proprietate, clienții care caută ceva asemănător. Totul pornind de la datele pe care le ai deja în aplicație.",
+      "Fiecare potrivire are un scor și motive explicate. Se compară tranzacția, bugetul, orașul și zona, camerele, suprafața, tipul și facilitățile cerute. Când schimbi o cerere sau o ofertă, rezultatele se recalculează singure.",
+      "Câștigul este dublu. Clientul primește mai repede propuneri care chiar se potrivesc cu ce a cerut. Tu nu mai pierzi timp cu oferte nepotrivite și nu mai uiți de cumpărătorul care căuta exact proprietatea abia intrată în portofoliu. Când preiei o exclusivitate nouă, știi din primele minute câți clienți din baza agenției ar putea fi interesați și pe cine să suni primul. Iar motivele afișate lângă fiecare scor îți dau argumente concrete pentru apel."
     ],
-    "benefits": [
-      {
-        "title": "De la o cerere la proprietăți",
-        "text": "Selectezi cererea și vezi ofertele comparate cu criteriile clientului. Folosești bugetul, localizarea și caracteristicile pe care le-ai completat pentru a înțelege selecția. Citești scorul și motivele înainte să deschizi oferta, apoi verifici fișa proprietății pentru detaliile de care ai nevoie în conversație sau la pregătirea unei vizionări."
-      },
-      {
-        "title": "De la o proprietate la clienți",
-        "text": "Pornești și în sens invers, dintr-o proprietate către clienții care au criterii apropiate. Când lucrezi cu o ofertă, poți verifica cine caută ceva asemănător fără să recitești fiecare cerere separat. Rezultatele te ajută să pregătești discuțiile, dar nu înlocuiesc contactul cu persoana și confirmarea interesului pentru proprietatea respectivă."
-      },
-      {
-        "title": "Criterii care folosesc datele existente",
-        "text": "Compararea urmărește tranzacția, bugetul, orașul și zona, camerele, suprafața și tipul proprietății. Facilitățile sunt luate în considerare când sunt cerute. De aceea contează să completezi corect atât cererea, cât și oferta: rezultatul folosește informațiile existente, nu caracteristici presupuse despre client sau proprietate."
-      },
-      {
-        "title": "Scor însoțit de explicații",
-        "text": "Nu vezi doar un procent. Motivele îți arată criteriile îndeplinite și diferențele dintre cerere și proprietate. Poți observa de ce o ofertă este apropiată de căutare și ce merită clarificat cu clientul. Folosești explicațiile pentru a compara rezultatele, nu ca pe o promisiune că persoana va accepta proprietatea."
-      },
-      {
-        "title": "Rezultate din informațiile actualizate",
-        "text": "Când modifici o cerere sau o proprietate, potrivirile se recalculează din datele actualizate. Un buget schimbat ori o altă zonă influențează comparația, în loc să rămână ascunse într-o notă. Revii la rezultate după modificare și verifici din nou scorurile și motivele înainte să continui selecția pentru client."
-      }
+    benefits: [
+      { title: "De la o cerere la proprietăți", text: "Deschizi cererea și vezi ofertele potrivite din portofoliu. Le parcurgi în ordinea scorului. În câteva minute ai selecția pentru client." },
+      { title: "De la o proprietate la clienți", text: "Ai o ofertă nouă? Vezi imediat clienții ale căror cereri se potrivesc. Știi pe cine să suni primul, fără să recitești fiecare cerere." },
+      { title: "Criterii care contează în imobiliare", text: "Tranzacția, bugetul, orașul și zona, camerele, suprafața și tipul sunt comparate automat. Facilitățile intră în calcul când clientul le cere. Cu cât datele sunt mai complete, cu atât rezultatele sunt mai bune." },
+      { title: "Scor cu motive explicate", text: "Nu vezi doar un procent. Vezi ce criterii sunt îndeplinite și unde apar diferențe. Ai argumente clare când propui oferta." },
+      { title: "Mereu la zi", text: "Clientul schimbă bugetul sau zona? Potrivirile se recalculează imediat. Lucrezi mereu cu selecția corectă." }
     ],
-    "steps": [
-      {
-        "title": "Completezi datele pe care le compari",
-        "text": "Verifici criteriile cererii și caracteristicile proprietăților. Păstrezi bugetul, localizarea, camerele și suprafața în câmpurile potrivite, iar facilitățile acolo unde sunt relevante. Notele pot explica discuția, dar nu înlocuiesc datele pe care le folosești pentru potrivire în aplicație."
-      },
-      {
-        "title": "Alegi sensul căutării",
-        "text": "Pornești de la cerere când vrei oferte pentru un client sau de la proprietate când cauți clienți pentru acea ofertă. Alegi în funcție de activitatea curentă, fără să schimbi criteriile doar pentru a obține mai multe rezultate. Cele două sensuri folosesc informațiile deja păstrate."
-      },
-      {
-        "title": "Citești scorul împreună cu motivele",
-        "text": "Compari rezultatele și verifici de ce se potrivesc. Deschizi datele ofertei sau ale cererii pentru detalii și clarifici diferențele înainte să propui o vizionare. Un scor apropiat nu îți spune singur dacă preferințele clientului sunt încă aceleași sau dacă acceptă oferta."
-      },
-      {
-        "title": "Revii după schimbarea criteriilor",
-        "text": "Actualizezi cererea când clientul își schimbă preferințele și proprietatea când primești informații noi. Consulți potrivirile recalculate și citești din nou explicațiile. Continui discuția pornind de la datele curente, fără să te bazezi doar pe o selecție făcută înaintea modificărilor."
-      }
+    steps: [
+      { title: "Completezi cererile și proprietățile", text: "Bugetul, localizarea, camerele, suprafața și facilitățile stau în câmpurile lor. Din ele se calculează potrivirile." },
+      { title: "Alegi de unde pornești", text: "Pornești de la cerere când cauți oferte pentru un client. Pornești de la proprietate când cauți clienți pentru o ofertă." },
+      { title: "Citești scorul și motivele", text: "Compari rezultatele, clarifici diferențele cu clientul și propui vizionările. Când criteriile se schimbă, revii la potrivirile recalculate." }
     ],
-    "faq": [
-      {
-        "q": "Pot căuta atât proprietăți, cât și clienți?",
-        "a": "Da. Ai sensurile Cerere → Proprietăți și Proprietate → Clienți. Alegi punctul de pornire în funcție de ceea ce lucrezi: o cerere pentru care cauți oferte sau o proprietate pentru care verifici clienții interesați de caracteristici asemănătoare."
-      },
-      {
-        "q": "Ce criterii intră în potrivire?",
-        "a": "Verifici tranzacția, bugetul, orașul și zona, camerele, suprafața, tipul proprietății și facilitățile cerute. Rezultatele folosesc datele completate în aplicație. Pentru o comparație relevantă, actualizezi câmpurile cererii și proprietății atunci când afli informații noi de la client sau proprietar."
-      },
-      {
-        "q": "Scorul înseamnă că un client va cumpăra?",
-        "a": "Nu. Scorul descrie potrivirea dintre criterii și datele ofertei. Motivele îți arată ce corespunde și ce diferă. Tu verifici interesul clientului, discuți despre proprietate și urmărești evoluția în lead, fără să tratezi scorul ca pe un rezultat confirmat."
-      },
-      {
-        "q": "Ce se întâmplă după modificarea cererii?",
-        "a": "Potrivirile se recalculează din informațiile actualizate. Când schimbi bugetul, zona sau alte criterii, revii la rezultate pentru noua comparație. Citești scorul și motivele înainte de a continua selecția, ca să nu lucrezi doar cu preferințele exprimate anterior."
-      }
+    faq: [
+      { q: "Pot căuta atât proprietăți, cât și clienți?", a: "Da. Ai ambele sensuri: Cerere → Proprietăți și Proprietate → Clienți. Alegi punctul de pornire după ce lucrezi în acel moment. Dimineața poți porni de la cererile noi, iar când intră o ofertă în portofoliu, pornești de la ea și vezi pe cine să suni." },
+      { q: "Ce criterii intră în potrivire?", a: "Tranzacția, bugetul, orașul și zona, camerele, suprafața, tipul proprietății și facilitățile cerute. Rezultatele folosesc datele completate în aplicație, așa că merită să le ții la zi." },
+      { q: "Scorul înseamnă că un client va cumpăra?", a: "Nu. Scorul arată cât de bine se potrivesc criteriile cu oferta. Interesul real îl afli din discuția cu clientul. Motivele te ajută să pregătești acea discuție." },
+      { q: "Ce se întâmplă după modificarea cererii?", a: "Potrivirile se recalculează din noile criterii. Deschizi rezultatele și vezi imediat selecția actualizată, fără să refaci căutarea. La fel se întâmplă când actualizezi prețul sau caracteristicile unei proprietăți: lista clienților potriviți se schimbă odată cu ea." }
     ],
-    "related": [
-      "cereri",
-      "proprietati",
-      "contacte",
-      "lead-uri"
-    ]
+    related: ["cereri", "proprietati", "contacte", "lead-uri"]
   }
   ,{
     slug: "activitati",
