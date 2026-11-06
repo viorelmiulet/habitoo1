@@ -6,6 +6,7 @@ import { FACEBOOK_URL } from "./structured-data";
 import { GOOGLE_PROFILE_URL, LEGAL_NAME, COMPANY_TAX_ID, COMPANY_REGISTER_ID } from "./public-identity";
 import { useEffect, useState } from "react";
 import { footerColumns } from "./public-nav";
+import { FEATURE_ENTRIES, featureHref } from "@/lib/marketing/feature-pages";
 import { getHasPublicPartners } from "@/lib/public-partners.functions";
 
 export function PublicFooter({ description = "CRM imobiliar pentru agențiile din România: proprietăți, clienți, cereri, lead-uri, matching automat, activități și rapoarte, într-o singură platformă." }: { description?: string }) {
@@ -33,7 +34,17 @@ export function PublicFooter({ description = "CRM imobiliar pentru agențiile di
               Lasă-ne o recenzie pe Google
             </a>
           </div>
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-7">
+            <div>
+              <h3 className="font-sans text-xs font-semibold tracking-wider text-navy uppercase">Funcționalități</h3>
+              <ul className="mt-4 space-y-2.5">
+                {FEATURE_ENTRIES.slice(0, 8).map((e) => (
+                  <li key={e.key}>
+                    <a href={featureHref(e)} className="text-sm text-muted-foreground transition-colors hover:text-foreground">{e.name}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
             {footerColumns.map((col) => (
               <div key={col.title}>
                 <h3 className="font-sans text-xs font-semibold tracking-wider text-navy uppercase">

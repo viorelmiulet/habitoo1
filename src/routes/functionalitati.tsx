@@ -7,7 +7,6 @@ import {
   Bell,
   Building2,
   CalendarDays,
-  Check,
   ClipboardList,
   History,
   Kanban,
@@ -47,7 +46,7 @@ import { PipelineMock } from "@/components/marketing/mockups/PipelineMock";
 import { PropertiesMock } from "@/components/marketing/mockups/PropertiesMock";
 import { ReportsMock } from "@/components/marketing/mockups/ReportsMock";
 import { cn } from "@/lib/utils";
-import { FEATURE_CATEGORIES, FEATURE_ENTRIES, featureHref, type FeatureEntry } from "@/lib/marketing/feature-pages";
+import { FEATURE_CATEGORIES, FEATURE_ENTRIES, featureHref, featurePageBySlug, type FeatureEntry } from "@/lib/marketing/feature-pages";
 import { publicPortalCount } from "@/lib/portals/integration-pages";
 import { SITE_URL } from "@/components/marketing/public-head";
 
@@ -65,9 +64,7 @@ function featuresItemListJsonLd() {
 }
 
 function FeatureLink({ entry, children, className }: { entry: FeatureEntry; children: ReactNode; className?: string }) {
-  return entry.hash
-    ? <a href={featureHref(entry)} className={className}>{children}</a>
-    : <a href={entry.to} className={className}>{children}</a>;
+  return <a href={featureHref(entry)} className={className}>{children}</a>;
 }
 
 const TITLE = "Funcționalități — Habitoo CRM imobiliar";
@@ -340,6 +337,9 @@ function FeaturesPage() {
                 {m.headline}
               </h2>
               <p className="mt-4 text-base text-pretty text-muted-foreground">{m.text}</p>
+              {featurePageBySlug(m.id) && (
+                <a href={`/functionalitati/${m.id}`} className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">Află mai multe <ArrowRight className="size-4" /></a>
+              )}
             </div>
             <Reveal
               className={cn(
