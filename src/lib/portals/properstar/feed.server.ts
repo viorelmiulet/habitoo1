@@ -71,6 +71,19 @@ function splitName(fullName: string | null | undefined): {
 }
 
 /**
+ * Logo-ul agenției: link public permanent (redirect), ca în celelalte indexuri —
+ * nu un URL semnat temporar. Fără logo încărcat și fără adresă externă https:
+ * nil, iar elementul `Logo` lipsește din feed.
+ */
+function agencyLogoUrl(
+  org: { id: string; logo_path?: string | null; logo_url?: string | null },
+  baseUrl: string,
+): string | null {
+  const hasLogo = Boolean(org.logo_path?.trim()) || Boolean(httpsUrlOrNull(org.logo_url ?? null));
+  return agencyLogoFeedUrl(org.id, hasLogo, baseUrl);
+}
+
+/**
  * Antetele răspunsului public. Nu lăsăm clientul să păstreze feedul: o ofertă
  * corectată trebuie să apară la următoarea citire, nu după cinci minute.
  * Baza de date rămâne protejată de cache-ul de pe server.
@@ -171,8 +184,6 @@ export async function buildProperstarFeed(input: {
   const capped = allRows.length > PROPERSTAR_MAX_ADVERTS;
   const rows = allRows.slice(0, PROPERSTAR_MAX_ADVERTS);
 
-  const signedLogos = await signAgencyLogos(supabaseAdmin as never, [organization?.logo_path]);
-  const signedLogos = await signAgencyLogos(supabaseAdmin as never, [organization?.logo_path]);
   const office: ProperstarOffice = {
     officeId: organization?.id ?? input.organizationId,
     officeName: organization?.name ?? null,
@@ -182,7 +193,7 @@ export async function buildProperstarFeed(input: {
     address: organization?.material_address ?? null,
     postalCode: organization?.postal_code ?? null,
     city: organization?.city ?? null,
-    logo: organization ? pickAgencyLogoUrl(organization, signedLogos) : null,
+    logo: organization ? agencyLogoUrl(organization, baseUrl) : null,
   };
 
   const ids = rows.map((r) => r.id);
