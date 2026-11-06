@@ -64,7 +64,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { CurrentUser } from "@/hooks/use-session";
-import { useTheme, type ThemePreference } from "@/hooks/use-theme";
+import { ThemeSwitch } from "@/components/app/ThemeSwitch";
 import { planLabel } from "@/lib/plans";
 import {
   activeNavigationPath,
@@ -226,7 +226,6 @@ function AccountMenu({
   collapsed: boolean;
   onSignOut?: () => void;
 }) {
-  const { preference, setPreference } = useTheme();
   const displayName = user.profile?.full_name || user.email || "Utilizator";
   const isPlatform = variant === "platform";
 
@@ -296,24 +295,6 @@ function AccountMenu({
             <HelpCircle /> Ajutor
           </a>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-          Temă
-        </DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={preference}
-          onValueChange={(value) => setPreference(value as ThemePreference)}
-        >
-          <DropdownMenuRadioItem value="light">
-            <Sun /> Luminoasă
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">
-            <Moon /> Întunecată
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="system">
-            <Monitor /> Sistem
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onSignOut}>
           <LogOut /> Deconectare
@@ -441,8 +422,8 @@ export function AppSidebar({
     >
       <div
         className={cn(
-          "px-3 pt-4 pb-3",
-          collapsed ? "flex justify-center" : "px-4",
+          "flex flex-col items-center px-3 pt-4 pb-3",
+          collapsed ? "" : "px-4",
           onNavigate && !collapsed && "pr-12",
         )}
       >
@@ -460,6 +441,7 @@ export function AppSidebar({
             loading="eager" decoding="async" />
         </Link>
         {collapsed ? null : <p className="mt-2 truncate text-center text-xs font-medium text-sidebar-foreground">{organizationName}</p>}
+        <div className="mt-3"><ThemeSwitch collapsed={collapsed} /></div>
       </div>
 
       <nav

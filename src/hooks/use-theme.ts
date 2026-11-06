@@ -6,12 +6,12 @@ const STORAGE_KEY = "habitoo.theme";
 const EVENT = "habitoo:theme";
 
 function readPreference(): ThemePreference {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "system";
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === "dark" || v === "light" || v === "system" ? v : "light";
+    return v === "dark" || v === "light" || v === "system" ? v : "system";
   } catch {
-    return "light";
+    return "system";
   }
 }
 
@@ -27,7 +27,7 @@ function resolve(pref: ThemePreference): "light" | "dark" {
  * în AppShell), astfel încât site-ul public rămâne neschimbat.
  */
 export function useTheme() {
-  const [preference, setPreferenceState] = useState<ThemePreference>("light");
+  const [preference, setPreferenceState] = useState<ThemePreference>("system");
 
   useEffect(() => {
     setPreferenceState(readPreference());

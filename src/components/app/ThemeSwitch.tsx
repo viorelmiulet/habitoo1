@@ -1,5 +1,5 @@
 /** Comutator temă cu trei poziții (Luminos / Automat / Întunecat) din meniul lateral. */
-import { Moon, SunMedium, CircleHalf } from "@/components/app/theme-icons";
+import { Contrast as CircleHalf, Moon, SunMedium } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme, type ThemePreference } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
