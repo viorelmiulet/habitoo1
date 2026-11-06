@@ -39,7 +39,7 @@ export async function runContactUpdateJob(
   const { data: connection } = await admin.from("portal_connections").select("activated")
     .eq("organization_id", job.organization_id).eq("portal", job.portal_key).maybeSingle();
   if (!connection?.activated) return { portalId: job.portal_key, ok: true, action: "skipped", message: "Sărit: portalul nu mai este activat." };
-  const result = await runRepublishJob(admin, job, input => execute({ ...input, operationLabel: "update" }));
+  const result = await runRepublishJob(admin, job, input => execute({ ...input, action: "update", operationLabel: "update" }));
   return { ...result, action: result.action === "republished" ? "updated" : result.action,
     message: result.action === "republished" ? `${result.portalName}: contactul a fost actualizat.` : result.message };
 }

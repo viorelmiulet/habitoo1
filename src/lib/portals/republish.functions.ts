@@ -50,14 +50,15 @@ export const getRepublishPreview = createServerFn({ method: "POST" })
     const { admin, org, scope, pairs } = await prepare(context, data);
     const queued = countByPortal(pairs.queued);
     const auto = countByPortal(pairs.autoPull);
-    const portalIds = [...new Set([...Object.keys(queued), ...Object.keys(auto)])];
+    const retry = countByPortal(pairs.retry);
+    const portalIds = [...new Set([...Object.keys(queued), ...Object.keys(retry), ...Object.keys(auto)])];
     return {
       canChooseScope: !org.agentOnly,
       scope,
       activeBatchId: await activeBatch(admin, org.organizationId),
-      listings: new Set(pairs.queued.map((p) => p.propertyId)).size,
-      portals: Object.keys(queued).length,
-      perPortal: portalIds.map((portalId) => ({ portalId, name: label(portalId), queued: queued[portalId] ?? 0, autoPull: auto[portalId] ?? 0 })),
+      listings: new Set([...pairs.queued, ...pairs.retry].map((p) => p.propertyId)).size,
+      portals: new Set([...Object.keys(queued), ...Object.keys(retry)]).size,
+      perPortal: portalIds.map((portalId) => ({ portalId, name: label(portalId), queued: queued[portalId] ?? 0, retry: retry[portalId] ?? 0, autoPull: auto[portalId] ?? 0 })),
     };
   });
 
@@ -67,13 +68,13 @@ export const startRepublish = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { admin, org, scope, pairs, userId } = await prepare(context, data);
     if (await activeBatch(admin, org.organizationId)) throw new Error("O republicare rulează deja pentru agenție. Așteaptă să se termine.");
-    if (pairs.queued.length === 0 && pairs.autoPull.length === 0) throw new Error("Nu există anunțuri publicate de republicat.");
+    if (pairs.queued.length === 0 && pairs.retry.length === 0 && pairs.autoPull.length === 0) throw new Error("Nu există anunțuri publicate de republicat.");
     const autoItems = pairs.autoPull.map((p) => ({ propertyId: p.propertyId, portalId: p.portalId, message: AUTO_PULL_MESSAGE }));
     // One RPC = one transaction: batch, all jobs, audit and worker arm. Nothing is left half-done.
     const { data: started, error } = await admin.rpc("start_portal_republish_batch", republishStartArgs({
       organizationId: org.organizationId, userId, scope, portalKeys: data.portalKeys ?? [], kind: "republish",
       operation: "republish", superadmin: org.superadmin, syncExisting: true, skippedItems: autoItems,
-      pairs: staggerRepublishPairs(pairs.queued, Date.now()), busyMessage: "Se sincronizează deja; sărit.",
+      pairs: staggerRepublishPairs([...pairs.queued, ...pairs.retry], Date.now()), busyMessage: "Se sincronizează deja; sărit.",
     }));
     if (error || !started) {
       if ((error as { code?: string } | null)?.code === "23505") throw new Error("O republicare rulează deja pentru agenție. Așteaptă să se termine.");
