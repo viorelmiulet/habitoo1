@@ -8,7 +8,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
-import { CalendarClock, Check, Phone, Rocket } from "lucide-react";
+import { AlertTriangle, CalendarClock, Check, Phone, Rocket } from "lucide-react";
 import { AgentGoalsCard } from "@/components/app/dashboard/AgentGoalsCard";
 import { SectionCard } from "@/components/app/SectionCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -146,6 +146,31 @@ export function AgentDashboard() {
                     ) : null}
                   </li>
                 ))}
+              </ul>
+            </SectionCard>
+          ) : null}
+
+          {(data?.listingIssues.length ?? 0) > 0 ? (
+            <SectionCard
+              title="Anunțurile mele care au nevoie de atenție"
+              icon={AlertTriangle}
+              flush
+              action={(data?.listingIssues.length ?? 0) > 5 ? (
+                <Link to="/app/properties" className="text-sm font-medium text-gold-dark hover:underline">Vezi toate →</Link>
+              ) : undefined}
+            >
+              <ul className="divide-y divide-border">
+                {data!.listingIssues.slice(0, 5).map((row) => {
+                  const main = row.issues.find((i) => i.severity === "danger") ?? row.issues[0]!;
+                  return (
+                    <li key={row.propertyId} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                      <Link to="/app/properties/$id" params={{ id: row.propertyId }} className="min-w-0 flex-1 truncate font-medium hover:text-primary">
+                        {row.title}
+                      </Link>
+                      <StatusBadge tone={main.severity === "danger" ? "danger" : "warning"}>{main.label}</StatusBadge>
+                    </li>
+                  );
+                })}
               </ul>
             </SectionCard>
           ) : null}

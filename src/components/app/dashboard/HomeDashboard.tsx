@@ -91,18 +91,20 @@ function MetricCard({
   icon: Icon,
   to,
   now,
+  search,
 }: {
   label: string;
   metric: HomeMetric;
   icon: typeof Users;
   to: "/app/properties" | "/app/requests" | "/app/leads" | "/app/contacts";
   now: Date;
+  search?: { deschise: true };
 }) {
   const series = dailyAdditions(metric.createdAt, now);
   const cmp = monthComparison(metric.createdAt, now);
   const trend = trendLabel(cmp.current, cmp.previous);
   return (
-    <Link to={to} className={cn(CARD, "block min-w-0 transition-shadow hover:border-gold/50 hover:shadow-md")}>
+    <Link to={to} search={search as never} className={cn(CARD, "block min-w-0 transition-shadow hover:border-gold/50 hover:shadow-md")}>
       <div className="flex items-center justify-between gap-2">
         <p className="truncate text-sm text-muted-foreground">{label}</p>
         <Icon className="size-4 shrink-0 text-gold-dark" aria-hidden />
@@ -211,7 +213,7 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard label="Proprietăți active" metric={data.metrics.properties} icon={Building2} to="/app/properties" now={now} />
             <MetricCard label="Cereri active" metric={data.metrics.requests} icon={ClipboardList} to="/app/requests" now={now} />
-            <MetricCard label="Lead-uri deschise" metric={data.metrics.leads} icon={Users} to="/app/leads" now={now} />
+            <MetricCard label="Lead-uri deschise" metric={data.metrics.leads} icon={Users} to="/app/leads" search={{ deschise: true }} now={now} />
             <MetricCard label="Contacte" metric={data.metrics.contacts} icon={UserRound} to="/app/contacts" now={now} />
           </div>
 
