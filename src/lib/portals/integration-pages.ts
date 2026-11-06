@@ -754,6 +754,17 @@ export function publicPortalCount(): number {
   return publicPortalIds().length;
 }
 
+/** Acord românesc: „de” când ultimele două cifre sunt 00 sau 20–99. */
+export function numeralLabel(n: number, singular: string, plural: string): string {
+  if (n === 1) return `${n} ${singular}`;
+  const lastTwoDigits = n % 100;
+  return `${n}${lastTwoDigits === 0 || lastTwoDigits >= 20 ? " de" : ""} ${plural}`;
+}
+
+export function portalsLabel(n: number): string {
+  return numeralLabel(n, "portal", "portaluri");
+}
+
 /** Ce face fiecare integrare, pentru tabelul de pe /integrari (din registru). */
 export function integrationFeatures(p: IntegrationPage) {
   const caps = p.definition.capabilities;
