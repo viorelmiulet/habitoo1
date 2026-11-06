@@ -3450,6 +3450,68 @@ export type Database = {
           },
         ]
       }
+      habitoo_news: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          link_url: string | null
+          published: boolean
+          published_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_url?: string | null
+          published?: boolean
+          published_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_url?: string | null
+          published?: boolean
+          published_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      habitoo_news_reads: {
+        Row: {
+          news_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          news_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          news_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habitoo_news_reads_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "habitoo_news"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homedirect_listings: {
         Row: {
           external_id: string
