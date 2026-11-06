@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { houseraStatusForStage, syncHouseraLeadStatuses } from "./lead-status.server";
 import { HouseraError } from "./client.server";
+import type { HouseraClientLike } from "./publish";
+const cl = (fn: unknown) => ({ requestMeta: fn }) as unknown as HouseraClientLike;
 
 type Row = Record<string, unknown>;
 function db(links: Row[]) {
@@ -33,7 +35,7 @@ describe("H11 etapa lead → Housera", () => {
   it("schimbare → PATCH doar cu status", async () => {
     const d = db([link()]);
     const requestMeta = vi.fn(async () => ({ status: 200, headers: new Headers(), data: {} }));
-    await syncHouseraLeadStatuses(d, "org", { requestMeta });
+    await syncHouseraLeadStatuses(d, "org", cl(requestMeta));
     expect(requestMeta).toHaveBeenCalledWith("leads/lead_1", expect.objectContaining({ method: "PATCH", body: { status: "offer" } }));
     expect(d.links[0]).toMatchObject({ status_desired: null, status_sent: "offer", status_remote: "offer" });
   });
@@ -41,7 +43,7 @@ describe("H11 etapa lead → Housera", () => {
   it("aceeași etapă → niciun apel", async () => {
     const d = db([link({ status_desired: "contacted", status_remote: "contacted" })]);
     const requestMeta = vi.fn();
-    await syncHouseraLeadStatuses(d, "org", { requestMeta });
+    await syncHouseraLeadStatuses(d, "org", cl(requestMeta));
     expect(requestMeta).not.toHaveBeenCalled();
     expect(d.links[0]!.status_desired).toBeNull();
   });
@@ -49,10 +51,10 @@ describe("H11 etapa lead → Housera", () => {
   it("eșec temporar → rămâne în așteptare și se reia", async () => {
     const d = db([link()]);
     const fail = vi.fn(async () => { throw new HouseraError("rate_limited", "Limită", 429, "too_many_requests"); });
-    expect((await syncHouseraLeadStatuses(d, "org", { requestMeta: fail })).failed).toBe(1);
+    expect((await syncHouseraLeadStatuses(d, "org", cl(fail))).failed).toBe(1);
     expect(d.links[0]).toMatchObject({ status_desired: "offer", status_sent: null });
     const ok = vi.fn(async () => ({ status: 200, headers: new Headers(), data: {} }));
-    expect((await syncHouseraLeadStatuses(d, "org", { requestMeta: ok })).sent).toBe(1);
+    expect((await syncHouseraLeadStatuses(d, "org", cl(ok))).sent).toBe(1);
     expect(d.links[0]).toMatchObject({ status_desired: null, status_sent: "offer", status_sync_error: null });
   });
 });

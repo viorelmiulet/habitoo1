@@ -160,7 +160,7 @@ async function importLead(ctx: Ctx, e: HouseraEvent, externalId: string, link: A
   if (link?.lead_id) {
     if (e.type === "lead.updated") {
       const { noteHouseraRemoteStatus } = await import("./lead-status.server");
-      await noteHouseraRemoteStatus(admin, orgId, externalId, lead.status);
+      await noteHouseraRemoteStatus(admin, orgId, externalId, lead.status ?? null);
     }
     const rowId = await insertMessage(admin, { ...msg, lead_id: link.lead_id });
     if (rowId) await appendNote(admin, orgId, link.lead_id, note, nowIso);
