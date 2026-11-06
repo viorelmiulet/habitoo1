@@ -105,7 +105,7 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-xl flex-col gap-4 overflow-hidden rounded-[18px] bg-card p-4 sm:w-full sm:p-6">
         <DialogHeader className="shrink-0 pr-6">
           <DialogTitle className="font-display">Republică anunțurile</DialogTitle>
-          <DialogDescription>Retrimite pe portaluri anunțurile deja publicate, cu datele actuale. Nu publică nimic nou, nu retrage și nu folosește promovări plătite.</DialogDescription>
+          <DialogDescription>Retrimite pe portaluri anunțurile deja publicate, cu datele actuale, și reîncearcă o dată anunțurile selectate a căror publicare a fost respinsă. Nu retrage și nu folosește promovări plătite.</DialogDescription>
         </DialogHeader>
         {batch ? (
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 text-sm">
