@@ -121,7 +121,7 @@ describe("saving", () => {
     const t = parseHouseraToken(goodBody, env, 0);
     const p = houseraConnectionPatch(t, { reconnect_required: true, other: 1 }, (v) => `enc:${Buffer.from(v).toString("base64")}`, "2026-11-05T00:00:00.000Z");
     expect(p.external_account_id).toBe("1234");
-    expect(p.settings).toEqual({ other: 1, oauth: { connected_at: "2026-11-05T00:00:00.000Z", expires_at: t.expires_at, scopes: ["listings:read", "listings:write"], connection_id: "1234" } });
+    expect(p.settings).toEqual({ other: 1, housera_env: "staging", oauth: { connected_at: "2026-11-05T00:00:00.000Z", expires_at: t.expires_at, scopes: ["listings:read", "listings:write"], connection_id: "1234" } });
     expect(JSON.stringify(p)).not.toContain("hsr_test_");
   });
 });
