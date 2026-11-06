@@ -1,3 +1,7 @@
+## S3 — primele cinci pagini de funcții
+- [ ] Conținut bazat pe funcțiile existente, legături din cuprins și asociere matching → potriviri-automate
+- [ ] Extinderea și rularea exclusivă a testului funcționalităților; verificare pagini; fără publicare
+
 ## S1.1 — acordul numeralelor
 - [x] Helper comun; acord corect pe homepage, /integrari și /functionalitati; 44 teste din cele trei fișiere cerute trec, pagini și metadate verificate; fără publicare
 
