@@ -102,7 +102,7 @@ export async function applyHouseraEvent(admin: Admin, orgId: string | null, e: H
   if (effect.kind !== "listing") return { note: effect.note, organizationId: orgId };
   const row = await findListingRow(admin, orgId, effect.code, effect.externalRef);
   if (!row) return { note: "anunț necunoscut", organizationId: orgId };
-  const patch = applyHouseraEffect({ ...row, portal_offers: parsePortalOffers(row.portal_offers) }, effect, nowIso);
+  const patch = applyHouseraEffect({ ...row, portal_offers: parsePortalOffers(row.portal_offers) }, effect, nowIso, (await import("./config")).activeHouseraEnv());
   if (!patch) return { note: "anunț necunoscut", organizationId: row.organization_id };
   const { error } = await admin.from("portal_listings").update({ ...patch, updated_at: nowIso }).eq("id", row.id);
   if (error) throw new Error("Anunțul Housera nu a putut fi actualizat.");
