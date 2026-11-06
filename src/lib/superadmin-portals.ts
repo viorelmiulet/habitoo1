@@ -19,3 +19,13 @@ export function errorsPill(n: number): { text: string; tone: "error" | "ok" } {
   if (n === 0) return { text: "fără erori", tone: "ok" };
   return { text: n === 1 ? "1 eroare" : `${n} ${n >= 20 ? "de " : ""}erori`, tone: "error" };
 }
+
+/** Textul de sub titlu, doar cu erori de platformă (conexiuni + publicări). */
+export function portalsSubtitle(failingConnections: number, cards: PortalCard[]): string {
+  const pubErrors = cards.reduce((n, c) => n + c.errors, 0);
+  if (failingConnections === 0 && pubErrors === 0) return "Toate conexiunile funcționează";
+  const parts: string[] = [];
+  if (failingConnections > 0) parts.push(failingConnections === 1 ? "1 conexiune cu eroare" : `${failingConnections} ${failingConnections >= 20 ? "de " : ""}conexiuni cu eroare`);
+  if (pubErrors > 0) parts.push(`${errorsPill(pubErrors).text} de platformă la publicare`);
+  return parts.join(" · ");
+}

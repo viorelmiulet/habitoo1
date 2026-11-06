@@ -2,13 +2,11 @@ import { Link } from "@tanstack/react-router";
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPortalDefinition } from "@/lib/portals/registry";
-import { agenciesLabel, errorsPill, publishedLabel, type PortalCard } from "@/lib/superadmin-portals";
+import { agenciesLabel, errorsPill, portalsSubtitle, publishedLabel, type PortalCard } from "@/lib/superadmin-portals";
 import type { SuperadminTodo } from "@/lib/superadmin-todo";
 import { cn } from "@/lib/utils";
 
 export function PortalsSection({ portals, todo, loading }: { portals: PortalCard[] | undefined; todo: SuperadminTodo | undefined; loading: boolean }) {
-  const totalErrors = todo?.blocked.reduce((n, b) => n + b.total, 0) ?? 0;
-  const notPublishable = todo?.blocked.reduce((n, b) => n + b.notPublishable, 0) ?? 0;
   return (
     <section className="min-w-0 rounded-[14px] border border-border bg-surface" data-testid="superadmin-portals">
       <header className="space-y-1 border-b border-border px-5 py-4">
@@ -18,11 +16,8 @@ export function PortalsSection({ portals, todo, loading }: { portals: PortalCard
             Configurări
           </Link>
         </div>
-        {todo ? (
-          <p className="text-[13px] text-muted-foreground">
-            Conexiuni cu eroare: {todo.counts.failingConnections}.
-            {totalErrors > 0 ? ` ${notPublishable} din cele ${totalErrors} erori vin din anunțuri nepublicate în CRM, nu din portaluri.` : ""}
-          </p>
+        {todo && portals ? (
+          <p className="text-[13px] text-muted-foreground">{portalsSubtitle(todo.counts.failingConnections, portals)}</p>
         ) : null}
       </header>
       <div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-4">
