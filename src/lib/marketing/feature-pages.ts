@@ -451,7 +451,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Actualizezi lead-ul", text: "Alegi etapa nouă și adaugi o notă. Totul e salvat înainte să pleci de la întâlnire. Colegii văd imediat unde ai ajuns cu clientul." }
     ],
     faq: [
-      { q: "Trebuie să instalez o aplicație?", a: "Nu. Habitoo funcționează în browserul telefonului, cu același cont ca pe calculator. Nu există, deocamdată, o aplicație separată în magazinele de aplicații. Îl poți adăuga pe ecranul telefonului din meniul browserului, ca să-l deschizi mai repede." },
+      { q: "Trebuie să instalez o aplicație?", a: "Nu. Habitoo funcționează în browserul telefonului, cu același cont ca pe calculator. Nu există, deocamdată, o aplicație separată în magazinele de aplicații." },
       { q: "Ce pot face de pe telefon?", a: "Adaugi contacte, lead-uri, cereri, contracte, activități și vizionări. Schimbi etapa lead-urilor, îți vezi agenda și cauți orice client sau proprietate. Ai la tine tot ce îți trebuie între două întâlniri." },
       { q: "Pot fotografia actul de identitate cu telefonul?", a: "Da. La contract alegi fotografierea actului, iar camera telefonului se deschide. Datele se completează automat și le verifici înainte de a merge mai departe. Poți și încărca o poză făcută mai devreme, dacă preferi." },
       { q: "Colegii văd imediat ce adaug?", a: "Da. Tot ce salvezi pe telefon ajunge în aceeași agenție. Colegii văd lead-ul actualizat sau vizionarea nouă fără să le mai spui tu. Nu mai trimiți mesaje separate ca să anunți ce s-a schimbat." }
