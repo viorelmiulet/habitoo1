@@ -1,3 +1,6 @@
+## S1.1 — acordul numeralelor
+- [ ] Helper comun, texte publice și cele trei teste cerute; fără publicare
+
 ## Contracte C3 — șabloane standard
 - [x] Catalog/mapare câmpuri și trei texte standard exacte aplicate prin 0233; hash-urile coincid, tipuri ascunse
 - [x] Tabel vizionare în previzualizare/PDF; numerotare combinată prin 0234; editor/copiere agenție accesibil din Contracte → Șabloane

@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD, integrationPageText, integrationSlugFor, wordCount } from "./integration-pages";
+import { INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD, integrationPageText, integrationSlugFor, portalsLabel, wordCount } from "./integration-pages";
 import { integrationJsonLd } from "./integration-jsonld";
 import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
 const SLUGS = ["storia", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook", "imo24", "zonata", "homedirect", "imopedia", "ofera", "zup", "imobli", "locuit", "bazaruldecase", "imobiliareplus", "vumsi", "housera"];
+
+describe("portalsLabel", () => {
+  it.each([
+    [1, "1 portal"], [2, "2 portaluri"], [19, "19 portaluri"],
+    [20, "20 de portaluri"], [25, "25 de portaluri"], [100, "100 de portaluri"],
+    [101, "101 portaluri"], [120, "120 de portaluri"],
+  ] as const)("%i → %s", (n, expected) => {
+    expect(portalsLabel(n)).toBe(expected);
+  });
+});
 
 describe("pagini integrări", () => {
   it("câte o pagină pentru fiecare slug cerut", () => {
@@ -51,7 +61,7 @@ describe("număr portaluri pe /integrari", async () => {
   });
   it("H1 folosește numărul calculat și fiecare pagină are link", async () => {
     const mod = await import("@/routes/integrari");
-    expect(mod.H1).toBe(`Integrări cu ${publicPortalCount()} portaluri imobiliare din România`);
+    expect(mod.H1).toBe(`Integrări cu ${portalsLabel(publicPortalCount())} imobiliare din România`);
     const { INTEGRATION_OVERVIEW } = await import("./integration-overview");
     for (const p of INTEGRATION_PAGES) expect(INTEGRATION_OVERVIEW.some((o) => o.slug === p.slug)).toBe(true);
     const src = readFileSync("src/routes/integrari.tsx", "utf8");
