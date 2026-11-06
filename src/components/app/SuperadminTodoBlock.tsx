@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, Inbox, LifeBuoy, PlugZap, Unplug } from "lucide-react";
+import { CalendarClock, CheckCircle2, CreditCard, Inbox, LifeBuoy, PlugZap, Unplug } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
