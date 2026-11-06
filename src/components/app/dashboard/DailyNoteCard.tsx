@@ -16,6 +16,23 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 const MAX = 2000;
+const NOTE_PROMPTS = [
+  "Pe cine trebuie să sun azi?",
+  "Ce vizionare confirm pentru mâine?",
+  "Ce proprietar aștept să-mi trimită acte?",
+  "Ce client nou vreau să recontactez?",
+  "Ce anunț are nevoie de poze noi?",
+  "Ce ofertă trimit până diseară?",
+  "Ce preț discut cu proprietarul?",
+  "Ce am promis unui client săptămâna asta?",
+  "Ce proprietate verific în teren?",
+  "Ce document pregătesc pentru semnare?",
+];
+/** Sugestie diferită în fiecare zi (după data locală); nu se salvează. */
+export function notePromptFor(date: Date) {
+  const day = Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000);
+  return NOTE_PROMPTS[day % NOTE_PROMPTS.length];
+}
 type Status = "idle" | "saving" | "saved" | "error";
 
 export function DailyNoteCard({ className }: { className?: string }) {
@@ -100,7 +117,7 @@ export function DailyNoteCard({ className }: { className?: string }) {
             maxLength={MAX}
             rows={6}
             autoFocus={editing && empty}
-            placeholder="Scrie aici ce vrei să nu uiți…"
+            placeholder={notePromptFor(new Date())}
             aria-label="Notița zilei"
             className="resize-none"
           />
@@ -133,6 +150,7 @@ export function DailyNoteCard({ className }: { className?: string }) {
             <NotebookPen className="size-5" aria-hidden />
           </span>
           <p className="mt-3 text-sm font-medium">Nicio notiță încă.</p>
+          <p className="mt-1 text-sm italic text-muted-foreground">Sugestie: {notePromptFor(new Date())}</p>
           <button type="button" onClick={() => setEditing(true)} className="mt-2 text-sm font-medium text-primary hover:underline">
             + Adaugă notiță
           </button>
