@@ -20,6 +20,8 @@ export class HouseraError extends Error {
     super(message);
     this.name = "HouseraError";
   }
+  /** Doar la 429: secundele din `Retry-After`. */
+  retryAfterMs: number | null = null;
 }
 
 export type HouseraClientDeps = {
@@ -32,7 +34,7 @@ export type HouseraClientDeps = {
   onUnauthorized?: () => Promise<void> | void;
 };
 
-export type HouseraRequest = { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; query?: Record<string, string | number>; body?: unknown; headers?: Record<string, string> };
+export type HouseraRequest = { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; query?: Record<string, string | number>; body?: unknown; headers?: Record<string, string>; noRateRetry?: boolean };
 export type HouseraResponse<T> = { status: number; headers: Headers; data: T };
 
 const BUSY_RETRIES = 3;
@@ -121,8 +123,10 @@ export function createHouseraClient(deps: HouseraClientDeps) {
         throw new HouseraError("unauthorized", HOUSERA_RECONNECT_MESSAGE, 401, code);
       }
       if (res.status === 429) {
-        if (!rateRetried) { rateRetried = true; await sleep(retryAfterMs(res.headers.get("Retry-After"))); continue; }
-        throw new HouseraError("rate_limited", "Limita de cereri Housera a fost atinsă. Reîncearcă peste un minut.", 429, code ?? "too_many_requests");
+        if (!rateRetried && !req.noRateRetry) { rateRetried = true; await sleep(retryAfterMs(res.headers.get("Retry-After"))); continue; }
+        const err = new HouseraError("rate_limited", "Limita de cereri Housera a fost atinsă. Reîncearcă peste un minut.", 429, code ?? "too_many_requests");
+        err.retryAfterMs = retryAfterMs(res.headers.get("Retry-After"));
+        throw err;
       }
       if (res.status === 409 && code === "listing_busy") {
         if (busyRetries < BUSY_RETRIES) { busyRetries++; await sleep(BUSY_DELAY_MS); continue; }
