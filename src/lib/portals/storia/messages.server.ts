@@ -136,6 +136,10 @@ export async function notifyAgentOfStoriaMessage(
     /** Implicit Storia.ro; refolosit de alte portaluri (ex. Housera.ro). */
     portalLabel?: string;
     keyPrefix?: string;
+    /** Opțional: link direct (implicit `/app/leads`). */
+    link?: string;
+    /** Opțional: `false` = fără email (ex. grupare per lead). Implicit trimite. */
+    email?: boolean;
   },
 ): Promise<void> {
   if (!input.assignedTo) return;
@@ -151,11 +155,12 @@ export async function notifyAgentOfStoriaMessage(
         type: "lead",
         title: title.slice(0, 200),
         body: text.slice(0, 500),
-        link: "/app/leads",
+        link: input.link ?? "/app/leads",
       },
       { onConflict: "id", ignoreDuplicates: true },
     );
   }
+  if (input.email === false) return;
   try {
     const { data: agent } = await admin
       .from("profiles")
@@ -167,7 +172,7 @@ export async function notifyAgentOfStoriaMessage(
     await sendEmail({
       to: [agent.email],
       subject: title.slice(0, 180),
-      text: `${text}\n\nDeschide lead-ul în Habitoo CRM: https://crm.habitoo.ro/app/leads`,
+      text: `${text}\n\nDeschide lead-ul în Habitoo CRM: https://crm.habitoo.ro${input.link ?? "/app/leads"}`,
       sendKey: `${prefix}:${input.messageKey}`,
     });
   } catch (error) {

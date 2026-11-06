@@ -6873,6 +6873,7 @@ export type Database = {
           created_at: string
           external_lead_id: string
           id: string
+          last_email_notified_at: string | null
           last_message_id: string | null
           lead_id: string | null
           organization_id: string
@@ -6888,6 +6889,7 @@ export type Database = {
           created_at?: string
           external_lead_id: string
           id?: string
+          last_email_notified_at?: string | null
           last_message_id?: string | null
           lead_id?: string | null
           organization_id: string
@@ -6903,6 +6905,7 @@ export type Database = {
           created_at?: string
           external_lead_id?: string
           id?: string
+          last_email_notified_at?: string | null
           last_message_id?: string | null
           lead_id?: string | null
           organization_id?: string
