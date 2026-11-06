@@ -28,3 +28,18 @@ export function partnerKeyConnectionStatus(
   if (!def.has(env)) return { status: "not_configured", error: def.missing };
   return activated ? { status: "ready", error: null } : { status: "not_configured", error: null };
 }
+
+/**
+ * Mesajul salvat „cheia nu este configurată pe server” rămâne în rând după ce
+ * cheia a fost adăugată. Pentru portalurile cu cheie de partener, mesajul vechi
+ * se ignoră când cheia există acum; restul mesajelor rămân neschimbate.
+ */
+export function currentPartnerKeyError(
+  portalId: string,
+  storedError: string | null,
+  env: Env = process.env,
+): string | null {
+  const def = PARTNER_KEY_PORTALS[portalId];
+  if (!def || storedError !== def.missing) return storedError;
+  return def.has(env) ? null : storedError;
+}
