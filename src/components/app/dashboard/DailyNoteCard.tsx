@@ -17,16 +17,16 @@ import { Textarea } from "@/components/ui/textarea";
 
 const MAX = 2000;
 const NOTE_PROMPTS = [
-  "Pe cine trebuie să sun azi?",
-  "Ce vizionare confirm pentru mâine?",
-  "Ce proprietar aștept să-mi trimită acte?",
-  "Ce client nou vreau să recontactez?",
-  "Ce anunț are nevoie de poze noi?",
-  "Ce ofertă trimit până diseară?",
-  "Ce preț discut cu proprietarul?",
-  "Ce am promis unui client săptămâna asta?",
-  "Ce proprietate verific în teren?",
-  "Ce document pregătesc pentru semnare?",
+  "Sun proprietarul de pe Republicii până la 11 – vrea să știe câți au văzut anunțul.",
+  "Confirm vizionarea de mâine la 17:00 și trimit locația pe WhatsApp.",
+  "Cer extrasul de carte funciară pentru apartamentul de 3 camere.",
+  "Revin la familia care caută 2 camere sub 90.000 €, au cerut și zona Nord.",
+  "Programez fotograful pentru casa nouă – lumina e bună după-amiaza.",
+  "Trimit oferta la doi clienți până diseară și notez cum au reacționat.",
+  "Discut cu proprietarul o scădere de preț: 3 luni fără ofertă serioasă.",
+  "Am promis o listă cu garsoniere lângă metrou – o trimit azi.",
+  "Trec pe la terenul din Bragadiru să văd accesul și utilitățile.",
+  "Pregătesc contractul de intermediere pentru semnare joi.",
 ];
 /** Sugestie diferită în fiecare zi (după data locală); nu se salvează. */
 export function notePromptFor(date: Date) {
