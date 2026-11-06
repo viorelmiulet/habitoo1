@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { hasPortalLogo, PortalLogo } from "@/components/app/PortalLogo";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
-import { homepagePortals, integrationSlugFor } from "@/lib/portals/integration-pages";
+import { homepagePortals, integrationSlugFor, publicPortalCount } from "@/lib/portals/integration-pages";
 
 const integratedPortals = homepagePortals();
 
@@ -15,10 +15,10 @@ export function IntegratedPortalsSection() {
           eyebrow="Integrări"
           title={
             <>
-              Portaluri <span className="text-gold">integrate</span>
+              CRM-ul imobiliar cu cele mai multe integrări: <span className="text-gold">{publicPortalCount()} portaluri</span> dintr-un singur loc
             </>
           }
-          text="Publici anunțurile direct din Habitoo, pe portalurile folosite de agențiile din România."
+          text="Introduci proprietatea o dată și ajunge pe toate portalurile alese, cu actualizare și retragere automată. Cererile clienților de pe portalurile care le trimit intră direct în CRM."
         />
         <ul className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           {integratedPortals.map(({ portal, label }, i) => {

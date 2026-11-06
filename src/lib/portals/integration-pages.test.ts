@@ -38,3 +38,24 @@ describe("pagini integrări", () => {
     for (const s of SLUGS) expect(xml).toContain(`<loc>https://www.habitoo.ro/integrari/${s}</loc>\n    <lastmod>`);
   });
 });
+
+describe("număr portaluri pe /integrari", async () => {
+  const { publicPortalCount, publicPortalIds } = await import("./integration-pages");
+  const { readFileSync } = await import("node:fs");
+  it("Catalogul Facebook nu intră; Publi24+Romimo două; OLX o dată", () => {
+    const ids = publicPortalIds();
+    expect(ids).not.toContain("facebook_catalog");
+    expect(ids).toEqual(expect.arrayContaining(["romimo", "publi24", "olx"]));
+    expect(ids.filter((i) => i.includes("olx"))).toEqual(["olx"]);
+    expect(publicPortalCount()).toBe(25);
+  });
+  it("H1 folosește numărul calculat și fiecare pagină are link", async () => {
+    const mod = await import("@/routes/integrari");
+    expect(mod.H1).toBe(`Integrări cu ${publicPortalCount()} portaluri imobiliare din România`);
+    const { INTEGRATION_OVERVIEW } = await import("./integration-overview");
+    for (const p of INTEGRATION_PAGES) expect(INTEGRATION_OVERVIEW.some((o) => o.slug === p.slug)).toBe(true);
+    const src = readFileSync("src/routes/integrari.tsx", "utf8");
+    expect(src).toContain("<IntegrationsOverview />");
+    expect(src).not.toMatch(/\b(API|OAuth|JSON|XML|feed)\b|lider|nr\. 1|cel mai bun/);
+  });
+});

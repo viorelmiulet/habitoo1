@@ -737,3 +737,33 @@ export function homepagePortals(): { portal: PortalDefinition; label: string }[]
     label: PORTAL_GROUPS.find((g) => g.primary === portal.id)?.label ?? portal.display_name,
   }));
 }
+
+/** Portaluri numărate public: Catalogul Facebook exclus; grupurile (Storia+OLX, Romimo+Publi24) contează separat; OLX o singură dată. */
+export function publicPortalIds(): string[] {
+  const ids = new Set<string>();
+  for (const p of INTEGRATION_PAGES) {
+    if (p.portalId === "facebook_catalog") continue;
+    for (const id of [p.portalId, ...(PORTAL_GROUPS.find((g) => g.primary === p.portalId)?.covers ?? [])]) {
+      ids.add(id === "olx_direct" ? "olx" : id);
+    }
+  }
+  return [...ids];
+}
+
+export function publicPortalCount(): number {
+  return publicPortalIds().length;
+}
+
+/** Ce face fiecare integrare, pentru tabelul de pe /integrari (din registru). */
+export function integrationFeatures(p: IntegrationPage) {
+  const caps = p.definition.capabilities;
+  const pulled = caps.includes("feed_pull");
+  return {
+    direct: caps.includes("publish_listing") && !pulled,
+    pulled,
+    publish: caps.includes("publish_listing") || pulled,
+    update: caps.includes("update_listing") || pulled,
+    withdraw: caps.includes("withdraw_listing") || (pulled && !!p.definition.withdraws_via_feed),
+    leads: LEAD_PORTALS.has(p.portalId) || !!p.definition.receives_leads,
+  };
+}

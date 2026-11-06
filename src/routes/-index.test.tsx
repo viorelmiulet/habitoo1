@@ -11,3 +11,9 @@ describe("pagina principală", () => {
     expect(source).toContain("Autentificare");
   });
 });
+describe("numărul de portaluri pe prima pagină", () => {
+  it("folosește numărul calculat, nu o cifră scrisă de mână", () => {
+    const source = readFileSync(new URL("./index.tsx", import.meta.url), "utf8");
+    expect(source).toContain("o publici pe {publicPortalCount()} portaluri, mai multe decât în orice alt CRM imobiliar din România");
+  });
+});
