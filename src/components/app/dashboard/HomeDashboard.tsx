@@ -9,8 +9,6 @@ import {
   CalendarDays,
   ClipboardList,
   Lightbulb,
-  Megaphone,
-  NotebookPen,
   Plus,
   UserRound,
   Users,
@@ -26,6 +24,7 @@ import { requestStatusLabels, requestStatusTone } from "@/lib/crm";
 import { cn } from "@/lib/utils";
 import { tipOfTheDay } from "./daily-tips";
 import { DailyNoteCard } from "./DailyNoteCard";
+import { HabitooNewsCard } from "./HabitooNewsCard";
 import { greetingFor } from "./greeting";
 import { dailyAdditions, monthComparison, trendLabel } from "./home-stats";
 
@@ -204,10 +203,7 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
                 </Link>
               </div>
             </section>
-            <section className={cn(CARD, "min-w-0")}>
-              <CardTitle icon={Megaphone} title="Noutăți Habitoo" />
-              <EmptyNote icon={Megaphone} title="Nicio noutate momentan." />
-            </section>
+            <HabitooNewsCard className={cn(CARD, "min-w-0")} />
             <DailyNoteCard className={cn(CARD, "min-w-0")} />
           </div>
 
