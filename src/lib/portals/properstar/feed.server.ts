@@ -1,4 +1,3 @@
-import { pickAgencyLogoUrl, signAgencyLogos } from "@/lib/portals/agency-logo";
 /**
  * Construcția feedului XML Properstar (server-only).
  *
@@ -17,6 +16,8 @@ import { feedUrlsForRequest } from "@/lib/site-feed/config";
 
 import {
   FEED_PUBLIC_STATUSES,
+  agencyLogoFeedUrl,
+  httpsUrlOrNull,
   type PropertyImageRow,
   type PropertyRow,
 } from "@/lib/site-feed/mapper";
@@ -170,6 +171,7 @@ export async function buildProperstarFeed(input: {
   const capped = allRows.length > PROPERSTAR_MAX_ADVERTS;
   const rows = allRows.slice(0, PROPERSTAR_MAX_ADVERTS);
 
+  const signedLogos = await signAgencyLogos(supabaseAdmin as never, [organization?.logo_path]);
   const signedLogos = await signAgencyLogos(supabaseAdmin as never, [organization?.logo_path]);
   const office: ProperstarOffice = {
     officeId: organization?.id ?? input.organizationId,
