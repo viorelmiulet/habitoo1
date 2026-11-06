@@ -47,11 +47,11 @@ import { PropertiesMock } from "@/components/marketing/mockups/PropertiesMock";
 import { ReportsMock } from "@/components/marketing/mockups/ReportsMock";
 import { cn } from "@/lib/utils";
 import { FEATURE_CATEGORIES, FEATURE_ENTRIES, featureHref, featurePageBySlug, type FeatureEntry } from "@/lib/marketing/feature-pages";
-import { publicPortalCount } from "@/lib/portals/integration-pages";
+import { portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
 import { SITE_URL } from "@/components/marketing/public-head";
 
 const N = publicPortalCount();
-const INTRO = `Habitoo reunește într-un singur loc toate modulele de care are nevoie agenția, inclusiv publicarea pe ${N} portaluri, cele mai multe integrări dintre CRM-urile imobiliare din România.`;
+const INTRO = `Habitoo reunește într-un singur loc toate modulele de care are nevoie agenția, inclusiv publicarea pe ${portalsLabel(N)}, cele mai multe integrări dintre CRM-urile imobiliare din România.`;
 
 function featuresItemListJsonLd() {
   return {

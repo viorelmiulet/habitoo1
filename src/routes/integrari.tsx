@@ -6,7 +6,7 @@ import { CrmLink } from "@/components/marketing/CrmLink";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { integrationItemListJsonLd } from "@/lib/portals/integration-overview";
-import { INTEGRATION_PAGES, integrationFeatures, publicPortalCount } from "@/lib/portals/integration-pages";
+import { INTEGRATION_PAGES, integrationFeatures, numeralLabel, portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
 import { FaqSection, faqPageJsonLd, type FaqItem } from "@/components/marketing/FaqSection";
 import { Check, Minus } from "lucide-react";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
@@ -16,11 +16,11 @@ import { pageJsonLd } from "@/components/marketing/structured-data";
 
 export const PORTAL_COUNT = publicPortalCount();
 const N = PORTAL_COUNT;
-export const H1 = `Integrări cu ${N} portaluri imobiliare din România`;
+export const H1 = `Integrări cu ${portalsLabel(N)} imobiliare din România`;
 const LEAD_TEXT = "Habitoo CRM are cele mai multe integrări cu portalurile imobiliare din România.";
-const TITLE = `${N} integrări cu portaluri imobiliare | Habitoo CRM`;
-const DESCRIPTION = `Introduci anunțul o singură dată în Habitoo și îl publici pe ${N} portaluri imobiliare din România, cu actualizare și retragere automată.`;
-const META_DESCRIPTION = `Habitoo CRM este conectat la ${N} portaluri imobiliare din România: introduci anunțul o dată, îl actualizezi și îl retragi automat, iar cererile intră în CRM.`;
+const TITLE = `${numeralLabel(N, "integrare", "integrări")} cu portaluri imobiliare | Habitoo CRM`;
+const DESCRIPTION = `Introduci anunțul o singură dată în Habitoo și îl publici pe ${portalsLabel(N)} imobiliare din România, cu actualizare și retragere automată.`;
+const META_DESCRIPTION = `Habitoo CRM este conectat la ${portalsLabel(N)} imobiliare din România: introduci anunțul o dată, îl actualizezi și îl retragi automat, iar cererile intră în CRM.`;
 
 const tablePages = INTEGRATION_PAGES.filter((p) => p.portalId !== "facebook_catalog");
 const GROUPS = [
@@ -34,8 +34,8 @@ const WHY = [
   { title: "Nicio cerere pierdută", text: "Cererile clienților de pe portalurile care le trimit intră direct în CRM, la agentul responsabil." },
 ];
 export const INTEGRARI_FAQ: FaqItem[] = [
-  { q: "Pe câte portaluri pot publica din Habitoo?", a: `Din Habitoo poți publica pe ${N} portaluri imobiliare din România și internaționale. Lista completă, cu ce face fiecare integrare, este pe această pagină.` },
-  { q: "Câte portaluri are Habitoo față de alte CRM-uri?", a: `Habitoo este conectat la ${N} portaluri, cele mai multe dintre CRM-urile imobiliare din România, iar lista completă e pe această pagină.` },
+  { q: "Pe câte portaluri pot publica din Habitoo?", a: `Din Habitoo poți publica pe ${portalsLabel(N)} imobiliare din România și internaționale. Lista completă, cu ce face fiecare integrare, este pe această pagină.` },
+  { q: "Câte portaluri are Habitoo față de alte CRM-uri?", a: `Habitoo este conectat la ${portalsLabel(N)}, cele mai multe dintre CRM-urile imobiliare din România, iar lista completă e pe această pagină.` },
   { q: "Costă ceva în plus integrările?", a: "Integrările sunt incluse în abonamentul Habitoo. Pachetele sau promovările cumpărate direct de la portaluri rămân între agenție și portal." },
   { q: "Cine activează un portal?", a: "Administratorul agenției, din Setări → Portaluri. Unele portaluri se activează dintr-un click, altele cer contul agenției de pe portal; fiecare pagină de integrare explică pașii." },
   { q: "Ce se întâmplă cu anunțurile la vânzare?", a: "Când marchezi proprietatea Vândută, Închiriată sau Arhivată, anunțul se retrage automat de pe portalurile pe care era publicat." },

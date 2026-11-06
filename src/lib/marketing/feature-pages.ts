@@ -2,7 +2,7 @@
  * Funcționalitățile Habitoo CRM: paginile dedicate /functionalitati/<slug> și cuprinsul de pe /functionalitati.
  * Textele sunt pentru agenți, fără termeni tehnici, prețuri sau nume de persoane.
  */
-import { publicPortalCount } from "@/lib/portals/integration-pages";
+import { portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
 
 export const FEATURE_CATEGORIES = [
   "Portofoliu și publicare",
@@ -52,7 +52,7 @@ export type FeatureEntry = {
 
 /** Funcții cu pagină proprie deja publicată; rămân la adresa lor. */
 const EXTERNAL: FeatureEntry[] = [
-  { key: "integrari", name: "Publicare pe portaluri", summary: `Publici proprietățile pe ${publicPortalCount()} portaluri imobiliare direct din Habitoo, cu actualizare și retragere automată.`, category: "Portofoliu și publicare", to: "/integrari", kind: "external" },
+  { key: "integrari", name: "Publicare pe portaluri", summary: `Publici proprietățile pe ${portalsLabel(publicPortalCount())} imobiliare direct din Habitoo, cu actualizare și retragere automată.`, category: "Portofoliu și publicare", to: "/integrari", kind: "external" },
   { key: "import-proprietati", name: "Import proprietăți", summary: "Muți portofoliul din alt CRM în Habitoo, cu poze și date păstrate, fără să introduci totul de la zero.", category: "Portofoliu și publicare", to: "/import-proprietati", kind: "external" },
   { key: "anunturi-proprietari", name: "Anunțuri de la proprietari", summary: "Vezi anunțurile noi ale proprietarilor, le filtrezi și le aduci în portofoliu cu acordul lor.", category: "Portofoliu și publicare", to: "/anunturi-proprietari", kind: "external" },
   { key: "colaborare-intre-agentii", name: "Colaborare între agenții", summary: "Împarți proprietăți cu alte agenții și stabiliți comisionul înainte de a lucra împreună.", category: "Clienți și vânzări", to: "/colaborare-intre-agentii", kind: "external" },

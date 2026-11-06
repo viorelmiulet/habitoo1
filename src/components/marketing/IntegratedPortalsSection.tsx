@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { hasPortalLogo, PortalLogo } from "@/components/app/PortalLogo";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
-import { homepagePortals, integrationSlugFor, publicPortalCount } from "@/lib/portals/integration-pages";
+import { homepagePortals, integrationSlugFor, portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
 
 const integratedPortals = homepagePortals();
 
@@ -15,7 +15,7 @@ export function IntegratedPortalsSection() {
           eyebrow="Integrări"
           title={
             <>
-              CRM-ul imobiliar cu cele mai multe integrări: <span className="text-gold">{publicPortalCount()} portaluri</span> dintr-un singur loc
+              CRM-ul imobiliar cu cele mai multe integrări: <span className="text-gold">{portalsLabel(publicPortalCount())}</span> dintr-un singur loc
             </>
           }
           text="Introduci proprietatea o dată și ajunge pe toate portalurile alese, cu actualizare și retragere automată. Cererile clienților de pe portalurile care le trimit intră direct în CRM."
