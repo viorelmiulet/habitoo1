@@ -42,7 +42,7 @@ export function HabitooNewsCard({ className }: { className?: string }) {
   }
 
   const fetchRate = useServerFn(getHomeEurRate);
-  const rate = useQuery({ queryKey: ["home", "eur-rate"], queryFn: () => fetchRate(), staleTime: 60 * 60_000 }).data;
+  const rate = useQuery({ queryKey: ["home", "eur-rate"], queryFn: () => fetchRate(), staleTime: 0, refetchOnMount: "always" }).data;
   const news = data?.news ?? [];
   const diff = rate && rate.previous ? rate.rate - rate.previous : null;
   const rateItem = rate ? (
@@ -50,6 +50,11 @@ export function HabitooNewsCard({ className }: { className?: string }) {
       <div className="min-w-0">
         <p className="font-semibold">Curs BNR: 1 EUR = {rate.rate.toLocaleString("ro-RO", { minimumFractionDigits: 4, maximumFractionDigits: 4 })} lei</p>
         <p className="text-xs text-muted-foreground">Cursul oficial din {fmt(rate.day)}</p>
+        {rate.previous !== null ? (
+          <p className="text-xs text-muted-foreground">
+            Anterior ({fmt(rate.previousDay)}): {rate.previous.toLocaleString("ro-RO", { minimumFractionDigits: 4, maximumFractionDigits: 4 })} lei
+          </p>
+        ) : null}
       </div>
       {diff !== null ? (
         <span className={cn("shrink-0 text-xs font-medium", diff > 0 ? "text-destructive" : diff < 0 ? "text-success" : "text-muted-foreground")}>
