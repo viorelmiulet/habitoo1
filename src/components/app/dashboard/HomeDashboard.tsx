@@ -1,6 +1,6 @@
 /**
  * Pagina Acasă (admin și agent): salut, agenda, cifre, etape și ultimele
- * proprietăți/cereri. Datele vin din `useHomeDashboard` (RLS decide ce vede fiecare).
+ * proprietăți/lead-uri. Datele vin din `useHomeDashboard` (RLS decide ce vede fiecare).
  */
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
@@ -19,14 +19,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HOME_STAGES, useHomeDashboard, type HomeMetric } from "@/hooks/use-home-dashboard";
 import { formatMoney, formatTime, relativeDays } from "@/lib/format";
-import { leadStageLabels, propertyStatusLabels, propertyStatusTone, propertyTypeLabels, requestKindLabels } from "@/lib/labels";
-import { requestStatusLabels, requestStatusTone } from "@/lib/crm";
+import { leadStageLabels, propertyStatusLabels, propertyStatusTone } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { tipOfTheDay } from "./daily-tips";
 import { DailyNoteCard } from "./DailyNoteCard";
 import { HabitooNewsCard } from "./HabitooNewsCard";
 import { greetingFor } from "./greeting";
-import { dailyAdditions, monthComparison, trendLabel } from "./home-stats";
+import { dailyAdditions, leadSourceLabel, monthComparison, relativeTime, trendLabel } from "./home-stats";
 
 const CARD = "rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6";
 
@@ -36,6 +35,11 @@ const STAGE_STYLE: Record<(typeof HOME_STAGES)[number], string> = {
   viewing: "bg-warning/10 text-warning-text border-warning/25",
   offer: "bg-success/10 text-success border-success/20",
   negotiation: "bg-primary/5 text-primary border-primary/15",
+};
+const LEAD_STAGE_STYLE: Record<string, string> = {
+  ...STAGE_STYLE,
+  won: "bg-success/10 text-success border-success/20",
+  lost: "bg-muted text-muted-foreground border-border",
 };
 
 function CardTitle({ icon: Icon, title, action }: { icon: typeof Users; title: string; action?: ReactNode }) {
@@ -52,7 +56,7 @@ function CardTitle({ icon: Icon, title, action }: { icon: typeof Users; title: s
   );
 }
 
-function SeeAll({ to }: { to: "/app/properties" | "/app/requests" | "/app/activities" }) {
+function SeeAll({ to }: { to: "/app/properties" | "/app/requests" | "/app/activities" | "/app/leads" }) {
   return (
     <Link to={to} className="shrink-0 text-sm font-medium text-gold-dark hover:underline">
       Vezi toate →
@@ -126,13 +130,6 @@ function MetricCard({
       </div>
     </Link>
   );
-}
-
-function budgetLabel(min: number | null, max: number | null, currency: string) {
-  if (min && max) return `${formatMoney(min, currency)} – ${formatMoney(max, currency)}`;
-  if (max) return `până la ${formatMoney(max, currency)}`;
-  if (min) return `de la ${formatMoney(min, currency)}`;
-  return "Buget nespecificat";
 }
 
 export function HomeDashboard({ organizationId, firstName }: { organizationId?: string | null; firstName: string }) {
@@ -266,30 +263,34 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
               )}
             </section>
             <section className={cn(CARD, "min-w-0")}>
-              <CardTitle icon={ClipboardList} title="Ultimele cereri" action={<SeeAll to="/app/requests" />} />
-              {data.latestRequests.length === 0 ? (
-                <EmptyNote icon={ClipboardList} title="Nicio cerere încă." />
+              <CardTitle icon={Users} title="Ultimele lead-uri" action={<SeeAll to="/app/leads" />} />
+              {data.latestLeads.length === 0 ? (
+                <EmptyNote icon={Users} title="Niciun lead încă." />
               ) : (
                 <ul className="divide-y divide-border">
-                  {data.latestRequests.map((r) => (
-                    <li key={r.id} className="flex min-w-0 items-center gap-3 py-3 first:pt-0 last:pb-0">
-                      <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-gold-tint text-gold-dark">
-                        <ClipboardList className="size-5" aria-hidden />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <Link to="/app/requests/$id" params={{ id: r.id }} className="block truncate text-sm font-medium hover:text-primary">
-                          {[requestKindLabels[r.kind] ?? r.kind, r.propertyType ? propertyTypeLabels[r.propertyType] ?? r.propertyType : null]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </Link>
-                        <p className="truncate text-sm font-semibold">{budgetLabel(r.budgetMin, r.budgetMax, r.currency)}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {r.agent ?? "Fără agent"} · {relativeDays(r.createdAt)}
-                        </p>
-                      </div>
-                      <StatusBadge tone={requestStatusTone[r.status] ?? "neutral"} className="shrink-0">
-                        {requestStatusLabels[r.status] ?? r.status}
-                      </StatusBadge>
+                  {data.latestLeads.map((l) => (
+                    <li key={l.id} className="py-1 first:pt-0 last:pb-0">
+                      <Link
+                        to="/app/leads"
+                        search={{ lead: l.id }}
+                        className="flex min-w-0 items-center gap-3 rounded-xl py-2 hover:bg-muted/50"
+                      >
+                        <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-gold-tint text-gold-dark">
+                          <Users className="size-5" aria-hidden />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{l.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {leadSourceLabel(l.source)}{l.property ? ` · ${l.property}` : ""}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {l.agent ?? "Fără agent"} · {relativeTime(l.createdAt)}
+                          </p>
+                        </div>
+                        <span className={cn("shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium", LEAD_STAGE_STYLE[l.stage] ?? LEAD_STAGE_STYLE.lost)}>
+                          {leadStageLabels[l.stage as keyof typeof leadStageLabels] ?? l.stage}
+                        </span>
+                      </Link>
                     </li>
                   ))}
                 </ul>
