@@ -47,6 +47,28 @@ import { PipelineMock } from "@/components/marketing/mockups/PipelineMock";
 import { PropertiesMock } from "@/components/marketing/mockups/PropertiesMock";
 import { ReportsMock } from "@/components/marketing/mockups/ReportsMock";
 import { cn } from "@/lib/utils";
+import { FEATURE_CATEGORIES, FEATURE_ENTRIES, featureHref, type FeatureEntry } from "@/lib/marketing/feature-pages";
+import { publicPortalCount } from "@/lib/portals/integration-pages";
+import { SITE_URL } from "@/components/marketing/public-head";
+
+const N = publicPortalCount();
+const INTRO = `Habitoo reunește într-un singur loc toate modulele de care are nevoie agenția, inclusiv publicarea pe ${N} portaluri, cele mai multe integrări dintre CRM-urile imobiliare din România.`;
+
+function featuresItemListJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Funcționalități Habitoo CRM",
+    numberOfItems: FEATURE_ENTRIES.length,
+    itemListElement: FEATURE_ENTRIES.map((e, i) => ({ "@type": "ListItem", position: i + 1, name: e.name, url: `${SITE_URL}${featureHref(e)}` })),
+  };
+}
+
+function FeatureLink({ entry, children, className }: { entry: FeatureEntry; children: ReactNode; className?: string }) {
+  return entry.hash
+    ? <a href={featureHref(entry)} className={className}>{children}</a>
+    : <a href={entry.to} className={className}>{children}</a>;
+}
 
 const TITLE = "Funcționalități — Habitoo CRM imobiliar";
 const DESCRIPTION =
@@ -59,7 +81,7 @@ export const Route = createFileRoute("/functionalitati")({
       path: "/functionalitati",
       title: TITLE,
       description: DESCRIPTION,
-      jsonLd: pageJsonLd({ path: "/functionalitati", name: "Funcționalități", description: DESCRIPTION, type: "WebPage", about: "software" }),
+      jsonLd: [...pageJsonLd({ path: "/functionalitati", name: "Funcționalități", description: DESCRIPTION, type: "WebPage", about: "software" }), featuresItemListJsonLd()],
     }),
   component: FeaturesPage,
 });
@@ -260,6 +282,7 @@ function FeaturesPage() {
             text="Fiecare modul funcționează împreună cu celelalte: proprietățile alimentează matching-ul, cererile generează lead-uri, iar activitățile apar în calendar și în rapoarte."
           />
           </PublicPhotoHeading>
+          <p className="mx-auto mt-6 max-w-3xl text-center text-base text-foreground sm:text-lg">{INTRO}</p>
           <nav
             aria-label="Module"
             className="mx-auto mt-10 flex max-w-4xl flex-wrap justify-center gap-2"
@@ -274,15 +297,27 @@ function FeaturesPage() {
               </a>
             ))}
           </nav>
-          <div className="mt-6 text-center">
-            <Button asChild variant="link"><Link to="/anunturi-proprietari">Anunțuri de la proprietari, filtre și import în portofoliu <ArrowRight /></Link></Button>
-            <Button asChild variant="link"><Link to="/analiza-comparativa-de-piata">Analiză comparativă de piață, ajustări și raport PDF <ArrowRight /></Link></Button>
-            <Button asChild variant="link" className="h-auto whitespace-normal"><Link to="/colaborare-intre-agentii">Colaborare între agenții, proprietăți și comision <ArrowRight className="shrink-0" /></Link></Button>
-            <Button asChild variant="link" className="h-auto whitespace-normal"><Link to="/comisioane-agenti-imobiliari">Evidența comisioanelor, rapoarte și exporturi <ArrowRight className="shrink-0" /></Link></Button>
-            <Button asChild variant="link" className="h-auto whitespace-normal"><Link to="/import-proprietati">Import proprietăți din alt CRM <ArrowRight className="shrink-0" /></Link></Button>
-          </div>
         </Container>
       </section>
+
+      <Section>
+        <Container className="space-y-12">
+          {FEATURE_CATEGORIES.map((cat) => (
+            <div key={cat}>
+              <h2 className="text-2xl font-semibold tracking-tight text-navy">{cat}</h2>
+              <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {FEATURE_ENTRIES.filter((e) => e.category === cat).map((e) => (
+                  <li key={e.key} className="panel flex flex-col p-5">
+                    <h3 className="font-semibold text-navy">{e.name}</h3>
+                    <p className="mt-2 flex-1 text-sm text-muted-foreground">{e.summary}</p>
+                    <FeatureLink entry={e} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">Află mai multe <ArrowRight className="size-4" /></FeatureLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </Container>
+      </Section>
 
       {modules.map((m, i) => (
         <Section
@@ -305,14 +340,6 @@ function FeaturesPage() {
                 {m.headline}
               </h2>
               <p className="mt-4 text-base text-pretty text-muted-foreground">{m.text}</p>
-              <ul className="mt-6 space-y-2.5">
-                {m.bullets.map((b) => (
-                  <li key={b} className="flex items-start gap-2.5 text-sm text-foreground">
-                    <Check className="mt-0.5 size-4 shrink-0 text-success" />
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
             <Reveal
               className={cn(

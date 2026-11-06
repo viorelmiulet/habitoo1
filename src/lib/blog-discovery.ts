@@ -1,3 +1,4 @@
+import { featurePaths, FEATURES_LASTMOD } from "@/lib/marketing/feature-pages";
 import { INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD } from "@/lib/portals/integration-pages";
 import type { BlogStatus } from "@/lib/blog";
 import { PLAN_KEYS, PLAN_LABELS, PLAN_PRICES, planAgentLimitLabel } from "@/lib/plans";
@@ -58,6 +59,7 @@ export const PAGE_LASTMOD: Record<string, string> = {
 
 const publicPages = ["/", "/functionalitati", "/anunturi-proprietari", "/analiza-comparativa-de-piata", "/colaborare-intre-agentii", "/comisioane-agenti-imobiliari", "/import-proprietati", "/preturi", "/despre", "/contact", "/integrari", "/intrebari-frecvente", "/blog", "/termeni", "/politica-de-confidentialitate"];
 
+const featurePagePaths = featurePaths();
 const integrationPaths = INTEGRATION_PAGES.map((p) => `/integrari/${p.slug}`);
 
 function urlXml(path: string, lastmod: string | null) {
@@ -70,9 +72,9 @@ function latestPostDate(posts: DiscoverableBlogPost[], now: Date) {
 }
 
 export function buildStaticSitemapXml(hasPartners = false, posts: DiscoverableBlogPost[] = [], now = new Date()) {
-  const pages = [...publicPages, ...(hasPartners ? ["/agentii"] : []), ...integrationPaths];
+  const pages = [...publicPages, ...(hasPartners ? ["/agentii"] : []), ...featurePagePaths, ...integrationPaths];
   const urls = pages.map((path) =>
-    urlXml(path, path === "/blog" ? latestPostDate(posts, now) : (PAGE_LASTMOD[path] ?? (path.startsWith("/integrari/") ? INTEGRATION_PAGES_LASTMOD : null))),
+    urlXml(path, path === "/blog" ? latestPostDate(posts, now) : (PAGE_LASTMOD[path] ?? (path.startsWith("/integrari/") ? INTEGRATION_PAGES_LASTMOD : path.startsWith("/functionalitati/") ? FEATURES_LASTMOD : null))),
   );
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }

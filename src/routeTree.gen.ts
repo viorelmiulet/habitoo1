@@ -48,6 +48,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as BlogRssDotxmlRouteImport } from './routes/blog/rss[.]xml'
+import { Route as FunctionalitatiSlugRouteImport } from './routes/functionalitati_.$slug'
 import { Route as IntegrariSlugRouteImport } from './routes/integrari_.$slug'
 import { Route as OCodeRouteImport } from './routes/o.$code'
 import { Route as OfertaIdRouteImport } from './routes/oferta.$id'
@@ -388,6 +389,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
 const BlogRssDotxmlRoute = BlogRssDotxmlRouteImport.update({
   id: '/blog/rss.xml',
   path: '/blog/rss.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FunctionalitatiSlugRoute = FunctionalitatiSlugRouteImport.update({
+  id: '/functionalitati_/$slug',
+  path: '/functionalitati/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IntegrariSlugRoute = IntegrariSlugRouteImport.update({
@@ -1255,6 +1261,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/functionalitati/$slug': typeof FunctionalitatiSlugRoute
   '/integrari/$slug': typeof IntegrariSlugRoute
   '/o/$code': typeof OCodeRoute
   '/oferta/$id': typeof OfertaIdRoute
@@ -1436,6 +1443,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/functionalitati/$slug': typeof FunctionalitatiSlugRoute
   '/integrari/$slug': typeof IntegrariSlugRoute
   '/o/$code': typeof OCodeRoute
   '/oferta/$id': typeof OfertaIdRoute
@@ -1621,6 +1629,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/functionalitati_/$slug': typeof FunctionalitatiSlugRoute
   '/integrari_/$slug': typeof IntegrariSlugRoute
   '/o/$code': typeof OCodeRoute
   '/oferta/$id': typeof OfertaIdRoute
@@ -1807,6 +1816,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/functionalitati/$slug'
     | '/integrari/$slug'
     | '/o/$code'
     | '/oferta/$id'
@@ -1988,6 +1998,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/functionalitati/$slug'
     | '/integrari/$slug'
     | '/o/$code'
     | '/oferta/$id'
@@ -2172,6 +2183,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/functionalitati_/$slug'
     | '/integrari_/$slug'
     | '/o/$code'
     | '/oferta/$id'
@@ -2353,6 +2365,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogRssDotxmlRoute: typeof BlogRssDotxmlRoute
+  FunctionalitatiSlugRoute: typeof FunctionalitatiSlugRoute
   IntegrariSlugRoute: typeof IntegrariSlugRoute
   OCodeRoute: typeof OCodeRoute
   OfertaIdRoute: typeof OfertaIdRoute
@@ -2712,6 +2725,13 @@ declare module '@tanstack/react-router' {
       path: '/blog/rss.xml'
       fullPath: '/blog/rss.xml'
       preLoaderRoute: typeof BlogRssDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/functionalitati_/$slug': {
+      id: '/functionalitati_/$slug'
+      path: '/functionalitati/$slug'
+      fullPath: '/functionalitati/$slug'
+      preLoaderRoute: typeof FunctionalitatiSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/integrari_/$slug': {
@@ -4004,6 +4024,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogRssDotxmlRoute: BlogRssDotxmlRoute,
+  FunctionalitatiSlugRoute: FunctionalitatiSlugRoute,
   IntegrariSlugRoute: IntegrariSlugRoute,
   OCodeRoute: OCodeRoute,
   OfertaIdRoute: OfertaIdRoute,
