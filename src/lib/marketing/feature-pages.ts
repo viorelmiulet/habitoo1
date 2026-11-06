@@ -282,9 +282,9 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Comisionul, ca țintă clară", text: "Un obiectiv de comision îți arată cât mai ai până la suma propusă. Știi dacă luna merge în direcția bună. Evidența detaliată a comisioanelor rămâne în secțiunea dedicată." }
     ],
     steps: [
-      { title: "Stabilești obiectivul", text: "Alegi luna, tipul obiectivului și valoarea țintă. Îl atribui unui agent sau îl lași la nivelul agenției. Ținta e vizibilă pentru toată lumea din momentul în care o salvezi." },
+      { title: "Stabilești obiectivul", text: "Alegi luna, tipul obiectivului și valoarea țintă. Îl atribui unui agent sau îl lași la nivelul agenției. Ținta apare și pe ecranul de start al agentului din momentul în care o salvezi." },
       { title: "Lucrezi ca de obicei", text: "Adaugi proprietăți, programezi vizionări și muți lead-urile pe etape. Nu ai nimic în plus de completat. Fiecare proprietate nouă sau vizionare făcută contează automat pentru obiectiv." },
-      { title: "Urmărești progresul", text: "Deschizi pagina de obiective și vezi cât s-a realizat din fiecare țintă. Dacă rămâi în urmă la jumătatea lunii, afli la timp. Ai timp să-ți reorganizezi agenda și să recuperezi." },
+      { title: "Urmărești progresul", text: "Pe ecranul de start și în pagina de obiective vezi cât s-a realizat din fiecare țintă. Dacă rămâi în urmă la jumătatea lunii, afli la timp. Ai timp să-ți reorganizezi agenda și să recuperezi." },
       { title: "Ajustezi pentru luna următoare", text: "Pornind de la ce s-a realizat, stabilești ținte noi, realiste, pentru fiecare agent și pentru agenție. Fiecare lună pornește de la cifre reale, nu de la estimări." }
     ],
     faq: [
@@ -308,7 +308,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       "Deschizi aplicația și știi imediat ce urmează. Pornești de aici spre fișa de care ai nevoie, fără să pierzi timp căutând. Mai puțin timp pierdut, mai multe apeluri făcute la timp și o zi mai bine organizată."
     ],
     benefits: [
-      { title: "Agentul își vede ziua", text: "Vezi ce ai de făcut azi, pipeline-ul tău și portofoliul tău. Anunțurile care au nevoie de atenție apar separat. La fel și propunerile de colaborare în așteptare." },
+      { title: "Agentul își vede ziua", text: "Vezi ce ai de făcut azi, pipeline-ul tău pe etape și obiectivele lunii, cu progresul lor. Dedesubt ai portofoliul și anunțurile care au nevoie de atenție. La fel și propunerile de colaborare în așteptare." },
       { title: "Administratorul vede agenția", text: "Vezi pipeline-ul pe agenți, portofoliile fiecăruia și sănătatea portofoliului. Urmărești portalurile, conversia din ultimele 30 de zile și echipa. Afli repede unde se blochează lucrurile." },
       { title: "Indicatori dintr-o privire", text: "Proprietățile active, lead-urile noi, vizionările de azi și tranzacțiile câștigate sunt primele cifre pe care le vezi. Un click te duce la lista din spatele fiecărei cifre." },
       { title: "Adăugare rapidă și căutare globală", text: "Din orice ecran adaugi un contact, un lead, o cerere, un contract, o activitate sau o vizionare. Căutarea globală găsește clientul sau proprietatea în câteva secunde." }
@@ -320,7 +320,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Revii între întâlniri", text: "Te întorci pe ecranul de start ca să vezi ce a rămas din ziua ta și ce s-a schimbat în agenție. Cifrele se bazează pe datele actuale din aplicație." }
     ],
     faq: [
-      { q: "De ce văd altceva decât colegul meu?", a: "Ecranul de start depinde de rol. Agentul își vede ziua, pipeline-ul și portofoliul propriu. Administratorul vede agenția pe agenți, portalurile și echipa. Fiecare primește informațiile cu care lucrează zilnic, fără să le caute." },
+      { q: "De ce văd altceva decât colegul meu?", a: "Ecranul de start depinde de rol. Agentul își vede ziua, pipeline-ul, obiectivele lunii și portofoliul propriu. Administratorul vede agenția pe agenți, portalurile și echipa. Fiecare primește informațiile cu care lucrează zilnic, fără să le caute." },
       { q: "Ce indicatori apar?", a: "Proprietățile active, lead-urile noi din ultimele 30 de zile, vizionările de azi și tranzacțiile câștigate în ultimele 30 de zile. Pentru analize detaliate, pe perioadă și agent, folosești rapoartele. Fiecare cifră duce la lista de înregistrări din spatele ei." },
       { q: "Pot căuta un client fără să părăsesc ecranul?", a: "Da. Căutarea globală și adăugarea rapidă sunt disponibile din orice ecran. Găsești un client, o proprietate sau un lead și îl deschizi direct. Nu mai treci prin meniuri pentru o informație rapidă." },
       { q: "Ce vede administratorul agenției?", a: "Pipeline-ul pe agenți, portofoliile fiecăruia, sănătatea portofoliului, portalurile și conversia din ultima lună. Pentru detalii pe fiecare agent, deschide rapoartele sau pagina echipei. Așa afli repede unde se blochează vânzările și cine are nevoie de sprijin." }

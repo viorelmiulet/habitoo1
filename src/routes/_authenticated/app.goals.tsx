@@ -1,3 +1,4 @@
+import { currentPeriod, goalRealized } from "@/lib/goals-progress";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -45,18 +46,6 @@ export const Route = createFileRoute("/_authenticated/app/goals")({
   head: () => { const title = "Habitoo CRM — obiective"; const description = "Obiective lunare pe agent și agenție, cu progres calculat din datele CRM."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: GoalsPage,
 });
-
-function currentPeriod() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function periodRange(period: string) {
-  const [y, m] = period.split("-").map(Number);
-  const start = new Date(y, (m ?? 1) - 1, 1);
-  const end = new Date(y, m ?? 1, 1);
-  return { start, end };
-}
 
 function GoalsPage() {
   const { data: user } = useCurrentUser();
@@ -159,37 +148,8 @@ function GoalsPage() {
   const nameFor = (id: string | null) =>
     id ? (data?.profiles.find((p) => p.id === id)?.full_name ?? "Agent") : "Toată agenția";
 
-  function realizedFor(goal: (typeof allGoals)[number]) {
-    const { start, end } = periodRange(goal.period);
-    const inRange = (d: string) => {
-      const t = new Date(d).getTime();
-      return t >= start.getTime() && t < end.getTime();
-    };
-    const filterUser = (assigned: string | null) => !goal.user_id || assigned === goal.user_id;
-    switch (goal.metric) {
-      case "new_properties":
-        return (data?.properties ?? []).filter(
-          (p) => inRange(p.created_at) && filterUser(p.assigned_to),
-        ).length;
-      case "leads":
-        return (data?.leads ?? []).filter((l) => inRange(l.created_at) && filterUser(l.assigned_to))
-          .length;
-      case "viewings":
-        return (data?.activities ?? []).filter(
-          (a) => a.kind === "viewing" && inRange(a.starts_at) && filterUser(a.assigned_to),
-        ).length;
-      case "transactions":
-        return (data?.leads ?? []).filter(
-          (l) => l.stage === "won" && inRange(l.created_at) && filterUser(l.assigned_to),
-        ).length;
-      case "commission":
-        return (data?.leads ?? [])
-          .filter((l) => l.stage === "won" && inRange(l.created_at) && filterUser(l.assigned_to))
-          .reduce((s, l) => s + Number(l.value ?? 0), 0);
-      default:
-        return 0;
-    }
-  }
+  const realizedFor = (goal: (typeof allGoals)[number]) =>
+    goalRealized(goal, { properties: data?.properties ?? [], leads: data?.leads ?? [], activities: data?.activities ?? [] });
 
   const computed = goals.map((g) => {
     const realized = realizedFor(g);
