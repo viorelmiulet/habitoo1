@@ -81,6 +81,7 @@ import { Route as AuthenticatedSuperadminDeletedRouteImport } from './routes/_au
 import { Route as AuthenticatedSuperadminMailRouteImport } from './routes/_authenticated/superadmin.mail'
 import { Route as AuthenticatedSuperadminMuzicaRouteImport } from './routes/_authenticated/superadmin.muzica'
 import { Route as AuthenticatedSuperadminNomenclatorRouteImport } from './routes/_authenticated/superadmin.nomenclator'
+import { Route as AuthenticatedSuperadminNoutatiRouteImport } from './routes/_authenticated/superadmin.noutati'
 import { Route as AuthenticatedSuperadminPortalLogsRouteImport } from './routes/_authenticated/superadmin.portal-logs'
 import { Route as AuthenticatedSuperadminPortalsRouteImport } from './routes/_authenticated/superadmin.portals'
 import { Route as AuthenticatedSuperadminQaRouteImport } from './routes/_authenticated/superadmin.qa'
@@ -574,6 +575,12 @@ const AuthenticatedSuperadminNomenclatorRoute =
   AuthenticatedSuperadminNomenclatorRouteImport.update({
     id: '/nomenclator',
     path: '/nomenclator',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminNoutatiRoute =
+  AuthenticatedSuperadminNoutatiRouteImport.update({
+    id: '/noutati',
+    path: '/noutati',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
 const AuthenticatedSuperadminPortalLogsRoute =
@@ -1294,6 +1301,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/muzica': typeof AuthenticatedSuperadminMuzicaRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
+  '/superadmin/noutati': typeof AuthenticatedSuperadminNoutatiRoute
   '/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
@@ -1475,6 +1483,7 @@ export interface FileRoutesByTo {
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/muzica': typeof AuthenticatedSuperadminMuzicaRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
+  '/superadmin/noutati': typeof AuthenticatedSuperadminNoutatiRoute
   '/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
@@ -1662,6 +1671,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/_authenticated/superadmin/muzica': typeof AuthenticatedSuperadminMuzicaRoute
   '/_authenticated/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
+  '/_authenticated/superadmin/noutati': typeof AuthenticatedSuperadminNoutatiRoute
   '/_authenticated/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/_authenticated/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/_authenticated/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
@@ -1849,6 +1859,7 @@ export interface FileRouteTypes {
     | '/superadmin/mail'
     | '/superadmin/muzica'
     | '/superadmin/nomenclator'
+    | '/superadmin/noutati'
     | '/superadmin/portal-logs'
     | '/superadmin/portals'
     | '/superadmin/qa'
@@ -2030,6 +2041,7 @@ export interface FileRouteTypes {
     | '/superadmin/mail'
     | '/superadmin/muzica'
     | '/superadmin/nomenclator'
+    | '/superadmin/noutati'
     | '/superadmin/portal-logs'
     | '/superadmin/portals'
     | '/superadmin/qa'
@@ -2216,6 +2228,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/mail'
     | '/_authenticated/superadmin/muzica'
     | '/_authenticated/superadmin/nomenclator'
+    | '/_authenticated/superadmin/noutati'
     | '/_authenticated/superadmin/portal-logs'
     | '/_authenticated/superadmin/portals'
     | '/_authenticated/superadmin/qa'
@@ -2956,6 +2969,13 @@ declare module '@tanstack/react-router' {
       path: '/nomenclator'
       fullPath: '/superadmin/nomenclator'
       preLoaderRoute: typeof AuthenticatedSuperadminNomenclatorRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/noutati': {
+      id: '/_authenticated/superadmin/noutati'
+      path: '/noutati'
+      fullPath: '/superadmin/noutati'
+      preLoaderRoute: typeof AuthenticatedSuperadminNoutatiRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
     '/_authenticated/superadmin/portal-logs': {
@@ -3863,6 +3883,7 @@ interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminMailRoute: typeof AuthenticatedSuperadminMailRoute
   AuthenticatedSuperadminMuzicaRoute: typeof AuthenticatedSuperadminMuzicaRoute
   AuthenticatedSuperadminNomenclatorRoute: typeof AuthenticatedSuperadminNomenclatorRoute
+  AuthenticatedSuperadminNoutatiRoute: typeof AuthenticatedSuperadminNoutatiRoute
   AuthenticatedSuperadminPortalLogsRoute: typeof AuthenticatedSuperadminPortalLogsRoute
   AuthenticatedSuperadminPortalsRoute: typeof AuthenticatedSuperadminPortalsRoute
   AuthenticatedSuperadminQaRoute: typeof AuthenticatedSuperadminQaRoute
@@ -3890,6 +3911,7 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
     AuthenticatedSuperadminMuzicaRoute: AuthenticatedSuperadminMuzicaRoute,
     AuthenticatedSuperadminNomenclatorRoute:
       AuthenticatedSuperadminNomenclatorRoute,
+    AuthenticatedSuperadminNoutatiRoute: AuthenticatedSuperadminNoutatiRoute,
     AuthenticatedSuperadminPortalLogsRoute:
       AuthenticatedSuperadminPortalLogsRoute,
     AuthenticatedSuperadminPortalsRoute: AuthenticatedSuperadminPortalsRoute,
