@@ -26,6 +26,7 @@ const unwrap = (v: unknown) => { const o = obj(v); return o["data"] && typeof o[
 export type HouseraLead = {
   id: string; source: string | null; name: string | null; phone: string | null; email: string | null;
   message: string | null; price: number | null; listingCode: string | null; externalRef: string | null; agentEmail: string | null;
+  status?: string | null;
 };
 
 export function parseHouseraLead(raw: unknown, fallbackId: string): HouseraLead {
