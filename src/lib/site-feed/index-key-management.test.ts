@@ -14,7 +14,15 @@ vi.mock("@/lib/dynamic-feed-portals.server", async () => {
   const { INDEX_PORTALS } = await import("@/lib/portals/clickimob/index-feed");
   return { loadDynamicFeedPortals: async () => [], resolveIndexPortal: async (id: keyof typeof INDEX_PORTALS) => INDEX_PORTALS[id] ? { ...INDEX_PORTALS[id], active: true } : null };
 });
-vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: () => ({ select: () => ({ eq: async (_column: string, portal: string) => ({ data: state.keys.filter(row => row.portal === portal), error: null }) }) }) } }));
+vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: () => {
+  const filters: [string, unknown][] = [];
+  const query = {
+    select: () => query,
+    eq: (column: string, value: unknown) => { filters.push([column, value]); return query; },
+    then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: state.keys.filter(row => filters.every(([column, value]) => row[column] === value)), error: null }).then(resolve),
+  };
+  return query;
+} } }));
 import { createPortalIndexKey, listPortalIndexKeys } from "./index-keys.functions";
 import { hashIndexKey } from "./index-keys.server";
 describe("SuperAdmin key management response safety", () => {
@@ -22,7 +30,7 @@ describe("SuperAdmin key management response safety", () => {
     const key = "hbbc_EXEMPLU_SECRET_FICTIV_012345678901234567890123456789";
     process.env['BAZARULDECASE_INDEX_KEY'] = key;
     state.allowed = true;
-    state.keys = [{ id: "managed", portal: "bazaruldecase", key_hash: hashIndexKey(key), prefix: "hbbc_", last4: key.slice(-4), source: "managed", status: "active", created_at: "2026-11-07", last_used_at: null }];
+    state.keys = [{ id: "managed", key_type: "index", portal: "bazaruldecase", key_hash: hashIndexKey(key), prefix: "hbbc_", last4: key.slice(-4), source: "managed", status: "active", created_at: "2026-11-07", last_used_at: null }];
     const result = await listPortalIndexKeys();
     expect(result).toHaveLength(6);
     expect(JSON.stringify(result)).not.toContain(key);
