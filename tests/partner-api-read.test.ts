@@ -123,7 +123,7 @@ describe("Partner API v1 — citirea datelor", () => {
     expect(w.events.filter(e => e.type === "listing.withdrawn")).toHaveLength(1);
     // deactivating the agency withdraws the rest and emits agency.deactivated
     w.addProperty(property(2, ORG_A)); await w.sync(ORG_A); w.active.delete(ORG_A); await w.sync(ORG_A);
-    expect(w.events.slice(-2).map(e => e.type)).toEqual(["listing.withdrawn", "agency.deactivated"]);
+    expect(w.events.slice(-3).map(e => e.type)).toEqual(["listing.withdrawn", "agent.updated", "agency.deactivated"]);
     expect((await body(await handleAgencies(ctx(), w.store()))).json.data).toEqual([]);
   });
 
