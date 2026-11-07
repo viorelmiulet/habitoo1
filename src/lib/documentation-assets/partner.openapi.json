@@ -7261,7 +7261,7 @@
       },
       "put": {
         "summary": "Configurează sau reactivează webhook",
-        "description": "Prima setare sau rotate_secret:true întoarce secretul o singură dată. PUT reactivează și pornește o nouă subscriere; recuperează evenimentele omise din /changes. Lipsa events sau [] înseamnă toate evenimentele.",
+        "description": "Prima setare sau rotate_secret:true întoarce secretul o singură dată. Pentru webhook activ păstrează livrările în așteptare. Pentru webhook suspendat, PUT reactivează o subscriere nouă; recuperează evenimentele omise din /changes. Lipsa events sau [] înseamnă toate evenimentele.",
         "security": [
           {
             "PartnerBearer": []

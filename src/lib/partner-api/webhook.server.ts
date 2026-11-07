@@ -31,6 +31,7 @@ export async function runWebhookWorker(store?:WebhookStore,send:typeof fetch=fet
  }
  return {processed};
 }
+export const webhookInternals={webhookTestBody};
 export async function handleWebhook(request:Request,ctx:PartnerContext,store:WebhookStore,kind:'config'|'test'|'deliveries',send:typeof fetch=fetch){
  const p=ctx.portal.slug,env=ctx.identity.environment;
  if(kind==='deliveries'){
