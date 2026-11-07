@@ -156,6 +156,7 @@ import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/
 import { Route as AuthenticatedAppAcpDatePiataIdRouteImport } from './routes/_authenticated/app.acp.date-piata.$id'
 import { Route as AuthenticatedSuperadminBlogPreviewIdRouteImport } from './routes/_authenticated/superadmin.blog.preview.$id'
 import { Route as ApiPublicCatalogV1FacebookDotcsvRouteImport } from './routes/api/public/catalog/v1/facebook[.]csv'
+import { Route as ApiPublicFeedPortalLogoRouteImport } from './routes/api/public/feed/$portal/logo'
 import { Route as ApiPublicFeedProperstarAgencyKeyRouteImport } from './routes/api/public/feed/properstar/$agencyKey'
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
 import { Route as ApiPublicListingsMediaIdRouteImport } from './routes/api/public/listings/media.$id'
@@ -1011,6 +1012,11 @@ const ApiPublicCatalogV1FacebookDotcsvRoute =
     path: '/api/public/catalog/v1/facebook.csv',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicFeedPortalLogoRoute = ApiPublicFeedPortalLogoRouteImport.update({
+  id: '/api/public/feed/$portal/logo',
+  path: '/api/public/feed/$portal/logo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicFeedProperstarAgencyKeyRoute =
   ApiPublicFeedProperstarAgencyKeyRouteImport.update({
     id: '/api/public/feed/properstar/$agencyKey',
@@ -1404,6 +1410,7 @@ export interface FileRoutesByFullPath {
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  '/api/public/feed/$portal/logo': typeof ApiPublicFeedPortalLogoRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
@@ -1590,6 +1597,7 @@ export interface FileRoutesByTo {
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  '/api/public/feed/$portal/logo': typeof ApiPublicFeedPortalLogoRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
@@ -1782,6 +1790,7 @@ export interface FileRoutesById {
   '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/_authenticated/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  '/api/public/feed/$portal/logo': typeof ApiPublicFeedPortalLogoRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
@@ -1974,6 +1983,7 @@ export interface FileRouteTypes {
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
+    | '/api/public/feed/$portal/logo'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/listings/media/$id'
@@ -2160,6 +2170,7 @@ export interface FileRouteTypes {
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
+    | '/api/public/feed/$portal/logo'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/listings/media/$id'
@@ -2351,6 +2362,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/acp/date-piata/$id'
     | '/_authenticated/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
+    | '/api/public/feed/$portal/logo'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/listings/media/$id'
@@ -2478,6 +2490,7 @@ export interface RootRouteChildren {
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiPublicCatalogV1FacebookDotcsvRoute: typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  ApiPublicFeedPortalLogoRoute: typeof ApiPublicFeedPortalLogoRoute
   ApiPublicFeedProperstarAgencyKeyRoute: typeof ApiPublicFeedProperstarAgencyKeyRoute
   ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   ApiPublicListingsMediaIdRoute: typeof ApiPublicListingsMediaIdRoute
@@ -3550,6 +3563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCatalogV1FacebookDotcsvRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/feed/$portal/logo': {
+      id: '/api/public/feed/$portal/logo'
+      path: '/api/public/feed/$portal/logo'
+      fullPath: '/api/public/feed/$portal/logo'
+      preLoaderRoute: typeof ApiPublicFeedPortalLogoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/feed/properstar/$agencyKey': {
       id: '/api/public/feed/properstar/$agencyKey'
       path: '/api/public/feed/properstar/$agencyKey'
@@ -4182,6 +4202,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiPublicCatalogV1FacebookDotcsvRoute: ApiPublicCatalogV1FacebookDotcsvRoute,
+  ApiPublicFeedPortalLogoRoute: ApiPublicFeedPortalLogoRoute,
   ApiPublicFeedProperstarAgencyKeyRoute: ApiPublicFeedProperstarAgencyKeyRoute,
   ApiPublicHomepitchV1PropertiesRoute:
     ApiPublicHomepitchV1PropertiesRouteWithChildren,
