@@ -14,6 +14,7 @@ import { IMO24_KEY_FORMAT_MESSAGE, isValidImo24Key } from "./imo24/key";
 import { ZONATA_KEY_FORMAT_MESSAGE, isValidZonataKey } from "./zonata/key";
 import { IMOPEDIA_AGENCY_ID_MESSAGE, parseImopediaAgencyId } from "./imopedia/config";
 import { oferaProviderId } from "./ofera/config";
+import { feedDefinitions } from "../feed-registry";
 
 export type PortalId = string;
 
@@ -67,6 +68,9 @@ export type PortalConfigField = {
 export type PortalActivationMode = "self_service" | "oauth" | "approval";
 
 export type PortalDefinition = {
+  dynamic_feed?: boolean;
+  show_public?: boolean;
+  logo_url?: string;
   id: PortalId;
   /** Implicit `approval` pentru orice portal care nu declară altceva. */
   activation?: PortalActivationMode;
@@ -144,7 +148,7 @@ export const PORTAL_AVAILABILITY_LABEL: Record<PortalAvailability, string> = {
   disabled: "Indisponibil",
 };
 
-export const PORTALS: PortalDefinition[] = [
+export const STATIC_PORTALS: PortalDefinition[] = [
   {
     id: "clickimob",
     activation: "self_service",
@@ -783,6 +787,19 @@ export const PROMOTION_CATALOGS: PortalDefinition[] = [
     website: "https://www.facebook.com/commerce_manager",
   },
 ];
+
+/** Read-through array: every existing consumer sees the same request-scoped merged registry. */
+export function allPortals(): PortalDefinition[] {
+  const reserved = new Set([...STATIC_PORTALS, ...PROMOTION_CATALOGS].map(p => p.id));
+  return [...STATIC_PORTALS, ...feedDefinitions().filter(p => !reserved.has(p.id))];
+}
+export const PORTALS: PortalDefinition[] = new Proxy([] as PortalDefinition[], {
+  get: (_target, property) => {
+    const list = allPortals();
+    const value = Reflect.get(list, property);
+    return typeof value === "function" ? value.bind(list) : value;
+  },
+});
 
 /**
  * Perechi de portaluri acoperite de o SINGURĂ integrare (aceeași cheie API):
