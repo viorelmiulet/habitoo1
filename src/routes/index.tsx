@@ -28,6 +28,7 @@ import { DashboardMock } from "@/components/marketing/mockups/DashboardMock";
 import { homeIdentityJsonLd } from "@/components/marketing/structured-data";
 import { publicHead } from "@/components/marketing/public-head";
 import { portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
+import { getPublicDynamicFeedPortals } from "@/lib/dynamic-feed-portals.functions";
 import { getCurrentHostname } from "@/lib/current-host";
 import { isCrmHostname } from "@/lib/host";
 
@@ -137,6 +138,7 @@ const steps = [
 ] as const;
 
 export const Route = createFileRoute("/")({
+  loader: () => getPublicDynamicFeedPortals(),
   beforeLoad: () => {
     if (isCrmHostname(getCurrentHostname())) throw redirect({ to: "/app" });
   },
@@ -183,6 +185,7 @@ function FeatureVisual({ type }: { type?: "properties" | "matching" }) {
 }
 
 function HomePage() {
+  const dynamic = Route.useLoaderData();
   return (
     <div className="mk-root min-h-screen overflow-x-hidden bg-background text-foreground">
       <a href="#continut" className="sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:not-sr-only focus:rounded-full focus:bg-background focus:px-4 focus:py-2">
@@ -204,7 +207,7 @@ function HomePage() {
                 <span className="text-gold">tranzacții închise.</span>
               </h1>
               <p className="mt-6 max-w-xl text-base leading-relaxed text-navy-foreground sm:text-lg">
-                Anunțuri, clienți și lead-uri într-un singur loc: introduci proprietatea o dată și o publici pe {portalsLabel(publicPortalCount())}, mai multe decât în orice alt CRM imobiliar din România.
+                Anunțuri, clienți și lead-uri într-un singur loc: introduci proprietatea o dată și o publici pe {portalsLabel(publicPortalCount() + (typeof window === "undefined" ? 0 : dynamic.length))}, mai multe decât în orice alt CRM imobiliar din România.
               </p>
               <div className="mt-7 grid grid-cols-2 gap-2 sm:mt-9 sm:flex sm:gap-3">
                 <Button asChild size="lg" className="h-12 rounded-full px-3 text-sm shadow-raised sm:px-7 sm:text-base">
@@ -279,7 +282,7 @@ function HomePage() {
           </Container>
         </Section>
 
-        <IntegratedPortalsSection />
+        <IntegratedPortalsSection dynamic={dynamic} />
 
         <Section id="cum-functioneaza" tone="muted" className="relative overflow-hidden">
           <Container>
