@@ -9,6 +9,8 @@ import { sandboxListings, sandboxAgents } from '../src/lib/partner-api/sandbox';
 import { publicationSchema, leadSchema, messageSchema, statsSchema, handlePartnerWrite } from '../src/lib/partner-api/write.server';
 import { apiError, meResponse } from '../src/lib/partner-api/core.server';
 import { handleChanges, handleAgencies, handleAgents, handleListings } from '../src/lib/partner-api/read.server';
+import {webhookInput,webhookEvent} from '../src/lib/partner-api/webhook';
+import {publicWebhook} from '../src/lib/partner-api/webhook.server';
 const read=(p:string)=>readFileSync(p,'utf8');
 const raw=read('public/dezvoltatori/partner-api.json');
 const spec=JSON.parse(raw);
@@ -17,19 +19,19 @@ const ctx:any={portal:{slug:'demo',display_name:'Portal Demo',rate_limit_per_min
 function assertSchema(value:any,input:any,path='root') {
   const s=input.$ref?spec.components.schemas[input.$ref.split('/').at(-1)]:input;
   if(s.anyOf){const errors=[];for(const option of s.anyOf){try{assertSchema(value,option,path);return;}catch(e){errors.push(e);}}throw errors[0];}
-  if(s.type){const actual=value===null?'null':Array.isArray(value)?'array':typeof value;expect([].concat(s.type),path).toContain(actual==='number'&&s.type==='integer'?'integer':actual);if(s.type==='integer')expect(Number.isInteger(value)).toBe(true);}
+  if(s.type){const actual=value===null?'null':Array.isArray(value)?'array':typeof value;const types=[].concat(s.type);expect(types,path).toContain(actual==='number'&&types.includes('integer')?'integer':actual);if(actual==='number'&&types.includes('integer'))expect(Number.isInteger(value)).toBe(true);}
   if(s.const!==undefined)expect(value,path).toBe(s.const);
   if(s.enum)expect(s.enum,path).toContain(value);
   if(s.properties && value && typeof value==='object'&&!Array.isArray(value)){for(const k of s.required??[])expect(value,path).toHaveProperty(k);if(s.additionalProperties===false)expect(Object.keys(value).every(k=>k in s.properties),path).toBe(true);for(const [k,v]of Object.entries(value)){expect(s.properties[k],`${path}.${k} documented`).toBeDefined();assertSchema(v,s.properties[k],`${path}.${k}`);}}
   if(s.items && Array.isArray(value))value.forEach((v,i)=>assertSchema(v,s.items,`${path}[${i}]`));
 }
 describe('P6 — Partner API documentation',()=>{
-  it('inventories every implemented route independently and never advertises absent webhooks',()=>{
+  it('inventories every implemented route including webhook methods',()=>{
     const routes=readdirSync('src/routes/api/public/partner/v1').filter(f=>f.endsWith('.ts')&&f!=='$.ts');
     const found:string[]=[];
-    for(const file of routes){const text=read(`src/routes/api/public/partner/v1/${file}`);const ast=ts.createSourceFile(file,text,ts.ScriptTarget.Latest,true);let route='';function visit(n:ts.Node){if(ts.isCallExpression(n)&&n.expression.getText(ast)==='createFileRoute'&&n.arguments[0]&&ts.isStringLiteral(n.arguments[0]))route=n.arguments[0].text;ts.forEachChild(n,visit);}visit(ast);const path=route.replace('/api/public/partner/v1','').replace(/\$id/g,'{id}');expect(spec.paths,path).toHaveProperty(path);const method=file==='me.ts'||text.includes('partnerGet(')?'get':'post';expect(spec.paths[path][method]).toBeDefined();found.push(path);}
+    for(const file of routes){const text=read(`src/routes/api/public/partner/v1/${file}`);const ast=ts.createSourceFile(file,text,ts.ScriptTarget.Latest,true);let route='';function visit(n:ts.Node){if(ts.isCallExpression(n)&&n.expression.getText(ast)==='createFileRoute'&&n.arguments[0]&&ts.isStringLiteral(n.arguments[0]))route=n.arguments[0].text;ts.forEachChild(n,visit);}visit(ast);const path=route.replace('/api/public/partner/v1','').replace(/\$id/g,'{id}');expect(spec.paths,path).toHaveProperty(path);const methods=file==='webhook.ts'?['get','put','delete']:file==='webhook.deliveries.ts'?['get']:file==='me.ts'||text.includes('partnerGet(')?['get']:['post'];for(const method of methods)expect(spec.paths[path][method]).toBeDefined();found.push(path);}
     expect(Object.keys(spec.paths).sort()).toEqual(found.sort());
-    expect(Object.keys(spec.paths).some(p=>p.includes('webhook'))).toBe(false);
+    expect(Object.keys(spec.paths).filter(p=>p.includes('webhook'))).toHaveLength(3);
   });
   it('is generated reproducibly from real serializers and input validators',()=>{expect(spec).toEqual(generated);expect(spec.openapi).toBe('3.1.0');});
   it('matches listing serialization for precise, imprecise and withdrawn properties',()=>{
@@ -56,6 +58,13 @@ describe('P6 — Partner API documentation',()=>{
       const store:any={read:{scope:async()=>({active:new Map([[listing.agency_id,null]])})},lead:async()=>({id:listing.id,deduplicated,test}),publication:async()=>({id:listing.id,applied:true,...(test?{test:true,deduplicated:false}:{})}),message:async()=>({id:listing.id,deduplicated,...(test?{test:true,applied:true}:{})}),stats:async()=>({accepted:1})};
       for(const [path,kind]of [['/leads','lead'],['/listings/{id}/publication','publication'],['/leads/{id}/messages','message'],['/stats','stats']] as const){const operation=spec.paths[path].post;const response=await handlePartnerWrite(ctx,store,kind,operation.requestBody.content['application/json'].example,listing.id);assertSchema(await response.json(),operation.responses[String(response.status)].content['application/json'].schema);}
     }
+  });
+  it('webhook schemas match the real config and event serializers',()=>{
+    const value=publicWebhook({url:'https://example.invalid/hook',events:[],status:'active',has_secret:true,last_success_at:null,consecutive_failures:0,secret_encrypted:'fixture',generation:'fixture'});
+    assertSchema(value,spec.components.schemas.Webhook);
+    assertSchema(webhookEvent({seq:1,type:'listing.upserted',entity_type:'listing',entity_id:listing.id,organization_id:listing.agency_id,occurred_at:'2026-11-07T12:00:00Z'}),spec.components.schemas.WebhookEvent);
+    expect(webhookInput.safeParse(spec.paths['/webhook'].put.requestBody.content['application/json'].example).success).toBe(true);
+    assertSchema({id:listing.id,event:'webhook.test',seq:1,http_status:204,duration_ms:10,attempt:1,occurred_at:'2026-11-07T12:00:00Z',error:null},spec.components.schemas.Delivery);
   });
   it('rejects real-looking keys, private URLs and nonfictitious credential examples',()=>{
     const text=[raw,read('src/components/marketing/PartnerDeveloperDocs.tsx'),read('src/lib/partner-developer-docs.ts')].join('\n');

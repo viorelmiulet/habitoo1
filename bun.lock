@@ -61,6 +61,7 @@
         "fflate": "^0.8.3",
         "html2canvas-pro": "^2.5.2",
         "input-otp": "^1.4.2",
+        "ipaddr.js": "^2.5.0",
         "jpeg-js": "^0.4.4",
         "leaflet": "^1.9.4",
         "lucide-react": "^0.575.0",
@@ -1239,6 +1240,8 @@
     "internmap": ["internmap@2.0.3", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/internmap/-/internmap-2.0.3.tgz", {}, "sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg=="],
 
     "iobuffer": ["iobuffer@6.0.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/iobuffer/-/iobuffer-6.0.1.tgz", {}, "sha512-SZWYkWNfjIXIBYSDpXDYIgshqtbOPsi4lviawAEceR1Kqk+sHDlcQjWrzNQsii80AyBY0q5c8HCTNjqo74ul+Q=="],
+
+    "ipaddr.js": ["ipaddr.js@2.5.0", "", {}, "sha512-aq+t5NAc+cS6rZQQVWC2x98CPqGtKKTMDd4Gaodv0wShnItdKg/51djkGJ1hqH+Oy0ivDftCbSLCQob8zso01w=="],
 
     "is-array-buffer": ["is-array-buffer@3.0.5", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/is-array-buffer/-/is-array-buffer-3.0.5.tgz", { "dependencies": { "call-bind": "^1.0.8", "call-bound": "^1.0.3", "get-intrinsic": "^1.2.6" } }, "sha512-DDfANUiiG2wC1qawP66qlTugJeL5HyzMpfr8lLK+jMQirGzNod0B12cFB/9q838Ru27sBwfw78/rdoU7RERz6A=="],
 

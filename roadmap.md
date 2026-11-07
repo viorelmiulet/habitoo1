@@ -1,20 +1,26 @@
+## P4 — implementare fără releu (cererea curentă)
+- [x] Validare HTTPS/443 și DNS A+AAAA, semnare, secret criptat, timeout și răspuns limitat
+- [x] Endpointuri, coadă ordonată, reîncercări 24h, suspendare/notificare și demo izolat
+- [x] Controale SuperAdmin, OpenAPI 1.1.0 și exemple Node.js/PHP/Python; 49 teste P4 și 19 documentație, fără publicare
+- [ ] Verificare conectată API → livrare → SuperAdmin: niciun portal API activ; nu s-au creat portaluri/chei sau livrări reale. Sesiunea disponibilă nu a afișat pagina SuperAdmin.
+
 ## P6 — documentație Partner API
 - [x] OpenAPI separată din contractele implementate P1–P3/P5: 15 endpointuri, generare din tipuri/validări și teste de concordanță; feed JSON neatins (SHA-256 identic)
 - [x] Partner API recomandat / Feed alternativ, endpointuri și ghid; chei emise manual, fără promisiuni de emitere automată
 - [x] 38/38 teste exclusiv documentație/pagină; 1440/390 fără overflow, file/copiere/JSON 200 verificate, fără erori; fără publicare
-- [ ] Contractele Webhook/Delivery și exemple semnătură: P4 nu este implementat și așteaptă aprobarea releului securizat; documentația le marchează indisponibile, fără endpointuri inventate
+- [x] Contractele Webhook/Delivery și exemple semnătură Node.js/PHP/Python disponibile în 1.1.0; /dezvoltatori verificat 1440/390 fără overflow, endpointuri fără cheie 401.
 
 ## P5 — mediul Partner API de test
 - [x] Agenție demo ascunsă, allowlist, 2 agenți / 12 anunțuri fictive în stocare API separată; zero proprietăți/profiluri/lead-uri/conexiuni CRM, fără prezență în feed; Stare agenții exclude demo
 - [x] Simulare/reset doar test, scrieri private cu marcaj Test și expirare 30 zile prin curățarea orară existentă; notificări exclusiv SuperAdmin în aplicație, fără ingest/email push
 - [x] Activitate chei test și reset SuperAdmin; 13/13 teste exclusiv noi trec; /agentii, /integrari și homepage fără demo, fotografii 200, endpointuri fără cheie 401; build OK, fără publicare
 - [ ] Flux complet cu cheie reală de test și verificare SuperAdmin: niciun portal API activ configurat; nu s-au creat portal/cheie sau notificări reale pentru test
-- [ ] Webhooks demo: P4 neimplementat, așteaptă aprobarea releului securizat
+- [x] Webhooks demo: configurație, secret și coadă separate test/live, evenimentele simulării folosesc triggerul P2.
 
 ## P4 — webhooks Partner API
-- [ ] Configurare/test/livrări API, semnare și protecție HTTPS publică, secret criptat — așteaptă aprobarea extinderii releului securizat
-- [ ] Coadă atomică din evenimentele P2, ordine, reîncercări și suspendare/notificare
-- [ ] Controale SuperAdmin, teste exclusiv noi și verificări fără publicare sau livrări reale
+- [x] Configurare/test/livrări API, semnare și protecție HTTPS publică, secret criptat; releul extern neschimbat.
+- [x] Coadă atomică din evenimentele P2, ordine per portal/mediu înainte de alocarea seq, reîncercări și suspendare/notificare; trezire la enqueue, retry în cron-ul Partner existent.
+- [x] Controale SuperAdmin, teste exclusiv noi și verificări fără publicare sau livrări reale; verificarea conectată rămâne explicit blocată mai sus.
 
 ## P3 — răspunsuri ale portalurilor API
 - [x] POST-uri cu Idempotency-Key obligatoriu, validări, RPC-uri service-only pentru stări/date, deduplicare și email 10 minute; migrări 0252/0253 aplicate

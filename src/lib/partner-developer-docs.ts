@@ -29,6 +29,7 @@ export function partnerCurl(path: string, method: string, operation: Operation):
   const address = `${partnerSpec.servers[0]?.url}${path.replace('{id}','11111111-1111-4111-8111-111111111111')}`;
   const params = (operation.parameters ?? []).filter(p=>p.in==='query' && p.schema.default!==undefined).map(p=>`${p.name}=${p.schema.default}`).join('&');
   const lines = [`curl -X ${method.toUpperCase()} "${address}${params?`?${params}`:''}"`, '  -H "Authorization: Bearer $HABITOO_API_KEY"'];
-  if (method==='post') lines.push(`  -H "Idempotency-Key: DEMO-${path.replace(/[^a-z]+/g,'-')}-001"`,'  -H "Content-Type: application/json"',`  --data '${JSON.stringify(operation.requestBody?.content['application/json']?.example ?? {},null,2)}'`);
+  if (method==='post') lines.push(`  -H \"Idempotency-Key: DEMO-${path.replace(/[^a-z]+/g,'-')}-001\"`);
+  if (method==='post'||method==='put') lines.push('  -H "Content-Type: application/json"',`  --data '${JSON.stringify(operation.requestBody?.content['application/json']?.example ?? {},null,2)}'`);
   return lines.join(' \\\n');
 }

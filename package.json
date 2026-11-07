@@ -71,6 +71,7 @@
     "fflate": "^0.8.3",
     "html2canvas-pro": "^2.5.2",
     "input-otp": "^1.4.2",
+    "ipaddr.js": "^2.5.0",
     "jpeg-js": "^0.4.4",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.575.0",
