@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "Habitoo — API pentru integrarea portalurilor",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": "API pentru indexul agențiilor, anunțuri JSON, fotografii, lead-uri, vizualizări și XML Kyero v3. Toate exemplele sunt fictive. Cheia de index descoperă agențiile; tokenul fiecărei agenții autorizează accesul numai la aceasta. Folosiți Bearer; /sites/v1 nu acceptă token în query. Scopuri: feed:read, agents:read, leads:write. Limită orientativă: 120 cereri/60 secunde pentru aceeași cheie și adresă IP, inclusiv XML; media nu are o limită specifică. Limita poate varia între cereri: tratați 429 prin reîncercare cu întârziere progresivă. Parcurgeți toate paginile înainte de reconciliere; ordinea poate varia între pagini și nu există cursor sau instantaneu comun. Agențiile în perioada de retragere au inventar gol. XML și index: generarea incompletă întoarce 503 cu Retry-After: 300. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
   },
   "x-developer-guide": {
@@ -27,6 +27,11 @@
     ],
     "history": [
       {
+        "version": "1.2.1",
+        "date": "2026-11-07",
+        "description": "Autentificare clarificată: cheia de index, tokenul agenției, metodele de compatibilitate și accesul XML; codurile 401/403 explicate conform API-ului. Fără schimbări de comportament."
+      },
+      {
         "version": "1.2.0",
         "date": "2026-11-07",
         "description": "Liste de valori și descrieri clarificate; fără schimbări de comportament. GET /visits: limita existentă de agregare la ultimele 1.000 de înregistrări este explicată."
@@ -42,7 +47,81 @@
         "description": "Prima specificație OpenAPI 3.1 derivată din cod: indexul agențiilor, feed JSON, media, lead-uri, vizualizări și XML Kyero v3. Documentația este generată din această specificație."
       }
     ],
-    "contact": "contact@habitoo.ro"
+    "contact": "contact@habitoo.ro",
+    "authentication": {
+      "index": {
+        "description": "Cheia de index se pune în calea URL-ului: /api/public/feed/{portal}/index/{indexKey}. Servește la descoperirea agențiilor care activează portalul și a valorilor feed.base_url și feed.token pentru fiecare agenție. Nu o folosi în locul tokenului agenției.",
+        "example": "curl \"https://www.habitoo.ro/api/public/feed/bazaruldecase/index/hbxx_EXEMPLU_INDEX_FICTIV\"",
+        "storage": "Păstrează cheia de index și tokenurile numai pe server, în afara browserului, jurnalelor și depozitelor de cod. Ascunde cheile din URL-uri în jurnalele de acces. Rotirea se solicită la contact@habitoo.ro."
+      },
+      "agency": {
+        "description": "Metoda recomandată pentru feedul JSON este Authorization: Bearer {token}, unde {token} este valoarea feed.token primită în index. Folosește feed.base_url pentru adresa agenției; tokenul autorizează doar agenția pentru care a fost emis. Scopurile necesare sunt indicate la fiecare endpoint: feed:read, agents:read sau leads:write.",
+        "example": "# FEED_BASE este feed.base_url primit în index\nFEED_BASE=\"https://www.habitoo.ro/api/public/sites/v1\"\ncurl \"$FEED_BASE/properties?page=1&per_page=50\" \\\n  -H \"Authorization: Bearer hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA\"",
+        "compatibilityNote": "Folosește o singură metodă per cerere. Authorization are prioritate; în lipsa sa, headerele alternative sunt verificate în ordinea x-habitoo-feed-token, x-api-key, x-apikey. Un Authorization prezent, dar neacceptat, nu permite trecerea la headerele alternative. Parametrii de query din tabel sunt disponibili numai pentru XML, nu pentru JSON."
+      },
+      "xml": {
+        "description": "Pentru XML, parametrul recomandat este token în query, cu tokenul agenției emis pentru acel portal, nu cheia de index. Feedul XML acceptă numai tokenul portalului său (BazarulDeCase în exemplu), cu scopul feed:read; un token obișnuit de site nu este acceptat.",
+        "example": "curl \"https://www.habitoo.ro/api/public/portal/v1/bazaruldecase/feed.xml?token=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA\"",
+        "compatibilityNote": "Pentru compatibilitate, XML acceptă și Authorization: Bearer, Basic și cele trei headere din tabel, plus key, api_key, apikey și apiKey în query. Un token extras din header are prioritate față de query. În query, ordinea este token, key, api_key, apikey, apiKey. Evită expunerea URL-ului cu token în jurnale."
+      },
+      "compatibility": [
+        {
+          "scheme": "AgencyBasic",
+          "label": "Basic · Authorization",
+          "example": "curl -u \":hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA\" \"$FEED_BASE/properties\"",
+          "description": "Tokenul se pune ca parolă; numele utilizatorului poate fi gol. Alternativ, folosește tokenul ca utilizator și o parolă goală (-u \"TOKEN:\"). O parolă negoală are prioritate față de utilizator. Acceptat pentru JSON și XML."
+        },
+        {
+          "scheme": "FeedTokenHeader",
+          "label": "x-habitoo-feed-token",
+          "example": "x-habitoo-feed-token: hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA",
+          "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index."
+        },
+        {
+          "scheme": "ApiKeyHeader",
+          "label": "x-api-key",
+          "example": "x-api-key: hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA",
+          "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index."
+        },
+        {
+          "scheme": "ApiKeyLegacyHeader",
+          "label": "x-apikey",
+          "example": "x-apikey: hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA",
+          "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index."
+        },
+        {
+          "scheme": "XmlTokenQuery",
+          "label": "Query · token",
+          "example": "?token=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA",
+          "description": "Recomandat pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1."
+        },
+        {
+          "scheme": "XmlKeyQuery",
+          "label": "Query · key",
+          "example": "?key=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA",
+          "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1."
+        },
+        {
+          "scheme": "XmlApiKeyQuery",
+          "label": "Query · api_key",
+          "example": "?api_key=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA",
+          "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1."
+        },
+        {
+          "scheme": "XmlApikeyQuery",
+          "label": "Query · apikey",
+          "example": "?apikey=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA",
+          "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1."
+        },
+        {
+          "scheme": "XmlApiKeyCamelQuery",
+          "label": "Query · apiKey",
+          "example": "?apiKey=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA",
+          "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1."
+        }
+      ],
+      "responseNote": "Cererile fără token valid primesc 401. Pentru XML, un token valid de site sau o cheie validă emisă pentru alt portal primește 403; un token de feed provenit din indexul altui portal este respins mai devreme cu 401. Un token valid fără scopul cerut primește 403. La index, cheia lipsă sau invalidă produce 401 cu corp gol. Regula „tokenul unui alt portal primește 403” nu se aplică tuturor tipurilor de token și nu este o restricție generală a feedului JSON."
+    }
   },
   "servers": [
     {
@@ -1918,7 +1997,7 @@
             }
           },
           "401": {
-            "description": "Missing API token. sau Invalid or revoked API token.",
+            "description": "Token absent, invalid sau revocat; inclusiv token de feed provenit din indexul altui portal. Răspuns JSON Error.",
             "headers": {
               "Cache-Control": {
                 "schema": {
@@ -1942,7 +2021,7 @@
             }
           },
           "403": {
-            "description": "Tokenul nu aparține portalului bazaruldecase sau lipsește feed:read.",
+            "description": "Token valid de site sau cheie validă pentru alt portal; ori lipsește scopul feed:read. XML acceptă numai tokenul portalului său. Răspuns JSON Error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2000,6 +2079,9 @@
               }
             }
           }
+        },
+        "x-authentication": {
+          "description": "Recomandat: ?token={feed.token} emis pentru BazarulDeCase. Compatibilitate: Bearer, Basic, x-habitoo-feed-token, x-api-key, x-apikey, apoi query key, api_key, apikey, apiKey. Tokenurile obișnuite de site nu sunt acceptate."
         }
       }
     }
@@ -2009,60 +2091,60 @@
       "AgencyBearer": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Token individual de feed al agenției, niciodată indexKey. Exemplu fictiv: hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA. Nu este OAuth; scopurile sunt verificate explicit de server. Tokenurile index au toate cele trei scopuri; iMove este respins pe sites/v1. Tokenul de site are toate scopurile. Cheile de portal folosesc scopurile configurate."
+        "description": "Metoda recomandată pentru JSON: Authorization: Bearer {token}, cu feed.token al agenției, nu indexKey. Nu este OAuth. Acceptată și pentru XML, doar cu tokenul portalului acelui feed și scopul feed:read. Scopurile necesare pentru JSON sunt indicate la fiecare endpoint."
       },
       "AgencyBasic": {
         "type": "http",
         "scheme": "basic",
-        "description": "Compatibilitate: token ca parolă sau ca utilizator dacă parola este goală; preferați Bearer. Authorization are prioritate față de antetele alternative."
+        "description": "Tokenul se pune ca parolă; numele utilizatorului poate fi gol. Alternativ, folosește tokenul ca utilizator și o parolă goală (-u \"TOKEN:\"). O parolă negoală are prioritate față de utilizator. Acceptat pentru JSON și XML. Authorization are prioritate față de headerele alternative."
       },
       "FeedTokenHeader": {
         "type": "apiKey",
         "in": "header",
         "name": "x-habitoo-feed-token",
-        "description": "Alternativă la Authorization; prioritate între alternative: x-habitoo-feed-token, x-api-key, x-apikey. Token individual, nu indexKey."
+        "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index. Prioritate între headere: x-habitoo-feed-token, x-api-key, x-apikey; Authorization prezent le exclude."
       },
       "ApiKeyHeader": {
         "type": "apiKey",
         "in": "header",
         "name": "x-api-key",
-        "description": "Alternativă la Authorization; prioritate între alternative: x-habitoo-feed-token, x-api-key, x-apikey. Token individual, nu indexKey."
+        "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index. Prioritate între headere: x-habitoo-feed-token, x-api-key, x-apikey; Authorization prezent le exclude."
       },
       "ApiKeyLegacyHeader": {
         "type": "apiKey",
         "in": "header",
         "name": "x-apikey",
-        "description": "Alternativă la Authorization; prioritate între alternative: x-habitoo-feed-token, x-api-key, x-apikey. Token individual, nu indexKey."
+        "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index. Prioritate între headere: x-habitoo-feed-token, x-api-key, x-apikey; Authorization prezent le exclude."
       },
       "XmlTokenQuery": {
         "type": "apiKey",
         "in": "query",
         "name": "token",
-        "description": "Numai XML: token individual. Antetele au prioritate; între query-uri: token, key, api_key, apikey, apiKey. Preferat Bearer când consumatorul poate trimite antete."
+        "description": "Recomandat pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1. Un token extras din header are prioritate; ordinea query este token, key, api_key, apikey, apiKey."
       },
       "XmlKeyQuery": {
         "type": "apiKey",
         "in": "query",
         "name": "key",
-        "description": "Numai XML: token individual. Antetele au prioritate; între query-uri: token, key, api_key, apikey, apiKey. Preferat Bearer când consumatorul poate trimite antete."
+        "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1. Un token extras din header are prioritate; ordinea query este token, key, api_key, apikey, apiKey."
       },
       "XmlApiKeyQuery": {
         "type": "apiKey",
         "in": "query",
         "name": "api_key",
-        "description": "Numai XML: token individual. Antetele au prioritate; între query-uri: token, key, api_key, apikey, apiKey. Preferat Bearer când consumatorul poate trimite antete."
+        "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1. Un token extras din header are prioritate; ordinea query este token, key, api_key, apikey, apiKey."
       },
       "XmlApikeyQuery": {
         "type": "apiKey",
         "in": "query",
         "name": "apikey",
-        "description": "Numai XML: token individual. Antetele au prioritate; între query-uri: token, key, api_key, apikey, apiKey. Preferat Bearer când consumatorul poate trimite antete."
+        "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1. Un token extras din header are prioritate; ordinea query este token, key, api_key, apikey, apiKey."
       },
       "XmlApiKeyCamelQuery": {
         "type": "apiKey",
         "in": "query",
         "name": "apiKey",
-        "description": "Numai XML: token individual. Antetele au prioritate; între query-uri: token, key, api_key, apikey, apiKey. Preferat Bearer când consumatorul poate trimite antete."
+        "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1. Un token extras din header are prioritate; ordinea query este token, key, api_key, apikey, apiKey."
       }
     },
     "schemas": {

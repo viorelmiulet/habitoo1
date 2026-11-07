@@ -80,7 +80,7 @@ function AuthenticationDocs() {
     <h4 className="font-semibold">Metode acceptate pentru compatibilitate</h4>
     <p className="text-sm text-muted-foreground">{auth.agency.compatibilityNote}</p>
     <table className="w-full table-fixed text-left text-xs leading-6 sm:text-sm">
-      <thead className="border-y bg-muted"><tr><th className="w-[38%] p-2">Méthode / nom exact</th><th className="p-2">Exemplu și utilizare</th></tr></thead>
+      <thead className="border-y bg-muted"><tr><th className="w-[38%] p-2">Metodă / nume exact</th><th className="p-2">Exemplu și utilizare</th></tr></thead>
       <tbody>{auth.compatibility.map(method => <tr key={method.scheme} className="border-b align-top">
         <td className="break-words p-2 [overflow-wrap:anywhere]"><span className="font-semibold">{method.label}</span></td>
         <td className="break-words p-2 text-muted-foreground [overflow-wrap:anywhere]"><code className="text-navy">{method.example}</code><p className="mt-2">{method.description}</p></td>
