@@ -1,4 +1,4 @@
-import specification from "../../public/dezvoltatori/openapi.json?raw";
+import specification from "./documentation-assets/feed.openapi.json?raw";
 
 export type Schema = {
   $ref?: string; type?: string | string[]; description?: string; properties?: Record<string, Schema>;

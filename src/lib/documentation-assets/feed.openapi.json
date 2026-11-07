@@ -1,0 +1,3997 @@
+{
+  "openapi": "3.1.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "Habitoo — API pentru integrarea portalurilor",
+    "version": "1.2.2",
+    "description": "API pentru indexul agențiilor, anunțuri JSON, fotografii, lead-uri, vizualizări și XML Kyero v3. Toate exemplele sunt fictive. Cheia de index descoperă agențiile; tokenul fiecărei agenții autorizează accesul numai la aceasta. Folosiți Bearer; /sites/v1 nu acceptă token în query. Scopuri: feed:read, agents:read, leads:write. Limită orientativă: 120 cereri/60 secunde pentru aceeași cheie și adresă IP, inclusiv XML; media nu are o limită specifică. Limita poate varia între cereri: tratați 429 prin reîncercare cu întârziere progresivă. Parcurgeți toate paginile înainte de reconciliere; ordinea poate varia între pagini și nu există cursor sau instantaneu comun. Agențiile în perioada de retragere au inventar gol. XML și index: generarea incompletă întoarce 503 cu Retry-After: 300. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
+  },
+  "x-developer-guide": {
+    "introduction": "Habitoo oferă portalurilor anunțurile agențiilor care activează integrarea și selectează ofertele pentru acel portal, împreună cu agenții responsabili, fotografiile și actualizările. Sunt disponibile două modele: feed JSON pe agenție și feed XML Kyero v3. Indexul este punctul de pornire pentru descoperirea agențiilor eligibile.",
+    "onboarding": [
+      "Scrie la contact@habitoo.ro cu numele portalului și modelul dorit: JSON sau XML Kyero. Primești o cheie de index pentru o agenție pilot; după verificarea integrării, primești accesul complet.",
+      "Administratorul agenției activează portalul din Setări → Portaluri, apoi selectează anunțurile din fila Publicare. Indexul și feedul reflectă eligibilitatea și selecțiile, nu întregul portofoliu CRM.",
+      "Păstrează cheia de index și tokenurile agențiilor numai pe server. Nu le expune în browser, în jurnale sau în depozite de cod. Cheia se poate roti la cerere, prin contact@habitoo.ro."
+    ],
+    "quickStart": [
+      "Obține cheia pilot și citește indexul portalului.",
+      "Preia feed.base_url și feed.token din agenția returnată; citește prima pagină folosind Bearer.",
+      "Importă primul anunț folosind idstr în contextul agenției. Parcurge apoi toate paginile și reconciliază inventarul numai după o citire completă reușită."
+    ],
+    "recommendations": [
+      "Recomandare de integrare, nu garanție de actualizare: citește indexul și feedurile la aproximativ 15–30 de minute, eșalonat pe agenții. Ajustează frecvența împreună cu echipa Habitoo; evită cererile simultane inutile.",
+      "Pentru actualizare incrementală locală, compară datamodificare cu versiunea importată. API-ul nu oferă un filtru updated_since, un cursor sau un snapshot: citește tot inventarul pentru reconciliere.",
+      "Dacă portalul poate afișa direct fotografiile prin URL, folosește images[].src fără descărcare. Păstrează linkul Habitoo, nu destinația temporară a redirectului; aplică w, h și fit pentru dimensiunea afișată.",
+      "Nu retrageți anunțuri după un răspuns care nu e 200 complet. Retrageți ofertele absente numai după citirea reușită a tuturor paginilor. XML și indexul întorc 503 cu Retry-After: 300 la eroare, fără inventar parțial. Nu există tombstones sau snapshot; ordinea se poate schimba între pagini.",
+      "Trimiteți un message_id stabil pentru fiecare lead și un event_id stabil pentru fiecare eveniment de vizualizare. event_id previne incrementul dublu la retrimitere, inclusiv după rotirea cheii portalului. Fără event_id, nu retrimiteți automat POST visits după un timeout. La 503 așteptați Retry-After: 300; la 429 folosiți întârziere progresivă."
+    ],
+    "history": [
+      {
+        "version": "1.2.2",
+        "date": "2026-11-07",
+        "description": "Strada și numărul se omit când locația nu e precisă"
+      },
+      {
+        "version": "1.2.1",
+        "date": "2026-11-07",
+        "description": "Autentificare clarificată: cheia de index, tokenul agenției, metodele de compatibilitate și accesul XML; codurile 401/403 explicate conform API-ului. Fără schimbări de comportament."
+      },
+      {
+        "version": "1.2.0",
+        "date": "2026-11-07",
+        "description": "Liste de valori și descrieri clarificate; fără schimbări de comportament. GET /visits: limita existentă de agregare la ultimele 1.000 de înregistrări este explicată."
+      },
+      {
+        "version": "1.1.0",
+        "date": "2026-11-07",
+        "description": "Feeduri XML și index complete sau 503 cu Retry-After: 300; filtre JSON/XML comune și acces XML exclusiv al portalului. event_id opțional pentru vizualizări idempotente."
+      },
+      {
+        "version": "1.0.0",
+        "date": "2026-11-07",
+        "description": "Prima specificație OpenAPI 3.1 derivată din cod: indexul agențiilor, feed JSON, media, lead-uri, vizualizări și XML Kyero v3. Documentația este generată din această specificație."
+      }
+    ],
+    "contact": "contact@habitoo.ro",
+    "authentication": {
+      "index": {
+        "description": "Cheia de index se pune în calea URL-ului: /api/public/feed/{portal}/index/{indexKey}. Servește la descoperirea agențiilor care activează portalul și a valorilor feed.base_url și feed.token pentru fiecare agenție. Nu o folosi în locul tokenului agenției.",
+        "example": "curl \"https://www.habitoo.ro/api/public/feed/bazaruldecase/index/hbxx_EXEMPLU_INDEX_FICTIV\"",
+        "storage": "Păstrează cheia de index și tokenurile numai pe server, în afara browserului, jurnalelor și depozitelor de cod. Ascunde cheile din URL-uri în jurnalele de acces. Rotirea se solicită la contact@habitoo.ro."
+      },
+      "agency": {
+        "description": "Metoda recomandată pentru feedul JSON este Authorization: Bearer {token}, unde {token} este valoarea feed.token primită în index. Folosește feed.base_url pentru adresa agenției; tokenul autorizează doar agenția pentru care a fost emis. Scopurile necesare sunt indicate la fiecare endpoint: feed:read, agents:read sau leads:write.",
+        "example": "# FEED_BASE este feed.base_url primit în index\nFEED_BASE=\"https://www.habitoo.ro/api/public/sites/v1\"\ncurl \"$FEED_BASE/properties?page=1&per_page=50\" \\\n  -H \"Authorization: Bearer hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA\"",
+        "compatibilityNote": "Folosește o singură metodă per cerere. Authorization are prioritate; în lipsa sa, headerele alternative sunt verificate în ordinea x-habitoo-feed-token, x-api-key, x-apikey. Un Authorization prezent, dar neacceptat, nu permite trecerea la headerele alternative. Parametrii de query din tabel sunt disponibili numai pentru XML, nu pentru JSON."
+      },
+      "xml": {
+        "description": "Pentru XML, parametrul recomandat este token în query, cu tokenul agenției emis pentru acel portal, nu cheia de index. Feedul XML acceptă numai tokenul portalului său (BazarulDeCase în exemplu), cu scopul feed:read; un token obișnuit de site nu este acceptat.",
+        "example": "curl \"https://www.habitoo.ro/api/public/portal/v1/bazaruldecase/feed.xml?token=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA\"",
+        "compatibilityNote": "Pentru compatibilitate, XML acceptă și Authorization: Bearer, Basic și cele trei headere din tabel, plus key, api_key, apikey și apiKey în query. Un token extras din header are prioritate față de query. În query, ordinea este token, key, api_key, apikey, apiKey. Evită expunerea URL-ului cu token în jurnale."
+      },
+      "compatibility": [
+        {
+          "scheme": "AgencyBasic",
+          "label": "Basic · Authorization",
+          "example": "curl -u \":hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA\" \"$FEED_BASE/properties\"",
+          "description": "Tokenul se pune ca parolă; numele utilizatorului poate fi gol. Alternativ, folosește tokenul ca utilizator și o parolă goală (-u \"TOKEN:\"). O parolă negoală are prioritate față de utilizator. Acceptat pentru JSON și XML."
+        },
+        {
+          "scheme": "FeedTokenHeader",
+          "label": "x-habitoo-feed-token",
+          "example": "x-habitoo-feed-token: hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA",
+          "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index."
+        },
+        {
+          "scheme": "ApiKeyHeader",
+          "label": "x-api-key",
+          "example": "x-api-key: hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA",
+          "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index."
+        },
+        {
+          "scheme": "ApiKeyLegacyHeader",
+          "label": "x-apikey",
+          "example": "x-apikey: hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA",
+          "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index."
+        },
+        {
+          "scheme": "XmlTokenQuery",
+          "label": "Query · token",
+          "example": "?token=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA",
+          "description": "Recomandat pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1."
+        },
+        {
+          "scheme": "XmlKeyQuery",
+          "label": "Query · key",
+          "example": "?key=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA",
+          "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1."
+        },
+        {
+          "scheme": "XmlApiKeyQuery",
+          "label": "Query · api_key",
+          "example": "?api_key=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA",
+          "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1."
+        },
+        {
+          "scheme": "XmlApikeyQuery",
+          "label": "Query · apikey",
+          "example": "?apikey=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA",
+          "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1."
+        },
+        {
+          "scheme": "XmlApiKeyCamelQuery",
+          "label": "Query · apiKey",
+          "example": "?apiKey=hbxx_EXEMPLU_PORTAIL.SEMNATURA_FICTIVA",
+          "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1."
+        }
+      ],
+      "responseNote": "Cererile fără token valid primesc 401. Pentru XML, un token valid de site sau o cheie validă emisă pentru alt portal primește 403; un token de feed provenit din indexul altui portal este respins mai devreme cu 401. Un token valid fără scopul cerut primește 403. La index, cheia lipsă sau invalidă produce 401 cu corp gol. Regula „tokenul unui alt portal primește 403” nu se aplică tuturor tipurilor de token și nu este o restricție generală a feedului JSON."
+    }
+  },
+  "servers": [
+    {
+      "url": "https://www.habitoo.ro",
+      "description": "Origine publică Habitoo; utilizați baza feed.base_url furnizată în index pentru cererile agenției și src pentru imagini, fără reconstruirea originii."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Index portal"
+    },
+    {
+      "name": "Feed pe agenție"
+    },
+    {
+      "name": "Media"
+    },
+    {
+      "name": "Lead-uri"
+    },
+    {
+      "name": "Vizualizări"
+    },
+    {
+      "name": "XML Kyero"
+    }
+  ],
+  "paths": {
+    "/api/public/feed/{portal}/index/{indexKey}": {
+      "get": {
+        "summary": "Indexul agențiilor integrate cu portalul",
+        "tags": [
+          "Index portal"
+        ],
+        "description": "Lista completă a agențiilor care au activat portalul și au cel puțin un anunț selectat. Fără paginare. Agențiile eligibile sunt active sau în perioada de probă; după dezactivare pot rămâne în perioada de retragere (grace) timp de 7 zile. Lipsa anunțurilor selectate elimină agenția din index. Folosiți feed.base_url și feed.token din fiecare agenție. iMove indică un feed dedicat; Properstar are un model separat. Limita orientativă este 120 cereri/60 secunde pentru același portal și IP, inclusiv chei invalide; la 429 aplicați întârziere progresivă. Dacă o agenție activă sau inventarul complet nu poate fi furnizat, răspunsul este 503, niciodată un index parțial.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "portal",
+            "in": "path",
+            "required": true,
+            "description": "Identificatorul portalului pentru care a fost emisă cheia de index; valorile acceptate sunt listate mai jos.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "clickimob",
+                "imobli",
+                "locuit",
+                "imobiliareplus",
+                "imove",
+                "bazaruldecase"
+              ]
+            }
+          },
+          {
+            "name": "indexKey",
+            "in": "path",
+            "required": true,
+            "description": "Cheia de index; extensia .json finală este acceptată și eliminată la verificare.",
+            "schema": {
+              "type": "string",
+              "example": "hbxx_EXEMPLU_INDEX_FICTIV"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Index JSON complet.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-cache, must-revalidate"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalIndex"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Cheie absentă/nevalidă sau index neconfigurat. Corp gol, fără anvelopă JSON."
+          },
+          "429": {
+            "description": "Limita locală depășită; fără Retry-After. Corp gol, fără anvelopă JSON."
+          },
+          "503": {
+            "description": "Inventarul nu a putut fi generat complet. Nu retrageți anunțuri după un răspuns care nu e 200 complet. Reîncercați după 300 secunde.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "const": "300"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Service unavailable. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
+                }
+              }
+            }
+          }
+        },
+        "x-authentication": {
+          "type": "path-secret",
+          "parameter": "indexKey",
+          "description": "Cheie secretă obligatorie în cale; security=[] înseamnă fără schemă de antet, NU acces anonim."
+        }
+      }
+    },
+    "/api/public/sites/v1/properties": {
+      "get": {
+        "summary": "Lista proprietăților",
+        "description": "Necesită feed:read. Returnează anunțuri publicate, neretrase, cu starea active, reserved sau negotiation. Tokenul portalului limitează lista la anunțurile selectate pentru el și exclude ofertele fără telefon de contact al agentului responsabil; tokenul de site include ofertele eligibile ale agenției. iMove utilizează feedul dedicat indicat în index. În grace: data=[] și total=0. Ofertele sunt ordonate de la cea mai recentă modificare. Paginile după last_page întorc 200 și data=[]. Fără cursor, instantaneu comun sau filtre suplimentare.",
+        "tags": [
+          "Feed pe agenție"
+        ],
+        "security": [
+          {
+            "AgencyBearer": []
+          },
+          {
+            "AgencyBasic": []
+          },
+          {
+            "FeedTokenHeader": []
+          },
+          {
+            "ApiKeyHeader": []
+          },
+          {
+            "ApiKeyLegacyHeader": []
+          }
+        ],
+        "x-required-scopes": "feed:read",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Implicit 1; valori invalide sau <1 devin 1; fracțiile sunt rotunjite în jos."
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 200
+            },
+            "description": "Implicit 50; valori invalide sau <1 devin 50; peste 200 se limitează la 200; fracțiile se rotunjesc în jos."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "private, max-age=60"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API token. sau Invalid or revoked API token.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing scope: <scope>",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Limita locală a fost depășită; fără Retry-After.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/sites/v1/properties/{id}": {
+      "get": {
+        "summary": "O proprietate",
+        "description": "feed:read UUID sau referință, în agenția tokenului; dacă valoarea arată ca UUID se caută numai după UUID, altfel după referință. Aceleași reguli de eligibilitate și selecție ca lista; grace întoarce 404.",
+        "tags": [
+          "Feed pe agenție"
+        ],
+        "security": [
+          {
+            "AgencyBearer": []
+          },
+          {
+            "AgencyBasic": []
+          },
+          {
+            "FeedTokenHeader": []
+          },
+          {
+            "ApiKeyHeader": []
+          },
+          {
+            "ApiKeyLegacyHeader": []
+          }
+        ],
+        "x-required-scopes": "feed:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID sau referință. Trim; gol sau peste 64 caractere: 400.",
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "minLength": 1,
+              "example": "HB-900001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "private, max-age=60"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON body. sau Invalid property id., după operație.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API token. sau Invalid or revoked API token.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing scope: <scope>",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found. sau Agency not found., după operație.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Limita locală a fost depășită; fără Retry-After.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/sites/v1/agents": {
+      "get": {
+        "summary": "Lista agenților activi",
+        "description": "Necesită agents:read sau feed:read. Agenții activi ai agenției, ordonați alfabetic după nume; nu sunt limitați la cei cu anunțuri selectate pentru portal. Aceeași paginare ca anunțurile.",
+        "tags": [
+          "Feed pe agenție"
+        ],
+        "security": [
+          {
+            "AgencyBearer": []
+          },
+          {
+            "AgencyBasic": []
+          },
+          {
+            "FeedTokenHeader": []
+          },
+          {
+            "ApiKeyHeader": []
+          },
+          {
+            "ApiKeyLegacyHeader": []
+          }
+        ],
+        "x-required-scopes": "agents:read SAU feed:read",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Implicit 1; valori invalide sau <1 devin 1; fracțiile sunt rotunjite în jos."
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 200
+            },
+            "description": "Implicit 50; valori invalide sau <1 devin 50; peste 200 se limitează la 200; fracțiile se rotunjesc în jos."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "private, max-age=60"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API token. sau Invalid or revoked API token.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing scope: <scope>",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Limita locală a fost depășită; fără Retry-After.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/sites/v1/agency": {
+      "get": {
+        "summary": "Identitatea agenției",
+        "description": "agents:read SAU feed:read Doar numele și logo-ul; fără paginare.",
+        "tags": [
+          "Feed pe agenție"
+        ],
+        "security": [
+          {
+            "AgencyBearer": []
+          },
+          {
+            "AgencyBasic": []
+          },
+          {
+            "FeedTokenHeader": []
+          },
+          {
+            "ApiKeyHeader": []
+          },
+          {
+            "ApiKeyLegacyHeader": []
+          }
+        ],
+        "x-required-scopes": "agents:read SAU feed:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Succes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "private, max-age=60"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API token. sau Invalid or revoked API token.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing scope: <scope>",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found. sau Agency not found., după operație.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Limita locală a fost depășită; fără Retry-After.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/sites/v1/media/{id}": {
+      "get": {
+        "summary": "Imagine de proprietate",
+        "tags": [
+          "Media"
+        ],
+        "security": [],
+        "description": "Imagine inclusă la publicare, neconfidențială, cu proprietate eligibilă publicată. Nu verifică selecția unui anumit portal. Poate aplica watermark-ul agenției fără modificarea originalului. Fără token și fără limită de cereri pentru aceste adrese. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID al imaginii, agentului sau agenției, în funcție de cale; poate avea sufix .jpg, .jpeg, .png sau .webp.",
+            "schema": {
+              "type": "string",
+              "example": "11111111-1111-4111-8111-111111111111"
+            }
+          },
+          {
+            "name": "w",
+            "in": "query",
+            "required": false,
+            "description": "Lățime în pixeli; valori invalide sau în afara intervalului sunt ignorate.",
+            "schema": {
+              "type": "integer",
+              "minimum": 50,
+              "maximum": 1920
+            }
+          },
+          {
+            "name": "h",
+            "in": "query",
+            "required": false,
+            "description": "Înălțime în pixeli; valori invalide sau în afara intervalului sunt ignorate.",
+            "schema": {
+              "type": "integer",
+              "minimum": 50,
+              "maximum": 1920
+            }
+          },
+          {
+            "name": "fit",
+            "in": "query",
+            "required": false,
+            "description": "Trim, fără diferențiere majuscule: cover sau contain; orice altă valoare devine contain. Ignorat fără w/h valid.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "cover",
+                "contain"
+              ],
+              "default": "contain"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect cu corp gol.",
+            "headers": {
+              "Location": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "description": "Destinația temporară a imaginii."
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "public, max-age=3600"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ID nevalid, imagine lipsă/neeligibilă.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Eroare internă.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Internal error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/sites/v1/media/agent/{id}": {
+      "get": {
+        "summary": "Avatarul agentului",
+        "tags": [
+          "Media"
+        ],
+        "security": [],
+        "description": "Agent activ cu avatar. Nu verifică eligibilitatea agenției în index. Fără token și fără limită de cereri pentru aceste adrese. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID al imaginii, agentului sau agenției, în funcție de cale; poate avea sufix .jpg, .jpeg, .png sau .webp.",
+            "schema": {
+              "type": "string",
+              "example": "11111111-1111-4111-8111-111111111111"
+            }
+          },
+          {
+            "name": "w",
+            "in": "query",
+            "required": false,
+            "description": "Lățime în pixeli; valori invalide sau în afara intervalului sunt ignorate.",
+            "schema": {
+              "type": "integer",
+              "minimum": 50,
+              "maximum": 1920
+            }
+          },
+          {
+            "name": "h",
+            "in": "query",
+            "required": false,
+            "description": "Înălțime în pixeli; valori invalide sau în afara intervalului sunt ignorate.",
+            "schema": {
+              "type": "integer",
+              "minimum": 50,
+              "maximum": 1920
+            }
+          },
+          {
+            "name": "fit",
+            "in": "query",
+            "required": false,
+            "description": "Trim, fără diferențiere majuscule: cover sau contain; orice altă valoare devine contain. Ignorat fără w/h valid.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "cover",
+                "contain"
+              ],
+              "default": "contain"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect cu corp gol.",
+            "headers": {
+              "Location": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "description": "Destinația temporară a imaginii."
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "public, max-age=3600"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ID nevalid, imagine lipsă/neeligibilă.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Eroare internă.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Internal error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/sites/v1/media/agency/{id}": {
+      "get": {
+        "summary": "Logo-ul agenției",
+        "tags": [
+          "Media"
+        ],
+        "security": [],
+        "description": "Agenție existentă cu logo. Nu verifică starea sau eligibilitatea agenției în index. Fără token și fără limită de cereri pentru aceste adrese. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID al imaginii, agentului sau agenției, în funcție de cale; poate avea sufix .jpg, .jpeg, .png sau .webp.",
+            "schema": {
+              "type": "string",
+              "example": "11111111-1111-4111-8111-111111111111"
+            }
+          },
+          {
+            "name": "w",
+            "in": "query",
+            "required": false,
+            "description": "Lățime în pixeli; valori invalide sau în afara intervalului sunt ignorate.",
+            "schema": {
+              "type": "integer",
+              "minimum": 50,
+              "maximum": 1920
+            }
+          },
+          {
+            "name": "h",
+            "in": "query",
+            "required": false,
+            "description": "Înălțime în pixeli; valori invalide sau în afara intervalului sunt ignorate.",
+            "schema": {
+              "type": "integer",
+              "minimum": 50,
+              "maximum": 1920
+            }
+          },
+          {
+            "name": "fit",
+            "in": "query",
+            "required": false,
+            "description": "Trim, fără diferențiere majuscule: cover sau contain; orice altă valoare devine contain. Ignorat fără w/h valid.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "cover",
+                "contain"
+              ],
+              "default": "contain"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect cu corp gol.",
+            "headers": {
+              "Location": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "description": "Destinația temporară a imaginii."
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "public, max-age=3600"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ID nevalid, imagine lipsă/neeligibilă.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Eroare internă.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Internal error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/sites/v1/contacts": {
+      "post": {
+        "summary": "Trimite un lead",
+        "description": "Necesită leads:write. Trimite solicitarea clientului către agenție și creează sau reutilizează un contact și un lead. idstr identifică referința anunțului; nu deduplică mesajul. Anunțul trebuie să aparțină agenției; nu este necesar să fie în inventarul public curent. Cu token de portal, sursa este portalul autentificat, iar lead-ul ajunge la agentul responsabil al anunțului. Folosiți un message_id stabil, unic în agenție și portal, pentru a recunoaște retrimiterile. Fără acesta, un lead deschis poate fi reutilizat pentru același portal, client și anunț. Clientul este identificat după email dacă este transmis, altfel după telefon. Cu token de site, message_id este ignorat și se poate reutiliza lead-ul deschis pentru același client și anunț. Deduplicarea lead-urilor nu este garantată la retrimiteri simultane.",
+        "tags": [
+          "Lead-uri"
+        ],
+        "security": [
+          {
+            "AgencyBearer": []
+          },
+          {
+            "AgencyBasic": []
+          },
+          {
+            "FeedTokenHeader": []
+          },
+          {
+            "ApiKeyHeader": []
+          },
+          {
+            "ApiKeyLegacyHeader": []
+          }
+        ],
+        "x-required-scopes": "leads:write",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Token de portal: lead existent/deduplicat.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON body. sau Invalid property id., după operație.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API token. sau Invalid or revoked API token.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing scope: <scope>",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found. sau Agency not found., după operație.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid payload. sau Either telefon or email is required.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Limita locală a fost depășită; fără Retry-After.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Lead creat de portal; cu token de site inclusiv lead reutilizat (deduplicated=true).",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResult"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactInput"
+              },
+              "example": {
+                "nume": "Client fictiv",
+                "email": "client@example.invalid",
+                "idstr": "HB-900001",
+                "mesaj": "Doresc informații despre oferta fictivă.",
+                "message_id": "EXEMPLU-MESAJ-001"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/sites/v1/visits": {
+      "get": {
+        "summary": "Totaluri de vizualizări",
+        "description": "Necesită leads:write. Sunt vizualizări ale anunțurilor, nu programări de vizionare. Însumează cel mult ultimele 1.000 de înregistrări ale agenției, ordonate descrescător după data vizualizării, și grupează rezultatul pe anunț, pentru toate sursele. Limita este comună întregii agenții, nu 1.000 pentru fiecare anunț. Rezultatul nu este un total istoric complet dacă există mai multe înregistrări. O înregistrare poate cuprinde mai multe vizualizări: limita nu înseamnă 1.000 de vizualizări. Fără parametri de query sau paginare.",
+        "tags": [
+          "Vizualizări"
+        ],
+        "security": [
+          {
+            "AgencyBearer": []
+          },
+          {
+            "AgencyBasic": []
+          },
+          {
+            "FeedTokenHeader": []
+          },
+          {
+            "ApiKeyHeader": []
+          },
+          {
+            "ApiKeyLegacyHeader": []
+          }
+        ],
+        "x-required-scopes": "leads:write",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Succes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitTotals"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API token. sau Invalid or revoked API token.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing scope: <scope>",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Limita locală a fost depășită; fără Retry-After.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Raportează vizualizări",
+        "description": "Necesită leads:write. Acceptă o intrare sau un lot de 1–500. Adaugă views la vizualizările anunțului pentru data și sursa indicate. Cu event_id, același eveniment retrimis de același portal în aceeași agenție primește 200 cu deduplicated: true, fără a adăuga din nou vizualizări. Deduplicarea rămâne valabilă după rotirea cheii portalului. Fără event_id, fiecare retrimitere adaugă din nou views. Identitatea portalului este determinată exclusiv din token, nu din source. Anunțurile inexistente sau din altă agenție sunt ignorate. În lot, accepted include duplicatele; duplicates le numără separat și deduplicated este true dacă există cel puțin una.",
+        "tags": [
+          "Vizualizări"
+        ],
+        "security": [
+          {
+            "AgencyBearer": []
+          },
+          {
+            "AgencyBasic": []
+          },
+          {
+            "FeedTokenHeader": []
+          },
+          {
+            "ApiKeyHeader": []
+          },
+          {
+            "ApiKeyLegacyHeader": []
+          }
+        ],
+        "x-required-scopes": "leads:write",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Succes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitResult"
+                },
+                "example": {
+                  "accepted": 1,
+                  "rejected": 0,
+                  "deduplicated": true,
+                  "duplicates": 1,
+                  "api_version": "habitoo-site-feed/1.0"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON body. sau Invalid property id., după operație.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API token. sau Invalid or revoked API token.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing scope: <scope>",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid payload. sau Either telefon or email is required.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Limita locală a fost depășită; fără Retry-After.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nicio intrare acceptată; NU folosește schema Error.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitResult"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/VisitInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/VisitBatch"
+                  }
+                ]
+              },
+              "example": {
+                "id": "11111111-1111-4111-8111-111111111111",
+                "views": 1,
+                "source": "portal-exemplu",
+                "event_id": "EXEMPLU-EVENIMENT-001"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/portal/v1/bazaruldecase/feed.xml": {
+      "get": {
+        "summary": "Inventar XML Kyero v3",
+        "description": "Necesită feed:read și tokenul BazarulDeCase. Acceptă tokenul pe agenție primit în indexul acestui portal sau o cheie emisă pentru același portal. Un token de site primește 403; tokenurile din indexul altor portaluri primesc 401. XML Kyero v3 complet, fără paginare: aceleași anunțuri eligibile și selectate ca în JSON, inclusiv telefon de contact valid. În grace: inventar gol cu 200. Dacă vreo parte a inventarului nu poate fi furnizată sau un anunț nu poate fi reprezentat (tip necunoscut, preț lipsă/nepozitiv, monedă neacceptată), răspunsul este 503 cu Retry-After: 300, fără XML parțial. Până la 50 de fotografii per ofertă; vânzarea și închirierea simultane produc două elemente. Nu retrageți anunțuri după un răspuns care nu e 200 complet.",
+        "tags": [
+          "XML Kyero"
+        ],
+        "security": [
+          {
+            "AgencyBearer": []
+          },
+          {
+            "AgencyBasic": []
+          },
+          {
+            "FeedTokenHeader": []
+          },
+          {
+            "ApiKeyHeader": []
+          },
+          {
+            "ApiKeyLegacyHeader": []
+          },
+          {
+            "XmlTokenQuery": []
+          },
+          {
+            "XmlKeyQuery": []
+          },
+          {
+            "XmlApiKeyQuery": []
+          },
+          {
+            "XmlApikeyQuery": []
+          },
+          {
+            "XmlApiKeyCamelQuery": []
+          }
+        ],
+        "x-required-scopes": "feed:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Inventar XML complet sau inventar gol intenționat; niciodată XML parțial la eroare.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-cache, must-revalidate"
+                }
+              }
+            },
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/KyeroDocument"
+                },
+                "example": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root><kyero><feed_version>3</feed_version></kyero><property><id>11111111-1111-4111-8111-111111111111-sale</id><ref>HB-900001</ref><price>100000</price><currency>EUR</currency><price_freq>sale</price_freq><new_build>0</new_build><type>Apartment</type><country>Romania</country><pool>0</pool><notes>Habitoo HB-900001</notes></property></root>"
+              }
+            }
+          },
+          "401": {
+            "description": "Token absent, invalid sau revocat; inclusiv token de feed provenit din indexul altui portal. Răspuns JSON Error.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token valid de site sau cheie validă pentru alt portal; ori lipsește scopul feed:read. XML acceptă numai tokenul portalului său. Răspuns JSON Error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Limita locală a fost depășită; fără Retry-After.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.0",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Inventarul nu a putut fi generat complet. Nu retrageți anunțuri după un răspuns care nu e 200 complet. Reîncercați după 300 secunde.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "const": "300"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Service unavailable. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
+                }
+              }
+            }
+          }
+        },
+        "x-authentication": {
+          "description": "Recomandat: ?token={feed.token} emis pentru BazarulDeCase. Compatibilitate: Bearer, Basic, x-habitoo-feed-token, x-api-key, x-apikey, apoi query key, api_key, apikey, apiKey. Tokenurile obișnuite de site nu sunt acceptate."
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "AgencyBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Metoda recomandată pentru JSON: Authorization: Bearer {token}, cu feed.token al agenției, nu indexKey. Nu este OAuth. Acceptată și pentru XML, doar cu tokenul portalului acelui feed și scopul feed:read. Scopurile necesare pentru JSON sunt indicate la fiecare endpoint."
+      },
+      "AgencyBasic": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Tokenul se pune ca parolă; numele utilizatorului poate fi gol. Alternativ, folosește tokenul ca utilizator și o parolă goală (-u \"TOKEN:\"). O parolă negoală are prioritate față de utilizator. Acceptat pentru JSON și XML. Authorization are prioritate față de headerele alternative."
+      },
+      "FeedTokenHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-habitoo-feed-token",
+        "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index. Prioritate între headere: x-habitoo-feed-token, x-api-key, x-apikey; Authorization prezent le exclude."
+      },
+      "ApiKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index. Prioritate între headere: x-habitoo-feed-token, x-api-key, x-apikey; Authorization prezent le exclude."
+      },
+      "ApiKeyLegacyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-apikey",
+        "description": "Header alternativ la Authorization, acceptat pentru JSON și XML. Folosește tokenul agenției, nu cheia de index. Prioritate între headere: x-habitoo-feed-token, x-api-key, x-apikey; Authorization prezent le exclude."
+      },
+      "XmlTokenQuery": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "token",
+        "description": "Recomandat pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1. Un token extras din header are prioritate; ordinea query este token, key, api_key, apikey, apiKey."
+      },
+      "XmlKeyQuery": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "key",
+        "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1. Un token extras din header are prioritate; ordinea query este token, key, api_key, apikey, apiKey."
+      },
+      "XmlApiKeyQuery": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "api_key",
+        "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1. Un token extras din header are prioritate; ordinea query este token, key, api_key, apikey, apiKey."
+      },
+      "XmlApikeyQuery": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "apikey",
+        "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1. Un token extras din header are prioritate; ordinea query este token, key, api_key, apikey, apiKey."
+      },
+      "XmlApiKeyCamelQuery": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "apiKey",
+        "description": "Variantă de compatibilitate pentru XML. Nu este acceptat de endpointurile JSON /api/public/sites/v1. Un token extras din header are prioritate; ordinea query este token, key, api_key, apikey, apiKey."
+      }
+    },
+    "schemas": {
+      "FeedProperty": {
+        "type": "object",
+        "properties": {
+          "idnum": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Cifrele extrase din referință, dacă formează un întreg sigur; altfel null. Nu este UUID-ul proprietății."
+          },
+          "idstr": {
+            "type": "string",
+            "description": "Referința proprietății; dacă nu există, UUID-ul. Cheie de reconciliere a ofertei în inventarul aceleiași agenții; nu este message_id. Nu garantează unicitatea referinței."
+          },
+          "alias": {
+            "type": "string",
+            "description": "oferta- urmat de UUID-ul proprietății."
+          },
+          "agent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Numele agentului responsabil, dacă este disponibil."
+          },
+          "agent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UUID-ul agentului responsabil, dacă există."
+          },
+          "dataadaugare": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Data creării în format ISO."
+          },
+          "datamodificare": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Data ultimei modificări în format ISO."
+          },
+          "adresa": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Adresa ofertei numai când locația este marcată precisă; null când locația nu e precisă sau adresa nu este disponibilă."
+          },
+          "titlu": {
+            "type": "object",
+            "properties": {
+              "ro": {
+                "type": "string",
+                "description": "Titlul în română."
+              },
+              "en": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "ro",
+              "en"
+            ],
+            "description": "Titlul ofertei pe limbi; textul românesc este disponibil."
+          },
+          "descriere": {
+            "type": "object",
+            "properties": {
+              "ro": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Descrierea în română."
+              },
+              "en": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "ro",
+              "en"
+            ],
+            "description": "Descrierea ofertei pe limbi; textul românesc poate fi null dacă nu este disponibil."
+          },
+          "vecinatati": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": ""
+            },
+            "description": "Întotdeauna listă goală."
+          },
+          "utilitati": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": ""
+            },
+            "description": "Utilitățile selectate, fără nomenclator închis în API."
+          },
+          "finisaje": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": ""
+            },
+            "description": "Reunește izolații, pereți, podele, ferestre, jaluzele, obloane și uși."
+          },
+          "dotari": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": ""
+            },
+            "description": "Dotări unice din caracteristici și grupurile de dotări, inclusiv spații suplimentare, bucătărie, contoare, electrocasnice, clădire, stradă, priveliști, diverse și răcire."
+          },
+          "altedetaliizona": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Aceeași zonă sau același cartier ca în zona."
+          },
+          "pretnegociabil": {
+            "type": "boolean",
+            "description": "Prețul este negociabil."
+          },
+          "longitudine": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Longitudine exactă numai când locația este marcată precisă; altfel aceeași coordonată aproximativă, deterministă, ca pe site-ul public și în Partner API. null dacă nu există coordonate publicabile."
+          },
+          "latitudine": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Latitudine exactă numai când locația este marcată precisă; altfel aceeași coordonată aproximativă, deterministă, ca pe site-ul public și în Partner API. null dacă nu există coordonate publicabile."
+          },
+          "tiplocuinta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tipul numai pentru apartment, studio, house sau villa; pentru celelalte tipuri este null.",
+            "enum": [
+              "apartment",
+              "studio",
+              "house",
+              "villa",
+              null
+            ]
+          },
+          "tipimobil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tipul proprietății: apartment = apartament, studio = garsonieră, house = casă/vilă, land = teren, commercial = spațiu comercial, office = birou, industrial = industrial. Null dacă nu este precizat.",
+            "enum": [
+              "apartment",
+              "studio",
+              "house",
+              "land",
+              "commercial",
+              "office",
+              "industrial",
+              null
+            ]
+          },
+          "tipteren": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Categoria terenului, ca text liber; null pentru alte tipuri de proprietate sau când nu este precizată. Nu există o listă închisă de valori pentru acest câmp."
+          },
+          "clasificareteren": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Aceeași categorie ca tipteren, ca text liber; null pentru alte tipuri sau când nu este precizată."
+          },
+          "nrfronturistradale": {
+            "type": "null"
+          },
+          "frontstradal": {
+            "type": "null"
+          },
+          "latimedrumacces": {
+            "type": "null"
+          },
+          "suprafatateren": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Suprafața terenului, în m²."
+          },
+          "nrcamere": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Numărul de camere."
+          },
+          "nrdormitoare": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Numărul de dormitoare."
+          },
+          "nrbucatarii": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Numărul de bucătării."
+          },
+          "etaj": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Etajul exprimat numeric; null dacă nu este precizat."
+          },
+          "tipcompartimentare": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Compartimentarea locuinței. Null dacă nu este precizat.",
+            "enum": [
+              "Decomandat",
+              "Semidecomandat",
+              "Nedecomandat",
+              "Circular",
+              "Vagon",
+              "Open space",
+              null
+            ]
+          },
+          "suprafatautila": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Suprafața utilă în m²."
+          },
+          "confort": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Categoria de confort, dacă este precizată."
+          },
+          "suprafataconstruita": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Suprafața construită în m²."
+          },
+          "anconstructie": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Anul construcției; poate fi un an viitor pentru o clădire în curs de finalizare. Null dacă nu este precizat."
+          },
+          "nrbai": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Numărul de băi."
+          },
+          "nrnivele": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Numărul de niveluri ale clădirii."
+          },
+          "nrbalcoane": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Numărul de balcoane."
+          },
+          "nrgaraje": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Numărul de garaje."
+          },
+          "stadiuconstructie": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stadiul construcției. Null dacă nu este precizat.",
+            "enum": [
+              "Finalizată",
+              "În construcție",
+              "La roșu",
+              "La cheie",
+              "Semifinisată",
+              "Proiect",
+              null
+            ]
+          },
+          "structurarezistenta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Structura de rezistență a clădirii; null dacă nu este precizată."
+          },
+          "status": {
+            "type": "string",
+            "description": "Doar active (activ), reserved (rezervat) sau negotiation (în negociere) în răspunsul endpointurilor de feed.",
+            "enum": [
+              "active",
+              "reserved",
+              "negotiation"
+            ]
+          },
+          "localitate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Localitatea ofertei; null dacă nu este precizată."
+          },
+          "judet": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Județul ofertei; null dacă nu este precizat."
+          },
+          "zona": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Zona sau cartierul ofertei; null dacă nu este precizat."
+          },
+          "strada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Strada ofertei numai când locația este marcată precisă; null când locația nu e precisă sau strada nu este precizată."
+          },
+          "numarstradal": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Numărul stradal numai când locația este marcată precisă; null când locația nu e precisă sau numărul nu este precizat."
+          },
+          "cod_siruta_judet": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Cod SIRUTA județ."
+          },
+          "cod_siruta_uat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Cod SIRUTA UAT."
+          },
+          "cod_siruta_localitate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Cod SIRUTA localitate."
+          },
+          "caroiaj": {
+            "type": "null"
+          },
+          "devanzare": {
+            "type": "boolean",
+            "description": "Oferta e de vânzare; poate fi adevărat împreună cu deinchiriere."
+          },
+          "deinchiriere": {
+            "type": "boolean",
+            "description": "Oferta e de închiriere; poate fi adevărat împreună cu devanzare."
+          },
+          "monedavanzare": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Moneda prețului de vânzare. Null dacă devanzare este false sau moneda nu este precizată.",
+            "enum": [
+              "EUR",
+              "RON",
+              "USD",
+              null
+            ]
+          },
+          "monedainchiriere": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Moneda chiriei. Null dacă deinchiriere este false sau moneda nu este precizată.",
+            "enum": [
+              "EUR",
+              "RON",
+              "USD",
+              null
+            ]
+          },
+          "pretvanzare": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Prețul de vânzare, în monedavanzare; null dacă oferta nu este de vânzare sau prețul nu este disponibil."
+          },
+          "pretinchiriere": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Chiria, în monedainchiriere; null dacă oferta nu este de închiriere sau chiria nu este disponibilă."
+          },
+          "pretfaratva": {
+            "type": "null"
+          },
+          "tvainclus": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Indică dacă TVA este inclus în preț; null dacă nu este precizat."
+          },
+          "comisioncumparator": {
+            "type": "null"
+          },
+          "referintaexterna": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Identificatorul extern al proprietății, dacă există."
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedImage"
+            },
+            "description": "Fotografiile publicabile, neconfidențiale; coperta prima, apoi în ordinea galeriei. Feedul JSON nu impune un număr maxim."
+          },
+          "publicare": {
+            "type": "boolean",
+            "const": true,
+            "description": "Întotdeauna true pentru ofertele eligibile returnate de feed."
+          },
+          "top": {
+            "type": "boolean",
+            "description": "Oferta este marcată pentru evidențiere."
+          },
+          "pole": {
+            "type": "boolean",
+            "description": "Rezervat pentru compatibilitate; întotdeauna false.",
+            "const": false
+          },
+          "custom1": {
+            "type": "null"
+          },
+          "custom2": {
+            "type": "null"
+          },
+          "portals": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": ""
+            },
+            "description": "Identificatorii portalurilor selectate sau pe care oferta este publicată. Lista nu este închisă; poate fi goală."
+          },
+          "tip": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tipul proprietății: apartment = apartament, studio = garsonieră, house = casă/vilă, land = teren, commercial = spațiu comercial, office = birou, industrial = industrial. Null dacă nu este precizat.",
+            "enum": [
+              "apartment",
+              "studio",
+              "house",
+              "land",
+              "commercial",
+              "office",
+              "industrial",
+              null
+            ]
+          },
+          "suprafata_value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Suprafața generală a ofertei, în m²; poate diferi de suprafața utilă. Null dacă nu este precizată."
+          },
+          "incalzire_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Sistemul principal de încălzire; dacă sunt mai multe sisteme, se poate afișa primul. Null dacă nu este precizat.",
+            "enum": [
+              "Termoficare",
+              "Centrală proprie",
+              "Centrală imobil",
+              "Convectoare",
+              "Sobă teracotă",
+              "Centrală pe lemne",
+              "Încălzire pardoseală",
+              "Calorifere",
+              "Pompă de căldură",
+              null
+            ]
+          },
+          "mobilare_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Gradul sau stilul de mobilare. Null dacă nu este precizat.",
+            "enum": [
+              "Complet",
+              "Parțial",
+              "Nemobilat",
+              "Lux",
+              "Modern",
+              null
+            ]
+          },
+          "mobilat_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Aceeași valoare ca mobilare_value. Null dacă nu este precizat.",
+            "enum": [
+              "Complet",
+              "Parțial",
+              "Nemobilat",
+              "Lux",
+              "Modern",
+              null
+            ]
+          },
+          "parcare_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tipul parcării. Null dacă nu este precizat.",
+            "enum": [
+              "Fără",
+              "Loc de parcare",
+              "Garaj",
+              "Parcare subterană",
+              "Parcare supraterană",
+              null
+            ]
+          },
+          "balcon_value": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Valoare booleană pentru balcon; altfel null."
+          },
+          "utilitati_values": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": ""
+            },
+            "description": "Alias pentru utilitati."
+          },
+          "dotari_values": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": ""
+            },
+            "description": "Alias pentru dotari."
+          },
+          "stadiuconstructie_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Aceeași valoare ca stadiuconstructie. Null dacă nu este precizat.",
+            "enum": [
+              "Finalizată",
+              "În construcție",
+              "La roșu",
+              "La cheie",
+              "Semifinisată",
+              "Proiect",
+              null
+            ]
+          },
+          "tipconstructie_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tipul clădirii. Null dacă nu este precizat.",
+            "enum": [
+              "Bloc",
+              "Casă",
+              "Vilă",
+              "Imobil de birouri",
+              "Ansamblu rezidențial",
+              "Hală",
+              null
+            ]
+          },
+          "starefinisaje_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Starea finisajelor. Null dacă nu este precizat.",
+            "enum": [
+              "Finisat",
+              "Semifinisat",
+              "Ultrafinisat",
+              "Bună",
+              "Necesită renovare",
+              "Renovat",
+              null
+            ]
+          },
+          "bucatarie_values": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": ""
+            },
+            "description": "Dotările bucătăriei."
+          },
+          "eficienta_energetica": {
+            "type": "null"
+          },
+          "consum_specific": {
+            "type": "null"
+          },
+          "indice_emisii": {
+            "type": "null"
+          },
+          "consum_energie_regenerabila": {
+            "type": "null"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Linkul public al ofertei; null dacă nu este disponibil."
+          },
+          "energy": {
+            "type": "object",
+            "properties": {
+              "clasa": {
+                "type": "null"
+              },
+              "consum": {
+                "type": "null"
+              },
+              "emisii": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "clasa",
+              "consum",
+              "emisii"
+            ],
+            "description": "Obiect rezervat pentru compatibilitate; valorile clasa, consum și emisii sunt întotdeauna null."
+          }
+        },
+        "required": [
+          "idnum",
+          "idstr",
+          "alias",
+          "agent",
+          "agent_id",
+          "dataadaugare",
+          "datamodificare",
+          "adresa",
+          "titlu",
+          "descriere",
+          "vecinatati",
+          "utilitati",
+          "finisaje",
+          "dotari",
+          "altedetaliizona",
+          "pretnegociabil",
+          "longitudine",
+          "latitudine",
+          "tiplocuinta",
+          "tipimobil",
+          "tipteren",
+          "clasificareteren",
+          "nrfronturistradale",
+          "frontstradal",
+          "latimedrumacces",
+          "suprafatateren",
+          "nrcamere",
+          "nrdormitoare",
+          "nrbucatarii",
+          "etaj",
+          "tipcompartimentare",
+          "suprafatautila",
+          "confort",
+          "suprafataconstruita",
+          "anconstructie",
+          "nrbai",
+          "nrnivele",
+          "nrbalcoane",
+          "nrgaraje",
+          "stadiuconstructie",
+          "structurarezistenta",
+          "status",
+          "localitate",
+          "judet",
+          "zona",
+          "strada",
+          "numarstradal",
+          "cod_siruta_judet",
+          "cod_siruta_uat",
+          "cod_siruta_localitate",
+          "caroiaj",
+          "devanzare",
+          "deinchiriere",
+          "monedavanzare",
+          "monedainchiriere",
+          "pretvanzare",
+          "pretinchiriere",
+          "pretfaratva",
+          "tvainclus",
+          "comisioncumparator",
+          "referintaexterna",
+          "images",
+          "publicare",
+          "top",
+          "pole",
+          "custom1",
+          "custom2",
+          "portals",
+          "tip",
+          "suprafata_value",
+          "incalzire_value",
+          "mobilare_value",
+          "mobilat_value",
+          "parcare_value",
+          "balcon_value",
+          "utilitati_values",
+          "dotari_values",
+          "stadiuconstructie_value",
+          "tipconstructie_value",
+          "starefinisaje_value",
+          "bucatarie_values",
+          "eficienta_energetica",
+          "consum_specific",
+          "indice_emisii",
+          "consum_energie_regenerabila",
+          "url",
+          "energy"
+        ],
+        "description": "Toate câmpurile sunt prezente; null înseamnă valoare indisponibilă, nu câmp absent. Listele de valori includ null unde este permis. Câmpuri rezervate pentru compatibilitate, întotdeauna null: titlu.en, descriere.en, nrfronturistradale, frontstradal, latimedrumacces, caroiaj, pretfaratva, comisioncumparator, custom1, custom2, eficienta_energetica, consum_specific, indice_emisii, consum_energie_regenerabila, energy.clasa, energy.consum, energy.emisii."
+      },
+      "FeedImage": {
+        "type": "object",
+        "properties": {
+          "src": {
+            "type": "string",
+            "description": "URL public stabil al imaginii.",
+            "format": "uri"
+          },
+          "tip": {
+            "type": "string",
+            "description": "Copertă sau galerie.",
+            "enum": [
+              "principala",
+              "galerie"
+            ]
+          },
+          "pozitie": {
+            "type": "number",
+            "description": "Poziția imaginii; 0 dacă lipsește."
+          },
+          "modificata": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Data modificării."
+          },
+          "alt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Text alternativ."
+          },
+          "width": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Lățimea originală în pixeli."
+          },
+          "height": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Înălțimea originală în pixeli."
+          }
+        },
+        "required": [
+          "src",
+          "tip",
+          "pozitie",
+          "modificata",
+          "alt",
+          "width",
+          "height"
+        ]
+      },
+      "FeedAgent": {
+        "type": "object",
+        "properties": {
+          "idstr": {
+            "type": "string",
+            "description": "UUID-ul agentului.",
+            "format": "uuid"
+          },
+          "nume": {
+            "type": "string",
+            "description": "Numele afișat."
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Emailul agentului."
+          },
+          "telefon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Telefonul agentului."
+          },
+          "functie": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Funcția agentului."
+          },
+          "poza": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL HTTPS existent sau URL public stabil pentru avatar; null fără avatar."
+          },
+          "activ": {
+            "type": "boolean",
+            "const": true,
+            "description": "Doar agenții activi sunt listați."
+          }
+        },
+        "required": [
+          "idstr",
+          "nume",
+          "email",
+          "telefon",
+          "functie",
+          "poza",
+          "activ"
+        ]
+      },
+      "Agency": {
+        "type": "object",
+        "properties": {
+          "nume": {
+            "type": "string",
+            "description": "Numele agenției."
+          },
+          "logo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL public stabil al logo-ului; null dacă nu există logo."
+          }
+        },
+        "required": [
+          "nume",
+          "logo"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Mesajul exact al erorii; mesajele API sunt în engleză."
+          },
+          "api_version": {
+            "const": "habitoo-site-feed/1.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "api_version"
+        ]
+      },
+      "PropertyPage": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Număr total de rezultate."
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "Dimensiunea efectivă a paginii."
+          },
+          "current_page": {
+            "type": "integer",
+            "description": "Pagina cerută normalizată."
+          },
+          "last_page": {
+            "type": "integer",
+            "description": "Maximum dintre 1 și ceil(total/per_page)."
+          },
+          "next_page_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL pagina următoare sau null."
+          },
+          "prev_page_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL pagina precedentă sau null."
+          },
+          "from": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Indicele primului rezultat, de la 1; null dacă total=0."
+          },
+          "to": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Indicele final calculat; null dacă total=0. La pagini peste last_page, metadata nu garantează un interval valid de rezultate."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedProperty"
+            }
+          },
+          "api_version": {
+            "const": "habitoo-site-feed/1.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total",
+          "per_page",
+          "current_page",
+          "last_page",
+          "next_page_url",
+          "prev_page_url",
+          "from",
+          "to",
+          "data",
+          "api_version"
+        ]
+      },
+      "AgentPage": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Număr total de rezultate."
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "Dimensiunea efectivă a paginii."
+          },
+          "current_page": {
+            "type": "integer",
+            "description": "Pagina cerută normalizată."
+          },
+          "last_page": {
+            "type": "integer",
+            "description": "Maximum dintre 1 și ceil(total/per_page)."
+          },
+          "next_page_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL pagina următoare sau null."
+          },
+          "prev_page_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL pagina precedentă sau null."
+          },
+          "from": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Indicele primului rezultat, de la 1; null dacă total=0."
+          },
+          "to": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Indicele final calculat; null dacă total=0. La pagini peste last_page, metadata nu garantează un interval valid de rezultate."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedAgent"
+            }
+          },
+          "api_version": {
+            "const": "habitoo-site-feed/1.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total",
+          "per_page",
+          "current_page",
+          "last_page",
+          "next_page_url",
+          "prev_page_url",
+          "from",
+          "to",
+          "data",
+          "api_version"
+        ]
+      },
+      "PropertyDetail": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FeedProperty"
+          },
+          "api_version": {
+            "const": "habitoo-site-feed/1.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "api_version"
+        ]
+      },
+      "AgencyDetail": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Agency"
+          },
+          "api_version": {
+            "const": "habitoo-site-feed/1.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "api_version"
+        ]
+      },
+      "IndexAgency": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID stabil opac cu prefix hb, nu UUID-ul agenției."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Numele comercial."
+          },
+          "legal_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Denumirea legală."
+          },
+          "cui": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cod fiscal."
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Adresa de email publică a agenției; null dacă nu este disponibilă."
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Telefonul public al agenției; null dacă nu este disponibil."
+          },
+          "website": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Website-ul public al agenției; null dacă nu este disponibil."
+          },
+          "county": {
+            "type": "null"
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Localitatea agenției."
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Adresa publică a agenției; null dacă nu este disponibilă."
+          },
+          "logo_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL public stabil sau null fără logo."
+          },
+          "status": {
+            "type": "string",
+            "description": "Activă sau în perioada de retragere de 7 zile.",
+            "enum": [
+              "active",
+              "grace"
+            ]
+          },
+          "inactive_since": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Începutul perioadei de retragere; null dacă active."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Data modificării agenției.",
+            "format": "date-time"
+          },
+          "feed": {
+            "type": "object",
+            "properties": {
+              "base_url": {
+                "type": "string",
+                "description": "Baza feedului agenției: /api/public/sites/v1; iMove are feed dedicat /api/public/portal/v1/imove/feed, în afara acestui contract JSON.",
+                "format": "uri"
+              },
+              "token": {
+                "type": "string",
+                "description": "Token individual, diferit de indexKey; se transmite Bearer la baza indicată.",
+                "examples": [
+                  "hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA"
+                ]
+              }
+            },
+            "required": [
+              "base_url",
+              "token"
+            ]
+          },
+          "kyero_xml_url": {
+            "type": "string",
+            "description": "Prezent numai pentru bazaruldecase: URL XML cu token individual în query.",
+            "format": "uri",
+            "example": "https://www.habitoo.ro/api/public/portal/v1/bazaruldecase/feed.xml?token=hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "legal_name",
+          "cui",
+          "email",
+          "phone",
+          "website",
+          "county",
+          "city",
+          "address",
+          "logo_url",
+          "status",
+          "inactive_since",
+          "updated_at",
+          "feed"
+        ],
+        "description": "Câmp rezervat pentru compatibilitate, întotdeauna null: county."
+      },
+      "PortalIndex": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "Versiunea depinde de portal.",
+            "enum": [
+              "habitoo-clickimob-index/1.0",
+              "habitoo-imobli-index/1.0",
+              "habitoo-locuit-index/1.0",
+              "habitoo-imobiliareplus-index/1.0",
+              "habitoo-imove-index/1.0",
+              "habitoo-bazaruldecase-index/1.0"
+            ]
+          },
+          "generated_at": {
+            "type": "string",
+            "description": "Data generării indexului.",
+            "format": "date-time"
+          },
+          "agencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndexAgency"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "generated_at",
+          "agencies"
+        ]
+      },
+      "ContactInput": {
+        "type": "object",
+        "properties": {
+          "nume": {
+            "type": "string",
+            "description": "Numele clientului; spațiile exterioare sunt eliminate.",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "telefon": {
+            "type": "string",
+            "description": "Obligatoriu dacă lipsește email.",
+            "minLength": 6,
+            "maxLength": 32
+          },
+          "email": {
+            "type": "string",
+            "description": "Obligatoriu dacă lipsește telefon.",
+            "format": "email",
+            "maxLength": 255
+          },
+          "mesaj": {
+            "type": "string",
+            "description": "Mesajul clientului.",
+            "maxLength": 2000
+          },
+          "id": {
+            "type": "string",
+            "description": "UUID proprietate; prioritar față de idstr.",
+            "format": "uuid"
+          },
+          "idstr": {
+            "type": "string",
+            "description": "Referința proprietății, nu cheie de deduplicare; se caută numai în referințe, fără fallback UUID.",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "source": {
+            "type": "string",
+            "description": "Numai token de site: sursa website:<source>. La token de portal este ignorat; portalul rezultă din token.",
+            "maxLength": 60
+          },
+          "message_id": {
+            "type": "string",
+            "description": "ID extern al mesajului; deduplicare numai cu token de portal, în cadrul agenției și portalului.",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "nume"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "telefon"
+            ]
+          },
+          {
+            "required": [
+              "email"
+            ]
+          }
+        ],
+        "description": "Câmpurile necunoscute sunt eliminate de API. Spațiile exterioare sunt eliminate din texte. Nu acceptă null în locul valorilor opționale."
+      },
+      "ContactResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "lead_id": {
+                "type": "string",
+                "description": "UUID lead.",
+                "format": "uuid"
+              },
+              "contact_id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "UUID contact sau null la reutilizarea unui link existent."
+              },
+              "deduplicated": {
+                "type": "boolean",
+                "description": "true dacă lead-ul a fost reutilizat."
+              }
+            },
+            "required": [
+              "lead_id",
+              "contact_id",
+              "deduplicated"
+            ]
+          },
+          "api_version": {
+            "const": "habitoo-site-feed/1.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "api_version"
+        ]
+      },
+      "VisitInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "UUID proprietate din agenția tokenului.",
+            "format": "uuid"
+          },
+          "views": {
+            "type": "integer",
+            "description": "Increment, nu total cumulativ.",
+            "minimum": 0,
+            "maximum": 1000000,
+            "default": 1
+          },
+          "source": {
+            "type": "string",
+            "description": "Text fără spații exterioare; omis sau gol reprezintă același grup.",
+            "maxLength": 60
+          },
+          "date": {
+            "type": "string",
+            "description": "Dată calendaristică reală: de la azi UTC minus 365 zile la azi UTC plus 1 zi; implicit azi UTC.",
+            "format": "date"
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "ID stabil opțional al evenimentului (fără spații exterioare), unic în agenție + portal autentificat. Retrimiterea nu incrementează. Cheile rotite ale aceluiași portal păstrează deduplicarea; pentru tokenuri de site, identitatea este ID-ul tokenului. În lot, fiecare intrare are propriul event_id.",
+            "example": "EXEMPLU-EVENIMENT-001"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "description": "Câmpurile necunoscute sunt eliminate. Lipsa unui câmp opțional nu este echivalentă cu null."
+      },
+      "VisitBatch": {
+        "type": "object",
+        "properties": {
+          "visits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisitInput"
+            },
+            "minItems": 1,
+            "maxItems": 500
+          }
+        },
+        "required": [
+          "visits"
+        ]
+      },
+      "VisitResult": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "description": "Intrări pentru proprietăți ale agenției procesate cu succes, inclusiv duplicate recunoscute (fără increment suplimentar)."
+          },
+          "rejected": {
+            "type": "integer",
+            "description": "Numărul intrărilor neacceptate (proprietăți inexistente sau din altă agenție)."
+          },
+          "api_version": {
+            "const": "habitoo-site-feed/1.0",
+            "type": "string"
+          },
+          "deduplicated": {
+            "type": "boolean",
+            "description": "Prezent numai dacă cel puțin o intrare are event_id. true dacă cel puțin un eveniment a fost deja procesat; la cerere singulară duplicată: 200 și true."
+          },
+          "duplicates": {
+            "type": "integer",
+            "description": "Prezent numai dacă există event_id; numărul intrărilor duplicate recunoscute. În lot mixt, celelalte evenimente noi se incrementează normal."
+          }
+        },
+        "required": [
+          "accepted",
+          "rejected",
+          "api_version"
+        ]
+      },
+      "VisitTotals": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "UUID proprietate.",
+                  "format": "uuid"
+                },
+                "views": {
+                  "type": "number",
+                  "description": "Suma vizualizărilor acestui anunț în cel mult ultimele 1.000 de înregistrări ale întregii agenții, pentru toate sursele; nu un total istoric garantat."
+                }
+              },
+              "required": [
+                "id",
+                "views"
+              ]
+            }
+          },
+          "api_version": {
+            "const": "habitoo-site-feed/1.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "api_version"
+        ]
+      },
+      "KyeroProperty": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "UUID proprietate cu sufix -sale/-rent."
+          },
+          "date": {
+            "type": "string",
+            "description": "Ultima modificare: YYYY-MM-DD HH:MM:SS, Europe/Bucharest."
+          },
+          "ref": {
+            "type": "string",
+            "description": "Referință sau UUID."
+          },
+          "price": {
+            "type": "integer",
+            "description": "Preț pozitiv rotunjit.",
+            "minimum": 1
+          },
+          "currency": {
+            "type": "string",
+            "description": "Monedă normalizată la majuscule.",
+            "enum": [
+              "EUR",
+              "RON",
+              "USD"
+            ]
+          },
+          "price_freq": {
+            "type": "string",
+            "description": "Vânzare sau chirie lunară.",
+            "enum": [
+              "sale",
+              "month"
+            ]
+          },
+          "new_build": {
+            "type": "integer",
+            "description": "1 pentru stadiu nou/proiect/în construcție/la roșu; altfel 0.",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "type": {
+            "type": "string",
+            "description": "Tip Kyero.",
+            "enum": [
+              "Apartment",
+              "Studio",
+              "Penthouse",
+              "Duplex",
+              "House",
+              "Villa",
+              "Land",
+              "Commercial",
+              "Office",
+              "Industrial",
+              "Garage"
+            ]
+          },
+          "town": {
+            "type": "string",
+            "description": "Localitate normalizată; omisă dacă goală."
+          },
+          "province": {
+            "type": "string",
+            "description": "Județ normalizat; omis dacă gol."
+          },
+          "country": {
+            "const": "Romania",
+            "type": "string"
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "description": "Latitudine publică."
+              },
+              "longitude": {
+                "type": "number",
+                "description": "Longitudine publică."
+              }
+            },
+            "required": [
+              "latitude",
+              "longitude"
+            ]
+          },
+          "location_detail": {
+            "type": "string",
+            "description": "Zona normalizată, dacă există."
+          },
+          "beds": {
+            "type": "integer",
+            "description": "Dormitoare sau camere, valoare pozitivă rotunjită.",
+            "minimum": 1
+          },
+          "baths": {
+            "type": "integer",
+            "description": "Băi, valoare pozitivă rotunjită.",
+            "minimum": 1
+          },
+          "pool": {
+            "type": "integer",
+            "description": "1 dacă dotările conțin piscină/pool, altfel 0.",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "surface_area": {
+            "type": "object",
+            "properties": {
+              "built": {
+                "type": "integer",
+                "description": "Suprafața utilă sau generală, în m², rotunjită la un întreg pozitiv; nu reprezintă neapărat suprafața construită.",
+                "minimum": 1
+              },
+              "plot": {
+                "type": "integer",
+                "description": "Teren, pozitiv rotunjit, m².",
+                "minimum": 1
+              }
+            },
+            "required": [],
+            "anyOf": [
+              {
+                "required": [
+                  "built"
+                ]
+              },
+              {
+                "required": [
+                  "plot"
+                ]
+              }
+            ]
+          },
+          "energy_rating": {
+            "type": "object",
+            "properties": {
+              "consumption": {
+                "type": "string",
+                "description": "Clasă energetică A–G; A+ devine A.",
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D",
+                  "E",
+                  "F",
+                  "G"
+                ]
+              },
+              "emissions": {
+                "const": "X",
+                "type": "string"
+              }
+            },
+            "required": [
+              "consumption",
+              "emissions"
+            ]
+          },
+          "desc": {
+            "type": "object",
+            "properties": {
+              "en": {
+                "type": "string",
+                "description": "Același text românesc ca ro, nu traducere; HTML eliminat și newline escapate &#13;."
+              },
+              "ro": {
+                "type": "string",
+                "description": "Descriere fără HTML."
+              }
+            },
+            "required": [
+              "en",
+              "ro"
+            ]
+          },
+          "features": {
+            "type": "object",
+            "properties": {
+              "feature": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "Dotare curățată de punctuație, maximum 35 caractere; valori unice.",
+                  "maxLength": 35
+                },
+                "xml": {
+                  "name": "feature",
+                  "wrapped": false
+                }
+              }
+            },
+            "required": [
+              "feature"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "description": "Habitoo urmat de referință sau UUID."
+          },
+          "email": {
+            "type": "string",
+            "description": "Emailul agentului, dacă există."
+          },
+          "contact_number": {
+            "type": "string",
+            "description": "Telefon normalizat 0040… sau prefix internațional 00; omis dacă prea scurt."
+          },
+          "images": {
+            "type": "object",
+            "properties": {
+              "image": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "Poziție 1–50.",
+                      "minimum": 1,
+                      "maximum": 50,
+                      "xml": {
+                        "attribute": true
+                      }
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "URL public al imaginii.",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "url"
+                  ]
+                },
+                "maxItems": 50,
+                "xml": {
+                  "name": "image",
+                  "wrapped": false
+                }
+              }
+            },
+            "required": [
+              "image"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "price",
+          "currency",
+          "price_freq",
+          "new_build",
+          "type",
+          "country",
+          "pool",
+          "notes"
+        ],
+        "xml": {
+          "name": "property"
+        },
+        "description": "Elementele opționale lipsesc din XML dacă nu au valori; nu se emit elemente null. O proprietate poate produce două elemente, pentru sale și rent."
+      },
+      "KyeroDocument": {
+        "type": "object",
+        "properties": {
+          "kyero": {
+            "type": "object",
+            "properties": {
+              "feed_version": {
+                "const": "3",
+                "type": "string"
+              }
+            },
+            "required": [
+              "feed_version"
+            ]
+          },
+          "property": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KyeroProperty"
+            },
+            "xml": {
+              "name": "property",
+              "wrapped": false
+            }
+          }
+        },
+        "required": [
+          "kyero"
+        ],
+        "xml": {
+          "name": "root"
+        },
+        "description": "Document Kyero v3 complet, fără paginare. Un root fără elemente property este inventar gol."
+      }
+    }
+  },
+  "x-code-ambiguities": [
+    "idstr poate fi UUID când referința lipsește, dar la POST /contacts idstr acceptă numai referința. Folosiți id pentru UUID; alias și url conțin UUID-ul anunțului.",
+    "tipteren și clasificareteren sunt text liber și nu au o listă închisă de valori. Nu confundați categoria terenului cu încadrarea intravilan/extravilan.",
+    "POST /contacts: message_id deduplică numai cererile cu token de portal. Cu token de site, răspunsul poate fi 201 și deduplicated=true pentru un lead reutilizat. Deduplicarea lead-urilor nu este garantată la retrimiteri simultane.",
+    "XML: desc.en repetă textul românesc; surface_area.built este suprafața utilă/generală, iar emissions este rezervat cu valoarea X. Un anunț imposibil de reprezentat produce 503 pentru întregul inventar.",
+    "iMove utilizează un feed dedicat, neacoperit de modelul JSON prezentat aici. Properstar utilizează un index și un model separat.",
+    "Media: redimensionarea poate reveni la original și nu este garantată pentru fotografii externe. Păstrați URL-ul permanent Habitoo, nu destinația temporară a redirectului.",
+    "GET /visits însumează cel mult ultimele 1.000 de înregistrări ale întregii agenții; nu garantează totalul istoric. event_id protejează POST de dublare, fără să schimbe limita GET.",
+    "Nu există un instantaneu comun între cererile JSON/XML sau paginile JSON. La 503 păstrați inventarul anterior și reîncercați după 300 secunde."
+  ]
+}

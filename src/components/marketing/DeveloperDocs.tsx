@@ -12,7 +12,7 @@ const sections = [
   ["limite", "Limite de cereri"], ["practici", "Bune practici"], ["istoric", "Istoric versiuni"], ["contact-tehnic", "Contact tehnic"],
 ] as const;
 
-function CodeBlock({ text, label }: {text: string; label: string}) {
+export function CodeBlock({ text, label }: {text: string; label: string}) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   useEffect(() => { if (state === "idle") return; const t = setTimeout(() => setState("idle"), 2500); return () => clearTimeout(t); }, [state]);
   return <div className="my-4 min-w-0 max-w-full overflow-hidden rounded-lg bg-navy text-on-navy">
