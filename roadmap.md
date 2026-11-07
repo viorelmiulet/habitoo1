@@ -1,6 +1,6 @@
 ## D4 — autentificare clară pentru integratori
-- [ ] Explicații din cod pentru cheia de index, tokenul agenției, compatibilitate și XML; OpenAPI 1.2.1 și istoric
-- [ ] Doar teste documentație/pagină și verificare vizuală; fără modificări de feed sau publicare
+- [x] Explicații din cod pentru cheia de index, tokenul agenției, compatibilitate și XML; OpenAPI 1.2.1 și istoric; diferența 401/403 pentru tokenurile altui portal documentată exact
+- [x] 28/28 teste numai documentație/pagină; afișare verificată 1440/390 fără depășire sau erori; build OK; copierea existentă nu a putut fi confirmată în browser; fără modificări de feed sau publicare
 
 ## D3 — documentație pentru integratori externi
 - [x] Listele formularului și SELECT DISTINCT confirmate fără valori istorice în afara lor; categoria terenului rămâne text liber, fără listă fixă corespunzătoare
