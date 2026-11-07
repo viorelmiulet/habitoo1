@@ -1,3 +1,8 @@
+## P5 — mediul Partner API de test
+- [ ] Agenție și 2 agenți / 12 anunțuri fictive, izolate de public, feed și statistici reale
+- [ ] Simulare/reset doar test, scrieri private expirabile și notificări exclusiv SuperAdmin „Test”
+- [ ] Activitate chei test și reset SuperAdmin; teste exclusiv noi, fără publicare
+
 ## P4 — webhooks Partner API
 - [ ] Configurare/test/livrări API, semnare și protecție HTTPS publică, secret criptat
 - [ ] Coadă atomică din evenimentele P2, ordine, reîncercări și suspendare/notificare
