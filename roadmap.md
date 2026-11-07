@@ -1,3 +1,9 @@
+## P1 — Partner API v1
+- [ ] Schema aditivă, chei test/live și contoare atomice aprobate, idempotență și retenție automată
+- [ ] API public /me și erori uniforme, izolare test/live, fără modificarea feedurilor
+- [ ] SuperAdmin Portaluri API, chei afișate unic, audit și jurnal; catalog/activare existente
+- [ ] Numai teste noi; verificare ambele domenii și acces UI fără publicare
+
 ## K2 — portaluri cu feed create din SuperAdmin
 - [x] Portaluri dinamice, validări slug/prefix, logo privat cu citire publică opt-in și creare atomică cu prima cheie; migrările 0247–0249 aplicate
 - [x] Index/XML generice, autentificare izolată și sursă lead din numele portalului; dezactivare 401
