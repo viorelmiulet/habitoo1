@@ -1,8 +1,9 @@
 ## P1 — Partner API v1
-- [ ] Schema aditivă, chei test/live și contoare atomice aprobate, idempotență și retenție automată
-- [ ] API public /me și erori uniforme, izolare test/live, fără modificarea feedurilor
-- [ ] SuperAdmin Portaluri API, chei afișate unic, audit și jurnal; catalog/activare existente
-- [ ] Numai teste noi; verificare ambele domenii și acces UI fără publicare
+- [x] Migrarea 0250: reutilizare portaluri/chei K2/K1, tip index/api și test/live, 120/min atomic, idempotență 24h și curățare SQL orară (ferestre >1h, jurnal >30 zile)
+- [x] /api/public/partner/v1/me public, erori uniforme și request ID, rate-check fail-open cu timeout/jurnal, allowlist test goală până la P5; cititorii index exclud cheile API
+- [x] SuperAdmin Portaluri API: creare/editare, mod/limită/logo, chei unice/revocare, ultima folosire, jurnal 7 zile filtrat/paginat; catalogul dinamic și activarea existente reutilizate
+- [x] 31/31 teste exclusiv noi; HTTP fără sesiune Host www/crm → 401 JSON cu X-Request-Id, ruta necunoscută tot autentificată; build OK, fără publicare sau portaluri/chei reale create
+- [ ] Flux complet și verificare vizuală SuperAdmin: sesiunea disponibilă este admin agenție, redirecționată la /app; acces SuperAdmin indisponibil. Confirmarea pe domeniile publicate așteaptă publicare explicită (interzisă în P1).
 
 ## K2 — portaluri cu feed create din SuperAdmin
 - [x] Portaluri dinamice, validări slug/prefix, logo privat cu citire publică opt-in și creare atomică cu prima cheie; migrările 0247–0249 aplicate
