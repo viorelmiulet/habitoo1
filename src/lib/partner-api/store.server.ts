@@ -7,6 +7,10 @@ export async function partnerStore(): Promise<PartnerStore> {
     async rate(id) { const r=await db.rpc("partner_api_rate_take",{_key_id:id}); if(r.error) throw r.error; return r.data as unknown as Rate; },
     async touch(id) { const r=await db.rpc("portal_index_key_touch",{_id:id}); if(r.error) console.warn("partner_api_touch_unavailable"); },
     async countAgencies(portal,environment: Environment) {
+      if(environment==="test"){
+        const {supabaseReadStore}=await import("./read.server");
+        return (await (await supabaseReadStore()).scope(portal,environment)).active.size;
+      }
       const test=await db.from("partner_api_test_agencies").select("organization_id"); if(test.error) throw test.error;
       const ids=test.data.map(r=>r.organization_id);
       if(environment==="test" && !ids.length) return 0;
