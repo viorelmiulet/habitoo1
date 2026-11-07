@@ -1,7 +1,8 @@
 import {beforeEach,describe,expect,it,vi} from "vitest";
 import {handleSandbox,sandboxWriteStore} from "@/lib/partner-api/sandbox.server";
 import {SANDBOX_AGENCY_ID,sandboxAgents,sandboxListings} from "@/lib/partner-api/sandbox";
-import {handleAgencies,handleAgents,handleListings,supabaseReadStore} from "@/lib/partner-api/read.server";
+import {handleAgencies,handleAgents,handleListings,handleChanges,supabaseReadStore} from "@/lib/partner-api/read.server";
+import {encodeCursor} from "@/lib/partner-api/schema";
 import {handlePartnerWrite} from "@/lib/partner-api/write.server";
 import type {PartnerContext} from "@/lib/partner-api/core.server";
 const state=vi.hoisted(()=>({tables:{} as Record<string,Record<string,unknown>[]>,calls:[] as string[]}));
@@ -37,6 +38,18 @@ describe("P5 sandbox",()=>{
   });
   it("live simulate is 403 with no mutation",async()=>{
     const run=vi.fn();expect((await handleSandbox(ctx("live"),"simulate",{action:"listing_update"},run)).status).toBe(403);expect(run).not.toHaveBeenCalled();
+  });
+  it("changes are isolated by the same test and live scope",async()=>{
+    state.tables.partner_api_events=[{portal:"example",seq:1,type:"listing.upserted",entity_id:"demo",organization_id:SANDBOX_AGENCY_ID},{portal:"example",seq:2,type:"listing.upserted",entity_id:"real",organization_id:real}];
+    const store=await supabaseReadStore(),url=new URL(`https://example.invalid/changes?cursor=${encodeCursor({s:0})}`);
+    expect((await (await handleChanges(ctx(),store,url)).json()).data.map((e:{agency_id:string})=>e.agency_id)).toEqual([SANDBOX_AGENCY_ID]);
+    expect((await (await handleChanges(ctx("live"),store,url)).json()).data.map((e:{agency_id:string})=>e.agency_id)).toEqual([real]);
+  });
+  it("sandbox messages reject a lead from another portal",async()=>{
+    state.tables.partner_api_sandbox_data=[{portal:"other",kind:"lead",id:"a7b50000-0000-4000-8000-000000000777"}];
+    const store=await sandboxWriteStore(await supabaseReadStore());
+    expect(await store.message(ctx(),"a7b50000-0000-4000-8000-000000000777",{external_id:"m1",body:"Test",sender:"client"})).toEqual({not_found:true});
+    expect(state.calls).not.toContain("partner_api_sandbox_write");
   });
   it("fictitious fixtures cover property types, transactions, currencies and address privacy",()=>{
     const rows=sandboxListings({apartment:"a",house:"h",land:"l"});expect(rows).toHaveLength(12);

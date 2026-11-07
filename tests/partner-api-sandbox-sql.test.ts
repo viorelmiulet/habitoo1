@@ -46,4 +46,8 @@ describe("P5 durable sandbox rules",()=>{
   it("ordinary clients cannot read fixtures, write or reset",async()=>{
     await db.exec("SET ROLE authenticated");await expect(db.exec("SELECT * FROM partner_api_sandbox_templates")).rejects.toThrow(/permission denied/);await expect(db.exec("SELECT partner_api_sandbox_reset('example')")).rejects.toThrow(/permission denied/);await db.exec("RESET ROLE");
   });
+  it("stats retried overwrite a single test row",async()=>{
+    for(const views of [12,12,7])await db.query("SELECT partner_api_sandbox_write('example','stats','listing:2026-11-07',$1)",[JSON.stringify({views})]);
+    expect((await db.query("SELECT count(*)::int n,max((payload->>'views')::int) views FROM partner_api_sandbox_data WHERE kind='stats'")).rows[0]).toEqual({n:1,views:7});
+  });
 });
