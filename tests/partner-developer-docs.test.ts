@@ -9,6 +9,8 @@ import { sandboxListings, sandboxAgents } from '../src/lib/partner-api/sandbox';
 import { publicationSchema, leadSchema, messageSchema, statsSchema, handlePartnerWrite } from '../src/lib/partner-api/write.server';
 import { apiError, meResponse } from '../src/lib/partner-api/core.server';
 import { handleChanges, handleAgencies, handleAgents, handleListings } from '../src/lib/partner-api/read.server';
+import {webhookInput,webhookEvent} from '../src/lib/partner-api/webhook';
+import {publicWebhook} from '../src/lib/partner-api/webhook.server';
 const read=(p:string)=>readFileSync(p,'utf8');
 const raw=read('public/dezvoltatori/partner-api.json');
 const spec=JSON.parse(raw);
@@ -56,6 +58,13 @@ describe('P6 — Partner API documentation',()=>{
       const store:any={read:{scope:async()=>({active:new Map([[listing.agency_id,null]])})},lead:async()=>({id:listing.id,deduplicated,test}),publication:async()=>({id:listing.id,applied:true,...(test?{test:true,deduplicated:false}:{})}),message:async()=>({id:listing.id,deduplicated,...(test?{test:true,applied:true}:{})}),stats:async()=>({accepted:1})};
       for(const [path,kind]of [['/leads','lead'],['/listings/{id}/publication','publication'],['/leads/{id}/messages','message'],['/stats','stats']] as const){const operation=spec.paths[path].post;const response=await handlePartnerWrite(ctx,store,kind,operation.requestBody.content['application/json'].example,listing.id);assertSchema(await response.json(),operation.responses[String(response.status)].content['application/json'].schema);}
     }
+  });
+  it('webhook schemas match the real config and event serializers',()=>{
+    const value=publicWebhook({url:'https://example.invalid/hook',events:[],status:'active',has_secret:true,last_success_at:null,consecutive_failures:0,secret_encrypted:'fixture',generation:'fixture'});
+    assertSchema(value,spec.components.schemas.Webhook);
+    assertSchema(webhookEvent({seq:1,type:'listing.upserted',entity_type:'listing',entity_id:listing.id,organization_id:listing.agency_id,occurred_at:'2026-11-07T12:00:00Z'}),spec.components.schemas.WebhookEvent);
+    expect(webhookInput.safeParse(spec.paths['/webhook'].put.requestBody.content['application/json'].example).success).toBe(true);
+    assertSchema({id:listing.id,event:'webhook.test',seq:1,http_status:204,duration_ms:10,attempt:1,occurred_at:'2026-11-07T12:00:00Z',error:null},spec.components.schemas.Delivery);
   });
   it('rejects real-looking keys, private URLs and nonfictitious credential examples',()=>{
     const text=[raw,read('src/components/marketing/PartnerDeveloperDocs.tsx'),read('src/lib/partner-developer-docs.ts')].join('\n');
