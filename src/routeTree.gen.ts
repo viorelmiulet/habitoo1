@@ -162,6 +162,8 @@ import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api
 import { Route as ApiPublicListingsMediaIdRouteImport } from './routes/api/public/listings/media.$id'
 import { Route as ApiPublicMetaOauthCallbackRouteImport } from './routes/api/public/meta/oauth.callback'
 import { Route as ApiPublicNeutralOfferMediaCodeIndexRouteImport } from './routes/api/public/neutral-offer-media.$code.$index'
+import { Route as ApiPublicPartnerV1SplatRouteImport } from './routes/api/public/partner/v1/$'
+import { Route as ApiPublicPartnerV1MeRouteImport } from './routes/api/public/partner/v1/me'
 import { Route as ApiPublicPortalV1AgencyRouteImport } from './routes/api/public/portal/v1/agency'
 import { Route as ApiPublicPortalV1AgentsRouteImport } from './routes/api/public/portal/v1/agents'
 import { Route as ApiPublicPortalV1PropertiesRouteImport } from './routes/api/public/portal/v1/properties'
@@ -1047,6 +1049,16 @@ const ApiPublicNeutralOfferMediaCodeIndexRoute =
     path: '/api/public/neutral-offer-media/$code/$index',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPartnerV1SplatRoute = ApiPublicPartnerV1SplatRouteImport.update({
+  id: '/api/public/partner/v1/$',
+  path: '/api/public/partner/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPartnerV1MeRoute = ApiPublicPartnerV1MeRouteImport.update({
+  id: '/api/public/partner/v1/me',
+  path: '/api/public/partner/v1/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPortalV1AgencyRoute = ApiPublicPortalV1AgencyRouteImport.update({
   id: '/api/public/portal/v1/agency',
   path: '/api/public/portal/v1/agency',
@@ -1416,6 +1428,8 @@ export interface FileRoutesByFullPath {
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/neutral-offer-media/$code/$index': typeof ApiPublicNeutralOfferMediaCodeIndexRoute
+  '/api/public/partner/v1/$': typeof ApiPublicPartnerV1SplatRoute
+  '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1603,6 +1617,8 @@ export interface FileRoutesByTo {
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/neutral-offer-media/$code/$index': typeof ApiPublicNeutralOfferMediaCodeIndexRoute
+  '/api/public/partner/v1/$': typeof ApiPublicPartnerV1SplatRoute
+  '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1796,6 +1812,8 @@ export interface FileRoutesById {
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/neutral-offer-media/$code/$index': typeof ApiPublicNeutralOfferMediaCodeIndexRoute
+  '/api/public/partner/v1/$': typeof ApiPublicPartnerV1SplatRoute
+  '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1989,6 +2007,8 @@ export interface FileRouteTypes {
     | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
     | '/api/public/neutral-offer-media/$code/$index'
+    | '/api/public/partner/v1/$'
+    | '/api/public/partner/v1/me'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -2176,6 +2196,8 @@ export interface FileRouteTypes {
     | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
     | '/api/public/neutral-offer-media/$code/$index'
+    | '/api/public/partner/v1/$'
+    | '/api/public/partner/v1/me'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -2368,6 +2390,8 @@ export interface FileRouteTypes {
     | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
     | '/api/public/neutral-offer-media/$code/$index'
+    | '/api/public/partner/v1/$'
+    | '/api/public/partner/v1/me'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -2496,6 +2520,8 @@ export interface RootRouteChildren {
   ApiPublicListingsMediaIdRoute: typeof ApiPublicListingsMediaIdRoute
   ApiPublicMetaOauthCallbackRoute: typeof ApiPublicMetaOauthCallbackRoute
   ApiPublicNeutralOfferMediaCodeIndexRoute: typeof ApiPublicNeutralOfferMediaCodeIndexRoute
+  ApiPublicPartnerV1SplatRoute: typeof ApiPublicPartnerV1SplatRoute
+  ApiPublicPartnerV1MeRoute: typeof ApiPublicPartnerV1MeRoute
   ApiPublicPortalV1AgencyRoute: typeof ApiPublicPortalV1AgencyRoute
   ApiPublicPortalV1AgentsRoute: typeof ApiPublicPortalV1AgentsRoute
   ApiPublicPortalV1PropertiesRoute: typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -3605,6 +3631,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicNeutralOfferMediaCodeIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/partner/v1/$': {
+      id: '/api/public/partner/v1/$'
+      path: '/api/public/partner/v1/$'
+      fullPath: '/api/public/partner/v1/$'
+      preLoaderRoute: typeof ApiPublicPartnerV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/partner/v1/me': {
+      id: '/api/public/partner/v1/me'
+      path: '/api/public/partner/v1/me'
+      fullPath: '/api/public/partner/v1/me'
+      preLoaderRoute: typeof ApiPublicPartnerV1MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/agency': {
       id: '/api/public/portal/v1/agency'
       path: '/api/public/portal/v1/agency'
@@ -4210,6 +4250,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMetaOauthCallbackRoute: ApiPublicMetaOauthCallbackRoute,
   ApiPublicNeutralOfferMediaCodeIndexRoute:
     ApiPublicNeutralOfferMediaCodeIndexRoute,
+  ApiPublicPartnerV1SplatRoute: ApiPublicPartnerV1SplatRoute,
+  ApiPublicPartnerV1MeRoute: ApiPublicPartnerV1MeRoute,
   ApiPublicPortalV1AgencyRoute: ApiPublicPortalV1AgencyRoute,
   ApiPublicPortalV1AgentsRoute: ApiPublicPortalV1AgentsRoute,
   ApiPublicPortalV1PropertiesRoute:
