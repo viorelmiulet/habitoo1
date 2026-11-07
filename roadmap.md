@@ -1,3 +1,8 @@
+## P4 — implementare fără releu (cererea curentă)
+- [ ] Validare HTTPS/443 și DNS A+AAAA, semnare, secret criptat, timeout și răspuns limitat
+- [ ] Endpointuri, coadă ordonată, reîncercări 24h, suspendare/notificare și demo izolat
+- [ ] SuperAdmin, OpenAPI și exemple Node.js/PHP/Python; numai teste P4/documentație, fără publicare
+
 ## P6 — documentație Partner API
 - [x] OpenAPI separată din contractele implementate P1–P3/P5: 15 endpointuri, generare din tipuri/validări și teste de concordanță; feed JSON neatins (SHA-256 identic)
 - [x] Partner API recomandat / Feed alternativ, endpointuri și ghid; chei emise manual, fără promisiuni de emitere automată
