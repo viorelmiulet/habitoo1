@@ -1,7 +1,7 @@
 ## D1 — specificație publică pentru integrarea portalurilor
-- [ ] Inventar din cod: index, feed JSON, media, lead-uri, vizite și XML Kyero
-- [ ] OpenAPI 3.1 în română la /dezvoltatori/openapi.json, numai exemple fictive
-- [ ] Test nou de existență rute și concordanță mapper; doar testul nou, fără publicare
+- [x] Inventar din cod: șase indexuri INDEX_PORTALS, feed JSON, media, lead-uri, vizualizări și XML Kyero; diferențele reale documentate
+- [x] OpenAPI 3.1 în română în public/dezvoltatori/openapi.json: 11 căi, 12 operații, 87 câmpuri de proprietate; validare față de schema oficială, HTTP 200 fără autentificare inclusiv Host www; disponibil în producție doar după o publicare explicită
+- [x] Exclusiv tests/portal-openapi.test.ts: 6/6 verificări trec; rute/metode, INDEX_PORTALS, mapper real și câmpuri nested; fără date schimbate, apeluri la portaluri sau publicare; build OK
 
 ## A8 — mesaje portaluri pe Acasă
 - [x] Nume din registry, mesaje pentru preluare automată și gruparea erorilor pe peste două portaluri; 25/25 teste property-readiness/Acasă trec, build OK
