@@ -1765,6 +1765,13 @@
       "when": 1794056260151,
       "tag": "0251_partner_api_read_state",
       "breakpoints": true
+    },
+    {
+      "idx": 252,
+      "version": "7",
+      "when": 1794058235586,
+      "tag": "0252_partner_api_feedback",
+      "breakpoints": true
     }
   ]
 }

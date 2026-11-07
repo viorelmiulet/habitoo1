@@ -6623,6 +6623,60 @@ export type Database = {
           },
         ]
       }
+      partner_api_lead_receipts: {
+        Row: {
+          completed: boolean
+          environment: string
+          external_id: string
+          last_email_notified_at: string | null
+          lead_id: string | null
+          leased_until: string | null
+          message_id: string
+          organization_id: string
+          owner_id: string | null
+          portal: string
+        }
+        Insert: {
+          completed?: boolean
+          environment: string
+          external_id: string
+          last_email_notified_at?: string | null
+          lead_id?: string | null
+          leased_until?: string | null
+          message_id?: string
+          organization_id: string
+          owner_id?: string | null
+          portal: string
+        }
+        Update: {
+          completed?: boolean
+          environment?: string
+          external_id?: string
+          last_email_notified_at?: string | null
+          lead_id?: string | null
+          leased_until?: string | null
+          message_id?: string
+          organization_id?: string
+          owner_id?: string | null
+          portal?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_lead_receipts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_api_lead_receipts_portal_fkey"
+            columns: ["portal"]
+            isOneToOne: false
+            referencedRelation: "dynamic_feed_portals"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       partner_api_listing_state: {
         Row: {
           agent_id: string | null
@@ -6667,6 +6721,67 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dynamic_feed_portals"
             referencedColumns: ["slug"]
+          },
+        ]
+      }
+      partner_api_publications: {
+        Row: {
+          environment: string
+          occurred_at: string
+          organization_id: string
+          portal: string
+          portal_listing_id: string | null
+          property_id: string
+          reasons: Json
+          received_at: string
+          status: string
+          url: string | null
+        }
+        Insert: {
+          environment: string
+          occurred_at: string
+          organization_id: string
+          portal: string
+          portal_listing_id?: string | null
+          property_id: string
+          reasons?: Json
+          received_at?: string
+          status: string
+          url?: string | null
+        }
+        Update: {
+          environment?: string
+          occurred_at?: string
+          organization_id?: string
+          portal?: string
+          portal_listing_id?: string | null
+          property_id?: string
+          reasons?: Json
+          received_at?: string
+          status?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_publications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_api_publications_portal_fkey"
+            columns: ["portal"]
+            isOneToOne: false
+            referencedRelation: "dynamic_feed_portals"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "partner_api_publications_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -6734,6 +6849,64 @@ export type Database = {
           status?: number
         }
         Relationships: []
+      }
+      partner_api_statistics: {
+        Row: {
+          contacts: number
+          date: string
+          environment: string
+          favorites: number
+          organization_id: string
+          portal: string
+          property_id: string
+          updated_at: string
+          views: number
+        }
+        Insert: {
+          contacts?: number
+          date: string
+          environment: string
+          favorites?: number
+          organization_id: string
+          portal: string
+          property_id: string
+          updated_at?: string
+          views?: number
+        }
+        Update: {
+          contacts?: number
+          date?: string
+          environment?: string
+          favorites?: number
+          organization_id?: string
+          portal?: string
+          property_id?: string
+          updated_at?: string
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_statistics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_api_statistics_portal_fkey"
+            columns: ["portal"]
+            isOneToOne: false
+            referencedRelation: "dynamic_feed_portals"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "partner_api_statistics_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       partner_api_sync_lease: {
         Row: {
@@ -12436,6 +12609,10 @@ export type Database = {
         Returns: undefined
       }
       partner_api_cleanup: { Args: never; Returns: undefined }
+      partner_api_email_claim: {
+        Args: { _environment: string; _lead: string; _portal: string }
+        Returns: boolean
+      }
       partner_api_enqueue_sync: {
         Args: { _orgs: string[] }
         Returns: undefined
@@ -12450,8 +12627,50 @@ export type Database = {
         }
         Returns: Json
       }
+      partner_api_lead_claim: {
+        Args: {
+          _environment: string
+          _external: string
+          _org: string
+          _owner: string
+          _portal: string
+        }
+        Returns: Json
+      }
+      partner_api_lead_finish: {
+        Args: {
+          _environment: string
+          _external: string
+          _lead: string
+          _owner: string
+          _portal: string
+        }
+        Returns: undefined
+      }
+      partner_api_listing_allowed: {
+        Args: {
+          _environment: string
+          _id: string
+          _portal: string
+          _recent: boolean
+        }
+        Returns: string
+      }
+      partner_api_publication_apply: {
+        Args: {
+          _body: Json
+          _environment: string
+          _id: string
+          _portal: string
+        }
+        Returns: Json
+      }
       partner_api_purge: { Args: never; Returns: undefined }
       partner_api_rate_take: { Args: { _key_id: string }; Returns: Json }
+      partner_api_stats_apply: {
+        Args: { _environment: string; _items: Json; _portal: string }
+        Returns: Json
+      }
       partner_api_sync_lease_acquire: {
         Args: { _holder: string; _seconds: number }
         Returns: boolean
@@ -12463,6 +12682,10 @@ export type Database = {
       partner_api_take_sync_queue: {
         Args: { _limit: number }
         Returns: string[]
+      }
+      partner_api_write_allowed: {
+        Args: { _environment: string; _org: string; _portal: string }
+        Returns: boolean
       }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       portal_bulk_arm: { Args: never; Returns: undefined }
