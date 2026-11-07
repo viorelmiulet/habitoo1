@@ -1,10 +1,12 @@
 ## P5 — mediul Partner API de test
-- [ ] Agenție și 2 agenți / 12 anunțuri fictive, izolate de public, feed și statistici reale
-- [ ] Simulare/reset doar test, scrieri private expirabile și notificări exclusiv SuperAdmin „Test”
-- [ ] Activitate chei test și reset SuperAdmin; teste exclusiv noi, fără publicare
+- [x] Agenție demo ascunsă, allowlist, 2 agenți / 12 anunțuri fictive în stocare API separată; zero proprietăți/profiluri/lead-uri/conexiuni CRM, fără prezență în feed; Stare agenții exclude demo
+- [x] Simulare/reset doar test, scrieri private cu marcaj Test și expirare 30 zile prin curățarea orară existentă; notificări exclusiv SuperAdmin în aplicație, fără ingest/email push
+- [x] Activitate chei test și reset SuperAdmin; 13/13 teste exclusiv noi trec; /agentii, /integrari și homepage fără demo, fotografii 200, endpointuri fără cheie 401; build OK, fără publicare
+- [ ] Flux complet cu cheie reală de test și verificare SuperAdmin: niciun portal API activ configurat; nu s-au creat portal/cheie sau notificări reale pentru test
+- [ ] Webhooks demo: P4 neimplementat, așteaptă aprobarea releului securizat
 
 ## P4 — webhooks Partner API
-- [ ] Configurare/test/livrări API, semnare și protecție HTTPS publică, secret criptat
+- [ ] Configurare/test/livrări API, semnare și protecție HTTPS publică, secret criptat — așteaptă aprobarea extinderii releului securizat
 - [ ] Coadă atomică din evenimentele P2, ordine, reîncercări și suspendare/notificare
 - [ ] Controale SuperAdmin, teste exclusiv noi și verificări fără publicare sau livrări reale
 
