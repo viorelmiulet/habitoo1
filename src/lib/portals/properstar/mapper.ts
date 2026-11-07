@@ -10,7 +10,7 @@
  * deci nu generăm versiuni în alte limbi. Structura rămâne multi-limbă.
  */
 import type { Database } from "@/integrations/supabase/types";
-import { publicCoords } from "@/lib/geo";
+import { publicLocation } from "@/lib/geo";
 import { feedImageUrl, offerUrl, isImageFeedEligible } from "@/lib/site-feed/mapper";
 
 type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
@@ -417,17 +417,13 @@ export function mapPropertyToProperstar(
       `${feedImageUrl(options.baseUrl, img.id)}.jpg${properstarPhotoDateSuffix(img.updated_at)}`,
   );
 
-  const coords = publicCoords({
-    id: p.id,
-    lat: p.lat,
-    lng: p.lng,
-    location_precise: p.location_precise,
-  });
+  const location = publicLocation(p);
+  const coords = location.coords;
 
   // Adresa exactă apare doar dacă agenția a permis afișarea locației precise.
-  const showAddress = p.location_precise === true;
-  const streetAddress = [p.street, p.street_number].filter(Boolean).join(" ").trim();
-  const address = showAddress ? (p.address ?? streetAddress) || null : null;
+  const showAddress = location.precise;
+  const streetAddress = [location.street, location.street_number].filter(Boolean).join(" ").trim();
+  const address = showAddress ? (location.address ?? streetAddress) || null : null;
 
   const price =
     typeof p.price === "number" && p.price > 0

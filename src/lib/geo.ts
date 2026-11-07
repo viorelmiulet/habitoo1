@@ -60,3 +60,19 @@ export function publicCoords(p: {
   const approx = approximateCoords(p.lat, p.lng, p.id);
   return { ...approx, precise: false, radiusM: APPROX_RADIUS_M };
 }
+
+/** Public address projection for pull feeds; push portals keep their own rules. */
+export function publicLocation(p: Parameters<typeof publicCoords>[0] & {
+  address?: string | null;
+  street?: string | null;
+  street_number?: string | null;
+}) {
+  const precise = p.location_precise === true;
+  return {
+    precise,
+    address: precise ? p.address ?? null : null,
+    street: precise ? p.street ?? null : null,
+    street_number: precise ? p.street_number ?? null : null,
+    coords: publicCoords(p),
+  };
+}
