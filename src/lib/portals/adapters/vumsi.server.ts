@@ -113,7 +113,7 @@ export function createVumsiAdapter(deps: VumsiAdapterDeps = {}): PortalAdapter {
     const stored = await d.loadStored(ctx.organizationId, ref.propertyId).catch(() => [] as VumsiStored[]);
     const pics = await d.images(ctx.organizationId, ref.propertyId);
     const states: VumsiStored[] = [];
-    const notes: string[] = [...pics.warnings];
+    const notes: string[] = [...new Set([...pv.warnings, ...pics.warnings])];
     const done: string[] = [];
     const mediaWarnings: (string | null)[] = [];
     const save = () => d.save(ctx.organizationId, ref.propertyId, states).catch(() => undefined);
