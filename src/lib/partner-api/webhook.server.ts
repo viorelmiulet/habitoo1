@@ -24,10 +24,10 @@ export async function webhookStore():Promise<WebhookStore>{
 export async function runWebhookWorker(store?:WebhookStore,send:typeof fetch=fetch,portal?:string,env?:Environment){
  const s=store??await webhookStore(),started=Date.now();let processed=0;
  while(processed<10 && Date.now()-started<40000){const owner=crypto.randomUUID(),row=await s.claim(owner,portal,env);if(!row)break;
-  let result:Awaited<ReturnType<typeof sendWebhook>>;
+  const delivery=crypto.randomUUID();let result:Awaited<ReturnType<typeof sendWebhook>>;
   if(Date.now()>=Date.parse(row.created_at)+86400000)result={ok:false,http_status:null,duration_ms:0,error:'Livrarea a depășit intervalul de 24 de ore.'};
-  else try{const secret=decryptPortalCredential(row.secret_encrypted);if(!secret)throw new Error('missing secret');result=await sendWebhook(row.url,secret,row.event,crypto.randomUUID(),send);}catch{result={ok:false,http_status:null,duration_ms:0,error:'Secretul webhook nu poate fi citit.'};}
-  const delivery=crypto.randomUUID();await s.finish(row,owner,delivery,result);processed++;
+  else try{const secret=decryptPortalCredential(row.secret_encrypted);if(!secret)throw new Error('missing secret');result=await sendWebhook(row.url,secret,row.event,delivery,send);}catch{result={ok:false,http_status:null,duration_ms:0,error:'Secretul webhook nu poate fi citit.'};}
+  await s.finish(row,owner,delivery,result);processed++;
  }
  return {processed};
 }
