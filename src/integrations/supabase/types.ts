@@ -2953,8 +2953,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           display_name: string
+          integration_mode: string
           key_prefix: string
           logo_path: string | null
+          rate_limit_per_minute: number
           show_public: boolean
           slug: string
           updated_at: string
@@ -2966,8 +2968,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           display_name: string
+          integration_mode?: string
           key_prefix: string
           logo_path?: string | null
+          rate_limit_per_minute?: number
           show_public?: boolean
           slug: string
           updated_at?: string
@@ -2979,8 +2983,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           display_name?: string
+          integration_mode?: string
           key_prefix?: string
           logo_path?: string | null
+          rate_limit_per_minute?: number
           show_public?: boolean
           slug?: string
           updated_at?: string
@@ -6470,6 +6476,138 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_api_idempotency: {
+        Row: {
+          created_at: string
+          environment: string
+          expires_at: string
+          idempotency_key: string
+          owner_id: string
+          portal: string
+          request_hash: string
+          response_body: string | null
+          response_headers: Json | null
+          response_status: number | null
+        }
+        Insert: {
+          created_at?: string
+          environment: string
+          expires_at?: string
+          idempotency_key: string
+          owner_id: string
+          portal: string
+          request_hash: string
+          response_body?: string | null
+          response_headers?: Json | null
+          response_status?: number | null
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          expires_at?: string
+          idempotency_key?: string
+          owner_id?: string
+          portal?: string
+          request_hash?: string
+          response_body?: string | null
+          response_headers?: Json | null
+          response_status?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_idempotency_portal_fkey"
+            columns: ["portal"]
+            isOneToOne: false
+            referencedRelation: "dynamic_feed_portals"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      partner_api_rate_windows: {
+        Row: {
+          key_id: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          key_id: string
+          request_count?: number
+          window_start: string
+        }
+        Update: {
+          key_id?: string
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_rate_windows_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "portal_index_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_api_request_logs: {
+        Row: {
+          created_at: string
+          duration_ms: number
+          id: string
+          key_prefix: string | null
+          method: string
+          path: string
+          portal: string | null
+          rate_check_failed: boolean
+          request_id: string
+          status: number
+        }
+        Insert: {
+          created_at?: string
+          duration_ms: number
+          id?: string
+          key_prefix?: string | null
+          method: string
+          path: string
+          portal?: string | null
+          rate_check_failed?: boolean
+          request_id: string
+          status: number
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number
+          id?: string
+          key_prefix?: string | null
+          method?: string
+          path?: string
+          portal?: string | null
+          rate_check_failed?: boolean
+          request_id?: string
+          status?: number
+        }
+        Relationships: []
+      }
+      partner_api_test_agencies: {
+        Row: {
+          organization_id: string
+        }
+        Insert: {
+          organization_id: string
+        }
+        Update: {
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_test_agencies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_settings: {
         Row: {
           key: string
@@ -6870,8 +7008,10 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          environment: string
           id: string
           key_hash: string
+          key_type: string
           last_used_at: string | null
           last4: string
           portal: string
@@ -6883,8 +7023,10 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          environment?: string
           id?: string
           key_hash: string
+          key_type?: string
           last_used_at?: string | null
           last4: string
           portal: string
@@ -6896,8 +7038,10 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          environment?: string
           id?: string
           key_hash?: string
+          key_type?: string
           last_used_at?: string | null
           last4?: string
           portal?: string
@@ -12102,6 +12246,18 @@ export type Database = {
           used: number
         }[]
       }
+      partner_api_cleanup: { Args: never; Returns: undefined }
+      partner_api_idempotency_claim: {
+        Args: {
+          _environment: string
+          _hash: string
+          _key: string
+          _owner: string
+          _portal: string
+        }
+        Returns: Json
+      }
+      partner_api_rate_take: { Args: { _key_id: string }; Returns: Json }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       portal_bulk_arm: { Args: never; Returns: undefined }
       portal_bulk_tick: { Args: never; Returns: undefined }

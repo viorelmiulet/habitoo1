@@ -31,7 +31,7 @@ async function adminClient() {
 }
 export async function readIndexKeys(portal: IndexPortal): Promise<IndexKeyRow[]> {
   const admin = await adminClient();
-  const { data, error } = await admin.from("portal_index_keys").select("*").eq("portal", portal);
+  const { data, error } = await admin.from("portal_index_keys").select("*").eq("portal", portal).eq("key_type", "index");
   if (error) throw new Error("Index key lookup unavailable");
   return (data ?? []).map(validatedRow);
 }

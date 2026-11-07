@@ -1,0 +1,3 @@
+- Partner API reuses dynamic_feed_portals and typed portal_index_keys; index readers select key_type=index. Why: additive onboarding without changing legacy feeds or agency-owned portal_api_keys.
+- Public handlers live under /api/public/partner/v1 and authenticate every operation; service-only atomic counters and receipts are durable, test agencies are explicitly allowlisted, and hourly SQL cleanup consolidates retention. Why: published-site bypass, no cross-environment data and no Worker-local state.
+- Request journals contain only canonical route templates, method, status, prefix, portal, duration, request ID and a rate-check failure flag; never request payloads, queries, arbitrary path segments or credentials. Why: diagnostic privacy.

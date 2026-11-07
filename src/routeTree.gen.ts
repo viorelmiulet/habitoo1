@@ -85,6 +85,7 @@ import { Route as AuthenticatedSuperadminNomenclatorRouteImport } from './routes
 import { Route as AuthenticatedSuperadminNoutatiRouteImport } from './routes/_authenticated/superadmin.noutati'
 import { Route as AuthenticatedSuperadminPortalLogsRouteImport } from './routes/_authenticated/superadmin.portal-logs'
 import { Route as AuthenticatedSuperadminPortalsRouteImport } from './routes/_authenticated/superadmin.portals'
+import { Route as AuthenticatedSuperadminPortaluriApiRouteImport } from './routes/_authenticated/superadmin.portaluri-api'
 import { Route as AuthenticatedSuperadminPortaluriFeedRouteImport } from './routes/_authenticated/superadmin.portaluri-feed'
 import { Route as AuthenticatedSuperadminQaRouteImport } from './routes/_authenticated/superadmin.qa'
 import { Route as AuthenticatedSuperadminSetariPortaluriRouteImport } from './routes/_authenticated/superadmin.setari-portaluri'
@@ -162,6 +163,8 @@ import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api
 import { Route as ApiPublicListingsMediaIdRouteImport } from './routes/api/public/listings/media.$id'
 import { Route as ApiPublicMetaOauthCallbackRouteImport } from './routes/api/public/meta/oauth.callback'
 import { Route as ApiPublicNeutralOfferMediaCodeIndexRouteImport } from './routes/api/public/neutral-offer-media.$code.$index'
+import { Route as ApiPublicPartnerV1SplatRouteImport } from './routes/api/public/partner/v1/$'
+import { Route as ApiPublicPartnerV1MeRouteImport } from './routes/api/public/partner/v1/me'
 import { Route as ApiPublicPortalV1AgencyRouteImport } from './routes/api/public/portal/v1/agency'
 import { Route as ApiPublicPortalV1AgentsRouteImport } from './routes/api/public/portal/v1/agents'
 import { Route as ApiPublicPortalV1PropertiesRouteImport } from './routes/api/public/portal/v1/properties'
@@ -603,6 +606,12 @@ const AuthenticatedSuperadminPortalsRoute =
   AuthenticatedSuperadminPortalsRouteImport.update({
     id: '/portals',
     path: '/portals',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminPortaluriApiRoute =
+  AuthenticatedSuperadminPortaluriApiRouteImport.update({
+    id: '/portaluri-api',
+    path: '/portaluri-api',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
 const AuthenticatedSuperadminPortaluriFeedRoute =
@@ -1047,6 +1056,16 @@ const ApiPublicNeutralOfferMediaCodeIndexRoute =
     path: '/api/public/neutral-offer-media/$code/$index',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPartnerV1SplatRoute = ApiPublicPartnerV1SplatRouteImport.update({
+  id: '/api/public/partner/v1/$',
+  path: '/api/public/partner/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPartnerV1MeRoute = ApiPublicPartnerV1MeRouteImport.update({
+  id: '/api/public/partner/v1/me',
+  path: '/api/public/partner/v1/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPortalV1AgencyRoute = ApiPublicPortalV1AgencyRouteImport.update({
   id: '/api/public/portal/v1/agency',
   path: '/api/public/portal/v1/agency',
@@ -1338,6 +1357,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/noutati': typeof AuthenticatedSuperadminNoutatiRoute
   '/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
+  '/superadmin/portaluri-api': typeof AuthenticatedSuperadminPortaluriApiRoute
   '/superadmin/portaluri-feed': typeof AuthenticatedSuperadminPortaluriFeedRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
   '/superadmin/setari-portaluri': typeof AuthenticatedSuperadminSetariPortaluriRoute
@@ -1416,6 +1436,8 @@ export interface FileRoutesByFullPath {
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/neutral-offer-media/$code/$index': typeof ApiPublicNeutralOfferMediaCodeIndexRoute
+  '/api/public/partner/v1/$': typeof ApiPublicPartnerV1SplatRoute
+  '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1525,6 +1547,7 @@ export interface FileRoutesByTo {
   '/superadmin/noutati': typeof AuthenticatedSuperadminNoutatiRoute
   '/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
+  '/superadmin/portaluri-api': typeof AuthenticatedSuperadminPortaluriApiRoute
   '/superadmin/portaluri-feed': typeof AuthenticatedSuperadminPortaluriFeedRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
   '/superadmin/setari-portaluri': typeof AuthenticatedSuperadminSetariPortaluriRoute
@@ -1603,6 +1626,8 @@ export interface FileRoutesByTo {
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/neutral-offer-media/$code/$index': typeof ApiPublicNeutralOfferMediaCodeIndexRoute
+  '/api/public/partner/v1/$': typeof ApiPublicPartnerV1SplatRoute
+  '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1718,6 +1743,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/noutati': typeof AuthenticatedSuperadminNoutatiRoute
   '/_authenticated/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/_authenticated/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
+  '/_authenticated/superadmin/portaluri-api': typeof AuthenticatedSuperadminPortaluriApiRoute
   '/_authenticated/superadmin/portaluri-feed': typeof AuthenticatedSuperadminPortaluriFeedRoute
   '/_authenticated/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
   '/_authenticated/superadmin/setari-portaluri': typeof AuthenticatedSuperadminSetariPortaluriRoute
@@ -1796,6 +1822,8 @@ export interface FileRoutesById {
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/neutral-offer-media/$code/$index': typeof ApiPublicNeutralOfferMediaCodeIndexRoute
+  '/api/public/partner/v1/$': typeof ApiPublicPartnerV1SplatRoute
+  '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1911,6 +1939,7 @@ export interface FileRouteTypes {
     | '/superadmin/noutati'
     | '/superadmin/portal-logs'
     | '/superadmin/portals'
+    | '/superadmin/portaluri-api'
     | '/superadmin/portaluri-feed'
     | '/superadmin/qa'
     | '/superadmin/setari-portaluri'
@@ -1989,6 +2018,8 @@ export interface FileRouteTypes {
     | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
     | '/api/public/neutral-offer-media/$code/$index'
+    | '/api/public/partner/v1/$'
+    | '/api/public/partner/v1/me'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -2098,6 +2129,7 @@ export interface FileRouteTypes {
     | '/superadmin/noutati'
     | '/superadmin/portal-logs'
     | '/superadmin/portals'
+    | '/superadmin/portaluri-api'
     | '/superadmin/portaluri-feed'
     | '/superadmin/qa'
     | '/superadmin/setari-portaluri'
@@ -2176,6 +2208,8 @@ export interface FileRouteTypes {
     | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
     | '/api/public/neutral-offer-media/$code/$index'
+    | '/api/public/partner/v1/$'
+    | '/api/public/partner/v1/me'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -2290,6 +2324,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/noutati'
     | '/_authenticated/superadmin/portal-logs'
     | '/_authenticated/superadmin/portals'
+    | '/_authenticated/superadmin/portaluri-api'
     | '/_authenticated/superadmin/portaluri-feed'
     | '/_authenticated/superadmin/qa'
     | '/_authenticated/superadmin/setari-portaluri'
@@ -2368,6 +2403,8 @@ export interface FileRouteTypes {
     | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
     | '/api/public/neutral-offer-media/$code/$index'
+    | '/api/public/partner/v1/$'
+    | '/api/public/partner/v1/me'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -2496,6 +2533,8 @@ export interface RootRouteChildren {
   ApiPublicListingsMediaIdRoute: typeof ApiPublicListingsMediaIdRoute
   ApiPublicMetaOauthCallbackRoute: typeof ApiPublicMetaOauthCallbackRoute
   ApiPublicNeutralOfferMediaCodeIndexRoute: typeof ApiPublicNeutralOfferMediaCodeIndexRoute
+  ApiPublicPartnerV1SplatRoute: typeof ApiPublicPartnerV1SplatRoute
+  ApiPublicPartnerV1MeRoute: typeof ApiPublicPartnerV1MeRoute
   ApiPublicPortalV1AgencyRoute: typeof ApiPublicPortalV1AgencyRoute
   ApiPublicPortalV1AgentsRoute: typeof ApiPublicPortalV1AgentsRoute
   ApiPublicPortalV1PropertiesRoute: typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -3066,6 +3105,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuperadminPortalsRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
+    '/_authenticated/superadmin/portaluri-api': {
+      id: '/_authenticated/superadmin/portaluri-api'
+      path: '/portaluri-api'
+      fullPath: '/superadmin/portaluri-api'
+      preLoaderRoute: typeof AuthenticatedSuperadminPortaluriApiRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
     '/_authenticated/superadmin/portaluri-feed': {
       id: '/_authenticated/superadmin/portaluri-feed'
       path: '/portaluri-feed'
@@ -3605,6 +3651,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicNeutralOfferMediaCodeIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/partner/v1/$': {
+      id: '/api/public/partner/v1/$'
+      path: '/api/public/partner/v1/$'
+      fullPath: '/api/public/partner/v1/$'
+      preLoaderRoute: typeof ApiPublicPartnerV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/partner/v1/me': {
+      id: '/api/public/partner/v1/me'
+      path: '/api/public/partner/v1/me'
+      fullPath: '/api/public/partner/v1/me'
+      preLoaderRoute: typeof ApiPublicPartnerV1MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/agency': {
       id: '/api/public/portal/v1/agency'
       path: '/api/public/portal/v1/agency'
@@ -3988,6 +4048,7 @@ interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminNoutatiRoute: typeof AuthenticatedSuperadminNoutatiRoute
   AuthenticatedSuperadminPortalLogsRoute: typeof AuthenticatedSuperadminPortalLogsRoute
   AuthenticatedSuperadminPortalsRoute: typeof AuthenticatedSuperadminPortalsRoute
+  AuthenticatedSuperadminPortaluriApiRoute: typeof AuthenticatedSuperadminPortaluriApiRoute
   AuthenticatedSuperadminPortaluriFeedRoute: typeof AuthenticatedSuperadminPortaluriFeedRoute
   AuthenticatedSuperadminQaRoute: typeof AuthenticatedSuperadminQaRoute
   AuthenticatedSuperadminSetariPortaluriRoute: typeof AuthenticatedSuperadminSetariPortaluriRoute
@@ -4018,6 +4079,8 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
     AuthenticatedSuperadminPortalLogsRoute:
       AuthenticatedSuperadminPortalLogsRoute,
     AuthenticatedSuperadminPortalsRoute: AuthenticatedSuperadminPortalsRoute,
+    AuthenticatedSuperadminPortaluriApiRoute:
+      AuthenticatedSuperadminPortaluriApiRoute,
     AuthenticatedSuperadminPortaluriFeedRoute:
       AuthenticatedSuperadminPortaluriFeedRoute,
     AuthenticatedSuperadminQaRoute: AuthenticatedSuperadminQaRoute,
@@ -4210,6 +4273,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMetaOauthCallbackRoute: ApiPublicMetaOauthCallbackRoute,
   ApiPublicNeutralOfferMediaCodeIndexRoute:
     ApiPublicNeutralOfferMediaCodeIndexRoute,
+  ApiPublicPartnerV1SplatRoute: ApiPublicPartnerV1SplatRoute,
+  ApiPublicPartnerV1MeRoute: ApiPublicPartnerV1MeRoute,
   ApiPublicPortalV1AgencyRoute: ApiPublicPortalV1AgencyRoute,
   ApiPublicPortalV1AgentsRoute: ApiPublicPortalV1AgentsRoute,
   ApiPublicPortalV1PropertiesRoute:
