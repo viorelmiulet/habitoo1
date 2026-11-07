@@ -151,6 +151,7 @@ import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/publ
 import { Route as ApiPublicMetaDeauthorizeRouteImport } from './routes/api/public/meta/deauthorize'
 import { Route as ApiPublicPartnerLogoIdRouteImport } from './routes/api/public/partner-logo/$id'
 import { Route as ApiPublicRequestsUpsertRouteImport } from './routes/api/public/requests/upsert'
+import { Route as ApiPublicSandboxPhotoKindRouteImport } from './routes/api/public/sandbox-photo.$kind'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -195,6 +196,8 @@ import { Route as ApiPublicHomepitchV1PropertiesIdRouteImport } from './routes/a
 import { Route as ApiPublicPartnerV1AgenciesIdRouteImport } from './routes/api/public/partner/v1/agencies.$id'
 import { Route as ApiPublicPartnerV1AgentsIdRouteImport } from './routes/api/public/partner/v1/agents.$id'
 import { Route as ApiPublicPartnerV1ListingsIdRouteImport } from './routes/api/public/partner/v1/listings.$id'
+import { Route as ApiPublicPartnerV1SandboxResetRouteImport } from './routes/api/public/partner/v1/sandbox.reset'
+import { Route as ApiPublicPartnerV1SandboxSimulateRouteImport } from './routes/api/public/partner/v1/sandbox.simulate'
 import { Route as ApiPublicPortalV1PortalFeedDotxmlRouteImport } from './routes/api/public/portal/v1/$portal.feed[.]xml'
 import { Route as ApiPublicPortalV1BazaruldecaseFeedDotxmlRouteImport } from './routes/api/public/portal/v1/bazaruldecase.feed[.]xml'
 import { Route as ApiPublicPortalV1HouseraWebhookRouteImport } from './routes/api/public/portal/v1/housera.webhook'
@@ -1000,6 +1003,12 @@ const ApiPublicRequestsUpsertRoute = ApiPublicRequestsUpsertRouteImport.update({
   path: '/api/public/requests/upsert',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSandboxPhotoKindRoute =
+  ApiPublicSandboxPhotoKindRouteImport.update({
+    id: '/api/public/sandbox-photo/$kind',
+    path: '/api/public/sandbox-photo/$kind',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -1251,6 +1260,18 @@ const ApiPublicPartnerV1ListingsIdRoute =
     id: '/$id',
     path: '/$id',
     getParentRoute: () => ApiPublicPartnerV1ListingsRoute,
+  } as any)
+const ApiPublicPartnerV1SandboxResetRoute =
+  ApiPublicPartnerV1SandboxResetRouteImport.update({
+    id: '/api/public/partner/v1/sandbox/reset',
+    path: '/api/public/partner/v1/sandbox/reset',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPartnerV1SandboxSimulateRoute =
+  ApiPublicPartnerV1SandboxSimulateRouteImport.update({
+    id: '/api/public/partner/v1/sandbox/simulate',
+    path: '/api/public/partner/v1/sandbox/simulate',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicPortalV1PortalFeedDotxmlRoute =
   ApiPublicPortalV1PortalFeedDotxmlRouteImport.update({
@@ -1506,6 +1527,7 @@ export interface FileRoutesByFullPath {
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
+  '/api/public/sandbox-photo/$kind': typeof ApiPublicSandboxPhotoKindRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1558,6 +1580,8 @@ export interface FileRoutesByFullPath {
   '/api/public/partner/v1/agencies/$id': typeof ApiPublicPartnerV1AgenciesIdRoute
   '/api/public/partner/v1/agents/$id': typeof ApiPublicPartnerV1AgentsIdRoute
   '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
+  '/api/public/partner/v1/sandbox/reset': typeof ApiPublicPartnerV1SandboxResetRoute
+  '/api/public/partner/v1/sandbox/simulate': typeof ApiPublicPartnerV1SandboxSimulateRoute
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
@@ -1709,6 +1733,7 @@ export interface FileRoutesByTo {
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
+  '/api/public/sandbox-photo/$kind': typeof ApiPublicSandboxPhotoKindRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1761,6 +1786,8 @@ export interface FileRoutesByTo {
   '/api/public/partner/v1/agencies/$id': typeof ApiPublicPartnerV1AgenciesIdRoute
   '/api/public/partner/v1/agents/$id': typeof ApiPublicPartnerV1AgentsIdRoute
   '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
+  '/api/public/partner/v1/sandbox/reset': typeof ApiPublicPartnerV1SandboxResetRoute
+  '/api/public/partner/v1/sandbox/simulate': typeof ApiPublicPartnerV1SandboxSimulateRoute
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
@@ -1918,6 +1945,7 @@ export interface FileRoutesById {
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
+  '/api/public/sandbox-photo/$kind': typeof ApiPublicSandboxPhotoKindRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1970,6 +1998,8 @@ export interface FileRoutesById {
   '/api/public/partner/v1/agencies/$id': typeof ApiPublicPartnerV1AgenciesIdRoute
   '/api/public/partner/v1/agents/$id': typeof ApiPublicPartnerV1AgentsIdRoute
   '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
+  '/api/public/partner/v1/sandbox/reset': typeof ApiPublicPartnerV1SandboxResetRoute
+  '/api/public/partner/v1/sandbox/simulate': typeof ApiPublicPartnerV1SandboxSimulateRoute
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
@@ -2127,6 +2157,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
     | '/api/public/requests/upsert'
+    | '/api/public/sandbox-photo/$kind'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -2179,6 +2210,8 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/agencies/$id'
     | '/api/public/partner/v1/agents/$id'
     | '/api/public/partner/v1/listings/$id'
+    | '/api/public/partner/v1/sandbox/reset'
+    | '/api/public/partner/v1/sandbox/simulate'
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
     | '/api/public/portal/v1/housera/webhook'
@@ -2330,6 +2363,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
     | '/api/public/requests/upsert'
+    | '/api/public/sandbox-photo/$kind'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -2382,6 +2416,8 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/agencies/$id'
     | '/api/public/partner/v1/agents/$id'
     | '/api/public/partner/v1/listings/$id'
+    | '/api/public/partner/v1/sandbox/reset'
+    | '/api/public/partner/v1/sandbox/simulate'
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
     | '/api/public/portal/v1/housera/webhook'
@@ -2538,6 +2574,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
     | '/api/public/requests/upsert'
+    | '/api/public/sandbox-photo/$kind'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -2590,6 +2627,8 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/agencies/$id'
     | '/api/public/partner/v1/agents/$id'
     | '/api/public/partner/v1/listings/$id'
+    | '/api/public/partner/v1/sandbox/reset'
+    | '/api/public/partner/v1/sandbox/simulate'
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
     | '/api/public/portal/v1/housera/webhook'
@@ -2691,6 +2730,7 @@ export interface RootRouteChildren {
   ApiPublicMetaDeauthorizeRoute: typeof ApiPublicMetaDeauthorizeRoute
   ApiPublicPartnerLogoIdRoute: typeof ApiPublicPartnerLogoIdRoute
   ApiPublicRequestsUpsertRoute: typeof ApiPublicRequestsUpsertRoute
+  ApiPublicSandboxPhotoKindRoute: typeof ApiPublicSandboxPhotoKindRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -2728,6 +2768,8 @@ export interface RootRouteChildren {
   ApiPublicFeedProperstarAgencyOfficeIdRoute: typeof ApiPublicFeedProperstarAgencyOfficeIdRoute
   ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute
   ApiPublicHomepitchV1AgentsMeRoute: typeof ApiPublicHomepitchV1AgentsMeRoute
+  ApiPublicPartnerV1SandboxResetRoute: typeof ApiPublicPartnerV1SandboxResetRoute
+  ApiPublicPartnerV1SandboxSimulateRoute: typeof ApiPublicPartnerV1SandboxSimulateRoute
   ApiPublicPortalV1PortalFeedDotxmlRoute: typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute: typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   ApiPublicPortalV1HouseraWebhookRoute: typeof ApiPublicPortalV1HouseraWebhookRoute
@@ -3742,6 +3784,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRequestsUpsertRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sandbox-photo/$kind': {
+      id: '/api/public/sandbox-photo/$kind'
+      path: '/api/public/sandbox-photo/$kind'
+      fullPath: '/api/public/sandbox-photo/$kind'
+      preLoaderRoute: typeof ApiPublicSandboxPhotoKindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -4049,6 +4098,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/partner/v1/listings/$id'
       preLoaderRoute: typeof ApiPublicPartnerV1ListingsIdRouteImport
       parentRoute: typeof ApiPublicPartnerV1ListingsRoute
+    }
+    '/api/public/partner/v1/sandbox/reset': {
+      id: '/api/public/partner/v1/sandbox/reset'
+      path: '/api/public/partner/v1/sandbox/reset'
+      fullPath: '/api/public/partner/v1/sandbox/reset'
+      preLoaderRoute: typeof ApiPublicPartnerV1SandboxResetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/partner/v1/sandbox/simulate': {
+      id: '/api/public/partner/v1/sandbox/simulate'
+      path: '/api/public/partner/v1/sandbox/simulate'
+      fullPath: '/api/public/partner/v1/sandbox/simulate'
+      preLoaderRoute: typeof ApiPublicPartnerV1SandboxSimulateRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/portal/v1/$portal/feed.xml': {
       id: '/api/public/portal/v1/$portal/feed.xml'
@@ -4601,6 +4664,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMetaDeauthorizeRoute: ApiPublicMetaDeauthorizeRoute,
   ApiPublicPartnerLogoIdRoute: ApiPublicPartnerLogoIdRoute,
   ApiPublicRequestsUpsertRoute: ApiPublicRequestsUpsertRoute,
+  ApiPublicSandboxPhotoKindRoute: ApiPublicSandboxPhotoKindRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
@@ -4650,6 +4714,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute:
     ApiPublicFeedProperstarChar91indexChar93IndexKeyRoute,
   ApiPublicHomepitchV1AgentsMeRoute: ApiPublicHomepitchV1AgentsMeRoute,
+  ApiPublicPartnerV1SandboxResetRoute: ApiPublicPartnerV1SandboxResetRoute,
+  ApiPublicPartnerV1SandboxSimulateRoute:
+    ApiPublicPartnerV1SandboxSimulateRoute,
   ApiPublicPortalV1PortalFeedDotxmlRoute:
     ApiPublicPortalV1PortalFeedDotxmlRoute,
   ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute:
