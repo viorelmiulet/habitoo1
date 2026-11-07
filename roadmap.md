@@ -1,3 +1,8 @@
+## D3 — documentație pentru integratori externi
+- [ ] Verificare liste fixe și SELECT DISTINCT; documentare deschisă a valorilor istorice
+- [ ] OpenAPI 1.2.0, descrieri externe și câmpuri rezervate grupate; limita GET visits documentată, fără schimbări de feed
+- [ ] Teste numai documentație/pagină și verificarea paginii; fără publicare
+
 ## F1 — feeduri complete și vizualizări fără dublare
 - [x] XML/index: citiri complete paginate, erori 503 cu Retry-After 300, filtre comune JSON/XML și token exclusiv al portalului; imposibilitatea reprezentării Kyero nu produce inventar parțial
 - [x] event_id pentru vizualizări cu deduplicare atomică per agenție/portal; migrare aplicată, RPC doar server, test tranzacțional cu revenire la eroare și token rotit
