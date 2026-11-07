@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { XMLParser } from "fast-xml-parser";
 import type { FeedAuthOk } from "@/lib/site-feed/auth.server";
-import { createHash } from "node:crypto";
 import { clickimobFeedToken } from "@/lib/portals/clickimob/index-feed";
 import { properstarEntityId } from "@/lib/portals/properstar/mapper";
 
-const state = vi.hoisted(() => ({tableError: "", missingAgency: false, noPhone: false, authError: false, rows: 1}));
+const state = vi.hoisted(() => ({tableError: "", missingAgency: false, noPhone: false, authError: false, rows: 1, imagePages: [] as number[], lateImageError: false, unknownType: false}));
 const ORG = "11111111-1111-4111-8111-111111111111";
 const PROPERTY = "22222222-2222-4222-8222-222222222222";
 const AGENT = "33333333-3333-4333-8333-333333333333";
@@ -25,11 +24,12 @@ vi.mock("@/integrations/supabase/client.server", () => ({supabaseAdmin: {from: (
       const rows: Record<string, unknown>[] = table === "organizations" ? (state.missingAgency ? [] : [{id:ORG,status:"active",archived_at:null,updated_at:"2026-11-07T00:00:00Z"}])
         : table === "portal_connections" ? [{organization_id:ORG,portal:"bazaruldecase",activated:true}]
         : table === "portal_publications" ? [{organization_id:ORG,property_id:PROPERTY,portal_key:"bazaruldecase",enabled:true}]
-        : table === "properties" ? [{id:PROPERTY,organization_id:ORG,assigned_to:AGENT,publish_status:"published",deleted_at:null,status:"active",updated_at:"2026-11-07T00:00:00Z",property_type:"apartment",transaction_kind:"sale",for_sale:true,for_rent:false,price:100000,sale_price:100000,currency:"EUR",sale_currency:"EUR",features:[]}]
+        : table === "properties" ? [{id:PROPERTY,organization_id:ORG,assigned_to:AGENT,publish_status:"published",deleted_at:null,status:"active",updated_at:"2026-11-07T00:00:00Z",property_type:state.unknownType?"unknown":"apartment",transaction_kind:"sale",for_sale:true,for_rent:false,price:100000,sale_price:100000,currency:"EUR",sale_currency:"EUR",features:[]}]
         : table === "profiles" ? [{id:AGENT,organization_id:ORG,full_name:"Agent fictiv",phone:state.noPhone?null:"0722123456",email:null}]
         : table === "property_images" ? Array.from({length:state.rows},(_,i) => ({id:`image-${i}`,organization_id:ORG,property_id:PROPERTY,include_in_publish:true,is_confidential:false,position:i})) : [];
       const filtered = rows.filter(r=>filters.every(f=>f(r)));
-      const failed = state.tableError===table || (state.authError && table==="organizations");
+      if (table === "property_images") state.imagePages.push(start);
+      const failed = state.tableError===table || (state.authError && table==="organizations") || (table==="property_images" && state.lateImageError && start>=500);
       return Promise.resolve({data:failed?null:filtered.slice(start,end+1),error:failed?{message:"simulated read failure"}:null,count:filtered.length}).then(resolve);
     },
   };return query;
@@ -44,7 +44,7 @@ const xmlRequest = (token="portal") => {
   const signed = token==="site" ? "hbxx_EXEMPLU_SITE" : clickimobFeedToken(properstarEntityId("hb",ORG),KEY,"bazaruldecase");
   return handler({request:new Request("https://www.habitoo.ro/api/public/portal/v1/bazaruldecase/feed.xml",{headers:{authorization:`Bearer ${signed}`}})} as never) as Promise<Response>;
 };
-beforeEach(()=>{state.tableError="";state.missingAgency=false;state.noPhone=false;state.authError=false;state.rows=1;});
+beforeEach(()=>{state.tableError="";state.missingAgency=false;state.noPhone=false;state.authError=false;state.rows=1;state.imagePages=[];state.lateImageError=false;state.unknownType=false;});
 describe("XML and index inventory safety",()=>{
   for(const table of ["portal_publications","properties","profiles","property_images"]) it(`${table} read error gives 503, no partial XML`,async()=>{
     state.tableError=table;const r=await xmlRequest();expect(r.status).toBe(503);expect(r.headers.get("retry-after")).toBe("300");expect(await r.text()).not.toContain("<root>");
@@ -67,10 +67,20 @@ describe("XML and index inventory safety",()=>{
     expect(json.response.status).toBe(200);expect((await json.response.json()).data).toEqual([]);
   });
   it("site token is 403 even with feed:read",async()=>{const r=await xmlRequest("site");expect(r.status).toBe(403);});
+  it("an image read failure after the first page still returns only 503",async()=>{
+    state.rows=1101;state.lateImageError=true;
+    const res=await xmlRequest();expect(res.status).toBe(503);expect(await res.text()).not.toContain("<property>");expect(state.imagePages).toEqual([0,500]);
+  });
+  it("a JSON-eligible offer that cannot map to Kyero fails rather than disappears",async()=>{
+    state.unknownType=true;expect((await xmlRequest()).status).toBe(503);
+    const json=await handlePropertiesList(new Request("https://www.habitoo.ro/api/public/sites/v1/properties"),{organizationId:ORG,portal:"bazaruldecase",scopes:["feed:read"]} as FeedAuthOk);
+    expect((await json.response.json()).data).toHaveLength(1);
+  });
   it("a valid full feed is 200 with all image pages, not the database default limit",async()=>{
     state.rows=1101;
     const res=await xmlRequest();expect(res.status).toBe(200);
     const parsed=new XMLParser({isArray:n=>n==="property"}).parse(await res.text());
     expect(parsed.root.property).toHaveLength(1);expect(parsed.root.property[0].id).toBe(`${PROPERTY}-sale`);
+    expect(state.imagePages).toEqual([0,500,1000]);
   });
 });
