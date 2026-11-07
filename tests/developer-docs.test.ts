@@ -1,7 +1,22 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { apiSpec, operations, requestExample, responseExample, schemaRows } from "../src/lib/developer-docs";
 
 describe("Documentation generated from the public OpenAPI", () => {
+  it("covers each authentication alternative using the exact accepted header or query parameter", () => {
+    const source = readFileSync(new URL("../src/lib/site-feed/auth.server.ts", import.meta.url), "utf8");
+    const schemes = apiSpec.components.securitySchemes as Record<string, { description: string; name?: string; in?: string }>;
+    const alternatives = apiSpec["x-developer-guide"].authentication.compatibility;
+    expect(alternatives.map(method => method.scheme).sort()).toEqual(Object.keys(schemes).filter(name => name !== "AgencyBearer").sort());
+    for (const method of alternatives) {
+      const scheme = schemes[method.scheme];
+      if (!scheme) throw new Error(`Unknown authentication scheme ${method.scheme}`);
+      if (scheme.name) {
+        expect(source).toContain(`"${scheme.name}"`);
+        expect(method.example).toContain(scheme.name);
+      }
+    }
+  });
   it("includes every current operation including both visit methods", () => {
     expect(operations).toHaveLength(12);
     expect(operations.filter(o => o.path.endsWith("/visits")).map(o => o.method).sort()).toEqual(["get", "post"]);
