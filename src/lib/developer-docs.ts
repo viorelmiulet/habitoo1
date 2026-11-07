@@ -17,6 +17,13 @@ type Specification = { info: { title: string; version: string; description: stri
   components: { schemas: Record<string, Schema>; securitySchemes: Record<string, { description: string }> };
   "x-code-ambiguities": string[];
   "x-developer-guide": { introduction: string; onboarding: string[]; quickStart: string[]; recommendations: string[];
+    authentication: {
+      index: { description: string; example: string; storage: string };
+      agency: { description: string; example: string; compatibilityNote: string };
+      xml: { description: string; example: string; compatibilityNote: string };
+      compatibility: { scheme: string; label: string; example: string; description: string }[];
+      responseNote: string;
+    };
     history: {version: string; date: string; description: string}[]; contact: string };
 };
 export const apiSpec: Specification = JSON.parse(specification);

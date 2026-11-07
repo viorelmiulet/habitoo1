@@ -67,6 +67,32 @@ function Section({id, title, children}: {id: string; title: string; children: Re
 function Endpoints({match}: {match: (path: string) => boolean}) {
   return <div className="space-y-10">{operations.filter(o => match(o.path)).map(o => <Endpoint key={o.path + o.method} {...o} />)}</div>;
 }
+function AuthenticationDocs() {
+  const auth = apiSpec["x-developer-guide"].authentication;
+  return <>
+    <h3 className="text-xl font-bold text-navy">Cheia de index</h3>
+    <p>{auth.index.description}</p>
+    <CodeBlock text={auth.index.example} label="curl · Cheia de index în URL" />
+    <p className="text-sm text-muted-foreground">{auth.index.storage}</p>
+    <h3 className="pt-4 text-xl font-bold text-navy">Tokenul agenției (<code>feed.token</code>)</h3>
+    <p>{auth.agency.description}</p>
+    <CodeBlock text={auth.agency.example} label="curl · Authorization: Bearer" />
+    <h4 className="font-semibold">Metode acceptate pentru compatibilitate</h4>
+    <p className="text-sm text-muted-foreground">{auth.agency.compatibilityNote}</p>
+    <table className="w-full table-fixed text-left text-xs leading-6 sm:text-sm">
+      <thead className="border-y bg-muted"><tr><th className="w-[38%] p-2">Méthode / nom exact</th><th className="p-2">Exemplu și utilizare</th></tr></thead>
+      <tbody>{auth.compatibility.map(method => <tr key={method.scheme} className="border-b align-top">
+        <td className="break-words p-2 [overflow-wrap:anywhere]"><span className="font-semibold">{method.label}</span></td>
+        <td className="break-words p-2 text-muted-foreground [overflow-wrap:anywhere]"><code className="text-navy">{method.example}</code><p className="mt-2">{method.description}</p></td>
+      </tr>)}</tbody>
+    </table>
+    <h3 className="pt-4 text-xl font-bold text-navy">Feedul XML</h3>
+    <p>{auth.xml.description}</p>
+    <CodeBlock text={auth.xml.example} label="curl · XML cu parametrul token" />
+    <p className="text-sm text-muted-foreground">{auth.xml.compatibilityNote}</p>
+    <p className="border-l-2 border-gold pl-4 text-sm">{auth.responseNote}</p>
+  </>;
+}
 export function DeveloperDocs() {
   const [active, setActive] = useState("introducere");
   useEffect(() => {
@@ -106,7 +132,7 @@ export function DeveloperDocs() {
         <Section id="introducere" title="Introducere"><p>{guide.introduction}</p><p className="text-sm text-muted-foreground">Exemplele sunt ilustrative, generate din scheme; toate identitățile și cheile sunt fictive. API-ul nu este apelat din această pagină.</p></Section>
         <Section id="pornire" title="Pornire rapidă">{guide.quickStart.map((text, i) => <div key={text}><h3 className="flex gap-3 text-base font-semibold"><span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gold-tint text-gold-dark">{i+1}</span>{text}</h3>{i === 0 && index && <CodeBlock text={requestExample(index.path, index.method, index.operation)} label="1 · Citește indexul" />}{i === 1 && feed && <CodeBlock text={`# FEED_BASE este valoarea feed.base_url din index\nFEED_BASE="${apiSpec.servers[0]?.url}/api/public/sites/v1"\n${requestExample(feed.path, feed.method, feed.operation)}`} label="2 · Citește prima pagină" />}{i === 2 && feed && <CodeBlock text={responseExample(feed.operation).body} label="3 · Exemplu de inventar JSON" />}</div>)}</Section>
         <Section id="onboarding" title="Onboarding și chei">{guide.onboarding.map(p => <p key={p}>{p}</p>)}</Section>
-        <Section id="autentificare" title="Autentificare"><p>Cheia de index descoperă agențiile; tokenul din <code>feed.token</code> autorizează cererile unei singure agenții. Folosește baza <code>feed.base_url</code> primită în index. Nu le inversa.</p>{Object.entries(apiSpec.components.securitySchemes).map(([name, value]) => <details key={name} className="border-b pb-3"><summary className="cursor-pointer font-semibold">{name}</summary><p className="mt-3 text-sm text-muted-foreground">{value.description}</p></details>)}</Section>
+        <Section id="autentificare" title="Autentificare"><AuthenticationDocs /></Section>
         <Section id="index" title="Indexul agențiilor"><Endpoints match={p => p.includes("/index/")} /></Section>
         <Section id="anunturi" title="Feedul de anunțuri"><p>{guide.recommendations[0]}</p><p>{guide.recommendations[3]}</p><Endpoints match={p => p.includes("/properties")} /><h3 className="pt-4 text-xl font-bold">Toate câmpurile anunțului</h3><p className="text-sm text-muted-foreground">{apiSpec.components.schemas.FeedProperty?.description}</p><FieldTable schema={apiSpec.components.schemas.FeedProperty ?? {}} /></Section>
         <Section id="agenti" title="Agenți și agenție"><Endpoints match={p => p.endsWith("/agents") || p.endsWith("/agency")} /></Section>
