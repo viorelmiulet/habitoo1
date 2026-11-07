@@ -1,8 +1,9 @@
 ## K2 — portaluri cu feed create din SuperAdmin
-- [ ] Portaluri dinamice, validări slug/prefix, logo privat/public adecvat și creare atomică cu prima cheie
-- [ ] Index/XML generice, autentificare izolată și sursă lead din numele portalului; dezactivare 401
-- [ ] Registru comun în activare, selecție, republicare și afișare/numărătoare publică opt-in; prioritate portaluri din cod
-- [ ] Teste numai noi/site-feed; fără schimbări la /dezvoltatori sau publicare
+- [x] Portaluri dinamice, validări slug/prefix, logo privat cu citire publică opt-in și creare atomică cu prima cheie; migrările 0247–0249 aplicate
+- [x] Index/XML generice, autentificare izolată și sursă lead din numele portalului; dezactivare 401
+- [x] Registru comun izolat pe cerere în activare, selecție, republicare și lucrări programate; afișare/numărătoare publică opt-in și prioritate portaluri din cod
+- [x] 100/100 teste numai noi/site-feed; Integrări verificată 1440/390 fără depășire sau erori; fără schimbări la /dezvoltatori, date de portal create sau publicare
+- [ ] Verificare formular și creare completă în SuperAdmin: sesiunea disponibilă este admin de agenție și accesul redirecționează la Acasă; nu s-au creat portaluri reale în teste
 
 ## K1 — chei de index administrate în SuperAdmin
 - [x] Stocare SHA-256, RLS SuperAdmin, audit fără chei și ultima utilizare limitată atomic la 5 minute; migrare 0246 aplicată
