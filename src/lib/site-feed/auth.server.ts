@@ -13,7 +13,7 @@ export type FeedAuthOk = {
   tokenId: string;
   tokenPrefix: string;
   /** Din ce credențial a venit cererea: tokenul de site sau o cheie de portal. */
-  source: "site_token" | "portal_key" | "clickimob_index" | "imobli_index" | "locuit_index" | "imobiliareplus_index" | "imove_index" | "bazaruldecase_index";
+  source: "site_token" | "portal_key" | `${string}_index`;
   /**
    * Portalul care citește feedul, când cererea vine cu o cheie de portal.
    * `null` = token de site (feedul propriu al agenției, fără filtrare pe portal).
@@ -157,7 +157,7 @@ export type FeedAuthOptions = {
    * respinge tokenurile de index ale celorlalte portaluri. Tokenul acestui
    * portal nu deschide alte feeduri.
    */
-  indexPortal?: "imove" | "bazaruldecase";
+  indexPortal?: string;
 };
 
 export async function authenticateFeedRequest(
@@ -192,9 +192,9 @@ export async function authenticateFeedRequest(
     return { ok: false, status: 429, message: "Too many requests.", tokenPrefix: prefix };
   }
 
-  const indexPortalOf = Object.entries(INDEX_TOKEN_PREFIX).find(([, p]) => token.startsWith(p))?.[0] as
-    | keyof typeof INDEX_TOKEN_PREFIX
-    | undefined;
+  const fixedIndex = Object.entries(INDEX_TOKEN_PREFIX).find(([, p]) => token.startsWith(p))?.[0];
+  const { findDynamicIndexTokenPortal } = await import("@/lib/dynamic-feed-portals.server");
+  const indexPortalOf = fixedIndex ?? await findDynamicIndexTokenPortal(token);
   if (indexPortalOf && (indexPortalOf === "imove" || options.indexPortal) && indexPortalOf !== options.indexPortal) {
     return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
   }
@@ -211,7 +211,7 @@ export async function authenticateFeedRequest(
       ok: true,
       organizationId: match.organizationId,
       tokenId: `${portal}_index:${match.officeId}`,
-      tokenPrefix: prefix ?? INDEX_TOKEN_PREFIX[portal],
+      tokenPrefix: prefix ?? `${portal}_index`,
       source: `${portal}_index` as const,
       portal,
       scopes: ["feed:read", "agents:read", "leads:write"],

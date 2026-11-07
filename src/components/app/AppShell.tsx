@@ -16,6 +16,7 @@ import { ActiveAccessBanner } from "@/components/app/AccountAccessCard";
 import { SubscriptionBanner } from "@/components/app/SubscriptionBanner";
 import { TrialBanner } from "@/components/app/TrialBanner";
 import { OnboardingTourProvider } from "@/components/app/OnboardingTour";
+import { DynamicFeedRegistry } from "./DynamicFeedRegistry";
 
 import { useApplyTheme } from "@/hooks/use-theme";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-state";
@@ -155,7 +156,7 @@ export function AppShell({
               tabIndex={-1}
               className="mx-auto w-full max-w-[1500px] space-y-6 px-4 pt-5 pb-[calc(6rem+env(safe-area-inset-bottom))] outline-none sm:px-6 lg:px-8 lg:pt-6 lg:pb-10"
             >
-              {children}
+              <DynamicFeedRegistry>{children}</DynamicFeedRegistry>
             </main>
           </div>
 

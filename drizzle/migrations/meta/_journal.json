@@ -1730,6 +1730,27 @@
       "when": 1794051280838,
       "tag": "0246_portal_index_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 247,
+      "version": "7",
+      "when": 1794051849923,
+      "tag": "0247_dynamic_feed_portals",
+      "breakpoints": true
+    },
+    {
+      "idx": 248,
+      "version": "7",
+      "when": 1794051985171,
+      "tag": "0248_dynamic_feed_portal_atomic_digest",
+      "breakpoints": true
+    },
+    {
+      "idx": 249,
+      "version": "7",
+      "when": 1794052133762,
+      "tag": "0249_feed_portal_logo_policies",
+      "breakpoints": true
     }
   ]
 }

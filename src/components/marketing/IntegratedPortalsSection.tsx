@@ -4,10 +4,11 @@ import { hasPortalLogo, PortalLogo } from "@/components/app/PortalLogo";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
 import { homepagePortals, integrationSlugFor, portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
+import type { PortalDefinition } from "@/lib/portals/registry";
 
 const integratedPortals = homepagePortals();
 
-export function IntegratedPortalsSection() {
+export function IntegratedPortalsSection({ dynamic = [] }: { dynamic?: PortalDefinition[] }) {
   return (
     <Section id="portaluri" className="pt-12 sm:pt-16">
       <Container>
@@ -15,17 +16,17 @@ export function IntegratedPortalsSection() {
           eyebrow="Integrări"
           title={
             <>
-              CRM-ul imobiliar cu cele mai multe integrări: <span className="text-gold">{portalsLabel(publicPortalCount())}</span> dintr-un singur loc
+              CRM-ul imobiliar cu cele mai multe integrări: <span className="text-gold">{portalsLabel(publicPortalCount(dynamic))}</span> dintr-un singur loc
             </>
           }
           text="Introduci proprietatea o dată și ajunge pe toate portalurile alese, cu actualizare și retragere automată. Cererile clienților de pe portalurile care le trimit intră direct în CRM."
         />
         <ul className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-          {integratedPortals.map(({ portal, label }, i) => {
+          {[...integratedPortals, ...dynamic.map(portal => ({ portal, label: portal.display_name }))].map(({ portal, label }, i) => {
             const slug = integrationSlugFor(portal.id);
             const content = (
               <>
-                {hasPortalLogo(portal.id) && (
+                {portal.logo_url ? <img src={portal.logo_url} alt={`Logo ${portal.display_name}`} className="size-10 shrink-0 object-contain" /> : hasPortalLogo(portal.id) && (
                   <PortalLogo portalId={portal.id} name={portal.display_name} fallback={portal.logo} size={40} alt={`Logo ${portal.display_name}`} className="shrink-0" />
                 )}
                 <span className="min-w-0 text-sm font-semibold text-navy">{label}</span>

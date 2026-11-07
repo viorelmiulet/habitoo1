@@ -15,9 +15,11 @@ export function sameKeyHash(a: string, b: string): boolean {
   if (!/^[a-f0-9]{64}$/.test(a) || !/^[a-f0-9]{64}$/.test(b)) return false;
   return timingSafeEqual(Buffer.from(a, "hex"), Buffer.from(b, "hex"));
 }
-export function generateIndexKey(portal: IndexPortal) {
-  const key = INDEX_PORTALS[portal].prefix + randomBytes(32).toString("hex");
-  return { key, key_hash: hashIndexKey(key), prefix: INDEX_PORTALS[portal].prefix, last4: key.slice(-4) };
+export function generateIndexKey(portal: IndexPortal, prefix?: string) {
+  const resolved = prefix ?? INDEX_PORTALS[portal as keyof typeof INDEX_PORTALS]?.prefix;
+  if (!resolved) throw new Error("Unknown index prefix");
+  const key = resolved + randomBytes(32).toString("hex");
+  return { key, key_hash: hashIndexKey(key), prefix: resolved, last4: key.slice(-4) };
 }
 export function safeIndexKey(row: IndexKeyRow) {
   return { id: row.id, portal: row.portal, prefix: row.prefix, last4: row.last4, source: row.source,
@@ -35,14 +37,16 @@ export async function readIndexKeys(portal: IndexPortal): Promise<IndexKeyRow[]>
 }
 /** Register legacy metadata only on use or explicit administration; never store its plaintext. */
 export async function legacyIndexKey(portal: IndexPortal, rows: IndexKeyRow[], actor: string | null = null) {
-  const key = process.env[INDEX_PORTALS[portal].secret];
+  const config = INDEX_PORTALS[portal as keyof typeof INDEX_PORTALS];
+  if (!config) return null;
+  const key = process.env[config.secret];
   if (!key) return null;
   const hash = hashIndexKey(key);
   const existing = rows.find(row => row.source === "legacy" && sameKeyHash(row.key_hash, hash));
   if (existing) return existing;
   const admin = await adminClient();
   const { data, error } = await admin.from("portal_index_keys").upsert({
-    portal, prefix: INDEX_PORTALS[portal].prefix, last4: key.slice(-4), key_hash: hash,
+    portal, prefix: config.prefix, last4: key.slice(-4), key_hash: hash,
     source: "legacy", created_by: actor,
   }, { onConflict: "portal,key_hash", ignoreDuplicates: true }).select("*").maybeSingle();
   if (error) throw new Error("Index key registration unavailable");
@@ -58,27 +62,33 @@ async function touchIndexKey(row: IndexKeyRow) {
 /** Returns a signing seed only after active, portal-scoped authentication. */
 export async function authorizeIndexKey(portal: IndexPortal, candidate: string): Promise<string | null> {
   if (!candidate || candidate.length > 512) return null;
+  const { resolveIndexPortal } = await import("@/lib/dynamic-feed-portals.server");
+  const config = await resolveIndexPortal(portal);
+  if (!config?.active) return null;
   const rows = await readIndexKeys(portal);
   const hash = hashIndexKey(candidate);
   let row = rows.find(item => sameKeyHash(item.key_hash, hash));
   if (!row) {
-    const legacy = process.env[INDEX_PORTALS[portal].secret];
+    const legacy = config.secret ? process.env[config.secret] : null;
     if (!legacy || !sameKeyHash(hash, hashIndexKey(legacy))) return null;
     row = await legacyIndexKey(portal, rows) ?? undefined;
   }
   if (!row || row.status !== "active") return null;
   await touchIndexKey(row);
   // Hash is server-only and suffices to sign new tokens; legacy keeps its original signature.
-  return row.source === "legacy" ? process.env[INDEX_PORTALS[portal].secret] ?? null : row.key_hash;
+  return row.source === "legacy" ? (config.secret ? process.env[config.secret] ?? null : null) : row.key_hash;
 }
 export async function verifyManagedAgencyToken(token: string, portal: IndexPortal): Promise<string | null> {
+  const { resolveIndexPortal } = await import("@/lib/dynamic-feed-portals.server");
+  const config = await resolveIndexPortal(portal);
+  if (!config?.active) return null;
   const rows = await readIndexKeys(portal);
   for (const row of rows.filter(item => item.source === "managed" && item.status === "active")) {
-    const office = verifyClickimobFeedToken(token, row.key_hash, portal);
+    const office = verifyClickimobFeedToken(token, row.key_hash, portal, config.prefix);
     if (office) { await touchIndexKey(row); return office; }
   }
-  const legacy = process.env[INDEX_PORTALS[portal].secret];
-  const office = verifyClickimobFeedToken(token, legacy, portal);
+  const legacy = config.secret ? process.env[config.secret] : null;
+  const office = verifyClickimobFeedToken(token, legacy, portal, config.prefix);
   if (!office) return null;
   const row = await legacyIndexKey(portal, rows);
   if (!row || row.status !== "active") return null;

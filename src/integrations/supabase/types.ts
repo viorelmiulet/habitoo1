@@ -2947,6 +2947,48 @@ export type Database = {
           },
         ]
       }
+      dynamic_feed_portals: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          display_name: string
+          key_prefix: string
+          logo_path: string | null
+          show_public: boolean
+          slug: string
+          updated_at: string
+          website: string
+          xml_enabled: boolean
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          display_name: string
+          key_prefix: string
+          logo_path?: string | null
+          show_public?: boolean
+          slug: string
+          updated_at?: string
+          website: string
+          xml_enabled?: boolean
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          display_name?: string
+          key_prefix?: string
+          logo_path?: string | null
+          show_public?: boolean
+          slug?: string
+          updated_at?: string
+          website?: string
+          xml_enabled?: boolean
+        }
+        Relationships: []
+      }
       email_attachments: {
         Row: {
           checksum: string | null
@@ -11777,6 +11819,22 @@ export type Database = {
       collector_arm: { Args: never; Returns: undefined }
       collector_tick: { Args: never; Returns: undefined }
       contact_source_label: { Args: { _source: string }; Returns: string }
+      create_dynamic_feed_portal: {
+        Args: {
+          _key_hash: string
+          _last4: string
+          _logo: string
+          _name: string
+          _prefixes: string[]
+          _public: boolean
+          _reserved: string[]
+          _reserved_prefixes: string[]
+          _slug: string
+          _website: string
+          _xml: boolean
+        }
+        Returns: string
+      }
       cron_nonce_claim: {
         Args: { _purpose: string; _token: string }
         Returns: boolean

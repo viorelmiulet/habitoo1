@@ -10,6 +10,7 @@
  */
 
 import { HOMEPITCH_MAX_TITLE } from "./homepitch/mapper";
+import { getPortalDefinition } from "./registry";
 import { IMOBILIARE_DESCRIPTION_MIN, IMOBILIARE_TITLE_MAX } from "./imobiliare/config";
 import { normalizeImobiliareMobile } from "./imobiliare/contact";
 import { imobiliareFloorReasons } from "./imobiliare/mapper";
@@ -519,7 +520,7 @@ export type PortalRequirementReport = {
 
 /** Lista de cerințe a unui portal, fără date (pentru afișare în interfață). */
 export function portalRequirementSpec(portalId: string): PortalRequirementSpec | null {
-  return PORTAL_REQUIREMENTS[portalId] ?? null;
+  return PORTAL_REQUIREMENTS[portalId] ?? (getPortalDefinition(portalId)?.dynamic_feed ? PORTAL_REQUIREMENTS.clickimob : null);
 }
 
 /** Validare pre-publicare pentru un portal, pe datele reale ale ofertei. */
@@ -527,7 +528,7 @@ export function validatePortalRequirements(
   portalId: string,
   subject: PortalRequirementSubject,
 ): PortalRequirementReport {
-  const spec = PORTAL_REQUIREMENTS[portalId];
+  const spec = portalRequirementSpec(portalId);
   if (!spec) {
     return { portalId, known: false, ok: true, missing: [], required: [], allowed: [] };
   }

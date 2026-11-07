@@ -2,21 +2,27 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const portalSchema = z.enum(["clickimob", "imobli", "locuit", "imobiliareplus", "imove", "bazaruldecase"]);
+const portalSchema = z.string().regex(/^[a-z][a-z0-9-]{1,39}$/);
 export const listPortalIndexKeys = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { data: allowed, error } = await context.supabase.rpc("is_superadmin");
   if (error || allowed !== true) throw new Error("Acces refuzat.");
   const { INDEX_PORTALS } = await import("@/lib/portals/clickimob/index-feed");
+  const { loadDynamicFeedPortals } = await import("@/lib/dynamic-feed-portals.server");
+  const dynamic = await loadDynamicFeedPortals();
   const { readIndexKeys, safeIndexKey, hashIndexKey, sameKeyHash } = await import("./index-keys.server");
-  return Promise.all(Object.keys(INDEX_PORTALS).map(async name => {
+  return Promise.all([...Object.keys(INDEX_PORTALS), ...dynamic.filter(p => !(p.slug in INDEX_PORTALS)).map(p => p.slug)].map(async name => {
     const portal = portalSchema.parse(name);
     const rows = await readIndexKeys(portal);
-    const legacy = process.env[INDEX_PORTALS[portal].secret];
+    const fixed = INDEX_PORTALS[portal as keyof typeof INDEX_PORTALS];
+    const row = dynamic.find(p => p.slug === portal);
+    const prefix = fixed?.prefix ?? row?.key_prefix ?? "";
+    const legacy = fixed ? process.env[fixed.secret] : undefined;
     const legacyRow = legacy ? rows.find(row => sameKeyHash(row.key_hash, hashIndexKey(legacy))) : null;
-    return { portal, prefix: INDEX_PORTALS[portal].prefix,
+    return { portal, prefix, displayName: row?.display_name, dynamic: Boolean(row) && !fixed,
+      active: row?.active ?? true, showPublic: row?.show_public ?? false, xmlEnabled: row?.xml_enabled ?? false,
       indexUrl: `https://www.habitoo.ro/api/public/feed/${portal}/index/{indexKey}`,
       keys: rows.filter(row => row.source === "managed").map(safeIndexKey),
-      legacy: legacy ? { prefix: INDEX_PORTALS[portal].prefix, last4: legacy.slice(-4),
+      legacy: legacy ? { prefix, last4: legacy.slice(-4),
         status: legacyRow?.status ?? "active", last_used_at: legacyRow?.last_used_at ?? null } : null };
   }));
 });
@@ -25,7 +31,10 @@ export const createPortalIndexKey = createServerFn({ method: "POST" }).middlewar
     const { data: allowed, error } = await context.supabase.rpc("is_superadmin");
     if (error || allowed !== true) throw new Error("Acces refuzat.");
     const { generateIndexKey } = await import("./index-keys.server");
-    const generated = generateIndexKey(data.portal);
+    const { resolveIndexPortal } = await import("@/lib/dynamic-feed-portals.server");
+    const config = await resolveIndexPortal(data.portal);
+    if (!config?.active) throw new Error("Portal necunoscut sau dezactivat.");
+    const generated = generateIndexKey(data.portal, config.prefix);
     // Caller RLS and the audit trigger apply; the plaintext is returned once, never persisted.
     const { error: insertError } = await context.supabase.from("portal_index_keys").insert({
       portal: data.portal, prefix: generated.prefix, last4: generated.last4,

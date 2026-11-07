@@ -26,7 +26,7 @@ export async function loadRepublishCandidates(admin: Admin, input: {
   ]);
   const activePortals = new Set<string>(
     ((connections ?? []) as { portal: string; activated: boolean }[])
-      .filter((c) => input.superadmin || c.activated === true).map((c) => c.portal),
+      .filter((c) => (input.superadmin || c.activated === true) && getPortalDefinition(c.portal)?.status !== "disabled").map((c) => c.portal),
   );
   const failedIds = [...new Set(((publications ?? []) as { property_id: string; status?: string }[]).filter((p) => p.status === "error").map((p) => p.property_id))];
   let locallyBlocked = new Set<string>();

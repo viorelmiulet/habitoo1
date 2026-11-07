@@ -13,8 +13,9 @@ import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
 import { pageJsonLd } from "@/components/marketing/structured-data";
+import { getPublicDynamicFeedPortals } from "@/lib/dynamic-feed-portals.functions";
 
-export const PORTAL_COUNT = publicPortalCount();
+export const PORTAL_COUNT = publicPortalCount([]);
 const N = PORTAL_COUNT;
 export const H1 = `Integrări cu ${portalsLabel(N)} imobiliare din România`;
 const LEAD_TEXT = "Habitoo CRM are cele mai multe integrări cu portalurile imobiliare din România.";
@@ -55,22 +56,35 @@ const deliveryDescriptions = [
 ];
 
 export const Route = createFileRoute("/integrari")({
-  head: () => publicHead({
+  loader: () => getPublicDynamicFeedPortals(),
+  head: ({ loaderData }) => {
+    const count = PORTAL_COUNT + (loaderData?.length ?? 0);
+    const title = `${numeralLabel(count, "integrare", "integrări")} cu portaluri imobiliare | Habitoo CRM`;
+    const description = META_DESCRIPTION.replace(portalsLabel(N), portalsLabel(count));
+    const faq = INTEGRARI_FAQ.map(item => ({ ...item, a: item.a.replace(portalsLabel(N), portalsLabel(count)) }));
+    const list = integrationItemListJsonLd();
+    const extra = (loaderData ?? []).map((p, i) => ({ "@type": "ListItem", position: list.itemListElement.length + i + 1, name: p.display_name, url: p.website ?? "https://www.habitoo.ro/integrari" }));
+    return publicHead({
     path: "/integrari",
-    title: TITLE,
-    description: META_DESCRIPTION,
-    jsonLd: [...pageJsonLd({ path: "/integrari", name: H1, description: DESCRIPTION }), integrationItemListJsonLd(), faqPageJsonLd(INTEGRARI_FAQ)],
-  }),
+    title,
+    description,
+    jsonLd: [...pageJsonLd({ path: "/integrari", name: `Integrări cu ${portalsLabel(count)} imobiliare din România`, description }), { ...list, numberOfItems: list.numberOfItems + extra.length, itemListElement: [...list.itemListElement, ...extra] }, faqPageJsonLd(faq)],
+  }); },
   component: IntegrationsPage,
 });
 
 function IntegrationsPage() {
+  const dynamic = Route.useLoaderData();
+  const count = PORTAL_COUNT + dynamic.length;
+  const title = `Integrări cu ${portalsLabel(count)} imobiliare din România`;
+  const description = DESCRIPTION.replace(portalsLabel(N), portalsLabel(count));
+  const faq = INTEGRARI_FAQ.map(item => ({ ...item, a: item.a.replace(portalsLabel(N), portalsLabel(count)) }));
   return (
     <PublicLayout footerDescription="CRM imobiliar pentru agențiile din România, într-o singură platformă.">
       <section className="mk-page-hero overflow-hidden border-b">
         <Container className="pt-12 pb-8 sm:pt-16 sm:pb-12">
-          <SectionHeading as="h1" title={H1} text={LEAD_TEXT} />
-          <p className="mx-auto mt-3 max-w-2xl text-center text-base text-muted-foreground">{DESCRIPTION}</p>
+          <SectionHeading as="h1" title={title} text={LEAD_TEXT} />
+          <p className="mx-auto mt-3 max-w-2xl text-center text-base text-muted-foreground">{description}</p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button asChild size="lg"><CrmLink to="/register">Creează agenția <ArrowRight /></CrmLink></Button>
             <Button asChild size="lg" variant="outline"><Link to="/contact" search={{ interes: "demo" }}>Solicită o demonstrație</Link></Button>
@@ -94,6 +108,7 @@ function IntegrationsPage() {
                 {g.pages.map((p) => (
                   <li key={p.slug}><Link to="/integrari/$slug" params={{ slug: p.slug }} className="panel inline-block px-3 py-2 text-sm font-medium text-navy hover:shadow-soft">{p.name}</Link></li>
                 ))}
+                {g !== GROUPS[0] && dynamic.map(p => <li key={p.id}><a href={p.website} target="_blank" rel="noopener noreferrer" className="panel inline-block px-3 py-2 text-sm font-medium text-navy">{p.display_name}</a></li>)}
               </ul>
             </div>
           ))}
@@ -121,6 +136,7 @@ function IntegrationsPage() {
                     </tr>
                   );
                 })}
+                {dynamic.map(p => <tr key={p.id} className="border-b last:border-0"><td className="p-3 font-medium text-navy">{p.display_name}</td>{[true, true, true, true].map((_, i) => <td key={i} className="p-3 text-center"><Check className="inline size-4 text-primary" aria-label="Da" /></td>)}</tr>)}
               </tbody>
             </table>
           </div>
@@ -137,7 +153,7 @@ function IntegrationsPage() {
         </Container>
       </Section>
       <Section className="pt-0 sm:pt-0 lg:pt-0">
-        <Container><IntegrationsOverview /></Container>
+        <Container><IntegrationsOverview dynamic={dynamic} /></Container>
         <Container className="mt-10 text-center">
           <Button asChild variant="link" className="mb-4"><Link to="/dezvoltatori">Ești portal? Documentația API <ArrowRight /></Link></Button>
           <p className="text-sm text-muted-foreground">
@@ -158,7 +174,7 @@ function IntegrationsPage() {
           </div>
         </Container>
       </Section>
-      <FaqSection items={INTEGRARI_FAQ} title="Întrebări despre integrări" />
+      <FaqSection items={faq} title="Întrebări despre integrări" />
       <CtaBand text="Creează agenția în câteva minute, invită echipa și lucrează dintr-un singur sistem." />
     </PublicLayout>
   );

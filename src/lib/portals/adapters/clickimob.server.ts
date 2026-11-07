@@ -18,7 +18,7 @@ import {
 } from "../adapter";
 import { toPortalError } from "../errors";
 
-export function createIndexFeedAdapter(portal: "clickimob" | "imobli" | "locuit" | "imobiliareplus" | "bazaruldecase", name: string): PortalAdapter {
+export function createIndexFeedAdapter(portal: string, name: string): PortalAdapter {
 /** Diagnoza feedului pentru o ofertă: ce va citi portalul, în realitate. */
 async function diagnose(ctx: PortalContext, ref: ListingRef): Promise<ListingDiagnostics> {
   const { inspectFeedMedia, inspectFeedProperty } = await import("../feed-inspect.server");

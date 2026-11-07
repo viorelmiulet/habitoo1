@@ -17,7 +17,7 @@ export const CLICKIMOB_INDEX_HEADERS: Record<string, string> = {
   "cache-control": "no-cache, must-revalidate",
 };
 
-export type IndexPortal = "clickimob" | "imobli" | "locuit" | "imobiliareplus" | "imove" | "bazaruldecase";
+export type IndexPortal = string;
 export const INDEX_PORTALS = {
   clickimob: { prefix: CLICKIMOB_TOKEN_PREFIX, secret: "CLICKIMOB_INDEX_KEY", version: CLICKIMOB_INDEX_VERSION },
   imobli: { prefix: "hbim_", secret: "IMOBLI_INDEX_KEY", version: "habitoo-imobli-index/1.0" },
@@ -31,14 +31,14 @@ export const INDEX_PORTALS = {
 
 /** Calea feedului per agenție indicată în index; implicit feedul generic /sites/v1. */
 export function indexFeedPath(portal: IndexPortal): string {
-  const cfg = INDEX_PORTALS[portal];
-  return "feedPath" in cfg ? cfg.feedPath : "/api/public/sites/v1";
+  const cfg = INDEX_PORTALS[portal as keyof typeof INDEX_PORTALS];
+  return cfg && "feedPath" in cfg ? cfg.feedPath : "/api/public/sites/v1";
 }
 
 /** URL-ul absolut al feedului XML (Kyero) al agenției, cu tokenul în `?token=`; null dacă portalul nu are XML. */
 export function indexXmlUrl(portal: IndexPortal, baseUrl: string, token: string): string | null {
-  const cfg = INDEX_PORTALS[portal];
-  return "xmlPath" in cfg ? `${baseUrl.replace(/\/$/, "")}${cfg.xmlPath}?token=${encodeURIComponent(token)}` : null;
+  const cfg = INDEX_PORTALS[portal as keyof typeof INDEX_PORTALS];
+  return cfg && "xmlPath" in cfg ? `${baseUrl.replace(/\/$/, "")}${cfg.xmlPath}?token=${encodeURIComponent(token)}` : null;
 }
 
 /** Portalurile al căror token de index deschide DOAR feedul lor dedicat. */
@@ -48,8 +48,10 @@ export function signClickimobAgency(id: string, key: string, portal: IndexPortal
   return createHmac("sha256", key).update(`${portal}:${id}`).digest("hex");
 }
 
-export function clickimobFeedToken(id: string, key: string, portal: IndexPortal = "clickimob"): string {
-  return `${INDEX_PORTALS[portal].prefix}${id}.${signClickimobAgency(id, key, portal)}`;
+export function clickimobFeedToken(id: string, key: string, portal: IndexPortal = "clickimob", prefix?: string): string {
+  const resolved = prefix ?? INDEX_PORTALS[portal as keyof typeof INDEX_PORTALS]?.prefix;
+  if (!resolved) throw new Error("Unknown index prefix");
+  return `${resolved}${id}.${signClickimobAgency(id, key, portal)}`;
 }
 
 /** Întoarce id-ul agenției dacă tokenul e valid, altfel null (timing-safe). */
@@ -57,9 +59,11 @@ export function verifyClickimobFeedToken(
   token: string | null | undefined,
   key: string | null | undefined,
   portal: IndexPortal = "clickimob",
+  prefix?: string,
 ): string | null {
-  if (!key || !token || !token.startsWith(INDEX_PORTALS[portal].prefix)) return null;
-  const body = token.slice(INDEX_PORTALS[portal].prefix.length);
+  const resolved = prefix ?? INDEX_PORTALS[portal as keyof typeof INDEX_PORTALS]?.prefix;
+  if (!resolved || !key || !token || !token.startsWith(resolved)) return null;
+  const body = token.slice(resolved.length);
   const dot = body.lastIndexOf(".");
   if (dot <= 0) return null;
   const id = body.slice(0, dot);

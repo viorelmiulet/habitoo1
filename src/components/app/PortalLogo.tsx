@@ -33,7 +33,7 @@ import storiaLogo from "@/assets/portals/storia.png";
 import zonataLogo from "@/assets/portals/zonata.png";
 import imobiliareplusLogo from "@/assets/portals/imobiliareplus.png";
 import vumsiLogo from "@/assets/portals/vumsi.png";
-import { portalLogoIds } from "@/lib/portals/registry";
+import { getPortalDefinition, portalLogoIds } from "@/lib/portals/registry";
 import { cn } from "@/lib/utils";
 
 const PORTAL_LOGOS: Record<string, string> = {
@@ -86,7 +86,7 @@ type Props = {
 
 export function PortalLogo({ portalId, name, fallback, size = 32, className, alt }: Props) {
   const [failed, setFailed] = useState(false);
-  const src = PORTAL_LOGOS[portalId];
+  const src = PORTAL_LOGOS[portalId] ?? getPortalDefinition(portalId)?.logo_url;
   const initials = fallback ?? name.slice(0, 2).toUpperCase();
 
   return (
