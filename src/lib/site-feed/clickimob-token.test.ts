@@ -118,7 +118,7 @@ beforeEach(() => {
   locuitIndexed.clear();
   ipIndexed.clear();
   db["organizations"] = [{ id: ORG_A }, { id: ORG_B }, { id: ORG_OUT }];
-  db["profiles"] = [{ id: "agent-1", full_name: "Ana Pop", email: "ana@example.ro", phone: "0722123456" }];
+  db["profiles"] = [{ id: "agent-1", organization_id: ORG_A, full_name: "Agent fictiv", email: "agent@example.invalid", phone: "0722123456" }];
   db["properties"] = [property("p-sel", ORG_A), property("p-other", ORG_A), property("p-b", ORG_B)];
   db["portal_publications"] = [
     { organization_id: ORG_A, property_id: "p-sel", portal_key: "clickimob", enabled: true },

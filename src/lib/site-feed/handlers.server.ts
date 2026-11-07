@@ -66,6 +66,8 @@ async function portalKeysFor(
       .in("status", ["published", "updated"])
       .in("property_id", propertyIds),
   ]);
+  if (publications.error) throw publications.error;
+  if (listings.error) throw listings.error;
   const push = (propertyId: string, portal: string) => {
     const list = result.get(propertyId) ?? [];
     if (!list.includes(portal)) list.push(portal);
@@ -128,6 +130,7 @@ export async function handlePropertiesList(
   if (error?.code === "PGRST103") {
     // Pagină peste last_page: 200 cu data=[] și metadata consistentă.
     const head = await baseQuery().range(0, 0);
+    if (head.error) throw head.error;
     data = [];
     count = head.count ?? 0;
     error = null;
@@ -155,6 +158,8 @@ export async function handlePropertiesList(
       : Promise.resolve({ data: [] as { id: string; full_name: string }[], error: null }),
     portalKeysFor(auth.organizationId, ids),
   ]);
+  if (images.error) throw images.error;
+  if (agents.error) throw agents.error;
 
   const imagesByProperty = new Map<string, PropertyImageRow[]>();
   for (const img of (images.data ?? []) as PropertyImageRow[]) {
@@ -241,6 +246,8 @@ export async function handlePropertyDetail(
       : Promise.resolve({ data: null }),
     portalKeysFor(auth.organizationId, [row.id]),
   ]);
+  if (images.error) throw images.error;
+  if ("error" in agent && agent.error) throw agent.error;
 
   const { baseUrl, publicSiteUrl } = feedUrlsForRequest(new URL(request.url));
   const mapped = mapPropertyToFeed(row, {
