@@ -1,3 +1,8 @@
+## P3 — răspunsuri ale portalurilor API
+- [ ] Salvări autentificate/idempotente pentru publicare, lead-uri, mesaje și statistici; izolare portal/mediu/agenție și ordine temporală
+- [ ] Stări/motive și statistici în fișa proprietății; respingeri în Acasă; mesaje în fila existentă
+- [ ] Numai teste noi și verificări fără publicare sau schimbări ale fluxurilor push/contacts
+
 ## F2 — confidențialitatea adresei în feeduri
 - [x] Funcție comună pentru JSON, Kyero, Properstar și Partner API; publicarea push și datele proprietăților rămân neschimbate
 - [x] OpenAPI 1.2.2 și istoric vizibile la /dezvoltatori; 6/6 teste F2 și 28/28 documentație trec, fără publicare
