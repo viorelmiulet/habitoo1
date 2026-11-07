@@ -895,7 +895,7 @@ export function portalLogoIds(id: PortalId): PortalId[] {
 
 /** Portalurile care se configurează/activează: perechile apar o singură dată. */
 export function configurablePortals(): PortalDefinition[] {
-  return PORTALS.filter((p) => !isPortalCovered(p.id));
+  return PORTALS.filter((p) => !isPortalCovered(p.id) && (!p.dynamic_feed || p.status === "available"));
 }
 
 /** Lista din Setări → Portaluri: integrările obișnuite plus cataloagele de promovare. */

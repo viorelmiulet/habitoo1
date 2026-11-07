@@ -11,6 +11,9 @@ import { withFeedDefinitions } from "@/lib/feed-registry-scope.server";
 import { getPortalDefinition, STATIC_PORTALS } from "@/lib/portals/registry";
 import { selectRepublishPairs } from "@/lib/portals/republish";
 import { publicPortalCount } from "@/lib/portals/integration-pages";
+import { configurablePortals } from "@/lib/portals/registry";
+import { selectedPropertyIdsForPortal } from "./selection.server";
+import { buildBazarulKyeroFeed } from "@/lib/portals/bazaruldecase/feed.server";
 
 type Row = Record<string, unknown>;
 const db: Record<string, Row[]> = {};
@@ -85,6 +88,29 @@ describe("K2 dynamic feed portals", () => {
     const generated = await create(); db.dynamic_feed_portals[0].active = false;
     expect((await handlePortalIndex(request(), generated.key, "exempluimob")).status).toBe(401);
     expect(db.portal_index_keys).toHaveLength(1); expect(db.dynamic_feed_portals).toHaveLength(1);
+    withFeedDefinitions((db.dynamic_feed_portals as never[]).map(dynamicPortalDefinition), () => {
+      expect(configurablePortals().some(p => p.id === "exempluimob")).toBe(false);
+    });
+  });
+  it("rejects forged signatures, another portal's XML token and agency tokens after disabling", async () => {
+    const generated = await create();
+    const response = await handlePortalIndex(request(), generated.key, "exempluimob");
+    const body = await response.json();
+    const token = body.agencies[0].feed.token as string;
+    const forged = token.slice(0, token.lastIndexOf(".") + 1) + "0".repeat(64);
+    const auth = await authenticateFeedRequest(new Request("http://localhost:8080/", { headers: { authorization: `Bearer ${forged}` } }));
+    expect(auth.ok).toBe(false); expect(!auth.ok && auth.status).toBe(401);
+    const wrongXml = await authenticateFeedRequest(new Request("http://localhost:8080/", { headers: { authorization: `Bearer ${token}` } }), { indexPortal: "locuit" });
+    expect(wrongXml.ok).toBe(false);
+    db.dynamic_feed_portals[0].active = false;
+    const disabled = await authenticateFeedRequest(new Request("http://localhost:8080/", { headers: { authorization: `Bearer ${token}` } }));
+    expect(disabled.ok).toBe(false);
+  });
+  it("dynamic JSON selection and Kyero both exclude an offer whose agent has no phone", async () => {
+    await create(); db.profiles = [{ id: agent, organization_id: org, full_name: "Agent fictiv", phone: null }];
+    expect(await selectedPropertyIdsForPortal(org, "exempluimob")).toEqual([]);
+    const xml = await buildBazarulKyeroFeed({ organizationId: org, requestUrl: request().url, portal: "exempluimob" });
+    expect(xml.offers).toBe(0); expect(xml.xml).not.toContain(`<id>${prop}</id>`);
   });
   it("rejects every slug already defined in code", async () => {
     for (const portal of STATIC_PORTALS) await expect(createDynamicFeedPortalCore(caller, { slug: portal.id, display_name: "Portal fictiv", website: "https://example.org" })).rejects.toThrow();
