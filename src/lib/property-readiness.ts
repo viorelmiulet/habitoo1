@@ -8,6 +8,7 @@
  */
 import { IMOSPOT_MIN_DESCRIPTION } from "@/lib/portals/imospot/mapper";
 import { HOMEPITCH_RECOMMENDED_DESCRIPTION } from "@/lib/portals/homepitch/mapper";
+import { getPortalDefinition } from "@/lib/portals/registry";
 
 /** Minim de fotografii sub care oferta nu are șanse pe portaluri. */
 export const MIN_PUBLISH_IMAGES = 3;
@@ -103,17 +104,34 @@ export function computePropertyIssues(input: ReadinessInput): PropertyIssue[] {
     issues.push({ code: "no_location", label: "Fără localitate sau adresă", severity: "danger" });
   }
 
+  const errorPortals = new Set(
+    input.publications.filter((pub) => pub.enabled && pub.status === "error").map((pub) => pub.portalKey),
+  );
+  const groupPortalErrors = errorPortals.size > 2;
   for (const pub of input.publications) {
     if (!pub.enabled) continue;
+    const portal = getPortalDefinition(pub.portalKey);
+    const portalName = portal?.display_name ?? pub.portalKey;
     if (pub.status === "disabled" || pub.status === "withdrawn") {
       issues.push({
         code: "portal_withdrawn",
-        label: `Retrasă de pe ${pub.portalKey}`,
+        label: `Retrasă de pe ${portalName}`,
         severity: "warning",
       });
-    } else if (pub.status === "error") {
-      issues.push({ code: "portal_rejected", label: `Respins de ${pub.portalKey}`, severity: "danger" });
+    } else if (pub.status === "error" && !groupPortalErrors) {
+      issues.push({
+        code: "portal_rejected",
+        label: portal?.capabilities.includes("feed_pull") ? `Nu apare pe ${portalName}` : `Respins de ${portalName}`,
+        severity: "danger",
+      });
     }
+  }
+  if (groupPortalErrors) {
+    issues.push({
+      code: "portal_rejected",
+      label: `Nu se poate publica pe ${errorPortals.size} portaluri – verifică datele anunțului`,
+      severity: "danger",
+    });
   }
 
   const ageDays = (Date.now() - new Date(input.createdAt).getTime()) / 86_400_000;
