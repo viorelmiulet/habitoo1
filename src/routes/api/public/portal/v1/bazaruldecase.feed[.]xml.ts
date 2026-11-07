@@ -25,7 +25,6 @@ export const Route = createFileRoute("/api/public/portal/v1/bazaruldecase/feed.x
             const build = await buildBazarulKyeroFeed({ organizationId: auth.organizationId, requestUrl: request.url });
             return { response: new Response(build.xml, { status: 200, headers: KYERO_HEADERS }), items: build.properties };
           },
-          { allowQueryToken: true, indexPortal: "bazaruldecase" },
           { allowQueryToken: true, indexPortal: "bazaruldecase", inventory: true },
         ); } catch { return incompleteFeedResponse(); }
       },
