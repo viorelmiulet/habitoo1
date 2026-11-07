@@ -6824,6 +6824,48 @@ export type Database = {
           },
         ]
       }
+      portal_index_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          key_hash: string
+          last_used_at: string | null
+          last4: string
+          portal: string
+          prefix: string
+          revoked_at: string | null
+          source: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_hash: string
+          last_used_at?: string | null
+          last4: string
+          portal: string
+          prefix: string
+          revoked_at?: string | null
+          source?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_hash?: string
+          last_used_at?: string | null
+          last4?: string
+          portal?: string
+          prefix?: string
+          revoked_at?: string | null
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
       portal_index_state: {
         Row: {
           active: boolean
@@ -12005,6 +12047,7 @@ export type Database = {
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       portal_bulk_arm: { Args: never; Returns: undefined }
       portal_bulk_tick: { Args: never; Returns: undefined }
+      portal_index_key_touch: { Args: { _id: string }; Returns: undefined }
       portal_publish_arm: { Args: never; Returns: undefined }
       portal_publish_kick: { Args: never; Returns: undefined }
       portal_publish_tick: { Args: never; Returns: undefined }
