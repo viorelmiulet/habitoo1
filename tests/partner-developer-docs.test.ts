@@ -19,7 +19,7 @@ const ctx:any={portal:{slug:'demo',display_name:'Portal Demo',rate_limit_per_min
 function assertSchema(value:any,input:any,path='root') {
   const s=input.$ref?spec.components.schemas[input.$ref.split('/').at(-1)]:input;
   if(s.anyOf){const errors=[];for(const option of s.anyOf){try{assertSchema(value,option,path);return;}catch(e){errors.push(e);}}throw errors[0];}
-  if(s.type){const actual=value===null?'null':Array.isArray(value)?'array':typeof value;expect([].concat(s.type),path).toContain(actual==='number'&&s.type==='integer'?'integer':actual);if(s.type==='integer')expect(Number.isInteger(value)).toBe(true);}
+  if(s.type){const actual=value===null?'null':Array.isArray(value)?'array':typeof value;const types=[].concat(s.type);expect(types,path).toContain(actual==='number'&&types.includes('integer')?'integer':actual);if(actual==='number'&&types.includes('integer'))expect(Number.isInteger(value)).toBe(true);}
   if(s.const!==undefined)expect(value,path).toBe(s.const);
   if(s.enum)expect(s.enum,path).toContain(value);
   if(s.properties && value && typeof value==='object'&&!Array.isArray(value)){for(const k of s.required??[])expect(value,path).toHaveProperty(k);if(s.additionalProperties===false)expect(Object.keys(value).every(k=>k in s.properties),path).toBe(true);for(const [k,v]of Object.entries(value)){expect(s.properties[k],`${path}.${k} documented`).toBeDefined();assertSchema(v,s.properties[k],`${path}.${k}`);}}
