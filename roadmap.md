@@ -1,7 +1,7 @@
 ## F1 — feeduri complete și vizualizări fără dublare
-- [ ] XML/index: erori 503 cu Retry-After 300, filtre comune JSON/XML și token exclusiv al portalului
-- [ ] event_id pentru vizualizări cu deduplicare atomică per agenție și portal
-- [ ] OpenAPI/documentație actualizate și numai testele site-feed și cele noi XML; fără publicare/push
+- [x] XML/index: citiri complete paginate, erori 503 cu Retry-After 300, filtre comune JSON/XML și token exclusiv al portalului; imposibilitatea reprezentării Kyero nu produce inventar parțial
+- [x] event_id pentru vizualizări cu deduplicare atomică per agenție/portal; migrare aplicată, RPC doar server, test tranzacțional cu revenire la eroare și token rotit
+- [x] OpenAPI 1.1.0/documentație „Vizualizări” actualizate; 93/93 teste numai site-feed/noile XML, pagină verificată; fără publicare/push sau schimbări de anunțuri
 
 ## D2 — pagină publică pentru dezvoltatori
 - [x] Documentație și exemple generate din OpenAPI, navigare desktop/telefon și copiere
