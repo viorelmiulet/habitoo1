@@ -1,3 +1,7 @@
+## D4 — autentificare clară pentru integratori
+- [ ] Explicații din cod pentru cheia de index, tokenul agenției, compatibilitate și XML; OpenAPI 1.2.1 și istoric
+- [ ] Doar teste documentație/pagină și verificare vizuală; fără modificări de feed sau publicare
+
 ## D3 — documentație pentru integratori externi
 - [x] Listele formularului și SELECT DISTINCT confirmate fără valori istorice în afara lor; categoria terenului rămâne text liber, fără listă fixă corespunzătoare
 - [x] OpenAPI 1.2.0, descrieri externe și câmpuri rezervate grupate; limita GET visits documentată, fără schimbări de feed; pole provine din compatibilitatea ImmoFlux în primul mapper (6 septembrie), fără funcție în aplicație și zero valori true în date
