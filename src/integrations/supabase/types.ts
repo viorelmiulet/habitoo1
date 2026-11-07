@@ -12656,6 +12656,17 @@ export type Database = {
         }
         Returns: string
       }
+      partner_api_message_apply: {
+        Args: {
+          _body: string
+          _created: string
+          _environment: string
+          _external: string
+          _lead: string
+          _portal: string
+        }
+        Returns: Json
+      }
       partner_api_publication_apply: {
         Args: {
           _body: Json

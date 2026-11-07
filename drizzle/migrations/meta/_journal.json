@@ -1772,6 +1772,13 @@
       "when": 1794058235586,
       "tag": "0252_partner_api_feedback",
       "breakpoints": true
+    },
+    {
+      "idx": 253,
+      "version": "7",
+      "when": 1794058290982,
+      "tag": "0253_partner_api_message_receipts",
+      "breakpoints": true
     }
   ]
 }
