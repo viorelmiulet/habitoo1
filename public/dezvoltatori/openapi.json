@@ -108,7 +108,7 @@
     "/api/public/sites/v1/properties": {
       "get": {
         "summary": "Lista proprietăților",
-        "description": "feed:read Doar publicate, neșterse, cu status active/reserved/negotiation. Token de portal: numai selecțiile acelui portal; token de site: toate ofertele eligibile ale agenției. ClickImob exclude ofertele fără telefonul agentului. În grace: data=[] și total=0. Sortare updated_at desc; paginile peste last_page întorc 200 și data=[]. Fără cursor/snapshot; nu există filtre suplimentare.",
+        "description": "feed:read Doar publicate, neșterse, cu status active/reserved/negotiation. Token de portal: numai selecțiile acelui portal; token de site: toate ofertele eligibile ale agenției. Pentru tokenuri ale portalurilor clickimob, imobli, locuit, imobiliareplus, imove și bazaruldecase, selecția JSON exclude ofertele fără telefonul agentului (tokenul index iMove este însă respins pe sites/v1). În grace: data=[] și total=0. Sortare updated_at desc; paginile peste last_page întorc 200 și data=[]. Fără cursor/snapshot; nu există filtre suplimentare.",
         "tags": [
           "Feed pe agenție"
         ],
@@ -1137,7 +1137,7 @@
     "/api/public/sites/v1/contacts": {
       "post": {
         "summary": "Trimite un lead",
-        "description": "leads:write Nu este operație de vizionare programată. Creează/reutilizează contact cumpărător și lead. idstr asociază proprietatea, nu deduplică mesajul. Proprietatea trebuie să aparțină agenției, fără verificarea publicării sau selecției. Cu token de portal, sursa este numele din registry și responsabilul agentul proprietății. message_id reutilizează linkul portal+agenție+ID extern; altfel ingestia poate reutiliza un lead deschis după identitatea expeditorului/proprietate. Contactul se caută după email dacă este trimis, altfel telefon. Cu token de site, message_id este ignorat, iar lead-ul deschis al contactului/proprietății este reutilizat. Retrimiterile nu sunt garantate atomic în toate ramurile.",
+        "description": "leads:write Nu este operație de vizionare programată. Creează/reutilizează contact cumpărător și lead. idstr asociază proprietatea, nu deduplică mesajul. Proprietatea trebuie să aparțină agenției, fără verificarea publicării sau selecției. Cu token de portal, sursa este numele din registry și responsabilul agentul proprietății. message_id reutilizează linkul portal+agenție+ID extern; altfel ingestia poate reutiliza un lead deschis după sursa portalului, identitatea expeditorului (email prioritar, altfel telefon) și proprietate. Contactul se caută după email dacă este trimis, altfel telefon. Cu token de site, message_id este ignorat, iar lead-ul deschis al contactului/proprietății este reutilizat. Retrimiterile nu sunt garantate atomic în toate ramurile.",
         "tags": [
           "Lead-uri"
         ],
@@ -1792,7 +1792,7 @@
     "/api/public/portal/v1/bazaruldecase/feed.xml": {
       "get": {
         "summary": "Inventar XML Kyero v3",
-        "description": "feed:read Format descris generic; implementarea existentă este la calea BazarulDeCase, nu există cale Kyero generică. Fără paginare. Aceleași reguli de eligibilitate publică, numai ofertele selectate pentru bazaruldecase, inclusiv când se folosește un token obișnuit de site/portal. Tokenul index BazarulDeCase este acceptat; toate celelalte tokenuri de index sunt respinse. Tokenurile obișnuite site/portal cu feed:read sunt de asemenea acceptate (codul nu impune exclusiv tokenul BazarulDeCase). Grace: XML gol. Tip necunoscut, preț lipsă/nepozitiv sau monedă neacceptată: tranzacția este omisă, avertismentul nu apare în răspuns. Până la 50 imagini; o proprietate cu ambele tranzacții are două elemente. XML gol este un inventar gol, de reconciliat la retragere. Unele erori de citire sunt ignorate de generator și pot produce XML parțial/gol cu 200; codul nu oferă un indicator de inventar incomplet.",
+        "description": "feed:read Format descris generic; implementarea existentă este la calea BazarulDeCase, nu există cale Kyero generică. Fără paginare. Aceleași reguli de eligibilitate publică, numai ofertele selectate pentru bazaruldecase, inclusiv când se folosește un token obișnuit de site/portal. Tokenul index BazarulDeCase este acceptat; toate celelalte tokenuri de index sunt respinse. Tokenurile obișnuite site/portal cu feed:read sunt de asemenea acceptate (codul nu impune exclusiv tokenul BazarulDeCase). Grace: XML gol. Tip necunoscut, preț lipsă/nepozitiv sau monedă neacceptată: tranzacția este omisă, avertismentul nu apare în răspuns. Spre deosebire de selecția JSON, XML nu filtrează ofertele după telefonul agentului. Până la 50 imagini; o proprietate cu ambele tranzacții are două elemente. XML gol este un inventar gol, de reconciliat la retragere. Unele erori de citire sunt ignorate de generator și pot produce XML parțial/gol cu 200; codul nu oferă un indicator de inventar incomplet.",
         "tags": [
           "XML Kyero"
         ],
@@ -3759,8 +3759,7 @@
           }
         },
         "required": [
-          "kyero",
-          "property"
+          "kyero"
         ],
         "xml": {
           "name": "root"
@@ -3779,6 +3778,7 @@
     "XML: unele erori ale interogărilor sunt ignorate și pot produce inventar parțial/gol cu 200; nu există indicator de completitudine. Aceasta limitează siguranța reconcilierii automate la retragere.",
     "XML: comentariul spune exclusiv token BazarulDeCase, dar autentificarea acceptă și token de site/cheie de portal cu feed:read; selecția rămâne bazaruldecase.",
     "INDEX_PORTALS include iMove, cu feed dedicat neacoperit de acest model JSON. Properstar are alt index/model și este în afara INDEX_PORTALS.",
-    "Media: w/h se aplică numai imaginilor din stocare și poate reveni la original; pentru URL HTTPS extern redimensionarea nu este garantată. Avatar/logo nu verifică eligibilitatea agenției în index."
+    "Media: w/h se aplică numai imaginilor din stocare și poate reveni la original; pentru URL HTTPS extern redimensionarea nu este garantată. Avatar/logo nu verifică eligibilitatea agenției în index.",
+    "Filtrare: toate cele șase portaluri din INDEX_PORTALS cer telefonul agentului în selecția JSON; XML Kyero nu aplică această filtrare, deci inventarele JSON și XML pot diferi."
   ]
 }
