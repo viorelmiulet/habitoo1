@@ -137,7 +137,7 @@ export async function handlePropertiesList(
   }
   if (error) throw error;
 
-  const rows = (data ?? []) as PropertyRow[];
+  const rows = ((data ?? []) as PropertyRow[]).filter(isPropertyFeedEligible);
   const ids = rows.map((r) => r.id);
   const agentIds = [
     ...new Set(rows.map((r) => r.assigned_to).filter((v): v is string => Boolean(v))),

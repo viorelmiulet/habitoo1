@@ -1,17 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { XMLParser } from "fast-xml-parser";
 import type { FeedAuthOk } from "@/lib/site-feed/auth.server";
+import { createHash } from "node:crypto";
+import { clickimobFeedToken } from "@/lib/portals/clickimob/index-feed";
+import { properstarEntityId } from "@/lib/portals/properstar/mapper";
 
 const state = vi.hoisted(() => ({tableError: "", missingAgency: false, noPhone: false, authError: false, rows: 1}));
 const ORG = "11111111-1111-4111-8111-111111111111";
 const PROPERTY = "22222222-2222-4222-8222-222222222222";
 const AGENT = "33333333-3333-4333-8333-333333333333";
 const KEY = "hbxx_EXEMPLU_INDEX_FICTIV";
+process.env["BAZARULDECASE_INDEX_KEY"] = KEY;
 vi.mock("@/integrations/supabase/client.server", () => ({supabaseAdmin: {from: (table: string) => {
   const filters: ((r: Record<string, unknown>) => boolean)[] = [];
   let start=0, end=999;
   const query = {
-    select: () => query, order: () => query, upsert: () => query, insert: () => query,
+    select: () => query, order: () => query, upsert: () => query, insert: () => query, update: () => query,
+    maybeSingle: async () => ({data: table === "site_feed_tokens" ? {id:"fake-site-token",organization_id:ORG,token_prefix:"hbxx_EXEMPLU_SITE",scope:null,revoked_at:null} : null,error:null}),
     eq: (k: string,v: unknown) => {filters.push(r => r[k] === v);return query;},
     is: (k: string,v: unknown) => {filters.push(r => (r[k]??null) === v);return query;},
     in: (k: string,v: unknown[]) => {filters.push(r => v.includes(r[k]));return query;},
@@ -24,18 +29,11 @@ vi.mock("@/integrations/supabase/client.server", () => ({supabaseAdmin: {from: (
         : table === "profiles" ? [{id:AGENT,organization_id:ORG,full_name:"Agent fictiv",phone:state.noPhone?null:"0722123456",email:null}]
         : table === "property_images" ? Array.from({length:state.rows},(_,i) => ({id:`image-${i}`,organization_id:ORG,property_id:PROPERTY,include_in_publish:true,is_confidential:false,position:i})) : [];
       const filtered = rows.filter(r=>filters.every(f=>f(r)));
-      return Promise.resolve({data:state.tableError===table?null:filtered.slice(start,end+1),error:state.tableError===table?{message:"simulated read failure"}:null,count:filtered.length}).then(resolve);
+      const failed = state.tableError===table || (state.authError && table==="organizations");
+      return Promise.resolve({data:failed?null:filtered.slice(start,end+1),error:failed?{message:"simulated read failure"}:null,count:filtered.length}).then(resolve);
     },
   };return query;
 }}}));
-vi.mock("@/lib/site-feed/auth.server", async importOriginal => {
-  const original = await importOriginal<typeof import("@/lib/site-feed/auth.server")>();
-  return {...original, withFeedAuth: async (request: Request,_endpoint: string,handler: (auth: FeedAuthOk)=>Promise<{response:Response}>) => {
-    if(state.authError) throw new Error("agency index unavailable");
-    const auth = {organizationId:ORG,scopes:["feed:read"],portal:request.headers.get("authorization")==="Bearer site"?null:"bazaruldecase"} as FeedAuthOk;
-    try{return (await handler(auth)).response;}catch{return (await import("@/lib/site-feed/complete-read.server")).incompleteFeedResponse();}
-  }};
-});
 import { Route } from "@/routes/api/public/portal/v1/bazaruldecase.feed[.]xml";
 import { handlePortalIndex, listPortalIndexedAgencies } from "@/lib/portals/clickimob/index-feed.server";
 import { handlePropertiesList } from "@/lib/site-feed/handlers.server";
@@ -43,7 +41,8 @@ import { handlePropertiesList } from "@/lib/site-feed/handlers.server";
 const xmlRequest = (token="portal") => {
   const handler = Route.options.server?.handlers?.GET;
   if (typeof handler !== "function") throw new Error("Missing XML handler");
-  return handler({request:new Request("https://www.habitoo.ro/api/public/portal/v1/bazaruldecase/feed.xml",{headers:{authorization:`Bearer ${token}`}})} as never) as Promise<Response>;
+  const signed = token==="site" ? "hbxx_EXEMPLU_SITE" : clickimobFeedToken(properstarEntityId("hb",ORG),KEY,"bazaruldecase");
+  return handler({request:new Request("https://www.habitoo.ro/api/public/portal/v1/bazaruldecase/feed.xml",{headers:{authorization:`Bearer ${signed}`}})} as never) as Promise<Response>;
 };
 beforeEach(()=>{state.tableError="";state.missingAgency=false;state.noPhone=false;state.authError=false;state.rows=1;});
 describe("XML and index inventory safety",()=>{

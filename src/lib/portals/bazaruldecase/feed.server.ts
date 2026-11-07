@@ -68,6 +68,7 @@ export async function buildBazarulKyeroFeed(input: { organizationId: string; req
       agent: p.assigned_to ? agentById.get(p.assigned_to) ?? null : null,
       coords: c ? { lat: c.lat, lng: c.lng } : null,
     });
+    if (!r.xml.length) throw new Error("JSON-eligible offer cannot be rendered in Kyero");
     xml.push(...r.xml);
     warnings.push(...r.warnings);
   }
