@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { handlePartnerWrite, type PartnerWriteStore } from "@/lib/partner-api/write.server";
-import { apiError, generatePartnerKey, servePartner, type PartnerContext, type PartnerStore } from "@/lib/partner-api/core.server";
+import { generatePartnerKey, servePartner, type PartnerContext, type PartnerStore } from "@/lib/partner-api/core.server";
 import { computePropertyIssues } from "@/lib/property-readiness";
-import { summarizePortalStats, publicationReason } from "@/lib/partner-api/feedback";
+import { summarizePortalStats, publicationReason, mergePublicationFeedback } from "@/lib/partner-api/feedback";
 const org = "11111111-1111-4111-8111-111111111111", listing = "22222222-2222-4222-8222-222222222222";
 const context: PartnerContext = { requestId: org, identity: { id: org, portal: "example", prefix: "hbpk_live_", environment: "live", key_hash: "", status: "active" }, portal: { slug: "example", display_name: "Exemplu.ro", active: true, integration_mode: "api", rate_limit_per_minute: 120 } };
 function store(): PartnerWriteStore {
@@ -42,6 +42,12 @@ describe("P3 validation and agent-facing rules", () => {
   it("statistics totals contain exactly the last 30 UTC days", () => {
     const result = summarizePortalStats([{ portal: "example", date: "2026-10-08", views: 100, contacts: 100, favorites: 100 }, { portal: "example", date: "2026-10-09", views: 4, contacts: 2, favorites: 1 }, { portal: "example", date: "2026-11-07", views: 8, contacts: 3, favorites: 2 }], new Date("2026-11-07T13:28:00Z"));
     expect(result[0]).toMatchObject({ views: 12, contacts: 5, favorites: 3 }); expect(result[0]?.days).toHaveLength(30);
+  });
+  it("API feedback replaces rather than duplicates a portal readiness entry", () => {
+    const merged = mergePublicationFeedback([{ portalKey: "example", status: "error", enabled: true }], [{ portal: "example", status: "rejected", name: "Exemplu.ro", reasons: [{ message: "Primul motiv" }] }]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toMatchObject({ portalKey: "example", status: "error", reason: "Primul motiv", apiFeedback: true });
+    expect(mergePublicationFeedback(merged, [{ portal: "example", status: "published", name: "Exemplu.ro", reasons: [] }])[0]?.status).toBe("published");
   });
   it("P1 idempotency on the actual publication handler replays and conflicts on another body", async () => {
     const key = generatePartnerKey("live"), s = store(); let saved: { hash: string; response?: Response } | undefined;

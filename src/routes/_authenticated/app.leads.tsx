@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { getPortalDefinition } from "@/lib/portals/registry";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -1310,7 +1311,7 @@ function LeadsPage() {
                             </StatusBadge>
                           ) : (
                             <StatusBadge tone="neutral">
-                              Sursa: {m.portal === "storia" ? "Storia.ro" : m.portal === "housera" ? "Housera.ro" : m.portal}
+                              Sursa: {m.portal === "storia" ? "Storia.ro" : m.portal === "housera" ? "Housera.ro" : detailLead.source || getPortalDefinition(m.portal)?.display_name || m.portal}
                             </StatusBadge>
                           )}
                         </div>

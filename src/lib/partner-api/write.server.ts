@@ -53,7 +53,9 @@ export async function supabaseWriteStore(): Promise<PartnerWriteStore> {
     const lead = await db.from("leads").select("organization_id,assigned_to,name,property_id").eq("id", leadId).is("deleted_at", null).single();
     if (lead.error) throw lead.error;
     const l = lead.data;
-    const recipients = l.assigned_to ? [l.assigned_to] : (await db.from("user_roles").select("user_id").eq("organization_id", l.organization_id).eq("role", "agency_admin")).data?.map(r => r.user_id) ?? [];
+    const admins = l.assigned_to ? null : await db.from("user_roles").select("user_id").eq("organization_id", l.organization_id).eq("role", "agency_admin");
+    if (admins?.error) throw admins.error;
+    const recipients = l.assigned_to ? [l.assigned_to] : admins?.data?.map(r => r.user_id) ?? [];
     const claim = await db.rpc("partner_api_email_claim", { _portal: ctx.portal.slug, _environment: ctx.identity.environment, _lead: leadId });
     if (claim.error) throw claim.error;
     const { notifyAgentOfStoriaMessage } = await import("@/lib/portals/storia/messages.server");
@@ -85,8 +87,31 @@ export async function supabaseWriteStore(): Promise<PartnerWriteStore> {
       if (!leadId) {
         const msg = await db.from("portal_messages").upsert({ id: receipt.message_id, organization_id: org, portal: ctx.portal.slug, property_id: body.listing_id ?? null, external_message_id: `partner:${ctx.identity.environment}:lead:${digest(body.external_id)}`, conversation_id: `partner:${ctx.identity.environment}:${digest(body.external_id)}`, sender_name: body.name, sender_email: body.email ?? null, sender_phone: body.phone ?? null, body: body.message ?? null, sent_at: sentAt }, { onConflict: "id", ignoreDuplicates: true });
         if (msg.error) throw msg.error;
-        const result = await ingestPortalLead(db, { portal: ctx.portal.slug, source: ctx.portal.display_name, match: { organizationId: org, propertyId: body.listing_id ?? null, assignedTo: property?.assigned_to ?? null, propertyTitle: property?.title ?? null }, name: body.name, email: body.email ?? null, phone: body.phone ?? null, senderName: body.name, bodyText: body.message ?? null, noteLine: body.message ?? `Cerere nouă din ${ctx.portal.display_name}`, sentAt, now, messageRowId: receipt.message_id, expiresAt: new Date(Date.now() + 180 * 86400000).toISOString(), createdEventNote: `Cerere nouă din ${ctx.portal.display_name}`, notificationTitle: `Cerere nouă din ${ctx.portal.display_name}`, notificationBody: body.message ?? body.name, auditAction: "partner_api_lead", auditValues: { portal: ctx.portal.slug } });
-        leadId = result.leadId; created = result.created;
+        // The receipt reserves a stable CRM ID before ingestion. A crash between
+        // creating the lead and attaching its message must not create a second lead.
+        const recovered = await db.from("leads").select("id").eq("id", receipt.id).eq("organization_id", org).is("deleted_at", null).maybeSingle();
+        if (recovered.error) throw recovered.error;
+        if (recovered.data) {
+          leadId = recovered.data.id;
+          const attached = await db.from("portal_messages").update({ lead_id: leadId }).eq("id", receipt.message_id);
+          if (attached.error) throw attached.error;
+        } else {
+          const stableLeadId = receipt.id;
+          // Scope the reserved ID to this invocation only; keep shared push ingestion unchanged.
+          const ingestionDb = new Proxy(db, { get(target, key) {
+            if (key !== "from") return Reflect.get(target, key);
+            return (table: Parameters<typeof db.from>[0]) => {
+              const query = target.from(table);
+              if (table !== "leads") return query;
+              return new Proxy(query, { get(builder, method) {
+                if (method === "insert") return (value: Record<string, unknown>) => builder.insert({ ...value, id: stableLeadId } as never);
+                return Reflect.get(builder, method);
+              } });
+            };
+          } });
+          const result = await ingestPortalLead(ingestionDb, { portal: ctx.portal.slug, source: ctx.portal.display_name, match: { organizationId: org, propertyId: body.listing_id ?? null, assignedTo: property?.assigned_to ?? null, propertyTitle: property?.title ?? null }, name: body.name, email: body.email ?? null, phone: body.phone ?? null, senderName: body.name, bodyText: body.message ?? null, noteLine: body.message ?? `Cerere nouă din ${ctx.portal.display_name}`, sentAt, now, messageRowId: receipt.message_id, expiresAt: new Date(Date.now() + 180 * 86400000).toISOString(), createdEventNote: `Cerere nouă din ${ctx.portal.display_name}`, notificationTitle: `Cerere nouă din ${ctx.portal.display_name}`, notificationBody: body.message ?? body.name, auditAction: "partner_api_lead", auditValues: { portal: ctx.portal.slug } });
+          leadId = result.leadId; created = result.created;
+        }
       }
       const done = await db.rpc("partner_api_lead_finish", { _portal: ctx.portal.slug, _environment: ctx.identity.environment, _external: body.external_id, _owner: ctx.requestId, _lead: leadId });
       if (done.error) throw done.error;
