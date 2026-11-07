@@ -1,5 +1,6 @@
 import { assertFormBelongsToProperty } from "@/lib/property-form-guard";
 import { SendOfferDialog } from "@/components/app/SendOfferDialog";
+import { PropertyPortalStatistics } from "@/components/app/PropertyPortalStatistics";
 import { SendCollaboratorOfferDialog } from "@/components/app/SendCollaboratorOfferDialog";
 import { neutralOfferReason } from "@/lib/neutral-offer";
 import { offerSendReason } from "@/lib/offer-client";
@@ -1403,6 +1404,7 @@ function PropertyDetailContent() {
             }}
           />
           {tab === "publishing" ? <div className="pt-4" data-tour="property-promotion">
+          <PropertyPortalStatistics propertyId={id} />
           <PropertyPromotionTab
             propertyId={id}
             onOpenPublishing={() => document.querySelector('[data-tour="property-publishing"]')?.scrollIntoView({ behavior: "smooth" })}
