@@ -38,7 +38,12 @@ const feedRegistryMiddleware = createMiddleware().server(async ({ next, request 
   if (path.startsWith("/api/public/") || path.startsWith("/lovable/")) return next();
   const { dynamicRegistryDefinitions } = await import("./lib/dynamic-feed-portals.server");
   const { withFeedDefinitions } = await import("./lib/feed-registry-scope.server");
-  const definitions = await dynamicRegistryDefinitions();
+  // Public pages see only the opt-in projection; CRM server functions get the complete scoped catalog.
+  const { loadPublicDynamicFeedPortals } = await import("./lib/public-feed-portals.server");
+  const { publicRead } = await import("./lib/public-read");
+  const definitions = path.startsWith("/_serverFn/")
+    ? await dynamicRegistryDefinitions()
+    : await publicRead("public_feed_registry", loadPublicDynamicFeedPortals, []);
   return withFeedDefinitions(definitions, () => next());
 });
 

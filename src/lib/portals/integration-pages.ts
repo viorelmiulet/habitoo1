@@ -748,6 +748,7 @@ export function publicPortalIds(): string[] {
       ids.add(id === "olx_direct" ? "olx" : id);
     }
   }
+  for (const p of PORTALS) if (p.dynamic_feed && p.status === "available" && p.show_public) ids.add(p.id);
   return [...ids];
 }
 
