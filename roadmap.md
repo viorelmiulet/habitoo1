@@ -525,3 +525,6 @@
 - [x] Contracte scos din grupul „Clienți" și mutat ca rând propriu în meniul lateral (toate rolurile)
 - [x] Teste de meniu actualizate: 15 trec; build OK
 - [x] Verificat în cont: desktop, meniu restrâns 72px și telefon 390px, fără derulare orizontală
+
+## P2 Partner API — citirea datelor
+- [x] Schemă engleză, stare per portal, evenimente, job coadă/5 min, endpointuri, teste (10 noi)
