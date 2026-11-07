@@ -1,4 +1,4 @@
-import raw from '../../public/dezvoltatori/partner-api.json?raw';
+import raw from './documentation-assets/partner.openapi.json?raw';
 import type { Schema, Operation } from './developer-docs';
 
 export const partnerSpec = JSON.parse(raw) as {
