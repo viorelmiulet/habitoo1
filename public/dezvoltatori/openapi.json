@@ -3838,7 +3838,7 @@
     "JSON: idstr poate fi UUID când referința lipsește, dar POST contacts cu idstr caută numai referința. Folosiți id pentru UUID. Feedul nu emite un câmp UUID id separat; alias/url îl conțin.",
     "JSON: pole este doar tag; nu este definită semnificația comercială. energy și alte câmpuri de compatibilitate rămân null; mobilat_value/utilitati_values/dotari_values sunt aliasuri.",
     "Contacts: site token răspunde 201 inclusiv la reutilizare; message_id deduplică numai portalurile. Unele interogări/scrieri nu verifică erorile și deduplicarea nu este atomică în toate ramurile.",
-    "XML: desc.en repetă textul românesc, surface_area.built folosește suprafața utilă/generală, emissions este X. Avertismentele privind ofertele omise nu se întorc către consumator.",
+    "XML: desc.en repetă textul românesc, surface_area.built folosește suprafața utilă/generală, emissions este X. Orice imposibilitate de reprezentare a unei oferte produce 503 pentru întregul document.",
     "INDEX_PORTALS include iMove, cu feed dedicat neacoperit de acest model JSON. Properstar are alt index/model și este în afara INDEX_PORTALS.",
     "Media: w/h se aplică numai imaginilor din stocare și poate reveni la original; pentru URL HTTPS extern redimensionarea nu este garantată. Avatar/logo nu verifică eligibilitatea agenției în index.",
     "GET visits însumează numai cele mai recente 1000 rânduri și cere leads:write; event_id protejează POST, nu schimbă limita agregării GET. Fără event_id, retrimiterile se incrementează ca înainte.",
