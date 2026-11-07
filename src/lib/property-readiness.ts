@@ -49,7 +49,7 @@ export type ReadinessInput = {
   publishStatus: string | null;
   createdAt: string;
   /** Publicări portal active pe această proprietate. */
-  publications: { portalKey: string; status: string | null; enabled: boolean }[];
+  publications: { portalKey: string; status: string | null; enabled: boolean; portalName?: string; reason?: string | null; apiFeedback?: boolean }[];
 };
 
 /** Problemele care blochează sau slăbesc publicarea, în ordinea gravității. */
@@ -111,7 +111,7 @@ export function computePropertyIssues(input: ReadinessInput): PropertyIssue[] {
   for (const pub of input.publications) {
     if (!pub.enabled) continue;
     const portal = getPortalDefinition(pub.portalKey);
-    const portalName = portal?.display_name ?? pub.portalKey;
+    const portalName = pub.portalName ?? portal?.display_name ?? pub.portalKey;
     if (pub.status === "disabled" || pub.status === "withdrawn") {
       issues.push({
         code: "portal_withdrawn",
@@ -121,7 +121,7 @@ export function computePropertyIssues(input: ReadinessInput): PropertyIssue[] {
     } else if (pub.status === "error" && !groupPortalErrors) {
       issues.push({
         code: "portal_rejected",
-        label: portal?.capabilities.includes("feed_pull") ? `Nu apare pe ${portalName}` : `Respins de ${portalName}`,
+        label: pub.apiFeedback ? `Respins de ${portalName}${pub.reason ? `: ${pub.reason}` : ""}` : portal?.capabilities.includes("feed_pull") ? `Nu apare pe ${portalName}` : `Respins de ${portalName}`,
         severity: "danger",
       });
     }

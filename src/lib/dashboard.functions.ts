@@ -13,6 +13,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import type { Database } from "@/integrations/supabase/types";
 import { getPortalDefinition } from "@/lib/portals/registry";
+import { publicationReason } from "@/lib/partner-api/feedback";
 import {
   computePropertyIssues,
   isBlocking,
@@ -250,7 +251,7 @@ export const getAgentDashboard = createServerFn({ method: "GET" })
     }
     const pubsByProperty = new Map<
       string,
-      { portalKey: string; status: string | null; enabled: boolean }[]
+      { portalKey: string; status: string | null; enabled: boolean; portalName?: string; reason?: string | null; apiFeedback?: boolean }[]
     >();
     for (const row of publicationsRes.data ?? []) {
       const list = pubsByProperty.get(row.property_id) ?? [];
@@ -260,6 +261,17 @@ export const getAgentDashboard = createServerFn({ method: "GET" })
         enabled: row.enabled,
       });
       pubsByProperty.set(row.property_id, list);
+    }
+    if (propertyIds.length) {
+      const feedback = await supabase.from("partner_api_publications").select("property_id,portal,status,reasons").in("property_id", propertyIds).eq("status", "rejected");
+      if (feedback.error) throw new Error("Respingerile portalurilor nu au putut fi citite.");
+      for (const row of feedback.data ?? []) {
+        const list = pubsByProperty.get(row.property_id) ?? [];
+        const selected = (publicationsRes.data ?? []).some(p => p.property_id === row.property_id && p.portal_key === row.portal && p.enabled);
+        if (!selected) continue;
+        list.push({ portalKey: row.portal, portalName: portalName(row.portal), status: "error", enabled: true, apiFeedback: true, reason: publicationReason(row.reasons) });
+        pubsByProperty.set(row.property_id, list);
+      }
     }
 
     const listingIssues: ListingIssueRow[] = properties

@@ -1,4 +1,5 @@
 import { deselectedErrorHidden } from "@/lib/portals/deselect-cleanup";
+import { publicationLabels } from "@/lib/partner-api/feedback";
 import { HOUSERA_PENDING_SENTENCE, HOUSERA_VIEW_LABEL, houseraPendingView } from "@/lib/portals/housera/status-view";
 import { portalCanPublish } from "@/lib/portals/registry";
 import { UNCONFIRMED_UPDATE_NOTE } from "@/lib/portals/transient-failure";
@@ -932,7 +933,7 @@ export const PropertyPortalsCard = forwardRef<
                   (cell.availability === "available" && value && !cell.configured));
               const latestOperationFailedFor = (id: string) => !hideDeselectedError && latestOperationByPortal.get(id)?.success === false;
               const stateView =
-                cell.portalId === "vumsi" && cell.selected && vumsiView && !(latestOperationFailedFor(cell.portalId) && vumsiView.pill !== "error")
+                cell.apiPublication ? { label: publicationLabels[cell.apiPublication.status], pill: (cell.apiPublication.status === "published" ? "published" : cell.apiPublication.status === "rejected" ? "error" : cell.apiPublication.status === "pending_review" ? "pending" : "inactive") as StatusPillState } : cell.portalId === "vumsi" && cell.selected && vumsiView && !(latestOperationFailedFor(cell.portalId) && vumsiView.pill !== "error")
                   ? { label: vumsiView.label, pill: vumsiView.pill as StatusPillState }
                   : cell.portalId === "housera" && cell.houseraView
                   ? { label: HOUSERA_VIEW_LABEL[cell.houseraView], pill: "inactive" as StatusPillState }
@@ -951,7 +952,7 @@ export const PropertyPortalsCard = forwardRef<
                     : STATE_VIEW[cell.state];
               const latestOperation = latestOperationByPortal.get(cell.portalId);
               const latestOperationFailed = !hideDeselectedError && latestOperation?.success === false;
-              const detail = publishSoon
+              const detail = cell.apiPublication ? cell.apiPublication.status === "rejected" ? cell.apiPublication.reasons.map(r => r.message).join(" · ") || "Anunțul a fost respins." : publicationLabels[cell.apiPublication.status] : publishSoon
                 ? "În curând"
                 : busy
                 ? "Se sincronizează…"

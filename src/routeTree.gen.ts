@@ -168,8 +168,10 @@ import { Route as ApiPublicPartnerV1SplatRouteImport } from './routes/api/public
 import { Route as ApiPublicPartnerV1AgenciesRouteImport } from './routes/api/public/partner/v1/agencies'
 import { Route as ApiPublicPartnerV1AgentsRouteImport } from './routes/api/public/partner/v1/agents'
 import { Route as ApiPublicPartnerV1ChangesRouteImport } from './routes/api/public/partner/v1/changes'
+import { Route as ApiPublicPartnerV1LeadsRouteImport } from './routes/api/public/partner/v1/leads'
 import { Route as ApiPublicPartnerV1ListingsRouteImport } from './routes/api/public/partner/v1/listings'
 import { Route as ApiPublicPartnerV1MeRouteImport } from './routes/api/public/partner/v1/me'
+import { Route as ApiPublicPartnerV1StatsRouteImport } from './routes/api/public/partner/v1/stats'
 import { Route as ApiPublicPartnerV1TaxonomiesRouteImport } from './routes/api/public/partner/v1/taxonomies'
 import { Route as ApiPublicPortalV1AgencyRouteImport } from './routes/api/public/portal/v1/agency'
 import { Route as ApiPublicPortalV1AgentsRouteImport } from './routes/api/public/portal/v1/agents'
@@ -205,6 +207,8 @@ import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './rout
 import { Route as ApiPublicPortalV1VdiLeadsRouteImport } from './routes/api/public/portal/v1/vdi/leads'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
+import { Route as ApiPublicPartnerV1LeadsIdMessagesRouteImport } from './routes/api/public/partner/v1/leads.$id.messages'
+import { Route as ApiPublicPartnerV1ListingsIdPublicationRouteImport } from './routes/api/public/partner/v1/listings.$id.publication'
 import { Route as ApiPublicPortalV1HouseraOauthCallbackRouteImport } from './routes/api/public/portal/v1/housera.oauth.callback'
 import { Route as ApiPublicPortalV1OlxOauthCallbackRouteImport } from './routes/api/public/portal/v1/olx.oauth.callback'
 import { Route as ApiPublicPortalV1StoriaOauthCallbackRouteImport } from './routes/api/public/portal/v1/storia.oauth.callback'
@@ -1094,6 +1098,11 @@ const ApiPublicPartnerV1ChangesRoute =
     path: '/api/public/partner/v1/changes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPartnerV1LeadsRoute = ApiPublicPartnerV1LeadsRouteImport.update({
+  id: '/api/public/partner/v1/leads',
+  path: '/api/public/partner/v1/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPartnerV1ListingsRoute =
   ApiPublicPartnerV1ListingsRouteImport.update({
     id: '/api/public/partner/v1/listings',
@@ -1103,6 +1112,11 @@ const ApiPublicPartnerV1ListingsRoute =
 const ApiPublicPartnerV1MeRoute = ApiPublicPartnerV1MeRouteImport.update({
   id: '/api/public/partner/v1/me',
   path: '/api/public/partner/v1/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPartnerV1StatsRoute = ApiPublicPartnerV1StatsRouteImport.update({
+  id: '/api/public/partner/v1/stats',
+  path: '/api/public/partner/v1/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicPartnerV1TaxonomiesRoute =
@@ -1309,6 +1323,18 @@ const ApiPublicSitesV1PropertiesIdRoute =
     path: '/$id',
     getParentRoute: () => ApiPublicSitesV1PropertiesRoute,
   } as any)
+const ApiPublicPartnerV1LeadsIdMessagesRoute =
+  ApiPublicPartnerV1LeadsIdMessagesRouteImport.update({
+    id: '/$id/messages',
+    path: '/$id/messages',
+    getParentRoute: () => ApiPublicPartnerV1LeadsRoute,
+  } as any)
+const ApiPublicPartnerV1ListingsIdPublicationRoute =
+  ApiPublicPartnerV1ListingsIdPublicationRouteImport.update({
+    id: '/publication',
+    path: '/publication',
+    getParentRoute: () => ApiPublicPartnerV1ListingsIdRoute,
+  } as any)
 const ApiPublicPortalV1HouseraOauthCallbackRoute =
   ApiPublicPortalV1HouseraOauthCallbackRouteImport.update({
     id: '/api/public/portal/v1/housera/oauth/callback',
@@ -1504,8 +1530,10 @@ export interface FileRoutesByFullPath {
   '/api/public/partner/v1/agencies': typeof ApiPublicPartnerV1AgenciesRouteWithChildren
   '/api/public/partner/v1/agents': typeof ApiPublicPartnerV1AgentsRouteWithChildren
   '/api/public/partner/v1/changes': typeof ApiPublicPartnerV1ChangesRoute
+  '/api/public/partner/v1/leads': typeof ApiPublicPartnerV1LeadsRouteWithChildren
   '/api/public/partner/v1/listings': typeof ApiPublicPartnerV1ListingsRouteWithChildren
   '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
+  '/api/public/partner/v1/stats': typeof ApiPublicPartnerV1StatsRoute
   '/api/public/partner/v1/taxonomies': typeof ApiPublicPartnerV1TaxonomiesRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -1529,7 +1557,7 @@ export interface FileRoutesByFullPath {
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/partner/v1/agencies/$id': typeof ApiPublicPartnerV1AgenciesIdRoute
   '/api/public/partner/v1/agents/$id': typeof ApiPublicPartnerV1AgentsIdRoute
-  '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRoute
+  '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
@@ -1542,6 +1570,8 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/partner/v1/leads/$id/messages': typeof ApiPublicPartnerV1LeadsIdMessagesRoute
+  '/api/public/partner/v1/listings/$id/publication': typeof ApiPublicPartnerV1ListingsIdPublicationRoute
   '/api/public/portal/v1/housera/oauth/callback': typeof ApiPublicPortalV1HouseraOauthCallbackRoute
   '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -1703,8 +1733,10 @@ export interface FileRoutesByTo {
   '/api/public/partner/v1/agencies': typeof ApiPublicPartnerV1AgenciesRouteWithChildren
   '/api/public/partner/v1/agents': typeof ApiPublicPartnerV1AgentsRouteWithChildren
   '/api/public/partner/v1/changes': typeof ApiPublicPartnerV1ChangesRoute
+  '/api/public/partner/v1/leads': typeof ApiPublicPartnerV1LeadsRouteWithChildren
   '/api/public/partner/v1/listings': typeof ApiPublicPartnerV1ListingsRouteWithChildren
   '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
+  '/api/public/partner/v1/stats': typeof ApiPublicPartnerV1StatsRoute
   '/api/public/partner/v1/taxonomies': typeof ApiPublicPartnerV1TaxonomiesRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -1728,7 +1760,7 @@ export interface FileRoutesByTo {
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/partner/v1/agencies/$id': typeof ApiPublicPartnerV1AgenciesIdRoute
   '/api/public/partner/v1/agents/$id': typeof ApiPublicPartnerV1AgentsIdRoute
-  '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRoute
+  '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
@@ -1741,6 +1773,8 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/partner/v1/leads/$id/messages': typeof ApiPublicPartnerV1LeadsIdMessagesRoute
+  '/api/public/partner/v1/listings/$id/publication': typeof ApiPublicPartnerV1ListingsIdPublicationRoute
   '/api/public/portal/v1/housera/oauth/callback': typeof ApiPublicPortalV1HouseraOauthCallbackRoute
   '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -1908,8 +1942,10 @@ export interface FileRoutesById {
   '/api/public/partner/v1/agencies': typeof ApiPublicPartnerV1AgenciesRouteWithChildren
   '/api/public/partner/v1/agents': typeof ApiPublicPartnerV1AgentsRouteWithChildren
   '/api/public/partner/v1/changes': typeof ApiPublicPartnerV1ChangesRoute
+  '/api/public/partner/v1/leads': typeof ApiPublicPartnerV1LeadsRouteWithChildren
   '/api/public/partner/v1/listings': typeof ApiPublicPartnerV1ListingsRouteWithChildren
   '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
+  '/api/public/partner/v1/stats': typeof ApiPublicPartnerV1StatsRoute
   '/api/public/partner/v1/taxonomies': typeof ApiPublicPartnerV1TaxonomiesRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -1933,7 +1969,7 @@ export interface FileRoutesById {
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/partner/v1/agencies/$id': typeof ApiPublicPartnerV1AgenciesIdRoute
   '/api/public/partner/v1/agents/$id': typeof ApiPublicPartnerV1AgentsIdRoute
-  '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRoute
+  '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
@@ -1946,6 +1982,8 @@ export interface FileRoutesById {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/partner/v1/leads/$id/messages': typeof ApiPublicPartnerV1LeadsIdMessagesRoute
+  '/api/public/partner/v1/listings/$id/publication': typeof ApiPublicPartnerV1ListingsIdPublicationRoute
   '/api/public/portal/v1/housera/oauth/callback': typeof ApiPublicPortalV1HouseraOauthCallbackRoute
   '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -2113,8 +2151,10 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/agencies'
     | '/api/public/partner/v1/agents'
     | '/api/public/partner/v1/changes'
+    | '/api/public/partner/v1/leads'
     | '/api/public/partner/v1/listings'
     | '/api/public/partner/v1/me'
+    | '/api/public/partner/v1/stats'
     | '/api/public/partner/v1/taxonomies'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
@@ -2151,6 +2191,8 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/partner/v1/leads/$id/messages'
+    | '/api/public/partner/v1/listings/$id/publication'
     | '/api/public/portal/v1/housera/oauth/callback'
     | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
@@ -2312,8 +2354,10 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/agencies'
     | '/api/public/partner/v1/agents'
     | '/api/public/partner/v1/changes'
+    | '/api/public/partner/v1/leads'
     | '/api/public/partner/v1/listings'
     | '/api/public/partner/v1/me'
+    | '/api/public/partner/v1/stats'
     | '/api/public/partner/v1/taxonomies'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
@@ -2350,6 +2394,8 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/partner/v1/leads/$id/messages'
+    | '/api/public/partner/v1/listings/$id/publication'
     | '/api/public/portal/v1/housera/oauth/callback'
     | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
@@ -2516,8 +2562,10 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/agencies'
     | '/api/public/partner/v1/agents'
     | '/api/public/partner/v1/changes'
+    | '/api/public/partner/v1/leads'
     | '/api/public/partner/v1/listings'
     | '/api/public/partner/v1/me'
+    | '/api/public/partner/v1/stats'
     | '/api/public/partner/v1/taxonomies'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
@@ -2554,6 +2602,8 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/partner/v1/leads/$id/messages'
+    | '/api/public/partner/v1/listings/$id/publication'
     | '/api/public/portal/v1/housera/oauth/callback'
     | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
@@ -2655,8 +2705,10 @@ export interface RootRouteChildren {
   ApiPublicPartnerV1AgenciesRoute: typeof ApiPublicPartnerV1AgenciesRouteWithChildren
   ApiPublicPartnerV1AgentsRoute: typeof ApiPublicPartnerV1AgentsRouteWithChildren
   ApiPublicPartnerV1ChangesRoute: typeof ApiPublicPartnerV1ChangesRoute
+  ApiPublicPartnerV1LeadsRoute: typeof ApiPublicPartnerV1LeadsRouteWithChildren
   ApiPublicPartnerV1ListingsRoute: typeof ApiPublicPartnerV1ListingsRouteWithChildren
   ApiPublicPartnerV1MeRoute: typeof ApiPublicPartnerV1MeRoute
+  ApiPublicPartnerV1StatsRoute: typeof ApiPublicPartnerV1StatsRoute
   ApiPublicPartnerV1TaxonomiesRoute: typeof ApiPublicPartnerV1TaxonomiesRoute
   ApiPublicPortalV1AgencyRoute: typeof ApiPublicPortalV1AgencyRoute
   ApiPublicPortalV1AgentsRoute: typeof ApiPublicPortalV1AgentsRoute
@@ -3809,6 +3861,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPartnerV1ChangesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/partner/v1/leads': {
+      id: '/api/public/partner/v1/leads'
+      path: '/api/public/partner/v1/leads'
+      fullPath: '/api/public/partner/v1/leads'
+      preLoaderRoute: typeof ApiPublicPartnerV1LeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/partner/v1/listings': {
       id: '/api/public/partner/v1/listings'
       path: '/api/public/partner/v1/listings'
@@ -3821,6 +3880,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/partner/v1/me'
       fullPath: '/api/public/partner/v1/me'
       preLoaderRoute: typeof ApiPublicPartnerV1MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/partner/v1/stats': {
+      id: '/api/public/partner/v1/stats'
+      path: '/api/public/partner/v1/stats'
+      fullPath: '/api/public/partner/v1/stats'
+      preLoaderRoute: typeof ApiPublicPartnerV1StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/partner/v1/taxonomies': {
@@ -4067,6 +4133,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/sites/v1/properties/$id'
       preLoaderRoute: typeof ApiPublicSitesV1PropertiesIdRouteImport
       parentRoute: typeof ApiPublicSitesV1PropertiesRoute
+    }
+    '/api/public/partner/v1/leads/$id/messages': {
+      id: '/api/public/partner/v1/leads/$id/messages'
+      path: '/$id/messages'
+      fullPath: '/api/public/partner/v1/leads/$id/messages'
+      preLoaderRoute: typeof ApiPublicPartnerV1LeadsIdMessagesRouteImport
+      parentRoute: typeof ApiPublicPartnerV1LeadsRoute
+    }
+    '/api/public/partner/v1/listings/$id/publication': {
+      id: '/api/public/partner/v1/listings/$id/publication'
+      path: '/publication'
+      fullPath: '/api/public/partner/v1/listings/$id/publication'
+      preLoaderRoute: typeof ApiPublicPartnerV1ListingsIdPublicationRouteImport
+      parentRoute: typeof ApiPublicPartnerV1ListingsIdRoute
     }
     '/api/public/portal/v1/housera/oauth/callback': {
       id: '/api/public/portal/v1/housera/oauth/callback'
@@ -4367,13 +4447,44 @@ const ApiPublicPartnerV1AgentsRouteWithChildren =
     ApiPublicPartnerV1AgentsRouteChildren,
   )
 
+interface ApiPublicPartnerV1LeadsRouteChildren {
+  ApiPublicPartnerV1LeadsIdMessagesRoute: typeof ApiPublicPartnerV1LeadsIdMessagesRoute
+}
+
+const ApiPublicPartnerV1LeadsRouteChildren: ApiPublicPartnerV1LeadsRouteChildren =
+  {
+    ApiPublicPartnerV1LeadsIdMessagesRoute:
+      ApiPublicPartnerV1LeadsIdMessagesRoute,
+  }
+
+const ApiPublicPartnerV1LeadsRouteWithChildren =
+  ApiPublicPartnerV1LeadsRoute._addFileChildren(
+    ApiPublicPartnerV1LeadsRouteChildren,
+  )
+
+interface ApiPublicPartnerV1ListingsIdRouteChildren {
+  ApiPublicPartnerV1ListingsIdPublicationRoute: typeof ApiPublicPartnerV1ListingsIdPublicationRoute
+}
+
+const ApiPublicPartnerV1ListingsIdRouteChildren: ApiPublicPartnerV1ListingsIdRouteChildren =
+  {
+    ApiPublicPartnerV1ListingsIdPublicationRoute:
+      ApiPublicPartnerV1ListingsIdPublicationRoute,
+  }
+
+const ApiPublicPartnerV1ListingsIdRouteWithChildren =
+  ApiPublicPartnerV1ListingsIdRoute._addFileChildren(
+    ApiPublicPartnerV1ListingsIdRouteChildren,
+  )
+
 interface ApiPublicPartnerV1ListingsRouteChildren {
-  ApiPublicPartnerV1ListingsIdRoute: typeof ApiPublicPartnerV1ListingsIdRoute
+  ApiPublicPartnerV1ListingsIdRoute: typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
 }
 
 const ApiPublicPartnerV1ListingsRouteChildren: ApiPublicPartnerV1ListingsRouteChildren =
   {
-    ApiPublicPartnerV1ListingsIdRoute: ApiPublicPartnerV1ListingsIdRoute,
+    ApiPublicPartnerV1ListingsIdRoute:
+      ApiPublicPartnerV1ListingsIdRouteWithChildren,
   }
 
 const ApiPublicPartnerV1ListingsRouteWithChildren =
@@ -4506,8 +4617,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPartnerV1AgenciesRoute: ApiPublicPartnerV1AgenciesRouteWithChildren,
   ApiPublicPartnerV1AgentsRoute: ApiPublicPartnerV1AgentsRouteWithChildren,
   ApiPublicPartnerV1ChangesRoute: ApiPublicPartnerV1ChangesRoute,
+  ApiPublicPartnerV1LeadsRoute: ApiPublicPartnerV1LeadsRouteWithChildren,
   ApiPublicPartnerV1ListingsRoute: ApiPublicPartnerV1ListingsRouteWithChildren,
   ApiPublicPartnerV1MeRoute: ApiPublicPartnerV1MeRoute,
+  ApiPublicPartnerV1StatsRoute: ApiPublicPartnerV1StatsRoute,
   ApiPublicPartnerV1TaxonomiesRoute: ApiPublicPartnerV1TaxonomiesRoute,
   ApiPublicPortalV1AgencyRoute: ApiPublicPortalV1AgencyRoute,
   ApiPublicPortalV1AgentsRoute: ApiPublicPortalV1AgentsRoute,
