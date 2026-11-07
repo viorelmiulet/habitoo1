@@ -6850,6 +6850,62 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_api_sandbox_data: {
+        Row: {
+          created_at: string
+          expires_at: string
+          external_id: string
+          id: string
+          kind: string
+          payload: Json
+          portal: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          external_id: string
+          id?: string
+          kind: string
+          payload: Json
+          portal: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          external_id?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          portal?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_sandbox_data_portal_fkey"
+            columns: ["portal"]
+            isOneToOne: false
+            referencedRelation: "dynamic_feed_portals"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      partner_api_sandbox_templates: {
+        Row: {
+          id: string
+          kind: string
+          payload: Json
+        }
+        Insert: {
+          id: string
+          kind: string
+          payload: Json
+        }
+        Update: {
+          id?: string
+          kind?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       partner_api_statistics: {
         Row: {
           contacts: number
@@ -12678,6 +12734,20 @@ export type Database = {
       }
       partner_api_purge: { Args: never; Returns: undefined }
       partner_api_rate_take: { Args: { _key_id: string }; Returns: Json }
+      partner_api_sandbox_reset: { Args: { _portal: string }; Returns: Json }
+      partner_api_sandbox_simulate: {
+        Args: { _action: string; _portal: string }
+        Returns: Json
+      }
+      partner_api_sandbox_write: {
+        Args: {
+          _external: string
+          _kind: string
+          _payload: Json
+          _portal: string
+        }
+        Returns: Json
+      }
       partner_api_stats_apply: {
         Args: { _environment: string; _items: Json; _portal: string }
         Returns: Json
