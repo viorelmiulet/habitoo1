@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
+import { propertyTypeLabels } from "../src/lib/labels";
+import { layoutOptions, heatingOptions, furnishingOptions, parkingOptions, constructionStageOptions, buildingTypeOptions, finishStateOptions } from "../src/lib/property-taxonomy";
 import {
   mapPropertyToFeed,
   mapImage,
@@ -96,6 +98,40 @@ function assertObjectFields(value: unknown, schema: any, path: string) {
 }
 
 describe("D1 — public portal OpenAPI contract", () => {
+  const currencies: string[] = [];
+  function collectCurrencies(node: ts.Node) {
+    if (ts.isVariableDeclaration(node) && nameOf(node.name) === "CURRENCY_OPTIONS" && node.initializer) {
+      const initializer = ts.isAsExpression(node.initializer) ? node.initializer.expression : node.initializer;
+      if (ts.isArrayLiteralExpression(initializer)) for (const item of initializer.elements) {
+        if (ts.isStringLiteral(item)) currencies.push(item.text);
+      }
+    }
+    ts.forEachChild(node, collectCurrencies);
+  }
+  collectCurrencies(source("src/components/app/PropertyTransactionFields.tsx"));
+  const optionContracts: Record<string, readonly string[]> = {
+    tip: Object.keys(propertyTypeLabels), tipimobil: Object.keys(propertyTypeLabels),
+    tipcompartimentare: layoutOptions, incalzire_value: heatingOptions,
+    mobilare_value: furnishingOptions, mobilat_value: furnishingOptions, parcare_value: parkingOptions,
+    stadiuconstructie: constructionStageOptions, stadiuconstructie_value: constructionStageOptions,
+    tipconstructie_value: buildingTypeOptions, starefinisaje_value: finishStateOptions,
+    monedavanzare: currencies, monedainchiriere: currencies,
+  };
+  for (const [field, options] of Object.entries(optionContracts)) {
+    it(`${field}: every documented enum value matches the application's current options`, () => {
+      expect(options.length).toBeGreaterThan(0);
+      const schema = spec.components.schemas.FeedProperty.properties[field];
+      expect(schema.enum).toBeDefined();
+      expect(schema.enum.filter((value: unknown) => value !== null).sort()).toEqual([...options].sort());
+      expect(schema.enum).toContain(null);
+    });
+  }
+  it("keeps the land category open instead of substituting the unrelated land classification", () => {
+    const schema = spec.components.schemas.FeedProperty.properties.tipteren;
+    expect(schema.type).toEqual(["string", "null"]);
+    expect(schema.enum).toBeUndefined();
+  });
+
   it("retains every requested route and HTTP method in code and documentation", () => {
     for (const route of routes) {
       const actual = routeContract(route.file);

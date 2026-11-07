@@ -1,3 +1,8 @@
+## D3 — documentație pentru integratori externi
+- [x] Listele formularului și SELECT DISTINCT confirmate fără valori istorice în afara lor; categoria terenului rămâne text liber, fără listă fixă corespunzătoare
+- [x] OpenAPI 1.2.0, descrieri externe și câmpuri rezervate grupate; limita GET visits documentată, fără schimbări de feed; pole provine din compatibilitatea ImmoFlux în primul mapper (6 septembrie), fără funcție în aplicație și zero valori true în date
+- [x] 27/27 teste numai documentație/pagină; pagina și OpenAPI 200 verificate 1440/390, fără depășire sau erori; build OK, fără publicare
+
 ## F1 — feeduri complete și vizualizări fără dublare
 - [x] XML/index: citiri complete paginate, erori 503 cu Retry-After 300, filtre comune JSON/XML și token exclusiv al portalului; imposibilitatea reprezentării Kyero nu produce inventar parțial
 - [x] event_id pentru vizualizări cu deduplicare atomică per agenție/portal; migrare aplicată, RPC doar server, test tranzacțional cu revenire la eroare și token rotit
