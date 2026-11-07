@@ -120,38 +120,48 @@ describe("mapper Vumsi", () => {
 });
 
 describe("limitele numerice din nomenclator (min/max)", () => {
+  const CURRENT_YEAR = new Date().getFullYear();
   const HOUSE_FIELDS = [
     f("rooms", "number", { required: true, label: "Camere" }),
-    f("construction_year", "number", { label: "Anul construcției", min: 1900, max: 2026 }),
+    f("construction_year", "number", { label: "Anul construcției", min: 1900 }),
     f("bedrooms", "number", { label: "Dormitoare", min: 1, max: 20 }),
     f("land_area", "decimal", { label: "Suprafața teren" }),
   ];
   const houseCtx = { ...ctx, attributes: { "73": { attr_model: "attr_real_estate_house", fields: HOUSE_FIELDS } } };
   const house = { ...base, property_type: "house", for_sale: true, rooms: 4, land_surface: 300 };
 
-  it("anul 2027 e omis, cu avertisment; anunțul se publică fără el", () => {
-    const r = mapPropertyToVumsi({ ...house, build_year: 2027 }, houseCtx);
+  it("anul din viitor e omis, cu notă; anunțul se publică fără el", () => {
+    const future = CURRENT_YEAR + 1;
+    const r = mapPropertyToVumsi({ ...house, build_year: future }, houseCtx);
     expect(r.plans[0]!.body).not.toBeNull();
     expect(r.plans[0]!.attrs.construction_year).toBeUndefined();
-    expect(r.warnings).toContain("Anul construcției 2027 nu a fost trimis la Vumsi (acceptă cel mult 2026).");
+    expect(r.warnings).toContain(`Anul construcției (${future}) nu a fost trimis la Vumsi, acceptă doar ani trecuți.`);
+    expect(r.plans[0]!.reasons).toEqual([]);
   });
 
-  it("snapshot vechi: limitele se recalculează din raw când fields nu le are", () => {
+  it("anul din viitor e omis și când nomenclatorul nu are limită max", () => {
     const raw = { attr_model: "attr_real_estate_house", fields: [
       { name: "rooms", type: "number", required: true, label: "Camere" },
-      { name: "construction_year", type: "number", label: "Anul construcției", min: 1900, max: 2026 },
+      { name: "construction_year", type: "number", label: "Anul construcției", min: 1900 },
     ] };
     const oldFields = [f("rooms", "number", { required: true, label: "Camere" }), f("construction_year", "number", { label: "Anul construcției" })];
     const oldCtx = { ...ctx, attributes: { "73": { attr_model: "attr_real_estate_house", fields: oldFields, raw } } };
-    const r = mapPropertyToVumsi({ ...house, build_year: 2027 }, oldCtx);
+    const future = CURRENT_YEAR + 1;
+    const r = mapPropertyToVumsi({ ...house, build_year: future }, oldCtx);
     expect(r.plans[0]!.attrs.construction_year).toBeUndefined();
-    expect(r.warnings).toContain("Anul construcției 2027 nu a fost trimis la Vumsi (acceptă cel mult 2026).");
+    expect(r.warnings).toContain(`Anul construcției (${future}) nu a fost trimis la Vumsi, acceptă doar ani trecuți.`);
   });
 
 
-  it("anul 2026 (limita) se trimite", () => {
-    const r = mapPropertyToVumsi({ ...house, build_year: 2026 }, houseCtx);
-    expect(r.plans[0]!.attrs.construction_year).toBe(2026);
+  it("anul 2020 se trimite", () => {
+    const r = mapPropertyToVumsi({ ...house, build_year: 2020 }, houseCtx);
+    expect(r.plans[0]!.attrs.construction_year).toBe(2020);
+    expect(r.warnings).toEqual([]);
+  });
+
+  it("anul curent se trimite", () => {
+    const r = mapPropertyToVumsi({ ...house, build_year: CURRENT_YEAR }, houseCtx);
+    expect(r.plans[0]!.attrs.construction_year).toBe(CURRENT_YEAR);
     expect(r.warnings).toEqual([]);
   });
 
