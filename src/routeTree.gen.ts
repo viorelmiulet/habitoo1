@@ -20,6 +20,7 @@ import { Route as ComisioaneAgentiImobiliariRouteImport } from './routes/comisio
 import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
+import { Route as DezvoltatoriRouteImport } from './routes/dezvoltatori'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FunctionalitatiRouteImport } from './routes/functionalitati'
 import { Route as ImportProprietatiRouteImport } from './routes/import-proprietati'
@@ -249,6 +250,11 @@ const ContactRoute = ContactRouteImport.update({
 const DespreRoute = DespreRouteImport.update({
   id: '/despre',
   path: '/despre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DezvoltatoriRoute = DezvoltatoriRouteImport.update({
+  id: '/dezvoltatori',
+  path: '/dezvoltatori',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -1242,6 +1248,7 @@ export interface FileRoutesByFullPath {
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
+  '/dezvoltatori': typeof DezvoltatoriRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/import-proprietati': typeof ImportProprietatiRoute
@@ -1427,6 +1434,7 @@ export interface FileRoutesByTo {
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
+  '/dezvoltatori': typeof DezvoltatoriRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/import-proprietati': typeof ImportProprietatiRoute
@@ -1612,6 +1620,7 @@ export interface FileRoutesById {
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
+  '/dezvoltatori': typeof DezvoltatoriRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/import-proprietati': typeof ImportProprietatiRoute
@@ -1800,6 +1809,7 @@ export interface FileRouteTypes {
     | '/confidentialitate'
     | '/contact'
     | '/despre'
+    | '/dezvoltatori'
     | '/forgot-password'
     | '/functionalitati'
     | '/import-proprietati'
@@ -1985,6 +1995,7 @@ export interface FileRouteTypes {
     | '/confidentialitate'
     | '/contact'
     | '/despre'
+    | '/dezvoltatori'
     | '/forgot-password'
     | '/functionalitati'
     | '/import-proprietati'
@@ -2169,6 +2180,7 @@ export interface FileRouteTypes {
     | '/confidentialitate'
     | '/contact'
     | '/despre'
+    | '/dezvoltatori'
     | '/forgot-password'
     | '/functionalitati'
     | '/import-proprietati'
@@ -2357,6 +2369,7 @@ export interface RootRouteChildren {
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
+  DezvoltatoriRoute: typeof DezvoltatoriRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FunctionalitatiRoute: typeof FunctionalitatiRoute
   ImportProprietatiRoute: typeof ImportProprietatiRoute
@@ -2542,6 +2555,13 @@ declare module '@tanstack/react-router' {
       path: '/despre'
       fullPath: '/despre'
       preLoaderRoute: typeof DespreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dezvoltatori': {
+      id: '/dezvoltatori'
+      path: '/dezvoltatori'
+      fullPath: '/dezvoltatori'
+      preLoaderRoute: typeof DezvoltatoriRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -4025,6 +4045,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,
+  DezvoltatoriRoute: DezvoltatoriRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   FunctionalitatiRoute: FunctionalitatiRoute,
   ImportProprietatiRoute: ImportProprietatiRoute,

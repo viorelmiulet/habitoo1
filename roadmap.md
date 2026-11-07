@@ -1,3 +1,8 @@
+## D2 — pagină publică pentru dezvoltatori
+- [x] Documentație și exemple generate din OpenAPI, navigare desktop/telefon și copiere
+- [x] Metadate, sitemap, linkuri din subsol și Integrări
+- [x] Verificare vizuală 1440/390, fără depășire orizontală; 7/7 teste ale paginii noi, fără publicare
+
 ## D1 — specificație publică pentru integrarea portalurilor
 - [x] Inventar din cod: șase indexuri INDEX_PORTALS, feed JSON, media, lead-uri, vizualizări și XML Kyero; diferențele reale documentate
 - [x] OpenAPI 3.1 în română în public/dezvoltatori/openapi.json: 11 căi, 12 operații, 87 câmpuri de proprietate; validare față de schema oficială, HTTP 200 fără autentificare inclusiv Host www; disponibil în producție doar după o publicare explicită
