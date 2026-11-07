@@ -63,5 +63,5 @@ describe('P6 — Partner API documentation',()=>{
     for(const operation of partnerOperations){const curl=partnerCurl(operation.path,operation.method,operation.operation);expect(curl).toContain('$HABITOO_API_KEY');expect(curl).not.toMatch(/hbpk_(test|live)_[a-f0-9]{64}/);}
   });
   it('keeps the feed asset byte-identical',()=>{expect(createHash('sha256').update(read('public/dezvoltatori/openapi.json')).digest('hex')).toBe('e1dc271225e2fa9e5bc4ce921e3689ec407d24fb9bfa73b4730f90899648f7cd');});
-  it('lists every nested listing field without silently resolving feed schemas',()=>{const rows=partnerRows(partnerSpec.components.schemas.Listing);expect(rows.some(r=>r.name==='location.street')).toBe(true);expect(rows.some(r=>r.name==='offers[].currency')).toBe(true);expect(rows.filter(r=>!r.name.includes('.')).length).toBe(39);});
+  it('lists every nested listing field without silently resolving feed schemas',()=>{const rows=partnerRows(partnerSpec.components.schemas.Listing);expect(rows.some(r=>r.name==='location.street')).toBe(true);expect(rows.some(r=>r.name==='offers[].currency')).toBe(true);expect(rows.filter(r=>!r.name.includes('.')).map(r=>r.name).sort()).toEqual(Object.keys(listing).sort());});
 });
