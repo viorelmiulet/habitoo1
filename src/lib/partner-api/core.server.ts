@@ -32,7 +32,7 @@ export async function servePartner(request: Request, store: PartnerStore, handle
   let response: Response;
   try {
     const bearer = request.headers.get("authorization")?.match(/^Bearer (hbpk_(test|live)_[A-Za-z0-9]{40,128})$/);
-    if (!bearer) response = apiError(401,"UNAUTHORIZED","Clé API lipsă sau invalidă.",requestId);
+    if (!bearer) response = apiError(401,"UNAUTHORIZED","Cheie API lipsă sau invalidă.",requestId);
     else {
       const hash = digest(bearer[1]); identity = await store.key(hash);
       if (!identity || !equalDigest(hash,identity.key_hash) || identity.environment !== bearer[2]) response = apiError(401,"UNAUTHORIZED","Cheie API invalidă.",requestId);
@@ -40,7 +40,8 @@ export async function servePartner(request: Request, store: PartnerStore, handle
         portal = await store.portal(identity.portal);
         if (identity.status !== "active" || !portal?.active || !["api","both"].includes(portal.integration_mode)) response = apiError(403,"FORBIDDEN","Cheia a fost revocată sau portalul este dezactivat pentru API.",requestId);
         else {
-          try { rate = await store.rate(identity.id); } catch { rateFailed = true; }
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try { rate = await Promise.race([store.rate(identity.id),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error("rate_timeout")),2000);})]); } catch { rateFailed = true; } finally { if(timer)clearTimeout(timer); }
           if (rate && !rate.allowed) {
             response = apiError(429,"RATE_LIMIT_EXCEEDED","Limita de cereri a fost depășită.",requestId);
             response.headers.set("Retry-After",String(Math.max(1,rate.reset-Math.floor(Date.now()/1000))));

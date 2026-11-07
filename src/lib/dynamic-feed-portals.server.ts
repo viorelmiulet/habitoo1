@@ -7,7 +7,7 @@ import { readCompleteRows } from "./site-feed/complete-read.server";
 export async function loadDynamicFeedPortals(): Promise<DynamicFeedPortal[]> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return readCompleteRows((from, to) => supabaseAdmin.from("dynamic_feed_portals")
-    .select("slug,display_name,key_prefix,website,logo_path,xml_enabled,active,show_public").order("slug").range(from, to));
+    .select("slug,display_name,key_prefix,website,logo_path,xml_enabled,active,show_public,integration_mode").order("slug").range(from, to));
 }
 export async function resolveIndexPortal(slug: string) {
   const fixed = INDEX_PORTALS[slug as keyof typeof INDEX_PORTALS];

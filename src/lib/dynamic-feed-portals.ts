@@ -4,6 +4,7 @@ import type { PortalDefinition } from "./portals/registry";
 export type DynamicFeedPortal = {
   slug: string; display_name: string; key_prefix: string; website: string;
   logo_path: string | null; xml_enabled: boolean; active: boolean; show_public: boolean;
+  integration_mode?: "feed" | "api" | "both" | string;
 };
 export const dynamicFeedPortalSchema = z.object({
   slug: z.string().regex(/^[a-z][a-z0-9-]{1,39}$/, "Identificatorul trebuie să aibă 2–40 de litere mici, cifre sau cratime."),
@@ -14,7 +15,7 @@ export const dynamicFeedPortalSchema = z.object({
 });
 export function dynamicPortalDefinition(row: DynamicFeedPortal): PortalDefinition {
   return { id: row.slug, display_name: row.display_name,
-    description: `${row.display_name} preia automat anunțurile selectate, agenții și fotografiile din feedul Habitoo.`,
+    description: row.integration_mode === "api" ? `${row.display_name} are acces Partner API numai pentru agențiile care aprobă activarea.` : `${row.display_name} preia automat anunțurile selectate, agenții și fotografiile din feedul Habitoo.`,
     logo: row.display_name.slice(0, 2).toUpperCase(), status: row.active ? "available" : "disabled",
     activation: "approval", directions: ["habitoo_to_portal"], authentication: ["none"],
     capabilities: ["feed_pull", "test_connection", "update_listing", "withdraw_listing", "sync"],

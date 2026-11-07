@@ -5,7 +5,7 @@ import { dynamicFeedPortalSchema, dynamicPortalDefinition } from "./dynamic-feed
 
 export const getDynamicFeedRegistry = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { data, error } = await context.supabase.from("dynamic_feed_portals")
-    .select("slug,display_name,key_prefix,website,logo_path,xml_enabled,active,show_public").eq("active", true).order("slug");
+    .select("slug,display_name,key_prefix,website,logo_path,xml_enabled,active,show_public,integration_mode").eq("active", true).order("slug");
   if (error) throw new Error("Catalogul portalurilor nu poate fi încărcat.");
   const rows = await Promise.all((data ?? []).map(async row => {
     const definition = dynamicPortalDefinition(row);
