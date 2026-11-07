@@ -44,6 +44,7 @@ function query(table: string) {
     limit: () => api,
     range: () => api,
     update: () => api,
+    upsert: (row: Row) => { insertRow = { id: `${table}-legacy`, created_at: "2026-11-07T00:00:00Z", last_used_at: new Date().toISOString(), status: "active", ...row }; (db[table] ??= []).push(insertRow); return api; },
     insert: (row: Row) => {
       insertRow = { id: `${table}-new`, ...row };
       inserts.push({ table, row: insertRow });
@@ -62,7 +63,7 @@ function query(table: string) {
 }
 
 vi.mock("@/integrations/supabase/client.server", () => ({
-  supabaseAdmin: { from: (t: string) => query(t) },
+  supabaseAdmin: { from: (t: string) => query(t), rpc: async () => ({ error: null }) },
 }));
 
 vi.mock("@/lib/portals/clickimob/index-feed.server", async () => {

@@ -1723,6 +1723,13 @@
       "when": 1794032692640,
       "tag": "0245_site_feed_visit_event_receipts",
       "breakpoints": true
+    },
+    {
+      "idx": 246,
+      "version": "7",
+      "when": 1794051280838,
+      "tag": "0246_portal_index_keys",
+      "breakpoints": true
     }
   ]
 }

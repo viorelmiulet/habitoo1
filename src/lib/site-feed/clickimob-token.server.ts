@@ -4,7 +4,8 @@
  * Agenția se găsește EXCLUSIV prin OfficeId-ul exact (`properstarEntityId("hb", org.id)`)
  * și trebuie să fie acum în indexul ClickImob (`active` sau `grace`).
  */
-import { verifyClickimobFeedToken, CLICKIMOB_TOKEN_PREFIX, INDEX_PORTALS, type IndexPortal } from "@/lib/portals/clickimob/index-feed";
+import { CLICKIMOB_TOKEN_PREFIX, type IndexPortal } from "@/lib/portals/clickimob/index-feed";
+import { verifyManagedAgencyToken } from "./index-keys.server";
 import { properstarEntityId } from "@/lib/portals/properstar/mapper";
 import { readCompleteRows } from "./complete-read.server";
 
@@ -36,7 +37,7 @@ export async function resolvePortalIndexToken(
   portal: IndexPortal,
   now: Date = new Date(),
 ): Promise<ClickimobTokenMatch | null> {
-  const officeId = verifyClickimobFeedToken(token, process.env[INDEX_PORTALS[portal].secret], portal);
+  const officeId = await verifyManagedAgencyToken(token, portal);
   if (!officeId) return null;
 
   const { listClickimobIndexedAgencies, listPortalIndexedAgencies } = await import(

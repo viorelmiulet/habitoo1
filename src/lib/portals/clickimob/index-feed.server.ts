@@ -40,6 +40,7 @@ export type ClickimobIndexedAgency = Omit<ClickimobIndexAgency, "feed">;
 
 export type ClickimobIndexDeps = {
   indexKey: () => string | undefined;
+  authorize?: (portal: IndexPortal, key: string) => Promise<string | null>;
   listAgencies: (now: Date) => Promise<ClickimobIndexedAgency[]>;
   log: typeof logFeedAccess;
   rateLimited: (request: Request) => boolean;
@@ -147,6 +148,7 @@ export async function listPortalIndexedAgencies(now: Date, portal: IndexPortal):
 
 export const defaultClickimobIndexDeps: ClickimobIndexDeps = {
   indexKey: () => process.env["CLICKIMOB_INDEX_KEY"],
+  authorize: async (portal, key) => (await import("@/lib/site-feed/index-keys.server")).authorizeIndexKey(portal, key),
   listAgencies: listClickimobIndexedAgencies,
   log: logFeedAccess,
   rateLimited: (request) => feedRequestRateLimited(CLICKIMOB_INDEX_LOG_PREFIX, request),
@@ -167,6 +169,7 @@ export async function handlePortalIndex(
   portal: IndexPortal,
   deps: ClickimobIndexDeps = {
     indexKey: () => process.env[INDEX_PORTALS[portal].secret],
+    authorize: async (portal, key) => (await import("@/lib/site-feed/index-keys.server")).authorizeIndexKey(portal, key),
     listAgencies: (now) => listPortalIndexedAgencies(now, portal),
     log: logFeedAccess,
     rateLimited: (request) => feedRequestRateLimited(`${portal}_index`, request),
@@ -179,12 +182,12 @@ export async function handlePortalIndex(
     return new Response(null, { status: 429 });
   }
   const key = rawKey.replace(/\.json$/i, "");
-  const secret = deps.indexKey();
-  if (!secret || !verifyClickimobIndexKey(key, secret)) {
+  try {
+  const secret = deps.authorize ? await deps.authorize(portal, key) : (verifyClickimobIndexKey(key, deps.indexKey()) ? deps.indexKey() : null);
+  if (!secret) {
     await deps.log({ ...base, organizationId: null, status: 401, detail: "unauthorized" });
     return new Response(null, { status: 401 });
   }
-  try {
     const { baseUrl } = feedUrlsForRequest(new URL(request.url));
     const agencies = await deps.listAgencies(now);
     const body: ClickimobIndex = {
@@ -199,7 +202,7 @@ export async function handlePortalIndex(
     await deps.log({ ...base, organizationId: null, status: 200, items: body.agencies.length });
     return new Response(JSON.stringify(body), { status: 200, headers: { ...CLICKIMOB_INDEX_HEADERS } });
   } catch (error) {
-    console.error(`[${portal}-index] failed`, error);
+    console.error(`[${portal}-index] incomplete_inventory`);
     await deps.log({ ...base, organizationId: null, status: 503, detail: "incomplete_inventory" });
     return incompleteFeedResponse();
   }

@@ -159,6 +159,7 @@ export const superadminNav: NavGroup[] = [
       { label: "Cereri abonament", to: "/superadmin/cereri-abonament", icon: CalendarDays },
       { label: "Utilizatori", to: "/superadmin/users", icon: Users },
       { label: "Portaluri", to: "/superadmin/portals", icon: PlugZap },
+      { label: "Portaluri cu feed", to: "/superadmin/portaluri-feed", icon: PlugZap },
       { label: "Setări portaluri", to: "/superadmin/setari-portaluri", icon: PlugZap },
       { label: "Jurnal portaluri", to: "/superadmin/portal-logs", icon: ScrollText },
       { label: "Funcții AI", to: "/superadmin/ai-features", icon: Bot },
