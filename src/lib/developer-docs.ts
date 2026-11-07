@@ -63,8 +63,8 @@ export function schemaExample(input: Schema, name = "", depth = 0): unknown {
   if (s.format === "uuid") return "11111111-1111-4111-8111-111111111111";
   if (s.format === "date-time") return "2026-11-07T06:00:00Z";
   if (s.format === "date") return "2026-11-07";
-  if (s.format === "uri" || name === "src") return `${apiSpec.servers[0]?.url}/api/public/sites/v1/media/11111111-1111-4111-8111-111111111111`;
   if (name === "base_url") return `${apiSpec.servers[0]?.url}/api/public/sites/v1`;
+  if (s.format === "uri" || name === "src") return `${apiSpec.servers[0]?.url}/api/public/sites/v1/media/11111111-1111-4111-8111-111111111111`;
   if (name === "idstr" || name === "ref") return "HB-900001";
   if (name === "alias") return "oferta-11111111-1111-4111-8111-111111111111";
   if (name === "id") return "hbEXEMPLE001";
@@ -95,5 +95,5 @@ export function responseExample(operation: Operation): {code: string; format: st
   const [code, response] = entry;
   const [format, media] = Object.entries(response.content ?? {})[0] ?? ["HTTP", undefined];
   const value = media?.example ?? (media?.schema ? schemaExample(media.schema) : undefined);
-  return {code, format, schema: media?.schema, body: value === undefined ? `HTTP/1.1 ${code}\nCorps vide — suivre l’en-tête Location (destination temporaire).`.replace("Corps vide — suivre l’en-tête", "Corp gol — urmează antetul").replace("destination temporaire", "destinație temporară") : typeof value === "string" ? value : JSON.stringify(value, null, 2)};
+  return {code, format, schema: media?.schema, body: value === undefined ? `HTTP/1.1 ${code}\nCorp gol — urmează antetul Location (destinație temporară).` : typeof value === "string" ? value : JSON.stringify(value, null, 2)};
 }

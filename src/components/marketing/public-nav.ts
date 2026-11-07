@@ -16,6 +16,7 @@ export const footerColumns = [
       { to: "/anunturi-proprietari", label: "Anunțuri de la proprietari" },
       { to: "/colaborare-intre-agentii", label: "Colaborare între agenții" },
       { to: "/integrari", label: "Integrări" },
+      { to: "/dezvoltatori", label: "Documentație API" },
       { to: "/preturi", label: "Prețuri" },
       { to: "/despre", label: "Despre" },
       { to: "/blog", label: "Blog" },
