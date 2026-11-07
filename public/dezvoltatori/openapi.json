@@ -1197,7 +1197,7 @@
     "/api/public/sites/v1/contacts": {
       "post": {
         "summary": "Trimite un lead",
-        "description": "leads:write Nu este operație de vizionare programată. Creează/reutilizează contact cumpărător și lead. idstr asociază proprietatea, nu deduplică mesajul. Proprietatea trebuie să aparțină agenției, fără verificarea publicării sau selecției. Cu token de portal, sursa este numele din registry și responsabilul agentul proprietății. message_id reutilizează linkul portal+agenție+ID extern; altfel ingestia poate reutiliza un lead deschis după sursa portalului, identitatea expeditorului (email prioritar, altfel telefon) și proprietate. Contactul se caută după email dacă este trimis, altfel telefon. Cu token de site, message_id este ignorat, iar lead-ul deschis al contactului/proprietății este reutilizat. Retrimiterile nu sunt garantate atomic în toate ramurile.",
+        "description": "Necesită leads:write. Trimite solicitarea clientului către agenție și creează sau reutilizează un contact și un lead. idstr identifică referința anunțului; nu deduplică mesajul. Anunțul trebuie să aparțină agenției; nu este necesar să fie în inventarul public curent. Cu token de portal, sursa este portalul autentificat, iar lead-ul ajunge la agentul responsabil al anunțului. Folosiți un message_id stabil, unic în agenție și portal, pentru a recunoaște retrimiterile. Fără acesta, un lead deschis poate fi reutilizat pentru același portal, client și anunț. Clientul este identificat după email dacă este transmis, altfel după telefon. Cu token de site, message_id este ignorat și se poate reutiliza lead-ul deschis pentru același client și anunț. Deduplicarea lead-urilor nu este garantată la retrimiteri simultane.",
         "tags": [
           "Lead-uri"
         ],
@@ -3225,21 +3225,21 @@
               "string",
               "null"
             ],
-            "description": "Email public; datele materialelor au prioritate."
+            "description": "Adresa de email publică a agenției; null dacă nu este disponibilă."
           },
           "phone": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Telefon public; datele materialelor au prioritate."
+            "description": "Telefonul public al agenției; null dacă nu este disponibil."
           },
           "website": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Website din datele materialelor."
+            "description": "Website-ul public al agenției; null dacă nu este disponibil."
           },
           "county": {
             "type": "null"
@@ -3256,7 +3256,7 @@
               "string",
               "null"
             ],
-            "description": "Adresa din datele materialelor."
+            "description": "Adresa publică a agenției; null dacă nu este disponibilă."
           },
           "logo_url": {
             "type": [
