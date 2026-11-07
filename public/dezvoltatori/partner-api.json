@@ -190,8 +190,8 @@
               }
             }
           },
-          "404": {
-            "description": "Entitatea nu este accesibilă acestui portal/mediu.",
+          "409": {
+            "description": "Conflict de idempotență, cerere în procesare sau external_id conflictual.",
             "headers": {
               "X-Request-Id": {
                 "description": "Identificatorul cererii.",
@@ -217,40 +217,9 @@
                 "schema": {
                   "type": "integer"
                 }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Metodă neacceptată (la /me se întoarce 400).",
-            "headers": {
-              "X-Request-Id": {
-                "description": "Identificatorul cererii.",
-                "schema": {
-                  "type": "string",
-                  "format": "uuid"
-                }
               },
-              "X-RateLimit-Limit": {
-                "description": "Limita per minut configurată pentru portal.",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-RateLimit-Remaining": {
-                "description": "Cereri rămase în fereastra curentă.",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-RateLimit-Reset": {
-                "description": "Sfârșitul ferestrei în secunde Unix.",
+              "Retry-After": {
+                "description": "Secunde până la reîncercare.",
                 "schema": {
                   "type": "integer"
                 }
@@ -350,7 +319,7 @@
     "/agencies": {
       "get": {
         "summary": "Agenții activate",
-        "description": "",
+        "description": "Date accesibile numai portalului autentificat, în mediul cheii folosite.",
         "security": [
           {
             "PartnerBearer": []
@@ -697,7 +666,7 @@
     "/agencies/{id}": {
       "get": {
         "summary": "Detaliile entității",
-        "description": "",
+        "description": "Date accesibile numai portalului autentificat, în mediul cheii folosite.",
         "security": [
           {
             "PartnerBearer": []
@@ -1039,7 +1008,7 @@
     "/agents": {
       "get": {
         "summary": "Agenți accesibili",
-        "description": "",
+        "description": "Date accesibile numai portalului autentificat, în mediul cheii folosite.",
         "security": [
           {
             "PartnerBearer": []
@@ -1392,7 +1361,7 @@
     "/agents/{id}": {
       "get": {
         "summary": "Detaliile entității",
-        "description": "",
+        "description": "Date accesibile numai portalului autentificat, în mediul cheii folosite.",
         "security": [
           {
             "PartnerBearer": []
@@ -2183,7 +2152,7 @@
     "/listings/{id}": {
       "get": {
         "summary": "Detaliile anunțului",
-        "description": "",
+        "description": "Date accesibile numai portalului autentificat, în mediul cheii folosite.",
         "security": [
           {
             "PartnerBearer": []
@@ -2570,7 +2539,7 @@
     "/taxonomies": {
       "get": {
         "summary": "Liste de valori",
-        "description": "",
+        "description": "Date accesibile numai portalului autentificat, în mediul cheii folosite.",
         "security": [
           {
             "PartnerBearer": []
@@ -3805,7 +3774,7 @@
             "name": "Idempotency-Key",
             "in": "header",
             "required": true,
-            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore.",
+            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore. Reîncercarea păstrează metoda, URL-ul, Content-Type și corpul brut identice.",
             "schema": {
               "type": "string",
               "minLength": 1,
@@ -3968,6 +3937,43 @@
           },
           "404": {
             "description": "Entitatea nu este accesibilă acestui portal/mediu.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Metodă neacceptată (la /me se întoarce 400).",
             "headers": {
               "X-Request-Id": {
                 "description": "Identificatorul cererii.",
@@ -4270,7 +4276,7 @@
             "name": "Idempotency-Key",
             "in": "header",
             "required": true,
-            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore.",
+            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore. Reîncercarea păstrează metoda, URL-ul, Content-Type și corpul brut identice.",
             "schema": {
               "type": "string",
               "minLength": 1,
@@ -4526,6 +4532,43 @@
           },
           "404": {
             "description": "Entitatea nu este accesibilă acestui portal/mediu.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Metodă neacceptată (la /me se întoarce 400).",
             "headers": {
               "X-Request-Id": {
                 "description": "Identificatorul cererii.",
@@ -4839,7 +4882,7 @@
             "name": "Idempotency-Key",
             "in": "header",
             "required": true,
-            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore.",
+            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore. Reîncercarea păstrează metoda, URL-ul, Content-Type și corpul brut identice.",
             "schema": {
               "type": "string",
               "minLength": 1,
@@ -5002,6 +5045,43 @@
           },
           "404": {
             "description": "Entitatea nu este accesibilă acestui portal/mediu.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Metodă neacceptată (la /me se întoarce 400).",
             "headers": {
               "X-Request-Id": {
                 "description": "Identificatorul cererii.",
@@ -5292,7 +5372,7 @@
     "/stats": {
       "post": {
         "summary": "Statistici zilnice",
-        "description": "Maximum 500 rânduri; valorile suprascriu ziua, fără adunare la retrimitere.",
+        "description": "Maximum 500 rânduri; valorile suprascriu ziua, fără adunare la retrimitere. Anunț accesibil acum sau retras în ultimele 30 zile. Corpul este limitat la 1 MiB.",
         "security": [
           {
             "PartnerBearer": []
@@ -5303,7 +5383,7 @@
             "name": "Idempotency-Key",
             "in": "header",
             "required": true,
-            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore.",
+            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore. Reîncercarea păstrează metoda, URL-ul, Content-Type și corpul brut identice.",
             "schema": {
               "type": "string",
               "minLength": 1,
@@ -5474,6 +5554,43 @@
           },
           "404": {
             "description": "Entitatea nu este accesibilă acestui portal/mediu.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Metodă neacceptată (la /me se întoarce 400).",
             "headers": {
               "X-Request-Id": {
                 "description": "Identificatorul cererii.",
@@ -5770,7 +5887,7 @@
     "/sandbox/simulate": {
       "post": {
         "summary": "Simulează o modificare demo",
-        "description": "Doar test; live primește 403. Generează eveniment în /changes.",
+        "description": "Doar test; live primește 403. Generează eveniment în /changes. Corpul este limitat la 1000 caractere.",
         "security": [
           {
             "PartnerBearer": []
@@ -5781,7 +5898,7 @@
             "name": "Idempotency-Key",
             "in": "header",
             "required": true,
-            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore.",
+            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore. Reîncercarea păstrează metoda, URL-ul, Content-Type și corpul brut identice.",
             "schema": {
               "type": "string",
               "minLength": 1,
@@ -5974,6 +6091,43 @@
           },
           "404": {
             "description": "Entitatea nu este accesibilă acestui portal/mediu.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Metodă neacceptată (la /me se întoarce 400).",
             "headers": {
               "X-Request-Id": {
                 "description": "Identificatorul cererii.",
@@ -6262,7 +6416,7 @@
     "/sandbox/reset": {
       "post": {
         "summary": "Resetează datele demo",
-        "description": "Restaurează 12 anunțuri și 2 agenți pentru portalul curent. Șterge feedbackul demo, nu datele reale.",
+        "description": "Restaurează 12 anunțuri și 2 agenți pentru portalul curent. Șterge feedbackul demo, nu datele reale. Corpul este limitat la 1000 caractere.",
         "security": [
           {
             "PartnerBearer": []
@@ -6273,7 +6427,7 @@
             "name": "Idempotency-Key",
             "in": "header",
             "required": true,
-            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore.",
+            "description": "1–200 caractere ASCII vizibile; unic per operație, păstrat 24 ore. Reîncercarea păstrează metoda, URL-ul, Content-Type și corpul brut identice.",
             "schema": {
               "type": "string",
               "minLength": 1,
@@ -6462,6 +6616,43 @@
           },
           "404": {
             "description": "Entitatea nu este accesibilă acestui portal/mediu.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Metodă neacceptată (la /me se întoarce 400).",
             "headers": {
               "X-Request-Id": {
                 "description": "Identificatorul cererii.",
@@ -7325,74 +7516,87 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Identificator UUID."
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Valoarea name a agenției."
           },
           "legal_name": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Valoarea legal_name a agenției."
           },
           "cui": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Valoarea cui a agenției."
           },
           "email": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Valoarea email a agenției."
           },
           "phone": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Valoarea phone a agenției."
           },
           "website": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Valoarea website a agenției."
           },
           "logo_url": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Valoarea logo_url a agenției."
           },
           "address": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Valoarea address a agenției."
           },
           "city": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Valoarea city a agenției."
           },
           "county": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Valoarea county a agenției."
           },
           "activated_at": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Valoarea activated_at a agenției."
           },
           "status": {
             "type": "string",
-            "const": "active"
+            "const": "active",
+            "description": "Starea entității."
           }
         },
         "required": [
@@ -7956,7 +8160,8 @@
             "type": "string",
             "format": "uri",
             "maxLength": 2000,
-            "description": "URL HTTPS opțional."
+            "description": "URL HTTPS opțional.",
+            "pattern": "^https://"
           },
           "reasons": {
             "type": "array",
@@ -8129,7 +8334,8 @@
                 "date": {
                   "type": "string",
                   "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-                  "description": "Valoare date."
+                  "description": "Valoare date.",
+                  "format": "date"
                 },
                 "views": {
                   "type": "integer",
@@ -8173,7 +8379,25 @@
             "type": "object",
             "properties": {
               "code": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "UNAUTHORIZED",
+                  "FORBIDDEN",
+                  "RATE_LIMIT_EXCEEDED",
+                  "INVALID_IDEMPOTENCY_KEY",
+                  "IDEMPOTENCY_KEY_REQUIRED",
+                  "IDEMPOTENCY_CONFLICT",
+                  "REQUEST_IN_PROGRESS",
+                  "SERVICE_UNAVAILABLE",
+                  "METHOD_NOT_ALLOWED",
+                  "INVALID_PARAMETER",
+                  "NOT_FOUND",
+                  "UNSUPPORTED_MEDIA_TYPE",
+                  "PAYLOAD_TOO_LARGE",
+                  "INVALID_JSON",
+                  "VALIDATION_ERROR",
+                  "EXTERNAL_ID_CONFLICT"
+                ]
               },
               "message": {
                 "type": "string"
@@ -8267,6 +8491,10 @@
       },
       "WriteResult": {
         "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ],
         "properties": {
           "id": {
             "type": "string",
