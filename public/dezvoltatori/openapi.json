@@ -3,8 +3,8 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "Habitoo — API pentru integrarea portalurilor",
-    "version": "1.1.0",
-    "description": "Contract derivat din cod la 7 noiembrie 2026. Exclusiv endpointurile pentru indexul INDEX_PORTALS, feed JSON pe agenție, imagini, lead-uri, vizualizări și model XML Kyero v3. Fără cron, webhook-uri primite, OAuth, cataloage, mail sau upsert-uri interne. Toate exemplele sunt fictive. Agenția și portalul sunt determinate din token, niciodată din organization_id trimis de client. Bearer este recomandat. /sites/v1 nu acceptă token în query. Rate limit pentru feedurile autentificate: 120 cereri/60 secunde per prefix token + IP, best-effort local (nu distribuit), inclusiv XML; token lipsă întoarce 401 înaintea contorului. Media nu are limită în handler. Scopuri: feed:read, agents:read, leads:write; nu sunt scopuri OAuth. RETRAGERE: portalul trebuie să retragă un anunț care nu mai apare în inventarul complet citit cu succes; nu există tombstones. Parcurgeți toate paginile înainte de reconciliere și nu interpretați 401/429/500/503 sau citirea incompletă drept retragere. Paginarea nu are snapshot/cursor și ordinea se poate schimba între pagini. În grace feedul returnează inventar gol; dacă agenția dispare din index, retrageți ofertele ei. Vezi x-code-ambiguities pentru limite reale ale implementării. XML și index: orice generare incompletă întoarce 503 cu Retry-After: 300, fără inventar parțial. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
+    "version": "1.2.0",
+    "description": "API pentru indexul agențiilor, anunțuri JSON, fotografii, lead-uri, vizualizări și XML Kyero v3. Toate exemplele sunt fictive. Cheia de index descoperă agențiile; tokenul fiecărei agenții autorizează accesul numai la aceasta. Folosiți Bearer; /sites/v1 nu acceptă token în query. Scopuri: feed:read, agents:read, leads:write. Limită orientativă: 120 cereri/60 secunde pentru aceeași cheie și adresă IP, inclusiv XML; media nu are o limită specifică. Limita poate varia între cereri: tratați 429 prin reîncercare cu întârziere progresivă. Parcurgeți toate paginile înainte de reconciliere; ordinea poate varia între pagini și nu există cursor sau instantaneu comun. Agențiile în perioada de retragere au inventar gol. XML și index: generarea incompletă întoarce 503 cu Retry-After: 300. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
   },
   "x-developer-guide": {
     "introduction": "Habitoo oferă portalurilor anunțurile agențiilor care activează integrarea și selectează ofertele pentru acel portal, împreună cu agenții responsabili, fotografiile și actualizările. Sunt disponibile două modele: feed JSON pe agenție și feed XML Kyero v3. Indexul este punctul de pornire pentru descoperirea agențiilor eligibile.",
@@ -26,6 +26,11 @@
       "Trimiteți un message_id stabil pentru fiecare lead și un event_id stabil pentru fiecare eveniment de vizualizare. event_id previne incrementul dublu la retrimitere, inclusiv după rotirea cheii portalului. Fără event_id, nu retrimiteți automat POST visits după un timeout. La 503 așteptați Retry-After: 300; la 429 folosiți întârziere progresivă."
     ],
     "history": [
+      {
+        "version": "1.2.0",
+        "date": "2026-11-07",
+        "description": "Liste de valori și descrieri clarificate; fără schimbări de comportament. GET /visits: limita existentă de agregare la ultimele 1.000 de înregistrări este explicată."
+      },
       {
         "version": "1.1.0",
         "date": "2026-11-07",
@@ -72,14 +77,14 @@
         "tags": [
           "Index portal"
         ],
-        "description": "Cheia de index este secretul portalului, nu tokenul individual al agenției. Lista completă, fără paginare. Sunt incluse agențiile activate active/trial cu cel puțin o selecție enabled, ori în grace (7 zile); lipsa selecțiilor elimină agenția imediat. Din index se obțin baza și tokenul pe agenție. iMove indică feed dedicat, nu feedul JSON sites/v1. Properstar nu folosește INDEX_PORTALS și nu intră în acest model. Limită locală best-effort: 120 cereri/60 secunde per portal și IP, inclusiv chei invalide; nu este distribuită. Citirile sunt paginate complet; orice eroare, inclusiv o agenție activă lipsă din citire sau eroare de salvare a stării, produce 503, nu un index parțial.",
+        "description": "Lista completă a agențiilor care au activat portalul și au cel puțin un anunț selectat. Fără paginare. Agențiile eligibile sunt active sau în perioada de probă; după dezactivare pot rămâne în perioada de retragere (grace) timp de 7 zile. Lipsa anunțurilor selectate elimină agenția din index. Folosiți feed.base_url și feed.token din fiecare agenție. iMove indică un feed dedicat; Properstar are un model separat. Limita orientativă este 120 cereri/60 secunde pentru același portal și IP, inclusiv chei invalide; la 429 aplicați întârziere progresivă. Dacă o agenție activă sau inventarul complet nu poate fi furnizat, răspunsul este 503, niciodată un index parțial.",
         "security": [],
         "parameters": [
           {
             "name": "portal",
             "in": "path",
             "required": true,
-            "description": "Portal din INDEX_PORTALS; cele șase valori au rute concrete, nu o rută dinamică universală.",
+            "description": "Identificatorul portalului pentru care a fost emisă cheia de index; valorile acceptate sunt listate mai jos.",
             "schema": {
               "type": "string",
               "enum": [
@@ -163,7 +168,7 @@
     "/api/public/sites/v1/properties": {
       "get": {
         "summary": "Lista proprietăților",
-        "description": "feed:read Doar publicate, neșterse, cu status active/reserved/negotiation. Token de portal: numai selecțiile acelui portal; token de site: toate ofertele eligibile ale agenției. Pentru tokenuri ale portalurilor clickimob, imobli, locuit, imobiliareplus, imove și bazaruldecase, selecția JSON exclude ofertele fără telefonul agentului (tokenul index iMove este însă respins pe sites/v1). În grace: data=[] și total=0. Sortare updated_at desc; paginile peste last_page întorc 200 și data=[]. Fără cursor/snapshot; nu există filtre suplimentare.",
+        "description": "Necesită feed:read. Returnează anunțuri publicate, neretrase, cu starea active, reserved sau negotiation. Tokenul portalului limitează lista la anunțurile selectate pentru el și exclude ofertele fără telefon de contact al agentului responsabil; tokenul de site include ofertele eligibile ale agenției. iMove utilizează feedul dedicat indicat în index. În grace: data=[] și total=0. Ofertele sunt ordonate de la cea mai recentă modificare. Paginile după last_page întorc 200 și data=[]. Fără cursor, instantaneu comun sau filtre suplimentare.",
         "tags": [
           "Feed pe agenție"
         ],
@@ -546,7 +551,7 @@
     "/api/public/sites/v1/agents": {
       "get": {
         "summary": "Lista agenților activi",
-        "description": "agents:read SAU feed:read Sortare full_name asc. Aceeași paginare ca proprietățile. Agenții activi ai agenției, fără filtrare după selecțiile portalului.",
+        "description": "Necesită agents:read sau feed:read. Agenții activi ai agenției, ordonați alfabetic după nume; nu sunt limitați la cei cu anunțuri selectate pentru portal. Aceeași paginare ca anunțurile.",
         "tags": [
           "Feed pe agenție"
         ],
@@ -896,7 +901,7 @@
           "Media"
         ],
         "security": [],
-        "description": "Imagine inclusă la publicare, neconfidențială, cu proprietate eligibilă publicată. Nu verifică selecția unui anumit portal. Poate aplica watermark-ul agenției fără modificarea originalului. Fără token și fără limită de cereri în aceste handlere. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate.",
+        "description": "Imagine inclusă la publicare, neconfidențială, cu proprietate eligibilă publicată. Nu verifică selecția unui anumit portal. Poate aplica watermark-ul agenției fără modificarea originalului. Fără token și fără limită de cereri pentru aceste adrese. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate.",
         "parameters": [
           {
             "name": "id",
@@ -996,7 +1001,7 @@
           "Media"
         ],
         "security": [],
-        "description": "Agent activ cu avatar. Nu verifică eligibilitatea agenției în index. Fără token și fără limită de cereri în aceste handlere. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate.",
+        "description": "Agent activ cu avatar. Nu verifică eligibilitatea agenției în index. Fără token și fără limită de cereri pentru aceste adrese. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate.",
         "parameters": [
           {
             "name": "id",
@@ -1096,7 +1101,7 @@
           "Media"
         ],
         "security": [],
-        "description": "Agenție existentă cu logo. Nu verifică starea sau eligibilitatea agenției în index. Fără token și fără limită de cereri în aceste handlere. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate.",
+        "description": "Agenție existentă cu logo. Nu verifică starea sau eligibilitatea agenției în index. Fără token și fără limită de cereri pentru aceste adrese. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate.",
         "parameters": [
           {
             "name": "id",
@@ -1455,7 +1460,7 @@
     "/api/public/sites/v1/visits": {
       "get": {
         "summary": "Totaluri de vizualizări",
-        "description": "leads:write Nu sunt programări de vizionare: sunt vizualizări raportate. Citește maximum 1000 rânduri, cele mai recente după occurred_on, și le însumează pe proprietate peste toate sursele. NU garantează totalul istoric dacă există peste 1000 rânduri. Fără parametri de query și fără paginare.",
+        "description": "Necesită leads:write. Sunt vizualizări ale anunțurilor, nu programări de vizionare. Însumează cel mult ultimele 1.000 de înregistrări ale agenției, ordonate descrescător după data vizualizării, și grupează rezultatul pe anunț, pentru toate sursele. Limita este comună întregii agenții, nu 1.000 pentru fiecare anunț. Rezultatul nu este un total istoric complet dacă există mai multe înregistrări. O înregistrare poate cuprinde mai multe vizualizări: limita nu înseamnă 1.000 de vizualizări. Fără parametri de query sau paginare.",
         "tags": [
           "Vizualizări"
         ],
@@ -1603,7 +1608,7 @@
       },
       "post": {
         "summary": "Raportează vizualizări",
-        "description": "leads:write O intrare sau un lot de 1–500. Incrementează atomic per proprietate, dată și sursă. event_id opțional revendică un eveniment durabil per agenție + portal înaintea incrementului, în aceeași tranzacție. Același portal și event_id retrimis: 200 cu deduplicated: true, fără increment nou. Fără event_id, retrimiterea adaugă din nou views, ca înainte. Sursa din body nu determină identitatea portalului; aceasta vine exclusiv din token. Proprietățile inexistente/din altă agenție sunt ignorate. În lot, accepted include duplicatele; duplicates le numără separat și deduplicated este true dacă există cel puțin una.",
+        "description": "Necesită leads:write. Acceptă o intrare sau un lot de 1–500. Adaugă views la vizualizările anunțului pentru data și sursa indicate. Cu event_id, același eveniment retrimis de același portal în aceeași agenție primește 200 cu deduplicated: true, fără a adăuga din nou vizualizări. Deduplicarea rămâne valabilă după rotirea cheii portalului. Fără event_id, fiecare retrimitere adaugă din nou views. Identitatea portalului este determinată exclusiv din token, nu din source. Anunțurile inexistente sau din altă agenție sunt ignorate. În lot, accepted include duplicatele; duplicates le numără separat și deduplicated este true dacă există cel puțin una.",
         "tags": [
           "Vizualizări"
         ],
@@ -1855,7 +1860,7 @@
     "/api/public/portal/v1/bazaruldecase/feed.xml": {
       "get": {
         "summary": "Inventar XML Kyero v3",
-        "description": "feed:read Format XML Kyero v3; calea existentă este cea BazarulDeCase. Fără paginare pentru consumator; toate citirile interne sunt paginate. Acceptă numai tokenul din indexul BazarulDeCase sau o cheie de portal Habitoo al cărei portal este bazaruldecase. Un token de site cu feed:read primește 403; tokenurile de index ale altor portaluri sunt respinse cu 401. Aceeași selecție ca JSON, aceeași funcție de eligibilitate, inclusiv telefon valid al agentului responsabil. Grace: inventar XML gol cu 200. Dacă orice citire/generare eșuează, întregul răspuns este 503 cu Retry-After: 300, fără XML parțial. Tip necunoscut, preț lipsă/nepozitiv sau monedă neacceptată nu mai omit tranzacții în tăcere: întregul document devine 503. Până la 50 imagini; o ofertă cu ambele tranzacții are două elemente. Nu retrageți anunțuri după un răspuns care nu e 200 complet.",
+        "description": "Necesită feed:read și tokenul BazarulDeCase. Acceptă tokenul pe agenție primit în indexul acestui portal sau o cheie emisă pentru același portal. Un token de site primește 403; tokenurile din indexul altor portaluri primesc 401. XML Kyero v3 complet, fără paginare: aceleași anunțuri eligibile și selectate ca în JSON, inclusiv telefon de contact valid. În grace: inventar gol cu 200. Dacă vreo parte a inventarului nu poate fi furnizată sau un anunț nu poate fi reprezentat (tip necunoscut, preț lipsă/nepozitiv, monedă neacceptată), răspunsul este 503 cu Retry-After: 300, fără XML parțial. Până la 50 de fotografii per ofertă; vânzarea și închirierea simultane produc două elemente. Nu retrageți anunțuri după un răspuns care nu e 200 complet.",
         "tags": [
           "XML Kyero"
         ],
@@ -2112,7 +2117,7 @@
               "string",
               "null"
             ],
-            "description": "Adresa stocată a proprietății; nu este anonimizată de mapper."
+            "description": "Adresa ofertei, dacă este disponibilă; poate conține adresa completă."
           },
           "titlu": {
             "type": "object",
@@ -2122,15 +2127,14 @@
                 "description": "Titlul în română."
               },
               "en": {
-                "type": "null",
-                "description": "Nu există traducere în mapper; întotdeauna null."
+                "type": "null"
               }
             },
             "required": [
               "ro",
               "en"
             ],
-            "description": "Întotdeauna null: nu există echivalent publicabil în mapper."
+            "description": "Titlul ofertei pe limbi; textul românesc este disponibil."
           },
           "descriere": {
             "type": "object",
@@ -2143,15 +2147,14 @@
                 "description": "Descrierea în română."
               },
               "en": {
-                "type": "null",
-                "description": "Nu există traducere în mapper; întotdeauna null."
+                "type": "null"
               }
             },
             "required": [
               "ro",
               "en"
             ],
-            "description": "Întotdeauna null: nu există echivalent publicabil în mapper."
+            "description": "Descrierea ofertei pe limbi; textul românesc poate fi null dacă nu este disponibil."
           },
           "vecinatati": {
             "type": "array",
@@ -2190,11 +2193,11 @@
               "string",
               "null"
             ],
-            "description": "Aceeași valoare ca zona (district)."
+            "description": "Aceeași zonă sau același cartier ca în zona."
           },
           "pretnegociabil": {
             "type": "boolean",
-            "description": "Dacă prețul este negociabil; conversie booleană."
+            "description": "Prețul este negociabil."
           },
           "longitudine": {
             "type": [
@@ -2229,19 +2232,16 @@
               "string",
               "null"
             ],
-            "description": "Tipul proprietății, transmis direct, fără validare/nomenclator închis în mapper. Valori întâlnite în opțiuni și mappere: apartment, studio, house, villa, land, commercial, office, industrial, penthouse, duplex, garage.",
-            "examples": [
+            "description": "Tipul proprietății: apartment = apartament, studio = garsonieră, house = casă/vilă, land = teren, commercial = spațiu comercial, office = birou, industrial = industrial. Null dacă nu este precizat.",
+            "enum": [
               "apartment",
               "studio",
               "house",
-              "villa",
               "land",
               "commercial",
               "office",
               "industrial",
-              "penthouse",
-              "duplex",
-              "garage"
+              null
             ]
           },
           "tipteren": {
@@ -2249,26 +2249,23 @@
               "string",
               "null"
             ],
-            "description": "Categoria pentru land; altfel null."
+            "description": "Categoria terenului, ca text liber; null pentru alte tipuri de proprietate sau când nu este precizată. Nu există o listă închisă de valori pentru acest câmp."
           },
           "clasificareteren": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Aceeași categorie ca tipteren, numai pentru land."
+            "description": "Aceeași categorie ca tipteren, ca text liber; null pentru alte tipuri sau când nu este precizată."
           },
           "nrfronturistradale": {
-            "type": "null",
-            "description": "Întotdeauna null: nu există echivalent publicabil în mapper."
+            "type": "null"
           },
           "frontstradal": {
-            "type": "null",
-            "description": "Întotdeauna null: nu există echivalent publicabil în mapper."
+            "type": "null"
           },
           "latimedrumacces": {
-            "type": "null",
-            "description": "Întotdeauna null: nu există echivalent publicabil în mapper."
+            "type": "null"
           },
           "suprafatateren": {
             "type": [
@@ -2303,14 +2300,23 @@
               "number",
               "null"
             ],
-            "description": "Etajul numeric, fără conversie de etichete."
+            "description": "Etajul exprimat numeric; null dacă nu este precizat."
           },
           "tipcompartimentare": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Compartimentarea stocată; șir fără enum impus de mapper."
+            "description": "Compartimentarea locuinței. Null dacă nu este precizat.",
+            "enum": [
+              "Decomandat",
+              "Semidecomandat",
+              "Nedecomandat",
+              "Circular",
+              "Vagon",
+              "Open space",
+              null
+            ]
           },
           "suprafatautila": {
             "type": [
@@ -2324,7 +2330,7 @@
               "string",
               "null"
             ],
-            "description": "Confortul stocat; șir fără enum impus de mapper."
+            "description": "Categoria de confort, dacă este precizată."
           },
           "suprafataconstruita": {
             "type": [
@@ -2338,7 +2344,7 @@
               "number",
               "null"
             ],
-            "description": "Anul construcției stocat, fără limitare la anul curent în acest feed."
+            "description": "Anul construcției; poate fi un an viitor pentru o clădire în curs de finalizare. Null dacă nu este precizat."
           },
           "nrbai": {
             "type": [
@@ -2373,14 +2379,23 @@
               "string",
               "null"
             ],
-            "description": "Stadiul construcției stocat; șir fără enum în mapper."
+            "description": "Stadiul construcției. Null dacă nu este precizat.",
+            "enum": [
+              "Finalizată",
+              "În construcție",
+              "La roșu",
+              "La cheie",
+              "Semifinisată",
+              "Proiect",
+              null
+            ]
           },
           "structurarezistenta": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Structura clădirii; șir fără enum în mapper."
+            "description": "Structura de rezistență a clădirii; null dacă nu este precizată."
           },
           "status": {
             "type": "string",
@@ -2396,35 +2411,35 @@
               "string",
               "null"
             ],
-            "description": "Localitatea stocată."
+            "description": "Localitatea ofertei; null dacă nu este precizată."
           },
           "judet": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Județul stocat."
+            "description": "Județul ofertei; null dacă nu este precizat."
           },
           "zona": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Zona/cartierul stocat."
+            "description": "Zona sau cartierul ofertei; null dacă nu este precizat."
           },
           "strada": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Strada stocată."
+            "description": "Strada ofertei; null dacă nu este precizată."
           },
           "numarstradal": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Numărul stradal stocat."
+            "description": "Numărul stradal; null dacă nu este precizat."
           },
           "cod_siruta_judet": {
             "type": [
@@ -2448,24 +2463,23 @@
             "description": "Cod SIRUTA localitate."
           },
           "caroiaj": {
-            "type": "null",
-            "description": "Întotdeauna null: nu există echivalent publicabil în mapper."
+            "type": "null"
           },
           "devanzare": {
             "type": "boolean",
-            "description": "Oferta este de vânzare: for_sale, iar dacă lipsește, transaction_kind diferit de rent. Poate fi true simultan cu deinchiriere."
+            "description": "Oferta e de vânzare; poate fi adevărat împreună cu deinchiriere."
           },
           "deinchiriere": {
             "type": "boolean",
-            "description": "Oferta este de închiriere: for_rent, iar dacă lipsește, transaction_kind = rent. Tranzacțiile interne sunt sale/rent; transaction_kind nu este un câmp al răspunsului."
+            "description": "Oferta e de închiriere; poate fi adevărat împreună cu devanzare."
           },
           "monedavanzare": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Moneda vânzării; null dacă devanzare=false. sale_currency sau currency numai când tranzacția principală nu este rent. Opțiunile aplicației: EUR, RON, USD; feedul nu respinge alte șiruri.",
-            "examples": [
+            "description": "Moneda prețului de vânzare. Null dacă devanzare este false sau moneda nu este precizată.",
+            "enum": [
               "EUR",
               "RON",
               "USD",
@@ -2477,8 +2491,8 @@
               "string",
               "null"
             ],
-            "description": "Moneda închirierii; null dacă deinchiriere=false. rent_currency sau currency numai când tranzacția principală este rent. Opțiunile aplicației: EUR, RON, USD; feedul nu respinge alte șiruri.",
-            "examples": [
+            "description": "Moneda chiriei. Null dacă deinchiriere este false sau moneda nu este precizată.",
+            "enum": [
               "EUR",
               "RON",
               "USD",
@@ -2490,29 +2504,27 @@
               "number",
               "null"
             ],
-            "description": "Prețul vânzării: sale_price sau price când tranzacția principală nu este rent; null dacă devanzare=false."
+            "description": "Prețul de vânzare, în monedavanzare; null dacă oferta nu este de vânzare sau prețul nu este disponibil."
           },
           "pretinchiriere": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Chiria: rent_price sau price când tranzacția principală este rent; null dacă deinchiriere=false."
+            "description": "Chiria, în monedainchiriere; null dacă oferta nu este de închiriere sau chiria nu este disponibilă."
           },
           "pretfaratva": {
-            "type": "null",
-            "description": "Întotdeauna null: nu se deduce un preț fără TVA."
+            "type": "null"
           },
           "tvainclus": {
             "type": [
               "boolean",
               "null"
             ],
-            "description": "Indică TVA inclus numai dacă valoarea stocată este booleană; altfel null."
+            "description": "Indică dacă TVA este inclus în preț; null dacă nu este precizat."
           },
           "comisioncumparator": {
-            "type": "null",
-            "description": "Întotdeauna null: comisionul intern nu se expune."
+            "type": "null"
           },
           "referintaexterna": {
             "type": [
@@ -2526,7 +2538,7 @@
             "items": {
               "$ref": "#/components/schemas/FeedImage"
             },
-            "description": "Imagini publicabile, neconfidențiale; coperta prima, apoi ordonate după poziție. Fără limită de imagini în mapperul JSON."
+            "description": "Fotografiile publicabile, neconfidențiale; coperta prima, apoi în ordinea galeriei. Feedul JSON nu impune un număr maxim."
           },
           "publicare": {
             "type": "boolean",
@@ -2535,19 +2547,18 @@
           },
           "top": {
             "type": "boolean",
-            "description": "Tagul top este prezent."
+            "description": "Oferta este marcată pentru evidențiere."
           },
           "pole": {
             "type": "boolean",
-            "description": "Tagul pole este prezent; semnificația comercială nu este definită în mapper."
+            "description": "Rezervat pentru compatibilitate; întotdeauna false.",
+            "const": false
           },
           "custom1": {
-            "type": "null",
-            "description": "Întotdeauna null."
+            "type": "null"
           },
           "custom2": {
-            "type": "null",
-            "description": "Întotdeauna null."
+            "type": "null"
           },
           "portals": {
             "type": "array",
@@ -2555,26 +2566,23 @@
               "type": "string",
               "description": ""
             },
-            "description": "Chei ale portalurilor din selecții activate, listări publicate/actualizate și taguri legacy portal:; listă unică, fără enum închis."
+            "description": "Identificatorii portalurilor selectate sau pe care oferta este publicată. Lista nu este închisă; poate fi goală."
           },
           "tip": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Alias pentru tipimobil, fără enum închis.",
-            "examples": [
+            "description": "Tipul proprietății: apartment = apartament, studio = garsonieră, house = casă/vilă, land = teren, commercial = spațiu comercial, office = birou, industrial = industrial. Null dacă nu este precizat.",
+            "enum": [
               "apartment",
               "studio",
               "house",
-              "villa",
               "land",
               "commercial",
               "office",
               "industrial",
-              "penthouse",
-              "duplex",
-              "garage"
+              null
             ]
           },
           "suprafata_value": {
@@ -2582,35 +2590,71 @@
               "number",
               "null"
             ],
-            "description": "Suprafața generală stocată în m²; nu este obligatoriu suprafața utilă."
+            "description": "Suprafața generală a ofertei, în m²; poate diferi de suprafața utilă. Null dacă nu este precizată."
           },
           "incalzire_value": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Încălzirea principală sau primul sistem de încălzire."
+            "description": "Sistemul principal de încălzire; dacă sunt mai multe sisteme, se poate afișa primul. Null dacă nu este precizat.",
+            "enum": [
+              "Termoficare",
+              "Centrală proprie",
+              "Centrală imobil",
+              "Convectoare",
+              "Sobă teracotă",
+              "Centrală pe lemne",
+              "Încălzire pardoseală",
+              "Calorifere",
+              "Pompă de căldură",
+              null
+            ]
           },
           "mobilare_value": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Mobilarea stocată."
+            "description": "Gradul sau stilul de mobilare. Null dacă nu este precizat.",
+            "enum": [
+              "Complet",
+              "Parțial",
+              "Nemobilat",
+              "Lux",
+              "Modern",
+              null
+            ]
           },
           "mobilat_value": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Alias pentru mobilare_value."
+            "description": "Aceeași valoare ca mobilare_value. Null dacă nu este precizat.",
+            "enum": [
+              "Complet",
+              "Parțial",
+              "Nemobilat",
+              "Lux",
+              "Modern",
+              null
+            ]
           },
           "parcare_value": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Parcarea stocată."
+            "description": "Tipul parcării. Null dacă nu este precizat.",
+            "enum": [
+              "Fără",
+              "Loc de parcare",
+              "Garaj",
+              "Parcare subterană",
+              "Parcare supraterană",
+              null
+            ]
           },
           "balcon_value": {
             "type": [
@@ -2640,21 +2684,48 @@
               "string",
               "null"
             ],
-            "description": "Alias pentru stadiuconstructie."
+            "description": "Aceeași valoare ca stadiuconstructie. Null dacă nu este precizat.",
+            "enum": [
+              "Finalizată",
+              "În construcție",
+              "La roșu",
+              "La cheie",
+              "Semifinisată",
+              "Proiect",
+              null
+            ]
           },
           "tipconstructie_value": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Tipul clădirii stocat."
+            "description": "Tipul clădirii. Null dacă nu este precizat.",
+            "enum": [
+              "Bloc",
+              "Casă",
+              "Vilă",
+              "Imobil de birouri",
+              "Ansamblu rezidențial",
+              "Hală",
+              null
+            ]
           },
           "starefinisaje_value": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Starea finisajelor stocată."
+            "description": "Starea finisajelor. Null dacă nu este precizat.",
+            "enum": [
+              "Finisat",
+              "Semifinisat",
+              "Ultrafinisat",
+              "Bună",
+              "Necesită renovare",
+              "Renovat",
+              null
+            ]
           },
           "bucatarie_values": {
             "type": "array",
@@ -2665,42 +2736,35 @@
             "description": "Dotările bucătăriei."
           },
           "eficienta_energetica": {
-            "type": "null",
-            "description": "Întotdeauna null în feedul JSON."
+            "type": "null"
           },
           "consum_specific": {
-            "type": "null",
-            "description": "Întotdeauna null în feedul JSON."
+            "type": "null"
           },
           "indice_emisii": {
-            "type": "null",
-            "description": "Întotdeauna null în feedul JSON."
+            "type": "null"
           },
           "consum_energie_regenerabila": {
-            "type": "null",
-            "description": "Întotdeauna null în feedul JSON."
+            "type": "null"
           },
           "url": {
             "type": [
               "string",
               "null"
             ],
-            "description": "URL public al ofertei /oferta/{UUID}; endpointurile furnizează baza publică. Poate fi null în utilizările mapperului fără bază publică."
+            "description": "Linkul public al ofertei; null dacă nu este disponibil."
           },
           "energy": {
             "type": "object",
             "properties": {
               "clasa": {
-                "type": "null",
-                "description": "Întotdeauna null în mapperul JSON."
+                "type": "null"
               },
               "consum": {
-                "type": "null",
-                "description": "Întotdeauna null în mapperul JSON."
+                "type": "null"
               },
               "emisii": {
-                "type": "null",
-                "description": "Întotdeauna null în mapperul JSON."
+                "type": "null"
               }
             },
             "required": [
@@ -2708,7 +2772,7 @@
               "consum",
               "emisii"
             ],
-            "description": "Obiect prezent; toate cele trei valori sunt null în mapperul JSON."
+            "description": "Obiect rezervat pentru compatibilitate; valorile clasa, consum și emisii sunt întotdeauna null."
           }
         },
         "required": [
@@ -2800,7 +2864,7 @@
           "url",
           "energy"
         ],
-        "description": "Toate câmpurile sunt întotdeauna prezente; null nu înseamnă câmp absent. Șirurile de tip/monedă și dotări sunt transmise direct dacă nu se precizează explicit un enum. Niciun câmp transaction_kind sau UUID id separat nu este emis."
+        "description": "Toate câmpurile sunt prezente; null înseamnă valoare indisponibilă, nu câmp absent. Listele de valori includ null unde este permis. Câmpuri rezervate pentru compatibilitate, întotdeauna null: titlu.en, descriere.en, nrfronturistradale, frontstradal, latimedrumacces, caroiaj, pretfaratva, comisioncumparator, custom1, custom2, eficienta_energetica, consum_specific, indice_emisii, consum_energie_regenerabila, energy.clasa, energy.consum, energy.emisii."
       },
       "FeedImage": {
         "type": "object",
@@ -3178,8 +3242,7 @@
             "description": "Website din datele materialelor."
           },
           "county": {
-            "type": "null",
-            "description": "Întotdeauna null în mapperul indexului."
+            "type": "null"
           },
           "city": {
             "type": [
@@ -3266,7 +3329,8 @@
           "inactive_since",
           "updated_at",
           "feed"
-        ]
+        ],
+        "description": "Câmp rezervat pentru compatibilitate, întotdeauna null: county."
       },
       "PortalIndex": {
         "type": "object",
@@ -3365,7 +3429,7 @@
             ]
           }
         ],
-        "description": "Câmpurile necunoscute sunt eliminate de validator. Toate șirurile sunt trim. Nu acceptă null în locul valorilor opționale."
+        "description": "Câmpurile necunoscute sunt eliminate de API. Spațiile exterioare sunt eliminate din texte. Nu acceptă null în locul valorilor opționale."
       },
       "ContactResult": {
         "type": "object",
@@ -3423,7 +3487,7 @@
           },
           "source": {
             "type": "string",
-            "description": "Șir trim; omis sau gol reprezintă același grup.",
+            "description": "Text fără spații exterioare; omis sau gol reprezintă același grup.",
             "maxLength": 60
           },
           "date": {
@@ -3435,7 +3499,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200,
-            "description": "ID stabil opțional al evenimentului (trim), unic în agenție + portal autentificat. Retrimiterea nu incrementează. Cheile rotite ale aceluiași portal păstrează deduplicarea; pentru tokenuri de site, identitatea este ID-ul tokenului. În lot, fiecare intrare are propriul event_id.",
+            "description": "ID stabil opțional al evenimentului (fără spații exterioare), unic în agenție + portal autentificat. Retrimiterea nu incrementează. Cheile rotite ale aceluiași portal păstrează deduplicarea; pentru tokenuri de site, identitatea este ID-ul tokenului. În lot, fiecare intrare are propriul event_id.",
             "example": "EXEMPLU-EVENIMENT-001"
           }
         },
@@ -3505,7 +3569,7 @@
                 },
                 "views": {
                   "type": "number",
-                  "description": "Suma din cele mai recente maximum 1000 rânduri ale agenției, peste toate sursele."
+                  "description": "Suma vizualizărilor acestui anunț în cel mult ultimele 1.000 de înregistrări ale întregii agenții, pentru toate sursele; nu un total istoric garantat."
                 }
               },
               "required": [
@@ -3642,7 +3706,7 @@
             "properties": {
               "built": {
                 "type": "integer",
-                "description": "Suprafață utilă sau generală (nu built_surface), pozitivă rotunjită, m².",
+                "description": "Suprafața utilă sau generală, în m², rotunjită la un întreg pozitiv; nu reprezintă neapărat suprafața construită.",
                 "minimum": 1
               },
               "plot": {
@@ -3834,14 +3898,13 @@
     }
   },
   "x-code-ambiguities": [
-    "JSON: tipurile, monedele și câmpurile de dotări sunt șiruri transmise direct, fără enum exhaustiv; EUR/RON/USD sunt opțiunile interfeței, nu validare de feed.",
-    "JSON: idstr poate fi UUID când referința lipsește, dar POST contacts cu idstr caută numai referința. Folosiți id pentru UUID. Feedul nu emite un câmp UUID id separat; alias/url îl conțin.",
-    "JSON: pole este doar tag; nu este definită semnificația comercială. energy și alte câmpuri de compatibilitate rămân null; mobilat_value/utilitati_values/dotari_values sunt aliasuri.",
-    "Contacts: site token răspunde 201 inclusiv la reutilizare; message_id deduplică numai portalurile. Unele interogări/scrieri nu verifică erorile și deduplicarea nu este atomică în toate ramurile.",
-    "XML: desc.en repetă textul românesc, surface_area.built folosește suprafața utilă/generală, emissions este X. Orice imposibilitate de reprezentare a unei oferte produce 503 pentru întregul document.",
-    "INDEX_PORTALS include iMove, cu feed dedicat neacoperit de acest model JSON. Properstar are alt index/model și este în afara INDEX_PORTALS.",
-    "Media: w/h se aplică numai imaginilor din stocare și poate reveni la original; pentru URL HTTPS extern redimensionarea nu este garantată. Avatar/logo nu verifică eligibilitatea agenției în index.",
-    "GET visits însumează numai cele mai recente 1000 rânduri și cere leads:write; event_id protejează POST, nu schimbă limita agregării GET. Fără event_id, retrimiterile se incrementează ca înainte.",
-    "XML: ofertele eligibile JSON care nu pot fi reprezentate în Kyero (tip, preț, monedă) produc 503 pentru întregul inventar; portalul păstrează inventarul anterior și reîncearcă. Nu există snapshot comun între cererile JSON/XML sau între pagini."
+    "idstr poate fi UUID când referința lipsește, dar la POST /contacts idstr acceptă numai referința. Folosiți id pentru UUID; alias și url conțin UUID-ul anunțului.",
+    "tipteren și clasificareteren sunt text liber și nu au o listă închisă de valori. Nu confundați categoria terenului cu încadrarea intravilan/extravilan.",
+    "POST /contacts: message_id deduplică numai cererile cu token de portal. Cu token de site, răspunsul poate fi 201 și deduplicated=true pentru un lead reutilizat. Deduplicarea lead-urilor nu este garantată la retrimiteri simultane.",
+    "XML: desc.en repetă textul românesc; surface_area.built este suprafața utilă/generală, iar emissions este rezervat cu valoarea X. Un anunț imposibil de reprezentat produce 503 pentru întregul inventar.",
+    "iMove utilizează un feed dedicat, neacoperit de modelul JSON prezentat aici. Properstar utilizează un index și un model separat.",
+    "Media: redimensionarea poate reveni la original și nu este garantată pentru fotografii externe. Păstrați URL-ul permanent Habitoo, nu destinația temporară a redirectului.",
+    "GET /visits însumează cel mult ultimele 1.000 de înregistrări ale întregii agenții; nu garantează totalul istoric. event_id protejează POST de dublare, fără să schimbe limita GET.",
+    "Nu există un instantaneu comun între cererile JSON/XML sau paginile JSON. La 503 păstrați inventarul anterior și reîncercați după 300 secunde."
   ]
 }
