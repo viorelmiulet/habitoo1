@@ -6,6 +6,28 @@
     "version": "1.0.0",
     "description": "Contract derivat din cod la 7 noiembrie 2026. Exclusiv endpointurile pentru indexul INDEX_PORTALS, feed JSON pe agenție, imagini, lead-uri, vizualizări și model XML Kyero v3. Fără cron, webhook-uri primite, OAuth, cataloage, mail sau upsert-uri interne. Toate exemplele sunt fictive. Agenția și portalul sunt determinate din token, niciodată din organization_id trimis de client. Bearer este recomandat. /sites/v1 nu acceptă token în query. Rate limit pentru feedurile autentificate: 120 cereri/60 secunde per prefix token + IP, best-effort local (nu distribuit), inclusiv XML; token lipsă întoarce 401 înaintea contorului. Media nu are limită în handler. Scopuri: feed:read, agents:read, leads:write; nu sunt scopuri OAuth. RETRAGERE: portalul trebuie să retragă un anunț care nu mai apare în inventarul complet citit cu succes; nu există tombstones. Parcurgeți toate paginile înainte de reconciliere și nu interpretați 401/429/500 sau citirea incompletă drept retragere. Paginarea nu are snapshot/cursor și ordinea se poate schimba între pagini. În grace feedul returnează inventar gol; dacă agenția dispare din index, retrageți ofertele ei. Vezi x-code-ambiguities pentru limite reale ale implementării."
   },
+  "x-developer-guide": {
+    "introduction": "Habitoo oferă portalurilor anunțurile agențiilor care activează integrarea și selectează ofertele pentru acel portal, împreună cu agenții responsabili, fotografiile și actualizările. Sunt disponibile două modele: feed JSON pe agenție și feed XML Kyero v3. Indexul este punctul de pornire pentru descoperirea agențiilor eligibile.",
+    "onboarding": [
+      "Scrie la contact@habitoo.ro cu numele portalului și modelul dorit: JSON sau XML Kyero. Primești o cheie de index pentru o agenție pilot; după verificarea integrării, primești accesul complet.",
+      "Administratorul agenției activează portalul din Setări → Portaluri, apoi selectează anunțurile din fila Publicare. Indexul și feedul reflectă eligibilitatea și selecțiile, nu întregul portofoliu CRM.",
+      "Păstrează cheia de index și tokenurile agențiilor numai pe server. Nu le expune în browser, în jurnale sau în depozite de cod. Cheia se poate roti la cerere, prin contact@habitoo.ro."
+    ],
+    "quickStart": [
+      "Obține cheia pilot și citește indexul portalului.",
+      "Preia feed.base_url și feed.token din agenția returnată; citește prima pagină folosind Bearer.",
+      "Importă primul anunț folosind idstr în contextul agenției. Parcurge apoi toate paginile și reconciliază inventarul numai după o citire completă reușită."
+    ],
+    "recommendations": [
+      "Recomandare de integrare, nu garanție de actualizare: citește indexul și feedurile la aproximativ 15–30 de minute, eșalonat pe agenții. Ajustează frecvența împreună cu echipa Habitoo; evită cererile simultane inutile.",
+      "Pentru actualizare incrementală locală, compară datamodificare cu versiunea importată. API-ul nu oferă un filtru updated_since, un cursor sau un snapshot: citește tot inventarul pentru reconciliere.",
+      "Dacă portalul poate afișa direct fotografiile prin URL, folosește images[].src fără descărcare. Păstrează linkul Habitoo, nu destinația temporară a redirectului; aplică w, h și fit pentru dimensiunea afișată.",
+      "Retrage ofertele absente numai după citirea reușită a tuturor paginilor. Un răspuns de eroare sau o citire întreruptă nu este un inventar gol. Nu există tombstones; ordinea se poate schimba între pagini. Pentru XML, ține cont de limita de completitudine descrisă în contract.",
+      "Trimite un message_id stabil pentru fiecare mesaj al portalului. Nu retrimite automat POST visits după un timeout: incrementul nu este idempotent. La 429, amână cererile și reia cu întârziere progresivă; nu există Retry-After."
+    ],
+    "history": [{ "version": "1.0.0", "date": "2026-11-07", "description": "Prima specificație OpenAPI 3.1 derivată din cod: indexul agențiilor, feed JSON, media, lead-uri, vizualizări și XML Kyero v3. Documentația este generată din această specificație." }],
+    "contact": "contact@habitoo.ro"
+  },
   "servers": [
     {
       "url": "https://www.habitoo.ro",
