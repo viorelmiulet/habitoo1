@@ -90,8 +90,8 @@ export function mapPartnerListing(row: PropertyRow, images: PropertyImageRow[], 
     features: [...new Set(feed.dotari.map(taxonomyCode).filter(Boolean))].sort(),
     location: {
       county: feed.judet, city: feed.localitate, district: feed.zona,
-      // Imprecise location: never street or number; coordinates are already approximated by publicCoords.
-      street: precise ? feed.strada : null, street_number: precise ? feed.numarstradal : null,
+      // Address redaction and coordinate approximation share the feed's publicLocation projection.
+      street: feed.strada, street_number: feed.numarstradal,
       latitude: feed.latitudine, longitude: feed.longitudine, is_precise: precise,
     },
     images: feed.images.map((img, i) => ({ url: img.src, position: i, is_cover: i === 0 })),

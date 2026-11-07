@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "Habitoo — API pentru integrarea portalurilor",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "description": "API pentru indexul agențiilor, anunțuri JSON, fotografii, lead-uri, vizualizări și XML Kyero v3. Toate exemplele sunt fictive. Cheia de index descoperă agențiile; tokenul fiecărei agenții autorizează accesul numai la aceasta. Folosiți Bearer; /sites/v1 nu acceptă token în query. Scopuri: feed:read, agents:read, leads:write. Limită orientativă: 120 cereri/60 secunde pentru aceeași cheie și adresă IP, inclusiv XML; media nu are o limită specifică. Limita poate varia între cereri: tratați 429 prin reîncercare cu întârziere progresivă. Parcurgeți toate paginile înainte de reconciliere; ordinea poate varia între pagini și nu există cursor sau instantaneu comun. Agențiile în perioada de retragere au inventar gol. XML și index: generarea incompletă întoarce 503 cu Retry-After: 300. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
   },
   "x-developer-guide": {
@@ -26,6 +26,11 @@
       "Trimiteți un message_id stabil pentru fiecare lead și un event_id stabil pentru fiecare eveniment de vizualizare. event_id previne incrementul dublu la retrimitere, inclusiv după rotirea cheii portalului. Fără event_id, nu retrimiteți automat POST visits după un timeout. La 503 așteptați Retry-After: 300; la 429 folosiți întârziere progresivă."
     ],
     "history": [
+      {
+        "version": "1.2.2",
+        "date": "2026-11-07",
+        "description": "Strada și numărul se omit când locația nu e precisă"
+      },
       {
         "version": "1.2.1",
         "date": "2026-11-07",
@@ -2199,7 +2204,7 @@
               "string",
               "null"
             ],
-            "description": "Adresa ofertei, dacă este disponibilă; poate conține adresa completă."
+            "description": "Adresa ofertei numai când locația este marcată precisă; null când locația nu e precisă sau adresa nu este disponibilă."
           },
           "titlu": {
             "type": "object",
@@ -2286,14 +2291,14 @@
               "number",
               "null"
             ],
-            "description": "Longitudine publică conform preciziei locației; null dacă nu există coordonate publicabile."
+            "description": "Longitudine exactă numai când locația este marcată precisă; altfel aceeași coordonată aproximativă, deterministă, ca pe site-ul public și în Partner API. null dacă nu există coordonate publicabile."
           },
           "latitudine": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Latitudine publică conform preciziei locației; null dacă nu există coordonate publicabile."
+            "description": "Latitudine exactă numai când locația este marcată precisă; altfel aceeași coordonată aproximativă, deterministă, ca pe site-ul public și în Partner API. null dacă nu există coordonate publicabile."
           },
           "tiplocuinta": {
             "type": [
@@ -2514,14 +2519,14 @@
               "string",
               "null"
             ],
-            "description": "Strada ofertei; null dacă nu este precizată."
+            "description": "Strada ofertei numai când locația este marcată precisă; null când locația nu e precisă sau strada nu este precizată."
           },
           "numarstradal": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Numărul stradal; null dacă nu este precizat."
+            "description": "Numărul stradal numai când locația este marcată precisă; null când locația nu e precisă sau numărul nu este precizat."
           },
           "cod_siruta_judet": {
             "type": [

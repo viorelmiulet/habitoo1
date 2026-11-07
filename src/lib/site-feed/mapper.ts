@@ -4,7 +4,7 @@
  * documentată public de ImmoFlux; câmpurile inexistente în Habitoo rămân null.
  */
 import type { Tables } from "@/integrations/supabase/types";
-import { publicCoords } from "@/lib/geo";
+import { publicLocation } from "@/lib/geo";
 
 export type PropertyRow = Tables<"properties">;
 export type PropertyImageRow = Tables<"property_images">;
@@ -281,7 +281,8 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     .map((img) => mapImage(img, options.baseUrl));
 
   // Coordonatele publicate respectă setarea de precizie a locației.
-  const feedCoords = publicCoords(p);
+  const location = publicLocation(p);
+  const feedCoords = location.coords;
 
   const isLand = p.property_type === "land";
   const isResidential = ["apartment", "studio", "house", "villa"].includes(p.property_type);
@@ -294,7 +295,7 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     agent_id: p.assigned_to ?? null,
     dataadaugare: p.created_at ?? null,
     datamodificare: p.updated_at ?? null,
-    adresa: p.address ?? null,
+    adresa: location.address,
     titlu: { ro: p.title, en: null },
     descriere: { ro: p.description ?? null, en: null },
     vecinatati: [],
@@ -334,8 +335,8 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     localitate: p.city ?? null,
     judet: p.county ?? null,
     zona: p.district ?? null,
-    strada: p.street ?? null,
-    numarstradal: p.street_number ?? null,
+    strada: location.street,
+    numarstradal: location.street_number,
     cod_siruta_judet: p.county_siruta_code ?? null,
     cod_siruta_uat: p.uat_siruta_code ?? null,
     cod_siruta_localitate: p.locality_siruta_code ?? null,

@@ -7,7 +7,7 @@ import { feedUrlsForRequest } from "@/lib/site-feed/config";
 import { FEED_PUBLIC_STATUSES, feedImageUrl, isPropertyFeedEligible, isImageFeedEligible, type PropertyImageRow, type PropertyRow } from "@/lib/site-feed/mapper";
 import { selectedPropertyIdsForPortal } from "@/lib/site-feed/selection.server";
 import { readCompleteRows } from "@/lib/site-feed/complete-read.server";
-import { publicCoords } from "@/lib/geo";
+import { publicLocation } from "@/lib/geo";
 import { BAZARULDECASE_PORTAL, kyeroDocument, kyeroProperties } from "./kyero";
 
 export type KyeroFeedBuild = { xml: string; properties: number; offers: number; warnings: string[] };
@@ -61,7 +61,7 @@ export async function buildBazarulKyeroFeed(input: { organizationId: string; req
     const imgs = (imagesBy.get(p.id) ?? [])
       .sort((a, b) => (a.is_primary === b.is_primary ? (a.position ?? 0) - (b.position ?? 0) : a.is_primary ? -1 : 1))
       .map((img) => feedImageUrl(baseUrl, img.id));
-    const c = publicCoords(p);
+    const c = publicLocation(p).coords;
     const r = kyeroProperties({
       property: { ...p, features: amenities(p) },
       images: imgs,
