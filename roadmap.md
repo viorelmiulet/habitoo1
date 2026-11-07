@@ -1,3 +1,8 @@
+## P4 — webhooks Partner API
+- [ ] Configurare/test/livrări API, semnare și protecție HTTPS publică, secret criptat
+- [ ] Coadă atomică din evenimentele P2, ordine, reîncercări și suspendare/notificare
+- [ ] Controale SuperAdmin, teste exclusiv noi și verificări fără publicare sau livrări reale
+
 ## P3 — răspunsuri ale portalurilor API
 - [x] POST-uri cu Idempotency-Key obligatoriu, validări, RPC-uri service-only pentru stări/date, deduplicare și email 10 minute; migrări 0252/0253 aplicate
 - [x] Stări/motive pe cardul portalului, respingeri integrate în readiness agent/admin fără duplicate, mesaje în fila existentă; statistici 30 zile cu citire caller-RLS completă și grafic zilnic
