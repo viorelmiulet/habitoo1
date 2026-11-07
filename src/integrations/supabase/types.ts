@@ -7017,6 +7017,148 @@ export type Database = {
           },
         ]
       }
+      partner_api_webhook_deliveries: {
+        Row: {
+          attempt: number
+          cursor_id: number
+          duration_ms: number
+          environment: string
+          error: string | null
+          event: string
+          http_status: number | null
+          id: string
+          occurred_at: string
+          portal: string
+          seq: number
+        }
+        Insert: {
+          attempt: number
+          cursor_id?: number
+          duration_ms: number
+          environment: string
+          error?: string | null
+          event: string
+          http_status?: number | null
+          id: string
+          occurred_at?: string
+          portal: string
+          seq: number
+        }
+        Update: {
+          attempt?: number
+          cursor_id?: number
+          duration_ms?: number
+          environment?: string
+          error?: string | null
+          event?: string
+          http_status?: number | null
+          id?: string
+          occurred_at?: string
+          portal?: string
+          seq?: number
+        }
+        Relationships: []
+      }
+      partner_api_webhook_queue: {
+        Row: {
+          attempt: number
+          available_at: string
+          created_at: string
+          environment: string
+          event: Json
+          generation: string
+          id: string
+          leased_until: string | null
+          owner: string | null
+          portal: string
+          seq: number
+          status: string
+        }
+        Insert: {
+          attempt?: number
+          available_at?: string
+          created_at?: string
+          environment: string
+          event: Json
+          generation: string
+          id?: string
+          leased_until?: string | null
+          owner?: string | null
+          portal: string
+          seq: number
+          status?: string
+        }
+        Update: {
+          attempt?: number
+          available_at?: string
+          created_at?: string
+          environment?: string
+          event?: Json
+          generation?: string
+          id?: string
+          leased_until?: string | null
+          owner?: string | null
+          portal?: string
+          seq?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_webhook_queue_portal_environment_fkey"
+            columns: ["portal", "environment"]
+            isOneToOne: false
+            referencedRelation: "partner_api_webhooks"
+            referencedColumns: ["portal", "environment"]
+          },
+        ]
+      }
+      partner_api_webhooks: {
+        Row: {
+          consecutive_failures: number
+          environment: string
+          events: string[]
+          generation: string
+          last_success_at: string | null
+          portal: string
+          secret_encrypted: string
+          status: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          consecutive_failures?: number
+          environment: string
+          events?: string[]
+          generation?: string
+          last_success_at?: string | null
+          portal: string
+          secret_encrypted: string
+          status?: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          consecutive_failures?: number
+          environment?: string
+          events?: string[]
+          generation?: string
+          last_success_at?: string | null
+          portal?: string
+          secret_encrypted?: string
+          status?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_webhooks_portal_fkey"
+            columns: ["portal"]
+            isOneToOne: false
+            referencedRelation: "dynamic_feed_portals"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       platform_settings: {
         Row: {
           key: string
@@ -12665,6 +12807,7 @@ export type Database = {
         Returns: undefined
       }
       partner_api_cleanup: { Args: never; Returns: undefined }
+      partner_api_cleanup_before_webhooks: { Args: never; Returns: undefined }
       partner_api_email_claim: {
         Args: { _environment: string; _lead: string; _portal: string }
         Returns: boolean
@@ -12768,6 +12911,37 @@ export type Database = {
         Args: { _environment: string; _org: string; _portal: string }
         Returns: boolean
       }
+      partner_webhook_claim: {
+        Args: { _environment?: string; _owner: string; _portal?: string }
+        Returns: Json
+      }
+      partner_webhook_finish: {
+        Args: {
+          _delivery: string
+          _duration: number
+          _error: string
+          _http: number
+          _id: string
+          _ok: boolean
+          _owner: string
+        }
+        Returns: boolean
+      }
+      partner_webhook_put: {
+        Args: {
+          _environment: string
+          _events: string[]
+          _portal: string
+          _secret?: string
+          _url: string
+        }
+        Returns: Json
+      }
+      partner_webhook_test_enqueue: {
+        Args: { _environment: string; _portal: string }
+        Returns: string
+      }
+      partner_webhook_wake: { Args: never; Returns: undefined }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       portal_bulk_arm: { Args: never; Returns: undefined }
       portal_bulk_tick: { Args: never; Returns: undefined }

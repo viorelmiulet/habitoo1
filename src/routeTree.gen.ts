@@ -143,6 +143,7 @@ import { Route as ApiPublicCronVdiLeadsRouteImport } from './routes/api/public/c
 import { Route as ApiPublicCronVumsiStatusRouteImport } from './routes/api/public/cron/vumsi-status'
 import { Route as ApiPublicCronZonataStatusRouteImport } from './routes/api/public/cron/zonata-status'
 import { Route as ApiPublicJobsPartnerApiSyncRouteImport } from './routes/api/public/jobs/partner-api-sync'
+import { Route as ApiPublicJobsPartnerWebhooksRouteImport } from './routes/api/public/jobs/partner-webhooks'
 import { Route as ApiPublicListingsUpsertRouteImport } from './routes/api/public/listings/upsert'
 import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
 import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
@@ -174,6 +175,7 @@ import { Route as ApiPublicPartnerV1ListingsRouteImport } from './routes/api/pub
 import { Route as ApiPublicPartnerV1MeRouteImport } from './routes/api/public/partner/v1/me'
 import { Route as ApiPublicPartnerV1StatsRouteImport } from './routes/api/public/partner/v1/stats'
 import { Route as ApiPublicPartnerV1TaxonomiesRouteImport } from './routes/api/public/partner/v1/taxonomies'
+import { Route as ApiPublicPartnerV1WebhookRouteImport } from './routes/api/public/partner/v1/webhook'
 import { Route as ApiPublicPortalV1AgencyRouteImport } from './routes/api/public/portal/v1/agency'
 import { Route as ApiPublicPortalV1AgentsRouteImport } from './routes/api/public/portal/v1/agents'
 import { Route as ApiPublicPortalV1PropertiesRouteImport } from './routes/api/public/portal/v1/properties'
@@ -198,6 +200,8 @@ import { Route as ApiPublicPartnerV1AgentsIdRouteImport } from './routes/api/pub
 import { Route as ApiPublicPartnerV1ListingsIdRouteImport } from './routes/api/public/partner/v1/listings.$id'
 import { Route as ApiPublicPartnerV1SandboxResetRouteImport } from './routes/api/public/partner/v1/sandbox.reset'
 import { Route as ApiPublicPartnerV1SandboxSimulateRouteImport } from './routes/api/public/partner/v1/sandbox.simulate'
+import { Route as ApiPublicPartnerV1WebhookDeliveriesRouteImport } from './routes/api/public/partner/v1/webhook.deliveries'
+import { Route as ApiPublicPartnerV1WebhookTestRouteImport } from './routes/api/public/partner/v1/webhook.test'
 import { Route as ApiPublicPortalV1PortalFeedDotxmlRouteImport } from './routes/api/public/portal/v1/$portal.feed[.]xml'
 import { Route as ApiPublicPortalV1BazaruldecaseFeedDotxmlRouteImport } from './routes/api/public/portal/v1/bazaruldecase.feed[.]xml'
 import { Route as ApiPublicPortalV1HouseraWebhookRouteImport } from './routes/api/public/portal/v1/housera.webhook'
@@ -960,6 +964,12 @@ const ApiPublicJobsPartnerApiSyncRoute =
     path: '/api/public/jobs/partner-api-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicJobsPartnerWebhooksRoute =
+  ApiPublicJobsPartnerWebhooksRouteImport.update({
+    id: '/api/public/jobs/partner-webhooks',
+    path: '/api/public/jobs/partner-webhooks',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicListingsUpsertRoute = ApiPublicListingsUpsertRouteImport.update({
   id: '/api/public/listings/upsert',
   path: '/api/public/listings/upsert',
@@ -1134,6 +1144,12 @@ const ApiPublicPartnerV1TaxonomiesRoute =
     path: '/api/public/partner/v1/taxonomies',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPartnerV1WebhookRoute =
+  ApiPublicPartnerV1WebhookRouteImport.update({
+    id: '/api/public/partner/v1/webhook',
+    path: '/api/public/partner/v1/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1AgencyRoute = ApiPublicPortalV1AgencyRouteImport.update({
   id: '/api/public/portal/v1/agency',
   path: '/api/public/portal/v1/agency',
@@ -1272,6 +1288,18 @@ const ApiPublicPartnerV1SandboxSimulateRoute =
     id: '/api/public/partner/v1/sandbox/simulate',
     path: '/api/public/partner/v1/sandbox/simulate',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPartnerV1WebhookDeliveriesRoute =
+  ApiPublicPartnerV1WebhookDeliveriesRouteImport.update({
+    id: '/deliveries',
+    path: '/deliveries',
+    getParentRoute: () => ApiPublicPartnerV1WebhookRoute,
+  } as any)
+const ApiPublicPartnerV1WebhookTestRoute =
+  ApiPublicPartnerV1WebhookTestRouteImport.update({
+    id: '/test',
+    path: '/test',
+    getParentRoute: () => ApiPublicPartnerV1WebhookRoute,
   } as any)
 const ApiPublicPortalV1PortalFeedDotxmlRoute =
   ApiPublicPortalV1PortalFeedDotxmlRouteImport.update({
@@ -1519,6 +1547,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/vumsi-status': typeof ApiPublicCronVumsiStatusRoute
   '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
   '/api/public/jobs/partner-api-sync': typeof ApiPublicJobsPartnerApiSyncRoute
+  '/api/public/jobs/partner-webhooks': typeof ApiPublicJobsPartnerWebhooksRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -1557,6 +1586,7 @@ export interface FileRoutesByFullPath {
   '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
   '/api/public/partner/v1/stats': typeof ApiPublicPartnerV1StatsRoute
   '/api/public/partner/v1/taxonomies': typeof ApiPublicPartnerV1TaxonomiesRoute
+  '/api/public/partner/v1/webhook': typeof ApiPublicPartnerV1WebhookRouteWithChildren
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1582,6 +1612,8 @@ export interface FileRoutesByFullPath {
   '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
   '/api/public/partner/v1/sandbox/reset': typeof ApiPublicPartnerV1SandboxResetRoute
   '/api/public/partner/v1/sandbox/simulate': typeof ApiPublicPartnerV1SandboxSimulateRoute
+  '/api/public/partner/v1/webhook/deliveries': typeof ApiPublicPartnerV1WebhookDeliveriesRoute
+  '/api/public/partner/v1/webhook/test': typeof ApiPublicPartnerV1WebhookTestRoute
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
@@ -1725,6 +1757,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/vumsi-status': typeof ApiPublicCronVumsiStatusRoute
   '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
   '/api/public/jobs/partner-api-sync': typeof ApiPublicJobsPartnerApiSyncRoute
+  '/api/public/jobs/partner-webhooks': typeof ApiPublicJobsPartnerWebhooksRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -1763,6 +1796,7 @@ export interface FileRoutesByTo {
   '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
   '/api/public/partner/v1/stats': typeof ApiPublicPartnerV1StatsRoute
   '/api/public/partner/v1/taxonomies': typeof ApiPublicPartnerV1TaxonomiesRoute
+  '/api/public/partner/v1/webhook': typeof ApiPublicPartnerV1WebhookRouteWithChildren
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1788,6 +1822,8 @@ export interface FileRoutesByTo {
   '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
   '/api/public/partner/v1/sandbox/reset': typeof ApiPublicPartnerV1SandboxResetRoute
   '/api/public/partner/v1/sandbox/simulate': typeof ApiPublicPartnerV1SandboxSimulateRoute
+  '/api/public/partner/v1/webhook/deliveries': typeof ApiPublicPartnerV1WebhookDeliveriesRoute
+  '/api/public/partner/v1/webhook/test': typeof ApiPublicPartnerV1WebhookTestRoute
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
@@ -1937,6 +1973,7 @@ export interface FileRoutesById {
   '/api/public/cron/vumsi-status': typeof ApiPublicCronVumsiStatusRoute
   '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
   '/api/public/jobs/partner-api-sync': typeof ApiPublicJobsPartnerApiSyncRoute
+  '/api/public/jobs/partner-webhooks': typeof ApiPublicJobsPartnerWebhooksRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -1975,6 +2012,7 @@ export interface FileRoutesById {
   '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
   '/api/public/partner/v1/stats': typeof ApiPublicPartnerV1StatsRoute
   '/api/public/partner/v1/taxonomies': typeof ApiPublicPartnerV1TaxonomiesRoute
+  '/api/public/partner/v1/webhook': typeof ApiPublicPartnerV1WebhookRouteWithChildren
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -2000,6 +2038,8 @@ export interface FileRoutesById {
   '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
   '/api/public/partner/v1/sandbox/reset': typeof ApiPublicPartnerV1SandboxResetRoute
   '/api/public/partner/v1/sandbox/simulate': typeof ApiPublicPartnerV1SandboxSimulateRoute
+  '/api/public/partner/v1/webhook/deliveries': typeof ApiPublicPartnerV1WebhookDeliveriesRoute
+  '/api/public/partner/v1/webhook/test': typeof ApiPublicPartnerV1WebhookTestRoute
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
@@ -2149,6 +2189,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/vumsi-status'
     | '/api/public/cron/zonata-status'
     | '/api/public/jobs/partner-api-sync'
+    | '/api/public/jobs/partner-webhooks'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -2187,6 +2228,7 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/me'
     | '/api/public/partner/v1/stats'
     | '/api/public/partner/v1/taxonomies'
+    | '/api/public/partner/v1/webhook'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -2212,6 +2254,8 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/listings/$id'
     | '/api/public/partner/v1/sandbox/reset'
     | '/api/public/partner/v1/sandbox/simulate'
+    | '/api/public/partner/v1/webhook/deliveries'
+    | '/api/public/partner/v1/webhook/test'
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
     | '/api/public/portal/v1/housera/webhook'
@@ -2355,6 +2399,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/vumsi-status'
     | '/api/public/cron/zonata-status'
     | '/api/public/jobs/partner-api-sync'
+    | '/api/public/jobs/partner-webhooks'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -2393,6 +2438,7 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/me'
     | '/api/public/partner/v1/stats'
     | '/api/public/partner/v1/taxonomies'
+    | '/api/public/partner/v1/webhook'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -2418,6 +2464,8 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/listings/$id'
     | '/api/public/partner/v1/sandbox/reset'
     | '/api/public/partner/v1/sandbox/simulate'
+    | '/api/public/partner/v1/webhook/deliveries'
+    | '/api/public/partner/v1/webhook/test'
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
     | '/api/public/portal/v1/housera/webhook'
@@ -2566,6 +2614,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/vumsi-status'
     | '/api/public/cron/zonata-status'
     | '/api/public/jobs/partner-api-sync'
+    | '/api/public/jobs/partner-webhooks'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -2604,6 +2653,7 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/me'
     | '/api/public/partner/v1/stats'
     | '/api/public/partner/v1/taxonomies'
+    | '/api/public/partner/v1/webhook'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -2629,6 +2679,8 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/listings/$id'
     | '/api/public/partner/v1/sandbox/reset'
     | '/api/public/partner/v1/sandbox/simulate'
+    | '/api/public/partner/v1/webhook/deliveries'
+    | '/api/public/partner/v1/webhook/test'
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
     | '/api/public/portal/v1/housera/webhook'
@@ -2722,6 +2774,7 @@ export interface RootRouteChildren {
   ApiPublicCronVumsiStatusRoute: typeof ApiPublicCronVumsiStatusRoute
   ApiPublicCronZonataStatusRoute: typeof ApiPublicCronZonataStatusRoute
   ApiPublicJobsPartnerApiSyncRoute: typeof ApiPublicJobsPartnerApiSyncRoute
+  ApiPublicJobsPartnerWebhooksRoute: typeof ApiPublicJobsPartnerWebhooksRoute
   ApiPublicListingsUpsertRoute: typeof ApiPublicListingsUpsertRoute
   ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
   ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
@@ -2750,6 +2803,7 @@ export interface RootRouteChildren {
   ApiPublicPartnerV1MeRoute: typeof ApiPublicPartnerV1MeRoute
   ApiPublicPartnerV1StatsRoute: typeof ApiPublicPartnerV1StatsRoute
   ApiPublicPartnerV1TaxonomiesRoute: typeof ApiPublicPartnerV1TaxonomiesRoute
+  ApiPublicPartnerV1WebhookRoute: typeof ApiPublicPartnerV1WebhookRouteWithChildren
   ApiPublicPortalV1AgencyRoute: typeof ApiPublicPortalV1AgencyRoute
   ApiPublicPortalV1AgentsRoute: typeof ApiPublicPortalV1AgentsRoute
   ApiPublicPortalV1PropertiesRoute: typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -3728,6 +3782,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicJobsPartnerApiSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/jobs/partner-webhooks': {
+      id: '/api/public/jobs/partner-webhooks'
+      path: '/api/public/jobs/partner-webhooks'
+      fullPath: '/api/public/jobs/partner-webhooks'
+      preLoaderRoute: typeof ApiPublicJobsPartnerWebhooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/listings/upsert': {
       id: '/api/public/listings/upsert'
       path: '/api/public/listings/upsert'
@@ -3945,6 +4006,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPartnerV1TaxonomiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/partner/v1/webhook': {
+      id: '/api/public/partner/v1/webhook'
+      path: '/api/public/partner/v1/webhook'
+      fullPath: '/api/public/partner/v1/webhook'
+      preLoaderRoute: typeof ApiPublicPartnerV1WebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/agency': {
       id: '/api/public/portal/v1/agency'
       path: '/api/public/portal/v1/agency'
@@ -4112,6 +4180,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/partner/v1/sandbox/simulate'
       preLoaderRoute: typeof ApiPublicPartnerV1SandboxSimulateRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/partner/v1/webhook/deliveries': {
+      id: '/api/public/partner/v1/webhook/deliveries'
+      path: '/deliveries'
+      fullPath: '/api/public/partner/v1/webhook/deliveries'
+      preLoaderRoute: typeof ApiPublicPartnerV1WebhookDeliveriesRouteImport
+      parentRoute: typeof ApiPublicPartnerV1WebhookRoute
+    }
+    '/api/public/partner/v1/webhook/test': {
+      id: '/api/public/partner/v1/webhook/test'
+      path: '/test'
+      fullPath: '/api/public/partner/v1/webhook/test'
+      preLoaderRoute: typeof ApiPublicPartnerV1WebhookTestRouteImport
+      parentRoute: typeof ApiPublicPartnerV1WebhookRoute
     }
     '/api/public/portal/v1/$portal/feed.xml': {
       id: '/api/public/portal/v1/$portal/feed.xml'
@@ -4555,6 +4637,23 @@ const ApiPublicPartnerV1ListingsRouteWithChildren =
     ApiPublicPartnerV1ListingsRouteChildren,
   )
 
+interface ApiPublicPartnerV1WebhookRouteChildren {
+  ApiPublicPartnerV1WebhookDeliveriesRoute: typeof ApiPublicPartnerV1WebhookDeliveriesRoute
+  ApiPublicPartnerV1WebhookTestRoute: typeof ApiPublicPartnerV1WebhookTestRoute
+}
+
+const ApiPublicPartnerV1WebhookRouteChildren: ApiPublicPartnerV1WebhookRouteChildren =
+  {
+    ApiPublicPartnerV1WebhookDeliveriesRoute:
+      ApiPublicPartnerV1WebhookDeliveriesRoute,
+    ApiPublicPartnerV1WebhookTestRoute: ApiPublicPartnerV1WebhookTestRoute,
+  }
+
+const ApiPublicPartnerV1WebhookRouteWithChildren =
+  ApiPublicPartnerV1WebhookRoute._addFileChildren(
+    ApiPublicPartnerV1WebhookRouteChildren,
+  )
+
 interface ApiPublicPortalV1PropertiesRouteChildren {
   ApiPublicPortalV1PropertiesIdRoute: typeof ApiPublicPortalV1PropertiesIdRoute
 }
@@ -4656,6 +4755,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronVumsiStatusRoute: ApiPublicCronVumsiStatusRoute,
   ApiPublicCronZonataStatusRoute: ApiPublicCronZonataStatusRoute,
   ApiPublicJobsPartnerApiSyncRoute: ApiPublicJobsPartnerApiSyncRoute,
+  ApiPublicJobsPartnerWebhooksRoute: ApiPublicJobsPartnerWebhooksRoute,
   ApiPublicListingsUpsertRoute: ApiPublicListingsUpsertRoute,
   ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
   ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,
@@ -4686,6 +4786,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPartnerV1MeRoute: ApiPublicPartnerV1MeRoute,
   ApiPublicPartnerV1StatsRoute: ApiPublicPartnerV1StatsRoute,
   ApiPublicPartnerV1TaxonomiesRoute: ApiPublicPartnerV1TaxonomiesRoute,
+  ApiPublicPartnerV1WebhookRoute: ApiPublicPartnerV1WebhookRouteWithChildren,
   ApiPublicPortalV1AgencyRoute: ApiPublicPortalV1AgencyRoute,
   ApiPublicPortalV1AgentsRoute: ApiPublicPortalV1AgentsRoute,
   ApiPublicPortalV1PropertiesRoute:
