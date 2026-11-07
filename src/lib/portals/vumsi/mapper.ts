@@ -194,6 +194,10 @@ export function buildVumsiAttrs(p: Row, fields: VumsiAttribute[], categoryName: 
     const { known, value } = habitooValue(p, f);
     const v = known ? convert(f, value) : null;
     const label = f.label ?? f.name;
+    if (typeof v === "number" && isConstructionYearField(f) && v > new Date().getFullYear()) {
+      warnings.push(`Anul construcției (${v}) nu a fost trimis la Vumsi, acceptă doar ani trecuți.`);
+      continue;
+    }
     if (typeof v === "number" && ((f.max != null && v > f.max) || (f.min != null && v < f.min))) {
       const limit = f.max != null && v > f.max ? `acceptă cel mult ${f.max}` : `acceptă cel puțin ${f.min}`;
       warnings.push(`${label} ${v} nu a fost trimis la Vumsi (${limit}).`);
