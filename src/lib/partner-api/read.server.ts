@@ -60,9 +60,9 @@ export async function handleListings(ctx: PartnerContext, store: PartnerReadStor
   const scope = await store.scope(ctx.portal.slug, ctx.identity.environment);
   const orgIds = q.agency_id ? scope.known.filter(o => o === q.agency_id) : scope.known;
   if (!orgIds.length) return json({ data: [], next_cursor: null });
-  const rows = (await store.listings(ctx.portal.slug, { orgIds, status: q.status, updatedSince: q.updated_since ?? null, after, limit: q.limit + 1 })).filter(r => present(r));
+  const rows = await store.listings(ctx.portal.slug, { orgIds, status: q.status, updatedSince: q.updated_since ?? null, after, limit: q.limit + 1 });
   const page = rows.slice(0, q.limit); const last = page[page.length - 1];
-  return json({ data: page.map(listingResponse), next_cursor: rows.length > q.limit && last ? encodeCursor({ u: last.updated_at, i: last.property_id, f: filterKey }) : null });
+  return json({ data: page.filter(r => present(r)).map(listingResponse), next_cursor: rows.length > q.limit && last ? encodeCursor({ u: last.updated_at, i: last.property_id, f: filterKey }) : null });
 }
 export async function handleListing(ctx: PartnerContext, store: PartnerReadStore, id: string) {
   if (!uuid.safeParse(id).success) return notFound(ctx, "Anunțul");
@@ -135,6 +135,7 @@ export async function supabaseReadStore(): Promise<PartnerReadStore> {
       let query = db.from("partner_api_listing_state").select("property_id,organization_id,visible,payload,updated_at,withdrawn_at").eq("portal", portal).in("organization_id", q.orgIds);
       if (q.status === "active") query = query.eq("visible", true);
       if (q.status === "withdrawn") query = query.eq("visible", false);
+      query = query.or(`visible.eq.true,withdrawn_at.gt.${new Date(Date.now() - WITHDRAWN_RETENTION_MS).toISOString()}`);
       if (q.updatedSince) query = query.gt("updated_at", q.updatedSince);
       if (q.after) query = query.or(`updated_at.gt.${q.after.u},and(updated_at.eq.${q.after.u},property_id.gt.${q.after.i})`);
       const r = await query.order("updated_at").order("property_id").limit(q.limit);
