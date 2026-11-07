@@ -6476,6 +6476,106 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_api_agency_state: {
+        Row: {
+          activated_at: string | null
+          active: boolean
+          deactivated_at: string | null
+          organization_id: string
+          portal: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          active: boolean
+          deactivated_at?: string | null
+          organization_id: string
+          portal: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          active?: boolean
+          deactivated_at?: string | null
+          organization_id?: string
+          portal?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_agency_state_portal_fkey"
+            columns: ["portal"]
+            isOneToOne: false
+            referencedRelation: "dynamic_feed_portals"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      partner_api_agent_state: {
+        Row: {
+          agent_id: string
+          content_hash: string
+          organization_id: string
+          payload: Json
+          portal: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          content_hash: string
+          organization_id: string
+          payload: Json
+          portal: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          content_hash?: string
+          organization_id?: string
+          payload?: Json
+          portal?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_agent_state_portal_fkey"
+            columns: ["portal"]
+            isOneToOne: false
+            referencedRelation: "dynamic_feed_portals"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      partner_api_events: {
+        Row: {
+          entity_id: string
+          entity_type: string
+          occurred_at: string
+          organization_id: string
+          portal: string
+          seq: number
+          type: string
+        }
+        Insert: {
+          entity_id: string
+          entity_type: string
+          occurred_at?: string
+          organization_id: string
+          portal: string
+          seq?: number
+          type: string
+        }
+        Update: {
+          entity_id?: string
+          entity_type?: string
+          occurred_at?: string
+          organization_id?: string
+          portal?: string
+          seq?: number
+          type?: string
+        }
+        Relationships: []
+      }
       partner_api_idempotency: {
         Row: {
           created_at: string
@@ -6516,6 +6616,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "partner_api_idempotency_portal_fkey"
+            columns: ["portal"]
+            isOneToOne: false
+            referencedRelation: "dynamic_feed_portals"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      partner_api_listing_state: {
+        Row: {
+          agent_id: string | null
+          content_hash: string
+          first_visible_at: string
+          organization_id: string
+          payload: Json
+          portal: string
+          property_id: string
+          updated_at: string
+          visible: boolean
+          withdrawn_at: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          content_hash: string
+          first_visible_at?: string
+          organization_id: string
+          payload: Json
+          portal: string
+          property_id: string
+          updated_at?: string
+          visible: boolean
+          withdrawn_at?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          content_hash?: string
+          first_visible_at?: string
+          organization_id?: string
+          payload?: Json
+          portal?: string
+          property_id?: string
+          updated_at?: string
+          visible?: boolean
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_listing_state_portal_fkey"
             columns: ["portal"]
             isOneToOne: false
             referencedRelation: "dynamic_feed_portals"
@@ -6585,6 +6732,39 @@ export type Database = {
           rate_check_failed?: boolean
           request_id?: string
           status?: number
+        }
+        Relationships: []
+      }
+      partner_api_sync_lease: {
+        Row: {
+          expires_at: string
+          holder: string | null
+          id: number
+        }
+        Insert: {
+          expires_at?: string
+          holder?: string | null
+          id: number
+        }
+        Update: {
+          expires_at?: string
+          holder?: string | null
+          id?: number
+        }
+        Relationships: []
+      }
+      partner_api_sync_queue: {
+        Row: {
+          organization_id: string
+          requested_at: string
+        }
+        Insert: {
+          organization_id: string
+          requested_at?: string
+        }
+        Update: {
+          organization_id?: string
+          requested_at?: string
         }
         Relationships: []
       }
@@ -12246,7 +12426,20 @@ export type Database = {
           used: number
         }[]
       }
+      partner_api_apply_sync: {
+        Args: {
+          _agencies: Json
+          _agents: Json
+          _listings: Json
+          _portal: string
+        }
+        Returns: undefined
+      }
       partner_api_cleanup: { Args: never; Returns: undefined }
+      partner_api_enqueue_sync: {
+        Args: { _orgs: string[] }
+        Returns: undefined
+      }
       partner_api_idempotency_claim: {
         Args: {
           _environment: string
@@ -12257,7 +12450,20 @@ export type Database = {
         }
         Returns: Json
       }
+      partner_api_purge: { Args: never; Returns: undefined }
       partner_api_rate_take: { Args: { _key_id: string }; Returns: Json }
+      partner_api_sync_lease_acquire: {
+        Args: { _holder: string; _seconds: number }
+        Returns: boolean
+      }
+      partner_api_sync_lease_release: {
+        Args: { _holder: string }
+        Returns: undefined
+      }
+      partner_api_take_sync_queue: {
+        Args: { _limit: number }
+        Returns: string[]
+      }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       portal_bulk_arm: { Args: never; Returns: undefined }
       portal_bulk_tick: { Args: never; Returns: undefined }
