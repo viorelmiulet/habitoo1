@@ -1,0 +1,3 @@
+CREATE POLICY feed_portal_logos_superadmin_select ON storage.objects FOR SELECT TO authenticated USING (bucket_id='feed-portal-logos' AND public.is_superadmin());
+CREATE POLICY feed_portal_logos_superadmin_insert ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id='feed-portal-logos' AND public.is_superadmin() AND name ~ '^[a-z][a-z0-9-]{1,39}/[a-f0-9-]{36}\.(png|jpg|webp)$');
+CREATE POLICY feed_portal_logos_superadmin_delete ON storage.objects FOR DELETE TO authenticated USING (bucket_id='feed-portal-logos' AND public.is_superadmin());
