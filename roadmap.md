@@ -1,3 +1,9 @@
+## K2 — portaluri cu feed create din SuperAdmin
+- [ ] Portaluri dinamice, validări slug/prefix, logo privat/public adecvat și creare atomică cu prima cheie
+- [ ] Index/XML generice, autentificare izolată și sursă lead din numele portalului; dezactivare 401
+- [ ] Registru comun în activare, selecție, republicare și afișare/numărătoare publică opt-in; prioritate portaluri din cod
+- [ ] Teste numai noi/site-feed; fără schimbări la /dezvoltatori sau publicare
+
 ## K1 — chei de index administrate în SuperAdmin
 - [x] Stocare SHA-256, RLS SuperAdmin, audit fără chei și ultima utilizare limitată atomic la 5 minute; migrare 0246 aplicată
 - [x] Autentificare gestionată și compatibilitate până la revocare explicită pentru cheile existente și tokenurile JSON/XML; fără modificarea formatelor
