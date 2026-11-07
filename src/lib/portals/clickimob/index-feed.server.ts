@@ -168,7 +168,7 @@ export async function handlePortalIndex(
   rawKey: string,
   portal: IndexPortal,
   deps: ClickimobIndexDeps = {
-    indexKey: () => process.env[INDEX_PORTALS[portal].secret],
+    indexKey: () => { const cfg = INDEX_PORTALS[portal as keyof typeof INDEX_PORTALS]; return cfg ? process.env[cfg.secret] : undefined; },
     authorize: async (portal, key) => (await import("@/lib/site-feed/index-keys.server")).authorizeIndexKey(portal, key),
     listAgencies: (now) => listPortalIndexedAgencies(now, portal),
     log: logFeedAccess,
@@ -183,6 +183,9 @@ export async function handlePortalIndex(
   }
   const key = rawKey.replace(/\.json$/i, "");
   try {
+  const { resolveIndexPortal } = await import("@/lib/dynamic-feed-portals.server");
+  const config = await resolveIndexPortal(portal);
+  if (!config?.active) return new Response(null, { status: 401 });
   const secret = deps.authorize ? await deps.authorize(portal, key) : (verifyClickimobIndexKey(key, deps.indexKey()) ? deps.indexKey() : null);
   if (!secret) {
     await deps.log({ ...base, organizationId: null, status: 401, detail: "unauthorized" });
@@ -191,11 +194,11 @@ export async function handlePortalIndex(
     const { baseUrl } = feedUrlsForRequest(new URL(request.url));
     const agencies = await deps.listAgencies(now);
     const body: ClickimobIndex = {
-      version: INDEX_PORTALS[portal].version,
+      version: config.version,
       generated_at: now.toISOString(),
       agencies: agencies.map((a) => {
-        const token = clickimobFeedToken(a.id, secret, portal);
-        const xml = indexXmlUrl(portal, baseUrl, token);
+        const token = clickimobFeedToken(a.id, secret, portal, config.prefix);
+        const xml = "xmlPath" in config ? `${baseUrl}${config.xmlPath}?token=${encodeURIComponent(token)}` : indexXmlUrl(portal, baseUrl, token);
         return { ...a, feed: { base_url: `${baseUrl}${indexFeedPath(portal)}`, token }, ...(xml ? { kyero_xml_url: xml } : {}) };
       }),
     };

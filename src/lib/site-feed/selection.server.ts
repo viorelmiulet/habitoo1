@@ -1,4 +1,4 @@
-import { FEED_PORTALS_REQUIRING_AGENT_PHONE, idsWithAgentPhone } from "@/lib/portals/listing-contact";
+import { feedRequiresAgentPhone, idsWithAgentPhone } from "@/lib/portals/listing-contact";
 import { readCompleteRows } from "./complete-read.server";
 
 /** Shared by the JSON list/detail and the XML inventory. */
@@ -7,7 +7,9 @@ export async function selectedPropertyIdsForPortal(organizationId: string, porta
   const pubs = await readCompleteRows((from, to) => supabaseAdmin.from("portal_publications").select("property_id")
     .eq("organization_id", organizationId).eq("portal_key", portal).eq("enabled", true).order("property_id").range(from, to));
   const ids = [...new Set(pubs.map(row => row.property_id))];
-  if (!FEED_PORTALS_REQUIRING_AGENT_PHONE.has(portal) || !ids.length) return ids;
+  const { resolveIndexPortal } = await import("@/lib/dynamic-feed-portals.server");
+  const dynamic = !feedRequiresAgentPhone(portal) && (await resolveIndexPortal(portal)) !== null;
+  if ((!feedRequiresAgentPhone(portal) && !dynamic) || !ids.length) return ids;
   const props: {id: string; assigned_to: string | null}[] = [];
   for (let i = 0; i < ids.length; i += 300) {
     props.push(...await readCompleteRows((from, to) => supabaseAdmin.from("properties").select("id, assigned_to")

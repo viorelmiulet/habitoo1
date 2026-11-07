@@ -48,7 +48,13 @@ export async function handleSiteContact(admin: Admin, auth: ContactAuth, input: 
   }
   const propertyId = property?.id ?? null;
 
-  const label = auth.portal ? portalSourceLabel(auth.portal) : null;
+  let label = auth.portal ? portalSourceLabel(auth.portal) : null;
+  if (auth.portal && !getPortalDefinition(auth.portal)) {
+    const { loadDynamicFeedPortals } = await import("@/lib/dynamic-feed-portals.server");
+    const row = (await loadDynamicFeedPortals()).find(p => p.slug === auth.portal);
+    if (!row?.active) return { status: 404, message: "Portal not found." };
+    label = row.display_name;
+  }
 
   // Retrimitere de la portal: același portal + același `message_id` → lead-ul existent.
   if (auth.portal && input.message_id) {

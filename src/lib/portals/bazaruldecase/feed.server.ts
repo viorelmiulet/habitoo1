@@ -20,12 +20,12 @@ const amenities = (p: PropertyRow) => [
   ]),
 ];
 
-export async function buildBazarulKyeroFeed(input: { organizationId: string; requestUrl: URL | string }): Promise<KyeroFeedBuild> {
+export async function buildBazarulKyeroFeed(input: { organizationId: string; requestUrl: URL | string; portal?: string }): Promise<KyeroFeedBuild> {
   const url = typeof input.requestUrl === "string" ? new URL(input.requestUrl) : input.requestUrl;
   const { baseUrl } = feedUrlsForRequest(url);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  const selectedIds = await selectedPropertyIdsForPortal(input.organizationId, BAZARULDECASE_PORTAL);
+  const selectedIds = await selectedPropertyIdsForPortal(input.organizationId, input.portal ?? BAZARULDECASE_PORTAL);
   if (!selectedIds.length) return { xml: kyeroDocument([]), properties: 0, offers: 0, warnings: [] };
 
   const rows: PropertyRow[] = [];
