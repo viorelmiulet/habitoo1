@@ -29,8 +29,8 @@ export function resolveSchema(schema: Schema): Schema {
 }
 export function schemaType(input: Schema): string {
   const schema = resolveSchema(input);
-  if (schema.oneOf || schema.anyOf) return (schema.oneOf ?? schema.anyOf ?? []).map(schemaType).join(" ou ");
-  const type = Array.isArray(schema.type) ? schema.type.join(" | ") : schema.type ?? "objet";
+  if (schema.oneOf || schema.anyOf) return (schema.oneOf ?? schema.anyOf ?? []).map(schemaType).join(" sau ");
+  const type = Array.isArray(schema.type) ? schema.type.join(" | ") : schema.type ?? "object";
   return type === "array" ? `${schemaType(schema.items ?? {})}[]` : type;
 }
 export function schemaRows(input: Schema, prefix = "", depth = 0): {name: string; schema: Schema; required: boolean}[] {
@@ -87,7 +87,8 @@ export function requestExample(path: string, method: string, operation: Operatio
   if (operation.security?.length) lines.push('  -H "Authorization: Bearer hbxx_EXEMPLU_AGENTIE.SEMNATURA_FICTIVA"');
   const media = operation.requestBody?.content["application/json"];
   if (media) { lines.push('  -H "Content-Type: application/json"'); lines.push(`  --data '${JSON.stringify(media.example ?? schemaExample(media.schema ?? {}), null, 2)}'`); }
-  return lines.join(" \\\n");
+  const command = lines.join(" \\\n");
+  return url.startsWith("$FEED_BASE") ? `# Folosește feed.base_url din indexul agenției\nFEED_BASE="${apiSpec.servers[0]?.url}/api/public/sites/v1"\n${command}` : command;
 }
 export function responseExample(operation: Operation): {code: string; format: string; body: string; schema?: Schema} {
   const entry = Object.entries(operation.responses).find(([code]) => code.startsWith("2")) ?? Object.entries(operation.responses)[0];

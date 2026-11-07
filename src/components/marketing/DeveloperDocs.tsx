@@ -49,7 +49,7 @@ function Endpoint({path, method, operation}: {path: string; method: string; oper
     <h3 className="text-lg font-bold text-navy">{operation.summary}</h3>
     <div className="mt-3 flex items-start gap-3 rounded-md bg-muted px-3 py-3 text-sm"><span className={`shrink-0 font-bold ${method === "post" ? "text-gold-dark" : "text-success"}`}>{method.toUpperCase()}</span><code className="min-w-0 break-words font-semibold [overflow-wrap:anywhere]">{path}</code></div>
     <p className="mt-4 leading-7 text-muted-foreground">{operation.description}</p>
-    <p className="mt-3 text-sm font-semibold">{operation["x-authentication"]?.description ?? (operation.security?.length ? `Bearer par agenție · Scop: ${operation["x-required-scopes"] ?? "conform tokenului"}`.replace("par agenție", "pe agenție") : "Fără token")}</p>
+    <p className="mt-3 text-sm font-semibold">{operation["x-authentication"]?.description ?? (operation.security?.length ? `Bearer pe agenție · Scop: ${operation["x-required-scopes"] ?? "conform tokenului"}` : "Fără token")}</p>
     {(operation.parameters?.length ?? 0) > 0 ? <table className="mt-4 w-full table-fixed text-left text-xs leading-5 sm:text-sm"><thead className="border-y bg-muted"><tr><th className="w-[35%] p-2">Parametru</th><th className="p-2">Descriere</th></tr></thead><tbody>{operation.parameters?.map(p => <tr key={`${p.in}-${p.name}`} className="border-b align-top"><td className="p-2 [overflow-wrap:anywhere]"><code className="font-semibold">{p.name}</code><div className="text-muted-foreground">{p.in} · {schemaType(p.schema)}</div><div className="text-gold-dark">{p.required ? "Obligatoriu" : "Opțional"}</div></td><td className="p-2 text-muted-foreground [overflow-wrap:anywhere]">{p.description} <Description schema={p.schema} /></td></tr>)}</tbody></table> : <p className="mt-3 text-sm text-muted-foreground">Fără parametri în cale sau query.</p>}
     {operation.requestBody?.content["application/json"]?.schema && <><h4 className="mt-6 font-semibold">Corpul cererii</h4><FieldTable schema={operation.requestBody.content["application/json"].schema} /></>}
     <CodeBlock text={requestExample(path, method, operation)} label={`curl · ${method.toUpperCase()} ${path}`} />
@@ -68,9 +68,17 @@ function Endpoints({match}: {match: (path: string) => boolean}) {
 export function DeveloperDocs() {
   const [active, setActive] = useState("introducere");
   useEffect(() => {
-    const observer = new IntersectionObserver(entries => { const first = entries.find(e => e.isIntersecting); if (first) setActive(first.target.id); }, {rootMargin: "-140px 0px -60% 0px"});
-    sections.forEach(([id]) => {const el = document.getElementById(id); if (el) observer.observe(el);});
-    return () => observer.disconnect();
+    const update = () => {
+      let current: string = "introducere";
+      for (const [id] of sections) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 155) current = id;
+      }
+      setActive(current);
+    };
+    window.addEventListener("scroll", update, {passive: true});
+    update();
+    return () => window.removeEventListener("scroll", update);
   }, []);
   const guide = apiSpec["x-developer-guide"];
   const index = operations.find(o => o.path.includes("/index/"));

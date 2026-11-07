@@ -1,7 +1,7 @@
 ## D2 — pagină publică pentru dezvoltatori
-- [ ] Documentație și exemple generate din OpenAPI, navigare desktop/telefon și copiere
-- [ ] Metadate, sitemap, linkuri din subsol și Integrări
-- [ ] Verificare vizuală 1440/390 și numai testele paginii noi; fără publicare
+- [x] Documentație și exemple generate din OpenAPI, navigare desktop/telefon și copiere
+- [x] Metadate, sitemap, linkuri din subsol și Integrări
+- [x] Verificare vizuală 1440/390, fără depășire orizontală; 7/7 teste ale paginii noi, fără publicare
 
 ## D1 — specificație publică pentru integrarea portalurilor
 - [x] Inventar din cod: șase indexuri INDEX_PORTALS, feed JSON, media, lead-uri, vizualizări și XML Kyero; diferențele reale documentate
