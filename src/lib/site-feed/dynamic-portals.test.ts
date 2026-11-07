@@ -126,7 +126,7 @@ describe("K2 dynamic feed portals", () => {
     const result = await sql.query(createSql, [JSON.stringify({ hbex_: "a".repeat(64), hbey_: "b".repeat(64) })]);
     expect(result.rows).toEqual([{ create_dynamic_feed_portal: "hbex_" }]);
     expect((await sql.query("SELECT portal,key_hash FROM public.portal_index_keys")).rows).toEqual([{ portal: "exempluimob", key_hash: "a".repeat(64) }]);
-    await expect(sql.query(createSql, [JSON.stringify({ hbex_: "a".repeat(64) })])).rejects.toThrow("Identificatorul existe");
+    await expect(sql.query(createSql, [JSON.stringify({ hbex_: "a".repeat(64) })])).rejects.toThrow("Identificatorul există");
     await expect(sql.exec("INSERT INTO public.dynamic_feed_portals(slug,display_name,key_prefix,website) VALUES('clickimob','Conflict','hbzz_','https://example.org')")).rejects.toThrow("Reserved");
     await sql.close();
   });

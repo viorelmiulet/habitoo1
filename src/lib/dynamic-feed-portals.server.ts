@@ -18,6 +18,7 @@ export async function resolveIndexPortal(slug: string) {
     ...(row.xml_enabled ? { xmlPath: `/api/public/portal/v1/${slug}/feed.xml` } : {}) } : null;
 }
 export async function findDynamicIndexTokenPortal(token: string): Promise<string | null> {
+  // Prefix is only dispatch: authenticateFeedRequest verifies the full HMAC and current agency presence afterwards.
   if (!/^hb[a-z]{2}_[A-Za-z0-9]+\.[a-f0-9]{64}$/.test(token)) return null;
   const row = (await loadDynamicFeedPortals()).find(p => token.startsWith(p.key_prefix));
   return row?.slug ?? null;
@@ -33,7 +34,6 @@ export async function createDynamicFeedPortalCore(caller: Caller, raw: unknown) 
   const reservedPrefixes = [...Object.values(INDEX_PORTALS).map(p => p.prefix), "hbps_"];
   const used = [...reservedPrefixes, ...current.map(p => p.key_prefix)];
   const suggested = chooseFeedPrefix(input.slug, used);
-  // Digest belongs to the random suffix (prefix is public); this allows the RPC to allocate a different prefix atomically.
   const suffix = randomBytes(32).toString("hex");
   const prefixes = [suggested, ...Array.from({ length: 676 }, (_, n) => `hb${String.fromCharCode(97 + Math.floor(n / 26), 97 + n % 26)}_`).filter(p => p !== suggested)];
   // The final key hash must include the actual chosen prefix, so allocate and insert inside a single RPC using a hash per candidate.
