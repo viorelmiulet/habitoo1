@@ -1,6 +1,7 @@
 /** Registrul de adaptoare: singurul loc care leagă un portal de codul lui. */
 import type { PortalAdapter } from "../adapter";
-import { clickimobAdapter, imobliAdapter, locuitAdapter, imobiliareplusAdapter, bazaruldecaseAdapter } from "./clickimob.server";
+import { createIndexFeedAdapter, clickimobAdapter, imobliAdapter, locuitAdapter, imobiliareplusAdapter, bazaruldecaseAdapter } from "./clickimob.server";
+import { getPortalDefinition } from "../registry";
 import { imobiliareAdapter } from "./imobiliare.server";
 import { imoveAdapter } from "./imove.server";
 import { imospotAdapter } from "./imospot.server";
@@ -47,5 +48,7 @@ const ADAPTERS: Record<string, PortalAdapter> = {
 };
 
 export function getPortalAdapter(portalId: string): PortalAdapter | null {
-  return ADAPTERS[portalId] ?? null;
+  if (ADAPTERS[portalId]) return ADAPTERS[portalId];
+  const def = getPortalDefinition(portalId);
+  return def?.dynamic_feed ? createIndexFeedAdapter(portalId, def.display_name) : null;
 }

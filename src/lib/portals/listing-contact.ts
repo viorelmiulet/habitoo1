@@ -4,6 +4,7 @@
  * fără trecere pe `organizations.phone` / `material_phone`.
  */
 import { normalizeRoMobile } from "@/lib/user-profile";
+import { getPortalDefinition } from "./registry";
 
 export type ListingContactAgent = {
   full_name: string | null;
@@ -51,6 +52,9 @@ export function resolveListingContact(property: {
 
 /** Portalurile de tip feed din care se exclud ofertele al căror agent nu are telefon. */
 export const FEED_PORTALS_REQUIRING_AGENT_PHONE = new Set(["clickimob", "imobli", "locuit", "imobiliareplus", "imove", "bazaruldecase"]);
+export function feedRequiresAgentPhone(portal: string) {
+  return FEED_PORTALS_REQUIRING_AGENT_PHONE.has(portal) || getPortalDefinition(portal)?.dynamic_feed === true;
+}
 
 /** Filtrează ofertele: rămân doar cele cu agent responsabil care are telefon valid. */
 export function idsWithAgentPhone(

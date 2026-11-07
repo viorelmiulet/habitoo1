@@ -4,7 +4,9 @@
  */
 
 /** Portalurile care își preiau singure ofertele: nu primesc trimiteri. */
+import { getPortalDefinition } from "./registry";
 export const AUTO_PULL_PORTALS = new Set(["imove", "properstar", "clickimob", "imobli", "locuit", "imobiliareplus", "bazaruldecase", "facebook_catalog"]);
+export function isAutoPullPortal(id: string) { return AUTO_PULL_PORTALS.has(id) || getPortalDefinition(id)?.dynamic_feed === true; }
 export const AUTO_PULL_MESSAGE = "Se actualizează automat la următoarea preluare.";
 export const EXCLUDED_PROPERTY_STATUSES = new Set(["sold", "rented", "archived"]);
 /** Pauza dintre două trimiteri pe același portal. */
@@ -71,8 +73,10 @@ export function selectRepublishPairs(input: {
     const publication = pubs.get(key);
     const pair = { propertyId, portalId };
     if (isPublishedPair(listing, publication)) {
-      (AUTO_PULL_PORTALS.has(portalId) ? autoPull : queued).push(pair);
-    } else if (!AUTO_PULL_PORTALS.has(portalId) && !input.locallyBlocked?.has(key) && isRetryFailedPair(listing, publication)) {
+      (isAutoPullPortal(portalId) ? autoPull : queued).push(pair);
+    } else if (isAutoPullPortal(portalId) && publication?.enabled && getPortalDefinition(portalId)?.dynamic_feed) {
+      autoPull.push(pair);
+    } else if (!isAutoPullPortal(portalId) && !input.locallyBlocked?.has(key) && isRetryFailedPair(listing, publication)) {
       retry.push(pair);
     }
   }

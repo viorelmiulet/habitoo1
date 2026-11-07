@@ -32,7 +32,17 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+const feedRegistryMiddleware = createMiddleware().server(async ({ next, request }) => {
+  const path = new URL(request.url).pathname;
+  // API auth resolves dynamic portals itself; pure media/static endpoints do not need a catalog read.
+  if (path.startsWith("/api/public/") || path.startsWith("/lovable/")) return next();
+  const { dynamicRegistryDefinitions } = await import("./lib/dynamic-feed-portals.server");
+  const { withFeedDefinitions } = await import("./lib/feed-registry-scope.server");
+  const definitions = await dynamicRegistryDefinitions();
+  return withFeedDefinitions(definitions, () => next());
+});
+
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware, csrfMiddleware],
+  requestMiddleware: [errorMiddleware, csrfMiddleware, feedRegistryMiddleware],
 }));
