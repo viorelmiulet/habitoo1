@@ -1,5 +1,6 @@
 import { agencyLogoFeedUrl, httpsUrlOrNull } from "@/lib/site-feed/mapper";
 import { CRM_URL } from "@/lib/host";
+import { incompleteFeedResponse, readCompleteRows } from "@/lib/site-feed/complete-read.server";
 /**
  * Indexul ClickImob (server-only):
  *   GET /api/public/feed/clickimob/index/{CLICKIMOB_INDEX_KEY}.json
@@ -101,35 +102,36 @@ export async function listClickimobIndexedAgencies(now: Date): Promise<Clickimob
 export async function listPortalIndexedAgencies(now: Date, portal: IndexPortal): Promise<ClickimobIndexedAgency[]> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const [orgs, connections, pubs, states] = await Promise.all([
-    supabaseAdmin
+    readCompleteRows((from, to) => supabaseAdmin
       .from("organizations")
       .select(
         "id, status, archived_at, name, legal_name, cui, email, phone, city, logo_url, logo_path, material_address, material_email, material_phone, material_website, updated_at",
-      ),
-    supabaseAdmin
+      ).order("id").range(from, to)),
+    readCompleteRows((from, to) => supabaseAdmin
       .from("portal_connections")
       .select("organization_id, activated, updated_at")
-      .eq("portal", portal),
-    supabaseAdmin
+      .eq("portal", portal).order("organization_id").range(from, to)),
+    readCompleteRows((from, to) => supabaseAdmin
       .from("portal_publications")
       .select("organization_id")
       .eq("portal_key", portal)
-      .eq("enabled", true),
-    supabaseAdmin
+      .eq("enabled", true).order("organization_id").order("property_id").range(from, to)),
+    readCompleteRows((from, to) => supabaseAdmin
       .from("portal_index_state")
       .select("organization_id, active, last_active_at, inactive_since")
-      .eq("portal", portal),
+      .eq("portal", portal).order("organization_id").range(from, to)),
   ]);
-  const firstError = [orgs, connections, pubs, states].find((r) => r.error)?.error;
-  if (firstError) throw new Error(firstError.message);
-
-  const orgRows = orgs.data ?? [];
+  const orgRows = orgs;
+  const orgIds = new Set(orgRows.map(o => o.id));
+  if (connections.some(c => c.activated && !orgIds.has(c.organization_id)) || pubs.some(p => !orgIds.has(p.organization_id))) {
+    throw new Error("Indexed agency could not be read");
+  }
   const { agencies, changes } = selectClickimobAgencies(
     {
       orgs: orgRows.map((o) => ({ ...o, logo_url: indexLogoUrl(o) })),
-      connections: connections.data ?? [],
-      selectedOrgs: (pubs.data ?? []).map((p) => p.organization_id),
-      states: states.data ?? [],
+      connections,
+      selectedOrgs: pubs.map(p => p.organization_id),
+      states,
     },
     now,
   );
@@ -138,7 +140,7 @@ export async function listPortalIndexedAgencies(now: Date, portal: IndexPortal):
       changes.map((c) => ({ ...c, portal, updated_at: now.toISOString() })),
       { onConflict: "portal,organization_id" },
     );
-    if (error) console.error(`[${portal}-index] state upsert failed`, error.message);
+    if (error) throw new Error("Index state could not be persisted");
   }
   return agencies;
 }
@@ -198,8 +200,8 @@ export async function handlePortalIndex(
     return new Response(JSON.stringify(body), { status: 200, headers: { ...CLICKIMOB_INDEX_HEADERS } });
   } catch (error) {
     console.error(`[${portal}-index] failed`, error);
-    await deps.log({ ...base, organizationId: null, status: 500, detail: "internal_error" });
-    return new Response(null, { status: 500 });
+    await deps.log({ ...base, organizationId: null, status: 503, detail: "incomplete_inventory" });
+    return incompleteFeedResponse();
   }
 }
 

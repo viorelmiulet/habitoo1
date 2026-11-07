@@ -2,6 +2,7 @@
 // Tokenul este stocat exclusiv ca hash SHA-256; valoarea în clar nu ajunge niciodată
 // în DB, în loguri sau în frontend după afișarea unică de la generare.
 import { createHash, randomBytes } from "node:crypto";
+import { incompleteFeedResponse } from "./complete-read.server";
 
 export const FEED_API_VERSION = "habitoo-site-feed/1.0";
 export const FEED_BASE_PATH = "/api/public/sites/v1";
@@ -124,6 +125,8 @@ export function feedRequestRateLimited(prefix: string, request: Request): boolea
 
 /** Opțiuni de autentificare. Comportamentul implicit rămâne neschimbat. */
 export type FeedAuthOptions = {
+  /** An inventory failure must be retryable, never interpreted as an empty inventory. */
+  inventory?: boolean;
   /**
    * Acceptă tokenul și din parametrul de URL `?token=` / `?key=` /
    * `?api_key=` / `?apikey=`.
@@ -405,9 +408,9 @@ export async function withFeedAuth(
       tokenPrefix: auth.tokenPrefix,
       endpoint,
       method,
-      status: 500,
+      status: options.inventory ? 503 : 500,
       detail: "internal_error",
     });
-    return errorResponse(500, "Internal error.");
+    return options.inventory ? incompleteFeedResponse() : errorResponse(500, "Internal error.");
   }
 }

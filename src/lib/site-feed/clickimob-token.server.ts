@@ -6,6 +6,7 @@
  */
 import { verifyClickimobFeedToken, CLICKIMOB_TOKEN_PREFIX, INDEX_PORTALS, type IndexPortal } from "@/lib/portals/clickimob/index-feed";
 import { properstarEntityId } from "@/lib/portals/properstar/mapper";
+import { readCompleteRows } from "./complete-read.server";
 
 export type ClickimobTokenMatch = {
   organizationId: string;
@@ -48,9 +49,8 @@ export async function resolvePortalIndexToken(
   if (!agency || (agency.status !== "active" && agency.status !== "grace")) return null;
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin.from("organizations").select("id");
-  if (error) throw new Error(error.message);
-  const matches = (data ?? []).filter((o) => properstarEntityId("hb", o.id) === officeId);
+  const data = await readCompleteRows((from, to) => supabaseAdmin.from("organizations").select("id").order("id").range(from, to));
+  const matches = data.filter(o => properstarEntityId("hb", o.id) === officeId);
   if (matches.length !== 1) return null;
   const match = matches[0];
   if (!match) return null;
