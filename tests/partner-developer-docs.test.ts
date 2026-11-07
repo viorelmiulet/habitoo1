@@ -24,12 +24,12 @@ function assertSchema(value:any,input:any,path='root') {
   if(s.items && Array.isArray(value))value.forEach((v,i)=>assertSchema(v,s.items,`${path}[${i}]`));
 }
 describe('P6 — Partner API documentation',()=>{
-  it('inventories every implemented route independently and never advertises absent webhooks',()=>{
+  it('inventories every implemented route including webhook methods',()=>{
     const routes=readdirSync('src/routes/api/public/partner/v1').filter(f=>f.endsWith('.ts')&&f!=='$.ts');
     const found:string[]=[];
-    for(const file of routes){const text=read(`src/routes/api/public/partner/v1/${file}`);const ast=ts.createSourceFile(file,text,ts.ScriptTarget.Latest,true);let route='';function visit(n:ts.Node){if(ts.isCallExpression(n)&&n.expression.getText(ast)==='createFileRoute'&&n.arguments[0]&&ts.isStringLiteral(n.arguments[0]))route=n.arguments[0].text;ts.forEachChild(n,visit);}visit(ast);const path=route.replace('/api/public/partner/v1','').replace(/\$id/g,'{id}');expect(spec.paths,path).toHaveProperty(path);const method=file==='me.ts'||text.includes('partnerGet(')?'get':'post';expect(spec.paths[path][method]).toBeDefined();found.push(path);}
+    for(const file of routes){const text=read(`src/routes/api/public/partner/v1/${file}`);const ast=ts.createSourceFile(file,text,ts.ScriptTarget.Latest,true);let route='';function visit(n:ts.Node){if(ts.isCallExpression(n)&&n.expression.getText(ast)==='createFileRoute'&&n.arguments[0]&&ts.isStringLiteral(n.arguments[0]))route=n.arguments[0].text;ts.forEachChild(n,visit);}visit(ast);const path=route.replace('/api/public/partner/v1','').replace(/\$id/g,'{id}');expect(spec.paths,path).toHaveProperty(path);const methods=file==='webhook.ts'?['get','put','delete']:file==='webhook.deliveries.ts'?['get']:file==='me.ts'||text.includes('partnerGet(')?['get']:['post'];for(const method of methods)expect(spec.paths[path][method]).toBeDefined();found.push(path);}
     expect(Object.keys(spec.paths).sort()).toEqual(found.sort());
-    expect(Object.keys(spec.paths).some(p=>p.includes('webhook'))).toBe(false);
+    expect(Object.keys(spec.paths).filter(p=>p.includes('webhook'))).toHaveLength(3);
   });
   it('is generated reproducibly from real serializers and input validators',()=>{expect(spec).toEqual(generated);expect(spec.openapi).toBe('3.1.0');});
   it('matches listing serialization for precise, imprecise and withdrawn properties',()=>{
