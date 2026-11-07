@@ -5,7 +5,7 @@
  *  - /api/public/portal/v1/*  (cheie emisă de Habitoo pentru un portal)
  * Nu există o a doua implementare paralelă pentru proprietăți.
  */
-import { FEED_PORTALS_REQUIRING_AGENT_PHONE, idsWithAgentPhone } from "@/lib/portals/listing-contact";
+import { selectedPropertyIdsForPortal } from "./selection.server";
 import {
   errorResponse,
   jsonResponse,
@@ -66,6 +66,8 @@ async function portalKeysFor(
       .in("status", ["published", "updated"])
       .in("property_id", propertyIds),
   ]);
+  if (publications.error) throw publications.error;
+  if (listings.error) throw listings.error;
   const push = (propertyId: string, portal: string) => {
     const list = result.get(propertyId) ?? [];
     if (!list.includes(portal)) list.push(portal);
@@ -81,31 +83,6 @@ async function portalKeysFor(
  * etc.) trebuie să conțină DOAR aceste oferte: dacă o ofertă retrasă rămâne în
  * feed, portalul o reimportă la următoarea citire și retragerea nu are efect.
  */
-async function selectedPropertyIdsForPortal(
-  organizationId: string,
-  portal: string,
-): Promise<string[]> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("portal_publications")
-    .select("property_id")
-    .eq("organization_id", organizationId)
-    .eq("portal_key", portal)
-    .eq("enabled", true);
-  const ids = [...new Set((data ?? []).map((row) => row.property_id))];
-  if (!FEED_PORTALS_REQUIRING_AGENT_PHONE.has(portal) || ids.length === 0) return ids;
-  // ClickImob: oferta al cărei agent nu are telefon nu intră în feed.
-  const { data: props } = await supabaseAdmin
-    .from("properties")
-    .select("id, assigned_to")
-    .in("id", ids);
-  const agentIds = [...new Set((props ?? []).map((p) => p.assigned_to).filter(Boolean))] as string[];
-  const { data: agents } = agentIds.length
-    ? await supabaseAdmin.from("profiles").select("id, full_name, email, phone").in("id", agentIds)
-    : { data: [] };
-  return idsWithAgentPhone(props ?? [], agents ?? []);
-}
-
 export async function handlePropertiesList(
   request: Request,
   auth: FeedAuthOk,
@@ -153,13 +130,14 @@ export async function handlePropertiesList(
   if (error?.code === "PGRST103") {
     // Pagină peste last_page: 200 cu data=[] și metadata consistentă.
     const head = await baseQuery().range(0, 0);
+    if (head.error) throw head.error;
     data = [];
     count = head.count ?? 0;
     error = null;
   }
   if (error) throw error;
 
-  const rows = (data ?? []) as PropertyRow[];
+  const rows = ((data ?? []) as PropertyRow[]).filter(isPropertyFeedEligible);
   const ids = rows.map((r) => r.id);
   const agentIds = [
     ...new Set(rows.map((r) => r.assigned_to).filter((v): v is string => Boolean(v))),
@@ -180,6 +158,8 @@ export async function handlePropertiesList(
       : Promise.resolve({ data: [] as { id: string; full_name: string }[], error: null }),
     portalKeysFor(auth.organizationId, ids),
   ]);
+  if (images.error) throw images.error;
+  if (agents.error) throw agents.error;
 
   const imagesByProperty = new Map<string, PropertyImageRow[]>();
   for (const img of (images.data ?? []) as PropertyImageRow[]) {
@@ -266,6 +246,8 @@ export async function handlePropertyDetail(
       : Promise.resolve({ data: null }),
     portalKeysFor(auth.organizationId, [row.id]),
   ]);
+  if (images.error) throw images.error;
+  if ("error" in agent && agent.error) throw agent.error;
 
   const { baseUrl, publicSiteUrl } = feedUrlsForRequest(new URL(request.url));
   const mapped = mapPropertyToFeed(row, {

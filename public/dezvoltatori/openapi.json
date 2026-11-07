@@ -3,8 +3,8 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "Habitoo — API pentru integrarea portalurilor",
-    "version": "1.0.0",
-    "description": "Contract derivat din cod la 7 noiembrie 2026. Exclusiv endpointurile pentru indexul INDEX_PORTALS, feed JSON pe agenție, imagini, lead-uri, vizualizări și model XML Kyero v3. Fără cron, webhook-uri primite, OAuth, cataloage, mail sau upsert-uri interne. Toate exemplele sunt fictive. Agenția și portalul sunt determinate din token, niciodată din organization_id trimis de client. Bearer este recomandat. /sites/v1 nu acceptă token în query. Rate limit pentru feedurile autentificate: 120 cereri/60 secunde per prefix token + IP, best-effort local (nu distribuit), inclusiv XML; token lipsă întoarce 401 înaintea contorului. Media nu are limită în handler. Scopuri: feed:read, agents:read, leads:write; nu sunt scopuri OAuth. RETRAGERE: portalul trebuie să retragă un anunț care nu mai apare în inventarul complet citit cu succes; nu există tombstones. Parcurgeți toate paginile înainte de reconciliere și nu interpretați 401/429/500 sau citirea incompletă drept retragere. Paginarea nu are snapshot/cursor și ordinea se poate schimba între pagini. În grace feedul returnează inventar gol; dacă agenția dispare din index, retrageți ofertele ei. Vezi x-code-ambiguities pentru limite reale ale implementării."
+    "version": "1.1.0",
+    "description": "Contract derivat din cod la 7 noiembrie 2026. Exclusiv endpointurile pentru indexul INDEX_PORTALS, feed JSON pe agenție, imagini, lead-uri, vizualizări și model XML Kyero v3. Fără cron, webhook-uri primite, OAuth, cataloage, mail sau upsert-uri interne. Toate exemplele sunt fictive. Agenția și portalul sunt determinate din token, niciodată din organization_id trimis de client. Bearer este recomandat. /sites/v1 nu acceptă token în query. Rate limit pentru feedurile autentificate: 120 cereri/60 secunde per prefix token + IP, best-effort local (nu distribuit), inclusiv XML; token lipsă întoarce 401 înaintea contorului. Media nu are limită în handler. Scopuri: feed:read, agents:read, leads:write; nu sunt scopuri OAuth. RETRAGERE: portalul trebuie să retragă un anunț care nu mai apare în inventarul complet citit cu succes; nu există tombstones. Parcurgeți toate paginile înainte de reconciliere și nu interpretați 401/429/500/503 sau citirea incompletă drept retragere. Paginarea nu are snapshot/cursor și ordinea se poate schimba între pagini. În grace feedul returnează inventar gol; dacă agenția dispare din index, retrageți ofertele ei. Vezi x-code-ambiguities pentru limite reale ale implementării. XML și index: orice generare incompletă întoarce 503 cu Retry-After: 300, fără inventar parțial. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
   },
   "x-developer-guide": {
     "introduction": "Habitoo oferă portalurilor anunțurile agențiilor care activează integrarea și selectează ofertele pentru acel portal, împreună cu agenții responsabili, fotografiile și actualizările. Sunt disponibile două modele: feed JSON pe agenție și feed XML Kyero v3. Indexul este punctul de pornire pentru descoperirea agențiilor eligibile.",
@@ -22,10 +22,21 @@
       "Recomandare de integrare, nu garanție de actualizare: citește indexul și feedurile la aproximativ 15–30 de minute, eșalonat pe agenții. Ajustează frecvența împreună cu echipa Habitoo; evită cererile simultane inutile.",
       "Pentru actualizare incrementală locală, compară datamodificare cu versiunea importată. API-ul nu oferă un filtru updated_since, un cursor sau un snapshot: citește tot inventarul pentru reconciliere.",
       "Dacă portalul poate afișa direct fotografiile prin URL, folosește images[].src fără descărcare. Păstrează linkul Habitoo, nu destinația temporară a redirectului; aplică w, h și fit pentru dimensiunea afișată.",
-      "Retrage ofertele absente numai după citirea reușită a tuturor paginilor. Un răspuns de eroare sau o citire întreruptă nu este un inventar gol. Nu există tombstones; ordinea se poate schimba între pagini. Pentru XML, ține cont de limita de completitudine descrisă în contract.",
-      "Trimite un message_id stabil pentru fiecare mesaj al portalului. Nu retrimite automat POST visits după un timeout: incrementul nu este idempotent. La 429, amână cererile și reia cu întârziere progresivă; nu există Retry-After."
+      "Nu retrageți anunțuri după un răspuns care nu e 200 complet. Retrageți ofertele absente numai după citirea reușită a tuturor paginilor. XML și indexul întorc 503 cu Retry-After: 300 la eroare, fără inventar parțial. Nu există tombstones sau snapshot; ordinea se poate schimba între pagini.",
+      "Trimiteți un message_id stabil pentru fiecare lead și un event_id stabil pentru fiecare eveniment de vizualizare. event_id previne incrementul dublu la retrimitere, inclusiv după rotirea cheii portalului. Fără event_id, nu retrimiteți automat POST visits după un timeout. La 503 așteptați Retry-After: 300; la 429 folosiți întârziere progresivă."
     ],
-    "history": [{ "version": "1.0.0", "date": "2026-11-07", "description": "Prima specificație OpenAPI 3.1 derivată din cod: indexul agențiilor, feed JSON, media, lead-uri, vizualizări și XML Kyero v3. Documentația este generată din această specificație." }],
+    "history": [
+      {
+        "version": "1.1.0",
+        "date": "2026-11-07",
+        "description": "Feeduri XML și index complete sau 503 cu Retry-After: 300; filtre JSON/XML comune și acces XML exclusiv al portalului. event_id opțional pentru vizualizări idempotente."
+      },
+      {
+        "version": "1.0.0",
+        "date": "2026-11-07",
+        "description": "Prima specificație OpenAPI 3.1 derivată din cod: indexul agențiilor, feed JSON, media, lead-uri, vizualizări și XML Kyero v3. Documentația este generată din această specificație."
+      }
+    ],
     "contact": "contact@habitoo.ro"
   },
   "servers": [
@@ -61,7 +72,7 @@
         "tags": [
           "Index portal"
         ],
-        "description": "Cheia de index este secretul portalului, nu tokenul individual al agenției. Lista completă, fără paginare. Sunt incluse agențiile activate active/trial cu cel puțin o selecție enabled, ori în grace (7 zile); lipsa selecțiilor elimină agenția imediat. Din index se obțin baza și tokenul pe agenție. iMove indică feed dedicat, nu feedul JSON sites/v1. Properstar nu folosește INDEX_PORTALS și nu intră în acest model. Limită locală best-effort: 120 cereri/60 secunde per portal și IP, inclusiv chei invalide; nu este distribuită.",
+        "description": "Cheia de index este secretul portalului, nu tokenul individual al agenției. Lista completă, fără paginare. Sunt incluse agențiile activate active/trial cu cel puțin o selecție enabled, ori în grace (7 zile); lipsa selecțiilor elimină agenția imediat. Din index se obțin baza și tokenul pe agenție. iMove indică feed dedicat, nu feedul JSON sites/v1. Properstar nu folosește INDEX_PORTALS și nu intră în acest model. Limită locală best-effort: 120 cereri/60 secunde per portal și IP, inclusiv chei invalide; nu este distribuită. Citirile sunt paginate complet; orice eroare, inclusiv o agenție activă lipsă din citire sau eroare de salvare a stării, produce 503, nu un index parțial.",
         "security": [],
         "parameters": [
           {
@@ -116,8 +127,30 @@
           "429": {
             "description": "Limita locală depășită; fără Retry-After. Corp gol, fără anvelopă JSON."
           },
-          "500": {
-            "description": "Generarea indexului a eșuat. Corp gol, fără anvelopă JSON."
+          "503": {
+            "description": "Inventarul nu a putut fi generat complet. Nu retrageți anunțuri după un răspuns care nu e 200 complet. Reîncercați după 300 secunde.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "const": "300"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Service unavailable. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
+                }
+              }
+            }
           }
         },
         "x-authentication": {
@@ -1570,7 +1603,7 @@
       },
       "post": {
         "summary": "Raportează vizualizări",
-        "description": "leads:write O intrare sau un lot de 1–500. Incrementează atomic per proprietate, dată și sursă (sursă omisă/gol = același grup). NU este idempotent: repetarea cererii adaugă din nou views; nu acceptă cheie de deduplicare. Acceptă doar proprietăți din agenție, fără verificarea publicării/selecției. Fiecare intrare se numără individual; proprietățile inexistente/din altă agenție sunt ignorate.",
+        "description": "leads:write O intrare sau un lot de 1–500. Incrementează atomic per proprietate, dată și sursă. event_id opțional revendică un eveniment durabil per agenție + portal înaintea incrementului, în aceeași tranzacție. Același portal și event_id retrimis: 200 cu deduplicated: true, fără increment nou. Fără event_id, retrimiterea adaugă din nou views, ca înainte. Sursa din body nu determină identitatea portalului; aceasta vine exclusiv din token. Proprietățile inexistente/din altă agenție sunt ignorate. În lot, accepted include duplicatele; duplicates le numără separat și deduplicated este true dacă există cel puțin una.",
         "tags": [
           "Vizualizări"
         ],
@@ -1614,6 +1647,13 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VisitResult"
+                },
+                "example": {
+                  "accepted": 1,
+                  "rejected": 0,
+                  "deduplicated": true,
+                  "duplicates": 1,
+                  "api_version": "habitoo-site-feed/1.0"
                 }
               }
             }
@@ -1804,7 +1844,8 @@
               "example": {
                 "id": "11111111-1111-4111-8111-111111111111",
                 "views": 1,
-                "source": "portal-exemplu"
+                "source": "portal-exemplu",
+                "event_id": "EXEMPLU-EVENIMENT-001"
               }
             }
           }
@@ -1814,7 +1855,7 @@
     "/api/public/portal/v1/bazaruldecase/feed.xml": {
       "get": {
         "summary": "Inventar XML Kyero v3",
-        "description": "feed:read Format descris generic; implementarea existentă este la calea BazarulDeCase, nu există cale Kyero generică. Fără paginare. Aceleași reguli de eligibilitate publică, numai ofertele selectate pentru bazaruldecase, inclusiv când se folosește un token obișnuit de site/portal. Tokenul index BazarulDeCase este acceptat; toate celelalte tokenuri de index sunt respinse. Tokenurile obișnuite site/portal cu feed:read sunt de asemenea acceptate (codul nu impune exclusiv tokenul BazarulDeCase). Grace: XML gol. Tip necunoscut, preț lipsă/nepozitiv sau monedă neacceptată: tranzacția este omisă, avertismentul nu apare în răspuns. Spre deosebire de selecția JSON, XML nu filtrează ofertele după telefonul agentului. Până la 50 imagini; o proprietate cu ambele tranzacții are două elemente. XML gol este un inventar gol, de reconciliat la retragere. Unele erori de citire sunt ignorate de generator și pot produce XML parțial/gol cu 200; codul nu oferă un indicator de inventar incomplet.",
+        "description": "feed:read Format XML Kyero v3; calea existentă este cea BazarulDeCase. Fără paginare pentru consumator; toate citirile interne sunt paginate. Acceptă numai tokenul din indexul BazarulDeCase sau o cheie de portal Habitoo al cărei portal este bazaruldecase. Un token de site cu feed:read primește 403; tokenurile de index ale altor portaluri sunt respinse cu 401. Aceeași selecție ca JSON, aceeași funcție de eligibilitate, inclusiv telefon valid al agentului responsabil. Grace: inventar XML gol cu 200. Dacă orice citire/generare eșuează, întregul răspuns este 503 cu Retry-After: 300, fără XML parțial. Tip necunoscut, preț lipsă/nepozitiv sau monedă neacceptată nu mai omit tranzacții în tăcere: întregul document devine 503. Până la 50 imagini; o ofertă cu ambele tranzacții are două elemente. Nu retrageți anunțuri după un răspuns care nu e 200 complet.",
         "tags": [
           "XML Kyero"
         ],
@@ -1854,7 +1895,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Document XML complet (sau gol).",
+            "description": "Inventar XML complet sau inventar gol intenționat; niciodată XML parțial la eroare.",
             "headers": {
               "Cache-Control": {
                 "schema": {
@@ -1896,21 +1937,7 @@
             }
           },
           "403": {
-            "description": "Missing scope: <scope>",
-            "headers": {
-              "Cache-Control": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "no-store"
-              },
-              "x-habitoo-api-version": {
-                "schema": {
-                  "const": "habitoo-site-feed/1.0",
-                  "type": "string"
-                }
-              }
-            },
+            "description": "Tokenul nu aparține portalului bazaruldecase sau lipsește feed:read.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1943,26 +1970,27 @@
               }
             }
           },
-          "500": {
-            "description": "Internal error.",
+          "503": {
+            "description": "Inventarul nu a putut fi generat complet. Nu retrageți anunțuri după un răspuns care nu e 200 complet. Reîncercați după 300 secunde.",
             "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "const": "300"
+                }
+              },
               "Cache-Control": {
                 "schema": {
-                  "type": "string"
-                },
-                "description": "no-store"
-              },
-              "x-habitoo-api-version": {
-                "schema": {
-                  "const": "habitoo-site-feed/1.0",
-                  "type": "string"
+                  "type": "string",
+                  "const": "no-store"
                 }
               }
             },
             "content": {
-              "application/json": {
+              "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "type": "string",
+                  "const": "Service unavailable. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
                 }
               }
             }
@@ -3402,6 +3430,13 @@
             "type": "string",
             "description": "Dată calendaristică reală: de la azi UTC minus 365 zile la azi UTC plus 1 zi; implicit azi UTC.",
             "format": "date"
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "ID stabil opțional al evenimentului (trim), unic în agenție + portal autentificat. Retrimiterea nu incrementează. Cheile rotite ale aceluiași portal păstrează deduplicarea; pentru tokenuri de site, identitatea este ID-ul tokenului. În lot, fiecare intrare are propriul event_id.",
+            "example": "EXEMPLU-EVENIMENT-001"
           }
         },
         "required": [
@@ -3430,7 +3465,7 @@
         "properties": {
           "accepted": {
             "type": "integer",
-            "description": "Numărul intrărilor acceptate, inclusiv ID-uri repetate."
+            "description": "Intrări pentru proprietăți ale agenției procesate cu succes, inclusiv duplicate recunoscute (fără increment suplimentar)."
           },
           "rejected": {
             "type": "integer",
@@ -3439,6 +3474,14 @@
           "api_version": {
             "const": "habitoo-site-feed/1.0",
             "type": "string"
+          },
+          "deduplicated": {
+            "type": "boolean",
+            "description": "Prezent numai dacă cel puțin o intrare are event_id. true dacă cel puțin un eveniment a fost deja procesat; la cerere singulară duplicată: 200 și true."
+          },
+          "duplicates": {
+            "type": "integer",
+            "description": "Prezent numai dacă există event_id; numărul intrărilor duplicate recunoscute. În lot mixt, celelalte evenimente noi se incrementează normal."
           }
         },
         "required": [
@@ -3794,13 +3837,11 @@
     "JSON: tipurile, monedele și câmpurile de dotări sunt șiruri transmise direct, fără enum exhaustiv; EUR/RON/USD sunt opțiunile interfeței, nu validare de feed.",
     "JSON: idstr poate fi UUID când referința lipsește, dar POST contacts cu idstr caută numai referința. Folosiți id pentru UUID. Feedul nu emite un câmp UUID id separat; alias/url îl conțin.",
     "JSON: pole este doar tag; nu este definită semnificația comercială. energy și alte câmpuri de compatibilitate rămân null; mobilat_value/utilitati_values/dotari_values sunt aliasuri.",
-    "GET visits agregă numai cele mai recente 1000 rânduri și cere leads:write, deși este citire. POST visits adaugă din nou la retrimitere, fără idempotency key; nu sunt vizionări programate.",
     "Contacts: site token răspunde 201 inclusiv la reutilizare; message_id deduplică numai portalurile. Unele interogări/scrieri nu verifică erorile și deduplicarea nu este atomică în toate ramurile.",
-    "XML: desc.en repetă textul românesc, surface_area.built folosește suprafața utilă/generală, emissions este X. Avertismentele privind ofertele omise nu se întorc către consumator.",
-    "XML: unele erori ale interogărilor sunt ignorate și pot produce inventar parțial/gol cu 200; nu există indicator de completitudine. Aceasta limitează siguranța reconcilierii automate la retragere.",
-    "XML: comentariul spune exclusiv token BazarulDeCase, dar autentificarea acceptă și token de site/cheie de portal cu feed:read; selecția rămâne bazaruldecase.",
+    "XML: desc.en repetă textul românesc, surface_area.built folosește suprafața utilă/generală, emissions este X. Orice imposibilitate de reprezentare a unei oferte produce 503 pentru întregul document.",
     "INDEX_PORTALS include iMove, cu feed dedicat neacoperit de acest model JSON. Properstar are alt index/model și este în afara INDEX_PORTALS.",
     "Media: w/h se aplică numai imaginilor din stocare și poate reveni la original; pentru URL HTTPS extern redimensionarea nu este garantată. Avatar/logo nu verifică eligibilitatea agenției în index.",
-    "Filtrare: toate cele șase portaluri din INDEX_PORTALS cer telefonul agentului în selecția JSON; XML Kyero nu aplică această filtrare, deci inventarele JSON și XML pot diferi."
+    "GET visits însumează numai cele mai recente 1000 rânduri și cere leads:write; event_id protejează POST, nu schimbă limita agregării GET. Fără event_id, retrimiterile se incrementează ca înainte.",
+    "XML: ofertele eligibile JSON care nu pot fi reprezentate în Kyero (tip, preț, monedă) produc 503 pentru întregul inventar; portalul păstrează inventarul anterior și reîncearcă. Nu există snapshot comun între cererile JSON/XML sau între pagini."
   ]
 }

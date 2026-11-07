@@ -8,7 +8,7 @@ const sections = [
   ["introducere", "Introducere"], ["pornire", "Pornire rapidă"], ["onboarding", "Onboarding și chei"],
   ["autentificare", "Autentificare"], ["index", "Indexul agențiilor"], ["anunturi", "Feedul de anunțuri"],
   ["agenti", "Agenți și agenție"], ["poze", "Poze"], ["xml", "Feed XML (Kyero v3)"],
-  ["leaduri", "Trimiterea lead-urilor"], ["vizionari", "Vizionări"], ["erori", "Erori și coduri de răspuns"],
+  ["leaduri", "Trimiterea lead-urilor"], ["vizionari", "Vizualizări"], ["erori", "Erori și coduri de răspuns"],
   ["limite", "Limite de cereri"], ["practici", "Bune practici"], ["istoric", "Istoric versiuni"], ["contact-tehnic", "Contact tehnic"],
 ] as const;
 
@@ -111,7 +111,7 @@ export function DeveloperDocs() {
         <Section id="poze" title="Poze"><p>{guide.recommendations[2]}</p><Endpoints match={p => p.includes("/media/")} /></Section>
         <Section id="xml" title="Feed XML (Kyero v3)"><Endpoints match={p => p.endsWith("feed.xml")} /></Section>
         <Section id="leaduri" title="Trimiterea lead-urilor"><Endpoints match={p => p.endsWith("/contacts")} /></Section>
-        <Section id="vizionari" title="Vizionări"><p className="border-l-2 border-gold pl-4 font-semibold">În acest API, „visits” înseamnă vizualizări ale anunțurilor, nu programări de vizionare.</p><Endpoints match={p => p.endsWith("/visits")} /></Section>
+        <Section id="vizionari" title="Vizualizări"><p className="border-l-2 border-gold pl-4 font-semibold">În acest API, „visits” înseamnă vizualizări ale anunțurilor, nu programări de vizionare.</p><Endpoints match={p => p.endsWith("/visits")} /></Section>
         <Section id="erori" title="Erori și coduri de răspuns"><p>Codurile posibile sunt listate la fiecare endpoint. Feedul JSON întoarce anvelopa de mai jos; indexul are erori cu corp gol, iar media și XML folosesc text simplu conform contractului.</p><CodeBlock text={JSON.stringify({error: "Invalid or revoked API token.", api_version: apiSpec.components.schemas.Error?.properties?.api_version?.const}, null, 2)} label="Exemplu de eroare JSON · 401" /><h3 className="font-semibold">Particularități și limite cunoscute din cod</h3><ul className="list-disc space-y-3 pl-5 text-sm text-muted-foreground">{apiSpec["x-code-ambiguities"].map(p => <li key={p}>{p}</li>)}</ul></Section>
         <Section id="limite" title="Limite de cereri"><p>{apiSpec.info.description}</p></Section>
         <Section id="practici" title="Bune practici"><ul className="list-disc space-y-4 pl-5">{guide.recommendations.map(p => <li key={p}>{p}</li>)}</ul></Section>

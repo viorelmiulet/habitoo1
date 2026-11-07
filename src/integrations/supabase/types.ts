@@ -10243,6 +10243,35 @@ export type Database = {
           },
         ]
       }
+      site_feed_visit_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          identity_key: string
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          identity_key: string
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          identity_key?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_feed_visit_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_feed_visits: {
         Row: {
           created_at: string
@@ -12372,6 +12401,18 @@ export type Database = {
           _views: number
         }
         Returns: undefined
+      }
+      site_feed_record_visit_event: {
+        Args: {
+          _event_id: string
+          _identity: string
+          _occurred_on: string
+          _org: string
+          _property: string
+          _source: string
+          _views: number
+        }
+        Returns: boolean
       }
       start_portal_bulk_job: {
         Args: {
