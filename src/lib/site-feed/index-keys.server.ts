@@ -6,6 +6,10 @@ export type IndexKeyRow = {
   source: "managed" | "legacy"; status: "active" | "revoked";
   created_at: string; created_by: string | null; last_used_at: string | null;
 };
+function validatedRow(row: Omit<IndexKeyRow, "source" | "status"> & { source: string; status: string }): IndexKeyRow {
+  if ((row.source !== "managed" && row.source !== "legacy") || (row.status !== "active" && row.status !== "revoked")) throw new Error("Index key metadata invalid");
+  return { ...row, source: row.source, status: row.status };
+}
 export const hashIndexKey = (key: string) => createHash("sha256").update(key).digest("hex");
 export function sameKeyHash(a: string, b: string): boolean {
   if (!/^[a-f0-9]{64}$/.test(a) || !/^[a-f0-9]{64}$/.test(b)) return false;
@@ -27,7 +31,7 @@ export async function readIndexKeys(portal: IndexPortal): Promise<IndexKeyRow[]>
   const admin = await adminClient();
   const { data, error } = await admin.from("portal_index_keys").select("*").eq("portal", portal);
   if (error) throw new Error("Index key lookup unavailable");
-  return data ?? [];
+  return (data ?? []).map(validatedRow);
 }
 /** Register legacy metadata only on use or explicit administration; never store its plaintext. */
 export async function legacyIndexKey(portal: IndexPortal, rows: IndexKeyRow[], actor: string | null = null) {
@@ -42,7 +46,7 @@ export async function legacyIndexKey(portal: IndexPortal, rows: IndexKeyRow[], a
     source: "legacy", created_by: actor,
   }, { onConflict: "portal,key_hash", ignoreDuplicates: true }).select("*").maybeSingle();
   if (error) throw new Error("Index key registration unavailable");
-  if (data) return data;
+  if (data) return validatedRow(data);
   return (await readIndexKeys(portal)).find(row => sameKeyHash(row.key_hash, hash)) ?? null;
 }
 async function touchIndexKey(row: IndexKeyRow) {
