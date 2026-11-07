@@ -1,3 +1,8 @@
+## D1 — specificație publică pentru integrarea portalurilor
+- [ ] Inventar din cod: index, feed JSON, media, lead-uri, vizite și XML Kyero
+- [ ] OpenAPI 3.1 în română la /dezvoltatori/openapi.json, numai exemple fictive
+- [ ] Test nou de existență rute și concordanță mapper; doar testul nou, fără publicare
+
 ## A8 — mesaje portaluri pe Acasă
 - [x] Nume din registry, mesaje pentru preluare automată și gruparea erorilor pe peste două portaluri; 25/25 teste property-readiness/Acasă trec, build OK
 - [x] MRM: 28 oferte active cu publish_status=unpublished, blocate local înaintea portalurilor (12–14 portaluri/ofertă); alte 12 publicate au câte o eroare veche din 3 octombrie; doar citire, fără publicare
