@@ -1716,6 +1716,13 @@
       "when": 1793997117728,
       "tag": "0244_habitoo_news",
       "breakpoints": true
+    },
+    {
+      "idx": 245,
+      "version": "7",
+      "when": 1794032692640,
+      "tag": "0245_site_feed_visit_event_receipts",
+      "breakpoints": true
     }
   ]
 }
