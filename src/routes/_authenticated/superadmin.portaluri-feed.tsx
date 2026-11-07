@@ -11,6 +11,10 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { SuperadminGate } from "@/components/app/SuperadminGate";
 import { toast } from "@/components/ui/sonner";
 import { getPortalDefinition } from "@/lib/portals/registry";
+import { AddFeedPortalDialog } from "@/components/superadmin/AddFeedPortalDialog";
+import { updateDynamicFeedPortal } from "@/lib/dynamic-feed-portals.functions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 const keysOptions = queryOptions({ queryKey: ["superadmin", "portal-index-keys"], queryFn: () => listPortalIndexKeys() });
 export const Route = createFileRoute("/_authenticated/superadmin/portaluri-feed")({
@@ -30,6 +34,8 @@ function FeedKeysPage() {
   const qc = useQueryClient();
   const create = useServerFn(createPortalIndexKey);
   const revoke = useServerFn(revokePortalIndexKey);
+  const update = useServerFn(updateDynamicFeedPortal);
+  const [adding, setAdding] = useState(false);
   const [secret, setSecret] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [confirmation, setConfirmation] = useState<Revocation | null>(null);
@@ -42,10 +48,19 @@ function FeedKeysPage() {
     onSuccess: () => { setConfirmation(null); refresh(); toast.success("Cheia a fost revocată."); },
     onError: () => toast.error("Cheia nu a putut fi revocată."),
   });
+  const changePortal = useMutation({ mutationFn: (data: { slug: string; active?: boolean; show_public?: boolean }) => update({ data }),
+    onSuccess: () => { refresh(); qc.invalidateQueries({ queryKey: ["dynamic-feed-registry"] }); qc.invalidateQueries({ queryKey: ["agency-portal-catalog"] }); },
+    onError: () => toast.error("Portalul nu a putut fi actualizat."),
+  });
   return <div className="space-y-6">
-    <PageHeader title="Portaluri cu feed" />
+    <PageHeader title="Portaluri cu feed" actions={<Button onClick={() => setAdding(true)}><Plus />Adaugă portal cu feed</Button>} />
     <div className="grid gap-4 xl:grid-cols-2">{portals.map(portal => <article key={portal.portal} className="min-w-0 rounded-lg border bg-card p-5">
-      <h2 className="flex items-center gap-2 text-lg font-semibold"><KeyRound className="size-5 text-gold-dark" />{getPortalDefinition(portal.portal)?.display_name ?? portal.portal}</h2>
+      <h2 className="flex items-center gap-2 text-lg font-semibold"><KeyRound className="size-5 text-gold-dark" />{portal.displayName ?? getPortalDefinition(portal.portal)?.display_name ?? portal.portal}</h2>
+      {portal.dynamic && <div className="mt-3 flex flex-wrap gap-4 text-sm">
+        <Label className="flex items-center gap-2"><Checkbox checked={portal.active} disabled={changePortal.isPending} onCheckedChange={value => changePortal.mutate({ slug: portal.portal, active: value === true })} />Activ</Label>
+        <Label className="flex items-center gap-2"><Checkbox checked={portal.showPublic} disabled={changePortal.isPending} onCheckedChange={value => changePortal.mutate({ slug: portal.portal, show_public: value === true })} />Afișează public</Label>
+        <span className="text-muted-foreground">JSON{portal.xmlEnabled ? " + XML Kyero" : ""}</span>
+      </div>}
       <p className="mt-3 break-all font-mono text-xs text-muted-foreground">{portal.indexUrl}</p>
       <div className="mt-4 space-y-3">
         {portal.keys.filter(key => key.status === "active").map(key => <div key={key.id} className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
@@ -58,8 +73,9 @@ function FeedKeysPage() {
         </div> : <p className="text-sm text-muted-foreground">Fără cheie din secrete.</p>}
         {!portal.keys.some(key => key.status === "active") && <p className="text-sm text-muted-foreground">Nicio cheie nouă activă.</p>}
       </div>
-      <Button className="mt-5" disabled={generate.isPending} onClick={() => generate.mutate(portal.portal)}><Plus />Generează cheie nouă</Button>
+      <Button className="mt-5" disabled={generate.isPending || !portal.active} onClick={() => generate.mutate(portal.portal)}><Plus />Generează cheie nouă</Button>
     </article>)}</div>
+    <AddFeedPortalDialog open={adding} onOpenChange={setAdding} prefixes={portals.map(p => p.prefix)} onCreated={key => { setSecret(key); setCopied(false); refresh(); qc.invalidateQueries({ queryKey: ["dynamic-feed-registry"] }); }} />
     <Dialog open={secret !== null} onOpenChange={open => { if (!open) { setSecret(null); generate.reset(); } }}>
       <DialogContent><DialogHeader><DialogTitle>Cheia nouă</DialogTitle></DialogHeader>
         <p className="font-semibold text-warning">Nu va mai fi afișată</p>
