@@ -1,7 +1,8 @@
 ## P6 — documentație Partner API
-- [ ] OpenAPI separată din contractele P1–P5 și teste de concordanță; feed JSON neatins
-- [ ] Partner API recomandat / Feed alternativ, endpointuri și ghid; P4 marcat indisponibil, fără promisiuni de emitere automată
-- [ ] Teste exclusiv documentație/pagină și verificare 1440/390, fără publicare
+- [x] OpenAPI separată din contractele implementate P1–P3/P5: 15 endpointuri, generare din tipuri/validări și teste de concordanță; feed JSON neatins (SHA-256 identic)
+- [x] Partner API recomandat / Feed alternativ, endpointuri și ghid; chei emise manual, fără promisiuni de emitere automată
+- [x] 38/38 teste exclusiv documentație/pagină; 1440/390 fără overflow, file/copiere/JSON 200 verificate, fără erori; fără publicare
+- [ ] Contractele Webhook/Delivery și exemple semnătură: P4 nu este implementat și așteaptă aprobarea releului securizat; documentația le marchează indisponibile, fără endpointuri inventate
 
 ## P5 — mediul Partner API de test
 - [x] Agenție demo ascunsă, allowlist, 2 agenți / 12 anunțuri fictive în stocare API separată; zero proprietăți/profiluri/lead-uri/conexiuni CRM, fără prezență în feed; Stare agenții exclude demo
