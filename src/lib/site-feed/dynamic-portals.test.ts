@@ -48,7 +48,7 @@ const caller = { rpc: async (_fn: string, args: Row) => {
   const prefix = (args._prefixes as string[]).find(p => !(db.dynamic_feed_portals ?? []).some(r => r.key_prefix === p));
   if (!prefix) return { data: null, error: { message: "no prefix" } };
   (db.dynamic_feed_portals ??= []).push({ slug: args._slug, display_name: args._name, key_prefix: prefix, website: args._website, logo_path: args._logo, xml_enabled: args._xml, active: true, show_public: args._public });
-  (db.portal_index_keys ??= []).push({ id: prop, portal: args._slug, prefix, last4: args._last4, key_hash: JSON.parse(args._key_hash as string)[prefix], source: "managed", status: "active", created_at: "2026-11-07", created_by: agent, last_used_at: null });
+  (db.portal_index_keys ??= []).push({ id: prop, key_type: "index", portal: args._slug, prefix, last4: args._last4, key_hash: JSON.parse(args._key_hash as string)[prefix], source: "managed", status: "active", created_at: "2026-11-07", created_by: agent, last_used_at: null });
   return { data: prefix, error: null };
 } };
 async function create() { return createDynamicFeedPortalCore(caller, { slug: "exempluimob", display_name: "ExempluImob.ro", website: "https://example.org", xml_enabled: true }); }
