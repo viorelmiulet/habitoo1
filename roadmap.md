@@ -1,3 +1,9 @@
+## P3 — răspunsuri ale portalurilor API
+- [x] POST-uri cu Idempotency-Key obligatoriu, validări, RPC-uri service-only pentru stări/date, deduplicare și email 10 minute; migrări 0252/0253 aplicate
+- [x] Stări/motive pe cardul portalului, respingeri integrate în readiness agent/admin fără duplicate, mesaje în fila existentă; statistici 30 zile cu citire caller-RLS completă și grafic zilnic
+- [x] 21/21 teste exclusiv noi P3; cele patru endpointuri fără cheie → 401; secțiunea goală reală verificată în cont desktop/390px fără overflow sau erori; build OK; push/contacts neschimbate, fără publicare/emailuri reale
+- [ ] Flux complet API → fișa agentului cu feedback și grafic populat: nu s-au emis chei și nu s-au creat lead-uri/stări/statistici reale pentru test; necesită portal API activat și cheie de test cu agenție allowlisted (lista rămâne goală până la P5).
+
 ## F2 — confidențialitatea adresei în feeduri
 - [x] Funcție comună pentru JSON, Kyero, Properstar și Partner API; publicarea push și datele proprietăților rămân neschimbate
 - [x] OpenAPI 1.2.2 și istoric vizibile la /dezvoltatori; 6/6 teste F2 și 28/28 documentație trec, fără publicare

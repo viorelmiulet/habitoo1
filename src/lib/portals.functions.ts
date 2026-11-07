@@ -1,4 +1,5 @@
 import { currentPartnerKeyError } from "@/lib/portals/partner-key-status";
+import { publicationReason as awaitReason } from "@/lib/partner-api/feedback";
 import { imobiliarePromotionChangesSchema, imobiliarePublicationModeSchema, imobiliarePortalDecidesSlots, type ImobiliarePublicationMode, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
 import { HOMEDIRECT_KEY_MISSING_MESSAGE, homedirectKeyMissing } from "@/lib/portals/homedirect/config";
 import { OFERA_MISSING_MESSAGE, oferaConfigured, oferaProviderId } from "@/lib/portals/ofera/config";
@@ -2218,6 +2219,7 @@ import {
 import { houseraWithdrawnView, type HouseraView } from "@/lib/portals/housera/status-view";
 
 export type PropertyPortalCell = {
+  apiPublication?: import("@/lib/partner-api/feedback").PublicationFeedback;
   houseraView?: HouseraView;
   imobiliareMode?: ImobiliarePublicationMode;
   imobiliareConfirmedMode?: ImobiliarePublicationMode;
@@ -2504,6 +2506,9 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     // Portalurile de tip feed nu au conexiune cu credențiale: sunt „configurate”
     // când există o cheie Habitoo activă cu care pot citi feedul.
     const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
+    const feedbackResult = await context.supabase.from("partner_api_publications").select("portal,property_id,status,url,reasons,occurred_at").in("property_id", data.propertyIds);
+    if (feedbackResult.error) throw new Error("Stările portalurilor API nu au putut fi citite.");
+    const feedbackRows = feedbackResult.data ?? [];
 
 
     const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
@@ -2538,6 +2543,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           (l) => l.property_id === propertyId && l.portal === portal.id,
         );
         const connection = (connections ?? []).find((c) => c.portal === portal.id);
+        const feedback = feedbackRows.find(r => r.portal === portal.id && r.property_id === propertyId);
         const pushSupported = portal.capabilities.includes("publish_listing");
         const connectionReady = portalConnectionReady(portal.id, connection);
         const configured =
@@ -2555,6 +2561,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           feedEligible,
         });
         return {
+          ...(feedback ? { apiPublication: { portal: feedback.portal, status: feedback.status as import("@/lib/partner-api/feedback").PublicationStatus, url: feedback.url, reasons: feedback.reasons as { code?: string; message: string }[], occurred_at: feedback.occurred_at } } : {}),
           portalId: portal.id,
           ...(portal.id === "imobiliare_ro" ? {
             imobiliareMode: pub?.imobiliare_mode === "imoradar_only" ? "imoradar_only" as const : "combined" as const,
@@ -2567,11 +2574,11 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           selected: pub?.enabled === true,
           configured,
           listingStatus,
-          state,
+          state: feedback ? feedback.status === "published" ? "published" : feedback.status === "pending_review" ? "syncing" : feedback.status === "rejected" ? "error" : "withdrawn" : state,
           pushSupported,
           lastSyncAt: listing?.last_sync_at ?? pub?.last_synced_at ?? null,
           lastError:
-            !pushSupported && state === "error"
+            feedback ? feedback.status === "rejected" ? (awaitReason(feedback.reasons)) : null : !pushSupported && state === "error"
               ? "Oferta este selectată, dar nu intră în feed: verifică statusul și publicarea pe site."
               : (listing?.last_error ?? pub?.last_error ?? null),
           // Avertisment (ex. poze parțiale) doar pe un anunț bifat și publicat, niciodată peste o eroare.
@@ -2584,7 +2591,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           publicUrl:
             portal.id === "imobiliare_ro" && listing?.imobiliare_mode === "imoradar_only" ? null : portal.id === "imobiliare_ro"
               ? imobiliareCardUrl(listing, parsePortalOffers(listing?.portal_offers)[0]?.url ?? null)
-              : (listing?.public_url ?? null),
+              : (feedback ? feedback.status === "published" ? feedback.url : null : listing?.public_url ?? null),
           // Storia: linkurile exportului automat pe OLX, doar cât anunțul e publicat.
           olxLinks: portal.id === "storia" ? visibleOlxLinks(listing?.portal_offers, listingStatus) : [],
           offerLinks: parsePortalOffers(listing?.imobiliare_mode === "imoradar_only" ? [] : listing?.portal_offers).filter((o) => o.label !== "OLX").map((o) => ({
