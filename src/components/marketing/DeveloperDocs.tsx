@@ -35,9 +35,11 @@ function Description({schema}: {schema: Schema}) {
 function FieldTable({schema}: {schema: Schema}) {
   const rows = schemaRows(schema);
   if (!rows.length) return null;
-  return <div className="my-4 max-w-full"><table className="w-full table-fixed text-left text-xs leading-5 sm:text-sm">
+  const reserved = rows.filter(row => row.schema.type === "null");
+  const fields = rows.filter(row => row.schema.type !== "null");
+  return <div className="my-4 max-w-full">{reserved.length > 0 && <p className="mb-4 break-words text-sm text-muted-foreground [overflow-wrap:anywhere]">Câmpuri rezervate pentru compatibilitate, întotdeauna <code>null</code>: {reserved.map(row => row.name).join(", ")}.</p>}<table className="w-full table-fixed text-left text-xs leading-5 sm:text-sm">
     <thead className="border-y bg-muted text-muted-foreground"><tr><th className="w-[35%] px-2 py-3 font-semibold">Câmp / tip</th><th className="px-2 py-3 font-semibold">Descriere</th></tr></thead>
-    <tbody>{rows.map((row, i) => <tr key={`${row.name}-${i}`} className="border-b border-border align-top">
+    <tbody>{fields.map((row, i) => <tr key={`${row.name}-${i}`} className="border-b border-border align-top">
       <td className="break-words px-2 py-3 [overflow-wrap:anywhere]"><code className="font-semibold text-navy">{row.name}</code><div className="mt-1 text-muted-foreground">{schemaType(row.schema)}</div><div className="text-[11px] text-gold-dark">{row.required ? "Obligatoriu / prezent" : "Opțional"}</div></td>
       <td className="break-words px-2 py-3 text-muted-foreground [overflow-wrap:anywhere]"><Description schema={row.schema} /></td>
     </tr>)}</tbody>
@@ -112,7 +114,7 @@ export function DeveloperDocs() {
         <Section id="xml" title="Feed XML (Kyero v3)"><Endpoints match={p => p.endsWith("feed.xml")} /></Section>
         <Section id="leaduri" title="Trimiterea lead-urilor"><Endpoints match={p => p.endsWith("/contacts")} /></Section>
         <Section id="vizionari" title="Vizualizări"><p className="border-l-2 border-gold pl-4 font-semibold">În acest API, „visits” înseamnă vizualizări ale anunțurilor, nu programări de vizionare.</p><Endpoints match={p => p.endsWith("/visits")} /></Section>
-        <Section id="erori" title="Erori și coduri de răspuns"><p>Codurile posibile sunt listate la fiecare endpoint. Feedul JSON întoarce anvelopa de mai jos; indexul are erori cu corp gol, iar media și XML folosesc text simplu conform contractului.</p><CodeBlock text={JSON.stringify({error: "Invalid or revoked API token.", api_version: apiSpec.components.schemas.Error?.properties?.api_version?.const}, null, 2)} label="Exemplu de eroare JSON · 401" /><h3 className="font-semibold">Particularități și limite cunoscute din cod</h3><ul className="list-disc space-y-3 pl-5 text-sm text-muted-foreground">{apiSpec["x-code-ambiguities"].map(p => <li key={p}>{p}</li>)}</ul></Section>
+        <Section id="erori" title="Erori și coduri de răspuns"><p>Codurile posibile sunt listate la fiecare endpoint. Erorile JSON urmează exemplul de mai jos; unele răspunsuri au corp gol sau text simplu, conform codului și formatului documentat la fiecare endpoint.</p><CodeBlock text={JSON.stringify({error: "Invalid or revoked API token.", api_version: apiSpec.components.schemas.Error?.properties?.api_version?.const}, null, 2)} label="Exemplu de eroare JSON · 401" /><h3 className="font-semibold">Particularități și limite pentru integrare</h3><ul className="list-disc space-y-3 pl-5 text-sm text-muted-foreground">{apiSpec["x-code-ambiguities"].map(p => <li key={p}>{p}</li>)}</ul></Section>
         <Section id="limite" title="Limite de cereri"><p>{apiSpec.info.description}</p></Section>
         <Section id="practici" title="Bune practici"><ul className="list-disc space-y-4 pl-5">{guide.recommendations.map(p => <li key={p}>{p}</li>)}</ul></Section>
         <Section id="istoric" title="Istoric versiuni">{guide.history.map(v => <div key={v.version}><h3 className="font-semibold">v{v.version} <span className="ml-3 text-sm font-normal text-muted-foreground">{v.date}</span></h3><p className="mt-2">{v.description}</p></div>)}</Section>
