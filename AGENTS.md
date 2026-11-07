@@ -66,3 +66,6 @@
 - `market_listings` retention runs only in `market_listings_lifecycle()` (nightly cron): unseen 14 days → inactive with `disappeared_at`, `last_seen_at` older than 365 days → deleted; ingestion never deletes and ignores observations older than the stored `last_seen_at`. ACP v5 weights inactive offers by age. Why: one place for retention, idempotent historical imports.
 - ACP PDF reports render only the version snapshot (extras in `snapshot.report`); photos/OSM tiles fall back to placeholders; appendix opt-in; demand counts (`report/demand*.ts`) are computed at generation, partner-only numbers, frozen. Why: reproducible, private.
 
+
+- Partner webhooks run on Cloudflare Workers without accessible internal networking: HTTPS/443 hostname-only URLs, public-only DoH A+AAAA checks before saving and each delivery, and no redirects form the accepted protection for this deployment; DNS validation does not pin the subsequent fetch address. Why: the external Habitoo relay must not be changed, and this accepted runtime boundary avoids claiming general DNS-rebinding protection.
+- Partner webhook configs and ordered outbox are scoped by portal/environment; encrypted secrets stay server-only, event inserts wake delivery, and retries reuse the existing Partner sync minute callback. Why: durable delivery without a new idle polling schedule, with isolated demo traffic.

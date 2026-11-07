@@ -10,7 +10,7 @@ export const Route = createFileRoute("/api/public/jobs/partner-api-sync")({
         const body = (await request.json().catch(() => ({}))) as { mode?: string };
         const mode = body.mode === "full" ? "full" : "queue";
         const { runPartnerSync } = await import("@/lib/partner-api/sync.server");
-        try { return Response.json({ success: true, ...(await runPartnerSync(mode)) }); }
+        try { const sync=await runPartnerSync(mode); const {runWebhookWorker}=await import("@/lib/partner-api/webhook.server"); const webhooks=await runWebhookWorker(); return Response.json({ success: true, ...sync, webhooks }); }
         catch { return Response.json({ success: false }, { status: 503 }); }
       },
     },
