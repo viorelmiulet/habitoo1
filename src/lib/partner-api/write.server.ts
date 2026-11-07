@@ -105,6 +105,8 @@ export async function supabaseWriteStore(): Promise<PartnerWriteStore> {
               if (table !== "leads") return query;
               return new Proxy(query, { get(builder, method) {
                 if (method === "insert") return (value: Record<string, unknown>) => builder.insert({ ...value, id: stableLeadId } as never);
+                // Never attach to a push lead or another partner with the same display name/contact.
+                if (method === "select") return (...args: Parameters<typeof builder.select>) => builder.select(...args).eq("id", stableLeadId);
                 return Reflect.get(builder, method);
               } });
             };
@@ -113,6 +115,8 @@ export async function supabaseWriteStore(): Promise<PartnerWriteStore> {
           leadId = result.leadId; created = result.created;
         }
       }
+      const attached = await db.from("portal_messages").update({ lead_id: leadId }).eq("id", receipt.message_id).select("id").single();
+      if (attached.error) throw attached.error;
       const done = await db.rpc("partner_api_lead_finish", { _portal: ctx.portal.slug, _environment: ctx.identity.environment, _external: body.external_id, _owner: ctx.requestId, _lead: leadId });
       if (done.error) throw done.error;
       await notify(ctx, leadId, `lead:${digest(body.external_id)}`, body.message ?? null, !created);
