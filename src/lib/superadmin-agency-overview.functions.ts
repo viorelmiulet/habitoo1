@@ -67,7 +67,7 @@ export const getAgencyOverview = createServerFn({ method: "POST" })
         .select(
           "id,name,city,logo_path,status,plan,subscription_term,subscription_expires_at,is_trial,archived_at,created_at",
         )
-        .order("name", { ascending: true }),
+        .eq("is_demo",false).order("name", { ascending: true }),
       admin.from("profiles").select("id,organization_id,is_active"),
       // Istoricul agențiilor: toate acțiunile „organization.*” plus crearea.
       admin

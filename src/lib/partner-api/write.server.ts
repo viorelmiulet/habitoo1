@@ -10,7 +10,7 @@ export const leadSchema = z.object({ external_id: text(200), listing_id: z.strin
 export const messageSchema = z.object({ external_id: text(200), body: text(4000), sender: z.literal("client"), created_at: timestamp }).strict();
 const count = z.number().int().min(0).max(2147483647).optional();
 export const statsSchema = z.object({ items: z.array(z.object({ listing_id: z.string().uuid(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v => { const d = new Date(`${v}T00:00:00Z`); return Number.isFinite(d.getTime()) && d.toISOString().slice(0, 10) === v; }), views: count, contacts: count, favorites: count }).strict()).min(1).max(500) }).strict();
-export type WriteResult = { not_found?: boolean; pending?: boolean; conflict?: boolean; id?: string; message_id?: string; deduplicated?: boolean; applied?: boolean; accepted?: number };
+export type WriteResult = { not_found?: boolean; pending?: boolean; conflict?: boolean; id?: string; message_id?: string; deduplicated?: boolean; applied?: boolean; accepted?: number; test?:boolean };
 export type PartnerWriteStore = {
   read: PartnerReadStore;
   publication: (ctx: PartnerContext, id: string, body: z.infer<typeof publicationSchema>) => Promise<WriteResult>;
@@ -22,7 +22,7 @@ const missing = (ctx: PartnerContext) => apiError(404, "NOT_FOUND", "Entitatea n
 function resultResponse(ctx: PartnerContext, result: WriteResult, kind: string) {
   if (result.not_found) return missing(ctx);
   if (result.pending || result.conflict) return apiError(409, result.pending ? "REQUEST_IN_PROGRESS" : "EXTERNAL_ID_CONFLICT", "Cererea nu poate fi aplicată momentan.", ctx.requestId);
-  return Response.json(kind === "lead" ? { id: result.id, status: "accepted", deduplicated: result.deduplicated === true } : result, { status: kind === "lead" && !result.deduplicated ? 201 : 200 });
+  return Response.json(kind === "lead" ? { id: result.id, status: "accepted", deduplicated: result.deduplicated === true,...(result.test?{test:true,label:"Test"}:{}) } : result, { status: kind === "lead" && !result.deduplicated ? 201 : 200 });
 }
 export async function handlePartnerWrite(ctx: PartnerContext, store: PartnerWriteStore, kind: "publication" | "lead" | "message" | "stats", body: unknown, id?: string) {
   const schema = { publication: publicationSchema, lead: leadSchema, message: messageSchema, stats: statsSchema }[kind];

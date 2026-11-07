@@ -5,6 +5,7 @@
 import { z } from "zod";
 import { apiError, type Environment, type PartnerContext } from "./core.server";
 import { TAXONOMIES, decodeCursor, encodeCursor, mapPartnerAgency, type OrgRow, type PartnerAgent, type PartnerListing } from "./schema";
+import { SANDBOX_AGENCY_ID } from "./sandbox";
 
 export type StoredListing = { property_id: string; organization_id: string; visible: boolean; payload: PartnerListing; updated_at: string; withdrawn_at: string | null };
 export type StoredEvent = { seq: number; type: string; entity_type: string; entity_id: string; organization_id: string; occurred_at: string };
@@ -117,7 +118,7 @@ export async function supabaseReadStore(): Promise<PartnerReadStore> {
       if (state.error) throw state.error; if (test.error) throw test.error;
       const testIds = new Set((test.data ?? []).map(r => r.organization_id));
       let rows = state.data ?? [];
-      if (environment === "test") rows = rows.filter(r => testIds.has(r.organization_id));
+      if (environment === "test") rows = rows.filter(r => r.organization_id===SANDBOX_AGENCY_ID && testIds.has(r.organization_id));
       else {
         rows = rows.filter(r => !testIds.has(r.organization_id));
         if (rows.length) {

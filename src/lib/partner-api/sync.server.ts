@@ -5,6 +5,7 @@
  * same property filters and isPropertyFeedEligible used by the JSON feed.
  */
 import { digest } from "./core.server";
+import { SANDBOX_AGENCY_ID } from "./sandbox";
 import {
   diffAgents, diffListings, mapPartnerAgent, mapPartnerListing,
   type AgentChange, type AgentStateRow, type ListingChange, type ListingStateRow, type PartnerAgent, type PartnerListing,
@@ -110,6 +111,7 @@ export async function runPartnerSync(mode: "queue" | "full") {
       if (conn.error) throw conn.error; if (state.error) throw state.error;
       orgs = [...new Set([...(conn.data ?? []), ...(state.data ?? [])].map(r => r.organization_id))];
     }
+    orgs=orgs.filter(id=>id!==SANDBOX_AGENCY_ID);
     const retry: string[] = [];
     for (const org of orgs) for (const p of portals.data ?? []) {
       try { await syncPortalOrganization(p.slug, org, deps); pairs++; }
