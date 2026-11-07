@@ -1,3 +1,7 @@
+## F2 — confidențialitatea adresei în feeduri
+- [ ] Funcție comună pentru JSON, Kyero, Properstar și Partner API; publicarea push și datele proprietăților rămân neschimbate
+- [ ] OpenAPI 1.2.2 și istoric; numai teste site-feed/documentație, fără publicare
+
 ## P1 — Partner API v1
 - [x] Migrarea 0250: reutilizare portaluri/chei K2/K1, tip index/api și test/live, 120/min atomic, idempotență 24h și curățare SQL orară (ferestre >1h, jurnal >30 zile)
 - [x] /api/public/partner/v1/me public, erori uniforme și request ID, rate-check fail-open cu timeout/jurnal, allowlist test goală până la P5; cititorii index exclud cheile API
