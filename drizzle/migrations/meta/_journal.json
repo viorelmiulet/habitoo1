@@ -1800,6 +1800,13 @@
       "when": 1794064036144,
       "tag": "0256_partner_webhook_ordering",
       "breakpoints": true
+    },
+    {
+      "idx": 257,
+      "version": "7",
+      "when": 1794064102599,
+      "tag": "0257_partner_webhook_preserve_pending",
+      "breakpoints": true
     }
   ]
 }
