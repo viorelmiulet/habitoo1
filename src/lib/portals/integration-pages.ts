@@ -740,7 +740,7 @@ export function homepagePortals(): { portal: PortalDefinition; label: string }[]
 }
 
 /** Portaluri numărate public: Catalogul Facebook exclus; grupurile (Storia+OLX, Romimo+Publi24) contează separat; OLX o singură dată. */
-export function publicPortalIds(): string[] {
+export function publicPortalIds(dynamic: PortalDefinition[] = PORTALS.filter(p => p.dynamic_feed)): string[] {
   const ids = new Set<string>();
   for (const p of INTEGRATION_PAGES) {
     if (p.portalId === "facebook_catalog") continue;
@@ -748,12 +748,12 @@ export function publicPortalIds(): string[] {
       ids.add(id === "olx_direct" ? "olx" : id);
     }
   }
-  for (const p of PORTALS) if (p.dynamic_feed && p.status === "available" && p.show_public) ids.add(p.id);
+  for (const p of dynamic) if (p.dynamic_feed && p.status === "available" && p.show_public) ids.add(p.id);
   return [...ids];
 }
 
-export function publicPortalCount(): number {
-  return publicPortalIds().length;
+export function publicPortalCount(dynamic?: PortalDefinition[]): number {
+  return publicPortalIds(dynamic).length;
 }
 
 /** Acord românesc: „de” când ultimele două cifre sunt 00 sau 20–99. */

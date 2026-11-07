@@ -15,7 +15,7 @@ import { publicHead } from "@/components/marketing/public-head";
 import { pageJsonLd } from "@/components/marketing/structured-data";
 import { getPublicDynamicFeedPortals } from "@/lib/dynamic-feed-portals.functions";
 
-export const PORTAL_COUNT = publicPortalCount();
+export const PORTAL_COUNT = publicPortalCount([]);
 const N = PORTAL_COUNT;
 export const H1 = `Integrări cu ${portalsLabel(N)} imobiliare din România`;
 const LEAD_TEXT = "Habitoo CRM are cele mai multe integrări cu portalurile imobiliare din România.";

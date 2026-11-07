@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({ allowed: true, keys: [] as Record<string, unknown>[], inserted: [] as Record<string, unknown>[] }));
-vi.mock("@tanstack/react-start", () => ({ createServerFn: () => {
+vi.mock("@tanstack/react-start", () => ({ createIsomorphicFn: () => ({ client: () => ({ server: (fn: () => unknown) => fn }) }), createServerFn: () => {
   const chain = { middleware: () => chain, inputValidator: () => chain,
     handler: (handler: (args: unknown) => unknown) => (args?: { data?: unknown }) => handler({ data: args?.data, context: {
       userId: "11111111-1111-4111-8111-111111111111", supabase: { rpc: async () => ({ data: state.allowed, error: null }),
@@ -10,6 +10,10 @@ vi.mock("@tanstack/react-start", () => ({ createServerFn: () => {
   }; return chain;
 } }));
 vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));
+vi.mock("@/lib/dynamic-feed-portals.server", async () => {
+  const { INDEX_PORTALS } = await import("@/lib/portals/clickimob/index-feed");
+  return { loadDynamicFeedPortals: async () => [], resolveIndexPortal: async (id: keyof typeof INDEX_PORTALS) => INDEX_PORTALS[id] ? { ...INDEX_PORTALS[id], active: true } : null };
+});
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: () => ({ select: () => ({ eq: async (_column: string, portal: string) => ({ data: state.keys.filter(row => row.portal === portal), error: null }) }) }) } }));
 import { createPortalIndexKey, listPortalIndexKeys } from "./index-keys.functions";
 import { hashIndexKey } from "./index-keys.server";

@@ -7,7 +7,16 @@ export const getDynamicFeedRegistry = createServerFn({ method: "GET" }).middlewa
   const { data, error } = await context.supabase.from("dynamic_feed_portals")
     .select("slug,display_name,key_prefix,website,logo_path,xml_enabled,active,show_public").eq("active", true).order("slug");
   if (error) throw new Error("Catalogul portalurilor nu poate fi încărcat.");
-  return (data ?? []).map(dynamicPortalDefinition);
+  const rows = await Promise.all((data ?? []).map(async row => {
+    const definition = dynamicPortalDefinition(row);
+    if (row.logo_path) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const signed = await supabaseAdmin.storage.from("feed-portal-logos").createSignedUrl(row.logo_path, 3600);
+      definition.logo_url = signed.data?.signedUrl;
+    }
+    return definition;
+  }));
+  return rows;
 });
 export const createDynamicFeedPortal = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator(dynamicFeedPortalSchema).handler(async ({ data, context }) => {

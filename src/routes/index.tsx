@@ -207,7 +207,7 @@ function HomePage() {
                 <span className="text-gold">tranzacții închise.</span>
               </h1>
               <p className="mt-6 max-w-xl text-base leading-relaxed text-navy-foreground sm:text-lg">
-                Anunțuri, clienți și lead-uri într-un singur loc: introduci proprietatea o dată și o publici pe {portalsLabel(publicPortalCount() + (typeof window === "undefined" ? 0 : dynamic.length))}, mai multe decât în orice alt CRM imobiliar din România.
+                Anunțuri, clienți și lead-uri într-un singur loc: introduci proprietatea o dată și o publici pe {portalsLabel(publicPortalCount(dynamic))}, mai multe decât în orice alt CRM imobiliar din România.
               </p>
               <div className="mt-7 grid grid-cols-2 gap-2 sm:mt-9 sm:flex sm:gap-3">
                 <Button asChild size="lg" className="h-12 rounded-full px-3 text-sm shadow-raised sm:px-7 sm:text-base">
