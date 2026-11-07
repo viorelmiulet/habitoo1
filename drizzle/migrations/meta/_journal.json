@@ -1737,6 +1737,13 @@
       "when": 1794051849923,
       "tag": "0247_dynamic_feed_portals",
       "breakpoints": true
+    },
+    {
+      "idx": 248,
+      "version": "7",
+      "when": 1794051985171,
+      "tag": "0248_dynamic_feed_portal_atomic_digest",
+      "breakpoints": true
     }
   ]
 }
