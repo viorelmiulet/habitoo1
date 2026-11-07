@@ -148,6 +148,14 @@ const KNOWN: Array<{ keys: RegExp; value: (p: Row) => Raw }> = [
   { keys: /^(parking|parcare)$/, value: (p) => p.parking ?? (num(p.parking_spaces) ? true : null) },
 ];
 
+/** Câmpurile de an al construcției: Vumsi acceptă doar ani trecuți sau anul curent. */
+const YEAR_KEYS = /^(construction_year|year_built|build_year|an constructie|anul constructiei|anul de constructie)$/;
+
+function isConstructionYearField(f: VumsiAttribute): boolean {
+  const names = [fold(f.name), fold(f.label ?? "").replace(/\s*\(.*\)$/, "")];
+  return names.some((n) => n && YEAR_KEYS.test(n));
+}
+
 function habitooValue(p: Row, f: VumsiAttribute): { known: boolean; value: Raw } {
   const names = [fold(f.name), fold(f.label ?? "").replace(/\s*\(.*\)$/, "")];
   const k = KNOWN.find((x) => names.some((n) => n && x.keys.test(n)));
@@ -186,6 +194,10 @@ export function buildVumsiAttrs(p: Row, fields: VumsiAttribute[], categoryName: 
     const { known, value } = habitooValue(p, f);
     const v = known ? convert(f, value) : null;
     const label = f.label ?? f.name;
+    if (typeof v === "number" && isConstructionYearField(f) && v > new Date().getFullYear()) {
+      warnings.push(`Anul construcției (${v}) nu a fost trimis la Vumsi, acceptă doar ani trecuți.`);
+      continue;
+    }
     if (typeof v === "number" && ((f.max != null && v > f.max) || (f.min != null && v < f.min))) {
       const limit = f.max != null && v > f.max ? `acceptă cel mult ${f.max}` : `acceptă cel puțin ${f.min}`;
       warnings.push(`${label} ${v} nu a fost trimis la Vumsi (${limit}).`);
