@@ -5,7 +5,7 @@
  *  - /api/public/portal/v1/*  (cheie emisă de Habitoo pentru un portal)
  * Nu există o a doua implementare paralelă pentru proprietăți.
  */
-import { FEED_PORTALS_REQUIRING_AGENT_PHONE, idsWithAgentPhone } from "@/lib/portals/listing-contact";
+import { selectedPropertyIdsForPortal } from "./selection.server";
 import {
   errorResponse,
   jsonResponse,
@@ -81,31 +81,6 @@ async function portalKeysFor(
  * etc.) trebuie să conțină DOAR aceste oferte: dacă o ofertă retrasă rămâne în
  * feed, portalul o reimportă la următoarea citire și retragerea nu are efect.
  */
-async function selectedPropertyIdsForPortal(
-  organizationId: string,
-  portal: string,
-): Promise<string[]> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("portal_publications")
-    .select("property_id")
-    .eq("organization_id", organizationId)
-    .eq("portal_key", portal)
-    .eq("enabled", true);
-  const ids = [...new Set((data ?? []).map((row) => row.property_id))];
-  if (!FEED_PORTALS_REQUIRING_AGENT_PHONE.has(portal) || ids.length === 0) return ids;
-  // ClickImob: oferta al cărei agent nu are telefon nu intră în feed.
-  const { data: props } = await supabaseAdmin
-    .from("properties")
-    .select("id, assigned_to")
-    .in("id", ids);
-  const agentIds = [...new Set((props ?? []).map((p) => p.assigned_to).filter(Boolean))] as string[];
-  const { data: agents } = agentIds.length
-    ? await supabaseAdmin.from("profiles").select("id, full_name, email, phone").in("id", agentIds)
-    : { data: [] };
-  return idsWithAgentPhone(props ?? [], agents ?? []);
-}
-
 export async function handlePropertiesList(
   request: Request,
   auth: FeedAuthOk,
