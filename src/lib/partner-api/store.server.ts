@@ -13,10 +13,8 @@ export async function partnerStore(): Promise<PartnerStore> {
       }
       const test=await db.from("partner_api_test_agencies").select("organization_id"); if(test.error) throw test.error;
       const ids=test.data.map(r=>r.organization_id);
-      if(environment==="test" && !ids.length) return 0;
       let q=db.from("portal_connections").select("organization_id,organizations!inner(id,is_demo,archived_at)",{count:"exact",head:true}).eq("portal",portal).eq("activated",true).is("organizations.archived_at",null);
-      if(environment==="test") q=q.in("organization_id",ids);
-      else { q=q.eq("organizations.is_demo",false); if(ids.length) q=q.not("organization_id","in",`(${ids.join(",")})`); }
+      q=q.eq("organizations.is_demo",false); if(ids.length) q=q.not("organization_id","in",`(${ids.join(",")})`);
       const r=await q; if(r.error) throw r.error; return r.count??0;
     },
     async log(entry) { const r=await db.from("partner_api_request_logs").insert(entry as never); if(r.error) throw r.error; },
