@@ -52,7 +52,8 @@ export function supabaseSyncDeps(db: Admin): SyncDeps {
       const { readCompleteRows } = await import("@/lib/site-feed/complete-read.server");
       const { FEED_PUBLIC_STATUSES, isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
       const ids = await selectedPropertyIdsForPortal(org, portal);
-      const rows = []; const images = [];
+      const rows: import("@/lib/site-feed/mapper").PropertyRow[] = [];
+      const images: import("@/lib/site-feed/mapper").PropertyImageRow[] = [];
       for (let i = 0; i < ids.length; i += 300) {
         const chunk = ids.slice(i, i + 300);
         rows.push(...await readCompleteRows((from, to) => db.from("properties").select("*").eq("organization_id", org).in("id", chunk)
