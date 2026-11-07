@@ -1,3 +1,7 @@
+## A8 — mesaje portaluri pe Acasă
+- [ ] Nume din registry, mesaje pentru preluare automată și gruparea erorilor pe peste două portaluri; doar teste property-readiness/Acasă
+- [ ] Diagnostic MRM prin citire, fără modificări de date sau publicare
+
 ## S3 — primele cinci pagini de funcții
 - [x] Cinci pagini cu 693–716 cuvinte, legături din carduri și secțiuni; matching → potriviri-automate fără dubluri în cuprins
 - [x] Doar testul funcționalităților rulat: 8 teste trec; pagini 200, metadate și sitemap confirmate; navigare desktop și text mobil verificate; fără publicare
