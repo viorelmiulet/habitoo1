@@ -1730,6 +1730,13 @@
       "when": 1794051280838,
       "tag": "0246_portal_index_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 247,
+      "version": "7",
+      "when": 1794051849923,
+      "tag": "0247_dynamic_feed_portals",
+      "breakpoints": true
     }
   ]
 }
