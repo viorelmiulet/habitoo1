@@ -1,3 +1,8 @@
+## P6 — documentație Partner API
+- [ ] OpenAPI separată din contractele P1–P5 și teste de concordanță; feed JSON neatins
+- [ ] Partner API recomandat / Feed alternativ, endpointuri și ghid; P4 marcat indisponibil, fără promisiuni de emitere automată
+- [ ] Teste exclusiv documentație/pagină și verificare 1440/390, fără publicare
+
 ## P5 — mediul Partner API de test
 - [x] Agenție demo ascunsă, allowlist, 2 agenți / 12 anunțuri fictive în stocare API separată; zero proprietăți/profiluri/lead-uri/conexiuni CRM, fără prezență în feed; Stare agenții exclude demo
 - [x] Simulare/reset doar test, scrieri private cu marcaj Test și expirare 30 zile prin curățarea orară existentă; notificări exclusiv SuperAdmin în aplicație, fără ingest/email push
