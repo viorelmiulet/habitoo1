@@ -1,8 +1,9 @@
 ## K1 — chei de index administrate în SuperAdmin
-- [ ] Stocare hash, RLS SuperAdmin, audit și ultima utilizare limitată la 5 minute
-- [ ] Autentificare gestionată și compatibilitate până la revocare explicită pentru cheile existente și tokenurile JSON/XML
-- [ ] Pagina Portaluri cu feed, generare unică și revocare confirmată
-- [ ] Doar teste noi/site-feed și verificare în cont; fără publicare
+- [x] Stocare SHA-256, RLS SuperAdmin, audit fără chei și ultima utilizare limitată atomic la 5 minute; migrare 0246 aplicată
+- [x] Autentificare gestionată și compatibilitate până la revocare explicită pentru cheile existente și tokenurile JSON/XML; fără modificarea formatelor
+- [x] Pagina Portaluri cu feed, listă fără chei/hash-uri, generare unică și revocare confirmată
+- [x] 91/91 teste numai noi/site-feed; build OK; contul disponibil de admin agenție este redirecționat la Acasă; fără publicare sau revocări reale
+- [ ] Verificare vizuală și flux complet în SuperAdmin: necesită sesiunea SuperAdmin a utilizatorului în previzualizare (contul disponibil este admin agenție; mintarea propriului cont nu a găsit un utilizator)
 
 ## D4 — autentificare clară pentru integratori
 - [x] Explicații din cod pentru cheia de index, tokenul agenției, compatibilitate și XML; OpenAPI 1.2.1 și istoric; diferența 401/403 pentru tokenurile altui portal documentată exact
