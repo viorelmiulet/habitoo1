@@ -37,7 +37,7 @@ function FieldTable({schema}: {schema: Schema}) {
   if (!rows.length) return null;
   const reserved = rows.filter(row => row.schema.type === "null");
   const fields = rows.filter(row => row.schema.type !== "null");
-  return <div className="my-4 max-w-full">{reserved.length > 0 && <p className="mb-4 break-words text-sm text-muted-foreground [overflow-wrap:anywhere]">Câmpuri rezervate pentru compatibilitate, întotdeauna <code>null</code>: {reserved.map(row => row.name).join(", ")}.</p>}<table className="w-full table-fixed text-left text-xs leading-5 sm:text-sm">
+  return <div className="my-4 max-w-full">{reserved.length > 0 && !schema.description?.includes("Câmpuri rezervate pentru compatibilitate") && <p className="mb-4 break-words text-sm text-muted-foreground [overflow-wrap:anywhere]">Câmpuri rezervate pentru compatibilitate, întotdeauna <code>null</code>: {reserved.map(row => row.name).join(", ")}.</p>}<table className="w-full table-fixed text-left text-xs leading-5 sm:text-sm">
     <thead className="border-y bg-muted text-muted-foreground"><tr><th className="w-[35%] px-2 py-3 font-semibold">Câmp / tip</th><th className="px-2 py-3 font-semibold">Descriere</th></tr></thead>
     <tbody>{fields.map((row, i) => <tr key={`${row.name}-${i}`} className="border-b border-border align-top">
       <td className="break-words px-2 py-3 [overflow-wrap:anywhere]"><code className="font-semibold text-navy">{row.name}</code><div className="mt-1 text-muted-foreground">{schemaType(row.schema)}</div><div className="text-[11px] text-gold-dark">{row.required ? "Obligatoriu / prezent" : "Opțional"}</div></td>
