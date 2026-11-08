@@ -1,7 +1,7 @@
 ## D5 — ghid pentru site-ul propriu al agenției
-- [ ] Alegere portal/agenție înainte de file, pași și avertismente cu etichetele exacte din Setări
-- [ ] Documentație Feed 1.2.3 și istoric, fără schimbări de comportament
-- [ ] Doar teste documentație/pagină și verificare vizuală 1440/390, fără publicare
+- [x] Alegere portal/agenție înainte de file, pași și avertismente cu etichetele exacte din Setări; baza cardului este originea curentă + /api/public/sites/v1
+- [x] Documentație Feed 1.2.3 și istoric, fără schimbări de comportament; contractul feedului și Partner OpenAPI păstrate
+- [x] 20/20 teste exclusiv documentație/pagină; card → Feed → ghid și revenire Partner verificate 1440/390, fără overflow/erori; build OK, fără publicare
 
 ## P4 — implementare fără releu (cererea curentă)
 - [x] Validare HTTPS/443 și DNS A+AAAA, semnare, secret criptat, timeout și răspuns limitat
