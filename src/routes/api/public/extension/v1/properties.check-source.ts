@@ -5,7 +5,6 @@ import * as h from "@/lib/extension/properties";
 import { extensionPropertyStore } from "@/lib/extension/properties.server";
 
 async function handle(request: Request, params: Record<string, string>) {
-  void params; void h; void extensionPropertyStore;
   const handler = request.method === "POST" ? h.checkSourceHandler(request, await extensionPropertyStore()) : methodNotAllowed;
   return serveExtension(request, await extensionStore(), handler);
 }
