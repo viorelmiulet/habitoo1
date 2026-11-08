@@ -82,6 +82,10 @@ export function decideJobResult(
   };
   // Timeout / rețea: max 2 reîncercări (30 s, 2 min), doar la portalurile idempotente.
   if (isTimeoutLikeFailure(failure)) {
+    // Imobiliare has one bounded call: a timeout is final for this job, not another inline/queue loop.
+    if (portalId === "imobiliare_ro" && failure.code === "TIMEOUT") {
+      return { status: "error", ok: false, message: "Imobiliare.ro nu a răspuns în 15 secunde" };
+    }
     const delay = timeoutRetryDelayMs({ portalId, attemptNumber: job.attempts });
     return delay === null
       ? { status: "error", ok: false, message: message.slice(0, 500) }

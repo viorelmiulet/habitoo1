@@ -2,8 +2,11 @@ import { afterEach, expect, it, vi } from "vitest";
 import { imobiliareRequest } from "../src/lib/portals/imobiliare/client.server";
 import { relayFetch } from "../src/lib/portals/relay.server";
 import { republishIsStalled } from "../src/lib/portals/publication-resilience";
-import { runPortalPublishWorker } from "../src/lib/portals/publish-jobs.server";
+import { runPortalPublishWorker, decideJobResult } from "../src/lib/portals/publish-jobs.server";
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();vi.unstubAllEnvs();});
+it("Imobiliare TIMEOUT ends the job instead of automatically requeueing",()=>{
+  expect(decideJobResult({attempts:1,portal_key:'imobiliare_ro'},{portalId:'imobiliare_ro',ok:false,code:'TIMEOUT',message:'timeout'},undefined)).toEqual({status:'error',ok:false,message:'Imobiliare.ro nu a răspuns în 15 secunde'});
+});
 it.each([false,true])("Imobiliare hangs: TIMEOUT at 15 seconds (relay=%s)", async (relayed) => {
   vi.useFakeTimers();
   vi.stubEnv("PORTAL_RELAY_KEY",relayed?"fixture-key":"");
