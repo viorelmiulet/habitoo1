@@ -21,6 +21,7 @@ import { Route as ConfidentialitateRouteImport } from './routes/confidentialitat
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
 import { Route as DezvoltatoriRouteImport } from './routes/dezvoltatori'
+import { Route as ExtensieChromeRouteImport } from './routes/extensie-chrome'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FunctionalitatiRouteImport } from './routes/functionalitati'
 import { Route as ImportProprietatiRouteImport } from './routes/import-proprietati'
@@ -294,6 +295,11 @@ const DespreRoute = DespreRouteImport.update({
 const DezvoltatoriRoute = DezvoltatoriRouteImport.update({
   id: '/dezvoltatori',
   path: '/dezvoltatori',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExtensieChromeRoute = ExtensieChromeRouteImport.update({
+  id: '/extensie-chrome',
+  path: '/extensie-chrome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -1516,6 +1522,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
   '/dezvoltatori': typeof DezvoltatoriRoute
+  '/extensie-chrome': typeof ExtensieChromeRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/import-proprietati': typeof ImportProprietatiRoute
@@ -1741,6 +1748,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
   '/dezvoltatori': typeof DezvoltatoriRoute
+  '/extensie-chrome': typeof ExtensieChromeRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/import-proprietati': typeof ImportProprietatiRoute
@@ -1966,6 +1974,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
   '/dezvoltatori': typeof DezvoltatoriRoute
+  '/extensie-chrome': typeof ExtensieChromeRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/import-proprietati': typeof ImportProprietatiRoute
@@ -2194,6 +2203,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/despre'
     | '/dezvoltatori'
+    | '/extensie-chrome'
     | '/forgot-password'
     | '/functionalitati'
     | '/import-proprietati'
@@ -2419,6 +2429,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/despre'
     | '/dezvoltatori'
+    | '/extensie-chrome'
     | '/forgot-password'
     | '/functionalitati'
     | '/import-proprietati'
@@ -2643,6 +2654,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/despre'
     | '/dezvoltatori'
+    | '/extensie-chrome'
     | '/forgot-password'
     | '/functionalitati'
     | '/import-proprietati'
@@ -2871,6 +2883,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
   DezvoltatoriRoute: typeof DezvoltatoriRoute
+  ExtensieChromeRoute: typeof ExtensieChromeRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FunctionalitatiRoute: typeof FunctionalitatiRoute
   ImportProprietatiRoute: typeof ImportProprietatiRoute
@@ -3089,6 +3102,13 @@ declare module '@tanstack/react-router' {
       path: '/dezvoltatori'
       fullPath: '/dezvoltatori'
       preLoaderRoute: typeof DezvoltatoriRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/extensie-chrome': {
+      id: '/extensie-chrome'
+      path: '/extensie-chrome'
+      fullPath: '/extensie-chrome'
+      preLoaderRoute: typeof ExtensieChromeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -4966,6 +4986,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,
   DezvoltatoriRoute: DezvoltatoriRoute,
+  ExtensieChromeRoute: ExtensieChromeRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   FunctionalitatiRoute: FunctionalitatiRoute,
   ImportProprietatiRoute: ImportProprietatiRoute,
