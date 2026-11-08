@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "Habitoo — API pentru integrarea portalurilor",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "description": "API pentru indexul agențiilor, anunțuri JSON, fotografii, lead-uri, vizualizări și XML Kyero v3. Toate exemplele sunt fictive. Cheia de index descoperă agențiile; tokenul fiecărei agenții autorizează accesul numai la aceasta. Folosiți Bearer; /sites/v1 nu acceptă token în query. Scopuri: feed:read, agents:read, leads:write. Limită orientativă: 120 cereri/60 secunde pentru aceeași cheie și adresă IP, inclusiv XML; media nu are o limită specifică. Limita poate varia între cereri: tratați 429 prin reîncercare cu întârziere progresivă. Parcurgeți toate paginile înainte de reconciliere; ordinea poate varia între pagini și nu există cursor sau instantaneu comun. Agențiile în perioada de retragere au inventar gol. XML și index: generarea incompletă întoarce 503 cu Retry-After: 300. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
   },
   "x-developer-guide": {
@@ -26,6 +26,11 @@
       "Trimiteți un message_id stabil pentru fiecare lead și un event_id stabil pentru fiecare eveniment de vizualizare. event_id previne incrementul dublu la retrimitere, inclusiv după rotirea cheii portalului. Fără event_id, nu retrimiteți automat POST visits după un timeout. La 503 așteptați Retry-After: 300; la 429 folosiți întârziere progresivă."
     ],
     "history": [
+      {
+        "version": "1.2.3",
+        "date": "2026-11-08",
+        "description": "Ghid pentru site-ul propriu al agenției"
+      },
       {
         "version": "1.2.2",
         "date": "2026-11-07",
