@@ -7,7 +7,13 @@ import { Building2, Globe, ArrowRight } from 'lucide-react';
 
 export function DeveloperDocumentation() {
   const [tab,setTab]=useState('partner');
+  const [showAgencyGuide, setShowAgencyGuide] = useState(false);
   useEffect(()=>{if(window.location.hash && !window.location.hash.startsWith('#partner-'))setTab('feed');},[]);
+  useEffect(() => {
+    if (tab !== 'feed' || !showAgencyGuide) return;
+    document.getElementById('site-agentie')?.scrollIntoView({behavior: 'instant', block: 'start'});
+    setShowAgencyGuide(false);
+  }, [tab, showAgencyGuide]);
   return <div className="min-w-0 pt-6">
     <section aria-labelledby="integration-choice" className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
       <h2 id="integration-choice" className="mb-4 text-2xl font-bold text-navy">Ce integrezi?</h2>
@@ -22,7 +28,7 @@ export function DeveloperDocumentation() {
           <Globe className="mb-3 size-6 text-gold-dark" aria-hidden="true" />
           <h3 className="text-lg font-bold text-navy">Ești agenție Habitoo și ai propriul site?</h3>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">Folosește feedul pentru site-ul agenției. Administratorul agenției generează tokenul în Habitoo → Setări → Integrări → „Feed pentru site-ul agenției”. Fără cereri la suport.</p>
-          <Button variant="outline" className="mt-4" onClick={() => { setTab('feed'); history.replaceState(null, '', '#site-agentie'); requestAnimationFrame(() => document.getElementById('site-agentie')?.scrollIntoView({behavior: 'instant', block: 'start'})); }}>Site-ul propriu al agenției <ArrowRight /></Button>
+          <Button variant="outline" className="mt-4" onClick={() => { setTab('feed'); setShowAgencyGuide(true); history.replaceState(null, '', '#site-agentie'); }}>Site-ul propriu al agenției <ArrowRight /></Button>
         </article>
       </div>
     </section>
