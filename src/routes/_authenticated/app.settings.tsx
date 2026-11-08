@@ -12,7 +12,7 @@ import { AgencyBrandingCard } from "@/components/app/AgencyBrandingCard";
 import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
 
-import { SiteFeedCard } from "@/components/app/SiteFeedCard";
+import { AgencySitePortalCard, SiteFeedMovedCard } from "@/components/app/AgencySitePortalCard";
 import { ArgusConnectionCard } from "@/components/app/ArgusConnectionCard";
 import { CollaborationAutoSwitch } from "@/components/app/CollaborationAutoSwitch";
 import { AgencyCompanyDataFields } from "@/components/app/AgencyCompanyDataFields";
@@ -721,6 +721,7 @@ function SettingsPage() {
                 <ImoradarAutoCard />
                 <ImobiliarePromotionsAdminCard />
                 <ProperstarFeedCard />
+                <AgencySitePortalCard />
               </div>
             </TabsContent>
           ) : null}
@@ -737,7 +738,12 @@ function SettingsPage() {
           {user?.isAdmin ? (
             <TabsContent data-tour="settings-integrations" value="integrations" className="mt-0">
               <div className="space-y-6">
-                <SiteFeedCard />
+                <SiteFeedMovedCard
+                  onOpen={() => {
+                    selectTab("portals");
+                    window.setTimeout(() => document.getElementById("site-agentie")?.scrollIntoView({ block: "start" }), 300);
+                  }}
+                />
                 <ArgusConnectionCard />
               </div>
             </TabsContent>
