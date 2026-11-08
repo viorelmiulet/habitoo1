@@ -1842,6 +1842,13 @@
       "when": 1794167285854,
       "tag": "0262_extension_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 263,
+      "version": "7",
+      "when": 1794167809304,
+      "tag": "0263_extension_property_capture",
+      "breakpoints": true
     }
   ]
 }
