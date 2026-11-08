@@ -9,6 +9,7 @@ import {
 import { extError, sha256Hex, type ExtContext } from "./core";
 import { CRM_URL } from "@/lib/host";
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const MAX_EXTENSION_IMAGES = 30;
 export const MAX_EXTENSION_IMAGE_BYTES = 10 * 1024 * 1024;
 export const EXTENSION_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -193,7 +194,7 @@ export function validateImageFile(bytes: Uint8Array): { type: ExtImageType } | {
 
 export function uploadUrlsHandler(request: Request, store: ExtPropertyStore, propertyId: string) {
   return async (c: ExtContext) => {
-    const access = await store.propertyAccess(propertyId, c.token.user_id, c.token.organization_id);
+    const access = UUID.test(propertyId) ? await store.propertyAccess(propertyId, c.token.user_id, c.token.organization_id) : null;
     if (!access) return extError(404, "NOT_FOUND", "Proprietatea nu există sau nu îți este accesibilă.", c.requestId);
     const json = await readJson(request);
     const v = validateUploadRequest(json?.body ?? null, access.imageCount);
@@ -205,7 +206,7 @@ export function uploadUrlsHandler(request: Request, store: ExtPropertyStore, pro
 
 export function completeImagesHandler(request: Request, store: ExtPropertyStore, propertyId: string) {
   return async (c: ExtContext) => {
-    const access = await store.propertyAccess(propertyId, c.token.user_id, c.token.organization_id);
+    const access = UUID.test(propertyId) ? await store.propertyAccess(propertyId, c.token.user_id, c.token.organization_id) : null;
     if (!access) return extError(404, "NOT_FOUND", "Proprietatea nu există sau nu îți este accesibilă.", c.requestId);
     const json = await readJson(request);
     const paths = (json?.body as { paths?: unknown } | undefined)?.paths;
