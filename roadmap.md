@@ -1,3 +1,9 @@
+## Q1 — izolarea portalurilor blocate
+- [ ] Timeout Imobiliare.ro 15 secunde, reluări abandonate maximum 3 și preluare echitabilă maximum 2/portal
+- [ ] Stare durabilă releu, amânare 15 minute, notificare SuperAdmin și reluare automată
+- [ ] Detectare lot blocat și anulare autorizată „Oprește restul”
+- [ ] Teste exclusiv noi/worker și verificare fără apeluri reale sau publicare
+
 ## D5 — ghid pentru site-ul propriu al agenției
 - [x] Alegere portal/agenție înainte de file, pași și avertismente cu etichetele exacte din Setări; baza cardului este originea curentă + /api/public/sites/v1
 - [x] Documentație Feed 1.2.3 și istoric, fără schimbări de comportament; contractul feedului și Partner OpenAPI păstrate
