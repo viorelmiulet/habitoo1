@@ -11,15 +11,14 @@ let search: { nonce?: string } = {};
 vi.mock("@tanstack/react-start", () => ({ useServerFn: () => connect, createServerFn: () => ({}) }));
 vi.mock("@/lib/extension.functions", () => ({ connectExtension: {} }));
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (opts: Record<string, unknown>) => ({ ...opts, useSearch: () => search }),
   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
 }));
 
 beforeEach(() => { connect.mockClear(); });
 
 async function page() {
-  const mod = await import("./app.extensie.conectare");
-  const C = (mod.Route as unknown as { component: () => JSX.Element }).component;
+  const { ExtensionConnectPanel } = await import("@/components/app/ExtensionConnectPanel");
+  const C = () => <ExtensionConnectPanel nonce={search.nonce} />;
   const container = document.createElement("div"); document.body.appendChild(container);
   const root = createRoot(container);
   await act(async () => root.render(<C />));
