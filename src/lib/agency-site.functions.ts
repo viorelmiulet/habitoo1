@@ -22,8 +22,11 @@ async function requireAgencyAdmin(context: Ctx): Promise<string> {
     setResponseStatus(403);
     throw new Error("Acces refuzat: doar administratorul agenției gestionează site-ul agenției.");
   }
-  const { organizationId } = await resolvePublishingOrg(context);
-  return organizationId;
+  const { data: profile } = await (context.supabase as unknown as {
+    from: (t: "profiles") => { select: (c: string) => { eq: (c: string, v: string) => { maybeSingle: () => PromiseLike<{ data: { organization_id: string | null } | null }> } } };
+  }).from("profiles").select("organization_id").eq("id", (context as unknown as { userId: string }).userId).maybeSingle();
+  if (!profile?.organization_id) throw new Error("Agenția nu este configurată.");
+  return profile.organization_id;
 }
 
 export type AgencySiteSettings = {

@@ -125,6 +125,8 @@ async function collectBlockers(
   for (const row of publications ?? []) {
     if (row.enabled !== true) continue;
     const key = String(row.portal_key);
+    // Site-ul agenției citește feedul, care exclude singur anunțurile arhivate.
+    if (key === "agency_site") continue;
     if (blockers.has(key)) continue;
     const definition = getPortalDefinition(key);
     blockers.set(key, {

@@ -128,6 +128,10 @@ export const generateSiteFeedToken = createServerFn({ method: "POST" })
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const { admin, feed } = await loadServer();
     const generated = feed.generateFeedToken();
+    // Cheia funcționează doar cu site-ul agenției activ: îl creăm la prima generare.
+    const { ensureAgencySite } = await import("@/lib/site-feed/agency-site.server");
+    const { data: org } = await admin.from("organizations").select("name").eq("id", organizationId).maybeSingle();
+    await ensureAgencySite(admin, organizationId, context.userId, org?.name ?? null);
 
     await admin
       .from("site_feed_tokens")
