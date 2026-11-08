@@ -3,7 +3,7 @@ import { INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD, integrationPageText, inte
 import { integrationJsonLd } from "./integration-jsonld";
 import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
-const SLUGS = ["storia", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook", "imo24", "zonata", "homedirect", "imopedia", "ofera", "zup", "imobli", "locuit", "bazaruldecase", "imobiliareplus", "vumsi", "housera"];
+const SLUGS = ["storia", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook", "imo24", "zonata", "homedirect", "imopedia", "ofera", "zup", "imobli", "imobiliaremilitari", "locuit", "bazaruldecase", "imobiliareplus", "vumsi", "housera"];
 
 describe("portalsLabel", () => {
   it.each([
@@ -57,7 +57,7 @@ describe("număr portaluri pe /integrari", async () => {
     expect(ids).not.toContain("facebook_catalog");
     expect(ids).toEqual(expect.arrayContaining(["romimo", "publi24", "olx"]));
     expect(ids.filter((i) => i.includes("olx"))).toEqual(["olx"]);
-    expect(publicPortalCount()).toBe(25);
+    expect(publicPortalCount()).toBe(26);
   });
   it("H1 folosește numărul calculat și fiecare pagină are link", async () => {
     const mod = await import("@/routes/integrari");
