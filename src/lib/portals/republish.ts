@@ -5,7 +5,7 @@
 
 /** Portalurile care își preiau singure ofertele: nu primesc trimiteri. */
 import { getPortalDefinition } from "./registry";
-export const AUTO_PULL_PORTALS = new Set(["imove", "properstar", "clickimob", "imobli", "locuit", "imobiliareplus", "bazaruldecase", "facebook_catalog"]);
+export const AUTO_PULL_PORTALS = new Set(["imove", "properstar", "clickimob", "imobli", "imobiliaremilitari", "locuit", "imobiliareplus", "bazaruldecase", "facebook_catalog"]);
 export function isAutoPullPortal(id: string) { return AUTO_PULL_PORTALS.has(id) || getPortalDefinition(id)?.dynamic_feed === true; }
 export const AUTO_PULL_MESSAGE = "Se actualizează automat la următoarea preluare.";
 export const EXCLUDED_PROPERTY_STATUSES = new Set(["sold", "rented", "archived"]);

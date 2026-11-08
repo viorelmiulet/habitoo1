@@ -267,6 +267,7 @@ return adapter;
 
 export const clickimobAdapter = createIndexFeedAdapter("clickimob", "ClickImob");
 export const imobliAdapter = createIndexFeedAdapter("imobli", "Imobli");
+export const imobiliaremilitariAdapter = createIndexFeedAdapter("imobiliaremilitari", "Imobiliare Militari");
 export const locuitAdapter = createIndexFeedAdapter("locuit", "Locuit.ro");
 export const bazaruldecaseAdapter = createIndexFeedAdapter("bazaruldecase", "BazarulDeCase.ro");
 export const imobiliareplusAdapter = createIndexFeedAdapter("imobiliareplus", "Imobiliare+");

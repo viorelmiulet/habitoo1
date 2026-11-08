@@ -1,6 +1,6 @@
 /** Registrul de adaptoare: singurul loc care leagă un portal de codul lui. */
 import type { PortalAdapter } from "../adapter";
-import { createIndexFeedAdapter, clickimobAdapter, imobliAdapter, locuitAdapter, imobiliareplusAdapter, bazaruldecaseAdapter } from "./clickimob.server";
+import { createIndexFeedAdapter, clickimobAdapter, imobliAdapter, imobiliaremilitariAdapter, locuitAdapter, imobiliareplusAdapter, bazaruldecaseAdapter } from "./clickimob.server";
 import { getPortalDefinition } from "../registry";
 import { imobiliareAdapter } from "./imobiliare.server";
 import { imoveAdapter } from "./imove.server";
@@ -24,6 +24,7 @@ import { houseraAdapter } from "./housera.server";
 const ADAPTERS: Record<string, PortalAdapter> = {
   clickimob: clickimobAdapter,
   imobli: imobliAdapter,
+  imobiliaremilitari: imobiliaremilitariAdapter,
   locuit: locuitAdapter,
   bazaruldecase: bazaruldecaseAdapter,
   imobiliareplus: imobiliareplusAdapter,

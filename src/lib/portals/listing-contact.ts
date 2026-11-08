@@ -51,7 +51,7 @@ export function resolveListingContact(property: {
 }
 
 /** Portalurile de tip feed din care se exclud ofertele al căror agent nu are telefon. */
-export const FEED_PORTALS_REQUIRING_AGENT_PHONE = new Set(["clickimob", "imobli", "locuit", "imobiliareplus", "imove", "bazaruldecase"]);
+export const FEED_PORTALS_REQUIRING_AGENT_PHONE = new Set(["clickimob", "imobli", "imobiliaremilitari", "locuit", "imobiliareplus", "imove", "bazaruldecase"]);
 export function feedRequiresAgentPhone(portal: string) {
   return FEED_PORTALS_REQUIRING_AGENT_PHONE.has(portal) || getPortalDefinition(portal)?.dynamic_feed === true;
 }

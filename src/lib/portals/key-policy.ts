@@ -23,6 +23,11 @@ export function assertPortalKeyAllowed(
       "Imobli nu folosește chei pe agenție. Agenția intră în indexul Imobli după activarea portalului.",
     );
   }
+  if (definition.id === "imobiliaremilitari") {
+    throw new Error(
+      "Imobiliare Militari nu folosește chei pe agenție. Agenția intră în indexul Imobiliare Militari după activarea portalului.",
+    );
+  }
   if (definition.id === "locuit") {
     throw new Error(
       "Locuit.ro nu folosește chei pe agenție. Agenția intră în indexul Locuit.ro după activarea portalului.",
