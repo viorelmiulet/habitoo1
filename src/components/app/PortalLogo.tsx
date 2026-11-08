@@ -8,6 +8,7 @@
 import { useState } from "react";
 import clickimobLogo from "@/assets/portals/clickimob-logo.webp.asset.json";
 import imobliLogo from "@/assets/portals/imobli.png.asset.json";
+import imobiliaremilitariLogo from "@/assets/portals/imobiliaremilitari.png.asset.json";
 import locuitLogo from "@/assets/portals/locuit.png.asset.json";
 import bazaruldecaseLogo from "@/assets/portals/bazaruldecase.png.asset.json";
 import facebookLogo from "@/assets/portals/facebook.svg";
@@ -39,6 +40,7 @@ import { cn } from "@/lib/utils";
 const PORTAL_LOGOS: Record<string, string> = {
   clickimob: clickimobLogo.url,
   imobli: imobliLogo.url,
+  imobiliaremilitari: (imobiliaremilitariLogo as { url: string }).url,
   locuit: (locuitLogo as { url: string }).url,
   bazaruldecase: (bazaruldecaseLogo as { url: string }).url,
   facebook_catalog: facebookLogo,
