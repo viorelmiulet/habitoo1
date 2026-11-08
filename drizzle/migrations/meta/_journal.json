@@ -1849,6 +1849,13 @@
       "when": 1794167809304,
       "tag": "0263_extension_property_capture",
       "breakpoints": true
+    },
+    {
+      "idx": 264,
+      "version": "7",
+      "when": 1794168132861,
+      "tag": "0264_facebook_group_posts",
+      "breakpoints": true
     }
   ]
 }

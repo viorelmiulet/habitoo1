@@ -3469,6 +3469,50 @@ export type Database = {
         }
         Relationships: []
       }
+      facebook_group_posts: {
+        Row: {
+          created_at: string
+          group_key: string
+          group_name: string | null
+          group_url: string
+          id: string
+          organization_id: string
+          posted_at: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_key: string
+          group_name?: string | null
+          group_url: string
+          id?: string
+          organization_id: string
+          posted_at?: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_key?: string
+          group_name?: string | null
+          group_url?: string
+          id?: string
+          organization_id?: string
+          posted_at?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facebook_group_posts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generated_video_clips: {
         Row: {
           created_at: string
@@ -9242,6 +9286,7 @@ export type Database = {
           id: string
           is_active: boolean
           job_title: string | null
+          listing_phone: string | null
           onboarding_tour_seen_at: string | null
           organization_id: string | null
           phone: string | null
@@ -9250,6 +9295,7 @@ export type Database = {
           public_show_phone: boolean
           public_slug: string | null
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -9259,6 +9305,7 @@ export type Database = {
           id: string
           is_active?: boolean
           job_title?: string | null
+          listing_phone?: string | null
           onboarding_tour_seen_at?: string | null
           organization_id?: string | null
           phone?: string | null
@@ -9267,6 +9314,7 @@ export type Database = {
           public_show_phone?: boolean
           public_slug?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -9276,6 +9324,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           job_title?: string | null
+          listing_phone?: string | null
           onboarding_tour_seen_at?: string | null
           organization_id?: string | null
           phone?: string | null
@@ -9284,6 +9333,7 @@ export type Database = {
           public_show_phone?: boolean
           public_slug?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: [
           {
