@@ -83,6 +83,8 @@ import {
   getPropertyFacebookCatalog,
   setPropertyFacebookCatalog,
 } from "@/lib/facebook-catalog-listings.functions";
+import { getPropertyAgencySite, setPropertyAgencySite } from "@/lib/agency-site.functions";
+import { AGENCY_SITE_LABEL, AGENCY_SITE_PORTAL_KEY, agencySiteRowLabel, agencySiteStatusLabel } from "@/lib/site-feed/agency-site";
 import { FACEBOOK_LISTING_FIX, facebookListingState } from "@/lib/facebook-catalog-status";
 
 /** „acum 4 min” / „acum 3 h” / data completă, pentru ultima sincronizare. */
@@ -356,6 +358,22 @@ export const PropertyPortalsCard = forwardRef<
   const fbState = facebookListingState(fbValue, fb.data?.reason ?? null);
   const canEditFacebookCatalog = fb.data?.canEdit === true;
 
+  /** Site-ul agenției: portal privat, aceeași bifă, fără joburi de publicare. */
+  const loadSite = useServerFn(getPropertyAgencySite);
+  const saveSite = useServerFn(setPropertyAgencySite);
+  const site = useQuery({
+    queryKey: ["property-agency-site", organizationId, propertyId] as const,
+    queryFn: () => loadSite({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
+  });
+  const [siteChecked, setSiteChecked] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (site.data) setSiteChecked(site.data.enabled);
+  }, [site.data]);
+  const siteVisible = site.data?.available === true;
+  const siteValue = siteChecked ?? site.data?.enabled ?? false;
+  const siteDirty = siteVisible && site.data !== undefined && siteValue !== site.data.enabled;
+  const siteLabel = siteVisible ? agencySiteRowLabel(site.data!.displayName) : AGENCY_SITE_LABEL;
+
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [promotedChecked, setPromotedChecked] = useState<Record<string, boolean>>({});
 
@@ -526,9 +544,19 @@ export const PropertyPortalsCard = forwardRef<
 
   const applyPending = useCallback(async () => {
     const portalsActionable = canManage && actionable.length > 0;
-    if (!portalsActionable && !collabDirty && !fbDirty) return null;
+    if (!portalsActionable && !collabDirty && !fbDirty && !siteDirty) return null;
 
     const results: PortalApplyResult[] = [];
+
+    if (siteDirty) {
+      try {
+        await saveSite({ data: { ...(organizationId ? { organizationId } : {}), propertyId, enabled: siteValue } });
+        results.push({ portalId: AGENCY_SITE_PORTAL_KEY, portalName: siteLabel, ok: true, message: `${siteLabel}: ${agencySiteStatusLabel(siteValue).toLowerCase()}` });
+      } catch (e) {
+        results.push({ portalId: AGENCY_SITE_PORTAL_KEY, portalName: siteLabel, ok: false, message: e instanceof Error ? e.message : `${siteLabel}: salvarea a eșuat.` });
+      }
+      void queryClient.invalidateQueries({ queryKey: ["property-agency-site"] });
+    }
 
     if (fbDirty && canEditFacebookCatalog) {
       try {
@@ -612,6 +640,10 @@ export const PropertyPortalsCard = forwardRef<
     collabRow?.defaultCommissionPercent,
     fbDirty,
     fbValue,
+    siteDirty,
+    siteValue,
+    siteLabel,
+    saveSite,
     canEditFacebookCatalog,
     saveFb,
     organizationId,
@@ -631,10 +663,11 @@ export const PropertyPortalsCard = forwardRef<
   const activeCount =
     cells.filter((c) => c.state === "published" || c.state === "in_feed").length +
     (collabVisible && collabRow?.enabled ? 1 : 0) +
-    (fb.data?.enabled ? 1 : 0);
-  const totalRows = cells.length + (collabVisible ? 1 : 0) + 1;
+    (fb.data?.enabled ? 1 : 0) +
+    (siteVisible && site.data?.enabled ? 1 : 0);
+  const totalRows = cells.length + (collabVisible ? 1 : 0) + 1 + (siteVisible ? 1 : 0);
   const pendingCount =
-    (canManage ? actionable.length : 0) + (collabDirty ? 1 : 0) + (fbDirty ? 1 : 0);
+    (canManage ? actionable.length : 0) + (collabDirty ? 1 : 0) + (fbDirty ? 1 : 0) + (siteDirty ? 1 : 0);
 
   const lastSync = cells
     .map((cell) => cell.lastSyncAt)
@@ -757,6 +790,39 @@ export const PropertyPortalsCard = forwardRef<
                 </div>
               </Card>
             </li>
+            {siteVisible ? (
+              <li className="min-w-0">
+                <Card className={cn("relative min-h-14 min-w-0 gap-3 rounded-[14px] border-border bg-card p-3 text-sm", siteValue && "border-gold ring-1 ring-gold/40")}>
+                  <label htmlFor="portal-agency-site" aria-label={siteLabel} className={cn("absolute inset-0 z-0", editing ? "cursor-pointer" : "cursor-default")} />
+                  <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <PortalLogo portalId={AGENCY_SITE_PORTAL_KEY} name={siteLabel} fallback="WEB" size={32} />
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-[15px] font-semibold leading-5">{siteLabel}</p>
+                        <StatusPill state={site.data?.enabled ? "published" : "inactive"} dot>
+                          {agencySiteStatusLabel(site.data?.enabled === true)}
+                        </StatusPill>
+                      </div>
+                    </div>
+                    <Checkbox
+                      id="portal-agency-site"
+                      checked={siteValue}
+                      disabled={!editing || site.isLoading}
+                      aria-label={siteLabel}
+                      className="pointer-events-auto mt-0.5 size-6 rounded-full disabled:opacity-40 [&_svg]:size-4"
+                      onCheckedChange={(next) => setSiteChecked(next === true)}
+                    />
+                  </div>
+                  <p className="relative z-10 mt-3 text-xs text-muted-foreground pointer-events-none">
+                    {siteDirty
+                      ? "Se aplică la următoarea apăsare pe „Publică”."
+                      : site.data?.enabled
+                        ? "Apare în feedul citit de site-ul agenției."
+                        : "Nu apare pe site-ul agenției."}
+                  </p>
+                </Card>
+              </li>
+            ) : null}
             {collabVisible ? (
               <li className="min-w-0">
                 <Card
@@ -1276,6 +1342,7 @@ export const PropertyPortalsCard = forwardRef<
 });
 
 function portalDisplayLabel(cells: PropertyPortalCell[], portalId: string): string {
+  if (portalId === AGENCY_SITE_PORTAL_KEY) return AGENCY_SITE_LABEL;
   return cells.find((cell) => cell.portalId === portalId)?.portalName ?? portalId;
 }
 
