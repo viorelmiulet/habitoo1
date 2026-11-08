@@ -1,3 +1,8 @@
+## D5 — ghid pentru site-ul propriu al agenției
+- [ ] Alegere portal/agenție înainte de file, pași și avertismente cu etichetele exacte din Setări
+- [ ] Documentație Feed 1.2.3 și istoric, fără schimbări de comportament
+- [ ] Doar teste documentație/pagină și verificare vizuală 1440/390, fără publicare
+
 ## P4 — implementare fără releu (cererea curentă)
 - [x] Validare HTTPS/443 și DNS A+AAAA, semnare, secret criptat, timeout și răspuns limitat
 - [x] Endpointuri, coadă ordonată, reîncercări 24h, suspendare/notificare și demo izolat

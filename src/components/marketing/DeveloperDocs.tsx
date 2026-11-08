@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiSpec, operations, requestExample, responseExample, schemaRows, schemaType, type Schema, type Operation } from "@/lib/developer-docs";
 
 const sections = [
-  ["introducere", "Introducere"], ["pornire", "Pornire rapidă"], ["onboarding", "Onboarding și chei"],
+  ["introducere", "Introducere"], ["site-agentie", "Site-ul propriu al agenției"], ["pornire", "Pornire rapidă"], ["onboarding", "Onboarding și chei"],
   ["autentificare", "Autentificare"], ["index", "Indexul agențiilor"], ["anunturi", "Feedul de anunțuri"],
   ["agenti", "Agenți și agenție"], ["poze", "Poze"], ["xml", "Feed XML (Kyero v3)"],
   ["leaduri", "Trimiterea lead-urilor"], ["vizionari", "Vizualizări"], ["erori", "Erori și coduri de răspuns"],
@@ -130,6 +130,23 @@ export function DeveloperDocs() {
           <div className="mt-7 flex flex-wrap items-center gap-4"><Button asChild><a href="/dezvoltatori/openapi.json" target="_blank" rel="noopener noreferrer"><Download /> Descarcă OpenAPI</a></Button><span className="text-xs text-muted-foreground">Versiunea {apiSpec.info.version}</span></div>
         </header>
         <Section id="introducere" title="Introducere"><p>{guide.introduction}</p><p className="text-sm text-muted-foreground">Exemplele sunt ilustrative, generate din scheme; toate identitățile și cheile sunt fictive. API-ul nu este apelat din această pagină.</p></Section>
+        <Section id="site-agentie" title="Site-ul propriu al agenției">
+          <p>Ai un site pentru agenția ta? Administratorul agenției generează tokenul direct în Habitoo, fără cereri la suport și fără cheie de index.</p>
+          <ol className="list-decimal space-y-4 pl-6">
+            <li>Administratorul agenției intră în <strong>Setări → Integrări</strong>, la cardul <strong>„Feed pentru site-ul agenției”</strong>.</li>
+            <li>Apasă <strong>„Generează token”</strong> și copiază-l. Tokenul se afișează o singură dată.</li>
+            <li>Folosește tokenul în <code className="break-words [overflow-wrap:anywhere]">Authorization: Bearer {"{token}"}</code>, cu adresa de bază <code className="break-words [overflow-wrap:anywhere]">https://crm.habitoo.ro/api/public/sites/v1</code>. Cardul afișează adresele pe domeniul din care ai deschis Habitoo; aceasta este adresa când folosești crm.habitoo.ro.</li>
+            <li>Verifică totul cu <strong>„Testează conexiunea”</strong> și urmărește lista <strong>„Ultimele accesări”</strong>.</li>
+            <li>Endpointurile disponibile: <code>GET /properties</code>, <code className="break-words [overflow-wrap:anywhere]">GET /properties/{"{id}"}</code>, <code>GET /agents</code>, <code>POST /contacts</code> și <code>POST /visits</code>. „visits” înseamnă vizualizări ale anunțurilor.</li>
+          </ol>
+          <CodeBlock text={'curl "https://crm.habitoo.ro/api/public/sites/v1/properties" \\\n  -H "Authorization: Bearer {token}"'} label="curl · Feed pentru site-ul agenției" />
+          <div className="border-l-2 border-gold pl-4"><h3 className="mb-3 font-semibold text-navy">Protejează accesul site-ului</h3><ul className="list-disc space-y-3 pl-5 text-sm">
+            <li>Tokenul se folosește doar pe serverul site-ului, niciodată în cod vizibil în browser.</li>
+            <li><strong>„Generează token nou”</strong> invalidează tokenul vechi. Actualizează tokenul pe serverul site-ului.</li>
+            <li><strong>„Revocă accesul”</strong> oprește accesul site-ului la feed.</li>
+            <li>Partner API (cheile <code>hbpk_</code>) este pentru portaluri care preiau mai multe agenții, nu pentru site-ul unei agenții.</li>
+          </ul></div>
+        </Section>
         <Section id="pornire" title="Pornire rapidă">{guide.quickStart.map((text, i) => <div key={text}><h3 className="flex gap-3 text-base font-semibold"><span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gold-tint text-gold-dark">{i+1}</span>{text}</h3>{i === 0 && index && <CodeBlock text={requestExample(index.path, index.method, index.operation)} label="1 · Citește indexul" />}{i === 1 && feed && <CodeBlock text={`# FEED_BASE este valoarea feed.base_url din index\nFEED_BASE="${apiSpec.servers[0]?.url}/api/public/sites/v1"\n${requestExample(feed.path, feed.method, feed.operation)}`} label="2 · Citește prima pagină" />}{i === 2 && feed && <CodeBlock text={responseExample(feed.operation).body} label="3 · Exemplu de inventar JSON" />}</div>)}</Section>
         <Section id="onboarding" title="Onboarding și chei">{guide.onboarding.map(p => <p key={p}>{p}</p>)}</Section>
         <Section id="autentificare" title="Autentificare"><AuthenticationDocs /></Section>
