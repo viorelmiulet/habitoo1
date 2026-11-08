@@ -827,6 +827,47 @@ export type Database = {
           },
         ]
       }
+      agency_site_portals: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_name: string
+          first_activated_at: string | null
+          organization_id: string
+          site_url: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_name: string
+          first_activated_at?: string | null
+          organization_id: string
+          site_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_name?: string
+          first_activated_at?: string | null
+          organization_id?: string
+          site_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_site_portals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_portal_preferences: {
         Row: {
           created_at: string
