@@ -21,6 +21,7 @@ beforeAll(async () => {
   await db.exec(readFileSync("drizzle/migrations/0152_portal_republish_batches.sql", "utf8"));
   await db.exec(`ALTER TABLE portal_publish_jobs ADD contact_update_requested_by uuid, ADD followup_at timestamptz; ALTER TABLE portal_republish_batches ADD kind text DEFAULT 'republish';`);
   await db.exec(readFileSync("drizzle/migrations/0259_publication_resilience.sql", "utf8"));
+  await db.exec(readFileSync("drizzle/migrations/0260_publication_cancel_auth_guard.sql", "utf8"));
   await db.exec(readFileSync("drizzle/migrations/0198_republish_completion_notification.sql", "utf8"));
 }, 15000);
 afterAll(async () => { await db.close(); });
@@ -58,7 +59,7 @@ it("three relay failures defer both portals 15 minutes and notify superadmins on
   await db.exec("select record_portal_relay_response(false)");
   const state=(await db.query<any>("select extract(epoch from paused_until-now()) as seconds from portal_relay_health")).rows[0];
   expect(Number(state.seconds)).toBeGreaterThan(899); expect(Number(state.seconds)).toBeLessThanOrEqual(900);
-  expect((await db.query<any>("select user_id,title from notifications")).rows).toEqual([{user_id:user,title:"Releul cu IP fix (relay.habitoo.ro) nu răsponde".replace("răsponde","răspunde")}]);
+  expect((await db.query<any>("select user_id,title from notifications")).rows).toEqual([{user_id:user,title:"Releul cu IP fix (relay.habitoo.ro) nu răspunde"}]);
   expect((await claim(10)).map(j=>j.portal_key)).toEqual(["storia"]);
   await db.exec("select record_portal_relay_response(false)");
   expect((await db.query("select * from notifications")).rows).toHaveLength(1);

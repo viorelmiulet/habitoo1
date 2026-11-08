@@ -6,6 +6,7 @@ import { expect, it, vi } from 'vitest';
 import { PortalRepublishButton } from './PortalRepublishDialog';
 const mock = vi.hoisted(() => ({ start: vi.fn(), stop: vi.fn(), success: vi.fn(), batch: {id:'11111111-1111-4111-8111-111111111111',stalled:false,status:'running',total:2,succeeded:0,failed:0,skipped:0,pending:2,errors:[] as any[],skippedItems:[] as any[]} }));
 vi.mock('@tanstack/react-start', () => ({ useServerFn: (fn: unknown) => fn }));
+vi.mock('@/lib/feed-registry', () => ({ feedDefinitions: () => [] }));
 vi.mock('@/hooks/use-session', () => ({ useCurrentUser: () => ({ data:{userId:'agent',organization:{id:'org'}} }) }));
 vi.mock('@/lib/portals/republish.functions', () => ({
   startRepublish: mock.start,
@@ -40,4 +41,18 @@ it('explains start failures in plain words', () => {
   expect(startErrorText(new Error('republish_running'))).toMatch(/rulează deja/);
   expect(startErrorText(new Error('Failed to fetch'))).toMatch(/nu a putut fi pornită/);
   expect(startErrorText(new Error('Nu există anunțuri publicate de republicat.'))).toBe('Nu există anunțuri publicate de republicat.');
+});
+
+it('Oprește restul cancels the remaining jobs and shows the closed report',async()=>{
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);localStorage.clear();
+  mock.batch={...mock.batch,status:'running',stalled:true,succeeded:0,failed:0,skipped:0,pending:2,errors:[],skippedItems:[]};
+  mock.stop.mockImplementation(async()=>{mock.batch={...mock.batch,status:'done',stalled:false,pending:0,skipped:2};return {cancelled:2};});
+  const host=document.createElement('div');document.body.append(host);const root=createRoot(host);
+  const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}});
+  await act(async()=>root.render(<QueryClientProvider client={client}><PortalRepublishButton reportBatchId={mock.batch.id}/></QueryClientProvider>));
+  await pause();await click('Oprește restul');await pause();
+  expect(mock.stop).toHaveBeenCalledWith({data:{batchId:mock.batch.id}});
+  expect(document.body.textContent).toContain('Republicare terminată');
+  expect(document.body.textContent).not.toContain('Republicarea pare blocată');
+  await act(async()=>root.unmount());client.clear();host.remove();vi.unstubAllGlobals();
 });

@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { imobiliareRequest } from "../src/lib/portals/imobiliare/client.server";
 import { relayFetch } from "../src/lib/portals/relay.server";
 import { republishIsStalled } from "../src/lib/portals/publication-resilience";
+import { runPortalPublishWorker } from "../src/lib/portals/publish-jobs.server";
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();vi.unstubAllEnvs();});
 it.each([false,true])("Imobiliare hangs: TIMEOUT at 15 seconds (relay=%s)", async (relayed) => {
   vi.useFakeTimers();
@@ -35,4 +36,21 @@ it("stalled batch requires both 30-minute age and 10-minute absence of completio
   expect(republishIsStalled(ago(30),ago(11),now)).toBe(false);
   expect(republishIsStalled(ago(31),ago(10),now)).toBe(false);
   expect(republishIsStalled(ago(31),null,now)).toBe(true);
+});
+
+it("two slow portal lanes never hold the independent lane behind a batch barrier",async()=>{
+  const pending=Array.from({length:20},(_,i)=>({id:String(i),portal_key:'imobiliare_ro'}));
+  const fast=Array.from({length:8},(_,i)=>({id:`fast-${i}`,portal_key:'storia'}));
+  let slowActive=0,fastDone=0;
+  const releases:(()=>void)[]=[];
+  const admin={rpc:async()=>{const j=slowActive<2?pending.shift():fast.shift();if(j?.portal_key==='imobiliare_ro')slowActive++;return {data:j?[{...j,attempts:1,requested_by:'fixture'}]:[],error:null};},from:()=>({update:()=>({eq:async()=>({error:null})})})};
+  const work=runPortalPublishWorker(admin,async j=>{
+    if(j.portal_key==='imobiliare_ro')await new Promise<void>(r=>releases.push(r));
+    else fastDone++;
+    return {portalId:j.portal_key,ok:true,message:null};
+  });
+  for(let i=0;i<30;i++)await Promise.resolve();
+  expect(fastDone).toBe(8);
+  for(const release of releases)release();
+  await work;
 });
