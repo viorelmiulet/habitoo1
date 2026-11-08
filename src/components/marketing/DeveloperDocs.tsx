@@ -131,19 +131,20 @@ export function DeveloperDocs() {
         </header>
         <Section id="introducere" title="Introducere"><p>{guide.introduction}</p><p className="text-sm text-muted-foreground">Exemplele sunt ilustrative, generate din scheme; toate identitățile și cheile sunt fictive. API-ul nu este apelat din această pagină.</p></Section>
         <Section id="site-agentie" title="Site-ul propriu al agenției">
-          <p>Ai un site pentru agenția ta? Administratorul agenției generează tokenul direct în Habitoo, fără cereri la suport și fără cheie de index.</p>
+          <p>Ai un site pentru agenția ta? Site-ul devine un portal privat al agenției: administratorul îl adaugă și generează cheia direct în Habitoo, fără cereri la suport și fără cheie de index. Feedul site-ului conține doar anunțurile bifate pentru site.</p>
           <ol className="list-decimal space-y-4 pl-6">
-            <li>Administratorul agenției intră în <strong>Setări → Integrări</strong>, la cardul <strong>„Feed pentru site-ul agenției”</strong>.</li>
-            <li>Apasă <strong>„Generează token”</strong> și copiază-l. Tokenul se afișează o singură dată.</li>
+            <li>Administratorul agenției intră în <strong>Setări → Portaluri</strong>, la cardul <strong>„Site-ul agenției”</strong>, completează adresa site-ului și numele afișat și lasă site-ul <strong>Activ</strong>.</li>
+            <li>Apasă <strong>„Generează cheie”</strong> și copiaz-o. Cheia se afișează o singură dată. Cheile generate anterior rămân valabile.</li>
             <li>Folosește tokenul în <code className="break-words [overflow-wrap:anywhere]">Authorization: Bearer {"{token}"}</code>, cu adresa de bază <code className="break-words [overflow-wrap:anywhere]">https://crm.habitoo.ro/api/public/sites/v1</code>. Cardul afișează adresele pe domeniul din care ai deschis Habitoo; aceasta este adresa când folosești crm.habitoo.ro.</li>
             <li>Verifică totul cu <strong>„Testează conexiunea”</strong> și urmărește lista <strong>„Ultimele accesări”</strong>.</li>
+            <li>În fiecare anunț, rândul <strong>„Site-ul agenției — nume afișat”</strong> se bifează sau se debifează ca orice portal. La prima activare se bifează toate anunțurile publicate, iar anunțurile noi sunt bifate implicit. <code>GET /properties</code> conține doar anunțurile bifate; un anunț nebifat întoarce 404 la <code className="break-words [overflow-wrap:anywhere]">GET /properties/{"{id}"}</code>.</li>
             <li>Endpointurile disponibile: <code>GET /properties</code>, <code className="break-words [overflow-wrap:anywhere]">GET /properties/{"{id}"}</code>, <code>GET /agents</code>, <code>POST /contacts</code> și <code>POST /visits</code>. „visits” înseamnă vizualizări ale anunțurilor.</li>
           </ol>
           <CodeBlock text={'curl "https://crm.habitoo.ro/api/public/sites/v1/properties" \\\n  -H "Authorization: Bearer {token}"'} label="curl · Feed pentru site-ul agenției" />
           <div className="border-l-2 border-gold pl-4"><h3 className="mb-3 font-semibold text-navy">Protejează accesul site-ului</h3><ul className="list-disc space-y-3 pl-5 text-sm">
-            <li>Tokenul se folosește doar pe serverul site-ului, niciodată în cod vizibil în browser.</li>
-            <li><strong>„Generează token nou”</strong> invalidează tokenul vechi. Actualizează tokenul pe serverul site-ului.</li>
-            <li><strong>„Revocă accesul”</strong> oprește accesul site-ului la feed.</li>
+            <li>Cheia se folosește doar pe serverul site-ului, niciodată în cod vizibil în browser.</li>
+            <li><strong>„Generează cheie nouă”</strong> invalidează cheia veche. Actualizeaz-o pe serverul site-ului.</li>
+            <li><strong>„Revocă accesul”</strong> sau trecerea site-ului pe <strong>Inactiv</strong> oprește accesul site-ului la feed (răspuns 401).</li>
             <li>Partner API (cheile <code>hbpk_</code>) este pentru portaluri care preiau mai multe agenții, nu pentru site-ul unei agenții.</li>
           </ul></div>
         </Section>

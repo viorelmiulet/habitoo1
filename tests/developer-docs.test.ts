@@ -3,9 +3,11 @@ import { readFileSync } from "node:fs";
 import { apiSpec, operations, requestExample, responseExample, schemaRows } from "../src/lib/developer-docs";
 
 describe("Documentation generated from the public OpenAPI", () => {
-  it("releases the agency-site documentation as 1.2.3 without changing the feed protocol version", () => {
-    expect(apiSpec.info.version).toBe("1.2.3");
-    expect(apiSpec["x-developer-guide"].history[0]?.version).toBe("1.2.3");
+  it("releases the agency-site portal documentation as 1.2.4 without changing the feed protocol version", () => {
+    expect(apiSpec.info.version).toBe("1.2.4");
+    expect(apiSpec["x-developer-guide"].history[0]?.version).toBe("1.2.4");
+    expect(apiSpec["x-developer-guide"].history[0]?.description).toContain("Setări → Portaluri → „Site-ul agenției”");
+    expect(apiSpec["x-developer-guide"].history[1]?.version).toBe("1.2.3");
     expect(apiSpec.components.schemas.Error?.properties?.api_version?.const).toBe("habitoo-site-feed/1.0");
   });
   it("covers each authentication alternative using the exact accepted header or query parameter", () => {
