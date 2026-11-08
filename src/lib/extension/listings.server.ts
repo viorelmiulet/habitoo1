@@ -2,7 +2,7 @@ import type { ExtListingsStore, ExtListingRow } from "./listings";
 import { FEED_PUBLIC_STATUSES, feedImageUrl } from "@/lib/site-feed/mapper";
 import { CRM_URL } from "@/lib/host";
 
-const COLS = "id,reference,title,description,transaction_kind,property_type,price,currency,rooms,usable_surface,surface,floor,floor_label,building_floors,build_year,city,district,county,address,street,street_number,location_precise,latitude,longitude,assigned_to,created_at";
+const COLS = "id,reference,title,description,transaction_kind,property_type,price,currency,rooms,usable_surface,surface,floor,floor_label,building_floors,build_year,city,district,county,address,street,street_number,location_precise,lat,lng,assigned_to,created_at";
 
 export async function extensionListingsStore(): Promise<ExtListingsStore> {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");

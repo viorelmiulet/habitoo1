@@ -15,7 +15,7 @@ export type ExtListingRow = {
   rooms: number | null; usable_surface: number | null; surface: number | null; floor: number | null; floor_label: string | null;
   building_floors: number | null; build_year: number | null; city: string | null; district: string | null; county: string | null;
   address: string | null; street: string | null; street_number: string | null; location_precise: boolean | null;
-  latitude?: number | null; longitude?: number | null; assigned_to: string | null; created_at: string;
+  lat?: number | null; lng?: number | null; assigned_to: string | null; created_at: string;
 };
 export type ExtAgentContact = { full_name: string | null; phone: string | null; listing_phone: string | null; whatsapp: string | null };
 export type ExtFbPost = { group_name: string | null; group_url: string; posted_at: string };
@@ -51,7 +51,7 @@ export function truncate(text: string, max = POST_DESCRIPTION_MAX) {
 }
 
 export function listingLocation(p: ExtListingRow) {
-  const loc = publicLocation({ ...p, latitude: p.latitude ?? null, longitude: p.longitude ?? null } as Parameters<typeof publicLocation>[0]);
+  const loc = publicLocation({ ...p } as Parameters<typeof publicLocation>[0]);
   const street = loc.precise ? (loc.address || [loc.street, loc.street_number].filter(Boolean).join(" ")) : "";
   return [street, p.district, p.city].map((s) => (s ?? "").trim()).filter(Boolean).join(", ");
 }
