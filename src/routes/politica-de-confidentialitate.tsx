@@ -271,6 +271,34 @@ const sections: LegalSection[] = [
     ),
   },
   {
+    id: "extensie-chrome",
+    title: "Extensia Chrome Habitoo Captură",
+    body: (
+      <>
+        <h3>Ce face extensia</h3>
+        <ul>
+          <li>Importă în contul Habitoo al agentului anunțul pe care agentul îl alege explicit: titlu, descriere, preț, caracteristici, localizare, poze și datele de contact afișate public în anunț.</li>
+          <li>Completează postări în grupuri Facebook cu anunțurile agentului din Habitoo, cu datele de contact ale agentului.</li>
+        </ul>
+        <h3>Ce nu face extensia</h3>
+        <ul>
+          <li>Nu citește istoricul de navigare.</li>
+          <li>Nu citește pagini fără acțiunea agentului.</li>
+          <li>Nu postează singură pe Facebook: agentul apasă „Postează”.</li>
+          <li>Nu citește conținut de pe Facebook, în afară de numele și adresa grupului deschis.</li>
+          <li>Nu vinde și nu transmite date terților.</li>
+        </ul>
+        <h3>Unde ajung datele</h3>
+        <p>Datele ajung doar în contul agenției din Habitoo (crm.habitoo.ro). Tokenul de conectare se păstrează local în browser și poate fi revocat oricând din Setări → Profil → Extensia Chrome sau prin dezinstalarea extensiei.</p>
+        <h3>Temeiul și păstrarea</h3>
+        <p>Datele importate cu extensia se prelucrează și se păstrează la fel ca celelalte date din CRM: operatorul este agenția, iar Habitoo (MVA PERFECT BUSINESS S.R.L.) este persoana împuternicită. Pentru solicitări privind aceste date:{" "}
+          <a href="mailto:contact@habitoo.ro" className="font-medium text-primary underline-offset-4 hover:underline">contact@habitoo.ro</a>.
+        </p>
+        <p>Utilizarea informațiilor primite prin extensie respectă Chrome Web Store User Data Policy, inclusiv cerințele „Limited Use”.</p>
+      </>
+    ),
+  },
+  {
     title: "Modificări",
     body: (
       <p>
@@ -301,7 +329,7 @@ function PrivacyPage() {
       eyebrow="Legal"
       title="Politica de confidențialitate"
       intro="Ce date cu caracter personal prelucrăm, în ce scop și ce drepturi ai, conform GDPR."
-      lastUpdated="7 septembrie 2026"
+      lastUpdated="8 noiembrie 2026"
       sections={sections}
     />
   );

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { PublicLayout } from "./PublicLayout";
 import { Container, Eyebrow } from "./Section";
 
-export type LegalSection = { title: string; body: ReactNode };
+export type LegalSection = { title: string; body: ReactNode; id?: string };
 
 export function LegalPage({
   eyebrow,
@@ -41,7 +41,7 @@ export function LegalPage({
               {sections.map((s, i) => (
                 <li key={s.title}>
                   <a
-                    href={`#sectiune-${i + 1}`}
+                    href={`#${s.id ?? `sectiune-${i + 1}`}`}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {i + 1}. {s.title}
@@ -54,7 +54,7 @@ export function LegalPage({
         <article className="min-w-0 max-w-[760px] lg:col-span-9">
           <div className="space-y-12">
             {sections.map((s, i) => (
-              <section key={s.title} id={`sectiune-${i + 1}`} className="scroll-mt-28">
+              <section key={s.title} id={s.id ?? `sectiune-${i + 1}`} className="scroll-mt-28">
                 <h2 className="border-b border-border pb-2 text-xl font-semibold text-navy sm:text-2xl">
                   {i + 1}. {s.title}
                 </h2>

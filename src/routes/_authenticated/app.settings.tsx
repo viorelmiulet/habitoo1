@@ -435,6 +435,7 @@ function SettingsPage() {
               <div className="mt-6">
                 <SettingsCard title="Extensia Chrome" description="Dispozitivele pe care extensia Habitoo Captură este conectată la contul tău.">
                   <ExtensionDevicesCard />
+                  <Link to="/extensie-chrome" className="mt-3 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline">Despre extensie</Link>
                 </SettingsCard>
               </div>
             ) : null}

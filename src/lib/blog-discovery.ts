@@ -53,12 +53,13 @@ export const PAGE_LASTMOD: Record<string, string> = {
   "/contact": "2026-09-27",
   "/integrari": "2026-11-07",
   "/dezvoltatori": "2026-11-07",
+  "/extensie-chrome": "2026-11-08",
   "/intrebari-frecvente": "2026-10-10",
   "/termeni": "2026-10-05",
-  "/politica-de-confidentialitate": "2026-09-27",
+  "/politica-de-confidentialitate": "2026-11-08",
 };
 
-const publicPages = ["/", "/functionalitati", "/anunturi-proprietari", "/analiza-comparativa-de-piata", "/colaborare-intre-agentii", "/comisioane-agenti-imobiliari", "/import-proprietati", "/preturi", "/despre", "/contact", "/integrari", "/dezvoltatori", "/intrebari-frecvente", "/blog", "/termeni", "/politica-de-confidentialitate"];
+const publicPages = ["/", "/functionalitati", "/anunturi-proprietari", "/analiza-comparativa-de-piata", "/colaborare-intre-agentii", "/comisioane-agenti-imobiliari", "/import-proprietati", "/preturi", "/despre", "/contact", "/integrari", "/extensie-chrome", "/dezvoltatori", "/intrebari-frecvente", "/blog", "/termeni", "/politica-de-confidentialitate"];
 
 const featurePagePaths = featurePaths();
 const integrationPaths = INTEGRATION_PAGES.map((p) => `/integrari/${p.slug}`);
