@@ -2,7 +2,6 @@
 import { z } from "zod";
 import { publicLocation } from "@/lib/geo";
 import { extError, type ExtContext } from "./core";
-import { normalizeSourceUrl } from "./properties";
 
 export const POST_DESCRIPTION_MAX = 1500;
 export const RECENT_POST_DAYS = 7;
@@ -29,6 +28,16 @@ export type ExtListingsStore = {
   lastPost: (propertyId: string, groupKey: string, since: string) => Promise<string | null>;
   insertPost: (row: { property_id: string; user_id: string; organization_id: string; group_url: string; group_key: string; group_name: string | null; posted_at: string }) => Promise<void>;
 };
+
+/** Cheia grupului: fără parametri, #, www./m., majuscule sau „/” final — același grup = aceeași cheie. */
+export function groupKey(raw: string): string | null {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+    const host = u.hostname.toLowerCase().replace(/^(www|m|web|mbasic)\./, "");
+    return `${host}${u.pathname.replace(/\/+$/, "").toLowerCase()}`;
+  } catch { return null; }
+}
 
 export const isAgencyWide = (role: string) => role === "agency_admin" || role === "superadmin";
 
@@ -127,7 +136,7 @@ export function facebookPostHandler(request: Request, store: ExtListingsStore, p
     try { const t = await request.text(); if (t.length > 20_000) throw 0; body = JSON.parse(t); } catch { return extError(422, "VALIDATION_ERROR", "Corpul cererii trebuie să fie JSON valid.", c.requestId); }
     const parsed = postSchema.safeParse(body);
     if (!parsed.success) return extError(422, "VALIDATION_ERROR", parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "), c.requestId);
-    const key = normalizeSourceUrl(parsed.data.group_url);
+    const key = groupKey(parsed.data.group_url);
     if (!key) return extError(422, "VALIDATION_ERROR", "group_url trebuie să fie o adresă http(s).", c.requestId);
     const ok = await store.listingAccess({ propertyId, org: c.token.organization_id, user: c.token.user_id, all: isAgencyWide(c.account.role) });
     if (!ok) return extError(404, "NOT_FOUND", "Anunțul nu a fost găsit.", c.requestId);
