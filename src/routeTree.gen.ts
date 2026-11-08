@@ -161,7 +161,10 @@ import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/
 import { Route as AuthenticatedAppAcpDatePiataIdRouteImport } from './routes/_authenticated/app.acp.date-piata.$id'
 import { Route as AuthenticatedSuperadminBlogPreviewIdRouteImport } from './routes/_authenticated/superadmin.blog.preview.$id'
 import { Route as ApiPublicCatalogV1FacebookDotcsvRouteImport } from './routes/api/public/catalog/v1/facebook[.]csv'
+import { Route as ApiPublicExtensionV1LocalitiesRouteImport } from './routes/api/public/extension/v1/localities'
 import { Route as ApiPublicExtensionV1MeRouteImport } from './routes/api/public/extension/v1/me'
+import { Route as ApiPublicExtensionV1PropertiesRouteImport } from './routes/api/public/extension/v1/properties'
+import { Route as ApiPublicExtensionV1TaxonomiesRouteImport } from './routes/api/public/extension/v1/taxonomies'
 import { Route as ApiPublicExtensionV1TokenRouteImport } from './routes/api/public/extension/v1/token'
 import { Route as ApiPublicFeedPortalLogoRouteImport } from './routes/api/public/feed/$portal/logo'
 import { Route as ApiPublicFeedProperstarAgencyKeyRouteImport } from './routes/api/public/feed/properstar/$agencyKey'
@@ -187,6 +190,7 @@ import { Route as ApiPublicSitesV1AgentsRouteImport } from './routes/api/public/
 import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/public/sites/v1/contacts'
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
 import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
+import { Route as ApiPublicExtensionV1PropertiesCheckSourceRouteImport } from './routes/api/public/extension/v1/properties.check-source'
 import { Route as ApiPublicFeedPortalChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/$portal/[index]/$indexKey'
 import { Route as ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/bazaruldecase/[index]/$indexKey'
 import { Route as ApiPublicFeedClickimobChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/clickimob/[index]/$indexKey'
@@ -226,6 +230,8 @@ import { Route as ApiPublicPortalV1StoriaOauthCallbackRouteImport } from './rout
 import { Route as ApiPublicPortalV1ZupOauthCallbackRouteImport } from './routes/api/public/portal/v1/zup.oauth.callback'
 import { Route as ApiPublicSitesV1MediaAgencyIdRouteImport } from './routes/api/public/sites/v1/media.agency.$id'
 import { Route as ApiPublicSitesV1MediaAgentIdRouteImport } from './routes/api/public/sites/v1/media.agent.$id'
+import { Route as ApiPublicExtensionV1PropertiesIdImagesCompleteRouteImport } from './routes/api/public/extension/v1/properties/$id/images/complete'
+import { Route as ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRouteImport } from './routes/api/public/extension/v1/properties/$id/images/upload-urls'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -1069,11 +1075,29 @@ const ApiPublicCatalogV1FacebookDotcsvRoute =
     path: '/api/public/catalog/v1/facebook.csv',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicExtensionV1LocalitiesRoute =
+  ApiPublicExtensionV1LocalitiesRouteImport.update({
+    id: '/api/public/extension/v1/localities',
+    path: '/api/public/extension/v1/localities',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicExtensionV1MeRoute = ApiPublicExtensionV1MeRouteImport.update({
   id: '/api/public/extension/v1/me',
   path: '/api/public/extension/v1/me',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicExtensionV1PropertiesRoute =
+  ApiPublicExtensionV1PropertiesRouteImport.update({
+    id: '/api/public/extension/v1/properties',
+    path: '/api/public/extension/v1/properties',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicExtensionV1TaxonomiesRoute =
+  ApiPublicExtensionV1TaxonomiesRouteImport.update({
+    id: '/api/public/extension/v1/taxonomies',
+    path: '/api/public/extension/v1/taxonomies',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicExtensionV1TokenRoute =
   ApiPublicExtensionV1TokenRouteImport.update({
     id: '/api/public/extension/v1/token',
@@ -1214,6 +1238,12 @@ const ApiPublicSitesV1VisitsRoute = ApiPublicSitesV1VisitsRouteImport.update({
   path: '/api/public/sites/v1/visits',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicExtensionV1PropertiesCheckSourceRoute =
+  ApiPublicExtensionV1PropertiesCheckSourceRouteImport.update({
+    id: '/check-source',
+    path: '/check-source',
+    getParentRoute: () => ApiPublicExtensionV1PropertiesRoute,
+  } as any)
 const ApiPublicFeedPortalChar91indexChar93IndexKeyRoute =
   ApiPublicFeedPortalChar91indexChar93IndexKeyRouteImport.update({
     id: '/api/public/feed/$portal/index/$indexKey',
@@ -1447,6 +1477,18 @@ const ApiPublicSitesV1MediaAgentIdRoute =
     path: '/api/public/sites/v1/media/agent/$id',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicExtensionV1PropertiesIdImagesCompleteRoute =
+  ApiPublicExtensionV1PropertiesIdImagesCompleteRouteImport.update({
+    id: '/$id/images/complete',
+    path: '/$id/images/complete',
+    getParentRoute: () => ApiPublicExtensionV1PropertiesRoute,
+  } as any)
+const ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRoute =
+  ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRouteImport.update({
+    id: '/$id/images/upload-urls',
+    path: '/$id/images/upload-urls',
+    getParentRoute: () => ApiPublicExtensionV1PropertiesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -1599,7 +1641,10 @@ export interface FileRoutesByFullPath {
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  '/api/public/extension/v1/localities': typeof ApiPublicExtensionV1LocalitiesRoute
   '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
+  '/api/public/extension/v1/properties': typeof ApiPublicExtensionV1PropertiesRouteWithChildren
+  '/api/public/extension/v1/taxonomies': typeof ApiPublicExtensionV1TaxonomiesRoute
   '/api/public/extension/v1/token': typeof ApiPublicExtensionV1TokenRoute
   '/api/public/feed/$portal/logo': typeof ApiPublicFeedPortalLogoRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
@@ -1626,6 +1671,7 @@ export interface FileRoutesByFullPath {
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/app/acp/date-piata/': typeof AuthenticatedAppAcpDatePiataIndexRoute
+  '/api/public/extension/v1/properties/check-source': typeof ApiPublicExtensionV1PropertiesCheckSourceRoute
   '/api/public/feed/$portal/index/$indexKey': typeof ApiPublicFeedPortalChar91indexChar93IndexKeyRoute
   '/api/public/feed/bazaruldecase/index/$indexKey': typeof ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
@@ -1665,6 +1711,8 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/zup/oauth/callback': typeof ApiPublicPortalV1ZupOauthCallbackRoute
   '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
   '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
+  '/api/public/extension/v1/properties/$id/images/complete': typeof ApiPublicExtensionV1PropertiesIdImagesCompleteRoute
+  '/api/public/extension/v1/properties/$id/images/upload-urls': typeof ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1813,7 +1861,10 @@ export interface FileRoutesByTo {
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  '/api/public/extension/v1/localities': typeof ApiPublicExtensionV1LocalitiesRoute
   '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
+  '/api/public/extension/v1/properties': typeof ApiPublicExtensionV1PropertiesRouteWithChildren
+  '/api/public/extension/v1/taxonomies': typeof ApiPublicExtensionV1TaxonomiesRoute
   '/api/public/extension/v1/token': typeof ApiPublicExtensionV1TokenRoute
   '/api/public/feed/$portal/logo': typeof ApiPublicFeedPortalLogoRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
@@ -1840,6 +1891,7 @@ export interface FileRoutesByTo {
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/app/acp/date-piata': typeof AuthenticatedAppAcpDatePiataIndexRoute
+  '/api/public/extension/v1/properties/check-source': typeof ApiPublicExtensionV1PropertiesCheckSourceRoute
   '/api/public/feed/$portal/index/$indexKey': typeof ApiPublicFeedPortalChar91indexChar93IndexKeyRoute
   '/api/public/feed/bazaruldecase/index/$indexKey': typeof ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
@@ -1879,6 +1931,8 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/zup/oauth/callback': typeof ApiPublicPortalV1ZupOauthCallbackRoute
   '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
   '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
+  '/api/public/extension/v1/properties/$id/images/complete': typeof ApiPublicExtensionV1PropertiesIdImagesCompleteRoute
+  '/api/public/extension/v1/properties/$id/images/upload-urls': typeof ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -2033,7 +2087,10 @@ export interface FileRoutesById {
   '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/_authenticated/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  '/api/public/extension/v1/localities': typeof ApiPublicExtensionV1LocalitiesRoute
   '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
+  '/api/public/extension/v1/properties': typeof ApiPublicExtensionV1PropertiesRouteWithChildren
+  '/api/public/extension/v1/taxonomies': typeof ApiPublicExtensionV1TaxonomiesRoute
   '/api/public/extension/v1/token': typeof ApiPublicExtensionV1TokenRoute
   '/api/public/feed/$portal/logo': typeof ApiPublicFeedPortalLogoRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
@@ -2060,6 +2117,7 @@ export interface FileRoutesById {
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/_authenticated/app/acp/date-piata/': typeof AuthenticatedAppAcpDatePiataIndexRoute
+  '/api/public/extension/v1/properties/check-source': typeof ApiPublicExtensionV1PropertiesCheckSourceRoute
   '/api/public/feed/$portal/index/$indexKey': typeof ApiPublicFeedPortalChar91indexChar93IndexKeyRoute
   '/api/public/feed/bazaruldecase/index/$indexKey': typeof ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
@@ -2099,6 +2157,8 @@ export interface FileRoutesById {
   '/api/public/portal/v1/zup/oauth/callback': typeof ApiPublicPortalV1ZupOauthCallbackRoute
   '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
   '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
+  '/api/public/extension/v1/properties/$id/images/complete': typeof ApiPublicExtensionV1PropertiesIdImagesCompleteRoute
+  '/api/public/extension/v1/properties/$id/images/upload-urls': typeof ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -2253,7 +2313,10 @@ export interface FileRouteTypes {
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
+    | '/api/public/extension/v1/localities'
     | '/api/public/extension/v1/me'
+    | '/api/public/extension/v1/properties'
+    | '/api/public/extension/v1/taxonomies'
     | '/api/public/extension/v1/token'
     | '/api/public/feed/$portal/logo'
     | '/api/public/feed/properstar/$agencyKey'
@@ -2280,6 +2343,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/app/acp/date-piata/'
+    | '/api/public/extension/v1/properties/check-source'
     | '/api/public/feed/$portal/index/$indexKey'
     | '/api/public/feed/bazaruldecase/index/$indexKey'
     | '/api/public/feed/clickimob/index/$indexKey'
@@ -2319,6 +2383,8 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/zup/oauth/callback'
     | '/api/public/sites/v1/media/agency/$id'
     | '/api/public/sites/v1/media/agent/$id'
+    | '/api/public/extension/v1/properties/$id/images/complete'
+    | '/api/public/extension/v1/properties/$id/images/upload-urls'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -2467,7 +2533,10 @@ export interface FileRouteTypes {
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
+    | '/api/public/extension/v1/localities'
     | '/api/public/extension/v1/me'
+    | '/api/public/extension/v1/properties'
+    | '/api/public/extension/v1/taxonomies'
     | '/api/public/extension/v1/token'
     | '/api/public/feed/$portal/logo'
     | '/api/public/feed/properstar/$agencyKey'
@@ -2494,6 +2563,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/app/acp/date-piata'
+    | '/api/public/extension/v1/properties/check-source'
     | '/api/public/feed/$portal/index/$indexKey'
     | '/api/public/feed/bazaruldecase/index/$indexKey'
     | '/api/public/feed/clickimob/index/$indexKey'
@@ -2533,6 +2603,8 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/zup/oauth/callback'
     | '/api/public/sites/v1/media/agency/$id'
     | '/api/public/sites/v1/media/agent/$id'
+    | '/api/public/extension/v1/properties/$id/images/complete'
+    | '/api/public/extension/v1/properties/$id/images/upload-urls'
   id:
     | '__root__'
     | '/'
@@ -2686,7 +2758,10 @@ export interface FileRouteTypes {
     | '/_authenticated/app/acp/date-piata/$id'
     | '/_authenticated/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
+    | '/api/public/extension/v1/localities'
     | '/api/public/extension/v1/me'
+    | '/api/public/extension/v1/properties'
+    | '/api/public/extension/v1/taxonomies'
     | '/api/public/extension/v1/token'
     | '/api/public/feed/$portal/logo'
     | '/api/public/feed/properstar/$agencyKey'
@@ -2713,6 +2788,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/_authenticated/app/acp/date-piata/'
+    | '/api/public/extension/v1/properties/check-source'
     | '/api/public/feed/$portal/index/$indexKey'
     | '/api/public/feed/bazaruldecase/index/$indexKey'
     | '/api/public/feed/clickimob/index/$indexKey'
@@ -2752,6 +2828,8 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/zup/oauth/callback'
     | '/api/public/sites/v1/media/agency/$id'
     | '/api/public/sites/v1/media/agent/$id'
+    | '/api/public/extension/v1/properties/$id/images/complete'
+    | '/api/public/extension/v1/properties/$id/images/upload-urls'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2839,7 +2917,10 @@ export interface RootRouteChildren {
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiPublicCatalogV1FacebookDotcsvRoute: typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  ApiPublicExtensionV1LocalitiesRoute: typeof ApiPublicExtensionV1LocalitiesRoute
   ApiPublicExtensionV1MeRoute: typeof ApiPublicExtensionV1MeRoute
+  ApiPublicExtensionV1PropertiesRoute: typeof ApiPublicExtensionV1PropertiesRouteWithChildren
+  ApiPublicExtensionV1TaxonomiesRoute: typeof ApiPublicExtensionV1TaxonomiesRoute
   ApiPublicExtensionV1TokenRoute: typeof ApiPublicExtensionV1TokenRoute
   ApiPublicFeedPortalLogoRoute: typeof ApiPublicFeedPortalLogoRoute
   ApiPublicFeedProperstarAgencyKeyRoute: typeof ApiPublicFeedProperstarAgencyKeyRoute
@@ -3962,11 +4043,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCatalogV1FacebookDotcsvRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/extension/v1/localities': {
+      id: '/api/public/extension/v1/localities'
+      path: '/api/public/extension/v1/localities'
+      fullPath: '/api/public/extension/v1/localities'
+      preLoaderRoute: typeof ApiPublicExtensionV1LocalitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/extension/v1/me': {
       id: '/api/public/extension/v1/me'
       path: '/api/public/extension/v1/me'
       fullPath: '/api/public/extension/v1/me'
       preLoaderRoute: typeof ApiPublicExtensionV1MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/v1/properties': {
+      id: '/api/public/extension/v1/properties'
+      path: '/api/public/extension/v1/properties'
+      fullPath: '/api/public/extension/v1/properties'
+      preLoaderRoute: typeof ApiPublicExtensionV1PropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/v1/taxonomies': {
+      id: '/api/public/extension/v1/taxonomies'
+      path: '/api/public/extension/v1/taxonomies'
+      fullPath: '/api/public/extension/v1/taxonomies'
+      preLoaderRoute: typeof ApiPublicExtensionV1TaxonomiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/extension/v1/token': {
@@ -4143,6 +4245,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/sites/v1/visits'
       preLoaderRoute: typeof ApiPublicSitesV1VisitsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/v1/properties/check-source': {
+      id: '/api/public/extension/v1/properties/check-source'
+      path: '/check-source'
+      fullPath: '/api/public/extension/v1/properties/check-source'
+      preLoaderRoute: typeof ApiPublicExtensionV1PropertiesCheckSourceRouteImport
+      parentRoute: typeof ApiPublicExtensionV1PropertiesRoute
     }
     '/api/public/feed/$portal/index/$indexKey': {
       id: '/api/public/feed/$portal/index/$indexKey'
@@ -4417,6 +4526,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1MediaAgentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/extension/v1/properties/$id/images/complete': {
+      id: '/api/public/extension/v1/properties/$id/images/complete'
+      path: '/$id/images/complete'
+      fullPath: '/api/public/extension/v1/properties/$id/images/complete'
+      preLoaderRoute: typeof ApiPublicExtensionV1PropertiesIdImagesCompleteRouteImport
+      parentRoute: typeof ApiPublicExtensionV1PropertiesRoute
+    }
+    '/api/public/extension/v1/properties/$id/images/upload-urls': {
+      id: '/api/public/extension/v1/properties/$id/images/upload-urls'
+      path: '/$id/images/upload-urls'
+      fullPath: '/api/public/extension/v1/properties/$id/images/upload-urls'
+      preLoaderRoute: typeof ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRouteImport
+      parentRoute: typeof ApiPublicExtensionV1PropertiesRoute
+    }
   }
 }
 
@@ -4633,6 +4756,27 @@ const AgentiiRouteChildren: AgentiiRouteChildren = {
 
 const AgentiiRouteWithChildren =
   AgentiiRoute._addFileChildren(AgentiiRouteChildren)
+
+interface ApiPublicExtensionV1PropertiesRouteChildren {
+  ApiPublicExtensionV1PropertiesCheckSourceRoute: typeof ApiPublicExtensionV1PropertiesCheckSourceRoute
+  ApiPublicExtensionV1PropertiesIdImagesCompleteRoute: typeof ApiPublicExtensionV1PropertiesIdImagesCompleteRoute
+  ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRoute: typeof ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRoute
+}
+
+const ApiPublicExtensionV1PropertiesRouteChildren: ApiPublicExtensionV1PropertiesRouteChildren =
+  {
+    ApiPublicExtensionV1PropertiesCheckSourceRoute:
+      ApiPublicExtensionV1PropertiesCheckSourceRoute,
+    ApiPublicExtensionV1PropertiesIdImagesCompleteRoute:
+      ApiPublicExtensionV1PropertiesIdImagesCompleteRoute,
+    ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRoute:
+      ApiPublicExtensionV1PropertiesIdImagesUploadUrlsRoute,
+  }
+
+const ApiPublicExtensionV1PropertiesRouteWithChildren =
+  ApiPublicExtensionV1PropertiesRoute._addFileChildren(
+    ApiPublicExtensionV1PropertiesRouteChildren,
+  )
 
 interface ApiPublicHomepitchV1PropertiesRouteChildren {
   ApiPublicHomepitchV1PropertiesIdRoute: typeof ApiPublicHomepitchV1PropertiesIdRoute
@@ -4854,7 +4998,11 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiPublicCatalogV1FacebookDotcsvRoute: ApiPublicCatalogV1FacebookDotcsvRoute,
+  ApiPublicExtensionV1LocalitiesRoute: ApiPublicExtensionV1LocalitiesRoute,
   ApiPublicExtensionV1MeRoute: ApiPublicExtensionV1MeRoute,
+  ApiPublicExtensionV1PropertiesRoute:
+    ApiPublicExtensionV1PropertiesRouteWithChildren,
+  ApiPublicExtensionV1TaxonomiesRoute: ApiPublicExtensionV1TaxonomiesRoute,
   ApiPublicExtensionV1TokenRoute: ApiPublicExtensionV1TokenRoute,
   ApiPublicFeedPortalLogoRoute: ApiPublicFeedPortalLogoRoute,
   ApiPublicFeedProperstarAgencyKeyRoute: ApiPublicFeedProperstarAgencyKeyRoute,

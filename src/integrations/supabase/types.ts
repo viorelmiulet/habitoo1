@@ -3386,6 +3386,30 @@ export type Database = {
         }
         Relationships: []
       }
+      extension_idempotency: {
+        Row: {
+          created_at: string
+          idempotency_key: string
+          property_id: string | null
+          request_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          idempotency_key: string
+          property_id?: string | null
+          request_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          idempotency_key?: string
+          property_id?: string | null
+          request_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       extension_rate_windows: {
         Row: {
           request_count: number
@@ -9976,6 +10000,47 @@ export type Database = {
           },
         ]
       }
+      property_capture_sources: {
+        Row: {
+          captured_at: string | null
+          created_at: string
+          created_by: string | null
+          normalized_url: string
+          organization_id: string
+          property_id: string
+          site: string
+          source_url: string
+        }
+        Insert: {
+          captured_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          normalized_url: string
+          organization_id: string
+          property_id: string
+          site: string
+          source_url: string
+        }
+        Update: {
+          captured_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          normalized_url?: string
+          organization_id?: string
+          property_id?: string
+          site?: string
+          source_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_capture_sources_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_favorites: {
         Row: {
           created_at: string
@@ -12752,6 +12817,18 @@ export type Database = {
         Returns: undefined
       }
       ensure_superadmin_profile: { Args: { _user: string }; Returns: undefined }
+      extension_create_property: {
+        Args: {
+          _hash: string
+          _key: string
+          _org: string
+          _owner: Json
+          _p: Json
+          _source: Json
+          _user: string
+        }
+        Returns: Json
+      }
       extension_rate_take: {
         Args: { _limit?: number; _token_id: string }
         Returns: Json
@@ -13247,6 +13324,7 @@ export type Database = {
       restore_lead: { Args: { _id: string }; Returns: string }
       restore_property: { Args: { _id: string }; Returns: string }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
+      ro_phone_key: { Args: { _raw: string }; Returns: string }
       save_contract_number_series: {
         Args: { _kind: string; _next_number: number; _series: string }
         Returns: undefined

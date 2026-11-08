@@ -1,3 +1,4 @@
+import { PropertyCaptureSource } from "@/components/app/PropertyCaptureSource";
 import { assertFormBelongsToProperty } from "@/lib/property-form-guard";
 import { SendOfferDialog } from "@/components/app/SendOfferDialog";
 import { PropertyPortalStatistics } from "@/components/app/PropertyPortalStatistics";
@@ -1296,6 +1297,7 @@ function PropertyDetailContent() {
 
                 <section className="panel px-5 py-[18px]">
                   <h2 className="font-sans text-base font-bold">Proprietar</h2>
+                  <PropertyCaptureSource propertyId={property.id} />
                   {ownerContact ? <><div className="mt-3 text-sm"><Link to="/app/contacts/$id" params={{ id: ownerContact.id }} className="font-bold hover:text-primary">{ownerContact.first_name} {ownerContact.last_name}</Link><p className="mt-1 text-muted-foreground">{ownerContact.phone ?? "Fără telefon"}</p></div><div className="mt-4 grid grid-cols-2 gap-2">{ownerContact.phone ? <Button variant="outline" asChild><a href={`tel:${ownerContact.phone}`}><Phone /> Sună</a></Button> : null}{(ownerContact.whatsapp ?? ownerContact.phone) ? <Button variant="outline" asChild><a href={`https://wa.me/${(ownerContact.whatsapp ?? ownerContact.phone ?? "").replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle /> WhatsApp</a></Button> : null}</div></> : <><p className="mt-3 text-sm text-muted-foreground">Niciun proprietar asociat</p><Button variant="outline" className="mt-4 w-full" onClick={() => { startEdit(); setTab("overview"); }}>Adaugă proprietar</Button></>}
                 </section>
 
