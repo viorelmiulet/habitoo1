@@ -119,9 +119,10 @@ describe("Site-ul agenției — feedul respectă bifa", () => {
     const auth = await authenticateFeedRequest(req("/properties", TOKEN_A));
     if (!auth.ok) throw new Error("auth");
     const out = await handlePropertiesList(req("/properties", TOKEN_A), auth);
-    const body = await out.response.json() as { data: { id: string; portals?: string[] }[] };
+    const body = await out.response.json() as { data: { idstr: string; portals?: string[] }[] };
     expect(out.response.status).toBe(200);
-    expect(body.data.map((p) => p.id)).toEqual([P1]);
+    expect(body.data.map((p) => p.idstr)).toEqual([P1.slice(0, 4)]);
+    expect(JSON.stringify(body)).not.toContain("agency_site");
   });
   it("detaliul unui anunț nebifat → 404; bifat → 200", async () => {
     const { authenticateFeedRequest } = await import("./auth.server");
