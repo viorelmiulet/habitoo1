@@ -163,6 +163,7 @@ import { Route as AuthenticatedSuperadminBlogPreviewIdRouteImport } from './rout
 import { Route as ApiPublicCatalogV1FacebookDotcsvRouteImport } from './routes/api/public/catalog/v1/facebook[.]csv'
 import { Route as ApiPublicExtensionV1LocalitiesRouteImport } from './routes/api/public/extension/v1/localities'
 import { Route as ApiPublicExtensionV1MeRouteImport } from './routes/api/public/extension/v1/me'
+import { Route as ApiPublicExtensionV1MyListingsRouteImport } from './routes/api/public/extension/v1/my-listings'
 import { Route as ApiPublicExtensionV1PropertiesRouteImport } from './routes/api/public/extension/v1/properties'
 import { Route as ApiPublicExtensionV1TaxonomiesRouteImport } from './routes/api/public/extension/v1/taxonomies'
 import { Route as ApiPublicExtensionV1TokenRouteImport } from './routes/api/public/extension/v1/token'
@@ -222,6 +223,7 @@ import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './rout
 import { Route as ApiPublicPortalV1VdiLeadsRouteImport } from './routes/api/public/portal/v1/vdi/leads'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
+import { Route as ApiPublicExtensionV1ListingsIdFacebookPostsRouteImport } from './routes/api/public/extension/v1/listings/$id/facebook-posts'
 import { Route as ApiPublicPartnerV1LeadsIdMessagesRouteImport } from './routes/api/public/partner/v1/leads.$id.messages'
 import { Route as ApiPublicPartnerV1ListingsIdPublicationRouteImport } from './routes/api/public/partner/v1/listings.$id.publication'
 import { Route as ApiPublicPortalV1HouseraOauthCallbackRouteImport } from './routes/api/public/portal/v1/housera.oauth.callback'
@@ -1086,6 +1088,12 @@ const ApiPublicExtensionV1MeRoute = ApiPublicExtensionV1MeRouteImport.update({
   path: '/api/public/extension/v1/me',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicExtensionV1MyListingsRoute =
+  ApiPublicExtensionV1MyListingsRouteImport.update({
+    id: '/api/public/extension/v1/my-listings',
+    path: '/api/public/extension/v1/my-listings',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicExtensionV1PropertiesRoute =
   ApiPublicExtensionV1PropertiesRouteImport.update({
     id: '/api/public/extension/v1/properties',
@@ -1429,6 +1437,12 @@ const ApiPublicSitesV1PropertiesIdRoute =
     path: '/$id',
     getParentRoute: () => ApiPublicSitesV1PropertiesRoute,
   } as any)
+const ApiPublicExtensionV1ListingsIdFacebookPostsRoute =
+  ApiPublicExtensionV1ListingsIdFacebookPostsRouteImport.update({
+    id: '/api/public/extension/v1/listings/$id/facebook-posts',
+    path: '/api/public/extension/v1/listings/$id/facebook-posts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPartnerV1LeadsIdMessagesRoute =
   ApiPublicPartnerV1LeadsIdMessagesRouteImport.update({
     id: '/$id/messages',
@@ -1643,6 +1657,7 @@ export interface FileRoutesByFullPath {
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/extension/v1/localities': typeof ApiPublicExtensionV1LocalitiesRoute
   '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
+  '/api/public/extension/v1/my-listings': typeof ApiPublicExtensionV1MyListingsRoute
   '/api/public/extension/v1/properties': typeof ApiPublicExtensionV1PropertiesRouteWithChildren
   '/api/public/extension/v1/taxonomies': typeof ApiPublicExtensionV1TaxonomiesRoute
   '/api/public/extension/v1/token': typeof ApiPublicExtensionV1TokenRoute
@@ -1703,6 +1718,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/extension/v1/listings/$id/facebook-posts': typeof ApiPublicExtensionV1ListingsIdFacebookPostsRoute
   '/api/public/partner/v1/leads/$id/messages': typeof ApiPublicPartnerV1LeadsIdMessagesRoute
   '/api/public/partner/v1/listings/$id/publication': typeof ApiPublicPartnerV1ListingsIdPublicationRoute
   '/api/public/portal/v1/housera/oauth/callback': typeof ApiPublicPortalV1HouseraOauthCallbackRoute
@@ -1863,6 +1879,7 @@ export interface FileRoutesByTo {
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/extension/v1/localities': typeof ApiPublicExtensionV1LocalitiesRoute
   '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
+  '/api/public/extension/v1/my-listings': typeof ApiPublicExtensionV1MyListingsRoute
   '/api/public/extension/v1/properties': typeof ApiPublicExtensionV1PropertiesRouteWithChildren
   '/api/public/extension/v1/taxonomies': typeof ApiPublicExtensionV1TaxonomiesRoute
   '/api/public/extension/v1/token': typeof ApiPublicExtensionV1TokenRoute
@@ -1923,6 +1940,7 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/extension/v1/listings/$id/facebook-posts': typeof ApiPublicExtensionV1ListingsIdFacebookPostsRoute
   '/api/public/partner/v1/leads/$id/messages': typeof ApiPublicPartnerV1LeadsIdMessagesRoute
   '/api/public/partner/v1/listings/$id/publication': typeof ApiPublicPartnerV1ListingsIdPublicationRoute
   '/api/public/portal/v1/housera/oauth/callback': typeof ApiPublicPortalV1HouseraOauthCallbackRoute
@@ -2089,6 +2107,7 @@ export interface FileRoutesById {
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/extension/v1/localities': typeof ApiPublicExtensionV1LocalitiesRoute
   '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
+  '/api/public/extension/v1/my-listings': typeof ApiPublicExtensionV1MyListingsRoute
   '/api/public/extension/v1/properties': typeof ApiPublicExtensionV1PropertiesRouteWithChildren
   '/api/public/extension/v1/taxonomies': typeof ApiPublicExtensionV1TaxonomiesRoute
   '/api/public/extension/v1/token': typeof ApiPublicExtensionV1TokenRoute
@@ -2149,6 +2168,7 @@ export interface FileRoutesById {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/extension/v1/listings/$id/facebook-posts': typeof ApiPublicExtensionV1ListingsIdFacebookPostsRoute
   '/api/public/partner/v1/leads/$id/messages': typeof ApiPublicPartnerV1LeadsIdMessagesRoute
   '/api/public/partner/v1/listings/$id/publication': typeof ApiPublicPartnerV1ListingsIdPublicationRoute
   '/api/public/portal/v1/housera/oauth/callback': typeof ApiPublicPortalV1HouseraOauthCallbackRoute
@@ -2315,6 +2335,7 @@ export interface FileRouteTypes {
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/extension/v1/localities'
     | '/api/public/extension/v1/me'
+    | '/api/public/extension/v1/my-listings'
     | '/api/public/extension/v1/properties'
     | '/api/public/extension/v1/taxonomies'
     | '/api/public/extension/v1/token'
@@ -2375,6 +2396,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/extension/v1/listings/$id/facebook-posts'
     | '/api/public/partner/v1/leads/$id/messages'
     | '/api/public/partner/v1/listings/$id/publication'
     | '/api/public/portal/v1/housera/oauth/callback'
@@ -2535,6 +2557,7 @@ export interface FileRouteTypes {
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/extension/v1/localities'
     | '/api/public/extension/v1/me'
+    | '/api/public/extension/v1/my-listings'
     | '/api/public/extension/v1/properties'
     | '/api/public/extension/v1/taxonomies'
     | '/api/public/extension/v1/token'
@@ -2595,6 +2618,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/extension/v1/listings/$id/facebook-posts'
     | '/api/public/partner/v1/leads/$id/messages'
     | '/api/public/partner/v1/listings/$id/publication'
     | '/api/public/portal/v1/housera/oauth/callback'
@@ -2760,6 +2784,7 @@ export interface FileRouteTypes {
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/extension/v1/localities'
     | '/api/public/extension/v1/me'
+    | '/api/public/extension/v1/my-listings'
     | '/api/public/extension/v1/properties'
     | '/api/public/extension/v1/taxonomies'
     | '/api/public/extension/v1/token'
@@ -2820,6 +2845,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/extension/v1/listings/$id/facebook-posts'
     | '/api/public/partner/v1/leads/$id/messages'
     | '/api/public/partner/v1/listings/$id/publication'
     | '/api/public/portal/v1/housera/oauth/callback'
@@ -2919,6 +2945,7 @@ export interface RootRouteChildren {
   ApiPublicCatalogV1FacebookDotcsvRoute: typeof ApiPublicCatalogV1FacebookDotcsvRoute
   ApiPublicExtensionV1LocalitiesRoute: typeof ApiPublicExtensionV1LocalitiesRoute
   ApiPublicExtensionV1MeRoute: typeof ApiPublicExtensionV1MeRoute
+  ApiPublicExtensionV1MyListingsRoute: typeof ApiPublicExtensionV1MyListingsRoute
   ApiPublicExtensionV1PropertiesRoute: typeof ApiPublicExtensionV1PropertiesRouteWithChildren
   ApiPublicExtensionV1TaxonomiesRoute: typeof ApiPublicExtensionV1TaxonomiesRoute
   ApiPublicExtensionV1TokenRoute: typeof ApiPublicExtensionV1TokenRoute
@@ -2969,6 +2996,7 @@ export interface RootRouteChildren {
   ApiPublicPortalV1StoriaNotificationsRoute: typeof ApiPublicPortalV1StoriaNotificationsRoute
   ApiPublicPortalV1VdiLeadsRoute: typeof ApiPublicPortalV1VdiLeadsRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
+  ApiPublicExtensionV1ListingsIdFacebookPostsRoute: typeof ApiPublicExtensionV1ListingsIdFacebookPostsRoute
   ApiPublicPortalV1HouseraOauthCallbackRoute: typeof ApiPublicPortalV1HouseraOauthCallbackRoute
   ApiPublicPortalV1OlxOauthCallbackRoute: typeof ApiPublicPortalV1OlxOauthCallbackRoute
   ApiPublicPortalV1StoriaOauthCallbackRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -4057,6 +4085,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicExtensionV1MeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/extension/v1/my-listings': {
+      id: '/api/public/extension/v1/my-listings'
+      path: '/api/public/extension/v1/my-listings'
+      fullPath: '/api/public/extension/v1/my-listings'
+      preLoaderRoute: typeof ApiPublicExtensionV1MyListingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/extension/v1/properties': {
       id: '/api/public/extension/v1/properties'
       path: '/api/public/extension/v1/properties'
@@ -4469,6 +4504,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/sites/v1/properties/$id'
       preLoaderRoute: typeof ApiPublicSitesV1PropertiesIdRouteImport
       parentRoute: typeof ApiPublicSitesV1PropertiesRoute
+    }
+    '/api/public/extension/v1/listings/$id/facebook-posts': {
+      id: '/api/public/extension/v1/listings/$id/facebook-posts'
+      path: '/api/public/extension/v1/listings/$id/facebook-posts'
+      fullPath: '/api/public/extension/v1/listings/$id/facebook-posts'
+      preLoaderRoute: typeof ApiPublicExtensionV1ListingsIdFacebookPostsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/partner/v1/leads/$id/messages': {
       id: '/api/public/partner/v1/leads/$id/messages'
@@ -5000,6 +5042,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCatalogV1FacebookDotcsvRoute: ApiPublicCatalogV1FacebookDotcsvRoute,
   ApiPublicExtensionV1LocalitiesRoute: ApiPublicExtensionV1LocalitiesRoute,
   ApiPublicExtensionV1MeRoute: ApiPublicExtensionV1MeRoute,
+  ApiPublicExtensionV1MyListingsRoute: ApiPublicExtensionV1MyListingsRoute,
   ApiPublicExtensionV1PropertiesRoute:
     ApiPublicExtensionV1PropertiesRouteWithChildren,
   ApiPublicExtensionV1TaxonomiesRoute: ApiPublicExtensionV1TaxonomiesRoute,
@@ -5069,6 +5112,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicPortalV1StoriaNotificationsRoute,
   ApiPublicPortalV1VdiLeadsRoute: ApiPublicPortalV1VdiLeadsRoute,
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
+  ApiPublicExtensionV1ListingsIdFacebookPostsRoute:
+    ApiPublicExtensionV1ListingsIdFacebookPostsRoute,
   ApiPublicPortalV1HouseraOauthCallbackRoute:
     ApiPublicPortalV1HouseraOauthCallbackRoute,
   ApiPublicPortalV1OlxOauthCallbackRoute:
