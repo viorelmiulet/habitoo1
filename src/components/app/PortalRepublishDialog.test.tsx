@@ -4,11 +4,12 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { expect, it, vi } from 'vitest';
 import { PortalRepublishButton } from './PortalRepublishDialog';
-const mock = vi.hoisted(() => ({ start: vi.fn(), success: vi.fn(), batch: {status:'running',total:2,succeeded:0,failed:0,skipped:0,pending:2,errors:[] as any[],skippedItems:[] as any[]} }));
+const mock = vi.hoisted(() => ({ start: vi.fn(), stop: vi.fn(), success: vi.fn(), batch: {id:'11111111-1111-4111-8111-111111111111',stalled:false,status:'running',total:2,succeeded:0,failed:0,skipped:0,pending:2,errors:[] as any[],skippedItems:[] as any[]} }));
 vi.mock('@tanstack/react-start', () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock('@/hooks/use-session', () => ({ useCurrentUser: () => ({ data:{userId:'agent',organization:{id:'org'}} }) }));
 vi.mock('@/lib/portals/republish.functions', () => ({
   startRepublish: mock.start,
+  stopRepublishBatch: mock.stop,
   getRepublishBatch: async () => ({...mock.batch}),
   getRepublishPreview: async () => ({canChooseScope:false,activeBatchId:null,listings:2,portals:1,perPortal:[{portalId:'lacheie',name:'La Cheie',queued:2,autoPull:0}]}),
 }));
