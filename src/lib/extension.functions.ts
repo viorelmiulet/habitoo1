@@ -42,3 +42,26 @@ export const revokeExtensionToken = createServerFn({ method: "POST" })
     await db.from("extension_tokens").update({ revoked_at: new Date().toISOString() }).eq("id", data.id).eq("user_id", userId).is("revoked_at", null);
     return { ok: true };
   });
+
+const contactPhone = z.string().trim().max(40).regex(/^[+\d\s().-]*$/, "Număr de telefon invalid.");
+
+/** Datele de contact din postările Facebook ale extensiei (doar utilizatorul curent). */
+export const getListingContact = createServerFn({ method: "GET" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context as unknown as Ctx;
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { data } = await db.from("profiles").select("full_name,phone,listing_phone,whatsapp").eq("id", userId).maybeSingle();
+    return data ?? { full_name: null, phone: null, listing_phone: null, whatsapp: null };
+  });
+
+export const updateListingContact = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => z.object({ listing_phone: contactPhone, whatsapp: contactPhone }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context as unknown as Ctx;
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { error } = await db.from("profiles").update({ listing_phone: data.listing_phone || null, whatsapp: data.whatsapp || null }).eq("id", userId);
+    if (error) throw new Error("Nu am putut salva datele de contact.");
+    return { ok: true as const };
+  });
