@@ -6,6 +6,7 @@
  * Cheia nu apare niciodată în loguri sau mesaje de eroare.
  */
 export type RelayPortal = "vdi" | "imobiliare";
+import { withPortalDeadline } from "./publication-resilience";
 
 const PORTAL_HOSTS: Record<RelayPortal, string> = {
   vdi: "vdi.ro",
@@ -53,10 +54,27 @@ export async function relayFetch(
   const rewritten = rewriteForRelay(portal, url, relayUrlOf(env));
   if (!rewritten) return fetchImpl(url, init);
   const headers = new Headers(init.headers);
-  headers.set("X-Relay-Key", env.key!.trim());
+  const key = env.key?.trim();
+  if (!key) return fetchImpl(url, init);
+  headers.set("X-Relay-Key", key);
   try {
-    return await fetchImpl(rewritten, { ...init, headers });
+    const response = await withPortalDeadline(async (signal) => {
+      const response = await fetchImpl(rewritten, { ...init, headers, signal });
+      const body = await response.arrayBuffer();
+      return new Response(response.status === 204 || response.status === 205 || response.status === 304 ? null : body, {
+        status: response.status, statusText: response.statusText, headers: response.headers,
+      });
+    });
+    if (fetchImpl === fetch) {
+      const { recordRelayResponse } = await import("./relay-health.server");
+      await recordRelayResponse(true);
+    }
+    return response;
   } catch (error) {
+    if (fetchImpl === fetch && error instanceof Error && (error.name === "AbortError" || /refused|fetch failed|network|connection|failed to fetch/i.test(error.message))) {
+      const { recordRelayResponse } = await import("./relay-health.server");
+      await recordRelayResponse(false);
+    }
     if (error instanceof Error) {
       const safe = new Error(stripRelayKey(error.message, env.key));
       safe.name = error.name;
@@ -87,7 +105,7 @@ export async function checkRelayIp(
   try {
     const response = await fetchImpl(`${relayUrlOf(env)}/ipcheck/`, {
       method: "GET",
-      headers: { "X-Relay-Key": env.key!.trim() },
+       headers: { "X-Relay-Key": env.key?.trim() ?? "" },
       signal: controller.signal,
     });
     if (response.status === 403) {
