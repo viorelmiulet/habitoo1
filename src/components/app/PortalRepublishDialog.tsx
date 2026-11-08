@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
-import { getRepublishBatch, getRepublishPreview, startRepublish } from "@/lib/portals/republish.functions";
+import { getRepublishBatch, getRepublishPreview, startRepublish, stopRepublishBatch } from "@/lib/portals/republish.functions";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/use-session";
 
@@ -81,6 +81,16 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
   const [portalFilter, setPortalFilter] = useState<string[]>([]);
   const loadPreview = useServerFn(getRepublishPreview);
   const start = useServerFn(startRepublish);
+  const stop = useServerFn(stopRepublishBatch);
+  const queryClient = useQueryClient();
+  const cancel = useMutation({
+    mutationFn: () => {
+      if (!batch?.id) throw new Error("Republicarea nu a fost găsită.");
+      return stop({ data: { batchId: batch.id } });
+    },
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["portal-republish-batch"] }); },
+    onError: (error: Error) => toastError(error),
+  });
   const showBatch = Boolean(batch);
   const { data: preview, isLoading } = useQuery({
     queryKey: ["portal-republish-preview", organizationId, scope, portalFilter],
@@ -110,6 +120,7 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
         {batch ? (
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 text-sm">
             <p className="font-semibold">{batch.status === "done" ? "Republicare terminată" : "Republicare în curs…"}</p>
+            {batch.stalled ? <p role="alert" className="font-semibold text-destructive">Republicarea pare blocată</p> : null}
             <p>{batch.succeeded} reușite · {batch.failed} erori · {batch.skipped} sărite{batch.pending ? ` · ${batch.pending} în așteptare` : ""} (din {batch.total})</p>
             {batch.errors.length ? <section><p className="font-semibold text-destructive">Erori</p><ul className="max-h-40 space-y-1 overflow-auto">{batch.errors.map((e, i) => <li key={i}>{e.listing} · {e.portal}: {e.message}</li>)}</ul></section> : null}
             {batch.skippedItems.length ? <section><p className="font-semibold">Sărite</p><ul className="max-h-40 space-y-1 overflow-auto text-muted-foreground">{batch.skippedItems.map((e, i) => <li key={i}>{e.listing} · {e.portal}: {e.message}</li>)}</ul></section> : null}
@@ -149,6 +160,7 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
           </div>
         )}
         <DialogFooter className="shrink-0 gap-2 sm:gap-0">
+          {batch?.stalled ? <Button variant="destructive" className="w-full sm:w-auto" disabled={cancel.isPending} onClick={() => cancel.mutate()}>{cancel.isPending ? "Se oprește…" : "Oprește restul"}</Button> : null}
           {batch?.status === "done" ? <Button variant="outline" className="w-full sm:w-auto" onClick={onDismiss}>Republicare nouă</Button> : null}
           <Button variant="outline" className="w-full sm:w-auto" onClick={onClose}>Închide</Button>
           {!batch ? <Button disabled={blocked} className="w-full sm:w-auto" onClick={() => mutation.mutate()}>{mutation.isPending ? "Se pornește…" : "Republică"}</Button> : null}

@@ -8251,9 +8251,26 @@ export type Database = {
           },
         ]
       }
+      portal_publish_fairness: {
+        Row: {
+          last_claimed_at: string
+          portal_key: string
+        }
+        Insert: {
+          last_claimed_at?: string
+          portal_key: string
+        }
+        Update: {
+          last_claimed_at?: string
+          portal_key?: string
+        }
+        Relationships: []
+      }
       portal_publish_jobs: {
         Row: {
           attempts: number
+          cancelled_at: string | null
+          claim_token: string | null
           contact_update_requested_by: string | null
           created_at: string
           enabled: boolean
@@ -8281,6 +8298,8 @@ export type Database = {
         }
         Insert: {
           attempts?: number
+          cancelled_at?: string | null
+          claim_token?: string | null
           contact_update_requested_by?: string | null
           created_at?: string
           enabled: boolean
@@ -8308,6 +8327,8 @@ export type Database = {
         }
         Update: {
           attempts?: number
+          cancelled_at?: string | null
+          claim_token?: string | null
           contact_update_requested_by?: string | null
           created_at?: string
           enabled?: boolean
@@ -8422,6 +8443,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      portal_relay_health: {
+        Row: {
+          consecutive_failures: number
+          first_failure_at: string | null
+          id: boolean
+          last_checked_at: string | null
+          paused_until: string | null
+          probe_locked_until: string | null
+          responding: boolean | null
+        }
+        Insert: {
+          consecutive_failures?: number
+          first_failure_at?: string | null
+          id?: boolean
+          last_checked_at?: string | null
+          paused_until?: string | null
+          probe_locked_until?: string | null
+          responding?: boolean | null
+        }
+        Update: {
+          consecutive_failures?: number
+          first_failure_at?: string | null
+          id?: boolean
+          last_checked_at?: string | null
+          paused_until?: string | null
+          probe_locked_until?: string | null
+          responding?: boolean | null
+        }
+        Relationships: []
       }
       portal_republish_batches: {
         Row: {
@@ -12179,6 +12230,10 @@ export type Database = {
       }
       can_access_contract: { Args: { _contract_id: string }; Returns: boolean }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      cancel_portal_republish_batch: {
+        Args: { _batch: string }
+        Returns: number
+      }
       cancel_subscription_request: {
         Args: { _request: string }
         Returns: undefined
@@ -12350,6 +12405,8 @@ export type Database = {
         Args: { _lease_seconds: number; _limit: number }
         Returns: {
           attempts: number
+          cancelled_at: string | null
+          claim_token: string | null
           contact_update_requested_by: string | null
           created_at: string
           enabled: boolean
@@ -12382,6 +12439,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_portal_relay_probe: { Args: never; Returns: boolean }
       claim_portal_slot_withdraw_job: {
         Args: { _job_id: string; _ttl_seconds: number }
         Returns: {
@@ -12602,6 +12660,18 @@ export type Database = {
       finish_onboarding_guide: {
         Args: { p_completed: boolean; p_guide_id: string }
         Returns: undefined
+      }
+      finish_portal_publish_job: {
+        Args: {
+          _action: string
+          _id: string
+          _message: string
+          _ok: boolean
+          _retry_ms: number
+          _status: string
+          _token: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
@@ -13015,6 +13085,10 @@ export type Database = {
       rate_limit_hit: {
         Args: { _bucket: string; _limit: number; _window_seconds: number }
         Returns: boolean
+      }
+      record_portal_relay_response: {
+        Args: { _ok: boolean }
+        Returns: undefined
       }
       refresh_public_llms_statistics: { Args: never; Returns: undefined }
       reject_registration_request: {

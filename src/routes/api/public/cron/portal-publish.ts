@@ -29,6 +29,8 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
         const { runPortalPublishWorker } = await import("@/lib/portals/publish-jobs.server");
         const { applyPortalSelectionForOrg, executeListingAction } = await import("@/lib/portals.functions");
         const { runRepublishJob, refreshRepublishBatches } = await import("@/lib/portals/republish.server");
+        const { recoverPortalRelay } = await import("@/lib/portals/relay-health.server");
+        const relayRecovery = recoverPortalRelay(supabaseAdmin);
         const result = await runPortalPublishWorker(supabaseAdmin, async (job) => {
           if (job.operation === "update") {
             const { runContactUpdateJob } = await import("@/lib/portals/contact-update.server");
@@ -70,6 +72,7 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
           });
           return out.results.find((r) => r.portalId === job.portal_key) ?? null;
         });
+        await relayRecovery;
         await refreshRepublishBatches(supabaseAdmin).catch((e: unknown) =>
           console.error("[portal-republish] progresul nu a putut fi actualizat", String(e).slice(0, 200)),
         );

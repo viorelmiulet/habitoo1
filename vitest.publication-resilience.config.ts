@@ -1,0 +1,2 @@
+import { defineConfig } from "vitest/config";
+export default defineConfig({ resolve: { alias: { "@": new URL("./src", import.meta.url).pathname } }, test: { environment: "node", include: ["tests/publication-resilience*.test.ts", "src/lib/portals/publish-jobs.test.ts", "src/components/app/PortalRepublishDialog.test.tsx", "src/lib/portals/zonata/job-log.test.ts"] } });

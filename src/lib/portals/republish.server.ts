@@ -80,14 +80,14 @@ export async function refreshRepublishBatches(admin: Admin) {
     const { data: jobs } = await admin.from("portal_publish_jobs").select("status,result_ok,result_action").eq("republish_batch_id", batch.id);
     const rows = (jobs ?? []) as { status: string; result_ok: boolean | null; result_action: string | null }[];
     const pending = rows.some((r) => r.status === "queued" || r.status === "running");
-    const skippedJobs = rows.filter((r) => r.status === "done" && r.result_action === "skipped").length;
-    const succeeded = rows.filter((r) => r.status === "done" && r.result_action !== "skipped").length;
+    const skippedJobs = rows.filter((r) => r.status === "done" && (r.result_action === "skipped" || r.result_action === "cancelled")).length;
+    const succeeded = rows.filter((r) => r.status === "done" && r.result_action !== "skipped" && r.result_action !== "cancelled").length;
     const failed = rows.filter((r) => r.status === "error").length;
     const skipped = ((batch.skipped_items ?? []) as unknown[]).length + skippedJobs;
     await admin.from("portal_republish_batches").update({
       succeeded, failed, skipped,
       ...(pending ? {} : { status: "done", finished_at: new Date().toISOString() }),
-    }).eq("id", batch.id);
+    }).eq("id", batch.id).eq("status", "running");
     // Regular republish notifications are atomic with completion in the DB.
     if (!pending && batch.kind === "imoradar") {
       await admin.from("notifications").insert({

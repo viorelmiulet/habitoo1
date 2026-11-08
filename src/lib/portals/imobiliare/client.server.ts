@@ -8,6 +8,7 @@
 import { PortalError } from "../errors";
 import { IMOBILIARE_BASE_URL } from "./config";
 import { relayFetch } from "../relay.server";
+import { withPortalDeadline, PORTAL_CALL_TIMEOUT_MS } from "../publication-resilience";
 import {
   classifyImobiliareNetworkError,
   classifyImobiliareStatus,
@@ -36,7 +37,7 @@ export type ImobiliareRequestInput = {
   timeoutMs?: number;
 };
 
-const REQUEST_TIMEOUT_MS = 30_000;
+const REQUEST_TIMEOUT_MS = PORTAL_CALL_TIMEOUT_MS;
 export const IMOBILIARE_WRITE_LIMIT_PER_MINUTE = 60;
 export const IMOBILIARE_READ_LIMIT_PER_MINUTE = 120;
 
@@ -88,7 +89,7 @@ export function assertSafeImobiliareUrl(baseUrl: string): URL {
 }
 
 async function readBody(response: Response): Promise<unknown> {
-  const text = await response.text().catch(() => "");
+  const text = await response.text();
   if (!text) return null;
   try {
     return JSON.parse(text);
@@ -125,19 +126,20 @@ export async function imobiliareRequest(
 
   while (attempt < IMOBILIARE_MAX_ATTEMPTS) {
     attempt += 1;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), input.timeoutMs ?? REQUEST_TIMEOUT_MS);
     try {
       const headers: Record<string, string> = { Accept: "application/json" };
       if (input.accessToken) headers["Authorization"] = `Bearer ${input.accessToken}`;
       if (input.body !== undefined) headers["Content-Type"] = "application/json";
+      const { response, body } = await withPortalDeadline(async (signal) => {
       const response = await relayFetch("imobiliare", url.toString(), {
         method: input.method,
         headers,
         ...(input.body === undefined ? {} : { body: JSON.stringify(input.body) }),
-        signal: controller.signal,
+        signal,
       });
       const body = await readBody(response);
+      return { response, body };
+      }, Math.min(input.timeoutMs ?? REQUEST_TIMEOUT_MS, REQUEST_TIMEOUT_MS));
       const baseClassification = classifyImobiliareStatus({
         status: response.status,
         attempt,
@@ -164,7 +166,9 @@ export async function imobiliareRequest(
       return last;
     } catch (error) {
       const timeout = error instanceof Error && error.name === "AbortError";
-      const classification = classifyImobiliareNetworkError({ attempt, timeout });
+      const classification = timeout
+        ? { action: "stop" as const, code: "TIMEOUT" as const, message: "Imobiliare.ro nu a răspuns în 15 secunde", waitMs: 0 }
+        : classifyImobiliareNetworkError({ attempt, timeout });
       last = {
         ok: false,
         status: 0,
@@ -175,8 +179,6 @@ export async function imobiliareRequest(
       };
       if (classification.action === "stop") return last;
       if (classification.waitMs > 0) await sleep(classification.waitMs);
-    } finally {
-      clearTimeout(timer);
     }
   }
 

@@ -31,6 +31,7 @@ export type PublishJobRow = {
   requested_by: string;
   superadmin: boolean;
   attempts: number;
+  claim_token?: string | null;
   operation?: string;
   ofera_intent?: "activate" | "resend" | null;
   republish_batch_id?: string | null;
@@ -81,6 +82,10 @@ export function decideJobResult(
   };
   // Timeout / rețea: max 2 reîncercări (30 s, 2 min), doar la portalurile idempotente.
   if (isTimeoutLikeFailure(failure)) {
+    // Imobiliare has one bounded call: a timeout is final for this job, not another inline/queue loop.
+    if (portalId === "imobiliare_ro" && failure.code === "TIMEOUT") {
+      return { status: "error", ok: false, message: "Imobiliare.ro nu a răspuns în 15 secunde" };
+    }
     const delay = timeoutRetryDelayMs({ portalId, attemptNumber: job.attempts });
     return delay === null
       ? { status: "error", ok: false, message: message.slice(0, 500) }
@@ -105,7 +110,8 @@ export async function runPool<T>(
   let ran = 0;
   const lanes = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
     while (index < items.length && Date.now() - started < budgetMs) {
-      const item = items[index++]!;
+      const item = items[index++];
+      if (item === undefined) break;
       ran += 1;
       try {
         await worker(item);
@@ -126,15 +132,16 @@ export async function runPortalPublishWorker(
   apply: PublishApplyFn,
   opts: { concurrency?: number; budgetMs?: number; portalName?: (id: string) => string } = {},
 ): Promise<{ claimed: number; done: number; failed: number; retried: number }> {
-  const concurrency = opts.concurrency ?? PUBLISH_JOB_CONCURRENCY;
+  const concurrency = Math.min(opts.concurrency ?? PUBLISH_JOB_CONCURRENCY, 3);
   const budgetMs = opts.budgetMs ?? PUBLISH_JOB_BUDGET_MS;
   const started = Date.now();
   const stats = { claimed: 0, done: 0, failed: 0, retried: 0 };
 
-  // Preia câte un lot mic, cât timp e buget; fiecare lot rulează în paralel (max 3).
+  // Independent lanes: two slow jobs never create a batch barrier for the third lane.
+  await Promise.all(Array.from({ length: concurrency }, async () => {
   while (Date.now() - started < budgetMs) {
     const { data, error } = await admin.rpc("claim_portal_publish_jobs", {
-      _limit: concurrency,
+      _limit: 1,
       _lease_seconds: PUBLISH_JOB_LEASE_SECONDS,
     });
     if (error) throw new Error(error.message);
@@ -142,7 +149,12 @@ export async function runPortalPublishWorker(
     if (jobs.length === 0) break;
     stats.claimed += jobs.length;
 
-    await runPool(jobs, concurrency, budgetMs, async (job) => {
+    for (const job of jobs) {
+      if (job.claim_token) {
+        const { data: active, error: readError } = await admin.from("portal_publish_jobs").select("id").eq("id", job.id).eq("claim_token", job.claim_token).eq("status", "running").is("cancelled_at", null).maybeSingle();
+        if (readError) throw new Error("Jobul nu a putut fi verificat.");
+        if (!active) continue;
+      }
       let outcome: PublishOutcome | null = null;
       let thrown: unknown = undefined;
       try {
@@ -157,6 +169,23 @@ export async function runPortalPublishWorker(
       }
       const decision = decideJobResult(job, outcome, thrown);
       const name = opts.portalName?.(job.portal_key) ?? outcome?.portalName ?? job.portal_key;
+      if (job.claim_token) {
+        const { data: saved, error: saveError } = await admin.rpc("finish_portal_publish_job", {
+          _id: job.id, _token: job.claim_token, _status: decision.status,
+          _ok: decision.status === "done", _action: decision.status === "done" ? decision.action : "blocked",
+          _message: decision.message, _retry_ms: decision.status === "queued" ? decision.retryInMs : 0,
+        });
+        if (saveError) throw new Error("Rezultatul publicării nu a putut fi salvat.");
+        if (!saved) continue;
+        if (decision.status === "queued") stats.retried += 1;
+        else if (decision.status === "done") stats.done += 1;
+        else stats.failed += 1;
+        if (decision.status !== "error" || job.republish_batch_id) continue;
+        await admin.from("notifications").insert({ organization_id: job.organization_id, user_id: job.requested_by,
+          type: "portal_publish_error", title: `${name}: publicarea a eșuat`, body: decision.message,
+          link: `/app/properties/${job.property_id}`, created_by: job.requested_by });
+        continue;
+      }
       if (decision.status === "queued") {
         stats.retried += 1;
         await admin
@@ -168,7 +197,7 @@ export async function runPortalPublishWorker(
             result_message: decision.message.slice(0, 500),
           })
           .eq("id", job.id);
-        return;
+        continue;
       }
       if (decision.status === "done") stats.done += 1;
       else stats.failed += 1;
@@ -185,7 +214,7 @@ export async function runPortalPublishWorker(
         .eq("id", job.id);
       // Clopoțelul arată doar erori: succesul nu creează notificare.
       // Republicarea în lot trimite o singură notificare, la final.
-      if (decision.ok || job.republish_batch_id) return;
+      if (decision.ok || job.republish_batch_id) continue;
       await admin.from("notifications").insert({
         organization_id: job.organization_id,
         user_id: job.requested_by,
@@ -195,7 +224,8 @@ export async function runPortalPublishWorker(
         link: `/app/properties/${job.property_id}`,
         created_by: job.requested_by,
       });
-    });
+    }
   }
+  }));
   return stats;
 }

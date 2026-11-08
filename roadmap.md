@@ -1,3 +1,10 @@
+## Q1 — izolarea portalurilor blocate
+- [x] Timeout Imobiliare.ro 15 secunde (inclusiv corp/releu), TIMEOUT final, abandonuri maximum 3 și preluare echitabilă maximum 2/portal
+- [x] Stare durabilă releu, amânare 15 minute, notificare SuperAdmin și reluare automată prin workerul armat existent
+- [x] Detectare lot blocat și anulare autorizată „Oprește restul”, protecție împotriva rezultatului unui worker vechi
+- [x] Teste exclusiv noi/worker; raport real citit și oprire simulată verificată desktop/390, fără apeluri reale sau publicare
+- [ ] Starea releului în cont SuperAdmin: sesiunea disponibilă este administrator de agenție; nu s-au schimbat roluri sau apelat releul
+
 ## D5 — ghid pentru site-ul propriu al agenției
 - [x] Alegere portal/agenție înainte de file, pași și avertismente cu etichetele exacte din Setări; baza cardului este originea curentă + /api/public/sites/v1
 - [x] Documentație Feed 1.2.3 și istoric, fără schimbări de comportament; contractul feedului și Partner OpenAPI păstrate

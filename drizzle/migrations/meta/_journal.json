@@ -1814,6 +1814,20 @@
       "when": 1794117426896,
       "tag": "0258_imobiliaremilitari_index_portal",
       "breakpoints": true
+    },
+    {
+      "idx": 259,
+      "version": "7",
+      "when": 1794151079158,
+      "tag": "0259_publication_resilience",
+      "breakpoints": true
+    },
+    {
+      "idx": 260,
+      "version": "7",
+      "when": 1794151239908,
+      "tag": "0260_publication_cancel_auth_guard",
+      "breakpoints": true
     }
   ]
 }

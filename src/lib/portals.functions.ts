@@ -3882,7 +3882,21 @@ export const checkPortalRelayIp = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await requireSuperadmin(context as unknown as AuthContext);
     const { checkRelayIp } = await import("./portals/relay.server");
-    return checkRelayIp();
+    const result = await checkRelayIp();
+    if (result.ok || result.reason !== "not_configured") {
+      const { recordRelayResponse } = await import("./portals/relay-health.server");
+      await recordRelayResponse(result.ok || result.reason !== "unreachable");
+    }
+    return result;
+  });
+
+export const getPortalRelayHealth = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }) => {
+    await requireSuperadmin(context as unknown as AuthContext);
+    const { data, error } = await context.supabase.from("portal_relay_health").select("responding,last_checked_at,paused_until").eq("id", true).maybeSingle();
+    if (error) throw new Error("Starea releului nu a putut fi citită.");
+    return data;
   });
 
 const storiaBulkSchema = z.object({
