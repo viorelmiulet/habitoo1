@@ -3386,6 +3386,65 @@ export type Database = {
         }
         Relationships: []
       }
+      extension_rate_windows: {
+        Row: {
+          request_count: number
+          token_id: string
+          window_start: string
+        }
+        Insert: {
+          request_count?: number
+          token_id: string
+          window_start: string
+        }
+        Update: {
+          request_count?: number
+          token_id?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extension_rate_windows_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "extension_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extension_tokens: {
+        Row: {
+          created_at: string
+          device_name: string
+          id: string
+          last_used_at: string | null
+          organization_id: string
+          revoked_at: string | null
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_name?: string
+          id?: string
+          last_used_at?: string | null
+          organization_id: string
+          revoked_at?: string | null
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_name?: string
+          id?: string
+          last_used_at?: string | null
+          organization_id?: string
+          revoked_at?: string | null
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       generated_video_clips: {
         Row: {
           created_at: string
@@ -12693,6 +12752,10 @@ export type Database = {
         Returns: undefined
       }
       ensure_superadmin_profile: { Args: { _user: string }; Returns: undefined }
+      extension_rate_take: {
+        Args: { _limit?: number; _token_id: string }
+        Returns: Json
+      }
       finish_collaborator_offer_delivery: {
         Args: { _id: string }
         Returns: string

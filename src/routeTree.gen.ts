@@ -99,6 +99,7 @@ import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
 import { Route as AuthenticatedAppContractsIndexRouteImport } from './routes/_authenticated/app.contracts.index'
 import { Route as AuthenticatedAppContractsIdRouteImport } from './routes/_authenticated/app.contracts.$id'
+import { Route as AuthenticatedAppExtensieConectareRouteImport } from './routes/_authenticated/app.extensie.conectare'
 import { Route as AuthenticatedAppPortaluriPortalIdRouteImport } from './routes/_authenticated/app.portaluri.$portalId'
 import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_authenticated/app.properties.index'
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
@@ -160,6 +161,8 @@ import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/
 import { Route as AuthenticatedAppAcpDatePiataIdRouteImport } from './routes/_authenticated/app.acp.date-piata.$id'
 import { Route as AuthenticatedSuperadminBlogPreviewIdRouteImport } from './routes/_authenticated/superadmin.blog.preview.$id'
 import { Route as ApiPublicCatalogV1FacebookDotcsvRouteImport } from './routes/api/public/catalog/v1/facebook[.]csv'
+import { Route as ApiPublicExtensionV1MeRouteImport } from './routes/api/public/extension/v1/me'
+import { Route as ApiPublicExtensionV1TokenRouteImport } from './routes/api/public/extension/v1/token'
 import { Route as ApiPublicFeedPortalLogoRouteImport } from './routes/api/public/feed/$portal/logo'
 import { Route as ApiPublicFeedProperstarAgencyKeyRouteImport } from './routes/api/public/feed/properstar/$agencyKey'
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
@@ -711,6 +714,12 @@ const AuthenticatedAppContractsIdRoute =
     path: '/contracts/$id',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppExtensieConectareRoute =
+  AuthenticatedAppExtensieConectareRouteImport.update({
+    id: '/extensie/conectare',
+    path: '/extensie/conectare',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppPortaluriPortalIdRoute =
   AuthenticatedAppPortaluriPortalIdRouteImport.update({
     id: '/portaluri/$portalId',
@@ -1058,6 +1067,17 @@ const ApiPublicCatalogV1FacebookDotcsvRoute =
   ApiPublicCatalogV1FacebookDotcsvRouteImport.update({
     id: '/api/public/catalog/v1/facebook.csv',
     path: '/api/public/catalog/v1/facebook.csv',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicExtensionV1MeRoute = ApiPublicExtensionV1MeRouteImport.update({
+  id: '/api/public/extension/v1/me',
+  path: '/api/public/extension/v1/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicExtensionV1TokenRoute =
+  ApiPublicExtensionV1TokenRouteImport.update({
+    id: '/api/public/extension/v1/token',
+    path: '/api/public/extension/v1/token',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicFeedPortalLogoRoute = ApiPublicFeedPortalLogoRouteImport.update({
@@ -1515,6 +1535,7 @@ export interface FileRoutesByFullPath {
   '/app/anunturi-particulari/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/app/extensie/conectare': typeof AuthenticatedAppExtensieConectareRoute
   '/app/portaluri/$portalId': typeof AuthenticatedAppPortaluriPortalIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
@@ -1578,6 +1599,8 @@ export interface FileRoutesByFullPath {
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
+  '/api/public/extension/v1/token': typeof ApiPublicExtensionV1TokenRoute
   '/api/public/feed/$portal/logo': typeof ApiPublicFeedPortalLogoRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -1726,6 +1749,7 @@ export interface FileRoutesByTo {
   '/app/anunturi-particulari/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/app/extensie/conectare': typeof AuthenticatedAppExtensieConectareRoute
   '/app/portaluri/$portalId': typeof AuthenticatedAppPortaluriPortalIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
@@ -1789,6 +1813,8 @@ export interface FileRoutesByTo {
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
+  '/api/public/extension/v1/token': typeof ApiPublicExtensionV1TokenRoute
   '/api/public/feed/$portal/logo': typeof ApiPublicFeedPortalLogoRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -1943,6 +1969,7 @@ export interface FileRoutesById {
   '/_authenticated/app/anunturi-particulari_/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/_authenticated/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/_authenticated/app/extensie/conectare': typeof AuthenticatedAppExtensieConectareRoute
   '/_authenticated/app/portaluri/$portalId': typeof AuthenticatedAppPortaluriPortalIdRoute
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
@@ -2006,6 +2033,8 @@ export interface FileRoutesById {
   '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/_authenticated/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
+  '/api/public/extension/v1/token': typeof ApiPublicExtensionV1TokenRoute
   '/api/public/feed/$portal/logo': typeof ApiPublicFeedPortalLogoRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -2160,6 +2189,7 @@ export interface FileRouteTypes {
     | '/app/anunturi-particulari/$id'
     | '/app/contacts/$id'
     | '/app/contracts/$id'
+    | '/app/extensie/conectare'
     | '/app/portaluri/$portalId'
     | '/app/properties/$id'
     | '/app/properties/new'
@@ -2223,6 +2253,8 @@ export interface FileRouteTypes {
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
+    | '/api/public/extension/v1/me'
+    | '/api/public/extension/v1/token'
     | '/api/public/feed/$portal/logo'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
@@ -2371,6 +2403,7 @@ export interface FileRouteTypes {
     | '/app/anunturi-particulari/$id'
     | '/app/contacts/$id'
     | '/app/contracts/$id'
+    | '/app/extensie/conectare'
     | '/app/portaluri/$portalId'
     | '/app/properties/$id'
     | '/app/properties/new'
@@ -2434,6 +2467,8 @@ export interface FileRouteTypes {
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
+    | '/api/public/extension/v1/me'
+    | '/api/public/extension/v1/token'
     | '/api/public/feed/$portal/logo'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
@@ -2587,6 +2622,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/anunturi-particulari_/$id'
     | '/_authenticated/app/contacts/$id'
     | '/_authenticated/app/contracts/$id'
+    | '/_authenticated/app/extensie/conectare'
     | '/_authenticated/app/portaluri/$portalId'
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
@@ -2650,6 +2686,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/acp/date-piata/$id'
     | '/_authenticated/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
+    | '/api/public/extension/v1/me'
+    | '/api/public/extension/v1/token'
     | '/api/public/feed/$portal/logo'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
@@ -2801,6 +2839,8 @@ export interface RootRouteChildren {
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiPublicCatalogV1FacebookDotcsvRoute: typeof ApiPublicCatalogV1FacebookDotcsvRoute
+  ApiPublicExtensionV1MeRoute: typeof ApiPublicExtensionV1MeRoute
+  ApiPublicExtensionV1TokenRoute: typeof ApiPublicExtensionV1TokenRoute
   ApiPublicFeedPortalLogoRoute: typeof ApiPublicFeedPortalLogoRoute
   ApiPublicFeedProperstarAgencyKeyRoute: typeof ApiPublicFeedProperstarAgencyKeyRoute
   ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -3488,6 +3528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppContractsIdRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/extensie/conectare': {
+      id: '/_authenticated/app/extensie/conectare'
+      path: '/extensie/conectare'
+      fullPath: '/app/extensie/conectare'
+      preLoaderRoute: typeof AuthenticatedAppExtensieConectareRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/portaluri/$portalId': {
       id: '/_authenticated/app/portaluri/$portalId'
       path: '/portaluri/$portalId'
@@ -3913,6 +3960,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/catalog/v1/facebook.csv'
       fullPath: '/api/public/catalog/v1/facebook.csv'
       preLoaderRoute: typeof ApiPublicCatalogV1FacebookDotcsvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/v1/me': {
+      id: '/api/public/extension/v1/me'
+      path: '/api/public/extension/v1/me'
+      fullPath: '/api/public/extension/v1/me'
+      preLoaderRoute: typeof ApiPublicExtensionV1MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/v1/token': {
+      id: '/api/public/extension/v1/token'
+      path: '/api/public/extension/v1/token'
+      fullPath: '/api/public/extension/v1/token'
+      preLoaderRoute: typeof ApiPublicExtensionV1TokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/feed/$portal/logo': {
@@ -4413,6 +4474,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAnunturiParticulariIdRoute: typeof AuthenticatedAppAnunturiParticulariIdRoute
   AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
   AuthenticatedAppContractsIdRoute: typeof AuthenticatedAppContractsIdRoute
+  AuthenticatedAppExtensieConectareRoute: typeof AuthenticatedAppExtensieConectareRoute
   AuthenticatedAppPortaluriPortalIdRoute: typeof AuthenticatedAppPortaluriPortalIdRoute
   AuthenticatedAppPropertiesIdRoute: typeof AuthenticatedAppPropertiesIdRoute
   AuthenticatedAppPropertiesNewRoute: typeof AuthenticatedAppPropertiesNewRoute
@@ -4453,6 +4515,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
     AuthenticatedAppAnunturiParticulariIdRoute,
   AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,
   AuthenticatedAppContractsIdRoute: AuthenticatedAppContractsIdRoute,
+  AuthenticatedAppExtensieConectareRoute:
+    AuthenticatedAppExtensieConectareRoute,
   AuthenticatedAppPortaluriPortalIdRoute:
     AuthenticatedAppPortaluriPortalIdRoute,
   AuthenticatedAppPropertiesIdRoute: AuthenticatedAppPropertiesIdRoute,
@@ -4790,6 +4854,8 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiPublicCatalogV1FacebookDotcsvRoute: ApiPublicCatalogV1FacebookDotcsvRoute,
+  ApiPublicExtensionV1MeRoute: ApiPublicExtensionV1MeRoute,
+  ApiPublicExtensionV1TokenRoute: ApiPublicExtensionV1TokenRoute,
   ApiPublicFeedPortalLogoRoute: ApiPublicFeedPortalLogoRoute,
   ApiPublicFeedProperstarAgencyKeyRoute: ApiPublicFeedProperstarAgencyKeyRoute,
   ApiPublicHomepitchV1PropertiesRoute:
