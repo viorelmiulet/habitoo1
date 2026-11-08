@@ -431,7 +431,7 @@ export function supabaseDeletionStore(admin: Admin): DeletionStore {
     listPortalTargets: async (propertyId) => {
       const [listings, publications, ofera] = await Promise.all([
         admin.from("portal_listings").select("portal,external_id,public_url").eq("property_id", propertyId).not("external_id", "is", null),
-        admin.from("portal_publications").select("portal_key").neq("portal_key", "facebook_catalog").eq("property_id", propertyId).eq("enabled", true),
+        admin.from("portal_publications").select("portal_key").not("portal_key", "in", "(facebook_catalog,agency_site)").eq("property_id", propertyId).eq("enabled", true),
         admin.from("ofera_listings").select("external_id,public_url").eq("property_id", propertyId).neq("status", "deleted"),
       ]);
       const rows: PortalTarget[] = [...(must(listings) ?? [])];
@@ -461,7 +461,7 @@ export function supabaseDeletionStore(admin: Admin): DeletionStore {
         const props = (must(await admin.from("properties").select("id").eq("assigned_to", userId)) ?? []).map((r: { id: string }) => r.id);
         const counts: Record<string, number> = {};
         for (let i = 0; i < props.length; i += 200) {
-          const rows = must(await admin.from("portal_publications").select("portal_key").neq("portal_key", "facebook_catalog").eq("enabled", true).in("property_id", props.slice(i, i + 200))) ?? [];
+          const rows = must(await admin.from("portal_publications").select("portal_key").not("portal_key", "in", "(facebook_catalog,agency_site)").eq("enabled", true).in("property_id", props.slice(i, i + 200))) ?? [];
           for (const r of rows as { portal_key: string }[]) counts[r.portal_key] = (counts[r.portal_key] ?? 0) + 1;
         }
         return counts;

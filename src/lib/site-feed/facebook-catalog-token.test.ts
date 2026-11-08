@@ -45,6 +45,8 @@ const logSpy = vi.spyOn(console, "log");
 beforeEach(() => {
   tables["site_feed_tokens"] = [];
   tables["audit_logs"] = [];
+  // Cheile de site funcționează doar cu „Site-ul agenției” activ (S1).
+  tables["agency_site_portals"] = [{ organization_id: ORG, active: true }];
 });
 
 async function addToken(scope: "site" | "facebook_catalog") {

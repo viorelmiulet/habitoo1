@@ -43,7 +43,8 @@ export function SiteFeedCard() {
     onSuccess: (res) => {
       setPlainToken(res.token);
       invalidate();
-      toast.success("Token generat. Copiază-l acum — nu va mai fi afișat.");
+      void queryClient.invalidateQueries({ queryKey: ["agency-site-settings"] });
+      toast.success("Cheie generată. Copiaz-o acum — nu va mai fi afișată.");
     },
     onError: (e: Error) => toastError(e),
   });
@@ -64,7 +65,7 @@ export function SiteFeedCard() {
       toast.success(
         res.hasToken
           ? `Conexiune pregătită: ${res.properties} proprietăți publicabile, ${res.agents} agenți activi.`
-          : "Generează mai întâi un token de acces.",
+          : "Generează mai întâi cheia site-ului.",
       );
     },
     onError: (e: Error) => toastError(e),
@@ -91,10 +92,10 @@ export function SiteFeedCard() {
       <div className="panel space-y-4 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="font-medium">Feed pentru site-ul agenției</h3>
+            <h3 className="font-medium">Cheia site-ului</h3>
             <p className="text-sm text-muted-foreground">
-              Un token de acces permite site-ului agenției să citească ofertele publicate și să
-              trimită înapoi cereri de contact.
+              Cheia permite site-ului agenției să citească anunțurile bifate pentru site și să
+              trimită înapoi cereri de contact. Se folosește doar pe serverul site-ului.
             </p>
           </div>
           <StatusBadge tone={data?.token ? "success" : "neutral"}>
@@ -105,7 +106,7 @@ export function SiteFeedCard() {
         {data?.token ? (
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-muted-foreground">Identificator token</dt>
+              <dt className="text-muted-foreground">Identificator cheie</dt>
               <dd className="font-mono">{data.token.tokenPrefix}…</dd>
             </div>
             <div>
@@ -123,16 +124,16 @@ export function SiteFeedCard() {
           </dl>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Nu există încă un token activ pentru agenția ta.
+            Nu există încă o cheie activă pentru site-ul agenției.
           </p>
         )}
 
         {plainToken ? (
           <div className="space-y-2 rounded-xl border border-primary/40 bg-primary/5 p-4">
-            <Label htmlFor="feed-token">Token nou (se afișează o singură dată)</Label>
+            <Label htmlFor="feed-token">Cheie nouă (se afișează o singură dată)</Label>
             <div className="flex gap-2">
               <Input id="feed-token" readOnly value={plainToken} className="font-mono text-xs" />
-              <Button type="button" variant="outline" onClick={() => copy(plainToken, "Tokenul")}>
+              <Button type="button" variant="outline" onClick={() => copy(plainToken, "Cheia")}>
                 <Copy className="size-4" />
               </Button>
             </div>
@@ -142,7 +143,7 @@ export function SiteFeedCard() {
         <div className="flex flex-wrap gap-2">
           <Button type="button" onClick={() => generate.mutate()} disabled={generate.isPending}>
             <KeyRound className="mr-2 size-4" />
-            {data?.token ? "Generează token nou" : "Generează token"}
+            {data?.token ? "Generează cheie nouă" : "Generează cheie"}
           </Button>
           <Button
             type="button"
@@ -164,6 +165,11 @@ export function SiteFeedCard() {
               Revocă accesul
             </Button>
           ) : null}
+          <Button asChild type="button" variant="link">
+            <a href="/dezvoltatori#site-agentie" target="_blank" rel="noreferrer">
+              Documentație pentru dezvoltatori
+            </a>
+          </Button>
         </div>
       </div>
 

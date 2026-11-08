@@ -3,6 +3,7 @@
 // în DB, în loguri sau în frontend după afișarea unică de la generare.
 import { createHash, randomBytes } from "node:crypto";
 import { incompleteFeedResponse } from "./complete-read.server";
+import { AGENCY_SITE_PORTAL_KEY, agencySiteAccepts } from "./agency-site";
 
 export const FEED_API_VERSION = "habitoo-site-feed/1.0";
 export const FEED_BASE_PATH = "/api/public/sites/v1";
@@ -27,6 +28,12 @@ export type FeedAuthOk = {
    * încă în index; feedul de oferte e gol, ca ClickImob să le retragă.
    */
   indexStatus?: "active" | "grace";
+  /**
+   * Selecția per anunț aplicată feedului fără a schimba `portal` (care decide
+   * sursa leadurilor). Tokenul de site citește doar anunțurile bifate pentru
+   * „Site-ul agenției” (`portal_publications.portal_key = agency_site`).
+   */
+  selectionPortal?: string;
 };
 
 export type FeedAuthErr = {
@@ -233,6 +240,17 @@ export async function authenticateFeedRequest(
     if (data.scope === "facebook_catalog" && !options.allowFacebookCatalogToken) {
       return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
     }
+    // Tokenul de site funcționează doar cât timp site-ul agenției este activ.
+    if (data.scope === "site") {
+      const { data: site } = await supabaseAdmin
+        .from("agency_site_portals")
+        .select("active")
+        .eq("organization_id", data.organization_id)
+        .maybeSingle();
+      if (!agencySiteAccepts(site)) {
+        return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
+      }
+    }
     await supabaseAdmin
       .from("site_feed_tokens")
       .update({
@@ -248,6 +266,7 @@ export async function authenticateFeedRequest(
       tokenPrefix: data.token_prefix,
       source: "site_token",
       portal: null,
+      ...(data.scope === "site" ? { selectionPortal: AGENCY_SITE_PORTAL_KEY } : {}),
       scopes: ["feed:read", "agents:read", "leads:write"],
     };
   }

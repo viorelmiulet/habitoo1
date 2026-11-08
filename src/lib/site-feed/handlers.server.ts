@@ -6,6 +6,7 @@
  * Nu există o a doua implementare paralelă pentru proprietăți.
  */
 import { selectedPropertyIdsForPortal } from "./selection.server";
+import { AGENCY_SITE_PORTAL_KEY, feedSelectionPortal } from "./agency-site";
 import {
   errorResponse,
   jsonResponse,
@@ -73,7 +74,8 @@ async function portalKeysFor(
     if (!list.includes(portal)) list.push(portal);
     result.set(propertyId, list);
   };
-  for (const row of publications.data ?? []) push(row.property_id, row.portal_key);
+  // Site-ul privat al agenției nu este un portal public: nu apare în listă.
+  for (const row of publications.data ?? []) if (row.portal_key !== AGENCY_SITE_PORTAL_KEY) push(row.property_id, row.portal_key);
   for (const row of listings.data ?? []) push(row.property_id, row.portal);
   return result;
 }
@@ -97,8 +99,8 @@ export async function handlePropertiesList(
   // Agenție ClickImob în grație: listă goală, ca ClickImob să retragă ofertele.
   const selectedIds = auth.indexStatus === "grace"
     ? []
-    : auth.portal
-    ? await selectedPropertyIdsForPortal(auth.organizationId, auth.portal)
+    : feedSelectionPortal(auth)
+    ? await selectedPropertyIdsForPortal(auth.organizationId, feedSelectionPortal(auth)!)
     : null;
   if (selectedIds !== null && selectedIds.length === 0) {
     const empty = buildPaginatedFeed({
@@ -222,8 +224,8 @@ export async function handlePropertyDetail(
     return { response: errorResponse(404, "Property not found."), items: 0 };
   }
   // Pentru o cheie de portal, oferta există doar dacă este bifată pentru el.
-  if (auth.portal) {
-    const selected = await selectedPropertyIdsForPortal(auth.organizationId, auth.portal);
+  if (feedSelectionPortal(auth)) {
+    const selected = await selectedPropertyIdsForPortal(auth.organizationId, feedSelectionPortal(auth)!);
     if (!selected.includes(row.id)) {
       return { response: errorResponse(404, "Property not found."), items: 0 };
     }

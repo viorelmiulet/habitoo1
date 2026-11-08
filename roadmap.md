@@ -575,3 +575,6 @@
 
 ## P2 Partner API — citirea datelor
 - [x] Schemă engleză, stare per portal, evenimente, job coadă/5 min, endpointuri, teste (10 noi)
+
+## S1 — Site-ul agenției ca portal privat
+- [x] Card în Setări → Portaluri, scurtătură în Integrări, bifă în anunț, feed filtrat, migrare cu bifare automată, documentație 1.2.4, teste

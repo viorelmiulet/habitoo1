@@ -32,7 +32,7 @@ describe("SuperAdmin key management response safety", () => {
     state.allowed = true;
     state.keys = [{ id: "managed", key_type: "index", portal: "bazaruldecase", key_hash: hashIndexKey(key), prefix: "hbbc_", last4: key.slice(-4), source: "managed", status: "active", created_at: "2026-11-07", last_used_at: null }];
     const result = await listPortalIndexKeys();
-    expect(result).toHaveLength(6);
+    expect(result).toHaveLength(7);
     expect(JSON.stringify(result)).not.toContain(key);
     expect(JSON.stringify(result)).not.toContain(hashIndexKey(key));
   });

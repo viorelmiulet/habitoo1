@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "Habitoo — API pentru integrarea portalurilor",
-    "version": "1.2.3",
+    "version": "1.2.4",
     "description": "API pentru indexul agențiilor, anunțuri JSON, fotografii, lead-uri, vizualizări și XML Kyero v3. Toate exemplele sunt fictive. Cheia de index descoperă agențiile; tokenul fiecărei agenții autorizează accesul numai la aceasta. Folosiți Bearer; /sites/v1 nu acceptă token în query. Scopuri: feed:read, agents:read, leads:write. Limită orientativă: 120 cereri/60 secunde pentru aceeași cheie și adresă IP, inclusiv XML; media nu are o limită specifică. Limita poate varia între cereri: tratați 429 prin reîncercare cu întârziere progresivă. Parcurgeți toate paginile înainte de reconciliere; ordinea poate varia între pagini și nu există cursor sau instantaneu comun. Agențiile în perioada de retragere au inventar gol. XML și index: generarea incompletă întoarce 503 cu Retry-After: 300. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
   },
   "x-developer-guide": {
@@ -26,6 +26,11 @@
       "Trimiteți un message_id stabil pentru fiecare lead și un event_id stabil pentru fiecare eveniment de vizualizare. event_id previne incrementul dublu la retrimitere, inclusiv după rotirea cheii portalului. Fără event_id, nu retrimiteți automat POST visits după un timeout. La 503 așteptați Retry-After: 300; la 429 folosiți întârziere progresivă."
     ],
     "history": [
+      {
+        "version": "1.2.4",
+        "date": "2026-11-08",
+        "description": "Site-ul agenției ca portal privat: cheia se generează din Setări → Portaluri → „Site-ul agenției”, iar feedul site-ului conține doar anunțurile bifate pentru site."
+      },
       {
         "version": "1.2.3",
         "date": "2026-11-08",
@@ -257,7 +262,7 @@
     "/api/public/sites/v1/properties": {
       "get": {
         "summary": "Lista proprietăților",
-        "description": "Necesită feed:read. Returnează anunțuri publicate, neretrase, cu starea active, reserved sau negotiation. Tokenul portalului limitează lista la anunțurile selectate pentru el și exclude ofertele fără telefon de contact al agentului responsabil; tokenul de site include ofertele eligibile ale agenției. iMove utilizează feedul dedicat indicat în index. În grace: data=[] și total=0. Ofertele sunt ordonate de la cea mai recentă modificare. Paginile după last_page întorc 200 și data=[]. Fără cursor, instantaneu comun sau filtre suplimentare.",
+        "description": "Necesită feed:read. Returnează anunțuri publicate, neretrase, cu starea active, reserved sau negotiation. Tokenul portalului limitează lista la anunțurile selectate pentru el și exclude ofertele fără telefon de contact al agentului responsabil; tokenul de site include doar ofertele eligibile ale agenției bifate pentru „Site-ul agenției” și răspunde 401 cât timp site-ul este inactiv sau cheia revocată. iMove utilizează feedul dedicat indicat în index. În grace: data=[] și total=0. Ofertele sunt ordonate de la cea mai recentă modificare. Paginile după last_page întorc 200 și data=[]. Fără cursor, instantaneu comun sau filtre suplimentare.",
         "tags": [
           "Feed pe agenție"
         ],
@@ -429,7 +434,7 @@
     "/api/public/sites/v1/properties/{id}": {
       "get": {
         "summary": "O proprietate",
-        "description": "feed:read UUID sau referință, în agenția tokenului; dacă valoarea arată ca UUID se caută numai după UUID, altfel după referință. Aceleași reguli de eligibilitate și selecție ca lista; grace întoarce 404.",
+        "description": "feed:read UUID sau referință, în agenția tokenului; dacă valoarea arată ca UUID se caută numai după UUID, altfel după referință. Aceleași reguli de eligibilitate și selecție ca lista (un anunț nebifat pentru site întoarce 404); grace întoarce 404.",
         "tags": [
           "Feed pe agenție"
         ],

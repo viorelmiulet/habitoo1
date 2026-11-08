@@ -27,7 +27,7 @@ export function DeveloperDocumentation() {
         <article className="min-w-0 rounded-lg border border-border bg-card p-5">
           <Globe className="mb-3 size-6 text-gold-dark" aria-hidden="true" />
           <h3 className="text-lg font-bold text-navy">Ești agenție Habitoo și ai propriul site?</h3>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">Folosește feedul pentru site-ul agenției. Administratorul agenției generează tokenul în Habitoo → Setări → Integrări → „Feed pentru site-ul agenției”. Fără cereri la suport.</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">Folosește feedul pentru site-ul agenției. Administratorul agenției adaugă site-ul și generează cheia în Habitoo → Setări → Portaluri → „Site-ul agenției”. Feedul conține doar anunțurile bifate pentru site. Fără cereri la suport.</p>
           <Button variant="outline" className="mt-4" onClick={() => { setTab('feed'); setShowAgencyGuide(true); history.replaceState(null, '', '#site-agentie'); }}>Site-ul propriu al agenției <ArrowRight /></Button>
         </article>
       </div>
