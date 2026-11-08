@@ -21,6 +21,7 @@ export type IndexPortal = string;
 export const INDEX_PORTALS = {
   clickimob: { prefix: CLICKIMOB_TOKEN_PREFIX, secret: "CLICKIMOB_INDEX_KEY", version: CLICKIMOB_INDEX_VERSION },
   imobli: { prefix: "hbim_", secret: "IMOBLI_INDEX_KEY", version: "habitoo-imobli-index/1.0" },
+  imobiliaremilitari: { prefix: "hbmi_", secret: "IMOBILIAREMILITARI_INDEX_KEY", version: "habitoo-imobiliaremilitari-index/1.0" },
   locuit: { prefix: "hblo_", secret: "LOCUIT_INDEX_KEY", version: "habitoo-locuit-index/1.0" },
   imobiliareplus: { prefix: "hbip_", secret: "IMOBILIAREPLUS_INDEX_KEY", version: "habitoo-imobiliareplus-index/1.0" },
   // iMove citește feedul propriu (format iMove), nu /sites/v1; tokenul e acceptat doar acolo.

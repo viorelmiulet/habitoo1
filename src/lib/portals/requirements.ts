@@ -324,6 +324,10 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     required: BASE_REQUIRED,
     allowed: COMMON_ALLOWED,
   },
+  imobiliaremilitari: {
+    required: BASE_REQUIRED,
+    allowed: COMMON_ALLOWED,
+  },
   locuit: {
     required: BASE_REQUIRED,
     allowed: COMMON_ALLOWED,

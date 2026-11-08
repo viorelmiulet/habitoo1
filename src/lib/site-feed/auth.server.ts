@@ -77,7 +77,7 @@ export function readTokenFromRequest(request: Request): string | null {
   return alt?.trim() || null;
 }
 
-const INDEX_TOKEN_PREFIX = { clickimob: "hbci_", imobli: "hbim_", locuit: "hblo_", imobiliareplus: "hbip_", imove: "hbmv_", bazaruldecase: "hbbc_" } as const;
+const INDEX_TOKEN_PREFIX = { clickimob: "hbci_", imobli: "hbim_", imobiliaremilitari: "hbmi_", locuit: "hblo_", imobiliareplus: "hbip_", imove: "hbmv_", bazaruldecase: "hbbc_" } as const;
 
 function tokenPrefixOf(token: string | null): string | null {
   if (!token) return null;

@@ -187,6 +187,7 @@ import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/
 import { Route as ApiPublicFeedPortalChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/$portal/[index]/$indexKey'
 import { Route as ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/bazaruldecase/[index]/$indexKey'
 import { Route as ApiPublicFeedClickimobChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/clickimob/[index]/$indexKey'
+import { Route as ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/imobiliaremilitari/[index]/$indexKey'
 import { Route as ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/imobiliareplus/[index]/$indexKey'
 import { Route as ApiPublicFeedImobliChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/imobli/[index]/$indexKey'
 import { Route as ApiPublicFeedImoveChar91indexChar93IndexKeyRouteImport } from './routes/api/public/feed/imove/[index]/$indexKey'
@@ -1211,6 +1212,12 @@ const ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute =
     path: '/api/public/feed/clickimob/index/$indexKey',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRoute =
+  ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRouteImport.update({
+    id: '/api/public/feed/imobiliaremilitari/index/$indexKey',
+    path: '/api/public/feed/imobiliaremilitari/index/$indexKey',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute =
   ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRouteImport.update({
     id: '/api/public/feed/imobiliareplus/index/$indexKey',
@@ -1599,6 +1606,7 @@ export interface FileRoutesByFullPath {
   '/api/public/feed/$portal/index/$indexKey': typeof ApiPublicFeedPortalChar91indexChar93IndexKeyRoute
   '/api/public/feed/bazaruldecase/index/$indexKey': typeof ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
+  '/api/public/feed/imobiliaremilitari/index/$indexKey': typeof ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobiliareplus/index/$indexKey': typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobli/index/$indexKey': typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
   '/api/public/feed/imove/index/$indexKey': typeof ApiPublicFeedImoveChar91indexChar93IndexKeyRoute
@@ -1809,6 +1817,7 @@ export interface FileRoutesByTo {
   '/api/public/feed/$portal/index/$indexKey': typeof ApiPublicFeedPortalChar91indexChar93IndexKeyRoute
   '/api/public/feed/bazaruldecase/index/$indexKey': typeof ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
+  '/api/public/feed/imobiliaremilitari/index/$indexKey': typeof ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobiliareplus/index/$indexKey': typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobli/index/$indexKey': typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
   '/api/public/feed/imove/index/$indexKey': typeof ApiPublicFeedImoveChar91indexChar93IndexKeyRoute
@@ -2025,6 +2034,7 @@ export interface FileRoutesById {
   '/api/public/feed/$portal/index/$indexKey': typeof ApiPublicFeedPortalChar91indexChar93IndexKeyRoute
   '/api/public/feed/bazaruldecase/index/$indexKey': typeof ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRoute
   '/api/public/feed/clickimob/index/$indexKey': typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
+  '/api/public/feed/imobiliaremilitari/index/$indexKey': typeof ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobiliareplus/index/$indexKey': typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
   '/api/public/feed/imobli/index/$indexKey': typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
   '/api/public/feed/imove/index/$indexKey': typeof ApiPublicFeedImoveChar91indexChar93IndexKeyRoute
@@ -2241,6 +2251,7 @@ export interface FileRouteTypes {
     | '/api/public/feed/$portal/index/$indexKey'
     | '/api/public/feed/bazaruldecase/index/$indexKey'
     | '/api/public/feed/clickimob/index/$indexKey'
+    | '/api/public/feed/imobiliaremilitari/index/$indexKey'
     | '/api/public/feed/imobiliareplus/index/$indexKey'
     | '/api/public/feed/imobli/index/$indexKey'
     | '/api/public/feed/imove/index/$indexKey'
@@ -2451,6 +2462,7 @@ export interface FileRouteTypes {
     | '/api/public/feed/$portal/index/$indexKey'
     | '/api/public/feed/bazaruldecase/index/$indexKey'
     | '/api/public/feed/clickimob/index/$indexKey'
+    | '/api/public/feed/imobiliaremilitari/index/$indexKey'
     | '/api/public/feed/imobiliareplus/index/$indexKey'
     | '/api/public/feed/imobli/index/$indexKey'
     | '/api/public/feed/imove/index/$indexKey'
@@ -2666,6 +2678,7 @@ export interface FileRouteTypes {
     | '/api/public/feed/$portal/index/$indexKey'
     | '/api/public/feed/bazaruldecase/index/$indexKey'
     | '/api/public/feed/clickimob/index/$indexKey'
+    | '/api/public/feed/imobiliaremilitari/index/$indexKey'
     | '/api/public/feed/imobiliareplus/index/$indexKey'
     | '/api/public/feed/imobli/index/$indexKey'
     | '/api/public/feed/imove/index/$indexKey'
@@ -2815,6 +2828,7 @@ export interface RootRouteChildren {
   ApiPublicFeedPortalChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedPortalChar91indexChar93IndexKeyRoute
   ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRoute
   ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute
+  ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRoute
   ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute
   ApiPublicFeedImobliChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedImobliChar91indexChar93IndexKeyRoute
   ApiPublicFeedImoveChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedImoveChar91indexChar93IndexKeyRoute
@@ -4090,6 +4104,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFeedClickimobChar91indexChar93IndexKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/feed/imobiliaremilitari/index/$indexKey': {
+      id: '/api/public/feed/imobiliaremilitari/index/$indexKey'
+      path: '/api/public/feed/imobiliaremilitari/index/$indexKey'
+      fullPath: '/api/public/feed/imobiliaremilitari/index/$indexKey'
+      preLoaderRoute: typeof ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/feed/imobiliareplus/index/$indexKey': {
       id: '/api/public/feed/imobiliareplus/index/$indexKey'
       path: '/api/public/feed/imobiliareplus/index/$indexKey'
@@ -4802,6 +4823,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicFeedBazaruldecaseChar91indexChar93IndexKeyRoute,
   ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute:
     ApiPublicFeedClickimobChar91indexChar93IndexKeyRoute,
+  ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRoute:
+    ApiPublicFeedImobiliaremilitariChar91indexChar93IndexKeyRoute,
   ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute:
     ApiPublicFeedImobiliareplusChar91indexChar93IndexKeyRoute,
   ApiPublicFeedImobliChar91indexChar93IndexKeyRoute:

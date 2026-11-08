@@ -8,6 +8,7 @@ const summaries: Record<string, string> = {
   bazaruldecase: "Activezi fără cheie, bifezi ofertele, iar BazarulDeCase.ro le preia automat.",
   locuit: "Activezi fără cheie, bifezi ofertele, iar portalul le preia automat.",
   imobli: "Activezi singur, alegi ofertele, iar portalul le preia automat.",
+  imobiliaremilitari: "Activezi singur, alegi ofertele, iar portalul le preia automat.",
   imobiliareplus: "Activezi fără cheie, bifezi ofertele, iar Imobiliare+ le preia automat.",
   storia: "Publici pe ambele portaluri. Lead-urile intră în CRM.",
   olx_direct: "Publici pe OLX folosind pachetul existent al agenției.",
