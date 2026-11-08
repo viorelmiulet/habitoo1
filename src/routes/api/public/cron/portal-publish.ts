@@ -29,6 +29,8 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
         const { runPortalPublishWorker } = await import("@/lib/portals/publish-jobs.server");
         const { applyPortalSelectionForOrg, executeListingAction } = await import("@/lib/portals.functions");
         const { runRepublishJob, refreshRepublishBatches } = await import("@/lib/portals/republish.server");
+        const { recoverPortalRelay } = await import("@/lib/portals/relay-health.server");
+        await recoverPortalRelay(supabaseAdmin);
         const result = await runPortalPublishWorker(supabaseAdmin, async (job) => {
           if (job.operation === "update") {
             const { runContactUpdateJob } = await import("@/lib/portals/contact-update.server");

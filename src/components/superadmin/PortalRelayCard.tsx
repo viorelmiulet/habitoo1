@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { checkPortalRelayIp } from "@/lib/portals.functions";
+import { checkPortalRelayIp, getPortalRelayHealth } from "@/lib/portals.functions";
 
 type Result = Awaited<ReturnType<typeof checkPortalRelayIp>>;
 
 export function PortalRelayCard() {
   const check = useServerFn(checkPortalRelayIp);
+  const loadHealth = useServerFn(getPortalRelayHealth);
+  const queryClient = useQueryClient();
+  const { data: health } = useQuery({ queryKey: ["portal-relay-health"], queryFn: () => loadHealth(), refetchInterval: 30_000 });
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [failed, setFailed] = useState(false);
@@ -16,6 +20,7 @@ export function PortalRelayCard() {
     setFailed(false);
     try {
       setResult(await check());
+      await queryClient.invalidateQueries({ queryKey: ["portal-relay-health"] });
     } catch {
       setFailed(true);
       setResult(null);
@@ -28,6 +33,11 @@ export function PortalRelayCard() {
     <section className="panel flex flex-wrap items-center justify-between gap-3 p-5">
       <div className="space-y-1">
         <h2 className="text-sm font-semibold tracking-wide uppercase">IP fix pentru portaluri</h2>
+        <p className={health?.responding === false ? "text-sm text-destructive" : "text-sm text-muted-foreground"}>
+          {health?.responding === true ? "Răspunde" : health?.responding === false ? "Nu răspunde" : "Neverificat"}
+          {health?.last_checked_at ? ` · Ultima verificare: ${new Date(health.last_checked_at).toLocaleString("ro-RO")}` : ""}
+        </p>
+        {health?.paused_until ? <p className="text-xs text-muted-foreground">Amânat până la {new Date(health.paused_until).toLocaleString("ro-RO")}</p> : null}
         <p className="text-xs text-muted-foreground">
           VDI.ro și Imobiliare.ro primesc cererile prin releul https://relay.habitoo.ro. IP așteptat: 185.166.212.65.
         </p>

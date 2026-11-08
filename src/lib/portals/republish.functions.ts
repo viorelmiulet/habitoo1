@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { resolvePublishingOrg } from "@/lib/portals.functions";
 import { portalDisplayName, getPortalDefinition, type PortalId } from "@/lib/portals/registry";
+import { republishIsStalled } from "@/lib/portals/publication-resilience";
 import {
   AUTO_PULL_MESSAGE,
   countByPortal,
@@ -91,20 +92,32 @@ export const getRepublishBatch = createServerFn({ method: "POST" })
     const { data: batch } = await context.supabase.from("portal_republish_batches").select("*").eq("id", data.batchId).maybeSingle();
     if (!batch) throw new Error("Republicarea nu a fost găsită.");
     const admin = await loadAdmin();
-    const { data: jobs } = await admin.from("portal_publish_jobs").select("property_id,portal_key,status,result_action,result_message").eq("republish_batch_id", batch.id);
+    const { data: jobs, error: jobsError } = await admin.from("portal_publish_jobs").select("property_id,portal_key,status,result_action,result_message,finished_at").eq("republish_batch_id", batch.id);
+    if (jobsError) throw new Error("Progresul republicării nu a putut fi citit.");
     const queued = (jobs ?? []).filter((j) => j.status === "queued" || j.status === "running").length;
     const errors = (jobs ?? []).filter((j) => j.status === "error");
     const skippedItems = [
       ...((batch.skipped_items ?? []) as { propertyId: string; portalId: string; message: string }[]),
-      ...(jobs ?? []).filter((j) => j.status === "done" && j.result_action === "skipped").map((j) => ({ propertyId: j.property_id, portalId: j.portal_key, message: j.result_message ?? "Sărit." })),
+      ...(jobs ?? []).filter((j) => j.status === "done" && (j.result_action === "skipped" || j.result_action === "cancelled")).map((j) => ({ propertyId: j.property_id, portalId: j.portal_key, message: j.result_message ?? "Sărit." })),
     ];
     const ids = [...new Set([...errors.map((e) => e.property_id), ...skippedItems.map((s) => s.propertyId)])];
     const { data: props } = ids.length ? await admin.from("properties").select("id,reference,title").in("id", ids) : { data: [] };
     const ref = (id: string) => { const p = (props ?? []).find((x) => x.id === id); return p?.reference ?? p?.title ?? id.slice(0, 8); };
     return {
+      id: batch.id,
+      stalled: batch.status === "running" && republishIsStalled(batch.created_at, (jobs ?? []).reduce<string | null>((last, j) => j.finished_at && (!last || j.finished_at > last) ? j.finished_at : last, null)),
       status: batch.status as string, total: batch.total as number, succeeded: batch.succeeded as number,
       failed: batch.failed as number, skipped: skippedItems.length, pending: queued,
       errors: errors.map((e) => ({ listing: ref(e.property_id), portal: label(e.portal_key), message: e.result_message ?? "Eroare." })),
       skippedItems: skippedItems.map((s) => ({ listing: ref(s.propertyId), portal: label(s.portalId), message: s.message })),
     };
+  });
+
+export const stopRepublishBatch = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => z.object({ batchId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: cancelled, error } = await context.supabase.rpc("cancel_portal_republish_batch", { _batch: data.batchId });
+    if (error) throw new Error("Republicarea nu a putut fi oprită; verifică accesul și progresul lotului.");
+    return { cancelled };
   });
