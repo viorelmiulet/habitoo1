@@ -14,6 +14,7 @@ import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
 import { AgencySitePortalCard, SiteFeedMovedCard } from "@/components/app/AgencySitePortalCard";
 import { ExtensionDevicesCard } from "@/components/app/ExtensionDevicesCard";
+import { ListingContactCard } from "@/components/app/ListingContactCard";
 import { ArgusConnectionCard } from "@/components/app/ArgusConnectionCard";
 import { CollaborationAutoSwitch } from "@/components/app/CollaborationAutoSwitch";
 import { AgencyCompanyDataFields } from "@/components/app/AgencyCompanyDataFields";
@@ -434,6 +435,13 @@ function SettingsPage() {
               <div className="mt-6">
                 <SettingsCard title="Extensia Chrome" description="Dispozitivele pe care extensia Habitoo Captură este conectată la contul tău.">
                   <ExtensionDevicesCard />
+                </SettingsCard>
+              </div>
+            ) : null}
+            {user?.profile?.organization_id ? (
+              <div className="mt-6">
+                <SettingsCard title="Contact în postările Facebook" description="Telefonul și WhatsApp-ul afișate la finalul anunțurilor postate cu extensia în grupuri Facebook.">
+                  <ListingContactCard />
                 </SettingsCard>
               </div>
             ) : null}
