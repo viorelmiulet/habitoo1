@@ -10,6 +10,7 @@ const connect = vi.fn(async () => ({ token: TOKEN }));
 let search: { nonce?: string } = {};
 vi.mock("@tanstack/react-start", () => ({ useServerFn: () => connect, createServerFn: () => ({}) }));
 vi.mock("@/lib/extension.functions", () => ({ connectExtension: {} }));
+vi.mock("@/lib/org-access", () => ({ orgBlockReason: () => null }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
 }));
