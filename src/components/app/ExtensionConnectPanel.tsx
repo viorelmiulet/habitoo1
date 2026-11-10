@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { connectExtension } from "@/lib/extension.functions";
 import { EXTENSION_MESSAGE_TYPE, isValidNonce } from "@/lib/extension/core";
+import { CHROME_EXTENSION_URL } from "@/components/marketing/chrome-extension-content";
 
 type State = "idle" | "working" | "done" | "denied" | "error";
 
@@ -30,7 +31,15 @@ export function ExtensionConnectPanel({ nonce }: { nonce?: string }) {
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <h1 className="text-xl font-semibold">Conectează extensia Habitoo Captură</h1>
         {!valid ? (
-          <p className="mt-4 text-sm text-destructive">Link de conectare invalid. Pornește conectarea din nou din extensie.</p>
+          <div className="mt-4">
+            <p className="text-sm text-destructive">Link de conectare invalid. Pornește conectarea din nou din extensie.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Nu ai extensia?{" "}
+              <a href={CHROME_EXTENSION_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline-offset-4 hover:underline">
+                Instaleaz-o din Chrome Web Store
+              </a>
+            </p>
+          </div>
         ) : state === "done" ? (
           <p className="mt-4 text-sm" role="status">Extensia a fost conectată, poți închide fila.</p>
         ) : state === "denied" ? (

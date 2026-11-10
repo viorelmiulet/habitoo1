@@ -1,8 +1,8 @@
 // Conținut public pentru /extensie-chrome (browser-safe, fără citiri private).
 import type { FaqItem } from "@/components/marketing/FaqSection";
 
-/** Adresa din Chrome Web Store; goală până la aprobarea extensiei. */
-export const CHROME_EXTENSION_URL = "";
+/** Adresa din Chrome Web Store. */
+export const CHROME_EXTENSION_URL = "https://chromewebstore.google.com/detail/halmjojklfjnnmjojpeboeaopkabmlee";
 export const CHROME_EXTENSION_PATH = "/extensie-chrome";
 export const CHROME_EXTENSION_TITLE = "Extensia Chrome Habitoo Captură";
 export const CHROME_EXTENSION_META_TITLE = "Extensia Chrome Habitoo Captură — import anunțuri și postări Facebook | Habitoo CRM";
@@ -11,6 +11,12 @@ export const CHROME_EXTENSION_DESCRIPTION =
 
 export function chromeInstallButton(url: string = CHROME_EXTENSION_URL) {
   return url ? { disabled: false as const, label: "Adaugă în Chrome", href: url } : { disabled: true as const, label: "În curând în Chrome Web Store", href: null };
+}
+
+/** Atributul `data-habitoo-extension` pus de extensie pe <html>; valoarea e versiunea instalată. */
+export function extensionInstalledVersion(attr: string | null | undefined): string | null {
+  const v = (attr ?? "").trim();
+  return v ? v : null;
 }
 
 export const extensionSteps = [

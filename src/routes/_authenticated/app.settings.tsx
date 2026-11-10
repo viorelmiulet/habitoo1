@@ -14,6 +14,7 @@ import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
 import { AgencySitePortalCard, SiteFeedMovedCard } from "@/components/app/AgencySitePortalCard";
 import { ExtensionDevicesCard } from "@/components/app/ExtensionDevicesCard";
+import { ExtensionInstallLink } from "@/components/app/ExtensionInstallLink";
 import { ListingContactCard } from "@/components/app/ListingContactCard";
 import { ArgusConnectionCard } from "@/components/app/ArgusConnectionCard";
 import { CollaborationAutoSwitch } from "@/components/app/CollaborationAutoSwitch";
@@ -435,7 +436,10 @@ function SettingsPage() {
               <div className="mt-6">
                 <SettingsCard title="Extensia Chrome" description="Dispozitivele pe care extensia Habitoo Captură este conectată la contul tău.">
                   <ExtensionDevicesCard />
-                  <Link to="/extensie-chrome" className="mt-3 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline">Despre extensie</Link>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <ExtensionInstallLink />
+                    <Link to="/extensie-chrome" className="inline-block text-sm font-medium text-primary underline-offset-4 hover:underline">Despre extensie</Link>
+                  </div>
                 </SettingsCard>
               </div>
             ) : null}
