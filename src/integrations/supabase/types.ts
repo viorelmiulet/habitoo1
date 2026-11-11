@@ -12038,6 +12038,7 @@ export type Database = {
       vumsi_accounts: {
         Row: {
           checked_at: string
+          company_type_synced_at: string | null
           external_id: string
           kind: string
           organization_id: string
@@ -12045,6 +12046,7 @@ export type Database = {
         }
         Insert: {
           checked_at?: string
+          company_type_synced_at?: string | null
           external_id: string
           kind: string
           organization_id: string
@@ -12052,6 +12054,7 @@ export type Database = {
         }
         Update: {
           checked_at?: string
+          company_type_synced_at?: string | null
           external_id?: string
           kind?: string
           organization_id?: string

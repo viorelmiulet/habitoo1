@@ -12,6 +12,7 @@ import type { ConnectionStatusOutcome, ListingDiagnostics, ListingOutcome, Listi
 import { notSupported } from "../adapter";
 import type { PortalErrorCode } from "../errors";
 import type { PortalOffer } from "../imobiliare/offer-links";
+import { patchVumsiCompanyType, VUMSI_COMPANY_TYPE, VUMSI_COMPANY_TYPE_WARNING } from "../vumsi/company-type";
 import { describeVumsiMe, getVumsiMe, vumsiRequest, type VumsiCallFail, type VumsiDeps } from "../vumsi/client.server";
 import { VUMSI_KEY_MISSING_MESSAGE, hasVumsiKey } from "../vumsi/config";
 import type * as Load from "../vumsi/load.server";
@@ -60,6 +61,7 @@ export type VumsiAdapterDeps = VumsiDeps & {
   save?: typeof Load.saveVumsiStored;
   saveAccount?: typeof Load.saveVumsiAccount;
   propertyState?: typeof Load.loadVumsiPropertyState;
+  markCompanyType?: typeof Load.markVumsiCompanyTypeSynced;
   now?: () => number;
 };
 
@@ -76,6 +78,7 @@ export function createVumsiAdapter(deps: VumsiAdapterDeps = {}): PortalAdapter {
     loadStored: deps.loadStored ?? (async (o: string, p: string) => (await L()).loadVumsiStored(o, p)),
     save: deps.save ?? (async (o: string, p: string, s: VumsiStored[]) => (await L()).saveVumsiStored(o, p, s)),
     saveAccount: deps.saveAccount ?? (async (k: "user" | "company", e: string, o: string, u: string) => (await L()).saveVumsiAccount(k, e, o, u)),
+    markCompanyType: deps.markCompanyType ?? (async (e: string) => (await L()).markVumsiCompanyTypeSynced(e)),
     propertyState: deps.propertyState ?? (async (o: string, p: string) => (await L()).loadVumsiPropertyState(o, p)),
   };
 
@@ -109,11 +112,19 @@ export function createVumsiAdapter(deps: VumsiAdapterDeps = {}): PortalAdapter {
     const company = await ensureVumsiAccount(call, "company", { ...pv.company.payload, owner: { ...pv.company.payload.owner, user_uuid: user.uuid } }, pv.company.vumsiUuid);
     if (!company.ok) return vumsiToPortalFail(company.fail, "Agenția nu a putut fi legată la Vumsi: ");
     await d.saveAccount("company", pv.company.payload.external_company_id, ctx.organizationId, company.uuid).catch(() => undefined);
+    // Tipul agenției: la creare vine din POST; altfel un singur PATCH, nu blochează anunțul.
+    let companyTypeNote: string | null = null;
+    if (pv.companyTypeAllowed !== false && pv.company.typeSyncedAt === null) {
+      const ext = pv.company.payload.external_company_id;
+      const ok = company.created ? pv.company.payload.company_type === VUMSI_COMPANY_TYPE : await patchVumsiCompanyType(call, company.uuid);
+      if (ok) await d.markCompanyType(ext).catch(() => undefined);
+      else if (!company.created) companyTypeNote = VUMSI_COMPANY_TYPE_WARNING;
+    }
 
     const stored = await d.loadStored(ctx.organizationId, ref.propertyId).catch(() => [] as VumsiStored[]);
     const pics = await d.images(ctx.organizationId, ref.propertyId);
     const states: VumsiStored[] = [];
-    const notes: string[] = [...new Set([...pv.warnings, ...pics.warnings])];
+    const notes: string[] = [...new Set([...pv.warnings, ...pics.warnings, ...(companyTypeNote ? [companyTypeNote] : [])])];
     const done: string[] = [];
     const mediaWarnings: (string | null)[] = [];
     const save = () => d.save(ctx.organizationId, ref.propertyId, states).catch(() => undefined);

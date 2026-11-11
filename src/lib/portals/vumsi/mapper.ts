@@ -344,7 +344,7 @@ export function pickVumsiCity(results: unknown, city: string, county: string | n
 // ------------------------------------------------------------------ agent și agenție
 
 export type VumsiUserPayload = { email: string | null; first_name: string; last_name: string; phone: string | null; external_user_id: string; account_type: "business" };
-export type VumsiCompanyPayload = { external_company_id: string; owner: { user_uuid: string | null; external_user_id: string | null }; name: string; company_number: string | null; city: string | null; country: "RO"; line1: string | null };
+export type VumsiCompanyPayload = { external_company_id: string; owner: { user_uuid: string | null; external_user_id: string | null }; name: string; company_number: string | null; city: string | null; country: "RO"; line1: string | null; company_type?: "real_estate" };
 
 export function vumsiUserPayload(profile: { id: string; full_name: string | null; email: string | null; phone: string | null }): VumsiUserPayload {
   const parts = (profile.full_name ?? "").trim().split(/\s+/).filter(Boolean);
@@ -361,8 +361,10 @@ export function vumsiUserPayload(profile: { id: string; full_name: string | null
 export function vumsiCompanyPayload(
   org: { id: string; name: string | null; legal_name?: string | null; cui?: string | null; city?: string | null; registered_address?: string | null; material_address?: string | null },
   owner: { userUuid: string | null; externalUserId: string | null },
+  opts: { realEstate?: boolean } = {},
 ): VumsiCompanyPayload {
   return {
+    ...(opts.realEstate === false ? {} : { company_type: "real_estate" as const }),
     external_company_id: org.id,
     owner: { user_uuid: owner.userUuid, external_user_id: owner.externalUserId },
     name: ((org.legal_name || org.name || "").trim()).slice(0, VUMSI_COMPANY_NAME_MAX),

@@ -1891,6 +1891,13 @@
       "when": 1794415223085,
       "tag": "0269_outreach_send_claim_fix_type",
       "breakpoints": true
+    },
+    {
+      "idx": 270,
+      "version": "7",
+      "when": 1794422240802,
+      "tag": "0270_vumsi_company_type_synced",
+      "breakpoints": true
     }
   ]
 }

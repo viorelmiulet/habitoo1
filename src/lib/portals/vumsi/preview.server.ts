@@ -4,6 +4,7 @@
  * uuid-uri găsite) se salvează în DB.
  */
 import type { PropertyRow } from "@/lib/site-feed/mapper";
+import { vumsiAllowsRealEstate } from "./company-type";
 import { hasVumsiKey, VUMSI_KEY_MISSING_MESSAGE } from "./config";
 import type { VumsiAttribute, VumsiCategory } from "./nomenclature";
 import {
@@ -30,7 +31,9 @@ export type VumsiPreview = {
   cityName: string | null;
   plans: VumsiListingPlan[];
   user: { payload: VumsiUserPayload | null; vumsiUuid: string | null; checked: boolean };
-  company: { payload: VumsiCompanyPayload | null; vumsiUuid: string | null; checked: boolean };
+  company: { payload: VumsiCompanyPayload | null; vumsiUuid: string | null; checked: boolean; typeSyncedAt?: string | null };
+  /** false când nomenclatorul Vumsi nu mai conține `real_estate`. */
+  companyTypeAllowed?: boolean;
 };
 
 type Getter = <T>(path: string, query?: Record<string, string | number>) => Promise<{ ok: true; data: T } | { ok: false; kind: string; message: string }>;
@@ -70,14 +73,15 @@ async function resolveCity(db: any, p: PropertyRow, get: Getter | null): Promise
 }
 
 async function lookupAccount(db: any, get: Getter | null, kind: "user" | "company", externalId: string, organizationId: string) {
-  const { data: saved } = await db.from("vumsi_accounts").select("vumsi_uuid").eq("kind", kind).eq("external_id", externalId).maybeSingle();
-  if (!get) return { vumsiUuid: (saved?.vumsi_uuid as string | null) ?? null, checked: false };
+  const { data: saved } = await db.from("vumsi_accounts").select("vumsi_uuid,company_type_synced_at").eq("kind", kind).eq("external_id", externalId).maybeSingle();
+  const typeSyncedAt = (saved?.company_type_synced_at as string | null) ?? null;
+  if (!get) return { vumsiUuid: (saved?.vumsi_uuid as string | null) ?? null, checked: false, typeSyncedAt };
   const path = kind === "user" ? `/users/by-external-id/${encodeURIComponent(externalId)}/` : `/companies/by-external-id/${encodeURIComponent(externalId)}/`;
   const r = await get<Record<string, unknown>>(path);
   if (!r.ok && r.kind !== "not_found") throw new Error(r.message);
   const uuid = r.ok && typeof r.data?.["uuid"] === "string" ? (r.data["uuid"] as string) : null;
   await db.from("vumsi_accounts").upsert({ kind, external_id: externalId, organization_id: organizationId, vumsi_uuid: uuid, checked_at: new Date().toISOString() });
-  return { vumsiUuid: uuid, checked: true };
+  return { vumsiUuid: uuid, checked: true, typeSyncedAt };
 }
 
 export async function loadVumsiSetup(db: any) {
@@ -111,14 +115,15 @@ export async function buildVumsiPreview(propertyId: string, deps: { db?: any; ge
   ]);
   const mapped = mapPropertyToVumsi(p as PropertyRow, { attributes: snapshot.attributes ?? {}, mappings, cityId: city.id });
 
+  const companyTypeAllowed = vumsiAllowsRealEstate(snapshot.reference);
   const userPayload = profile ? vumsiUserPayload(profile) : null;
   const user = userPayload ? { payload: userPayload, ...(await lookupAccount(db, get, "user", userPayload.external_user_id, p.organization_id)) } : empty;
-  const companyPayload = org ? vumsiCompanyPayload(org, { userUuid: user.vumsiUuid, externalUserId: userPayload?.external_user_id ?? null }) : null;
+  const companyPayload = org ? vumsiCompanyPayload(org, { userUuid: user.vumsiUuid, externalUserId: userPayload?.external_user_id ?? null }, { realEstate: companyTypeAllowed }) : null;
   const company = companyPayload ? { payload: companyPayload, ...(await lookupAccount(db, get, "company", companyPayload.external_company_id, p.organization_id)) } : empty;
 
   const reasons = [...mapped.reasons, ...vumsiAccountReasons(userPayload, companyPayload)];
   return {
     ok: reasons.length === 0, setupMissing: false, reasons: [...new Set(reasons)], warnings: [...warnings, ...mapped.warnings],
-    cityId: city.id, cityName: city.name, plans: mapped.plans, user, company,
+    cityId: city.id, cityName: city.name, plans: mapped.plans, user, company, companyTypeAllowed,
   };
 }

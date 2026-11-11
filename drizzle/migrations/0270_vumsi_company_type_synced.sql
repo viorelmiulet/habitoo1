@@ -1,0 +1,1 @@
+ALTER TABLE public.vumsi_accounts ADD COLUMN IF NOT EXISTS company_type_synced_at timestamptz;

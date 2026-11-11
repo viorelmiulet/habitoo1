@@ -72,3 +72,8 @@ export async function vumsiReasonsLoader(db: any) {
     return mapPropertyToVumsi(row, { attributes: snapshot.attributes ?? {}, mappings, cityId: 0 }).reasons;
   };
 }
+
+export async function markVumsiCompanyTypeSynced(externalId: string) {
+  const db = await admin();
+  await db.from("vumsi_accounts").update({ company_type_synced_at: new Date().toISOString() }).eq("kind", "company").eq("external_id", externalId);
+}

@@ -50,7 +50,7 @@ import {
   startStoriaAuthorization,
 } from "@/lib/portals/storia.functions";
 import { getZonataNomenclatureStatus, syncZonataNomenclature } from "@/lib/portals/zonata/nomenclature.functions";
-import { getVumsiNomenclatureStatus, syncVumsiNomenclature } from "@/lib/portals/vumsi/nomenclature.functions";
+import { getVumsiNomenclatureStatus, syncVumsiCompanyTypes, syncVumsiNomenclature } from "@/lib/portals/vumsi/nomenclature.functions";
 import { VumsiMappingPanel } from "@/components/superadmin/VumsiMappingPanel";
 import { OferaNomenclaturePanel } from "./OferaNomenclaturePanel";
 import { ZupNomenclaturePanel } from "./ZupNomenclaturePanel";
@@ -1283,12 +1283,24 @@ function VumsiNomenclaturePanel() {
     },
     onError: (e: Error) => toastError(e),
   });
+  const runTypes = useServerFn(syncVumsiCompanyTypes);
+  const types = useMutation({
+    mutationFn: () => runTypes(),
+    onSuccess: (r) => toast.success(`Tipul agențiilor la Vumsi: ${r.succeeded} reușite, ${r.failed} eșuate.`, { duration: 10_000 }),
+    onError: (e: Error) => toastError(e),
+  });
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button type="button" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
         <RefreshCw className={cn("mr-2 size-4", sync.isPending && "animate-spin")} />
         Sincronizează nomenclatoarele Vumsi
       </Button>
+      <Button type="button" variant="outline" onClick={() => types.mutate()} disabled={types.isPending || status.data?.companyTypeAllowed === false}>
+        <RefreshCw className={cn("mr-2 size-4", types.isPending && "animate-spin")} />
+        Actualizează tipul agențiilor la Vumsi
+      </Button>
+      {types.data && <span className="text-xs">{types.data.succeeded} reușite · {types.data.failed} eșuate</span>}
+      {status.data?.companyTypeAllowed === false && <span className="text-xs font-medium text-destructive">Vumsi nu mai acceptă tipul real_estate</span>}
       <span className="text-xs text-muted-foreground">
         {status.data?.syncedAt
           ? `Ultima sincronizare: ${formatDateTime(status.data.syncedAt)} · ${status.data.counts?.categories ?? 0} categorii, ${status.data.counts?.attributes ?? 0} câmpuri`
