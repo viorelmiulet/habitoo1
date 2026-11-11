@@ -24,7 +24,7 @@ export function OutreachMessageEditor({ listId }: { listId: string }) {
   const [form, setForm] = useState<CampaignInput>(empty);
   const [testOpen, setTestOpen] = useState(false);
   const [to, setTo] = useState("");
-  useEffect(() => { const c = query.data?.campaign; if (c) setForm({ name: c.name, subject: c.subject, body_text: c.body_text, sender_name: c.sender_name, footer_text: c.footer_text, status: c.status }); }, [query.data?.campaign]);
+  useEffect(() => { const c = query.data?.campaign; if (c) setForm({ name: c.name, subject: c.subject, body_text: c.body_text, sender_name: c.sender_name, footer_text: c.footer_text, status: c.status === "ready" ? "ready" : "draft" }); }, [query.data?.campaign]);
   const validation = validateCampaign(form);
   const recipient = query.data?.recipient;
   const preview = useMemo(() => recipient ? renderCampaign(form, recipient) : null, [form, recipient]);
@@ -34,6 +34,7 @@ export function OutreachMessageEditor({ listId }: { listId: string }) {
   if (query.error) return <QueryError error={query.error} onRetry={() => query.refetch()} />;
   const set = (k: keyof CampaignInput) => (e: { target: { value: string } }) => { saveM.reset(); setForm(f => ({ ...f, [k]: e.target.value })); };
   const savedId = query.data?.campaign?.id;
+  const locked = Boolean(query.data?.campaign && !["draft", "ready"].includes(query.data.campaign.status));
   return <div className="grid gap-6 lg:grid-cols-2">
     <form className="space-y-4" onSubmit={e => { e.preventDefault(); if (validation.ok) saveM.mutate(); }}>
       <div className="space-y-1.5"><Label htmlFor="oc-name">Numele campaniei</Label><Input id="oc-name" maxLength={160} value={form.name} onChange={set("name")} /></div>
@@ -49,9 +50,10 @@ export function OutreachMessageEditor({ listId }: { listId: string }) {
       {!validation.ok ? <p role="alert" className="text-sm text-destructive">{validation.error}</p> : null}
       {saveM.error ? <p role="alert" className="text-sm text-destructive">{saveM.error.message}</p> : saveM.isSuccess ? <p className="text-sm text-muted-foreground">Mesajul a fost salvat.</p> : null}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={!validation.ok || saveM.isPending}><Save className="size-4" />{saveM.isPending ? "Se salvează…" : "Salvează"}</Button>
+        <Button type="submit" disabled={locked || !validation.ok || saveM.isPending}><Save className="size-4" />{saveM.isPending ? "Se salvează…" : "Salvează"}</Button>
         <Button type="button" variant="outline" disabled={!savedId || !recipient} onClick={() => { testM.reset(); setTestOpen(true); }}><Send className="size-4" />Trimite test</Button>
       </div>
+      {locked ? <p className="text-xs text-muted-foreground">Trimiterea a pornit; mesajul nu se mai poate modifica.</p> : null}
       {!savedId ? <p className="text-xs text-muted-foreground">Salvează mesajul înainte de trimiterea de test. Testul folosește versiunea salvată.</p> : null}
     </form>
     <section aria-label="Previzualizare" className="space-y-3 rounded-lg border border-border bg-card p-4">

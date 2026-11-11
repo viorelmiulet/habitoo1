@@ -74,7 +74,7 @@ export type WorkspaceGmailMessage = {
 
 export type WorkspaceGmailSendResult =
   | { ok: true; gmailMessageId: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; /** Set for quota/rate-limit/authentication failures. */ kind?: "auth" | "quota" };
 
 const CRLF = /[\r\n]/;
 
@@ -188,7 +188,7 @@ export function workspaceGmailSendError(status: number): string {
  */
 export async function sendWorkspaceGmail(msg: WorkspaceGmailMessage): Promise<WorkspaceGmailSendResult> {
   const { configured } = workspaceGmailConfigStatus();
-  if (!configured) return { ok: false, error: "Gmail-ul platformei nu este configurat." };
+  if (!configured) return { ok: false, error: "Gmail-ul platformei nu este configurat.", kind: "auth" };
 
   let account: string;
   try {
@@ -228,7 +228,7 @@ export async function sendWorkspaceGmail(msg: WorkspaceGmailMessage): Promise<Wo
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     console.error(`Workspace Gmail send failed [${res.status}]: ${body.slice(0, 500)}`);
-    return { ok: false, error: workspaceGmailSendError(res.status) };
+    return { ok: false, error: workspaceGmailSendError(res.status), ...(res.status === 401 || res.status === 403 ? { kind: "auth" as const } : res.status === 429 ? { kind: "quota" as const } : {}) };
   }
   const data = (await res.json().catch(() => ({}))) as { id?: string };
   return { ok: true, gmailMessageId: data.id ?? "" };

@@ -133,6 +133,7 @@ import { Route as ApiPublicCronMarketPriceIndicesRouteImport } from './routes/ap
 import { Route as ApiPublicCronOferaNomenclatureRouteImport } from './routes/api/public/cron/ofera-nomenclature'
 import { Route as ApiPublicCronOlxStatusRouteImport } from './routes/api/public/cron/olx-status'
 import { Route as ApiPublicCronOlxTokenRefreshRouteImport } from './routes/api/public/cron/olx-token-refresh'
+import { Route as ApiPublicCronOutreachSendRouteImport } from './routes/api/public/cron/outreach-send'
 import { Route as ApiPublicCronPortalBulkRouteImport } from './routes/api/public/cron/portal-bulk'
 import { Route as ApiPublicCronPortalPublishRouteImport } from './routes/api/public/cron/portal-publish'
 import { Route as ApiPublicCronPortalSchedulesRouteImport } from './routes/api/public/cron/portal-schedules'
@@ -923,6 +924,12 @@ const ApiPublicCronOlxTokenRefreshRoute =
     path: '/api/public/cron/olx-token-refresh',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronOutreachSendRoute =
+  ApiPublicCronOutreachSendRouteImport.update({
+    id: '/api/public/cron/outreach-send',
+    path: '/api/public/cron/outreach-send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronPortalBulkRoute = ApiPublicCronPortalBulkRouteImport.update({
   id: '/api/public/cron/portal-bulk',
   path: '/api/public/cron/portal-bulk',
@@ -1652,6 +1659,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/ofera-nomenclature': typeof ApiPublicCronOferaNomenclatureRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
+  '/api/public/cron/outreach-send': typeof ApiPublicCronOutreachSendRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
   '/api/public/cron/portal-schedules': typeof ApiPublicCronPortalSchedulesRoute
@@ -1879,6 +1887,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/ofera-nomenclature': typeof ApiPublicCronOferaNomenclatureRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
+  '/api/public/cron/outreach-send': typeof ApiPublicCronOutreachSendRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
   '/api/public/cron/portal-schedules': typeof ApiPublicCronPortalSchedulesRoute
@@ -2112,6 +2121,7 @@ export interface FileRoutesById {
   '/api/public/cron/ofera-nomenclature': typeof ApiPublicCronOferaNomenclatureRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
+  '/api/public/cron/outreach-send': typeof ApiPublicCronOutreachSendRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
   '/api/public/cron/portal-schedules': typeof ApiPublicCronPortalSchedulesRoute
@@ -2345,6 +2355,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/ofera-nomenclature'
     | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
+    | '/api/public/cron/outreach-send'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
     | '/api/public/cron/portal-schedules'
@@ -2572,6 +2583,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/ofera-nomenclature'
     | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
+    | '/api/public/cron/outreach-send'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
     | '/api/public/cron/portal-schedules'
@@ -2804,6 +2816,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/ofera-nomenclature'
     | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
+    | '/api/public/cron/outreach-send'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
     | '/api/public/cron/portal-schedules'
@@ -2979,6 +2992,7 @@ export interface RootRouteChildren {
   ApiPublicCronOferaNomenclatureRoute: typeof ApiPublicCronOferaNomenclatureRoute
   ApiPublicCronOlxStatusRoute: typeof ApiPublicCronOlxStatusRoute
   ApiPublicCronOlxTokenRefreshRoute: typeof ApiPublicCronOlxTokenRefreshRoute
+  ApiPublicCronOutreachSendRoute: typeof ApiPublicCronOutreachSendRoute
   ApiPublicCronPortalBulkRoute: typeof ApiPublicCronPortalBulkRoute
   ApiPublicCronPortalPublishRoute: typeof ApiPublicCronPortalPublishRoute
   ApiPublicCronPortalSchedulesRoute: typeof ApiPublicCronPortalSchedulesRoute
@@ -3939,6 +3953,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/olx-token-refresh'
       fullPath: '/api/public/cron/olx-token-refresh'
       preLoaderRoute: typeof ApiPublicCronOlxTokenRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/outreach-send': {
+      id: '/api/public/cron/outreach-send'
+      path: '/api/public/cron/outreach-send'
+      fullPath: '/api/public/cron/outreach-send'
+      preLoaderRoute: typeof ApiPublicCronOutreachSendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/portal-bulk': {
@@ -5118,6 +5139,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronOferaNomenclatureRoute: ApiPublicCronOferaNomenclatureRoute,
   ApiPublicCronOlxStatusRoute: ApiPublicCronOlxStatusRoute,
   ApiPublicCronOlxTokenRefreshRoute: ApiPublicCronOlxTokenRefreshRoute,
+  ApiPublicCronOutreachSendRoute: ApiPublicCronOutreachSendRoute,
   ApiPublicCronPortalBulkRoute: ApiPublicCronPortalBulkRoute,
   ApiPublicCronPortalPublishRoute: ApiPublicCronPortalPublishRoute,
   ApiPublicCronPortalSchedulesRoute: ApiPublicCronPortalSchedulesRoute,

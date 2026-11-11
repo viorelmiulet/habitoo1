@@ -1877,6 +1877,20 @@
       "when": 1794411573529,
       "tag": "0267_outreach_campaigns",
       "breakpoints": true
+    },
+    {
+      "idx": 268,
+      "version": "7",
+      "when": 1794414922442,
+      "tag": "0268_outreach_bulk_sending",
+      "breakpoints": true
+    },
+    {
+      "idx": 269,
+      "version": "7",
+      "when": 1794415223085,
+      "tag": "0269_outreach_send_claim_fix_type",
+      "breakpoints": true
     }
   ]
 }

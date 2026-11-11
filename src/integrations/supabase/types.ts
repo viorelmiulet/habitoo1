@@ -6647,42 +6647,75 @@ export type Database = {
       outreach_campaigns: {
         Row: {
           body_text: string
+          completed_at: string | null
+          consecutive_failures: number
           created_at: string
           created_by: string
+          daily_limit: number
+          delay_seconds: number
           footer_text: string
           id: string
+          last_error: string | null
+          last_sent_at: string | null
           list_id: string
           name: string
+          paused_reason: string | null
           sender_name: string
+          started_at: string | null
           status: Database["public"]["Enums"]["outreach_campaign_status"]
           subject: string
           updated_at: string
+          weekdays_only: boolean
+          window_end: string
+          window_start: string
         }
         Insert: {
           body_text: string
+          completed_at?: string | null
+          consecutive_failures?: number
           created_at?: string
           created_by?: string
+          daily_limit?: number
+          delay_seconds?: number
           footer_text: string
           id?: string
+          last_error?: string | null
+          last_sent_at?: string | null
           list_id: string
           name: string
+          paused_reason?: string | null
           sender_name?: string
+          started_at?: string | null
           status?: Database["public"]["Enums"]["outreach_campaign_status"]
           subject: string
           updated_at?: string
+          weekdays_only?: boolean
+          window_end?: string
+          window_start?: string
         }
         Update: {
           body_text?: string
+          completed_at?: string | null
+          consecutive_failures?: number
           created_at?: string
           created_by?: string
+          daily_limit?: number
+          delay_seconds?: number
           footer_text?: string
           id?: string
+          last_error?: string | null
+          last_sent_at?: string | null
           list_id?: string
           name?: string
+          paused_reason?: string | null
           sender_name?: string
+          started_at?: string | null
           status?: Database["public"]["Enums"]["outreach_campaign_status"]
           subject?: string
           updated_at?: string
+          weekdays_only?: boolean
+          window_end?: string
+          window_start?: string
         }
         Relationships: [
           {
@@ -6719,6 +6752,7 @@ export type Database = {
         Row: {
           address_type: string | null
           agency_name: string | null
+          campaign_id: string | null
           city: string | null
           created_at: string
           email: string
@@ -6727,6 +6761,7 @@ export type Database = {
           list_id: string
           phone: string | null
           region: string | null
+          send_claimed_at: string | null
           sent_at: string | null
           source_url: string | null
           status: Database["public"]["Enums"]["outreach_status"]
@@ -6736,6 +6771,7 @@ export type Database = {
         Insert: {
           address_type?: string | null
           agency_name?: string | null
+          campaign_id?: string | null
           city?: string | null
           created_at?: string
           email: string
@@ -6744,6 +6780,7 @@ export type Database = {
           list_id: string
           phone?: string | null
           region?: string | null
+          send_claimed_at?: string | null
           sent_at?: string | null
           source_url?: string | null
           status?: Database["public"]["Enums"]["outreach_status"]
@@ -6753,6 +6790,7 @@ export type Database = {
         Update: {
           address_type?: string | null
           agency_name?: string | null
+          campaign_id?: string | null
           city?: string | null
           created_at?: string
           email?: string
@@ -6761,6 +6799,7 @@ export type Database = {
           list_id?: string
           phone?: string | null
           region?: string | null
+          send_claimed_at?: string | null
           sent_at?: string | null
           source_url?: string | null
           status?: Database["public"]["Enums"]["outreach_status"]
@@ -6768,6 +6807,13 @@ export type Database = {
           website?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "outreach_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "outreach_recipients_list_id_fkey"
             columns: ["list_id"]
@@ -13264,6 +13310,14 @@ export type Database = {
           used: number
         }[]
       }
+      outreach_campaign_control: {
+        Args: { _action: string; _campaign_id: string; _settings?: Json }
+        Returns: string
+      }
+      outreach_campaign_progress: {
+        Args: { _campaign_id: string }
+        Returns: Json
+      }
       outreach_exclude: { Args: { _recipient_id: string }; Returns: undefined }
       outreach_import: {
         Args: {
@@ -13274,6 +13328,13 @@ export type Database = {
           _rows: Json
         }
         Returns: Json
+      }
+      outreach_in_window: {
+        Args: {
+          _at: string
+          c: Database["public"]["Tables"]["outreach_campaigns"]["Row"]
+        }
+        Returns: boolean
       }
       outreach_list_detail: {
         Args: {
@@ -13287,6 +13348,26 @@ export type Database = {
       }
       outreach_list_summaries: { Args: never; Returns: Json }
       outreach_new_token: { Args: never; Returns: string }
+      outreach_recipient_action: {
+        Args: { _action: string; _recipient_id: string }
+        Returns: undefined
+      }
+      outreach_send_claim: { Args: { _campaign_id: string }; Returns: Json }
+      outreach_send_due: { Args: never; Returns: string[] }
+      outreach_send_recheck: {
+        Args: { _recipient_id: string }
+        Returns: boolean
+      }
+      outreach_send_result: {
+        Args: {
+          _campaign_id: string
+          _error: string
+          _fatal: boolean
+          _ok: boolean
+          _recipient_id: string
+        }
+        Returns: string
+      }
       outreach_test_send_take: {
         Args: { _campaign_id: string; _to: string }
         Returns: boolean
@@ -14032,7 +14113,12 @@ export type Database = {
         | "suspended"
         | "cancelled"
         | "pending_approval"
-      outreach_campaign_status: "draft" | "ready"
+      outreach_campaign_status:
+        | "draft"
+        | "ready"
+        | "sending"
+        | "paused"
+        | "completed"
       outreach_status:
         | "pending"
         | "sent"
@@ -14216,7 +14302,13 @@ export const Constants = {
         "cancelled",
         "pending_approval",
       ],
-      outreach_campaign_status: ["draft", "ready"],
+      outreach_campaign_status: [
+        "draft",
+        "ready",
+        "sending",
+        "paused",
+        "completed",
+      ],
       outreach_status: ["pending", "sent", "failed", "bounced", "unsubscribed"],
       property_status: [
         "draft",

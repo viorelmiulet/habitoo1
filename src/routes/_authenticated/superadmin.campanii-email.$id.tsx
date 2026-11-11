@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Search, UserX } from "lucide-react";
+import { ArrowLeft, MailX, RotateCcw, Search, UserX } from "lucide-react";
 import { appHead } from "@/components/app/app-head";
 import { PageHeader } from "@/components/app/PageHeader";
 import { SuperadminGate } from "@/components/app/SuperadminGate";
@@ -11,12 +11,13 @@ import { QueryError } from "@/components/app/QueryError";
 import { ListPagination } from "@/components/app/ListPagination";
 import { OutreachImportDialog } from "@/components/app/OutreachImportDialog";
 import { OutreachMessageEditor } from "@/components/app/OutreachMessageEditor";
+import { OutreachSendingPanel } from "@/components/app/OutreachSendingPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { getOutreachDetail, excludeOutreachRecipient } from "@/lib/outreach.functions";
+import { getOutreachDetail, excludeOutreachRecipient, outreachRecipientAction } from "@/lib/outreach.functions";
 import { outreachStatuses, outreachStatusLabels, type OutreachRecipient } from "@/lib/outreach";
 
 export const Route = createFileRoute("/_authenticated/superadmin/campanii-email/$id")({
@@ -34,14 +35,17 @@ function OutreachDetailPage() {
   const [exclude, setExclude] = useState<OutreachRecipient | null>(null);
   const fetchDetail = useServerFn(getOutreachDetail);
   const excludeRecipient = useServerFn(excludeOutreachRecipient);
+  const recipientAction = useServerFn(outreachRecipientAction);
   const qc = useQueryClient();
+  const rowAction = useMutation({ mutationFn: (v: { id: string; action: "retry" | "bounce" }) => recipientAction({ data: v }), onSuccess: () => { qc.invalidateQueries({ queryKey: ["outreach"] }); qc.invalidateQueries({ queryKey: ["outreach-progress"] }); } });
   const query = useQuery({ queryKey: ["outreach", id, q, status, city, page], queryFn: () => fetchDetail({ data: { listId: id, q, status, city, page } }) });
   const mutation = useMutation({ mutationFn: (recipientId: string) => excludeRecipient({ data: { id: recipientId } }), onSuccess: () => { setExclude(null); qc.invalidateQueries({ queryKey: ["outreach"] }); } });
   const data = query.data;
   return <div className="space-y-6">
     <Button asChild variant="ghost" size="sm"><Link to="/superadmin/campanii-email"><ArrowLeft className="size-4" />Liste destinatari</Link></Button>
     <PageHeader title={data?.name ?? "Destinatari"} actions={data ? <OutreachImportDialog listId={id} listName={data.name} /> : undefined} />
-    <Tabs defaultValue="destinatari"><TabsList><TabsTrigger value="destinatari">Destinatari</TabsTrigger><TabsTrigger value="mesaj">Mesaj</TabsTrigger></TabsList>
+    <Tabs defaultValue="destinatari"><TabsList><TabsTrigger value="destinatari">Destinatari</TabsTrigger><TabsTrigger value="mesaj">Mesaj</TabsTrigger><TabsTrigger value="trimitere">Trimitere</TabsTrigger></TabsList>
+    <TabsContent value="trimitere" className="mt-6"><OutreachSendingPanel listId={id} /></TabsContent>
     <TabsContent value="mesaj" className="mt-6"><OutreachMessageEditor listId={id} /></TabsContent>
     <TabsContent value="destinatari" className="mt-6 space-y-6">
     <form className="flex flex-wrap gap-3" onSubmit={e => { e.preventDefault(); setQ(draft.trim()); setPage(1); }}>
@@ -50,10 +54,11 @@ function OutreachDetailPage() {
       <Select value={city || "all"} onValueChange={v => { setCity(v === "all" ? "" : v); setPage(1); }}><SelectTrigger aria-label="Oraș" className="w-44"><SelectValue placeholder="Toate orașele" /></SelectTrigger><SelectContent><SelectItem value="all">Toate orașele</SelectItem>{data?.cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
       <Button type="submit"><Search className="size-4" />Caută</Button>
     </form>
+    {rowAction.error ? <p role="alert" className="text-sm text-destructive">{rowAction.error.message}</p> : null}
     {query.isLoading ? <InlineLoading /> : query.error ? <QueryError error={query.error} onRetry={() => query.refetch()} /> : <>
       <p className="text-sm text-muted-foreground">{data?.total ?? 0} destinatari</p>
       <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b border-border text-muted-foreground"><tr>{["Agenție / email", "Oraș / regiune", "Telefon", "Website / sursă", "Tip adresă", "Stare", ""].map((h, i) => <th key={i} className="p-3">{h}</th>)}</tr></thead><tbody>
-        {data?.rows.map(row => <tr key={row.id} className="border-b border-border hover:bg-muted/40"><td className="p-3"><p className="font-medium">{row.agency_name || "—"}</p><p className="break-all text-muted-foreground">{row.email}</p></td><td className="p-3">{row.city || "—"}<p className="text-muted-foreground">{row.region}</p></td><td className="p-3 whitespace-nowrap">{row.phone || "—"}</td><td className="max-w-48 break-all p-3 text-xs">{row.website || "—"}<p className="mt-1 text-muted-foreground">{row.source_url}</p></td><td className="p-3">{row.address_type || "—"}</td><td className="p-3"><span className="whitespace-nowrap rounded-md bg-muted px-2 py-1 text-xs">{outreachStatusLabels[row.status]}</span>{row.error ? <p className="mt-1 max-w-40 break-words text-xs text-destructive">{row.error}</p> : null}{row.sent_at ? <p className="mt-1 text-xs text-muted-foreground">{new Date(row.sent_at).toLocaleString("ro-RO")}</p> : null}</td><td className="p-3"><Button size="sm" variant="outline" disabled={row.status === "unsubscribed"} onClick={() => { mutation.reset(); setExclude(row); }}><UserX className="size-4" />Exclude</Button></td></tr>)}
+        {data?.rows.map(row => <tr key={row.id} className="border-b border-border hover:bg-muted/40"><td className="p-3"><p className="font-medium">{row.agency_name || "—"}</p><p className="break-all text-muted-foreground">{row.email}</p></td><td className="p-3">{row.city || "—"}<p className="text-muted-foreground">{row.region}</p></td><td className="p-3 whitespace-nowrap">{row.phone || "—"}</td><td className="max-w-48 break-all p-3 text-xs">{row.website || "—"}<p className="mt-1 text-muted-foreground">{row.source_url}</p></td><td className="p-3">{row.address_type || "—"}</td><td className="p-3"><span className="whitespace-nowrap rounded-md bg-muted px-2 py-1 text-xs">{outreachStatusLabels[row.status]}</span>{row.error ? <p className="mt-1 max-w-40 break-words text-xs text-destructive">{row.error}</p> : null}{row.sent_at ? <p className="mt-1 text-xs text-muted-foreground">{new Date(row.sent_at).toLocaleString("ro-RO")}</p> : null}</td><td className="p-3"><div className="flex flex-col gap-2">{row.status === "failed" ? <Button size="sm" variant="outline" disabled={rowAction.isPending} onClick={() => rowAction.mutate({ id: row.id, action: "retry" })}><RotateCcw className="size-4" />Retrimite</Button> : null}{row.status !== "bounced" && row.status !== "unsubscribed" ? <Button size="sm" variant="outline" disabled={rowAction.isPending} onClick={() => rowAction.mutate({ id: row.id, action: "bounce" })}><MailX className="size-4" />Marchează bounce</Button> : null}<Button size="sm" variant="outline" disabled={row.status === "unsubscribed"} onClick={() => { mutation.reset(); setExclude(row); }}><UserX className="size-4" />Exclude</Button></div></td></tr>)}
         {!data?.rows.length ? <tr><td colSpan={7} className="p-12 text-center text-muted-foreground">Niciun destinatar pentru filtrele alese.</td></tr> : null}
       </tbody></table></div>
       <ListPagination page={page} pages={Math.ceil((data?.total ?? 0) / 24)} onGo={setPage} />
