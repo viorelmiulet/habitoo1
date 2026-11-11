@@ -50,6 +50,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as BlogRssDotxmlRouteImport } from './routes/blog/rss[.]xml'
+import { Route as DezabonareTokenRouteImport } from './routes/dezabonare.$token'
 import { Route as FunctionalitatiSlugRouteImport } from './routes/functionalitati_.$slug'
 import { Route as IntegrariSlugRouteImport } from './routes/integrari_.$slug'
 import { Route as OCodeRouteImport } from './routes/o.$code'
@@ -154,6 +155,7 @@ import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public
 import { Route as ApiPublicMarketListingsUpsertRouteImport } from './routes/api/public/market-listings/upsert'
 import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta/data-deletion'
 import { Route as ApiPublicMetaDeauthorizeRouteImport } from './routes/api/public/meta/deauthorize'
+import { Route as ApiPublicOutreachUnsubscribeRouteImport } from './routes/api/public/outreach/unsubscribe'
 import { Route as ApiPublicPartnerLogoIdRouteImport } from './routes/api/public/partner-logo/$id'
 import { Route as ApiPublicRequestsUpsertRouteImport } from './routes/api/public/requests/upsert'
 import { Route as ApiPublicSandboxPhotoKindRouteImport } from './routes/api/public/sandbox-photo.$kind'
@@ -443,6 +445,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
 const BlogRssDotxmlRoute = BlogRssDotxmlRouteImport.update({
   id: '/blog/rss.xml',
   path: '/blog/rss.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DezabonareTokenRoute = DezabonareTokenRouteImport.update({
+  id: '/dezabonare/$token',
+  path: '/dezabonare/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FunctionalitatiSlugRoute = FunctionalitatiSlugRouteImport.update({
@@ -1041,6 +1048,12 @@ const ApiPublicMetaDeauthorizeRoute =
     path: '/api/public/meta/deauthorize',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicOutreachUnsubscribeRoute =
+  ApiPublicOutreachUnsubscribeRouteImport.update({
+    id: '/api/public/outreach/unsubscribe',
+    path: '/api/public/outreach/unsubscribe',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPartnerLogoIdRoute = ApiPublicPartnerLogoIdRouteImport.update({
   id: '/api/public/partner-logo/$id',
   path: '/api/public/partner-logo/$id',
@@ -1563,6 +1576,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/dezabonare/$token': typeof DezabonareTokenRoute
   '/functionalitati/$slug': typeof FunctionalitatiSlugRoute
   '/integrari/$slug': typeof IntegrariSlugRoute
   '/o/$code': typeof OCodeRoute
@@ -1660,6 +1674,7 @@ export interface FileRoutesByFullPath {
   '/api/public/market-listings/upsert': typeof ApiPublicMarketListingsUpsertRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
+  '/api/public/outreach/unsubscribe': typeof ApiPublicOutreachUnsubscribeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
   '/api/public/sandbox-photo/$kind': typeof ApiPublicSandboxPhotoKindRoute
@@ -1789,6 +1804,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/dezabonare/$token': typeof DezabonareTokenRoute
   '/functionalitati/$slug': typeof FunctionalitatiSlugRoute
   '/integrari/$slug': typeof IntegrariSlugRoute
   '/o/$code': typeof OCodeRoute
@@ -1885,6 +1901,7 @@ export interface FileRoutesByTo {
   '/api/public/market-listings/upsert': typeof ApiPublicMarketListingsUpsertRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
+  '/api/public/outreach/unsubscribe': typeof ApiPublicOutreachUnsubscribeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
   '/api/public/sandbox-photo/$kind': typeof ApiPublicSandboxPhotoKindRoute
@@ -2019,6 +2036,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/dezabonare/$token': typeof DezabonareTokenRoute
   '/functionalitati_/$slug': typeof FunctionalitatiSlugRoute
   '/integrari_/$slug': typeof IntegrariSlugRoute
   '/o/$code': typeof OCodeRoute
@@ -2116,6 +2134,7 @@ export interface FileRoutesById {
   '/api/public/market-listings/upsert': typeof ApiPublicMarketListingsUpsertRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
+  '/api/public/outreach/unsubscribe': typeof ApiPublicOutreachUnsubscribeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
   '/api/public/sandbox-photo/$kind': typeof ApiPublicSandboxPhotoKindRoute
@@ -2250,6 +2269,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/dezabonare/$token'
     | '/functionalitati/$slug'
     | '/integrari/$slug'
     | '/o/$code'
@@ -2347,6 +2367,7 @@ export interface FileRouteTypes {
     | '/api/public/market-listings/upsert'
     | '/api/public/meta/data-deletion'
     | '/api/public/meta/deauthorize'
+    | '/api/public/outreach/unsubscribe'
     | '/api/public/partner-logo/$id'
     | '/api/public/requests/upsert'
     | '/api/public/sandbox-photo/$kind'
@@ -2476,6 +2497,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/dezabonare/$token'
     | '/functionalitati/$slug'
     | '/integrari/$slug'
     | '/o/$code'
@@ -2572,6 +2594,7 @@ export interface FileRouteTypes {
     | '/api/public/market-listings/upsert'
     | '/api/public/meta/data-deletion'
     | '/api/public/meta/deauthorize'
+    | '/api/public/outreach/unsubscribe'
     | '/api/public/partner-logo/$id'
     | '/api/public/requests/upsert'
     | '/api/public/sandbox-photo/$kind'
@@ -2705,6 +2728,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/dezabonare/$token'
     | '/functionalitati_/$slug'
     | '/integrari_/$slug'
     | '/o/$code'
@@ -2802,6 +2826,7 @@ export interface FileRouteTypes {
     | '/api/public/market-listings/upsert'
     | '/api/public/meta/data-deletion'
     | '/api/public/meta/deauthorize'
+    | '/api/public/outreach/unsubscribe'
     | '/api/public/partner-logo/$id'
     | '/api/public/requests/upsert'
     | '/api/public/sandbox-photo/$kind'
@@ -2931,6 +2956,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogRssDotxmlRoute: typeof BlogRssDotxmlRoute
+  DezabonareTokenRoute: typeof DezabonareTokenRoute
   FunctionalitatiSlugRoute: typeof FunctionalitatiSlugRoute
   IntegrariSlugRoute: typeof IntegrariSlugRoute
   OCodeRoute: typeof OCodeRoute
@@ -2975,6 +3001,7 @@ export interface RootRouteChildren {
   ApiPublicMarketListingsUpsertRoute: typeof ApiPublicMarketListingsUpsertRoute
   ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
   ApiPublicMetaDeauthorizeRoute: typeof ApiPublicMetaDeauthorizeRoute
+  ApiPublicOutreachUnsubscribeRoute: typeof ApiPublicOutreachUnsubscribeRoute
   ApiPublicPartnerLogoIdRoute: typeof ApiPublicPartnerLogoIdRoute
   ApiPublicRequestsUpsertRoute: typeof ApiPublicRequestsUpsertRoute
   ApiPublicSandboxPhotoKindRoute: typeof ApiPublicSandboxPhotoKindRoute
@@ -3331,6 +3358,13 @@ declare module '@tanstack/react-router' {
       path: '/blog/rss.xml'
       fullPath: '/blog/rss.xml'
       preLoaderRoute: typeof BlogRssDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dezabonare/$token': {
+      id: '/dezabonare/$token'
+      path: '/dezabonare/$token'
+      fullPath: '/dezabonare/$token'
+      preLoaderRoute: typeof DezabonareTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/functionalitati_/$slug': {
@@ -4059,6 +4093,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/meta/deauthorize'
       fullPath: '/api/public/meta/deauthorize'
       preLoaderRoute: typeof ApiPublicMetaDeauthorizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/outreach/unsubscribe': {
+      id: '/api/public/outreach/unsubscribe'
+      path: '/api/public/outreach/unsubscribe'
+      fullPath: '/api/public/outreach/unsubscribe'
+      preLoaderRoute: typeof ApiPublicOutreachUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/partner-logo/$id': {
@@ -5054,6 +5095,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogRssDotxmlRoute: BlogRssDotxmlRoute,
+  DezabonareTokenRoute: DezabonareTokenRoute,
   FunctionalitatiSlugRoute: FunctionalitatiSlugRoute,
   IntegrariSlugRoute: IntegrariSlugRoute,
   OCodeRoute: OCodeRoute,
@@ -5100,6 +5142,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMarketListingsUpsertRoute: ApiPublicMarketListingsUpsertRoute,
   ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,
   ApiPublicMetaDeauthorizeRoute: ApiPublicMetaDeauthorizeRoute,
+  ApiPublicOutreachUnsubscribeRoute: ApiPublicOutreachUnsubscribeRoute,
   ApiPublicPartnerLogoIdRoute: ApiPublicPartnerLogoIdRoute,
   ApiPublicRequestsUpsertRoute: ApiPublicRequestsUpsertRoute,
   ApiPublicSandboxPhotoKindRoute: ApiPublicSandboxPhotoKindRoute,

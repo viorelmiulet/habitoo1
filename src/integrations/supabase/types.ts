@@ -6680,6 +6680,7 @@ export type Database = {
           sent_at: string | null
           source_url: string | null
           status: Database["public"]["Enums"]["outreach_status"]
+          unsubscribe_token: string
           website: string | null
         }
         Insert: {
@@ -6696,6 +6697,7 @@ export type Database = {
           sent_at?: string | null
           source_url?: string | null
           status?: Database["public"]["Enums"]["outreach_status"]
+          unsubscribe_token?: string
           website?: string | null
         }
         Update: {
@@ -6712,6 +6714,7 @@ export type Database = {
           sent_at?: string | null
           source_url?: string | null
           status?: Database["public"]["Enums"]["outreach_status"]
+          unsubscribe_token?: string
           website?: string | null
         }
         Relationships: [
@@ -6739,6 +6742,21 @@ export type Database = {
           created_at?: string
           email?: string
           reason?: string | null
+        }
+        Relationships: []
+      }
+      outreach_unsubscribe_hits: {
+        Row: {
+          bucket: string
+          created_at: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
         }
         Relationships: []
       }
@@ -13218,6 +13236,16 @@ export type Database = {
         Returns: Json
       }
       outreach_list_summaries: { Args: never; Returns: Json }
+      outreach_new_token: { Args: never; Returns: string }
+      outreach_unsubscribe: {
+        Args: { _channel?: string; _ip: string; _token: string }
+        Returns: string
+      }
+      outreach_unsubscribe_preview: {
+        Args: { _ip: string; _token: string }
+        Returns: Json
+      }
+      outreach_unsubscribe_rate: { Args: { _ip: string }; Returns: boolean }
       partner_api_apply_sync: {
         Args: {
           _agencies: Json
