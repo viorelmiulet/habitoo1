@@ -1,3 +1,9 @@
+## Outreach — Campanii email (fără trimitere)
+- [x] Schemă Superadmin, import CSV și excluderi globale cu audit atomic
+- [x] Meniu, liste, detalii paginate și filtre
+- [x] Teste țintite și acces refuzat în cont agency_admin; fără publicare sau cod de trimitere
+- [ ] Flux vizual import → detalii → excludere în Superadmin: sesiunea disponibilă este administrator de agenție; nicio listă de test creată în baza reală
+
 ## Q1 — izolarea portalurilor blocate
 - [x] Timeout Imobiliare.ro 15 secunde (inclusiv corp/releu), TIMEOUT final, abandonuri maximum 3 și preluare echitabilă maximum 2/portal
 - [x] Stare durabilă releu, amânare 15 minute, notificare SuperAdmin și reluare automată prin workerul armat existent

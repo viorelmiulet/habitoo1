@@ -111,6 +111,8 @@ import { Route as AuthenticatedAppTeamIdRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSuperadminAgenciesIndexRouteImport } from './routes/_authenticated/superadmin.agencies.index'
 import { Route as AuthenticatedSuperadminAgenciesIdRouteImport } from './routes/_authenticated/superadmin.agencies.$id'
 import { Route as AuthenticatedSuperadminBlogIndexRouteImport } from './routes/_authenticated/superadmin.blog.index'
+import { Route as AuthenticatedSuperadminCampaniiEmailIndexRouteImport } from './routes/_authenticated/superadmin.campanii-email.index'
+import { Route as AuthenticatedSuperadminCampaniiEmailIdRouteImport } from './routes/_authenticated/superadmin.campanii-email.$id'
 import { Route as AuthenticatedSuperadminUsersIndexRouteImport } from './routes/_authenticated/superadmin.users.index'
 import { Route as AuthenticatedSuperadminUsersIdRouteImport } from './routes/_authenticated/superadmin.users.$id'
 import { Route as ApiPublicBlogMediaSplatRouteImport } from './routes/api/public/blog-media/$'
@@ -791,6 +793,18 @@ const AuthenticatedSuperadminBlogIndexRoute =
   AuthenticatedSuperadminBlogIndexRouteImport.update({
     id: '/blog/',
     path: '/blog/',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminCampaniiEmailIndexRoute =
+  AuthenticatedSuperadminCampaniiEmailIndexRouteImport.update({
+    id: '/campanii-email/',
+    path: '/campanii-email/',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminCampaniiEmailIdRoute =
+  AuthenticatedSuperadminCampaniiEmailIdRouteImport.update({
+    id: '/campanii-email/$id',
+    path: '/campanii-email/$id',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
 const AuthenticatedSuperadminUsersIndexRoute =
@@ -1605,6 +1619,7 @@ export interface FileRoutesByFullPath {
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/app/team/$id': typeof AuthenticatedAppTeamIdRoute
   '/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
+  '/superadmin/campanii-email/$id': typeof AuthenticatedSuperadminCampaniiEmailIdRoute
   '/superadmin/users/$id': typeof AuthenticatedSuperadminUsersIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
@@ -1658,6 +1673,7 @@ export interface FileRoutesByFullPath {
   '/app/team/': typeof AuthenticatedAppTeamIndexRoute
   '/superadmin/agencies/': typeof AuthenticatedSuperadminAgenciesIndexRoute
   '/superadmin/blog/': typeof AuthenticatedSuperadminBlogIndexRoute
+  '/superadmin/campanii-email/': typeof AuthenticatedSuperadminCampaniiEmailIndexRoute
   '/superadmin/users/': typeof AuthenticatedSuperadminUsersIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
@@ -1828,6 +1844,7 @@ export interface FileRoutesByTo {
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/app/team/$id': typeof AuthenticatedAppTeamIdRoute
   '/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
+  '/superadmin/campanii-email/$id': typeof AuthenticatedSuperadminCampaniiEmailIdRoute
   '/superadmin/users/$id': typeof AuthenticatedSuperadminUsersIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
@@ -1881,6 +1898,7 @@ export interface FileRoutesByTo {
   '/app/team': typeof AuthenticatedAppTeamIndexRoute
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesIndexRoute
   '/superadmin/blog': typeof AuthenticatedSuperadminBlogIndexRoute
+  '/superadmin/campanii-email': typeof AuthenticatedSuperadminCampaniiEmailIndexRoute
   '/superadmin/users': typeof AuthenticatedSuperadminUsersIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
@@ -2057,6 +2075,7 @@ export interface FileRoutesById {
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/_authenticated/app/team/$id': typeof AuthenticatedAppTeamIdRoute
   '/_authenticated/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
+  '/_authenticated/superadmin/campanii-email/$id': typeof AuthenticatedSuperadminCampaniiEmailIdRoute
   '/_authenticated/superadmin/users/$id': typeof AuthenticatedSuperadminUsersIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
@@ -2110,6 +2129,7 @@ export interface FileRoutesById {
   '/_authenticated/app/team/': typeof AuthenticatedAppTeamIndexRoute
   '/_authenticated/superadmin/agencies/': typeof AuthenticatedSuperadminAgenciesIndexRoute
   '/_authenticated/superadmin/blog/': typeof AuthenticatedSuperadminBlogIndexRoute
+  '/_authenticated/superadmin/campanii-email/': typeof AuthenticatedSuperadminCampaniiEmailIndexRoute
   '/_authenticated/superadmin/users/': typeof AuthenticatedSuperadminUsersIndexRoute
   '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/_authenticated/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
@@ -2286,6 +2306,7 @@ export interface FileRouteTypes {
     | '/app/requests/$id'
     | '/app/team/$id'
     | '/superadmin/agencies/$id'
+    | '/superadmin/campanii-email/$id'
     | '/superadmin/users/$id'
     | '/api/public/blog-media/$'
     | '/api/public/blog-og/$'
@@ -2339,6 +2360,7 @@ export interface FileRouteTypes {
     | '/app/team/'
     | '/superadmin/agencies/'
     | '/superadmin/blog/'
+    | '/superadmin/campanii-email/'
     | '/superadmin/users/'
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
@@ -2509,6 +2531,7 @@ export interface FileRouteTypes {
     | '/app/requests/$id'
     | '/app/team/$id'
     | '/superadmin/agencies/$id'
+    | '/superadmin/campanii-email/$id'
     | '/superadmin/users/$id'
     | '/api/public/blog-media/$'
     | '/api/public/blog-og/$'
@@ -2562,6 +2585,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/superadmin/agencies'
     | '/superadmin/blog'
+    | '/superadmin/campanii-email'
     | '/superadmin/users'
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
@@ -2737,6 +2761,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/requests/$id'
     | '/_authenticated/app/team/$id'
     | '/_authenticated/superadmin/agencies/$id'
+    | '/_authenticated/superadmin/campanii-email/$id'
     | '/_authenticated/superadmin/users/$id'
     | '/api/public/blog-media/$'
     | '/api/public/blog-og/$'
@@ -2790,6 +2815,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/team/'
     | '/_authenticated/superadmin/agencies/'
     | '/_authenticated/superadmin/blog/'
+    | '/_authenticated/superadmin/campanii-email/'
     | '/_authenticated/superadmin/users/'
     | '/_authenticated/app/acp/date-piata/$id'
     | '/_authenticated/superadmin/blog/preview/$id'
@@ -3732,6 +3758,20 @@ declare module '@tanstack/react-router' {
       path: '/blog'
       fullPath: '/superadmin/blog/'
       preLoaderRoute: typeof AuthenticatedSuperadminBlogIndexRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/campanii-email/': {
+      id: '/_authenticated/superadmin/campanii-email/'
+      path: '/campanii-email'
+      fullPath: '/superadmin/campanii-email/'
+      preLoaderRoute: typeof AuthenticatedSuperadminCampaniiEmailIndexRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/campanii-email/$id': {
+      id: '/_authenticated/superadmin/campanii-email/$id'
+      path: '/campanii-email/$id'
+      fullPath: '/superadmin/campanii-email/$id'
+      preLoaderRoute: typeof AuthenticatedSuperadminCampaniiEmailIdRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
     '/_authenticated/superadmin/users/': {
@@ -4737,9 +4777,11 @@ interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminSupportRoute: typeof AuthenticatedSuperadminSupportRoute
   AuthenticatedSuperadminIndexRoute: typeof AuthenticatedSuperadminIndexRoute
   AuthenticatedSuperadminAgenciesIdRoute: typeof AuthenticatedSuperadminAgenciesIdRoute
+  AuthenticatedSuperadminCampaniiEmailIdRoute: typeof AuthenticatedSuperadminCampaniiEmailIdRoute
   AuthenticatedSuperadminUsersIdRoute: typeof AuthenticatedSuperadminUsersIdRoute
   AuthenticatedSuperadminAgenciesIndexRoute: typeof AuthenticatedSuperadminAgenciesIndexRoute
   AuthenticatedSuperadminBlogIndexRoute: typeof AuthenticatedSuperadminBlogIndexRoute
+  AuthenticatedSuperadminCampaniiEmailIndexRoute: typeof AuthenticatedSuperadminCampaniiEmailIndexRoute
   AuthenticatedSuperadminUsersIndexRoute: typeof AuthenticatedSuperadminUsersIndexRoute
   AuthenticatedSuperadminBlogPreviewIdRoute: typeof AuthenticatedSuperadminBlogPreviewIdRoute
 }
@@ -4773,11 +4815,15 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
     AuthenticatedSuperadminIndexRoute: AuthenticatedSuperadminIndexRoute,
     AuthenticatedSuperadminAgenciesIdRoute:
       AuthenticatedSuperadminAgenciesIdRoute,
+    AuthenticatedSuperadminCampaniiEmailIdRoute:
+      AuthenticatedSuperadminCampaniiEmailIdRoute,
     AuthenticatedSuperadminUsersIdRoute: AuthenticatedSuperadminUsersIdRoute,
     AuthenticatedSuperadminAgenciesIndexRoute:
       AuthenticatedSuperadminAgenciesIndexRoute,
     AuthenticatedSuperadminBlogIndexRoute:
       AuthenticatedSuperadminBlogIndexRoute,
+    AuthenticatedSuperadminCampaniiEmailIndexRoute:
+      AuthenticatedSuperadminCampaniiEmailIndexRoute,
     AuthenticatedSuperadminUsersIndexRoute:
       AuthenticatedSuperadminUsersIndexRoute,
     AuthenticatedSuperadminBlogPreviewIdRoute:

@@ -6644,6 +6644,104 @@ export type Database = {
         }
         Relationships: []
       }
+      outreach_lists: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      outreach_recipients: {
+        Row: {
+          address_type: string | null
+          agency_name: string | null
+          city: string | null
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          list_id: string
+          phone: string | null
+          region: string | null
+          sent_at: string | null
+          source_url: string | null
+          status: Database["public"]["Enums"]["outreach_status"]
+          website: string | null
+        }
+        Insert: {
+          address_type?: string | null
+          agency_name?: string | null
+          city?: string | null
+          created_at?: string
+          email: string
+          error?: string | null
+          id?: string
+          list_id: string
+          phone?: string | null
+          region?: string | null
+          sent_at?: string | null
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["outreach_status"]
+          website?: string | null
+        }
+        Update: {
+          address_type?: string | null
+          agency_name?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          error?: string | null
+          id?: string
+          list_id?: string
+          phone?: string | null
+          region?: string | null
+          sent_at?: string | null
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["outreach_status"]
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_recipients_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_suppressions: {
+        Row: {
+          created_at: string
+          email: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       partner_api_agency_state: {
         Row: {
           activated_at: string | null
@@ -13098,6 +13196,28 @@ export type Database = {
           used: number
         }[]
       }
+      outreach_exclude: { Args: { _recipient_id: string }; Returns: undefined }
+      outreach_import: {
+        Args: {
+          _duplicates?: number
+          _invalid?: number
+          _list_id?: string
+          _name: string
+          _rows: Json
+        }
+        Returns: Json
+      }
+      outreach_list_detail: {
+        Args: {
+          _city?: string
+          _list_id: string
+          _page?: number
+          _q?: string
+          _status?: string
+        }
+        Returns: Json
+      }
+      outreach_list_summaries: { Args: never; Returns: Json }
       partner_api_apply_sync: {
         Args: {
           _agencies: Json
@@ -13830,6 +13950,12 @@ export type Database = {
         | "suspended"
         | "cancelled"
         | "pending_approval"
+      outreach_status:
+        | "pending"
+        | "sent"
+        | "failed"
+        | "bounced"
+        | "unsubscribed"
       property_status:
         | "draft"
         | "active"
@@ -14007,6 +14133,7 @@ export const Constants = {
         "cancelled",
         "pending_approval",
       ],
+      outreach_status: ["pending", "sent", "failed", "bounced", "unsubscribed"],
       property_status: [
         "draft",
         "active",
