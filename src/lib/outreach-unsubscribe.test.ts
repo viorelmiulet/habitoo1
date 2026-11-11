@@ -17,7 +17,7 @@ vi.mock("@supabase/supabase-js", () => ({
 process.env.SUPABASE_URL = "http://x"; process.env.SUPABASE_PUBLISHABLE_KEY = "k";
 const { Route } = await import("@/routes/api/public/outreach/unsubscribe");
 const post = (token: string, ip = "1.1.1.1") => (Route.options.server!.handlers as any).POST({ request: new Request(`http://x/api/public/outreach/unsubscribe?token=${encodeURIComponent(token)}`, { method: "POST", headers: { "cf-connecting-ip": ip } }) }) as Promise<Response>;
-const state = async () => (await pg.query<{ email: string; status: string }>("select email,status::text from outreach_recipients order by list_id,email")).rows;
+const state = async () => (await pg.query<{ email: string; status: string }>("select email,status::text from outreach_recipients order by email,list_id")).rows;
 const audits = async () => Number((await pg.query<{ c: number }>("select count(*)::int c from audit_logs where action='outreach.unsubscribe'")).rows[0].c);
 let token = "";
 
@@ -58,7 +58,7 @@ describe("Outreach unsubscribe", () => {
   });
   it("valid token unsubscribes the email across all lists with suppression and audit", async () => {
     expect((await post(token)).status).toBe(200);
-    expect(await state()).toEqual([{ email: "office@agentie.ro", status: "unsubscribed" }, { email: "other@agentie.ro", status: "pending" }, { email: "office@agentie.ro", status: "unsubscribed" }]);
+    expect(await state()).toEqual([{ email: "office@agentie.ro", status: "unsubscribed" }, { email: "office@agentie.ro", status: "unsubscribed" }, { email: "other@agentie.ro", status: "pending" }]);
     expect((await pg.query("select reason from outreach_suppressions where email='office@agentie.ro'")).rows).toEqual([{ reason: "unsubscribe_link" }]);
     expect(await audits()).toBe(1);
   });
