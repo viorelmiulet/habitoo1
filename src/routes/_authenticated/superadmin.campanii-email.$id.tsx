@@ -10,6 +10,8 @@ import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { ListPagination } from "@/components/app/ListPagination";
 import { OutreachImportDialog } from "@/components/app/OutreachImportDialog";
+import { OutreachMessageEditor } from "@/components/app/OutreachMessageEditor";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,6 +41,9 @@ function OutreachDetailPage() {
   return <div className="space-y-6">
     <Button asChild variant="ghost" size="sm"><Link to="/superadmin/campanii-email"><ArrowLeft className="size-4" />Liste destinatari</Link></Button>
     <PageHeader title={data?.name ?? "Destinatari"} actions={data ? <OutreachImportDialog listId={id} listName={data.name} /> : undefined} />
+    <Tabs defaultValue="destinatari"><TabsList><TabsTrigger value="destinatari">Destinatari</TabsTrigger><TabsTrigger value="mesaj">Mesaj</TabsTrigger></TabsList>
+    <TabsContent value="mesaj" className="mt-6"><OutreachMessageEditor listId={id} /></TabsContent>
+    <TabsContent value="destinatari" className="mt-6 space-y-6">
     <form className="flex flex-wrap gap-3" onSubmit={e => { e.preventDefault(); setQ(draft.trim()); setPage(1); }}>
       <Input aria-label="Caută agenție sau email" placeholder="Agenție sau email" className="min-w-0 flex-1 basis-64" maxLength={200} value={draft} onChange={e => setDraft(e.target.value)} />
       <Select value={status || "all"} onValueChange={v => { setStatus(outreachStatuses.find(s => s === v) ?? ""); setPage(1); }}><SelectTrigger aria-label="Stare" className="w-44"><SelectValue placeholder="Toate stările" /></SelectTrigger><SelectContent><SelectItem value="all">Toate stările</SelectItem>{outreachStatuses.map(s => <SelectItem key={s} value={s}>{outreachStatusLabels[s]}</SelectItem>)}</SelectContent></Select>
@@ -53,6 +58,7 @@ function OutreachDetailPage() {
       </tbody></table></div>
       <ListPagination page={page} pages={Math.ceil((data?.total ?? 0) / 24)} onGo={setPage} />
     </>}
+    </TabsContent></Tabs>
     <Dialog open={Boolean(exclude)} onOpenChange={o => { if (!o && !mutation.isPending) setExclude(null); }}><DialogContent><DialogHeader><DialogTitle>Exclude destinatarul?</DialogTitle><DialogDescription className="break-all">{exclude?.email} va fi exclus din toate listele și din importurile viitoare.</DialogDescription></DialogHeader>{mutation.error ? <p role="alert" className="text-destructive">{mutation.error.message}</p> : null}<div className="flex justify-end gap-2"><Button variant="outline" disabled={mutation.isPending} onClick={() => setExclude(null)}>Renunță</Button><Button variant="destructive" disabled={mutation.isPending} onClick={() => { if (exclude) mutation.mutate(exclude.id); }}><UserX className="size-4" />{mutation.isPending ? "Se exclude…" : "Exclude"}</Button></div></DialogContent></Dialog>
   </div>;
 }

@@ -6644,6 +6644,56 @@ export type Database = {
         }
         Relationships: []
       }
+      outreach_campaigns: {
+        Row: {
+          body_text: string
+          created_at: string
+          created_by: string
+          footer_text: string
+          id: string
+          list_id: string
+          name: string
+          sender_name: string
+          status: Database["public"]["Enums"]["outreach_campaign_status"]
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body_text: string
+          created_at?: string
+          created_by?: string
+          footer_text: string
+          id?: string
+          list_id: string
+          name: string
+          sender_name?: string
+          status?: Database["public"]["Enums"]["outreach_campaign_status"]
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body_text?: string
+          created_at?: string
+          created_by?: string
+          footer_text?: string
+          id?: string
+          list_id?: string
+          name?: string
+          sender_name?: string
+          status?: Database["public"]["Enums"]["outreach_campaign_status"]
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_campaigns_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outreach_lists: {
         Row: {
           created_at: string
@@ -13237,6 +13287,10 @@ export type Database = {
       }
       outreach_list_summaries: { Args: never; Returns: Json }
       outreach_new_token: { Args: never; Returns: string }
+      outreach_test_send_take: {
+        Args: { _campaign_id: string; _to: string }
+        Returns: boolean
+      }
       outreach_unsubscribe: {
         Args: { _channel?: string; _ip: string; _token: string }
         Returns: string
@@ -13978,6 +14032,7 @@ export type Database = {
         | "suspended"
         | "cancelled"
         | "pending_approval"
+      outreach_campaign_status: "draft" | "ready"
       outreach_status:
         | "pending"
         | "sent"
@@ -14161,6 +14216,7 @@ export const Constants = {
         "cancelled",
         "pending_approval",
       ],
+      outreach_campaign_status: ["draft", "ready"],
       outreach_status: ["pending", "sent", "failed", "bounced", "unsubscribed"],
       property_status: [
         "draft",

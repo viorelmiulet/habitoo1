@@ -45,3 +45,48 @@ export const excludeOutreachRecipient = createServerFn({ method: "POST" }).middl
     if (error) throw new Error("Excluderea nu a fost salvată.");
     return { ok: true };
   });
+const campaignListInput = z.object({ listId: z.string().uuid() });
+export type OutreachCampaign = { id: string; list_id: string; name: string; subject: string; body_text: string; sender_name: string; footer_text: string; status: "draft" | "ready"; updated_at: string };
+export type OutreachPreviewRecipient = { agency_name: string | null; city: string | null; email: string; unsubscribe_token: string };
+
+export const getOutreachCampaign = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => campaignListInput.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperadmin(context);
+    const [{ data: campaign, error }, { data: recipient, error: rErr }] = await Promise.all([
+      context.supabase.from("outreach_campaigns").select("id,list_id,name,subject,body_text,sender_name,footer_text,status,updated_at").eq("list_id", data.listId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+      context.supabase.from("outreach_recipients").select("agency_name,city,email,unsubscribe_token").eq("list_id", data.listId).order("created_at").order("id").limit(1).maybeSingle(),
+    ]);
+    if (error || rErr) throw new Error("Mesajul nu a putut fi încărcat.");
+    return { campaign: campaign as OutreachCampaign | null, recipient: recipient as OutreachPreviewRecipient | null };
+  });
+
+export const saveOutreachCampaign = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ listId: z.string().uuid(), id: z.string().uuid().nullable(), campaign: z.unknown() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperadmin(context);
+    const { validateCampaign } = await import("./outreach-message");
+    const valid = validateCampaign(data.campaign);
+    if (!valid.ok) throw new Error(valid.error);
+    const q = data.id
+      ? context.supabase.from("outreach_campaigns").update(valid.value).eq("id", data.id).eq("list_id", data.listId)
+      : context.supabase.from("outreach_campaigns").insert({ ...valid.value, list_id: data.listId });
+    const { data: row, error } = await q.select("id").single();
+    if (error || !row) throw new Error("Mesajul nu a fost salvat.");
+    return { id: row.id };
+  });
+
+export const sendOutreachTest = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ campaignId: z.string().uuid(), to: z.string().max(254) }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperadmin(context);
+    const { runTestSend } = await import("./outreach-message");
+    const db = context.supabase;
+    return runTestSend({
+      loadCampaign: async (id) => { const { data: c } = await db.from("outreach_campaigns").select("list_id,name,subject,body_text,sender_name,footer_text,status").eq("id", id).maybeSingle(); return c; },
+      firstRecipient: async (listId) => { const { data: r } = await db.from("outreach_recipients").select("agency_name,city,unsubscribe_token").eq("list_id", listId).order("created_at").order("id").limit(1).maybeSingle(); return r; },
+      take: async (id, to) => { const { data: ok, error } = await db.rpc("outreach_test_send_take", { _campaign_id: id, _to: to }); if (error) throw new Error("Trimiterea de test nu a putut fi înregistrată."); return ok === true; },
+      // Gmail of the platform (contact@habitoo.ro) only — no Mailgun fallback for outreach.
+      send: async (msg) => { const { sendWorkspaceGmail } = await import("./gmail/gmail-workspace.server"); return sendWorkspaceGmail(msg); },
+    }, data.campaignId, data.to);
+  });

@@ -68,6 +68,8 @@ export type WorkspaceGmailMessage = {
   subject: string;
   text: string;
   html?: string | null;
+  /** Antete suplimentare opționale (ex. List-Unsubscribe); numele se validează. */
+  headers?: Record<string, string>;
 };
 
 export type WorkspaceGmailSendResult =
@@ -132,6 +134,12 @@ export function buildWorkspaceGmailMime(msg: WorkspaceGmailMessage, boundary?: s
   const cc = list(msg.cc);
   if (cc.length) headers.push(`Cc: ${cc.map((a) => formatAddress(a, "Cc")).join(", ")}`);
   if (msg.replyTo) headers.push(`Reply-To: ${formatAddress(msg.replyTo, "Reply-To")}`);
+  for (const [name, value] of Object.entries(msg.headers ?? {})) {
+    if (!/^[A-Za-z][A-Za-z0-9-]{0,63}$/.test(name) || /^(from|to|cc|bcc|subject|reply-to|mime-version|content-type|content-transfer-encoding)$/i.test(name)) throw new Error(`Antet nepermis: ${name}`);
+    assertHeaderSafe(value, name);
+    if (!/^[\x20-\x7E]*$/.test(value)) throw new Error(`Antetul ${name} conține caractere nepermise.`);
+    headers.push(`${name}: ${value}`);
+  }
   headers.push(`Subject: ${encodeHeaderWord(msg.subject)}`, "MIME-Version: 1.0");
 
   const textPart = [
