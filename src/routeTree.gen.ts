@@ -158,6 +158,7 @@ import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/publ
 import { Route as ApiPublicMetaDeauthorizeRouteImport } from './routes/api/public/meta/deauthorize'
 import { Route as ApiPublicOutreachUnsubscribeRouteImport } from './routes/api/public/outreach/unsubscribe'
 import { Route as ApiPublicPartnerLogoIdRouteImport } from './routes/api/public/partner-logo/$id'
+import { Route as ApiPublicPortalLogoSlugRouteImport } from './routes/api/public/portal-logo/$slug'
 import { Route as ApiPublicRequestsUpsertRouteImport } from './routes/api/public/requests/upsert'
 import { Route as ApiPublicSandboxPhotoKindRouteImport } from './routes/api/public/sandbox-photo.$kind'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -1066,6 +1067,11 @@ const ApiPublicPartnerLogoIdRoute = ApiPublicPartnerLogoIdRouteImport.update({
   path: '/api/public/partner-logo/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPortalLogoSlugRoute = ApiPublicPortalLogoSlugRouteImport.update({
+  id: '/api/public/portal-logo/$slug',
+  path: '/api/public/portal-logo/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicRequestsUpsertRoute = ApiPublicRequestsUpsertRouteImport.update({
   id: '/api/public/requests/upsert',
   path: '/api/public/requests/upsert',
@@ -1684,6 +1690,7 @@ export interface FileRoutesByFullPath {
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/outreach/unsubscribe': typeof ApiPublicOutreachUnsubscribeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
+  '/api/public/portal-logo/$slug': typeof ApiPublicPortalLogoSlugRoute
   '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
   '/api/public/sandbox-photo/$kind': typeof ApiPublicSandboxPhotoKindRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -1912,6 +1919,7 @@ export interface FileRoutesByTo {
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/outreach/unsubscribe': typeof ApiPublicOutreachUnsubscribeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
+  '/api/public/portal-logo/$slug': typeof ApiPublicPortalLogoSlugRoute
   '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
   '/api/public/sandbox-photo/$kind': typeof ApiPublicSandboxPhotoKindRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -2146,6 +2154,7 @@ export interface FileRoutesById {
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/outreach/unsubscribe': typeof ApiPublicOutreachUnsubscribeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
+  '/api/public/portal-logo/$slug': typeof ApiPublicPortalLogoSlugRoute
   '/api/public/requests/upsert': typeof ApiPublicRequestsUpsertRoute
   '/api/public/sandbox-photo/$kind': typeof ApiPublicSandboxPhotoKindRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -2380,6 +2389,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/deauthorize'
     | '/api/public/outreach/unsubscribe'
     | '/api/public/partner-logo/$id'
+    | '/api/public/portal-logo/$slug'
     | '/api/public/requests/upsert'
     | '/api/public/sandbox-photo/$kind'
     | '/lovable/email/auth/preview'
@@ -2608,6 +2618,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/deauthorize'
     | '/api/public/outreach/unsubscribe'
     | '/api/public/partner-logo/$id'
+    | '/api/public/portal-logo/$slug'
     | '/api/public/requests/upsert'
     | '/api/public/sandbox-photo/$kind'
     | '/lovable/email/auth/preview'
@@ -2841,6 +2852,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/deauthorize'
     | '/api/public/outreach/unsubscribe'
     | '/api/public/partner-logo/$id'
+    | '/api/public/portal-logo/$slug'
     | '/api/public/requests/upsert'
     | '/api/public/sandbox-photo/$kind'
     | '/lovable/email/auth/preview'
@@ -3017,6 +3029,7 @@ export interface RootRouteChildren {
   ApiPublicMetaDeauthorizeRoute: typeof ApiPublicMetaDeauthorizeRoute
   ApiPublicOutreachUnsubscribeRoute: typeof ApiPublicOutreachUnsubscribeRoute
   ApiPublicPartnerLogoIdRoute: typeof ApiPublicPartnerLogoIdRoute
+  ApiPublicPortalLogoSlugRoute: typeof ApiPublicPortalLogoSlugRoute
   ApiPublicRequestsUpsertRoute: typeof ApiPublicRequestsUpsertRoute
   ApiPublicSandboxPhotoKindRoute: typeof ApiPublicSandboxPhotoKindRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -4130,6 +4143,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPartnerLogoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal-logo/$slug': {
+      id: '/api/public/portal-logo/$slug'
+      path: '/api/public/portal-logo/$slug'
+      fullPath: '/api/public/portal-logo/$slug'
+      preLoaderRoute: typeof ApiPublicPortalLogoSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/requests/upsert': {
       id: '/api/public/requests/upsert'
       path: '/api/public/requests/upsert'
@@ -5166,6 +5186,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMetaDeauthorizeRoute: ApiPublicMetaDeauthorizeRoute,
   ApiPublicOutreachUnsubscribeRoute: ApiPublicOutreachUnsubscribeRoute,
   ApiPublicPartnerLogoIdRoute: ApiPublicPartnerLogoIdRoute,
+  ApiPublicPortalLogoSlugRoute: ApiPublicPortalLogoSlugRoute,
   ApiPublicRequestsUpsertRoute: ApiPublicRequestsUpsertRoute,
   ApiPublicSandboxPhotoKindRoute: ApiPublicSandboxPhotoKindRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

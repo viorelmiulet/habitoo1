@@ -664,6 +664,66 @@ export const INTEGRATION_PAGES: IntegrationPage[] = BASE.map(({ d, c }, i) => ({
   title: `Integrare ${c.name} cu CRM imobiliar | Habitoo`,
 }));
 
+/**
+ * Pagini publice pentru portaluri adăugate din SuperAdmin (dynamic_feed_portals).
+ * Apar doar când portalul e activ și are show_public; nu intră în numărătoarea statică.
+ */
+const DYNAMIC_CONTENT: Record<string, Content & { canDo: string[]; dailyWork: string[]; activationText: string }> = {
+  mvaimobiliare: {
+    slug: "mvaimobiliare",
+    name: "mvaimobiliare.ro",
+    description: "Publici gratuit anunțurile agenției pe mvaimobiliare.ro direct din Habitoo CRM: bifezi portalul în fișa anunțului, iar mesajele clienților ajung la agent.",
+    intro: [
+      "mvaimobiliare.ro este un site imobiliar din București, cu experiență pe ansambluri rezidențiale noi din zona de vest (Militari, Chiajna) și ofertă din tot Bucureștiul. Agențiile din Habitoo își pot publica anunțurile pe el direct din CRM.",
+      "Publicarea pe mvaimobiliare.ro este gratuită pentru agențiile Habitoo.",
+    ],
+    canDo: [
+      "Publici anunțurile pe mvaimobiliare.ro din fișa anunțului, ca pe orice portal, gratuit.",
+      "Anunțul apare cu „Oferit de <agenția ta>”, cu logo-ul agenției și cu agentul responsabil.",
+      "Mesajele și cererile de vizionare ajung direct în Habitoo, la agentul anunțului.",
+      "Vezi vizualizările anunțurilor.",
+    ],
+    dailyWork: [
+      "Bifezi sau debifezi mvaimobiliare.ro în lista de portaluri a anunțului.",
+      "Modificările ajung pe site în cel mult 15 minute.",
+      "Un anunț retras sau dezactivat dispare de pe site.",
+    ],
+    activationText: "Administratorul agenției solicită activarea din Setări → Portaluri, iar după aprobare, portalul apare în lista fiecărui anunț.",
+    notes: [
+      "Publicarea este gratuită.",
+      "Strada apare doar dacă anunțul are bifată „locație precisă”.",
+      "Pe site se folosesc pozele și datele din Habitoo.",
+      "Un anunț care e și de vânzare, și de închiriere apare cu varianta de vânzare.",
+    ],
+    faq: [
+      { q: "Cine poate activa mvaimobiliare.ro?", a: "Administratorul agenției solicită activarea din Setări → Portaluri. După aprobare, portalul apare în lista de portaluri a fiecărui anunț, iar agenții îl pot bifa." },
+      { q: "Costă ceva publicarea pe mvaimobiliare.ro?", a: "Nu, publicarea este gratuită pentru agențiile Habitoo." },
+      { q: "Cum ajung anunțurile pe mvaimobiliare.ro?", a: "Bifezi mvaimobiliare.ro în lista de portaluri a anunțului. Site-ul preia anunțul cu pozele și datele din Habitoo, iar modificările ajung pe site în cel mult 15 minute." },
+      { q: "Cum scot un anunț de pe mvaimobiliare.ro?", a: "Debifezi mvaimobiliare.ro în lista de portaluri a anunțului. Un anunț retras sau dezactivat dispare de pe site." },
+      { q: "Cine primește mesajele clienților?", a: "Mesajele și cererile de vizionare ajung direct în Habitoo, la agentul responsabil de anunț." },
+    ],
+    website: { href: "https://www.mvaimobiliare.ro/", label: "mvaimobiliare.ro" },
+  },
+};
+
+export const DYNAMIC_INTEGRATION_PAGES: IntegrationPage[] = Object.values(DYNAMIC_CONTENT).map((c) => ({
+  ...c,
+  portalId: c.slug,
+  definition: {
+    id: c.slug, display_name: c.name, description: c.description, logo: c.name.slice(0, 2).toUpperCase(), status: "available",
+    activation: "approval", directions: ["habitoo_to_portal"], authentication: ["none"],
+    capabilities: ["feed_pull", "update_listing", "withdraw_listing"], receives_leads: true, withdraws_via_feed: true,
+    configuration_schema: { fields: [] }, website: c.website?.href, dynamic_feed: true, show_public: true,
+  } as PortalDefinition,
+  whyHabitoo: whyHabitoo(c.name),
+  related: BASE.slice(0, 3).map((r) => ({ slug: r.c.slug, name: r.c.name })),
+  title: `Integrare ${c.name} cu CRM imobiliar | Habitoo`,
+}));
+
+export function dynamicIntegrationPageBySlug(slug: string): IntegrationPage | null {
+  return DYNAMIC_INTEGRATION_PAGES.find((p) => p.slug === slug) ?? null;
+}
+
 export function integrationPageBySlug(slug: string): IntegrationPage | null {
   return INTEGRATION_PAGES.find((p) => p.slug === slug) ?? null;
 }

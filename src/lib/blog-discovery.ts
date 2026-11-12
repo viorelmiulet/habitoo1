@@ -1,5 +1,5 @@
 import { featurePaths, FEATURES_LASTMOD } from "@/lib/marketing/feature-pages";
-import { INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD } from "@/lib/portals/integration-pages";
+import { DYNAMIC_INTEGRATION_PAGES, INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD } from "@/lib/portals/integration-pages";
 import type { BlogStatus } from "@/lib/blog";
 import { PLAN_KEYS, PLAN_LABELS, PLAN_PRICES, planAgentLimitLabel } from "@/lib/plans";
 import { marketSourceName } from "@/lib/market/sources";
@@ -62,7 +62,7 @@ export const PAGE_LASTMOD: Record<string, string> = {
 const publicPages = ["/", "/functionalitati", "/anunturi-proprietari", "/analiza-comparativa-de-piata", "/colaborare-intre-agentii", "/comisioane-agenti-imobiliari", "/import-proprietati", "/preturi", "/despre", "/contact", "/integrari", "/extensie-chrome", "/dezvoltatori", "/intrebari-frecvente", "/blog", "/termeni", "/politica-de-confidentialitate"];
 
 const featurePagePaths = featurePaths();
-const integrationPaths = INTEGRATION_PAGES.map((p) => `/integrari/${p.slug}`);
+const integrationPaths = [...INTEGRATION_PAGES, ...DYNAMIC_INTEGRATION_PAGES].map((p) => `/integrari/${p.slug}`);
 
 function urlXml(path: string, lastmod: string | null) {
   return `  <url>\n    <loc>${escapeXml(`${BLOG_SITE_URL}${path}`)}</loc>${lastmod ? `\n    <lastmod>${escapeXml(lastmod)}</lastmod>` : ""}\n  </url>`;
@@ -113,7 +113,7 @@ export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartne
   const sources = (statistics?.owner_sources ?? []).filter((row) => row.count > 0 && row.source !== "facebook");
   const total = sources.reduce((sum, row) => sum + row.count, 0);
   const today = new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Bucharest" }).format(now);
-  const portalLinks = INTEGRATION_PAGES.map((page) => `- [Integrare ${page.name}](${BLOG_SITE_URL}/integrari/${page.slug}): ${page.description}`).join("\n");
+  const portalLinks = [...INTEGRATION_PAGES, ...DYNAMIC_INTEGRATION_PAGES].map((page) => `- [Integrare ${page.name}](${BLOG_SITE_URL}/integrari/${page.slug}): ${page.description}`).join("\n");
   const prices = PLAN_KEYS.map((key) => {
     const price = PLAN_PRICES[key];
     const discount = Math.round((1 - price.annualMonthly / price.monthly) * 100);

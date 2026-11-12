@@ -4,8 +4,14 @@ import { CtaBand } from "@/components/marketing/CtaBand";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
-import { integrationPageAliasTarget, integrationPageBySlug, RELATED_CTA_TEXT } from "@/lib/portals/integration-pages";
+import { dynamicIntegrationPageBySlug, integrationPageAliasTarget, integrationPageBySlug as staticPageBySlug, RELATED_CTA_TEXT } from "@/lib/portals/integration-pages";
 import { integrationJsonLd } from "@/lib/portals/integration-jsonld";
+import { getPublicDynamicFeedPortals } from "@/lib/dynamic-feed-portals.functions";
+
+/** Pagini statice din registru sau pagini ale portalurilor adăugate din SuperAdmin. */
+function integrationPageBySlug(slug: string) {
+  return staticPageBySlug(slug) ?? dynamicIntegrationPageBySlug(slug);
+}
 
 export const Route = createFileRoute("/integrari_/$slug")({
   // Adresele alternative (ex. /integrari/storia-olx) merg 301 spre pagina canonică,
@@ -21,10 +27,15 @@ export const Route = createFileRoute("/integrari_/$slug")({
       });
     }
   },
-  loader: ({ params }) => {
-    const page = integrationPageBySlug(params.slug);
-    if (!page) throw notFound();
-    return { slug: page.slug };
+  loader: async ({ params }) => {
+    const page = staticPageBySlug(params.slug);
+    if (page) return { slug: page.slug, logoUrl: null as string | null };
+    const dynamicPage = dynamicIntegrationPageBySlug(params.slug);
+    if (!dynamicPage) throw notFound();
+    // Pagina există doar cât timp portalul e activ și vizibil public din SuperAdmin.
+    const portal = (await getPublicDynamicFeedPortals()).find((p) => p.id === dynamicPage.slug);
+    if (!portal) throw notFound();
+    return { slug: dynamicPage.slug, logoUrl: portal.logo_url ? `/api/public/portal-logo/${dynamicPage.slug}` : null };
   },
   head: ({ loaderData }) => {
     const page = loaderData ? integrationPageBySlug(loaderData.slug) : null;
@@ -44,7 +55,7 @@ function H2({ children }: { children: React.ReactNode }) {
 }
 
 function IntegrationPage() {
-  const { slug } = Route.useLoaderData();
+  const { slug, logoUrl } = Route.useLoaderData();
   const page = integrationPageBySlug(slug)!;
   return (
     <PublicLayout>
@@ -55,7 +66,11 @@ function IntegrationPage() {
             <Link to="/integrari" className="hover:underline">Integrări</Link> › <span>{page.name}</span>
           </nav>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <PortalLogoStack portalId={page.portalId} name={page.name} size={64} className="shrink-0" />
+            {logoUrl ? (
+              <img src={logoUrl} alt={`Logo ${page.name}`} className="h-16 w-auto max-w-[200px] shrink-0 object-contain" />
+            ) : (
+              <PortalLogoStack portalId={page.portalId} name={page.name} size={64} className="shrink-0" />
+            )}
             <h1 className="text-4xl font-semibold tracking-tight text-balance text-navy sm:text-5xl">
               Integrare {page.name} cu Habitoo CRM
             </h1>
