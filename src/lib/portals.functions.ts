@@ -3121,6 +3121,15 @@ export async function applyPortalSelectionForOrg(input: {
     const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
 
     const results: PortalSelectionOutcome[] = [];
+    // Câmpurile obligatorii blochează doar publicările noi; cele active rămân.
+    let completenessMessage: string | null | undefined;
+    const missingRequired = async () => {
+      if (completenessMessage === undefined) {
+        const { loadPropertyCompleteness } = await import("@/lib/property-completeness.server");
+        completenessMessage = (await loadPropertyCompleteness(admin as never, data.propertyId)).message;
+      }
+      return completenessMessage;
+    };
 
     for (const [wantedIndex, wanted] of data.selections.entries()) {
       if (wantedIndex > 0 && input.pauseBetweenPortalsMs) {
@@ -3135,6 +3144,17 @@ export async function applyPortalSelectionForOrg(input: {
        * portaluri, iar utilizatorul vedea un singur mesaj generic de eroare.
        */
       try {
+        if (
+          wanted.enabled &&
+          !(publications ?? []).some((p) => p.portal_key === definition.id && p.enabled) &&
+          !(listings ?? []).some((l) => l.portal === definition.id && l.status === "published")
+        ) {
+          const blockedBy = await missingRequired();
+          if (blockedBy) {
+            results.push({ portalId: definition.id, portalName: portalDisplayName(definition.id), action: "blocked", ok: false, message: blockedBy, code: "missing_required" });
+            continue;
+          }
+        }
         // Fără publicare push și fără feed: nu există nicio cale reală de publicare.
         if (wanted.enabled && !portalCanPublish(definition.id)) {
           results.push({

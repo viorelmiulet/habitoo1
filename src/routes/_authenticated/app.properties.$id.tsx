@@ -33,6 +33,9 @@ import { ArchivePropertyDialog } from "@/components/app/ArchivePropertyDialog";
 import { StatusChangeDialog } from "@/components/app/StatusChangeDialog";
 import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
+import { publishPropertyChecked } from "@/lib/property-completeness.functions";
+import { computeCompleteness, completenessInputFromRow, missingRequiredMessage, type CompletenessKey } from "@/lib/property-completeness";
+import { PropertyCompletenessCard, completenessTargetId, focusCompletenessTarget } from "@/components/app/PropertyCompletenessCard";
 import { unarchiveProperty } from "@/lib/property-archive.functions";
 import { toastError } from "@/lib/errors";
 import { FORM_ACTIONS_BAR, FormRow, FormSection } from "@/components/app/FormSection";
@@ -483,7 +486,39 @@ function PropertyDetailContent() {
     };
   };
 
+  const { data: contractCount = 0 } = useQuery({
+    queryKey: ["property-contract-count", id],
+    queryFn: async () => {
+      const { count, error } = await supabase.from("contracts").select("id", { count: "exact", head: true }).eq("property_id", id);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  // Același calcul pur ca verificarea de publicare de pe server.
+  const completeness = property ? computeCompleteness(completenessInputFromRow(
+    editing ? {
+      ...(property as Record<string, unknown>), ...details, ...transactionPayload(tx),
+      title: draft.title, description: draft.description,
+      city: location.localityName || draft.city || null,
+      assigned_to: draftAgent || property.assigned_to,
+      lat: coords?.lat ?? null, lng: coords?.lng ?? null,
+    } : (property as Record<string, unknown>),
+    { imageCount: data?.imageCount ?? 0, hasCover: (data?.imageCount ?? 0) > 0, hasContract: contractCount > 0 },
+  )) : null;
+  const COMPLETENESS_TABS: Partial<Record<CompletenessKey, string>> = {
+    title: "description", description: "description", sale_price: "price", rent_price: "price",
+    city: "location", coords: "location", cover: "media", photos: "media", contract: "documents",
+  };
+  const onCompletenessItem = (key: CompletenessKey) => {
+    const targetTab = COMPLETENESS_TABS[key] ?? "overview";
+    if (!editing && (INLINE_EDIT_TABS.has(targetTab) || targetTab === "overview")) startEdit();
+    setTab(targetTab);
+    const target = completenessTargetId(key, "edit", (editing ? details.property_type : property?.property_type) === "land");
+    window.setTimeout(() => focusCompletenessTarget(target), 150);
+  };
+
   const changeStatusFn = useServerFn(changePropertyStatus);
+  const publishCheckedFn = useServerFn(publishPropertyChecked);
   const [pendingStatus, setPendingStatus] = useState<"sold" | "rented" | "archived" | null>(null);
   const changeStatus = useMutation({
     mutationFn: async (status: string) =>
@@ -521,6 +556,8 @@ function PropertyDetailContent() {
    */
   const publish = useMutation({
     mutationFn: async () => {
+      const missing = completeness ? missingRequiredMessage(completeness) : null;
+      if (missing) throw new Error(missing);
       if (editing) {
         assertFormBelongsToProperty(formPropertyIdRef.current, id, property?.id);
         if (!hasTransactionSelection(tx)) {
@@ -541,15 +578,8 @@ function PropertyDetailContent() {
 
       // O ofertă publicată nu poate rămâne „Ciornă”: statusul ciornă este exclus
       // din feeduri și din portaluri, deci publicarea îl trece pe „Activ”.
-      const { error } = await supabase
-        .from("properties")
-        .update({
-          publish_status: "published",
-          published_at: new Date().toISOString(),
-          ...(property?.status === "draft" ? { status: "active" } : {}),
-        } as never)
-        .eq("id", id);
-      if (error) throw error;
+      // Verificarea câmpurilor obligatorii rulează și pe server.
+      await publishCheckedFn({ data: { propertyId: id } });
       await logAudit({
         organizationId: orgId,
         actorId: user?.userId,
@@ -1146,9 +1176,13 @@ function PropertyDetailContent() {
 
         <TabsContent value="overview" className="space-y-6" data-tour="property-overview">
           {editing ? (
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+            {completeness ? <aside className="min-w-0 lg:sticky lg:top-[7.5rem] lg:order-last">
+              <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} />
+            </aside> : null}
             <HintedForm
               id="property-details-form"
-              className="space-y-4"
+              className="min-w-0 space-y-4"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!hasTransactionSelection(tx)) {
@@ -1213,6 +1247,7 @@ function PropertyDetailContent() {
                 </Button>
               </div>
             </HintedForm>
+            </div>
           ) : null}
 
           {!editing ? (
@@ -1275,6 +1310,7 @@ function PropertyDetailContent() {
               </div>
 
               <aside className="space-y-4">
+                {completeness ? <PropertyCompletenessCard compact result={completeness} onItem={onCompletenessItem} /> : null}
                 <section className="panel px-5 py-[18px]">
                   <div className="flex items-center justify-between gap-3"><h2 className="font-sans text-base font-bold">Pe portaluri</h2><span className="text-sm text-muted-foreground">{publishedPortals} din {portalCells.length} activate</span></div>
                   {portalCells.length > 0 ? <ul className="mt-4 space-y-3">{portalCells.map((cell) => { const state = portalState(cell); return <li key={cell.portalId} className="flex items-center justify-between gap-3 text-sm"><span className="min-w-0 truncate font-medium">{cell.portalName}</span><span className="flex shrink-0 items-center gap-2"><StatusBadge tone={state.tone} dot>{state.label}</StatusBadge>{cell.promoted ? <StatusBadge tone="warning">Promovat</StatusBadge> : null}</span></li>; })}</ul> : <p className="mt-3 text-sm text-muted-foreground">Niciun portal activat pentru agenție.</p>}

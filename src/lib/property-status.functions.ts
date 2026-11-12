@@ -74,6 +74,15 @@ export const changePropertyStatus = createServerFn({ method: "POST" })
     const nowIso = new Date().toISOString();
 
     // Update-ul trece prin RLS-ul utilizatorului: agentul modifică doar ce are voie.
+    // Ciorna devine „Activ” doar cu toate câmpurile obligatorii completate.
+    if (data.status === "active") {
+      const { loadPropertyCompleteness } = await import("@/lib/property-completeness.server");
+      for (const row of rows) {
+        if (row.status !== "draft") continue;
+        const { message } = await loadPropertyCompleteness(ctx.supabase, row.id);
+        if (message) throw new Error(message);
+      }
+    }
     for (const row of rows) {
       if (row.status === data.status) continue;
       const patch: Record<string, unknown> =

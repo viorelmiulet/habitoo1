@@ -38,6 +38,8 @@ import { LocationPicker, emptyLocation, type LocationValue } from "@/components/
 import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { useCurrentUser } from "@/hooks/use-session";
 import { appHead } from "@/components/app/app-head";
+import { computeCompleteness, missingRequiredMessage } from "@/lib/property-completeness";
+import { PropertyCompletenessCard, completenessTargetId, focusCompletenessTarget } from "@/components/app/PropertyCompletenessCard";
 
 /** Notificare neblocantă despre codul poștal dedus la salvare. */
 function postalNotice(report: { status: string; reasonLabel: string } | null): void {
@@ -114,11 +116,38 @@ function NewPropertyPage() {
 
   const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
 
+  // Fotografiile se adaugă după prima salvare, deci o proprietate nouă pornește fără copertă.
+  const completeness = computeCompleteness({
+    propertyType: (details.property_type as string | null) ?? null,
+    title: form.title,
+    forSale: tx.for_sale, forRent: tx.for_rent, salePrice: tx.sale_price, rentPrice: tx.rent_price,
+    city: location.localityName || form.city,
+    assignedTo: user?.userId ?? null,
+    hasCover: false, imageCount: 0,
+    usableSurface: (details.usable_surface as number | null) ?? null,
+    landSurface: (details.land_surface as number | null) ?? null,
+    description: form.description,
+    rooms: (details.rooms as number | null) ?? null,
+    energyClass: null, hasContract: false,
+    lat: coords?.lat ?? null, lng: coords?.lng ?? null,
+  });
+  const onCompletenessItem = (key: Parameters<typeof completenessTargetId>[0]) => {
+    if (key === "cover" || key === "photos" || key === "contract" || key === "energy_class") {
+      toast.info("Se completează din pagina proprietății, după salvare.");
+      return;
+    }
+    focusCompletenessTarget(completenessTargetId(key, "new", details.property_type === "land"));
+  };
+
   const create = useMutation({
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
       if (!hasTransactionSelection(tx))
         throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
+      if (form.status === "active") {
+        const missing = missingRequiredMessage(completeness);
+        if (missing) throw new Error(missing);
+      }
       // Referință unică pe toată platforma: o secvență în baza de date, nu
       // „max + 1” per agenție (doi agenți care salvau simultan puteau primi
       // același număr, iar numerele se dublau între agenții).
@@ -192,8 +221,12 @@ function NewPropertyPage() {
         }
       />
 
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <aside className="min-w-0 lg:sticky lg:top-[7.5rem] lg:order-last">
+        <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} />
+      </aside>
       <HintedForm
-        className="space-y-4"
+        className="min-w-0 space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
           create.mutate();
@@ -329,6 +362,7 @@ function NewPropertyPage() {
           </Button>
         </div>
       </HintedForm>
+      </div>
     </>
   );
 }
