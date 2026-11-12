@@ -155,7 +155,7 @@ function IntegrationsPage() {
       <Section className="pt-0 sm:pt-0 lg:pt-0">
         <Container><IntegrationsOverview dynamic={dynamic} /></Container>
         <Container className="mt-10 text-center">
-          <Button asChild variant="link" className="mb-4"><Link to="/dezvoltatori">Ești portal? Documentația API <ArrowRight /></Link></Button>
+          <Button asChild variant="link" className="mb-4"><Link to="/dezvoltatori">Ești portal? Documentația pentru parteneri <ArrowRight /></Link></Button>
           <p className="text-sm text-muted-foreground">
             Ai întrebări despre publicare? Vezi{" "}
             <Link to="/intrebari-frecvente" className="font-medium text-primary underline-offset-4 hover:underline">

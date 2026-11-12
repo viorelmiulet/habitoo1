@@ -66,6 +66,6 @@ describe("număr portaluri pe /integrari", async () => {
     for (const p of INTEGRATION_PAGES) expect(INTEGRATION_OVERVIEW.some((o) => o.slug === p.slug)).toBe(true);
     const src = readFileSync("src/routes/integrari.tsx", "utf8");
     expect(src).toContain("<IntegrationsOverview dynamic={dynamic} />");
-    expect(src).not.toMatch(/\b(API|OAuth|JSON|XML|feed)\b|lider|nr\. 1|cel mai bun/);
+    expect(src.replace(/^import .*$/gm, "")).not.toMatch(/\b(API|OAuth|JSON|XML|feed)\b|lider|nr\. 1|cel mai bun/);
   });
 });
