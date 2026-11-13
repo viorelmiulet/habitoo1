@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import * as taxonomy from "@/lib/property-taxonomy";
 import { FormSection } from "@/components/app/FormSection";
 import { cn } from "@/lib/utils";
+import { AiMark } from "@/components/app/ai/AiFieldMarks";
 
 type Value = Record<string, unknown>;
 type FeatureGroup = { field: string; title: string; icon: LucideIcon; options: readonly string[]; single?: boolean };
@@ -71,7 +72,7 @@ function FeatureGroupFields({ group, value, onChange, idPrefix }: {
     <div data-feature-group={group.field} className="h-full min-w-0 rounded-card border border-border bg-card p-3">
       <div className="mb-3 flex min-w-0 items-center gap-2 border-b border-primary/25 pb-3">
         <span className="grid size-8 shrink-0 place-items-center rounded-control bg-accent text-accent-foreground"><Icon className="size-4" aria-hidden="true" /></span>
-        <h4 id={headingId} className="min-w-0 font-sans text-sm font-bold text-accent-foreground">{group.title}</h4>
+        <h4 id={headingId} className="min-w-0 font-sans text-sm font-bold text-accent-foreground">{group.title}{onChange ? <AiMark field={group.field} /> : null}</h4>
       </div>
       <div className="min-w-0">
         {!onChange ? <ul aria-labelledby={headingId} className={optionsClass}>{group.options.map((option) => (

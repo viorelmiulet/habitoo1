@@ -1,7 +1,11 @@
 import { notifyLeadMatchesForProperty } from "@/components/app/LeadMatches";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { ListingAutofillCard } from "@/components/app/ai/ListingAutofillCard";
+import { AiFieldMarksContext, AiMark } from "@/components/app/ai/AiFieldMarks";
+import { applyAutofillProposal, clearAutofillField, type AutofillSetters } from "@/components/app/ai/listing-autofill-apply";
+import { uploadPropertyPhotos } from "@/lib/property-photo-upload";
 import {
   PropertyDetailsFields,
   type PropertyDetailsValue,
@@ -114,6 +118,17 @@ function NewPropertyPage() {
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
 
+  // „Completează cu AI”: pozele alese se încarcă în galerie abia la salvare;
+  // câmpurile propuse de AI poartă marcajul „AI” până la confirmare.
+  const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
+  const [aiMarked, setAiMarked] = useState<string[]>([]);
+  const aiMarks = useMemo(() => new Set(aiMarked), [aiMarked]);
+  const autofillSetters: AutofillSetters = {
+    setDetails: (fn) => setDetails((d) => fn(d)),
+    setText: (patch) => setForm((f) => ({ ...f, ...patch })),
+    setTx,
+  };
+
   const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
 
   // Fotografiile se adaugă după prima salvare, deci o proprietate nouă pornește fără copertă.
@@ -123,7 +138,7 @@ function NewPropertyPage() {
     forSale: tx.for_sale, forRent: tx.for_rent, salePrice: tx.sale_price, rentPrice: tx.rent_price,
     city: location.localityName || form.city,
     assignedTo: user?.userId ?? null,
-    hasCover: false, imageCount: 0,
+    hasCover: pendingPhotos.length > 0, imageCount: pendingPhotos.length,
     usableSurface: (details.usable_surface as number | null) ?? null,
     landSurface: (details.land_surface as number | null) ?? null,
     description: form.description,
@@ -183,6 +198,13 @@ function NewPropertyPage() {
         .select("id")
         .single();
       if (error) throw error;
+      if (pendingPhotos.length) {
+        try {
+          await uploadPropertyPhotos(user.organization.id, data.id, user.userId, pendingPhotos);
+        } catch {
+          toast.warning("Proprietatea a fost salvată, dar unele poze nu s-au încărcat. Adaugă-le din galeria proprietății.");
+        }
+      }
       // Codul poștal se deduce din adresă pe server; lipsa lui nu blochează
       // salvarea, dar rezultatul (inclusiv eșecul) se arată utilizatorului.
       let postal: { status: string; reasonLabel: string } | null = null;
@@ -232,6 +254,21 @@ function NewPropertyPage() {
           create.mutate();
         }}
       >
+        <AiFieldMarksContext.Provider value={aiMarks}>
+        <ListingAutofillCard
+          mode="new"
+          photos={pendingPhotos}
+          onPhotosChange={setPendingPhotos}
+          onProposal={(p) => {
+            const { proposal, keys } = applyAutofillProposal(p, autofillSetters);
+            setAiMarked(keys);
+            return proposal;
+          }}
+          marked={aiMarked}
+          onRemoveField={(key) => { clearAutofillField(key, autofillSetters); setAiMarked((m) => m.filter((k) => k !== key)); }}
+          onAcceptAll={() => setAiMarked([])}
+          missing={completeness.items.filter((i) => !i.done).map((i) => i.label)}
+        />
         <PropertyFormLayout
           aside={<div data-tour="new-general"><FormSection title="Informații generale">
           <div className="grid gap-4">
@@ -288,7 +325,7 @@ function NewPropertyPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <LocationPicker idPrefix="new" value={location} onChange={setLocation} />
             <div className="space-y-2">
-              <Label htmlFor="district">Zonă / cartier</Label>
+              <Label htmlFor="district">Zonă / cartier<AiMark field="district" /></Label>
               <Input
                 id="district"
                 value={form.district}
@@ -296,7 +333,7 @@ function NewPropertyPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="address">Adresă</Label>
+              <Label htmlFor="address">Adresă<AiMark field="address" /></Label>
               <Input
                 id="address"
                 value={form.address}
@@ -347,6 +384,7 @@ function NewPropertyPage() {
           </div>
         </FormSection>
         </PropertyFormLayout>
+        </AiFieldMarksContext.Provider>
 
         <div className={FORM_ACTIONS_BAR}>
           <Button

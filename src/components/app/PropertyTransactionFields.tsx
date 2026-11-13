@@ -1,3 +1,4 @@
+import { AiMark } from "@/components/app/ai/AiFieldMarks";
 /**
  * Tipul tranzacției unei proprietăți: vânzare, închiriere sau ambele simultan.
  * Fiecare tranzacție activă are propriul preț și propria monedă, exact cum are
@@ -116,7 +117,7 @@ export function PropertyTransactionFields({ idPrefix = "tx", value, onChange }: 
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor={`${idPrefix}-sale-price`}>Preț vânzare</Label>
+              <Label htmlFor={`${idPrefix}-sale-price`}>Preț vânzare<AiMark field="price" /></Label>
               <Input
                 id={`${idPrefix}-sale-price`}
                 type="number"
@@ -162,7 +163,7 @@ export function PropertyTransactionFields({ idPrefix = "tx", value, onChange }: 
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor={`${idPrefix}-rent-price`}>Chirie / lună</Label>
+              <Label htmlFor={`${idPrefix}-rent-price`}>Chirie / lună<AiMark field="price" /></Label>
               <Input
                 id={`${idPrefix}-rent-price`}
                 type="number"

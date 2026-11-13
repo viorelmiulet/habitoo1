@@ -1,3 +1,4 @@
+import { AiMark } from "@/components/app/ai/AiFieldMarks";
 /**
  * Așezarea comună a formularelor de proprietate (editare și proprietate nouă):
  * coloană stânga, caracteristici + dotări, apoi „Descriere și Titlu” și restul panourilor.
@@ -31,13 +32,13 @@ export function PropertyTitleDescriptionPanel({ title, description, onTitle, onD
   return (
     <FormSection title="Descriere și Titlu">
       {stacked ? <div className="min-w-0 space-y-2">
-        <label htmlFor="title" className="text-[15px]">Titlu anunț<RequiredMark /> <span className="text-muted-foreground">({title.length}/{TITLE_COUNTER_MAX})</span></label>
+        <label htmlFor="title" className="text-[15px]">Titlu anunț<RequiredMark /><AiMark field="title" /> <span className="text-muted-foreground">({title.length}/{TITLE_COUNTER_MAX})</span></label>
         <Input id="title" required={titleRequired} className="h-10 rounded-[10px] text-[15px]" value={title} placeholder={titlePlaceholder} onChange={(e) => onTitle(e.target.value)} />
-      </div> : <FormRow htmlFor="title" label={<>Titlu anunț<RequiredMark /> <span className="text-muted-foreground">({title.length}/{TITLE_COUNTER_MAX})</span></>}>
+      </div> : <FormRow htmlFor="title" label={<>Titlu anunț<RequiredMark /><AiMark field="title" /> <span className="text-muted-foreground">({title.length}/{TITLE_COUNTER_MAX})</span></>}>
         <Input id="title" required={titleRequired} className="h-10 rounded-[10px] text-[15px]" value={title} placeholder={titlePlaceholder} onChange={(e) => onTitle(e.target.value)} />
       </FormRow>}
       <div className={stacked ? "grid min-w-0 grid-cols-1 gap-2" : "grid min-w-0 grid-cols-1 gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"}>
-        <label htmlFor="description" className={stacked ? "text-[15px]" : "pt-2 text-[15px] sm:text-right"}>Descriere <span className="text-muted-foreground">({description.length}/{DESCRIPTION_COUNTER_MAX})</span></label>
+        <label htmlFor="description" className={stacked ? "text-[15px]" : "pt-2 text-[15px] sm:text-right"}>Descriere<AiMark field="description" /> <span className="text-muted-foreground">({description.length}/{DESCRIPTION_COUNTER_MAX})</span></label>
         <PropertyDescriptionTextarea id="description" rows={stacked ? 12 : undefined} className={stacked ? "min-h-[300px] text-[15px] leading-6 sm:min-h-[300px]" : "text-[15px]"} value={description} onChange={(e) => onDescription(e.target.value)} />
       </div>
     </FormSection>

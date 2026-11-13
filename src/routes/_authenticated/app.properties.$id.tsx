@@ -9,7 +9,7 @@ import { offerSendReason } from "@/lib/offer-client";
 import { formatFloorLabel } from "@/lib/property-floor";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart3,
   Building2,
@@ -46,6 +46,9 @@ import { EmptyState } from "@/components/app/EmptyState";
 
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
+import { ListingAutofillCard } from "@/components/app/ai/ListingAutofillCard";
+import { AiFieldMarksContext } from "@/components/app/ai/AiFieldMarks";
+import { applyAutofillProposal, clearAutofillField, currentAutofillValues, type AutofillSetters } from "@/components/app/ai/listing-autofill-apply";
 import { PropertyAcpCard } from "@/components/app/PropertyAcpCard";
 import { PropertyPromotionTab } from "@/components/app/PropertyPromotionTab";
 import { MarketingAgentPanel } from "@/components/app/MarketingAgentPanel";
@@ -364,6 +367,14 @@ function PropertyDetailContent() {
   // Poziția pe hartă (Leaflet/OpenStreetMap) și precizia locației, în modul editare.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationPrecise, setLocationPrecise] = useState(false);
+  // „Completează câmpurile goale cu AI”: doar propuneri în formular, marcate „AI”.
+  const [aiMarked, setAiMarked] = useState<string[]>([]);
+  const aiMarks = useMemo(() => new Set(aiMarked), [aiMarked]);
+  const autofillSetters: AutofillSetters = {
+    setDetails: (fn) => setDetails((d) => fn(d)),
+    setText: (patch) => setDraft((d) => ({ ...d, ...patch })),
+    setTx,
+  };
   /** Id-ul proprietății pentru care a fost încărcat formularul de editare. */
   const formPropertyIdRef = useRef<string | null>(null);
   const startEdit = () => {
@@ -402,6 +413,7 @@ function PropertyDetailContent() {
       localitySirutaCode: property.locality_siruta_code ?? null,
       localityName: property.locality_siruta_code ? (property.city ?? "") : "",
     });
+    setAiMarked([]);
     setEditing(true);
   };
 
@@ -1180,6 +1192,7 @@ function PropertyDetailContent() {
             {completeness ? <aside className="min-w-0 lg:sticky lg:top-[7.5rem] lg:order-last">
               <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} />
             </aside> : null}
+            <AiFieldMarksContext.Provider value={aiMarks}>
             <HintedForm
               id="property-details-form"
               className="min-w-0 space-y-4"
@@ -1192,6 +1205,19 @@ function PropertyDetailContent() {
                 save.mutate(buildEditPatch());
               }}
             >
+              <ListingAutofillCard
+                mode="edit"
+                propertyId={id}
+                onProposal={(p) => {
+                  const { proposal, keys } = applyAutofillProposal(p, autofillSetters, currentAutofillValues(details, { title: draft.title, description: draft.description, city: draft.city, district: draft.district, address: draft.address }, tx));
+                  setAiMarked(keys);
+                  return proposal;
+                }}
+                marked={aiMarked}
+                onRemoveField={(key) => { clearAutofillField(key, autofillSetters); setAiMarked((m) => m.filter((k) => k !== key)); }}
+                onAcceptAll={() => setAiMarked([])}
+                missing={(completeness?.items ?? []).filter((item) => !item.done).map((item) => item.label)}
+              />
               <PropertyFormLayout
                 aside={<>
                   <PropertyMainPhoto propertyId={id} title={property.title} />
@@ -1247,6 +1273,7 @@ function PropertyDetailContent() {
                 </Button>
               </div>
             </HintedForm>
+            </AiFieldMarksContext.Provider>
             </div>
           ) : null}
 

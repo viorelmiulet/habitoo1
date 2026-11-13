@@ -31,6 +31,7 @@ import { propertyTypeLabels } from "@/lib/labels";
 import { floorNumberRequired, syncFloor } from "@/lib/property-floor";
 import { ENERGY_CLASS_OPTIONS, normalizeEnergyClass } from "@/lib/property-energy-class";
 import { useMemo, useRef } from "react";
+import { AiMark } from "@/components/app/ai/AiFieldMarks";
 
 export type PropertyDetailsValue = Record<string, unknown>;
 
@@ -73,7 +74,7 @@ function SelectField({
   options: readonly string[];
 }) {
   return (
-    <FormRow compact htmlFor={`${ctx.idPrefix}-${field}`} label={label}>
+    <FormRow compact htmlFor={`${ctx.idPrefix}-${field}`} label={<>{label}<AiMark field={field} /></>}>
       <Select
         value={ctx.str(field) || NONE}
         onValueChange={(v) => ctx.setField(field, v === NONE ? null : v)}
@@ -104,7 +105,7 @@ function EnergyClassField({ ctx }: { ctx: FieldCtx }) {
   const normalized = normalizeEnergyClass(raw);
   const known = normalized != null && (ENERGY_CLASS_OPTIONS as readonly string[]).includes(normalized);
   return (
-    <FormRow compact htmlFor={`${ctx.idPrefix}-energy_class`} label="Clasă energetică (recomandat)">
+    <FormRow compact htmlFor={`${ctx.idPrefix}-energy_class`} label={<>Clasă energetică (recomandat)<AiMark field="energy_class" /></>}>
       <Select
         value={normalized ?? NONE}
         onValueChange={(v) => ctx.setField("energy_class", v === NONE ? null : v)}
@@ -139,7 +140,7 @@ function NumberField({
   min?: number;
 }) {
   return (
-    <FormRow compact htmlFor={`${ctx.idPrefix}-${field}`} label={label}>
+    <FormRow compact htmlFor={`${ctx.idPrefix}-${field}`} label={<>{label}<AiMark field={field} /></>}>
       <Input
         id={`${ctx.idPrefix}-${field}`}
         className={CONTROL}
@@ -162,7 +163,7 @@ function FloorField({ ctx }: { ctx: FieldCtx }) {
   const needsNumber = floorNumberRequired(label || null);
   return (
     <>
-    <FormRow compact htmlFor={`${ctx.idPrefix}-floor_label`} label="Etaj">
+    <FormRow compact htmlFor={`${ctx.idPrefix}-floor_label`} label={<>Etaj<AiMark field={["floor_label", "floor"]} /></>}>
       <Select
         value={label || NONE}
         onValueChange={(v) => {
@@ -221,7 +222,7 @@ function BoolField({
         onCheckedChange={(c) => ctx.setField(field, c === true)}
       />
       <Label htmlFor={`${ctx.idPrefix}-${field}`} className="cursor-pointer font-normal">
-        {label}
+        {label}<AiMark field={field} />
       </Label>
     </div>
   );
@@ -315,7 +316,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       <div data-tour={idPrefix === "new" ? "new-details" : undefined} className="min-w-0">
       <FormSection title="Detalii">
         <div className="space-y-1">
-          <FormRow compact htmlFor={`${idPrefix}-property_type`} label="Tip apartament / imobil">
+          <FormRow compact htmlFor={`${idPrefix}-property_type`} label={<>Tip apartament / imobil<AiMark field="property_type" /></>}>
             <Select value={ctx.str("property_type")} onValueChange={(v) => setField("property_type", v)}>
               <SelectTrigger id={`${idPrefix}-property_type`} className={CONTROL}>
                 <SelectValue placeholder="Selectează" />

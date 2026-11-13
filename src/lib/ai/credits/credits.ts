@@ -14,6 +14,7 @@ export const AI_CREDIT_ACTIONS = [
   "photo_enhance",
   "photo_video",
   "ai_video_voice",
+  "listing_autofill",
 ] as const;
 export type AiCreditAction = (typeof AI_CREDIT_ACTIONS)[number];
 
@@ -24,6 +25,7 @@ export const AI_CREDIT_ACTION_LABELS: Record<AiCreditAction, string> = {
   photo_enhance: "Îmbunătățire poză",
   photo_video: "Video din poză",
   ai_video_voice: "Voce în video",
+  listing_autofill: "Anunț din poze și voce",
 };
 
 export const DEFAULT_AI_CREDIT_COSTS: Record<AiCreditAction, number> = {
@@ -33,6 +35,7 @@ export const DEFAULT_AI_CREDIT_COSTS: Record<AiCreditAction, number> = {
   photo_enhance: 10,
   photo_video: 40,
   ai_video_voice: 5,
+  listing_autofill: 5,
 };
 
 export const AI_CREDIT_PLANS = ["basic", "pro", "unlimited"] as const;

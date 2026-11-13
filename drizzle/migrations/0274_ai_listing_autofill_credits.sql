@@ -1,0 +1,3 @@
+ALTER TABLE public.ai_credit_costs DROP CONSTRAINT IF EXISTS ai_credit_costs_action_check;
+ALTER TABLE public.ai_credit_costs ADD CONSTRAINT ai_credit_costs_action_check CHECK (action IN ('text_fast','text_standard','marketing_image','photo_enhance','photo_video','ai_video_voice','listing_autofill'));
+INSERT INTO public.ai_credit_costs(action, credits) VALUES ('listing_autofill',5) ON CONFLICT (action) DO NOTHING;
