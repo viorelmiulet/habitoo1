@@ -4,10 +4,20 @@
  * 5xx / timeout → reluare identică; 429 → `Retry-After`; 400/422 → eroare de
  * validare, fără retry, cu numele câmpurilor respinse extrase din răspuns;
  * 401 → token expirat/invalid (se reînnoiește o singură dată de client).
+ * Pe endpointul de autorizare (`endpoint: "auth"`) un 4xx este refuz de
+ * credențiale: `AUTH_ERROR` cu mesajul despre datele de acces API.
  */
 import type { PortalErrorCode } from "../errors";
+import { IMOBILIARE_PATHS } from "./config";
 
 export type ImobiliareAction = "ok" | "retry_same" | "retry_after" | "reauth" | "stop";
+
+/**
+ * „auth” = cererea de autorizare (`POST /api/v1/auth/oauth/token`): acolo un
+ * răspuns 4xx înseamnă că portalul refuză utilizatorul sau parola.
+ * „data” = orice altă cerere (anunț, imagini, promovări).
+ */
+export type ImobiliareEndpoint = "auth" | "data";
 
 export type ImobiliareClassification = {
   action: ImobiliareAction;
@@ -18,6 +28,19 @@ export type ImobiliareClassification = {
 
 export const IMOBILIARE_MAX_ATTEMPTS = 3;
 export const IMOBILIARE_MAX_WAIT_MS = 30_000;
+
+/**
+ * Mesajul afișat când Imobiliare.ro refuză credențialele de autorizare.
+ * Spune clar ce s-a întâmplat și ce date se folosesc: cele primite de la
+ * Imobiliare.ro pentru integrarea cu un CRM, nu datele de logare de pe site.
+ */
+export const IMOBILIARE_AUTH_REJECTED_MESSAGE =
+  "Imobiliare.ro nu acceptă utilizatorul sau parola. Folosește datele de acces API primite de la Imobiliare.ro pentru integrarea cu un CRM, nu datele de logare de pe site.";
+
+/** Cererea de autorizare: aici un 4xx este refuz de credențiale, nu de anunț. */
+export function isImobiliareAuthPath(path: string): boolean {
+  return path === IMOBILIARE_PATHS.token;
+}
 
 export function retryAfterMs(header: string | null, now = Date.now()): number {
   if (!header) return 0;
@@ -37,12 +60,17 @@ export function classifyImobiliareStatus(input: {
   attempt: number;
   retryAfter?: string | null;
   now?: number;
+  endpoint?: ImobiliareEndpoint;
 }): ImobiliareClassification {
   const { status, attempt } = input;
   const canRetry = attempt < IMOBILIARE_MAX_ATTEMPTS;
 
   if (status >= 200 && status < 300) {
     return { action: "ok", code: "PORTAL_ERROR", message: "", waitMs: 0 };
+  }
+  // Autorizare refuzată: portalul nu acceptă utilizatorul sau parola.
+  if (input.endpoint === "auth" && (status === 400 || status === 401 || status === 403 || status === 422)) {
+    return { action: "stop", code: "AUTH_ERROR", message: IMOBILIARE_AUTH_REJECTED_MESSAGE, waitMs: 0 };
   }
   if (status === 401) {
     return {

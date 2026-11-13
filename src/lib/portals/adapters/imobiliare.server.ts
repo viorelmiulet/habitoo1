@@ -120,7 +120,9 @@ async function prepare(
       ok: false,
       result: {
         ok: false,
-        code: "CONFIG_ERROR",
+        // Codul vine din sesiune: un refuz de credențiale este AUTH_ERROR,
+        // o integrarea neconfigurată rămâne CONFIG_ERROR.
+        code: session.code,
         message: session.message,
         detail: session.detail,
       },

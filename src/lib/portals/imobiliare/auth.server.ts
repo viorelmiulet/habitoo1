@@ -8,6 +8,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import type { PortalErrorCode } from "../errors";
 import { IMOBILIARE_PATHS, IMOBILIARE_PORTAL_KEY } from "./config";
 import {
   encodeImobiliareTokens,
@@ -29,7 +30,7 @@ export type ImobiliareSession = {
 
 export type SessionResult =
   | { ok: true; session: ImobiliareSession }
-  | { ok: false; message: string; detail: string };
+  | { ok: false; message: string; detail: string; code: PortalErrorCode };
 
 async function persistTokens(
   admin: Admin,
@@ -49,7 +50,10 @@ async function persistTokens(
 async function requestTokens(
   connectionKey: string,
   body: Record<string, unknown>,
-): Promise<{ ok: true; body: unknown } | { ok: false; message: string; status: number }> {
+): Promise<{
+  ok: true;
+  body: unknown;
+} | { ok: false; message: string; status: number; code: PortalErrorCode }> {
   const response = await imobiliareRequest({
     method: "POST",
     path: IMOBILIARE_PATHS.token,
@@ -60,6 +64,7 @@ async function requestTokens(
     return {
       ok: false,
       status: response.status,
+      code: response.classification?.code ?? "CONFIG_ERROR",
       message:
         response.classification?.message ??
         `Imobiliare.ro a răspuns HTTP ${response.status} la autorizare.`,
@@ -84,6 +89,7 @@ export async function getImobiliareSession(input: {
   if (!parsed) {
     return {
       ok: false,
+      code: "CONFIG_ERROR",
       message:
         "Conexiunea Imobiliare.ro nu are credențiale salvate. Introduce utilizatorul și parola contului.",
       detail: "missing_credential",
@@ -97,6 +103,7 @@ export async function getImobiliareSession(input: {
     if (!username) {
       return {
         ok: false,
+        code: "CONFIG_ERROR",
         message: "Completează utilizatorul contului Imobiliare.ro înainte de conectare.",
         detail: "missing_username",
       };
@@ -105,11 +112,14 @@ export async function getImobiliareSession(input: {
       username,
       password: parsed.password,
     });
-    if (!result.ok) return { ok: false, message: result.message, detail: "login_failed" };
+    if (!result.ok) {
+      return { ok: false, code: result.code, message: result.message, detail: "login_failed" };
+    }
     const tokens = tokensFromResponse(result.body, null, input.now ?? Date.now());
     if (!tokens) {
       return {
         ok: false,
+        code: "CONFIG_ERROR",
         message: "Imobiliare.ro nu a returnat un token de acces la autorizare.",
         detail: "missing_access_token",
       };

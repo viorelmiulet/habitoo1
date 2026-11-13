@@ -517,7 +517,7 @@ export const STATIC_PORTALS: PortalDefinition[] = [
         {
           key: "external_account_id",
           label: "Utilizator Imobiliare.ro",
-          help: "Utilizatorul contului de agenție de la Imobiliare.ro.",
+          help: "Utilizatorul și parola de API primite de la Imobiliare.ro pentru integrarea cu un CRM (nu datele de logare de pe site).",
           target: "external_account_id",
         },
         {

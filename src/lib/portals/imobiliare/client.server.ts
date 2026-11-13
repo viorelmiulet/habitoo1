@@ -13,6 +13,7 @@ import {
   classifyImobiliareNetworkError,
   classifyImobiliareStatus,
   describeImobiliareValidation,
+  isImobiliareAuthPath,
   IMOBILIARE_MAX_ATTEMPTS,
   type ImobiliareClassification,
 } from "./http";
@@ -144,6 +145,7 @@ export async function imobiliareRequest(
         status: response.status,
         attempt,
         retryAfter: response.headers.get("retry-after"),
+        endpoint: isImobiliareAuthPath(input.path) ? "auth" : "data",
       });
       const details =
         baseClassification.code === "INVALID_REQUEST" ? describeImobiliareValidation(body) : null;
