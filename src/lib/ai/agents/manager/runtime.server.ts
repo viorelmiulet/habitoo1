@@ -56,6 +56,9 @@ import {
   type ManagerStep,
 } from "./plan";
 
+/** Clasa de model AI pentru această sarcină. */
+export const MANAGER_AI_MODEL_CLASS = "standard" as const;
+
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
@@ -203,7 +206,7 @@ export async function runManagerTurn(
   }
 
   const { resolveAiProvider } = await import("../../providers/registry.server");
-  let provider = resolveAiProvider();
+  let provider = resolveAiProvider(MANAGER_AI_MODEL_CLASS);
   if (!provider) {
     return { status: "not_configured", run: null, message: "AI nu este configurat." };
   }
@@ -222,7 +225,7 @@ export async function runManagerTurn(
   // Rutare: reguli deterministe + clasificare semantică (allowlist de intenții).
   const keywordRouting: ManagerRouting = routeManagerRequest(request);
   const { routeManagerRequestSemantic } = await import("./semantic.server");
-  let fallbackUsed = provider.id === "gemini";
+  let fallbackUsed = false;
   let inputTokens: number | null = null;
   let outputTokens: number | null = null;
   let routed;

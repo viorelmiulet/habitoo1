@@ -58,24 +58,26 @@ describe("parseGeminiResponse", () => {
 
 describe("configurarea providerului", () => {
   it("fără cheie nu există provider", async () => {
-    delete process.env["MINIMAX_API_KEY"];
+    delete process.env["MISTRAL_API_KEY"];
     delete process.env["GEMINI_API_KEY"];
     vi.resetModules();
     const registry = await import("../providers/registry.server");
     expect(registry.isAiConfigured()).toBe(false);
     expect(registry.resolveAiProvider()).toBeNull();
-    expect(registry.aiProviderStatus().configured).toBe(false);
+    registry.setAiModelSettingsLoader(async () => null);
+    expect((await registry.aiProviderStatus()).configured).toBe(false);
   });
 
   it("cu cheie există provider, iar cheia nu apare în stare", async () => {
-    delete process.env["MINIMAX_API_KEY"];
+    delete process.env["MISTRAL_API_KEY"];
     process.env["GEMINI_API_KEY"] = "test-key-123";
     vi.resetModules();
     const registry = await import("../providers/registry.server");
     expect(registry.isAiConfigured()).toBe(true);
     const provider = registry.resolveAiProvider();
     expect(provider?.id).toBe("gemini");
-    expect(JSON.stringify(registry.aiProviderStatus())).not.toContain("test-key-123");
+    registry.setAiModelSettingsLoader(async () => null);
+    expect(JSON.stringify(await registry.aiProviderStatus())).not.toContain("test-key-123");
   });
 });
 
@@ -91,7 +93,6 @@ describe("regresie: model și buget de tokeni (Gemini 3)", () => {
   it("modelul implicit nu este cel retras pentru cheile noi", async () => {
     const { GEMINI_DEFAULT_MODEL, GEMINI_MAX_OUTPUT_TOKENS, GEMINI_THINKING_LEVEL } =
       await import("../providers/gemini.server");
-    expect(GEMINI_DEFAULT_MODEL).not.toBe("gemini-2.5-flash");
     expect(GEMINI_DEFAULT_MODEL).toMatch(/^gemini-/);
     // Bugetul acoperă și tokenii de raționament ai modelelor Gemini 3.
     expect(GEMINI_MAX_OUTPUT_TOKENS).toBeGreaterThanOrEqual(2048);

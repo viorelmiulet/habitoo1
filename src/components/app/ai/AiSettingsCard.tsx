@@ -99,10 +99,13 @@ export function AiSettingsCard() {
               {data.providers?.map((provider) => (
                 <div key={provider.id}>
                   <dt className="text-xs uppercase text-muted-foreground">
-                    {provider.id === "minimax" ? "Principal · MiniMax" : "Rezervă · Gemini"}
+                    {provider.role === "primary" ? "Principal · Google Gemini" : "Rezervă · Mistral"}
                   </dt>
                   <dd className="text-sm font-medium">
-                    {provider.model} · {provider.configured ? "Configurat" : "Neconfigurat"}
+                    {provider.models
+                      ? `rapid ${provider.models.fast} · standard ${provider.models.standard}`
+                      : provider.model}{" "}
+                    · {provider.configured ? "Configurat" : "Neconfigurat"}
                   </dd>
                 </div>
               ))}

@@ -37,7 +37,8 @@ export const scanContactIdentity = createServerFn({ method: "POST" })
     const org = scope.organizationId;
 
     const { resolveAiProvider } = await import("@/lib/ai/providers/registry.server");
-    const primary = resolveAiProvider();
+    // Citire din imagini: clasa „standard”.
+    const primary = resolveAiProvider("standard");
     if (!primary) return { state: "not_configured", message: "Citirea automată nu este disponibilă. Completează manual." };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

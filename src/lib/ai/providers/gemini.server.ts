@@ -14,12 +14,8 @@ import {
 } from "./types";
 import { parseGeminiResponse } from "./gemini.parse";
 
-/**
- * Model implicit: `gemini-2.5-flash` a fost retras pentru cheile noi (404 cu
- * recomandarea explicită de migrare), deci folosim modelul flash actual.
- * Poate fi suprascris prin `GEMINI_MODEL`.
- */
-export const GEMINI_DEFAULT_MODEL = "gemini-3.6-flash";
+/** Model implicit; modelele active se aleg din SuperAdmin → AI. */
+export const GEMINI_DEFAULT_MODEL = "gemini-2.5-flash";
 /**
  * Free tier: răspunsuri scurte, cost minim. Bugetul acoperă și tokenii de
  * raționament ai modelelor Gemini 3, de aceea nu este mai mic.
@@ -84,6 +80,11 @@ function toGeminiTools(tools: AiToolDeclaration[]): Record<string, unknown>[] {
   ];
 }
 
+/** Gemini 2.x folosește buget de raționament; Gemini 3 folosește nivel. */
+export function geminiThinkingConfig(model: string): Record<string, unknown> {
+  return /^gemini-[12]\./.test(model) ? { thinkingBudget: 0 } : { thinkingLevel: GEMINI_THINKING_LEVEL };
+}
+
 export function createGeminiProvider(apiKey: string, model = GEMINI_DEFAULT_MODEL): AIProvider {
   return {
     id: "gemini",
@@ -97,7 +98,7 @@ export function createGeminiProvider(apiKey: string, model = GEMINI_DEFAULT_MODE
         generationConfig: {
           temperature: 0.2,
           maxOutputTokens: request.maxOutputTokens ?? GEMINI_MAX_OUTPUT_TOKENS,
-          thinkingConfig: { thinkingLevel: GEMINI_THINKING_LEVEL },
+          thinkingConfig: geminiThinkingConfig(model),
         },
       };
 

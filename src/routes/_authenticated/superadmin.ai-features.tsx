@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { AI_FEATURES, type AiFeatureKey } from "@/lib/ai/features/keys";
+import { AiModelSettingsCard } from "@/components/app/ai/AiModelSettingsCard";
 import {
   listOrganizationAiFeatures,
   setOrganizationAiFeature,
@@ -66,6 +67,8 @@ function SuperadminAiFeaturesPage() {
         title="Funcții AI"
         description="Toate funcțiile AI sunt oprite implicit. Activează-le individual, pentru fiecare agenție."
       />
+
+      <AiModelSettingsCard />
 
       <div className="max-w-sm space-y-2">
         <Label htmlFor="ai-features-search">Caută agenție</Label>

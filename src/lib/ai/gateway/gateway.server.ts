@@ -39,6 +39,9 @@ import type { AiProviderMessage } from "../providers/types";
 import { safeAiProviderMessage } from "../providers/types";
 import { withAiProviderFallback } from "../providers/fallback.server";
 
+/** Clasa de model AI pentru această sarcină. */
+export const GATEWAY_AI_MODEL_CLASS = "standard" as const;
+
 export type AiChatRequest = {
   conversationId?: string | null;
   message: string;
@@ -244,7 +247,7 @@ export async function runAiChat(actor: AiActor, request: AiChatRequest): Promise
   tracer.record("agent", HABITOO_COORDINATOR, { details: { capability: "chat" } });
 
   const { resolveAiProvider } = await import("../providers/registry.server");
-  let provider = resolveAiProvider();
+  let provider = resolveAiProvider(GATEWAY_AI_MODEL_CLASS);
   if (!provider) {
     const response = emptyAiResponse("not_configured", AI_NOT_CONFIGURED_MESSAGE);
     return { ...response, warnings: [AI_NOT_CONFIGURED] };
@@ -298,7 +301,7 @@ export async function runAiChat(actor: AiActor, request: AiChatRequest): Promise
   }
   messages.push({ role: "user", content: buildAiUserPrompt(context, message) });
 
-  let fallbackUsed = provider.id === "gemini";
+  let fallbackUsed = false;
   let outcome;
   try {
     const completed = await withAiProviderFallback(provider, (selected) =>

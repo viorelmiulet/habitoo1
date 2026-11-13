@@ -24,7 +24,7 @@ export const ACP_ENRICH_SYSTEM_USER = "00000000-0000-0000-0000-000000000000";
  * configurabile; costul real se calculează din tokenii raportați de provider.
  */
 export const ACP_ENRICH_PRICING: Record<string, { input: number; output: number }> = {
-  minimax: { input: 0.3, output: 1.2 },
+  mistral: { input: 0.1, output: 0.3 },
   gemini: { input: 0.5, output: 3 },
 };
 

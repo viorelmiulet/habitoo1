@@ -57,6 +57,9 @@ import {
   runCrmAgent,
 } from "./agent.server";
 
+/** Clasa de model AI pentru această sarcină. */
+export const CRM_AI_MODEL_CLASS = "standard" as const;
+
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
@@ -457,7 +460,7 @@ export async function runCrmTurn(
   if (!validation.ok) return { ...base, message: validation.message };
 
   const { resolveAiProvider } = await import("../../providers/registry.server");
-  let provider = resolveAiProvider();
+  let provider = resolveAiProvider(CRM_AI_MODEL_CLASS);
   if (!provider) {
     return { ...base, status: "not_configured", message: "AI nu este configurat." };
   }
@@ -513,7 +516,7 @@ export async function runCrmTurn(
   state = { ...state, contextCategories: context.categories };
   state = completeCrmStep(state, "build_context");
 
-  let fallbackUsed = provider.id === "gemini";
+  let fallbackUsed = false;
   let proposalRequest: Awaited<ReturnType<typeof proposeCrmAction>> | null = null;
   let outcome;
   try {

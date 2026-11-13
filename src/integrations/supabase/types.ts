@@ -1069,6 +1069,33 @@ export type Database = {
           },
         ]
       }
+      ai_model_settings: {
+        Row: {
+          fallback_model: string | null
+          fast_model: string | null
+          id: boolean
+          standard_model: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          fallback_model?: string | null
+          fast_model?: string | null
+          id?: boolean
+          standard_model?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          fallback_model?: string | null
+          fast_model?: string | null
+          id?: boolean
+          standard_model?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ai_trace_events: {
         Row: {
           created_at: string

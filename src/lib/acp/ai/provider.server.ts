@@ -8,6 +8,9 @@ import { withRetry } from "@/lib/ai/reliability/retry";
 import { AiProviderError } from "@/lib/ai/providers/types";
 export { AiProviderError } from "@/lib/ai/providers/types";
 
+/** Clasa de model AI pentru interpretarea ACP. */
+export const ACP_AI_MODEL_CLASS = "standard" as const;
+
 export type AiProvider = {
   readonly id: string;
   readonly model: string;
@@ -53,14 +56,14 @@ const RESPONSE_SCHEMA = {
 
 /** The registry reads private configuration only on the server. */
 export function isAcpAiConfigured(): boolean {
-  return resolveAiProvider() !== null;
+  return resolveAiProvider(ACP_AI_MODEL_CLASS) !== null;
 }
 
 export function resolveAcpAiProvider(): AiProvider | null {
-  const primary = resolveAiProvider();
+  const primary = resolveAiProvider(ACP_AI_MODEL_CLASS);
   if (!primary) return null;
   let actual = primary;
-  let fallbackUsed = primary.id === "gemini";
+  let fallbackUsed = false;
   let inputTokens: number | null = null;
   let outputTokens: number | null = null;
   let calls = 0;
@@ -75,7 +78,7 @@ export function resolveAcpAiProvider(): AiProvider | null {
     async generate(context) {
       const completed = await withAiProviderFallback(primary, async (provider) => {
         actual = provider;
-        fallbackUsed = provider.id === "gemini";
+        fallbackUsed = provider !== primary;
         inputTokens = null;
         outputTokens = null;
         calls = 0;

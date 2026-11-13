@@ -6,6 +6,9 @@
  */
 import { resolveAiProvider } from "@/lib/ai/providers/registry.server";
 import { withAiProviderFallback } from "@/lib/ai/providers/fallback.server";
+
+/** Extragere de date din anunțuri: clasa „rapid”. */
+export const ACP_ENRICH_AI_MODEL_CLASS = "fast" as const;
 import { withRetry } from "@/lib/ai/reliability/retry";
 import { AiProviderError } from "@/lib/ai/providers/types";
 import { writeAiUsage } from "@/lib/ai/usage/tracking.server";
@@ -72,7 +75,7 @@ async function setPause(admin: Admin, reason: string | null) {
 
 /** Un apel AI pentru un lot; întoarce rezultatele pe `ref`. */
 async function enrichBatch(listings: EnrichInputListing[]) {
-  const primary = resolveAiProvider();
+  const primary = resolveAiProvider(ACP_ENRICH_AI_MODEL_CLASS);
   if (!primary) throw new AiProviderError("AI neconfigurat", 401);
   const refs = listings.map((_, i) => `a${i + 1}`);
   const user = `Extrage datele pentru fiecare anunț. Întoarce un obiect JSON {"anunturi": [...]} cu câte un element pentru fiecare ref, conform schemei: ${JSON.stringify(ACP_ENRICH_RESPONSE_SCHEMA)}\n\nAnunțuri:\n${JSON.stringify(listings.map((l, i) => enrichPayload(l, refs[i]!)))}`;
@@ -134,7 +137,7 @@ export async function runAcpEnrichment(
   options: { mode: "new" | "backlog"; limit?: number; listingIds?: string[] },
 ): Promise<AcpEnrichRunResult> {
   const result: AcpEnrichRunResult = { status: "ok", processed: 0, failed: 0, costUsd: 0, monthSpentUsd: 0, calls: 0, items: [] };
-  if (!resolveAiProvider()) return { ...result, status: "unconfigured" };
+  if (!resolveAiProvider(ACP_ENRICH_AI_MODEL_CLASS)) return { ...result, status: "unconfigured" };
 
   const owner = crypto.randomUUID();
   const { data: acquired } = await admin.rpc("acp_enrich_acquire", { _owner: owner, _ttl_seconds: 600 });

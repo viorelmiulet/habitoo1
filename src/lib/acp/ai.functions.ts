@@ -467,7 +467,7 @@ export const reviewAcpComparables = createServerFn({ method: "POST" })
     if (!analysis) throw new Error("Analiza nu a fost găsită în agenția ta.");
 
     const { resolveAiProvider } = await import("@/lib/ai/providers/registry.server");
-    if (!resolveAiProvider()) {
+    if (!resolveAiProvider("standard")) {
       return { status: "not_configured", message: "Verificarea AI este indisponibilă momentan." };
     }
     for (const [bucket, config] of [

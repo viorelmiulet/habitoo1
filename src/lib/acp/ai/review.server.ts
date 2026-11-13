@@ -1,6 +1,9 @@
-/** „Verificare AI” — apelul AI (MiniMax prin registry, Gemini rezervă). Doar server. */
+/** „Verificare AI” — apelul AI (Gemini prin registry, Mistral rezervă). Doar server. */
 import { resolveAiProvider } from "@/lib/ai/providers/registry.server";
 import { withAiProviderFallback } from "@/lib/ai/providers/fallback.server";
+
+/** Clasa de model AI pentru verificarea ACP. */
+export const ACP_REVIEW_AI_MODEL_CLASS = "standard" as const;
 import { withRetry } from "@/lib/ai/reliability/retry";
 import { AiProviderError } from "@/lib/ai/providers/types";
 import { enrichCostUsd } from "../enrichment";
@@ -34,7 +37,7 @@ export async function callAcpComparableReview(
   comparables: readonly AcpReviewComparableInput[],
   targetTitle?: string | null,
 ): Promise<AcpReviewCallResult> {
-  const primary = resolveAiProvider();
+  const primary = resolveAiProvider(ACP_REVIEW_AI_MODEL_CLASS);
   if (!primary) throw new AiProviderError("AI neconfigurat", 401);
   const { refs, payload } = buildReviewPayload(target, comparables, targetTitle);
   const user = buildReviewUserPrompt(payload);

@@ -65,7 +65,13 @@ export type AiStatus = {
   model: string | null;
   runtime: string;
   plannedProviders: string[];
-  providers: { id: string; model: string; configured: boolean }[];
+  providers: {
+    id: string;
+    role: "primary" | "fallback";
+    model: string;
+    configured: boolean;
+    models?: { fast: string; standard: string };
+  }[];
   /** Funcția este activată de administratorul platformei pentru agenția ta. */
   featureEnabled: boolean;
   message: string;
@@ -86,7 +92,7 @@ export type AiStatus = {
 };
 
 const PROVIDER_LABELS: Record<string, string> = {
-  minimax: "MiniMax",
+  mistral: "Mistral",
   gemini: "Google Gemini",
   openai: "OpenAI",
   anthropic: "Anthropic",
@@ -98,7 +104,7 @@ export const getAiStatus = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<AiStatus> => {
     const { userId } = context as AuthContext;
     const { aiProviderStatus } = await import("./providers/registry.server");
-    const status = aiProviderStatus();
+    const status = await aiProviderStatus();
     const actor = await resolveActor(userId);
     const featureEnabled = actor ? !(await aiFeatureBlocked(actor.organizationId)) : false;
 

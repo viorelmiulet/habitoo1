@@ -43,17 +43,16 @@ afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.clearAllMocks();
 
 describe("ACP AI shared registry and validated persistence", () => {
   it.each(["valid", "corrected", "invalid", "fallback"])("%s JSON and actual usage", async (scenario) => {
-    vi.stubEnv("MINIMAX_API_KEY", "fixture"); vi.stubEnv("GEMINI_API_KEY", "fixture");
-    vi.stubEnv("MINIMAX_MODEL", "MiniMax-M3.1-Flash"); vi.stubEnv("GEMINI_MODEL", "gemini-fixture");
+    vi.stubEnv("MISTRAL_API_KEY", "fixture"); vi.stubEnv("GEMINI_API_KEY", "fixture");
     let count = 0;
     const bodies: Record<string, unknown>[] = [];
     const mockFetch = vi.fn(async (url: string, init: RequestInit) => {
       const body = JSON.parse(String(init.body)); bodies.push(body); count += 1;
-      if (url.includes("minimax.io") && scenario === "fallback") return new Response("fixture", { status: 529 });
+      if (url.includes("generativelanguage") && scenario === "fallback") return new Response("fixture", { status: 503 });
       const text = scenario === "invalid" || (scenario === "corrected" && count === 1) ? "not JSON" : JSON.stringify(insight);
-      return url.includes("minimax.io")
-        ? Response.json({ content: [{ type: "text", text }], usage: { input_tokens: 100, output_tokens: 20 } })
-        : Response.json({ candidates: [{ content: { parts: [{ text }] } }], usageMetadata: { promptTokenCount: 80, candidatesTokenCount: 10 } });
+      return url.includes("generativelanguage")
+        ? Response.json({ candidates: [{ content: { parts: [{ text }] } }], usageMetadata: { promptTokenCount: 100, candidatesTokenCount: 20 } })
+        : Response.json({ choices: [{ message: { content: text } }], usage: { prompt_tokens: 80, completion_tokens: 10 } });
     });
     vi.stubGlobal("fetch", mockFetch);
     const result = await run({ context: { userId: "user" }, data: { analysisId: "analysis" } });
@@ -61,8 +60,8 @@ describe("ACP AI shared registry and validated persistence", () => {
     expect(mockFetch).toHaveBeenCalledTimes(scenario === "fallback" ? 4 : scenario === "valid" ? 1 : 2);
     const usage = fixtures.inserts.filter((entry) => entry.table === "ai_usage_events");
     expect(usage).toHaveLength(1);
-    expect(usage[0]?.row).toMatchObject({ capability: "acp_ai", provider: scenario === "fallback" ? "gemini" : "minimax",
-      model: scenario === "fallback" ? "gemini-fixture" : "MiniMax-M3.1-Flash", fallback_used: scenario === "fallback",
+    expect(usage[0]?.row).toMatchObject({ capability: "acp_ai", provider: scenario === "fallback" ? "mistral" : "gemini",
+      model: scenario === "fallback" ? "mistral-small-latest" : "gemini-2.5-flash", fallback_used: scenario === "fallback",
       input_tokens: scenario === "fallback" ? 80 : scenario === "valid" ? 100 : 200,
       output_tokens: scenario === "fallback" ? 10 : scenario === "valid" ? 20 : 40, success: scenario !== "invalid" });
     expect(fixtures.rpc).toHaveBeenNthCalledWith(1, "rate_limit_hit", { _bucket: "acp_ai:user:user", _limit: 10, _window_seconds: 3600 });
@@ -83,7 +82,7 @@ describe("ACP AI shared registry and validated persistence", () => {
   });
 
   it("unconfigured registry never uses the former gateway", () => {
-    vi.stubEnv("MINIMAX_API_KEY", ""); vi.stubEnv("GEMINI_API_KEY", ""); vi.stubEnv("LOVABLE_API_KEY", "fixture");
+    vi.stubEnv("MISTRAL_API_KEY", ""); vi.stubEnv("GEMINI_API_KEY", ""); vi.stubEnv("LOVABLE_API_KEY", "fixture");
     expect(resolveAcpAiProvider()).toBeNull();
     expect(ACP_AI_RATE_LIMITS.perUser.limit).toBe(10); expect(ACP_AI_RATE_LIMITS.perOrganization.limit).toBe(40);
   });

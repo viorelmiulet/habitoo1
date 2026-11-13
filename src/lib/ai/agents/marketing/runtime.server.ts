@@ -51,6 +51,9 @@ import {
   type MarketingWorkflowStatus,
 } from "./workflow";
 
+/** Clasa de model AI pentru această sarcină. */
+export const MARKETING_AI_MODEL_CLASS = "standard" as const;
+
 /** Maximum de proprietăți per cerere: fiecare rezultat rămâne legat de ID-ul ei. */
 export const MARKETING_MAX_PROPERTIES = 5;
 
@@ -165,7 +168,7 @@ export async function runMarketingTurn(
   }
 
   const { resolveAiProvider } = await import("../../providers/registry.server");
-  let provider = resolveAiProvider();
+  let provider = resolveAiProvider(MARKETING_AI_MODEL_CLASS);
   if (!provider) {
     return { status: "not_configured", run: null, message: "AI nu este configurat." };
   }
@@ -212,7 +215,7 @@ export async function runMarketingTurn(
   state = completeMarketingStep(state, "resolve_organization");
 
   const branding = await marketingBrandingFor(admin, actor);
-  let fallbackUsed = provider.id === "gemini";
+  let fallbackUsed = false;
   let batch: {
     results: MarketingResult[];
     failures: MarketingWorkflowState["failures"];
