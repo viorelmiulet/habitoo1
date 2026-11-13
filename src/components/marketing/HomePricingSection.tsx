@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PLAN_AGENT_LIMITS, PLAN_LABELS, PLAN_PRICES, type PlanKey } from "@/lib/plans";
@@ -47,7 +47,7 @@ export function HomePricingSection() {
               <div
                 key={key}
                 className={cn(
-                  "relative flex min-w-0 flex-col rounded-3xl border p-6",
+                  "relative flex min-w-0 flex-col rounded-[28px] border p-6 transition-transform duration-300 hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0",
                   featured ? "mk-navy-bg border-navy shadow-float" : "border-border bg-card shadow-soft",
                 )}
               >
@@ -64,6 +64,9 @@ export function HomePricingSection() {
                   {key === "unlimited" ? "agenți fără limită" : `până la ${PLAN_AGENT_LIMITS[key]} agenți`}
                 </p>
                 <p className={cn("mt-2 text-sm", featured ? "text-navy-foreground" : "text-success")}>90 de zile gratuit, fără card bancar</p>
+                <p className={cn("mt-2 inline-flex items-center gap-1.5 text-sm font-semibold", featured ? "text-gold" : "text-gold-dark")}>
+                  <Sparkles className="size-4" aria-hidden /> Habitoo AI inclus
+                </p>
               </div>
             );
           })}

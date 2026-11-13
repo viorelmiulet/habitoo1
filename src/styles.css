@@ -626,3 +626,61 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
 }
 [data-settings-root] .panel > header h2 { font-size: 16px; font-weight: 700; text-transform: none; letter-spacing: normal; }
 [data-settings-root] .panel > header h2 + p, [data-settings-root] .panel > header div > h2 + p { font-size: 13px; }
+
+/* ---------- Homepage (HP1) ---------- */
+@utility hp-hero-bg {
+  background-color: var(--color-navy);
+  background-image:
+    radial-gradient(60% 55% at 78% 18%, color-mix(in oklab, var(--color-gold) 22%, transparent) 0%, transparent 62%),
+    radial-gradient(70% 60% at 0% 100%, color-mix(in oklab, var(--color-navy-foreground) 10%, transparent) 0%, transparent 60%),
+    linear-gradient(180deg, var(--color-navy) 0%, color-mix(in oklab, var(--color-navy) 82%, black) 100%);
+}
+
+@utility hp-card {
+  height: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  background: var(--color-card);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-soft);
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease, border-color 260ms ease;
+  &:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--color-gold) 45%, var(--color-border));
+    box-shadow: var(--shadow-float);
+  }
+}
+
+@utility hp-card-dark {
+  height: 100%;
+  border: 1px solid color-mix(in oklab, var(--color-gold) 22%, transparent);
+  border-radius: 28px;
+  background: color-mix(in oklab, var(--color-navy-foreground) 6%, transparent);
+  padding: 1.75rem;
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), border-color 260ms ease, background-color 260ms ease;
+  &:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--color-gold) 55%, transparent);
+    background: color-mix(in oklab, var(--color-navy-foreground) 10%, transparent);
+  }
+}
+
+@utility hp-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--color-gold);
+  animation: hp-blink 1s steps(2, start) infinite;
+}
+
+@keyframes hp-blink {
+  to { visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-card, .hp-card-dark { transition: none; }
+  .hp-card:hover, .hp-card-dark:hover { transform: none; }
+  .hp-caret { animation: none; }
+}

@@ -120,7 +120,7 @@ export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartne
     return `- ${PLAN_LABELS[key]}: ${price.monthly} €/lună, ${planAgentLimitLabel(key)}; plata anuală: ${price.annualMonthly * 12} €/an (${price.annualMonthly} €/lună echivalent), reducere ${discount}%.`;
   }).join("\n");
   return `# ${SITE_NAME}
-> Habitoo CRM este un CRM imobiliar în limba română pentru agențiile și agenții imobiliari din România. Reunește proprietățile, clienții, cererile, lead-urile și echipa, publică anunțurile pe portalurile imobiliare și adună anunțurile de la proprietari din mai multe portaluri.
+> Habitoo CRM este un CRM imobiliar cu AI, în limba română, pentru agențiile și agenții imobiliari din România. Reunește proprietățile, clienții, cererile, lead-urile și echipa, publică anunțurile pe portalurile imobiliare și adună anunțurile de la proprietari din mai multe portaluri.
 
 ## Pagini principale
 - [Habitoo CRM — prima pagină](${BLOG_SITE_URL}/): CRM imobiliar pentru agențiile din România.
@@ -145,6 +145,7 @@ ${hasPartners ? `- [Agenții partenere Habitoo](${BLOG_SITE_URL}/agentii): Agen�
 - Publicare pe portaluri: Imobiliare.ro, Storia și OLX, Publi24 (prin Romimo), iMove, Imospot, HomePitch, PrimulAnunț, LaCheie, ClickImob, Properstar și Catalogul Facebook (Meta)
 - Anunțuri de la proprietari: adunate automat din Storia, OLX, Romimo, Imoradar24 și Anuntul.ro, cu filtre pe județ, oraș și zone; importul în portofoliu se face doar după confirmarea acordului proprietarului
 - Analiză comparativă de piață (ACP) din ofertele active
+- Habitoo AI: agentul AI CRM (întrebări despre clienți, cereri, lead-uri și priorități), AI Marketing (titluri, descrieri și postări pentru anunțuri), Studio AI (îmbunătățirea pozelor, video din poză, imagini de marketing), voce AI în română pentru videoclipuri, comentariu AI în analiza comparativă de preț și citirea automată a actelor de identitate în contracte; AI-ul propune, agentul aprobă
 - Colaborare între agenții (de tip MLS), cu comision stabilit
 - Contracte digitale cu semnătură
 - Comisioane: agentul își vede comisioanele, adminul toată agenția, cu rapoarte, comparații și export
