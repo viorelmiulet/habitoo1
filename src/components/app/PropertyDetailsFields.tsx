@@ -338,6 +338,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           <SelectField ctx={ctx} field="building_type" label="Tip" options={buildingTypeOptions} />
           <SelectField ctx={ctx} field="building_structure" label="Structură" options={buildingStructureOptions} />
           <SelectField ctx={ctx} field="seismic_risk" label="Risc seismic" options={seismicRiskOptions} />
+          <SelectField ctx={ctx} field="energy_class" label="Clasă energetică (recomandat)" options={["A++", "A+", "A", "B", "C", "D", "E", "F", "G"]} />
           <NumberField ctx={ctx} field="building_floors" label="Etaje" />
           <NumberField ctx={ctx} field="recessed_floors" label="Etaje retrase" />
         </div>

@@ -40,6 +40,7 @@ export const PROPERTY_DETAIL_FIELDS = [
   "building_type",
   "building_structure",
   "seismic_risk",
+  "energy_class",
   "building_floors",
   "recessed_floors",
   "has_basement",

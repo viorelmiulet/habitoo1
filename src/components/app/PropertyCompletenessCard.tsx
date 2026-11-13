@@ -12,6 +12,7 @@ export function completenessTargetId(key: CompletenessKey, idPrefix: string, isL
     case "city": return `${idPrefix}-locality`;
     case "surface": return `${idPrefix}-${isLand ? "land_surface" : "usable_surface"}`;
     case "rooms": return `${idPrefix}-rooms`;
+    case "energy_class": return `${idPrefix}-energy_class`;
     case "coords": return `${idPrefix}-location-precise`;
     case "agent": return "responsible-agent";
     default: return null;
