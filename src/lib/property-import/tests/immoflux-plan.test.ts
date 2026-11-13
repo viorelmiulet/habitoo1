@@ -118,3 +118,26 @@ describe("planImmofluxImport", () => {
     expect(plan.counts).toMatchObject({ create: 1, skip: 1 });
   });
 });
+
+describe("planImmofluxImport – completare la reimport", () => {
+  const withCodes = (id: number) => item(id, { utilities: ["10001", "10002"], bedrooms: 2 });
+
+  it("utilitățile completate de agent nu se suprascriu", () => {
+    const plan = planImmofluxImport(
+      [withCodes(1)],
+      [existing("p1", "1", { fill: { utilities: ["Gaz"], bedrooms: null } })],
+      ctx,
+    );
+    const it0 = plan.items[0]!;
+    if (it0.action !== "update") throw new Error("update așteptat");
+    expect(it0.patch).not.toHaveProperty("utilities");
+    expect(it0.patch.bedrooms).toBe(2);
+  });
+
+  it("utilitățile goale se completează", () => {
+    const plan = planImmofluxImport([withCodes(1)], [existing("p1", "1", { fill: { utilities: [] } })], ctx);
+    const it0 = plan.items[0]!;
+    if (it0.action !== "update") throw new Error("update așteptat");
+    expect(it0.patch.utilities).toEqual(["Curent electric", "Apă"]);
+  });
+});

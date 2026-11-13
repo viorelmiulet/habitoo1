@@ -3,7 +3,9 @@
  * element, plus pozele de pus în coadă. Nu atinge rețeaua sau baza de date.
  */
 import {
+  FILL_IF_EMPTY_FIELDS,
   mapImmofluxItem,
+  type ImmofluxFillField,
   type ImmofluxImage,
   type ImmofluxItem,
   type ImmofluxMapperContext,
@@ -24,6 +26,8 @@ export type ExistingImmofluxProperty = {
   location_precise: boolean;
   /** `source_url` deja pe proprietate sau deja în coadă. */
   known_image_urls: string[];
+  /** Valorile actuale ale câmpurilor completate doar dacă sunt goale. */
+  fill?: Partial<Record<ImmofluxFillField, unknown>>;
 };
 
 /** Câmpuri care nu se suprascriu niciodată la actualizare. */
@@ -81,11 +85,35 @@ function isEmpty(value: unknown): boolean {
   return value === null || value === undefined || value === "" || value === false;
 }
 
+/** Valoare implicită (fără informație) pentru booleenele cu default în DB. */
+function isDefaultBoolean(key: ImmofluxFillField, value: unknown): boolean {
+  if (key === "vat_included") return value !== false;
+  if (key === "is_exclusive") return false;
+  return typeof value === "boolean" && value === false;
+}
+
+function isBlankMapped(key: ImmofluxFillField, value: unknown): boolean {
+  if (key === "is_exclusive") return value === null || value === undefined;
+  if (typeof value === "boolean" || key === "vat_included") return isDefaultBoolean(key, value);
+  return value === null || value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
+}
+
+function isBlankExisting(key: ImmofluxFillField, value: unknown): boolean {
+  if (value === null || value === undefined || value === "") return true;
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === "boolean") return isDefaultBoolean(key, value);
+  return false;
+}
+
 function buildPatch(row: ImmofluxPropertyRow, existing: ExistingImmofluxProperty): ImmofluxUpdatePatch {
   const patch: Record<string, unknown> = { ...row };
   for (const key of PROTECTED_FIELDS) delete patch[key];
   for (const key of LOCATION_FIELDS) {
     if (!isEmpty(existing[key])) delete patch[key];
+  }
+  for (const key of FILL_IF_EMPTY_FIELDS) {
+    if (!isBlankMapped(key, patch[key]) && isBlankExisting(key, existing.fill?.[key])) continue;
+    delete patch[key];
   }
   return patch as ImmofluxUpdatePatch;
 }

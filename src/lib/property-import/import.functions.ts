@@ -92,9 +92,10 @@ export const importImmofluxProperties = createServerFn({ method: "POST" })
     }
     if (!Array.isArray(parsed)) throw new Error("Fișierul trebuie să conțină o listă de proprietăți.");
 
-    const [{ supabaseAdmin }, { planImmofluxImport }] = await Promise.all([
+    const [{ supabaseAdmin }, { planImmofluxImport }, { FILL_IF_EMPTY_FIELDS }] = await Promise.all([
       import("@/integrations/supabase/client.server"),
       import("./immoflux/plan"),
+      import("./immoflux/mapper"),
     ]);
 
     const { data: agent } = await supabaseAdmin
@@ -104,6 +105,14 @@ export const importImmofluxProperties = createServerFn({ method: "POST" })
       .eq("organization_id", data.organizationId)
       .maybeSingle();
     if (!agent) throw new Error("Agentul ales nu aparține agenției selectate.");
+
+    // Membrii activi: `agent.email` din export alege responsabilul la creare.
+    const { data: memberRows, error: membersError } = await supabaseAdmin
+      .from("profiles")
+      .select("id,email")
+      .eq("organization_id", data.organizationId)
+      .eq("is_active", true);
+    if (membersError) throw new Error("Membrii agenției nu au putut fi citiți.");
 
     // Proprietățile existente ale agenției, importate anterior din IMMOFLUX.
     const externalIds = [
@@ -118,13 +127,20 @@ export const importImmofluxProperties = createServerFn({ method: "POST" })
       const { data: rows, error } = await supabaseAdmin
         .from("properties")
         .select(
-          "id,external_id,county,city,county_siruta_code,uat_siruta_code,locality_siruta_code,district,lat,lng,location_precise",
+          [
+            "id,external_id,county,city,county_siruta_code,uat_siruta_code,locality_siruta_code,district,lat,lng,location_precise",
+            ...FILL_IF_EMPTY_FIELDS,
+          ].join(","),
         )
         .eq("organization_id", data.organizationId)
         .eq("source", "immoflux")
         .in("external_id", part);
       if (error) throw new Error("Proprietățile existente nu au putut fi citite.");
-      for (const r of rows ?? []) existingRows.push({ ...r, external_id: r.external_id ?? "" });
+      for (const raw of (rows ?? []) as unknown as Record<string, unknown>[]) {
+        const fill = Object.fromEntries(FILL_IF_EMPTY_FIELDS.map((k) => [k, raw[k]]));
+        const r = raw as unknown as Omit<ExistingImmofluxProperty, "known_image_urls" | "fill">;
+        existingRows.push({ ...r, external_id: r.external_id ?? "", fill });
+      }
     }
     const known = new Map<string, string[]>(existingRows.map((r) => [r.id, []]));
     for (const part of chunks([...known.keys()])) {
@@ -145,6 +161,7 @@ export const importImmofluxProperties = createServerFn({ method: "POST" })
     const plan = planImmofluxImport(parsed, existing, {
       organizationId: data.organizationId,
       assignedTo: data.assignedTo,
+      members: memberRows ?? [],
     });
 
     if (data.mode === "preview") {

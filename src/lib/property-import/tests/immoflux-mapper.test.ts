@@ -116,7 +116,7 @@ describe("mapImmofluxItem", () => {
   });
 
   it("tranzacție, subcategorie sau monedă necunoscute → sărite cu motiv", () => {
-    const r = mapImmofluxItem(base({ transaction_id: 5, subcategory_id: 999, price_currency: 2 }), ctx);
+    const r = mapImmofluxItem(base({ transaction_id: 5, category_id: 7, subcategory_id: 999, price_currency: 9 }), ctx);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reasons).toHaveLength(3);
   });
@@ -208,8 +208,129 @@ describe("immoflux casă și hală", () => {
     const r = mapImmofluxItem(item({ category_id: 6, subcategory_id: 0, transaction_id: 2, price: 2500 }), ctx2);
     expect(r.ok && r.row.property_type).toBe("industrial");
   });
-  it("altă categorie rămâne sărită", () => {
-    const r = mapImmofluxItem(item({ category_id: 3, subcategory_id: 301 }), ctx2);
+  it("categoria 7 (hotel) rămâne sărită", () => {
+    const r = mapImmofluxItem(item({ category_id: 7, subcategory_id: 701 }), ctx2);
     expect(r.ok).toBe(false);
+  });
+});
+
+import { IMMOFLUX_CODES } from "../immoflux/codes";
+import * as taxonomy from "@/lib/property-taxonomy";
+
+const OPTIONS: Record<string, readonly string[]> = {
+  utilities: taxonomy.utilityOptions,
+  heating_systems: taxonomy.heatingOptions,
+  cooling_systems: taxonomy.coolingOptions,
+  insulation: taxonomy.insulationOptions,
+  wall_finishes: taxonomy.wallFinishOptions,
+  floor_finishes: taxonomy.floorFinishOptions,
+  windows: taxonomy.windowOptions,
+  blinds: taxonomy.blindOptions,
+  shutters: taxonomy.shutterOptions,
+  entry_door: taxonomy.entryDoorOptions,
+  interior_doors: taxonomy.interiorDoorOptions,
+  additional_spaces: taxonomy.additionalSpaceOptions,
+  kitchen_features: taxonomy.kitchenOptions,
+  metering: taxonomy.meteringOptions,
+  appliances: taxonomy.applianceOptions,
+  building_amenities: taxonomy.buildingAmenityOptions,
+  street_arrangement: taxonomy.streetArrangementOptions,
+  views: taxonomy.viewOptions,
+  misc_features: taxonomy.miscFeatureOptions,
+  finish_state: taxonomy.finishStateOptions,
+  furnishing: taxonomy.furnishingOptions,
+};
+
+// Elementul 158376 din exportul MRM.
+const mrm158376: Partial<ImmofluxItem> = {
+  id: 158376,
+  utilities: ["10001", "10002", "10003", "10004", "10012", "10013", "10102", "10107"],
+  finishes: ["20301", "20001", "20002", "20003", "20101", "20103", "20201", "20202", "20401", "20404", "20701"],
+  equipment: ["30301", "30105", "30106", "30201", "30203", "30204", "30205", "30401", "30402", "30421", "30403"],
+  zone_extra: ["50001", "50004", "50005", "50006", "90001", "90005"],
+  confort: 1,
+  partitioning: 1,
+  building_type: 1,
+  building_structure: 6,
+  built_stage: 4,
+  built_year: 2026,
+  destination_id: 1,
+  exclusivity: 1,
+  parking: 1,
+  key_in_agency: 1,
+  bedrooms: 1,
+  kitchens: 1,
+  surface_size: "33.00",
+};
+
+describe("IMMOFLUX – câmpuri complete", () => {
+  it("fiecare cod mapat folosește o opțiune existentă din formular", () => {
+    for (const [code, entry] of IMMOFLUX_CODES) {
+      if (!entry.field) continue;
+      expect(OPTIONS[entry.field], String(code)).toContain(entry.value);
+    }
+  });
+
+  it("elementul 158376 completează utilitățile, finisajele și dotările", () => {
+    const r = mapImmofluxItem(base(mrm158376), ctx);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const row = r.row;
+    expect(row.utilities).toEqual(["Curent electric", "Apă", "Canalizare", "Gaz", "Acces internet", "Fibră optică"]);
+    expect(row.heating_systems).toEqual(["Centrală proprie", "Încălzire pardoseală"]);
+    expect(row.metering).toEqual(["Apometre", "Contor gaz", "Contor curent electric", "Contorizare separată"]);
+    expect(row.insulation).toContain("Bloc izolat termic");
+    expect(row.wall_finishes).toEqual(["Vopsea lavabilă", "Faianță"]);
+    expect(row.floor_finishes).toEqual(["Parchet", "Gresie"]);
+    expect(row.windows).toEqual(expect.arrayContaining(["PVC", "Termopan"]));
+    expect(row.entry_door).toEqual(["Metal"]);
+    expect(row.building_amenities).toEqual(["Interfon", "Videointerfon", "Lift", "Supraveghere video"]);
+    expect(row.street_arrangement).toEqual(["Asfaltate", "Betonate", "Iluminat stradal", "Mijloace de transport în comun"]);
+    expect(row.views).toEqual(["Panoramică", "Spre oraș"]);
+    expect(row.finish_state).toBe("Finisat");
+    expect(row.furnishing).toBe("Nemobilat");
+    expect(row.kitchen_features).toEqual(["Nemobilată", "Neutilată"]);
+    expect(row).toMatchObject({
+      comfort: "1",
+      layout: "Decomandat",
+      building_type: "Bloc",
+      building_structure: "Beton",
+      construction_stage: "Finalizată",
+      destination: "Rezidențială",
+      is_exclusive: true,
+      bedrooms: 1,
+      kitchens: 1,
+      surface: 33,
+      parking_spaces: 1,
+      key_in_agency: true,
+    });
+    expect(r.warnings.some((w) => w.startsWith("Coduri IMMOFLUX nemapate"))).toBe(false);
+  });
+
+  it("price_currency 2 → RON", () => {
+    const r = mapImmofluxItem(base({ price_currency: 2 }), ctx);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.row.currency).toBe("RON");
+    expect(r.row.sale_currency).toBe("RON");
+  });
+
+  it("cod inventat → un singur avertisment, fără duplicate", () => {
+    const r = mapImmofluxItem(base({ utilities: ["39999", "39999"], equipment: "30420" }), ctx);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.warnings.filter((x) => x.startsWith("Coduri IMMOFLUX nemapate"));
+    expect(w).toHaveLength(1);
+    expect(w[0]).toContain("39999");
+    expect(w[0]!.match(/39999/g)).toHaveLength(1);
+    expect(w[0]).toContain("30420 (Recepție)");
+  });
+
+  it("agent.email al unui membru activ → responsabil", () => {
+    const r = mapImmofluxItem(base({ agent: { email: "Ana@MRM.ro " } }), {
+      ...ctx,
+      members: [{ id: "user-2", email: "ana@mrm.ro" }],
+    });
+    expect(r.ok && r.row.assigned_to).toBe("user-2");
   });
 });
