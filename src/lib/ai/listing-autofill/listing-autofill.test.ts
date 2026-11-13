@@ -96,7 +96,7 @@ describe("Anunț din poze și voce", () => {
     expect(filtered.title).toBeNull();
 
     let details: Record<string, unknown> = { rooms: 3 };
-    let tx = { ...emptyTransaction, sale_price: 80000 };
+    let tx: typeof emptyTransaction = { ...emptyTransaction, sale_price: 80000 };
     applyAutofillProposal(proposal, {
       setDetails: (fn) => { details = fn(details); },
       setText: () => undefined,
