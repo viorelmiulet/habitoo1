@@ -14,6 +14,7 @@ export const AI_FEATURE_KEYS = [
   "ai_video_voice",
   "acp_ai",
   "ai_listing_autofill",
+  "ai_lead_assist",
 ] as const;
 
 export type AiFeatureKey = (typeof AI_FEATURE_KEYS)[number];
@@ -60,6 +61,11 @@ export const AI_FEATURES: { key: AiFeatureKey; label: string; description: strin
     key: "ai_listing_autofill",
     label: "Anunț din poze și voce",
     description: "Completează formularul proprietății din poze și voce, ca propuneri de verificat.",
+  },
+  {
+    key: "ai_lead_assist",
+    label: "Asistent lead-uri",
+    description: "Citește mesajele primite din portaluri, extrage cererea clientului și pregătește o ciornă de răspuns.",
   },
 ];
 

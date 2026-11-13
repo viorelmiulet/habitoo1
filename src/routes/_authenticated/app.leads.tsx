@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { LeadAiAssist, LeadAiBadges, useLeadAiBadges } from "@/components/app/ai/LeadAiAssist";
 import { Slider } from "@/components/ui/slider";
 import {
   Dialog,
@@ -289,6 +290,10 @@ function LeadsPage() {
       return data;
     },
   });
+
+  const leadAiBadges = useLeadAiBadges(useMemo(() => leads.map((l) => l.id), [leads])).data;
+  const [aiDraft, setAiDraft] = useState<{ text: string; nonce: number } | null>(null);
+  useEffect(() => setAiDraft(null), [detailLead?.id]);
 
   const { data: detailData } = useQuery({
     queryKey: ["lead-detail", detailLead?.id],
@@ -623,6 +628,7 @@ function LeadsPage() {
             <span className="truncate">{l.source ?? "sursă necunoscută"}</span>
           </span>
           {l.value ? <span className="text-sm font-bold">{formatMoney(l.value)}</span> : null}
+          <LeadAiBadges info={leadAiBadges?.get(l.id)} />
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -1356,7 +1362,14 @@ function LeadsPage() {
                       </p>
                     ) : null}
                   </ul>
-                  <HouseraReplyBox leadId={detailLead.id} />
+                  <LeadAiAssist
+                    key={detailLead.id}
+                    leadId={detailLead.id}
+                    phone={detailLead.phone}
+                    portalReply={(detailData?.messages ?? []).some((m) => m.portal === "housera")}
+                    onUse={(text) => setAiDraft({ text, nonce: Date.now() })}
+                  />
+                  <HouseraReplyBox leadId={detailLead.id} draft={aiDraft} />
                   <p className="mt-3 text-[11px] text-muted-foreground">
                     Mesajele primite din portaluri se păstrează 180 de zile, apoi se șterg automat.
                   </p>

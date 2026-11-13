@@ -4364,6 +4364,91 @@ export type Database = {
           },
         ]
       }
+      lead_ai_insights: {
+        Row: {
+          attempts: number
+          changes_applied_at: string | null
+          created_at: string
+          draft: string | null
+          draft_language: string | null
+          extracted: Json | null
+          id: string
+          intent: string | null
+          lead_id: string
+          locked_until: string | null
+          message_id: string
+          organization_id: string
+          proposed_changes: Json
+          request_created: boolean
+          request_id: string | null
+          skip_reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          changes_applied_at?: string | null
+          created_at?: string
+          draft?: string | null
+          draft_language?: string | null
+          extracted?: Json | null
+          id?: string
+          intent?: string | null
+          lead_id: string
+          locked_until?: string | null
+          message_id: string
+          organization_id: string
+          proposed_changes?: Json
+          request_created?: boolean
+          request_id?: string | null
+          skip_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          changes_applied_at?: string | null
+          created_at?: string
+          draft?: string | null
+          draft_language?: string | null
+          extracted?: Json | null
+          id?: string
+          intent?: string | null
+          lead_id?: string
+          locked_until?: string | null
+          message_id?: string
+          organization_id?: string
+          proposed_changes?: Json
+          request_created?: boolean
+          request_id?: string | null
+          skip_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_ai_insights_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_ai_insights_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: true
+            referencedRelation: "portal_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_ai_insights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_events: {
         Row: {
           actor_id: string | null
@@ -13338,6 +13423,35 @@ export type Database = {
       is_superadmin: { Args: never; Returns: boolean }
       lacheie_resend_arm: { Args: never; Returns: undefined }
       lacheie_resend_tick: { Args: never; Returns: undefined }
+      lead_ai_claim: {
+        Args: { _limit?: number }
+        Returns: {
+          attempts: number
+          changes_applied_at: string | null
+          created_at: string
+          draft: string | null
+          draft_language: string | null
+          extracted: Json | null
+          id: string
+          intent: string | null
+          lead_id: string
+          locked_until: string | null
+          message_id: string
+          organization_id: string
+          proposed_changes: Json
+          request_created: boolean
+          request_id: string | null
+          skip_reason: string | null
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "lead_ai_insights"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       listing_image_replace: {
         Args: { _job_id: string; _stored_url: string }
         Returns: boolean

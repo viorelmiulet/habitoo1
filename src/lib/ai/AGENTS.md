@@ -1,1 +1,2 @@
 - Listing autofill only proposes form values (taxonomy-sanitized, explicit facts from agent words, `withAiCredits`). Why: AI never writes rows or invents facts.
+- Lead assist analyzes only lead-linked incoming portal messages via trigger-queued `lead_ai_insights` (bounded leased claim, 5-min worker, `withAiCredits`); it creates a request only when the lead has none, otherwise stores proposed diffs, and never sends. Why: message receipt must never depend on AI and agents approve every send.

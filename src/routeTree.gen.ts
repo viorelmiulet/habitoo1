@@ -126,6 +126,7 @@ import { Route as ApiPublicCronHouseraAvailabilityRouteImport } from './routes/a
 import { Route as ApiPublicCronHouseraEventsRouteImport } from './routes/api/public/cron/housera-events'
 import { Route as ApiPublicCronHouseraSchemaRouteImport } from './routes/api/public/cron/housera-schema'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
+import { Route as ApiPublicCronLeadAiRouteImport } from './routes/api/public/cron/lead-ai'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
 import { Route as ApiPublicCronListingImagesRouteImport } from './routes/api/public/cron/listing-images'
 import { Route as ApiPublicCronListingsRetentionRouteImport } from './routes/api/public/cron/listings-retention'
@@ -884,6 +885,11 @@ const ApiPublicCronLacheieResendRoute =
     path: '/api/public/cron/lacheie-resend',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronLeadAiRoute = ApiPublicCronLeadAiRouteImport.update({
+  id: '/api/public/cron/lead-ai',
+  path: '/api/public/cron/lead-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronListingCollectorRoute =
   ApiPublicCronListingCollectorRouteImport.update({
     id: '/api/public/cron/listing-collector',
@@ -1658,6 +1664,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/housera-events': typeof ApiPublicCronHouseraEventsRoute
   '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
+  '/api/public/cron/lead-ai': typeof ApiPublicCronLeadAiRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
@@ -1887,6 +1894,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/housera-events': typeof ApiPublicCronHouseraEventsRoute
   '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
+  '/api/public/cron/lead-ai': typeof ApiPublicCronLeadAiRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
@@ -2122,6 +2130,7 @@ export interface FileRoutesById {
   '/api/public/cron/housera-events': typeof ApiPublicCronHouseraEventsRoute
   '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
+  '/api/public/cron/lead-ai': typeof ApiPublicCronLeadAiRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
@@ -2357,6 +2366,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/housera-events'
     | '/api/public/cron/housera-schema'
     | '/api/public/cron/lacheie-resend'
+    | '/api/public/cron/lead-ai'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/listing-images'
     | '/api/public/cron/listings-retention'
@@ -2586,6 +2596,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/housera-events'
     | '/api/public/cron/housera-schema'
     | '/api/public/cron/lacheie-resend'
+    | '/api/public/cron/lead-ai'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/listing-images'
     | '/api/public/cron/listings-retention'
@@ -2820,6 +2831,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/housera-events'
     | '/api/public/cron/housera-schema'
     | '/api/public/cron/lacheie-resend'
+    | '/api/public/cron/lead-ai'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/listing-images'
     | '/api/public/cron/listings-retention'
@@ -2997,6 +3009,7 @@ export interface RootRouteChildren {
   ApiPublicCronHouseraEventsRoute: typeof ApiPublicCronHouseraEventsRoute
   ApiPublicCronHouseraSchemaRoute: typeof ApiPublicCronHouseraSchemaRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
+  ApiPublicCronLeadAiRoute: typeof ApiPublicCronLeadAiRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
   ApiPublicCronListingImagesRoute: typeof ApiPublicCronListingImagesRoute
   ApiPublicCronListingsRetentionRoute: typeof ApiPublicCronListingsRetentionRoute
@@ -3917,6 +3930,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/lacheie-resend'
       fullPath: '/api/public/cron/lacheie-resend'
       preLoaderRoute: typeof ApiPublicCronLacheieResendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/lead-ai': {
+      id: '/api/public/cron/lead-ai'
+      path: '/api/public/cron/lead-ai'
+      fullPath: '/api/public/cron/lead-ai'
+      preLoaderRoute: typeof ApiPublicCronLeadAiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/listing-collector': {
@@ -5152,6 +5172,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronHouseraEventsRoute: ApiPublicCronHouseraEventsRoute,
   ApiPublicCronHouseraSchemaRoute: ApiPublicCronHouseraSchemaRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
+  ApiPublicCronLeadAiRoute: ApiPublicCronLeadAiRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
   ApiPublicCronListingImagesRoute: ApiPublicCronListingImagesRoute,
   ApiPublicCronListingsRetentionRoute: ApiPublicCronListingsRetentionRoute,

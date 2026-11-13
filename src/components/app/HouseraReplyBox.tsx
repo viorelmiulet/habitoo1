@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,11 @@ import { getHouseraReplyState, retryHouseraLeadReply, sendHouseraLeadReply } fro
 const MAX = 2000;
 
 /** Câmpul de răspuns către clientul Housera, afișat doar la lead-urile legate. */
-export function HouseraReplyBox({ leadId }: { leadId: string }) {
+export function HouseraReplyBox({ leadId, draft }: { leadId: string; draft?: { text: string; nonce: number } | null }) {
   const qc = useQueryClient();
   const [body, setBody] = useState("");
+  // „Folosește” din Habitoo AI doar completează câmpul; trimiterea rămâne la „Trimite”.
+  useEffect(() => { if (draft?.text) setBody(draft.text.slice(0, MAX)); }, [draft?.nonce, draft?.text]);
   const stateFn = useServerFn(getHouseraReplyState);
   const sendFn = useServerFn(sendHouseraLeadReply);
   const state = useQuery({ queryKey: ["housera-reply-state", leadId], queryFn: () => stateFn({ data: { leadId } }) });
