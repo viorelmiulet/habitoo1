@@ -16,6 +16,7 @@ export const AI_FEATURE_KEYS = [
   "ai_listing_autofill",
   "ai_lead_assist",
   "ai_active_matching",
+  "ai_owner_report",
 ] as const;
 
 export type AiFeatureKey = (typeof AI_FEATURE_KEYS)[number];
@@ -72,6 +73,11 @@ export const AI_FEATURES: { key: AiFeatureKey; label: string; description: strin
     key: "ai_active_matching",
     label: "Potriviri active",
     description: "Anunță agentul când o proprietate nouă sau mai ieftină se potrivește cu o cerere și pregătește mesajul către client.",
+  },
+  {
+    key: "ai_owner_report",
+    label: "Raport proprietar",
+    description: "Pregătește în fiecare luni raportul săptămânal pentru proprietar, din datele reale ale proprietății.",
   },
 ];
 

@@ -1,4 +1,4 @@
-const DIRECT_TABS = new Set(["agent", "location", "description", "price", "overview", "media", "matching", "documents", "acp", "history"]);
+const DIRECT_TABS = new Set(["agent", "location", "description", "price", "overview", "media", "matching", "documents", "acp", "history", "owner-reports"]);
 
 /** Fila inițială a fișei: „publishing”/„promotion” → Promovare; file eliminate sau necunoscute → Caracteristici. */
 export function propertyTabFromSearch(tab: string | undefined): string {

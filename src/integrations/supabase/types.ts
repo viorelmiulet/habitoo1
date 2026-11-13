@@ -7251,6 +7251,139 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_report_settings: {
+        Row: {
+          auto_send: boolean
+          enabled: boolean
+          organization_id: string
+          property_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          auto_send?: boolean
+          enabled?: boolean
+          organization_id: string
+          property_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          auto_send?: boolean
+          enabled?: boolean
+          organization_id?: string
+          property_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_report_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_report_settings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_reports: {
+        Row: {
+          agent_id: string | null
+          auto_send: boolean
+          created_at: string
+          data: Json
+          id: string
+          is_ai: boolean
+          narrative: Json | null
+          organization_id: string
+          owner_contact_id: string | null
+          pdf_path: string | null
+          property_id: string
+          send_error: string | null
+          sent_at: string | null
+          sent_by: string | null
+          sent_via: string | null
+          short_text: string | null
+          status: string
+          updated_at: string
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          agent_id?: string | null
+          auto_send?: boolean
+          created_at?: string
+          data?: Json
+          id?: string
+          is_ai?: boolean
+          narrative?: Json | null
+          organization_id: string
+          owner_contact_id?: string | null
+          pdf_path?: string | null
+          property_id: string
+          send_error?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          sent_via?: string | null
+          short_text?: string | null
+          status?: string
+          updated_at?: string
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          agent_id?: string | null
+          auto_send?: boolean
+          created_at?: string
+          data?: Json
+          id?: string
+          is_ai?: boolean
+          narrative?: Json | null
+          organization_id?: string
+          owner_contact_id?: string | null
+          pdf_path?: string | null
+          property_id?: string
+          send_error?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          sent_via?: string | null
+          short_text?: string | null
+          status?: string
+          updated_at?: string
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_reports_owner_contact_id_fkey"
+            columns: ["owner_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_reports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_api_agency_state: {
         Row: {
           activated_at: string | null
@@ -13111,6 +13244,10 @@ export type Database = {
       }
       can_access_contract: { Args: { _contract_id: string }; Returns: boolean }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      can_see_property_reports: {
+        Args: { _property: string }
+        Returns: boolean
+      }
       cancel_portal_republish_batch: {
         Args: { _batch: string }
         Returns: number
@@ -13864,6 +14001,7 @@ export type Database = {
         Returns: Json
       }
       outreach_unsubscribe_rate: { Args: { _ip: string }; Returns: boolean }
+      owner_can_auto_send: { Args: { _contact: string }; Returns: boolean }
       partner_api_apply_sync: {
         Args: {
           _agencies: Json

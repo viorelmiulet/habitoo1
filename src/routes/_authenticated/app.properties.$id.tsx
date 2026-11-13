@@ -81,6 +81,7 @@ import { PropertyMainPhoto } from "@/components/app/PropertyMainPhoto";
 import { propertyTabFromSearch } from "@/lib/property-tabs";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OwnerReportSettingsCard, OwnerReportsHistory } from "@/components/app/owner-reports/OwnerReportsPanel";
 import {
   Dialog,
   DialogContent,
@@ -987,6 +988,7 @@ function PropertyDetailContent() {
             ["documents", "Documente"],
             ["acp", "ACP"],
             ["history", "Istoric"],
+            ["owner-reports", "Rapoarte proprietar"],
           ].map(([value, label]) => (
             <TabsTrigger
               key={value}
@@ -1025,6 +1027,7 @@ function PropertyDetailContent() {
               }}
             />
           ) : null}
+          <OwnerReportSettingsCard propertyId={id} />
         </TabsContent>
 
         <TabsContent value="location" className="space-y-4">
@@ -1492,6 +1495,10 @@ function PropertyDetailContent() {
             }}
           />
           </div> : null}
+        </TabsContent>
+
+        <TabsContent value="owner-reports">
+          <OwnerReportsHistory propertyId={id} />
         </TabsContent>
 
         <TabsContent value="history">
