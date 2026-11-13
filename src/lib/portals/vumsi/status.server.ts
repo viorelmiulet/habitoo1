@@ -5,7 +5,7 @@
 import { hasVumsiKey } from "./config";
 import { vumsiRequest } from "./client.server";
 import { readListing, vumsiStatusShape } from "./publish";
-import { aggregateVumsiStatus, checkVumsiStatuses, vumsiCardView, vumsiListingPatch, vumsiOnOpenDue, vumsiScheduledDue, type VumsiStatusRow } from "./status";
+import { aggregateVumsiStatus, checkVumsiStatuses, vumsiShouldLogFailure, VUMSI_GONE_MESSAGE, type VumsiCheckFailure, vumsiCardView, vumsiListingPatch, vumsiOnOpenDue, vumsiScheduledDue, type VumsiStatusRow } from "./status";
 
 type Row = VumsiStatusRow & { organization_id: string; property_id: string };
 const COLS = "organization_id,property_id,external_id,vumsi_uuid,status,public_url,expires_at,status_checked_at,deleted_at";
@@ -33,6 +33,29 @@ async function saveChecked(db: any, rows: Row[]) {
   }
 }
 
+/** 404 → `last_error`; alte 4xx → un rând `status_check` pe zi pe anunț. */
+async function handleFailures(db: any, failures: VumsiCheckFailure<Row>[]) {
+  const now = Date.now();
+  for (const f of failures) {
+    const r = f.row;
+    if (f.gone) {
+      await db.from("portal_listings").update({ last_error: VUMSI_GONE_MESSAGE, last_sync_at: new Date(now).toISOString() })
+        .eq("organization_id", r.organization_id).eq("property_id", r.property_id).eq("portal", "vumsi");
+      continue;
+    }
+    if (f.httpStatus === null || f.httpStatus < 400 || f.httpStatus >= 500) continue;
+    const { data: last } = await db.from("portal_operation_logs").select("created_at")
+      .eq("organization_id", r.organization_id).eq("portal", "vumsi").eq("operation", "status_check")
+      .eq("external_id", r.external_id).eq("success", false).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (!vumsiShouldLogFailure(f, last?.created_at ?? null, now)) continue;
+    await db.from("portal_operation_logs").insert({
+      organization_id: r.organization_id, property_id: r.property_id, portal: "vumsi", operation: "status_check",
+      success: false, http_status: f.httpStatus, error_code: f.kind, external_id: r.external_id,
+      error_message: `Verificarea statusului Vumsi a eșuat (HTTP ${f.httpStatus}, ${f.kind}).`,
+    });
+  }
+}
+
 /** Actualizează `portal_listings` (doar dacă Vumsi e bifat) din toate tranzacțiile proprietății. */
 async function syncPortalListing(db: any, organizationId: string, propertyId: string, rows: Row[]) {
   const agg = aggregateVumsiStatus(rows);
@@ -51,10 +74,12 @@ export async function refreshVumsiStatus(organizationId: string, propertyId: str
   const rows = ((data ?? []) as Row[]).filter((r) => r.vumsi_uuid && !r.deleted_at);
   if (hasVumsiKey()) {
     const now = Date.now();
-    const changed = await checkVumsiStatuses(call, readListing, rows, (r) => vumsiOnOpenDue(r, now), now, vumsiStatusShape);
+    const failures: VumsiCheckFailure<Row>[] = [];
+    const changed = await checkVumsiStatuses(call, readListing, rows, (r) => vumsiOnOpenDue(r, now), now, vumsiStatusShape, failures);
     if (changed.length) {
       await saveChecked(db, changed);
       await syncPortalListing(db, organizationId, propertyId, rows);
+      await handleFailures(db, failures);
     }
   }
   const agg = aggregateVumsiStatus(rows);
@@ -74,12 +99,14 @@ export async function pollVumsiStatuses(): Promise<{ checked: number; published:
   const now = Date.now();
   const all = ((data ?? []) as Row[]).filter((r) => on.has(`${r.organization_id}:${r.property_id}`));
   const due = all.filter((r) => vumsiScheduledDue(r, now)).slice(0, VUMSI_POLL_LIMIT);
-  const changed = await checkVumsiStatuses(call, readListing, due, () => true, now, vumsiStatusShape);
+  const failures: VumsiCheckFailure<Row>[] = [];
+  const changed = await checkVumsiStatuses(call, readListing, due, () => true, now, vumsiStatusShape, failures);
   if (changed.length) await saveChecked(db, changed);
   const props = new Set(changed.map((r) => `${r.organization_id}:${r.property_id}`));
   for (const key of props) {
     const [o, p] = key.split(":") as [string, string];
     await syncPortalListing(db, o, p, all.filter((r) => r.organization_id === o && r.property_id === p)).catch(() => undefined);
   }
+  await handleFailures(db, failures).catch(() => undefined);
   return { checked: changed.length, published: changed.filter((r) => r.status === 2).length };
 }

@@ -40,9 +40,45 @@ export type VumsiStatusRow = {
 
 const age = (s: VumsiStatusRow, now: number) => (s.status_checked_at ? now - Date.parse(s.status_checked_at) : Infinity);
 
-/** Verificarea la deschiderea tabului: cel mult o dată pe minut pe anunț. */
+/**
+ * Așteptarea progresivă după erori repetate: 30 min, 2 h, 6 h, apoi 24 h.
+ * Fără coloană pentru numărul de eșecuri: după o eroare, `status_checked_at` se mută
+ * (eventual în viitor) astfel încât cadența normală să cadă la `acum + așteptare`, iar
+ * treapta se ține în milisecundele timestampului (1–4). Verificările reușite scriu
+ * mereu milisecunde 0, deci marcajul nu se confundă cu o verificare normală.
+ */
+export const VUMSI_BACKOFF_MS = [30 * 60_000, 2 * 3600_000, 6 * 3600_000, 24 * 3600_000] as const;
+export const VUMSI_GONE_MESSAGE = "Anunțul nu mai există la Vumsi";
+
+const cadence = (status: number | null) => (status === 2 ? VUMSI_PUBLISHED_CHECK_MS : VUMSI_PENDING_CHECK_MS);
+const floorSec = (ms: number) => Math.floor(ms / 1000) * 1000;
+
+/** Treapta de eșec curentă (0 = fără eșec). */
+export function vumsiFailStep(s: Pick<VumsiStatusRow, "status_checked_at">): number {
+  if (!s.status_checked_at) return 0;
+  const ms = Date.parse(s.status_checked_at) % 1000;
+  return ms >= 1 && ms <= VUMSI_BACKOFF_MS.length ? ms : 0;
+}
+
+/** Momentul următoarei verificări permise după un eșec (null dacă nu e în așteptare). */
+export function vumsiBackoffUntil(s: VumsiStatusRow): number | null {
+  if (!vumsiFailStep(s)) return null;
+  return Date.parse(s.status_checked_at!) + cadence(s.status);
+}
+
+/** `status_checked_at` după un eșec: următoarea verificare la `now + așteptare`. */
+export function vumsiFailedCheckedAt(s: VumsiStatusRow, now: number): string {
+  const step = Math.min(vumsiFailStep(s) + 1, VUMSI_BACKOFF_MS.length);
+  const next = now + VUMSI_BACKOFF_MS[step - 1]!;
+  return new Date(floorSec(next - cadence(s.status)) + step).toISOString();
+}
+
+/** Verificarea la deschiderea tabului: cel mult o dată pe minut pe anunț; respectă așteptarea după erori. */
 export function vumsiOnOpenDue(s: VumsiStatusRow, now: number): boolean {
-  return !!s.vumsi_uuid && !s.deleted_at && age(s, now) >= VUMSI_STATUS_MIN_MS;
+  if (!s.vumsi_uuid || s.deleted_at) return false;
+  const until = vumsiBackoffUntil(s);
+  if (until !== null) return now >= until;
+  return age(s, now) >= VUMSI_STATUS_MIN_MS;
 }
 
 /** Verificarea programată: 1/3/necunoscut la 30 min, 2 o dată pe zi; restul nu. */
@@ -111,24 +147,45 @@ export function vumsiListingPatch(agg: VumsiAggregate, currentError: string | nu
   };
 }
 
-type Call = (method: "GET", path: string) => Promise<{ ok: true; data: unknown } | { ok: false; kind: string }>;
+type Call = (method: "GET", path: string) => Promise<{ ok: true; data: unknown } | { ok: false; kind: string; status?: number | null }>;
+
+export type VumsiCheckFailure<T> = { row: T; httpStatus: number | null; kind: string; gone: boolean };
 type Read = (v: unknown) => { status: number | null; url: string | null; expires_at: string | null; reason: string | null };
 
 /** GET `/listings/{uuid}/` pentru rândurile scadente; întoarce rândurile schimbate. */
-export async function checkVumsiStatuses<T extends VumsiStatusRow>(call: Call, read: Read, rows: T[], due: (r: T) => boolean, now: number, shape?: (v: unknown) => string): Promise<T[]> {
+export async function checkVumsiStatuses<T extends VumsiStatusRow>(call: Call, read: Read, rows: T[], due: (r: T) => boolean, now: number, shape?: (v: unknown) => string, failures?: VumsiCheckFailure<T>[]): Promise<T[]> {
   const changed: T[] = [];
   for (const s of rows) {
     if (!due(s)) continue;
     const r = await call("GET", `/listings/${s.vumsi_uuid}/`);
-    if (!r.ok) continue;
+    if (!r.ok) {
+      const httpStatus = r.status ?? null;
+      const gone = httpStatus === 404;
+      if (gone) {
+        // Anunțul nu mai există la Vumsi: Retras, ieșit din verificarea programată.
+        Object.assign(s, { status: 0, status_checked_at: new Date(floorSec(now)).toISOString(), reason: null });
+      } else {
+        // Statusul rămâne; rândul intră la coadă cu așteptare progresivă.
+        Object.assign(s, { status_checked_at: vumsiFailedCheckedAt(s, now) });
+      }
+      failures?.push({ row: s, httpStatus, kind: r.kind, gone });
+      changed.push(s);
+      continue;
+    }
     const l = read(r.data);
     if (l.status === null) {
       // Status necitit: păstrăm statusul cunoscut și nu atingem portal_listings.
       console.warn("[vumsi-status] status necitit", shape ? shape(r.data) : "");
       continue;
     }
-    Object.assign(s, { status: l.status, public_url: l.url ?? s.public_url, expires_at: l.expires_at, status_checked_at: new Date(now).toISOString(), reason: l.reason });
+    Object.assign(s, { status: l.status, public_url: l.url ?? s.public_url, expires_at: l.expires_at, status_checked_at: new Date(floorSec(now)).toISOString(), reason: l.reason });
     changed.push(s);
   }
   return changed;
+}
+
+/** Se jurnalizează un eșec (4xx, fără 404) doar dacă nu există deja unul în ultimele 24 h pentru anunț. */
+export function vumsiShouldLogFailure(f: { httpStatus: number | null; gone: boolean }, lastLogAt: string | null, now: number): boolean {
+  if (f.gone || f.httpStatus === null || f.httpStatus < 400 || f.httpStatus >= 500) return false;
+  return !lastLogAt || now - Date.parse(lastLogAt) >= 24 * 3600_000;
 }
