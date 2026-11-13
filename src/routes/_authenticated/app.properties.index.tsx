@@ -90,6 +90,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useListState } from "@/hooks/use-list-state";
 import { useCurrentUser } from "@/hooks/use-session";
+import { BulkDeletePropertiesDialog } from "@/components/app/BulkDeletePropertiesDialog";
 import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/DeletePropertyDialog";
 import { useSavedViews } from "@/hooks/use-saved-views";
 import { relativeDays } from "@/lib/format";
@@ -811,7 +812,7 @@ function PropertiesPage() {
               Export CSV
             </Button>
             <Button variant="destructive" size="sm" onClick={() => setArchiveTarget(selected)}>
-              Arhivează
+              <Trash2 className="mr-1.5 h-4 w-4" /> Șterge
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setSelected([])}>
               Anulează selecția
@@ -1043,23 +1044,12 @@ function PropertiesPage() {
         onCancel={() => setBulkStatus(null)}
         onConfirm={() => bulkStatus && updateStatus.mutate({ ids: selected, status: bulkStatus })}
       />
-      <AlertDialog open={archiveTarget !== null} onOpenChange={(o) => !o && setArchiveTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Arhivezi proprietățile selectate?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {archiveTarget?.length} proprietăți vor fi marcate ca arhivate. Poți reveni oricând
-              asupra statusului.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Anulează</AlertDialogCancel>
-            <AlertDialogAction onClick={() => archiveTarget && archiveMany.mutate(archiveTarget)}>
-              Arhivează
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+<BulkDeletePropertiesDialog
+        propertyIds={archiveTarget}
+        references={Object.fromEntries(rows.map((r) => [r.id, r.reference ?? r.id]))}
+        onClose={() => setArchiveTarget(null)}
+        onDone={() => setSelected([])}
+      />
 
       <DeletePropertyDialog
         propertyId={deleteTarget}

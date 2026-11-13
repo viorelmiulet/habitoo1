@@ -40,6 +40,72 @@ export async function deletePropertyCore(
   return { ok: true as const, organizationId, queued, manual };
 }
 
+export const BULK_DELETE_MAX = 200;
+
+/**
+ * Ștergere în masă: același RPC `delete_property` ca utilizator pe fiecare
+ * anunț (eșecurile nu le opresc pe celelalte), apoi un singur
+ * `enqueueStatusWithdrawals` per agenție pentru ID-urile reușite.
+ */
+export async function deletePropertiesCore(
+  userClient: RpcClient,
+  admin: StatusWithdrawAdmin,
+  input: { propertyIds: string[]; actorId: string },
+  deps: Parameters<typeof deletePropertyCore>[3],
+) {
+  const ids = [...new Set(input.propertyIds)].slice(0, BULK_DELETE_MAX);
+  const byOrg = new Map<string, string[]>();
+  const failed: { propertyId: string; reason: string }[] = [];
+  for (const id of ids) {
+    try {
+      const { data, error } = await userClient.rpc("delete_property", { _id: id });
+      if (error) throw new Error(error.message);
+      const org = String(data);
+      byOrg.set(org, [...(byOrg.get(org) ?? []), id]);
+    } catch (e) {
+      failed.push({ propertyId: id, reason: e instanceof Error ? e.message : "Eroare necunoscută" });
+    }
+  }
+  let queued = 0;
+  let manual = 0;
+  for (const [organizationId, propertyIds] of byOrg) {
+    try {
+      const out = await deps.enqueue(
+        admin,
+        { organizationId, propertyIds, reason: "deleted", actorId: input.actorId },
+        { logOperation: deps.logOperation },
+      );
+      queued += out.queued.length;
+      manual += out.manual.length;
+    } catch (e) {
+      console.error("bulk delete withdraw enqueue failed", e);
+    }
+  }
+  const deleted = [...byOrg.values()].flat();
+  return { deleted, failed, queued, manual, organizationIds: [...byOrg.keys()] };
+}
+
+export const deleteProperties = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ propertyIds: z.array(z.string().uuid()).min(1).max(BULK_DELETE_MAX) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as { userId: string; supabase: RpcClient };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { enqueueStatusWithdrawals } = await import("@/lib/portals/status-withdraw.server");
+    const { logOperation } = await import("@/lib/portals.functions");
+    const { clearProperstarCache } = await import("@/lib/portals/properstar/cache");
+    const out = await deletePropertiesCore(
+      ctx.supabase,
+      supabaseAdmin as never,
+      { propertyIds: data.propertyIds, actorId: ctx.userId },
+      { enqueue: enqueueStatusWithdrawals, logOperation: async (i) => void (await logOperation(i)) },
+    );
+    for (const org of out.organizationIds) clearProperstarCache(org);
+    return out;
+  });
+
 export const deleteProperty = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((d: unknown) => z.object({ propertyId: z.string().uuid() }).parse(d))
