@@ -182,7 +182,9 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
           <Button
             size="sm"
             disabled={
-              !data.hasProviderKey || data.agency.status !== "active" || testMutation.isPending
+              !data.hasProviderKey ||
+              (data.agency.status !== "active" && data.agency.status !== "error") ||
+              testMutation.isPending
             }
             onClick={() => testMutation.mutate()}
           >
@@ -225,7 +227,17 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
               </li>
             ) : null}
 
-            {data.agency.error ? (
+            {data.agency.status === "error" ? (
+              <li
+                role="alert"
+                className="rounded-lg border border-destructive/40 bg-destructive/10 p-2 text-destructive"
+              >
+                La Cheie a refuzat înregistrarea agenției: {data.agency.error ?? "motiv necomunicat"}
+                {data.agency.externalId
+                  ? ` Identificatorul agenției la La Cheie: ${data.agency.externalId}.`
+                  : ""}
+              </li>
+            ) : data.agency.error ? (
               <li className="text-destructive">{data.agency.error}</li>
             ) : null}
             {data.agency.missingFields.length ? (
@@ -247,7 +259,9 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
             >
               {activateMutation.isPending
                 ? "Se activează…"
-                : data.agency.status === "inactive"
+                : data.agency.status === "error"
+                  ? "Reîncearcă înregistrarea"
+                  : data.agency.status === "inactive"
                   ? "Reactivează agenția"
                   : "Activează agenția"}
             </Button>

@@ -42,6 +42,11 @@ export function LaCheieActivationPanel({ organizationId }: { organizationId: str
 
   return (
     <div className="flex w-full flex-col gap-2">
+      {view.rejection ? (
+        <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          {view.rejection}
+        </div>
+      ) : null}
       {view.missingFields.length > 0 ? (
         <p className="text-xs text-muted-foreground">
           Completează datele agenției în{" "}
@@ -56,7 +61,11 @@ export function LaCheieActivationPanel({ organizationId }: { organizationId: str
         disabled={blocked || request.isPending}
         onClick={() => request.mutate()}
       >
-        {request.isPending ? "Se trimite…" : "Activează"}
+        {request.isPending
+          ? "Se trimite…"
+          : view.status === "error"
+            ? "Reîncearcă înregistrarea"
+            : "Activează"}
       </Button>
     </div>
   );

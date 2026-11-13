@@ -43,7 +43,7 @@ import {
   readLaCheieAgencyState,
   type LaCheieAgencyStatus,
 } from "@/lib/portals/lacheie/agency";
-import { laCheieActivationBlockReason } from "@/lib/portals/lacheie/agency";
+import { laCheieActivationBlockReason, laCheieAgencyRejectionMessage } from "@/lib/portals/lacheie/agency";
 import {
   requireLaCheieActivator,
   requireLaCheieSuperadmin,
@@ -339,6 +339,9 @@ export type LaCheieAgencySelfView = {
   status: LaCheieAgencyStatus;
   statusLabel: string;
   error: string | null;
+  /** Refuzul La Cheie la înregistrare, cu identificatorul agenției. */
+  rejection: string | null;
+  externalId: string | null;
   canActivate: boolean;
   suspended: boolean;
   data: { name: string | null; adminEmail: string | null; phone: string | null; address: string | null };
@@ -371,6 +374,8 @@ export const getLaCheieAgencyStatusForAgency = createServerFn({ method: "POST" }
       status: state.status,
       statusLabel: LACHEIE_AGENCY_STATUS_LABEL[state.status],
       error: state.error,
+      rejection: laCheieAgencyRejectionMessage(state),
+      externalId: state.externalId,
       canActivate: canActivateLaCheieAgency(state.status) && built.ok,
       suspended: state.status === "suspended",
       data: {

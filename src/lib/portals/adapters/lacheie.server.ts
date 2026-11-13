@@ -51,7 +51,12 @@ import {
 import { laCheieOfferVersionFromBody, nextSourceVersion } from "../lacheie/version";
 import { isLaCheieAssociationConflict } from "../lacheie/http";
 
-import { laCheieAgencyBlockReason, readLaCheieAgencyState } from "../lacheie/agency";
+import {
+  laCheieAgencyBlockReason,
+  laCheieAgencyRejectionMessage,
+  laCheieConnectionTestFailure,
+  readLaCheieAgencyState,
+} from "../lacheie/agency";
 import { hasLaCheieCrmApiKey, laCheieCrmApiKey } from "../lacheie/credentials.server";
 
 
@@ -162,7 +167,13 @@ async function status(
       },
     };
   }
-  const blocked = laCheieAgencyBlockReason(agency);
+  // Testul explicit eșuează când agenția nu e activă la La Cheie (ex. refuz la
+  // înregistrare), ca interfața să nu afișeze „Configurarea este completă”.
+  if (live) {
+    const failure = laCheieConnectionTestFailure(agency);
+    if (failure) return { ok: false, code: "CONFIG_ERROR", message: failure, detail: failure };
+  }
+  const blocked = laCheieAgencyRejectionMessage(agency) ?? laCheieAgencyBlockReason(agency);
   if (blocked) {
     return { ok: true, data: { configured: false, live: false, detail: blocked } };
   }

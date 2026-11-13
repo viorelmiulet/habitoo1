@@ -577,3 +577,22 @@ export function laCheieAgencyStatusAfterDelete(input: {
   const transient = httpStatus === 0 || httpStatus === 408 || httpStatus === 429 || httpStatus >= 500;
   return { ok: false, status: input.previousStatus, keepPending: transient };
 }
+
+/* ------------------------- refuz la înregistrare -------------------------- */
+
+/**
+ * Mesajul afișat când La Cheie a refuzat înregistrarea agenției (status
+ * `error`): motivul primit de la portal plus identificatorul agenției, ca
+ * agenția să-l poată da suportului La Cheie. `null` pentru celelalte stări.
+ */
+export function laCheieAgencyRejectionMessage(state: LaCheieAgencyState): string | null {
+  if (state.status !== "error") return null;
+  const reason = state.error?.trim() || "motiv necomunicat";
+  const id = state.externalId ? ` Identificatorul agenției la La Cheie: ${state.externalId}.` : "";
+  return `La Cheie a refuzat înregistrarea agenției: ${reason}${id}`;
+}
+
+/** Motivul pentru care „Testează conexiunea” trebuie să eșueze, sau `null` când agenția e activă. */
+export function laCheieConnectionTestFailure(state: LaCheieAgencyState): string | null {
+  return laCheieAgencyRejectionMessage(state) ?? laCheieAgencyBlockReason(state);
+}
