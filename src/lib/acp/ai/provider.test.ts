@@ -74,10 +74,10 @@ describe("ACP AI shared registry and validated persistence", () => {
       expect(fixtures.inserts.find((entry) => entry.table === "acp_ai_insights")?.row).toMatchObject({ model: result.model, status: "ok", insight });
     }
     if (scenario === "corrected") {
-      const first = bodies[0]?.messages as { content: { text: string }[] }[];
-      const second = bodies[1]?.messages as { content: { text: string }[] }[];
-      expect(second[0]?.content[0]?.text).toContain(first[0]?.content[0]?.text);
-      expect(second[0]?.content[0]?.text).toContain("Răspunsul anterior");
+      const first = bodies[0]?.contents as { parts: { text: string }[] }[];
+      const second = bodies[1]?.contents as { parts: { text: string }[] }[];
+      expect(second[0]?.parts[0]?.text).toContain(first[0]?.parts[0]?.text);
+      expect(second[0]?.parts[0]?.text).toContain("Răspunsul anterior");
     }
   });
 
