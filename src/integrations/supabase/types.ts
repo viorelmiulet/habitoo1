@@ -941,6 +941,95 @@ export type Database = {
           },
         ]
       }
+      ai_credit_costs: {
+        Row: {
+          action: string
+          credits: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          action: string
+          credits: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          action?: string
+          credits?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      ai_credit_ledger: {
+        Row: {
+          action: string
+          created_at: string
+          credits: number
+          id: string
+          month_start: string
+          organization_id: string
+          ref: string | null
+          settled_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          credits: number
+          id?: string
+          month_start: string
+          organization_id: string
+          ref?: string | null
+          settled_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          credits?: number
+          id?: string
+          month_start?: string
+          organization_id?: string
+          ref?: string | null
+          settled_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_ledger_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_credit_plans: {
+        Row: {
+          monthly_credits: number
+          plan: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          monthly_credits: number
+          plan: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          monthly_credits?: number
+          plan?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ai_media_generations: {
         Row: {
           created_at: string
@@ -6471,6 +6560,7 @@ export type Database = {
         Row: {
           acp_calibration_enabled: boolean
           acp_calibration_min_sample_size: number
+          ai_bonus_credits: number
           ai_enabled: boolean
           ai_media_enhance_limit: number
           ai_media_image_limit: number
@@ -6541,6 +6631,7 @@ export type Database = {
         Insert: {
           acp_calibration_enabled?: boolean
           acp_calibration_min_sample_size?: number
+          ai_bonus_credits?: number
           ai_enabled?: boolean
           ai_media_enhance_limit?: number
           ai_media_image_limit?: number
@@ -6611,6 +6702,7 @@ export type Database = {
         Update: {
           acp_calibration_enabled?: boolean
           acp_calibration_min_sample_size?: number
+          ai_bonus_credits?: number
           ai_enabled?: boolean
           ai_media_enhance_limit?: number
           ai_media_image_limit?: number
@@ -12668,6 +12760,41 @@ export type Database = {
       admin_change_user_organization: {
         Args: { _new_org: string; _user_id: string }
         Returns: undefined
+      }
+      ai_credit_limit: { Args: { p_org: string }; Returns: number }
+      ai_credit_month: { Args: { p_at?: string }; Returns: string }
+      ai_credit_reserve: {
+        Args: {
+          p_action: string
+          p_org: string
+          p_ref?: string
+          p_user: string
+        }
+        Returns: string
+      }
+      ai_credit_settle: {
+        Args: { p_id: string; p_success: boolean }
+        Returns: undefined
+      }
+      ai_credit_settle_ref: {
+        Args: { p_ref: string; p_success: boolean }
+        Returns: undefined
+      }
+      ai_credit_usage: { Args: { p_org?: string }; Returns: Json }
+      ai_credit_usage_all: {
+        Args: never
+        Returns: {
+          bonus: number
+          credit_limit: number
+          organization_id: string
+          organization_name: string
+          plan: string
+          used: number
+        }[]
+      }
+      ai_credit_used: {
+        Args: { p_month: string; p_org: string }
+        Returns: number
       }
       ai_media_monthly_usage: { Args: never; Returns: Json }
       approve_organization: { Args: { _org: string }; Returns: undefined }

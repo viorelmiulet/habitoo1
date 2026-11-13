@@ -9,6 +9,7 @@
  * build_context → read_tools → analyze → respond → [action_proposal → approval
  * (SUSPEND) → execute_action → validate] → audit → complete.
  */
+import { chargedAiFallback } from "@/lib/ai/credits/credits.server";
 import type { AiActor, AiSource, AiToolCallRecord } from "../../gateway/types";
 import { AI_AUDIT_ACTIONS, logAiAudit } from "../../security/audit";
 import {
@@ -22,7 +23,6 @@ import {
 import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { writeAiUsage } from "../../usage/tracking.server";
-import { withAiProviderFallback } from "../../providers/fallback.server";
 import { safeAiProviderMessage } from "../../providers/types";
 import { validateAiRequestSize } from "../../usage/limits";
 import { buildAiContext } from "../../context/builder";
@@ -520,7 +520,7 @@ export async function runCrmTurn(
   let proposalRequest: Awaited<ReturnType<typeof proposeCrmAction>> | null = null;
   let outcome;
   try {
-    const completed = await withAiProviderFallback(provider, async (selected) => {
+    const completed = await chargedAiFallback(actor, CRM_AI_MODEL_CLASS, provider, async (selected) => {
       const analysis = await runCrmAgent({
         actor,
         provider: selected,

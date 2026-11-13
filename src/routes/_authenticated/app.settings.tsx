@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
 import { AgencyBrandingCard } from "@/components/app/AgencyBrandingCard";
 import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
+import { AiCreditsUsageCard } from "@/components/app/ai/AiCreditsUsageCard";
 
 
 import { AgencySitePortalCard, SiteFeedMovedCard } from "@/components/app/AgencySitePortalCard";
@@ -770,11 +771,10 @@ function SettingsPage() {
             </TabsContent>
           ) : null}
 
-          {user?.isAdmin ? (
-            <TabsContent value="ai" className="mt-0">
-              <AiSettingsCard />
-            </TabsContent>
-          ) : null}
+          <TabsContent value="ai" className="mt-0 space-y-4">
+            <AiCreditsUsageCard />
+            {user?.isAdmin ? <AiSettingsCard /> : null}
+          </TabsContent>
         </div>
       </Tabs>
     </div>

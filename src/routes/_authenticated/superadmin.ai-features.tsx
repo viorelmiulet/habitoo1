@@ -1,6 +1,7 @@
 /**
  * Superadmin → Funcții AI: singurul loc din produs unde funcțiile AI se
- * activează sau se opresc, individual, per agenție. Implicit sunt toate oprite.
+ * opresc sau se repornesc, individual, per agenție. Implicit sunt toate pornite,
+ * limitate de creditele AI lunare.
  */
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -21,11 +22,11 @@ import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { AI_FEATURES, type AiFeatureKey } from "@/lib/ai/features/keys";
 import { AiModelSettingsCard } from "@/components/app/ai/AiModelSettingsCard";
+import { AiCreditSettingsCard } from "@/components/app/ai/AiCreditSettingsCard";
+import { AiBonusCreditsEditor } from "@/components/app/ai/AiBonusCreditsEditor";
 import {
   listOrganizationAiFeatures,
   setOrganizationAiFeature,
-  setOrganizationMediaLimits,
-  type OrganizationAiFeatures,
 } from "@/lib/ai/features/features.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/ai-features")({
@@ -65,10 +66,12 @@ function SuperadminAiFeaturesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Funcții AI"
-        description="Toate funcțiile AI sunt oprite implicit. Activează-le individual, pentru fiecare agenție."
+        description="Toate funcțiile AI sunt pornite implicit, în limita creditelor AI lunare. Le poți opri sau reporni individual, pentru fiecare agenție."
       />
 
       <AiModelSettingsCard />
+
+      <AiCreditSettingsCard />
 
       <div className="max-w-sm space-y-2">
         <Label htmlFor="ai-features-search">Caută agenție</Label>
@@ -99,7 +102,10 @@ function SuperadminAiFeaturesPage() {
             <Card key={org.organizationId}>
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <CardTitle>{org.organizationName}</CardTitle>
+                  <div>
+                    <CardTitle>{org.organizationName}</CardTitle>
+                    {org.inactive ? <p className="mt-1 text-xs text-muted-foreground">Agenție suspendată sau arhivată: AI blocat.</p> : !org.aiEnabled ? <p className="mt-1 text-xs text-muted-foreground">AI oprit general pentru agenție (din pagina agenției).</p> : null}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
@@ -114,7 +120,7 @@ function SuperadminAiFeaturesPage() {
                         }
                       }}
                     >
-                      Activează tot
+                      Pornește tot
                     </Button>
                     <Button
                       variant="ghost"
@@ -164,7 +170,7 @@ function SuperadminAiFeaturesPage() {
                     </div>
                   );
                 })}
-                <MediaLimitsEditor org={org} />
+                <div className="border-t border-border pt-4 sm:col-span-2"><AiBonusCreditsEditor organizationId={org.organizationId} /></div>
               </CardContent>
             </Card>
           ))}
@@ -172,29 +178,4 @@ function SuperadminAiFeaturesPage() {
       )}
     </div>
   );
-}
-
-function MediaLimitsEditor({ org }: { org: OrganizationAiFeatures }) {
-  const [limits, setLimits] = useState(org.mediaLimits);
-  const save = useServerFn(setOrganizationMediaLimits);
-  const queryClient = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: (_input: void) => save({ data: { organizationId: org.organizationId, ...limits } }),
-    onSuccess: () => {
-      toast.success("Limitele Studio AI au fost salvate.");
-      void queryClient.invalidateQueries({ queryKey: ["superadmin", "ai-features"] });
-      void queryClient.invalidateQueries({ queryKey: ["ai-media-status"] });
-    },
-    onError: (error: unknown) => toastError(error),
-  });
-  return <div className="space-y-3 border-t border-border pt-4 sm:col-span-2">
-    <p className="text-sm font-semibold">Studio AI — limite lunare</p>
-    <div className="grid gap-3 sm:grid-cols-3">
-      {([['marketing_image', 'Imagini marketing'], ['photo_enhance', 'Îmbunătățiri poze'], ['photo_video', 'Video']] as const).map(([key, label]) => <div key={key} className="space-y-2">
-        <Label htmlFor={`${org.organizationId}-limit-${key}`}>{label}</Label>
-        <Input id={`${org.organizationId}-limit-${key}`} type="number" min={0} step={1} value={limits[key]} onChange={event => setLimits(previous => ({ ...previous, [key]: event.target.valueAsNumber }))} />
-      </div>)}
-    </div>
-    <Button variant="outline" disabled={mutation.isPending || Object.values(limits).some(value => !Number.isInteger(value) || value < 0)} onClick={() => mutation.mutate()}>Salvează limitele</Button>
-  </div>;
 }

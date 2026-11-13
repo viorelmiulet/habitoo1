@@ -320,7 +320,13 @@ export async function runGenerateAcpAiAnalysis({ context, data }: { context: unk
     const { writeAiUsage } = await import("@/lib/ai/usage/tracking.server");
     let generationValid = false;
     try {
-      raw = await provider.generate(aiContext);
+      const { withAiCredits } = await import("@/lib/ai/credits/credits.server");
+      raw = await withAiCredits(
+        { organizationId, userId },
+        "text_standard",
+        () => provider.generate(aiContext),
+        { isSuccess: (text) => parseAcpAiInsight(text).ok },
+      );
       generationValid = parseAcpAiInsight(raw).ok;
     } catch (providerError) {
       return await recordFailure("provider_error", safeAiErrorMessage(providerError));
@@ -519,7 +525,10 @@ export const reviewAcpComparables = createServerFn({ method: "POST" })
     const { safeAiErrorMessage } = await import("./ai/provider.server");
     let out: Awaited<ReturnType<typeof callAcpComparableReview>>;
     try {
-      out = await callAcpComparableReview(target, comparables, targetData.title ?? null);
+      const { withAiCredits } = await import("@/lib/ai/credits/credits.server");
+      out = await withAiCredits({ organizationId, userId }, "text_standard", () =>
+        callAcpComparableReview(target, comparables, targetData.title ?? null),
+      );
     } catch (providerError) {
       await writeAiUsage(admin as never, {
         organization_id: organizationId,

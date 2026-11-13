@@ -1,3 +1,4 @@
+import { AiCreditsExhaustedError } from "@/lib/ai/credits/credits";
 /** ACP interpretation uses the shared server-only registry; the engine stays deterministic. */
 import type { AcpAiContext } from "./context";
 import { ACP_AI_PROMPT_VERSION, ACP_AI_SYSTEM_PROMPT, buildAcpAiUserPrompt } from "./prompt";
@@ -110,6 +111,7 @@ export function resolveAcpAiProvider(): AiProvider | null {
 
 /** Traduce eroarea providerului într-un mesaj sigur pentru utilizator. */
 export function safeAiErrorMessage(error: unknown): string {
+  if (error instanceof AiCreditsExhaustedError) return error.message;
   if (error instanceof AiProviderError) {
     if (error.status === 429) {
       return "Serviciul AI este momentan aglomerat. Încearcă din nou în câteva minute.";

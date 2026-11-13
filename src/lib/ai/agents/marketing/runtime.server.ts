@@ -6,6 +6,7 @@
  * Starea trăiește în `ai_workflow_runs`, deci o propunere suspendată
  * supraviețuiește reîncărcării paginii și repornirii serverului.
  */
+import { chargedAiFallback } from "@/lib/ai/credits/credits.server";
 import type { AiActor } from "../../gateway/types";
 import { AI_AUDIT_ACTIONS, logAiAudit } from "../../security/audit";
 import {
@@ -20,7 +21,6 @@ import {
 import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { writeAiUsage } from "../../usage/tracking.server";
-import { withAiProviderFallback } from "../../providers/fallback.server";
 import { safeAiProviderMessage } from "../../providers/types";
 import { validateAiRequestSize } from "../../usage/limits";
 import { AI_CONTEXT_VERSION } from "../../context/builder";
@@ -223,7 +223,7 @@ export async function runMarketingTurn(
     outputTokens: number | null;
   };
   try {
-    const completed = await withAiProviderFallback(provider, async (selected) => {
+    const completed = await chargedAiFallback(actor, MARKETING_AI_MODEL_CLASS, provider, async (selected) => {
       const results: MarketingResult[] = [];
       const failures: MarketingWorkflowState["failures"] = [];
 

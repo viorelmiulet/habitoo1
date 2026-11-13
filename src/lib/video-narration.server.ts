@@ -1,3 +1,4 @@
+import { parseAiCreditError } from "@/lib/ai/credits/credits";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { NARRATION_BUCKET, NARRATION_FEATURE, NARRATION_MODEL, validateNarration, type NarrationItem, type NarrationVoice } from "./video-narration";
@@ -34,7 +35,7 @@ export async function startNarrationCore(client: Client, userId: string, input: 
   const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
   const voiceModel = (await loadAiMediaModelSettings()).voice || NARRATION_MODEL;
   const { data: id, error } = await admin.rpc("reserve_video_narration", { p_org: org, p_property: input.propertyId, p_user: userId, p_key: input.requestKey, p_text: input.text.trim(), p_voice: input.voice, p_duration: input.seconds, p_model: voiceModel });
-  if (error || !id) throw new Error(error?.message ?? "Generarea nu a putut fi pornită.");
+  if (error || !id) throw new Error(parseAiCreditError(error?.message) ?? error?.message ?? "Generarea nu a putut fi pornită.");
   const { data: claimed } = await admin.from("video_narrations").update({ prediction_id: "starting" }).eq("id", id).is("prediction_id", null).select("id,usage_event_id").maybeSingle();
   if (claimed) {
     const startedAt = Date.now();

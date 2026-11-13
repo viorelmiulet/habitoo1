@@ -8,6 +8,7 @@
  * Starea trăiește în `ai_workflow_runs`, deci un plan suspendat supraviețuiește
  * reîncărcării paginii și repornirii serverului.
  */
+import { chargedAiFallback } from "@/lib/ai/credits/credits.server";
 import { PROSPECTING_NO_LIVE_SOURCE_NOTE } from "@/lib/prospecting/workflow";
 import type { AiActor } from "../../gateway/types";
 import { AI_AUDIT_ACTIONS, logAiAudit } from "../../security/audit";
@@ -23,7 +24,6 @@ import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { validateAiRequestSize } from "../../usage/limits";
 import { writeAiUsage } from "../../usage/tracking.server";
-import { withAiProviderFallback } from "../../providers/fallback.server";
 import { safeAiProviderMessage } from "../../providers/types";
 import { classifyAiError } from "../../reliability/retry";
 import {
@@ -230,7 +230,7 @@ export async function runManagerTurn(
   let outputTokens: number | null = null;
   let routed;
   try {
-    const completed = await withAiProviderFallback(provider, (selected) =>
+    const completed = await chargedAiFallback(actor, MANAGER_AI_MODEL_CLASS, provider, (selected) =>
       routeManagerRequestSemantic(selected, request, keywordRouting, true, (input, output) => {
         inputTokens = input;
         outputTokens = output;

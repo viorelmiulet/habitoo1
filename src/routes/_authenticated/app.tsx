@@ -18,6 +18,7 @@ import { mustCompleteAgencyData } from "@/lib/agency-public-data";
 import { CompleteUserProfile } from "@/components/app/CompleteUserProfile";
 import { mustCompleteUserProfile } from "@/lib/user-profile";
 import { CompanyAnafSync } from "@/components/app/CompanyAnafSync";
+import { AiCreditsBanner } from "@/components/app/ai/AiCreditsBanner";
 import { usePresenceHeartbeat } from "@/hooks/use-presence-heartbeat";
 import { Messenger } from "@/components/app/chat/Messenger";
 import { messengerVisible } from "@/lib/chat/chat-rules";
@@ -87,6 +88,7 @@ function AppLayout() {
 
   return (
     <AppShell user={user} groups={groups} variant="agency">
+      {user.role === "agency_admin" && !user.impersonation && user.organization?.ai_enabled ? <AiCreditsBanner /> : null}
       <Outlet />
       <PortalBulkWatcher />
       {messengerVisible({ isSuperadmin: user.isSuperadmin, hasOrganization: Boolean(user.organization), impersonating: Boolean(user.impersonation) }) ? <Messenger user={user} /> : null}

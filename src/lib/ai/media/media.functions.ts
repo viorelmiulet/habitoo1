@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { aiFeatureDisabledMessage, type AiFeatureKey } from "@/lib/ai/features/keys";
-import type { MediaMonthlyUsage } from "./quota";
+import type { AiCreditUsage } from "@/lib/ai/credits/credits";
 
 export const AI_MEDIA_BUCKET = "ai-media";
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
@@ -88,11 +88,11 @@ export const getAiMediaStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const resolved = await resolveMediaOrganization(context);
-    if ("message" in resolved) return { configured: false, featureEnabled: false, monthlyUsage: null };
+    if ("message" in resolved) return { configured: false, featureEnabled: false, credits: null };
     const { mediaConfigured } = await import("@/lib/ai/media/providers.server");
-    const { data, error } = await context.supabase.rpc("ai_media_monthly_usage");
-    if (error) throw new Error("Consumul Studio AI nu a putut fi citit.");
-    return { configured: mediaConfigured(), featureEnabled: true, monthlyUsage: data as unknown as MediaMonthlyUsage };
+    const { data, error } = await context.supabase.rpc("ai_credit_usage", {});
+    if (error) throw new Error("Creditele AI nu au putut fi citite.");
+    return { configured: mediaConfigured(), featureEnabled: true, credits: data as unknown as AiCreditUsage };
   });
 
 /** Istoricul generărilor agenției (cele mai recente primele). */

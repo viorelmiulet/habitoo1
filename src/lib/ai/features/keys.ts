@@ -1,8 +1,9 @@
 /**
  * Funcțiile AI activabile individual per agenție.
  *
- * Toate sunt oprite implicit: lipsa unui rând în `organization_ai_features`
- * înseamnă „dezactivat”. Doar superadminul le poate activa.
+ * Toate sunt pornite implicit: lipsa unui rând în `organization_ai_features`
+ * înseamnă „activat”. Un rând cu `enabled = false` (setat doar de superadmin)
+ * oprește funcția pentru agenție. Consumul este limitat de creditele AI lunare.
  */
 export const AI_FEATURE_KEYS = [
   "ai_manager",
@@ -60,7 +61,12 @@ export const AI_FEATURE_LABELS: Record<AiFeatureKey, string> = Object.fromEntrie
   AI_FEATURES.map((feature) => [feature.key, feature.label]),
 ) as Record<AiFeatureKey, string>;
 
-/** Harta „totul oprit”, folosită ca punct de plecare și ca fallback sigur. */
+/** Harta implicită pentru o agenție activă: totul pornit. */
+export function defaultAiFeatureMap(): AiFeatureMap {
+  return Object.fromEntries(AI_FEATURE_KEYS.map((key) => [key, true])) as AiFeatureMap;
+}
+
+/** Harta „totul oprit”, folosită ca fallback sigur (AI oprit, eroare, agenție inactivă). */
 export function emptyAiFeatureMap(): AiFeatureMap {
   return Object.fromEntries(AI_FEATURE_KEYS.map((key) => [key, false])) as AiFeatureMap;
 }

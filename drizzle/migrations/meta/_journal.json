@@ -1912,6 +1912,13 @@
       "when": 1794599932821,
       "tag": "0272_ai_media_model_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 273,
+      "version": "7",
+      "when": 1794604127554,
+      "tag": "0273_ai_credits",
+      "breakpoints": true
     }
   ]
 }

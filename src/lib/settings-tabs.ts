@@ -43,11 +43,15 @@ export function settingsTabGroups(
     | undefined,
 ): SettingsTabGroup[] {
   const groups: SettingsTabGroup[] = [{ title: "Contul meu", tabs: ["profile", "access"] }];
-  if (!user?.isAdmin) return groups;
+  if (!user?.isAdmin) {
+    // Agenții văd fila AI doar pentru creditele AI ale agenției.
+    if (user?.organization?.ai_enabled === true) groups[0].tabs.push("ai");
+    return groups;
+  }
   const agency: SettingsTab[] = [];
   if (user.role === "agency_admin") agency.push("agency");
   agency.push("branding", "team", "portals", "promotion", "integrations");
-  // Fila AI apare doar când superadminul a activat AI pentru agenție.
+  // Fila AI apare când AI nu a fost oprit de superadmin pentru agenție (implicit pornit).
   if (user.isSuperadmin || user.organization?.ai_enabled === true) agency.push("ai");
   groups.push({ title: "Agenția", tabs: agency });
   return groups;

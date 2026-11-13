@@ -1,3 +1,4 @@
+import { AiCreditsExhaustedError } from "@/lib/ai/credits/credits";
 /**
  * Abstracția de provider AI.
  *
@@ -78,6 +79,7 @@ export class AiProviderError extends Error {
 
 /** Traduce orice eroare de provider într-un mesaj sigur pentru interfață. */
 export function safeAiProviderMessage(error: unknown): string {
+  if (error instanceof AiCreditsExhaustedError) return error.message;
   if (error instanceof AiProviderError) {
     if (error.status === 401 || error.status === 403) {
       return "AI nu este configurat corect. Contactează administratorul platformei.";

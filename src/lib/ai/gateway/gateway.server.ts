@@ -167,6 +167,9 @@ export async function checkAiQuota(
   if (!(await checkAiRateLimits(admin, actor, scope))) {
     return { allowed: false, message: AI_RATE_LIMIT_MESSAGE };
   }
+  const { aiCreditsBlockedMessage } = await import("../credits/credits.server");
+  const creditsMessage = await aiCreditsBlockedMessage(actor.organizationId);
+  if (creditsMessage) return { allowed: false, message: creditsMessage };
   const usage = await readAiOrgUsage(admin, actor.organizationId);
   if (usage === null) return { allowed: true };
   const ceiling = evaluateAiOrgCeiling(usage);
@@ -304,17 +307,26 @@ export async function runAiChat(actor: AiActor, request: AiChatRequest): Promise
   let fallbackUsed = false;
   let outcome;
   try {
-    const completed = await withAiProviderFallback(provider, (selected) =>
-      runCoordinator({
-        actor,
-        provider: selected,
-        system,
-        messages,
-        declarations,
-        tracer,
-        conversationId,
-        throwProviderErrors: true,
-      }),
+    const { withAiCredits } = await import("../credits/credits.server");
+    const { textCreditAction } = await import("../credits/credits");
+    const primary = provider;
+    const completed = await withAiCredits(
+      actor,
+      textCreditAction(GATEWAY_AI_MODEL_CLASS),
+      () =>
+        withAiProviderFallback(primary, (selected) =>
+          runCoordinator({
+            actor,
+            provider: selected,
+            system,
+            messages,
+            declarations,
+            tracer,
+            conversationId,
+            throwProviderErrors: true,
+          }),
+        ),
+      { isSuccess: (done) => done.result.failure === null },
     );
     outcome = completed.result;
     provider = completed.provider;

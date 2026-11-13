@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const orgs: Record<string, { ai_enabled: boolean }> = {};
+const orgs: Record<string, { ai_enabled: boolean; status?: string }> = {};
 const features: { organization_id: string; feature_key: string; enabled: boolean }[] = [];
 
 vi.mock("@/integrations/supabase/client.server", () => ({
@@ -43,6 +43,24 @@ describe("comutatorul general AI per agenție", () => {
   it("agenția activată: funcțiile activate rămân disponibile", async () => {
     expect(await isOrgAiEnabled(ON)).toBe(true);
     expect((await loadAiFeatures(ON)).ai_marketing).toBe(true);
+  });
+  it("agenție fără rânduri de funcții: toate funcțiile AI active", async () => {
+    features.length = 0;
+    const map = await loadAiFeatures(ON);
+    for (const value of Object.values(map)) expect(value).toBe(true);
+  });
+  it("funcție cu enabled=false: blocată, restul rămân active", async () => {
+    features.length = 0;
+    features.push({ organization_id: ON, feature_key: "ai_media", enabled: false });
+    const map = await loadAiFeatures(ON);
+    expect(map.ai_media).toBe(false);
+    expect(map.ai_crm).toBe(true);
+  });
+  it("agenție suspendată sau arhivată: blocată", async () => {
+    orgs[ON] = { ai_enabled: true, status: "suspended" };
+    expect(await isOrgAiEnabled(ON)).toBe(false);
+    orgs[ON] = { ai_enabled: true, status: "cancelled" };
+    expect((await loadAiFeatures(ON)).ai_crm).toBe(false);
   });
   it("fără agenție sau agenție necunoscută: închis", async () => {
     expect(await isOrgAiEnabled(null)).toBe(false);

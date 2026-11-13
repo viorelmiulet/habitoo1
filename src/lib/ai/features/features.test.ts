@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import {
   AI_FEATURE_KEYS,
   aiFeatureDisabledMessage,
+  defaultAiFeatureMap,
   emptyAiFeatureMap,
   isAiFeatureKey,
 } from "./keys";
@@ -10,7 +11,12 @@ import { agencyNav } from "@/components/app/AppSidebar";
 import { AI_NAV_FEATURE, filterAiNavigation } from "@/components/app/sidebar-navigation";
 
 describe("funcțiile AI per agenție", () => {
-  it("sunt oprite implicit", () => {
+  it("sunt pornite implicit", () => {
+    const map = defaultAiFeatureMap();
+    for (const key of AI_FEATURE_KEYS) expect(map[key]).toBe(true);
+  });
+
+  it("fallback-ul sigur rămâne „totul oprit”", () => {
     const map = emptyAiFeatureMap();
     for (const key of AI_FEATURE_KEYS) expect(map[key]).toBe(false);
   });

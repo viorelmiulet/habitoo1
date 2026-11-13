@@ -1,3 +1,4 @@
+import { AiBonusCreditsEditor } from "@/components/app/ai/AiBonusCreditsEditor";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -106,6 +107,7 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
           <AgencySubscriptionControls org={org} />
           <div className="mt-4"><AgencyPublicCatalogToggle org={org} /></div>
           <div className="mt-4"><AgencyAiToggle org={org} /></div>
+          <div className="mt-4"><AiBonusCreditsEditor organizationId={org.id} /></div>
         </DetailCard>
 
         <DetailCard title="Echipă" description={`${members.length} membri`}>

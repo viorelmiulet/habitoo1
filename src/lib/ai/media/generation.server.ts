@@ -1,5 +1,5 @@
 import { AI_MEDIA_MODELS, MediaProviderError, downloadAiMedia, mediaError, validateAiMediaBytes, readAiMediaPrediction, startAiMediaPrediction, type AiMediaKind } from "./providers.server";
-import { mediaQuotaError } from "./quota";
+import { parseAiCreditError } from "@/lib/ai/credits/credits";
 import { loadAiMediaModelSettings } from "./model-settings.server";
 
 /** Rânduri create cu furnizorul anterior: nu mai pot fi urmărite. */
@@ -43,7 +43,7 @@ export async function startMediaGeneration(context: MediaContext, admin: any, or
   const settings = await loadAiMediaModelSettings();
   const model = { id: input.kind === "marketing_image" ? settings.image : input.kind === "photo_video" ? settings.video : AI_MEDIA_MODELS[input.kind].id };
   const { data: row, error: insertError } = await context.supabase.from("ai_media_generations").insert({ organization_id: organizationId, created_by: context.userId, kind: input.kind, prompt: input.prompt, source_url: input.sourcePath, model: model.id, status: "running" }).select("*").single();
-  if (insertError || !row) return { ok: false as const, message: mediaQuotaError(insertError?.message ?? "") ?? "Generarea nu a putut fi înregistrată." };
+  if (insertError || !row) return { ok: false as const, message: parseAiCreditError(insertError?.message) ?? "Generarea nu a putut fi înregistrată." };
   try {
     await usage(admin, row, context.userId, { success: false, status: "running" }, true);
     let sourceUrl: string | null = null;

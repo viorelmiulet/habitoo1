@@ -161,8 +161,8 @@ export function AiMediaPanel() {
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="size-4" /> Generare nouă
           </CardTitle>
-          {status.data?.monthlyUsage ? <p data-tour="studio-usage" className="text-sm text-muted-foreground" aria-label="Consum Studio AI luna curentă">
-            Video {status.data.monthlyUsage.used.photo_video}/{status.data.monthlyUsage.limits.photo_video} · Imagini {status.data.monthlyUsage.used.marketing_image}/{status.data.monthlyUsage.limits.marketing_image} · Îmbunătățiri {status.data.monthlyUsage.used.photo_enhance}/{status.data.monthlyUsage.limits.photo_enhance}
+          {status.data?.credits ? <p data-tour="studio-usage" className="text-sm text-muted-foreground" aria-label="Credite AI luna curentă">
+            Credite AI folosite luna aceasta: {status.data.credits.used}/{status.data.credits.limit}
           </p> : null}
         </CardHeader>
         <CardContent className="space-y-4">
