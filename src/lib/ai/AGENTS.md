@@ -1,0 +1,1 @@
+- Listing autofill only proposes form values (taxonomy-sanitized, explicit facts from agent words, `withAiCredits`). Why: AI never writes rows or invents facts.
