@@ -2,6 +2,7 @@
  * Mapper IMMOFLUX → rând `properties` Habitoo. Funcție pură: fără rețea, fără DB.
  * `reference` NU se setează aici (se generează la inserare).
  */
+import { ENERGY_CLASS_OPTIONS } from "@/lib/property-energy-class";
 
 export type ImmofluxLocalized = { ro?: string | null; [lang: string]: string | null | undefined };
 
@@ -94,7 +95,7 @@ export type ImmofluxMapResult =
   | { ok: true; row: ImmofluxPropertyRow; images: ImmofluxImage[]; warnings: string[] }
   | { ok: false; skipped: true; reasons: string[] };
 
-const ENERGY_CLASSES = new Set(["A++", "A+", "A", "B", "C", "D", "E", "F", "G"]);
+const ENERGY_CLASSES = new Set<string>(ENERGY_CLASS_OPTIONS);
 
 // Convenția Habitoo: județ și oraș cu „ş” (sedilă), ca în nomenclatorul SIRUTA.
 const BUCHAREST = "Bucureşti";

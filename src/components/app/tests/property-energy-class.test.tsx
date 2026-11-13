@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import { PropertyDetailsFields } from "../PropertyDetailsFields";
 import { computeCompleteness, completenessInputFromRow, missingRequiredMessage } from "@/lib/property-completeness";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
+import { ENERGY_CLASS_OPTIONS, normalizeEnergyClass } from "@/lib/property-energy-class";
 
 // Exercise the shared field's value contract without Radix's pointer/layout requirements.
 vi.mock("@/components/ui/select", () => ({
@@ -70,5 +71,60 @@ describe("energy class in the shared create/edit form", () => {
     const draft = Object.fromEntries(PROPERTY_DETAIL_FIELDS.map((key) => [key, (property as Record<string, unknown>)[key] ?? null]));
     expect(draft.energy_class).toBe("A+");
     expect(computeCompleteness(completenessInputFromRow({ ...property, ...draft }, media)).percent).toBe(100);
+  });
+});
+
+describe("energy class normalization and checklist state", () => {
+  async function renderForm(initial: Record<string, unknown>) {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => root.render(<PropertyDetailsFields value={initial} onChange={() => undefined} />));
+    const select = Array.from(container.querySelectorAll("select")).find((s) =>
+      Array.from(s.options).some((o) => o.value === "A++"));
+    if (!select) throw new Error("Missing energy class selector");
+    return { container, root, select };
+  }
+
+  it("checks the checklist item when a class is saved and unchecks it for Nespecificat", () => {
+    const withClass = computeCompleteness(completenessInputFromRow({ ...complete, energy_class: "B" }, media));
+    expect(withClass.recommended.find((i) => i.key === "energy_class")?.done).toBe(true);
+    expect(withClass.percent).toBe(100);
+    const without = computeCompleteness(completenessInputFromRow({ ...complete, energy_class: null }, media));
+    expect(without.recommended.find((i) => i.key === "energy_class")?.done).toBe(false);
+    expect(without.percent).toBeLessThan(100);
+  });
+
+  it("normalizes a legacy value like „a+” to „A+” in the form", async () => {
+    const { container, root, select } = await renderForm({ ...complete, energy_class: "a+" });
+    try {
+      expect(select.value).toBe("A+");
+      // Fără opțiune duplicat: „A+” apare o singură dată.
+      expect(Array.from(select.options).filter((o) => o.value === "A+")).toHaveLength(1);
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+    }
+  });
+
+  it("keeps an unknown legacy value visible instead of losing it", async () => {
+    const { container, root, select } = await renderForm({ ...complete, energy_class: "Clasa A (certificat 2019)" });
+    try {
+      expect(select.value).toBe("Clasa A (certificat 2019)");
+      expect(Array.from(select.options).some((o) => o.value === "Clasa A (certificat 2019)")).toBe(true);
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+    }
+  });
+
+  it("normalizeEnergyClass maps equivalents and preserves unknowns", () => {
+    expect(normalizeEnergyClass("a+")).toBe("A+");
+    expect(normalizeEnergyClass(" a ")).toBe("A");
+    expect(normalizeEnergyClass("A++")).toBe("A++");
+    expect(normalizeEnergyClass("necunoscut")).toBe("necunoscut");
+    expect(normalizeEnergyClass("")).toBeNull();
+    expect(normalizeEnergyClass(null)).toBeNull();
+    expect(ENERGY_CLASS_OPTIONS).toEqual(["A++", "A+", "A", "B", "C", "D", "E", "F", "G"]);
   });
 });

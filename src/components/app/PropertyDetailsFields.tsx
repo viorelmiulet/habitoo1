@@ -29,6 +29,7 @@ import {
 } from "@/lib/property-taxonomy";
 import { propertyTypeLabels } from "@/lib/labels";
 import { floorNumberRequired, syncFloor } from "@/lib/property-floor";
+import { ENERGY_CLASS_OPTIONS, normalizeEnergyClass } from "@/lib/property-energy-class";
 import { useMemo, useRef } from "react";
 
 export type PropertyDetailsValue = Record<string, unknown>;
@@ -87,6 +88,38 @@ function SelectField({
               {o}
             </SelectItem>
           ))}
+        </SelectContent>
+      </Select>
+    </FormRow>
+  );
+}
+
+/**
+ * Clasa energetică: valorile vechi echivalente se normalizează la forma din
+ * listă („a+” → „A+”); o valoare necunoscută rămâne opțiune separată, ca să
+ * nu se piardă la afișare sau la salvarea altor câmpuri.
+ */
+function EnergyClassField({ ctx }: { ctx: FieldCtx }) {
+  const raw = ctx.str("energy_class");
+  const normalized = normalizeEnergyClass(raw);
+  const known = normalized != null && (ENERGY_CLASS_OPTIONS as readonly string[]).includes(normalized);
+  return (
+    <FormRow compact htmlFor={`${ctx.idPrefix}-energy_class`} label="Clasă energetică (recomandat)">
+      <Select
+        value={normalized ?? NONE}
+        onValueChange={(v) => ctx.setField("energy_class", v === NONE ? null : v)}
+      >
+        <SelectTrigger id={`${ctx.idPrefix}-energy_class`} className={CONTROL}>
+          <SelectValue placeholder="Selectează" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NONE}>Nespecificat</SelectItem>
+          {ENERGY_CLASS_OPTIONS.map((o) => (
+            <SelectItem key={o} value={o}>
+              {o}
+            </SelectItem>
+          ))}
+          {normalized && !known ? <SelectItem value={normalized}>{normalized}</SelectItem> : null}
         </SelectContent>
       </Select>
     </FormRow>
@@ -338,7 +371,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           <SelectField ctx={ctx} field="building_type" label="Tip" options={buildingTypeOptions} />
           <SelectField ctx={ctx} field="building_structure" label="Structură" options={buildingStructureOptions} />
           <SelectField ctx={ctx} field="seismic_risk" label="Risc seismic" options={seismicRiskOptions} />
-          <SelectField ctx={ctx} field="energy_class" label="Clasă energetică (recomandat)" options={["A++", "A+", "A", "B", "C", "D", "E", "F", "G"]} />
+          <EnergyClassField ctx={ctx} />
           <NumberField ctx={ctx} field="building_floors" label="Etaje" />
           <NumberField ctx={ctx} field="recessed_floors" label="Etaje retrase" />
         </div>
