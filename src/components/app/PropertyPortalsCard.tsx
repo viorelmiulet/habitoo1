@@ -1,3 +1,4 @@
+import { sortPromotionPortals } from "@/lib/promotion-portal-order";
 import { deselectedErrorHidden } from "@/lib/portals/deselect-cleanup";
 import { publicationLabels } from "@/lib/partner-api/feedback";
 import { HOUSERA_PENDING_SENTENCE, HOUSERA_VIEW_LABEL, houseraPendingView } from "@/lib/portals/housera/status-view";
@@ -262,7 +263,7 @@ export const PropertyPortalsCard = forwardRef<
       indices[imobiliare] = vdi;
       indices[vdi] = imobiliare;
     }
-    return indices;
+    return sortPromotionPortals(indices, (index) => cells[index].portalId);
   }, [cells]);
   const sessionUser = useCurrentUser().data;
   const loadMine = useServerFn(getMyPortalSlot);
