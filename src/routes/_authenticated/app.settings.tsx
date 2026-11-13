@@ -11,6 +11,7 @@ import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCar
 import { AgencyBrandingCard } from "@/components/app/AgencyBrandingCard";
 import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 import { AiCreditsUsageCard } from "@/components/app/ai/AiCreditsUsageCard";
+import { ActiveMatchThresholdCard } from "@/components/app/active-matching/ActiveMatchThresholdCard";
 
 
 import { AgencySitePortalCard, SiteFeedMovedCard } from "@/components/app/AgencySitePortalCard";
@@ -774,6 +775,7 @@ function SettingsPage() {
           <TabsContent value="ai" className="mt-0 space-y-4">
             <AiCreditsUsageCard />
             {user?.isAdmin ? <AiSettingsCard /> : null}
+            {user?.isAdmin ? <ActiveMatchThresholdCard /> : null}
           </TabsContent>
         </div>
       </Tabs>

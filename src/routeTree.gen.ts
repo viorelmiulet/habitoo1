@@ -71,6 +71,7 @@ import { Route as AuthenticatedAppGoalsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppLeadsRouteImport } from './routes/_authenticated/app.leads'
 import { Route as AuthenticatedAppMatchingRouteImport } from './routes/_authenticated/app.matching'
 import { Route as AuthenticatedAppNotificationsRouteImport } from './routes/_authenticated/app.notifications'
+import { Route as AuthenticatedAppPotriviriNoiRouteImport } from './routes/_authenticated/app.potriviri-noi'
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app.reports'
 import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
@@ -120,6 +121,7 @@ import { Route as ApiPublicBlogMediaSplatRouteImport } from './routes/api/public
 import { Route as ApiPublicBlogOgSplatRouteImport } from './routes/api/public/blog-og/$'
 import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/public/cron/account-deletion'
 import { Route as ApiPublicCronAcpEnrichRouteImport } from './routes/api/public/cron/acp-enrich'
+import { Route as ApiPublicCronActiveMatchRouteImport } from './routes/api/public/cron/active-match'
 import { Route as ApiPublicCronChatEmailRouteImport } from './routes/api/public/cron/chat-email'
 import { Route as ApiPublicCronCommissionRatesRouteImport } from './routes/api/public/cron/commission-rates'
 import { Route as ApiPublicCronHouseraAvailabilityRouteImport } from './routes/api/public/cron/housera-availability'
@@ -565,6 +567,12 @@ const AuthenticatedAppNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppPotriviriNoiRoute =
+  AuthenticatedAppPotriviriNoiRouteImport.update({
+    id: '/potriviri-noi',
+    path: '/potriviri-noi',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppReportsRoute = AuthenticatedAppReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -850,6 +858,12 @@ const ApiPublicCronAcpEnrichRoute = ApiPublicCronAcpEnrichRouteImport.update({
   path: '/api/public/cron/acp-enrich',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronActiveMatchRoute =
+  ApiPublicCronActiveMatchRouteImport.update({
+    id: '/api/public/cron/active-match',
+    path: '/api/public/cron/active-match',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronChatEmailRoute = ApiPublicCronChatEmailRouteImport.update({
   id: '/api/public/cron/chat-email',
   path: '/api/public/cron/chat-email',
@@ -1617,6 +1631,7 @@ export interface FileRoutesByFullPath {
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
   '/app/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/app/potriviri-noi': typeof AuthenticatedAppPotriviriNoiRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -1658,6 +1673,7 @@ export interface FileRoutesByFullPath {
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/acp-enrich': typeof ApiPublicCronAcpEnrichRoute
+  '/api/public/cron/active-match': typeof ApiPublicCronActiveMatchRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
   '/api/public/cron/housera-availability': typeof ApiPublicCronHouseraAvailabilityRoute
@@ -1848,6 +1864,7 @@ export interface FileRoutesByTo {
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
   '/app/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/app/potriviri-noi': typeof AuthenticatedAppPotriviriNoiRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -1888,6 +1905,7 @@ export interface FileRoutesByTo {
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/acp-enrich': typeof ApiPublicCronAcpEnrichRoute
+  '/api/public/cron/active-match': typeof ApiPublicCronActiveMatchRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
   '/api/public/cron/housera-availability': typeof ApiPublicCronHouseraAvailabilityRoute
@@ -2083,6 +2101,7 @@ export interface FileRoutesById {
   '/_authenticated/app/leads': typeof AuthenticatedAppLeadsRoute
   '/_authenticated/app/matching': typeof AuthenticatedAppMatchingRoute
   '/_authenticated/app/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/_authenticated/app/potriviri-noi': typeof AuthenticatedAppPotriviriNoiRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
   '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -2124,6 +2143,7 @@ export interface FileRoutesById {
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/acp-enrich': typeof ApiPublicCronAcpEnrichRoute
+  '/api/public/cron/active-match': typeof ApiPublicCronActiveMatchRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
   '/api/public/cron/housera-availability': typeof ApiPublicCronHouseraAvailabilityRoute
@@ -2319,6 +2339,7 @@ export interface FileRouteTypes {
     | '/app/leads'
     | '/app/matching'
     | '/app/notifications'
+    | '/app/potriviri-noi'
     | '/app/reports'
     | '/app/requests'
     | '/app/settings'
@@ -2360,6 +2381,7 @@ export interface FileRouteTypes {
     | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/acp-enrich'
+    | '/api/public/cron/active-match'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
     | '/api/public/cron/housera-availability'
@@ -2550,6 +2572,7 @@ export interface FileRouteTypes {
     | '/app/leads'
     | '/app/matching'
     | '/app/notifications'
+    | '/app/potriviri-noi'
     | '/app/reports'
     | '/app/requests'
     | '/app/settings'
@@ -2590,6 +2613,7 @@ export interface FileRouteTypes {
     | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/acp-enrich'
+    | '/api/public/cron/active-match'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
     | '/api/public/cron/housera-availability'
@@ -2784,6 +2808,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/leads'
     | '/_authenticated/app/matching'
     | '/_authenticated/app/notifications'
+    | '/_authenticated/app/potriviri-noi'
     | '/_authenticated/app/reports'
     | '/_authenticated/app/requests'
     | '/_authenticated/app/settings'
@@ -2825,6 +2850,7 @@ export interface FileRouteTypes {
     | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/acp-enrich'
+    | '/api/public/cron/active-match'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
     | '/api/public/cron/housera-availability'
@@ -3003,6 +3029,7 @@ export interface RootRouteChildren {
   ApiPublicBlogOgSplatRoute: typeof ApiPublicBlogOgSplatRoute
   ApiPublicCronAccountDeletionRoute: typeof ApiPublicCronAccountDeletionRoute
   ApiPublicCronAcpEnrichRoute: typeof ApiPublicCronAcpEnrichRoute
+  ApiPublicCronActiveMatchRoute: typeof ApiPublicCronActiveMatchRoute
   ApiPublicCronChatEmailRoute: typeof ApiPublicCronChatEmailRoute
   ApiPublicCronCommissionRatesRoute: typeof ApiPublicCronCommissionRatesRoute
   ApiPublicCronHouseraAvailabilityRoute: typeof ApiPublicCronHouseraAvailabilityRoute
@@ -3547,6 +3574,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppNotificationsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/potriviri-noi': {
+      id: '/_authenticated/app/potriviri-noi'
+      path: '/potriviri-noi'
+      fullPath: '/app/potriviri-noi'
+      preLoaderRoute: typeof AuthenticatedAppPotriviriNoiRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/reports': {
       id: '/_authenticated/app/reports'
       path: '/reports'
@@ -3888,6 +3922,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/acp-enrich'
       fullPath: '/api/public/cron/acp-enrich'
       preLoaderRoute: typeof ApiPublicCronAcpEnrichRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/active-match': {
+      id: '/api/public/cron/active-match'
+      path: '/api/public/cron/active-match'
+      fullPath: '/api/public/cron/active-match'
+      preLoaderRoute: typeof ApiPublicCronActiveMatchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/chat-email': {
@@ -4790,6 +4831,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppLeadsRoute: typeof AuthenticatedAppLeadsRoute
   AuthenticatedAppMatchingRoute: typeof AuthenticatedAppMatchingRoute
   AuthenticatedAppNotificationsRoute: typeof AuthenticatedAppNotificationsRoute
+  AuthenticatedAppPotriviriNoiRoute: typeof AuthenticatedAppPotriviriNoiRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
   AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRouteWithChildren
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
@@ -4830,6 +4872,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppLeadsRoute: AuthenticatedAppLeadsRoute,
   AuthenticatedAppMatchingRoute: AuthenticatedAppMatchingRoute,
   AuthenticatedAppNotificationsRoute: AuthenticatedAppNotificationsRoute,
+  AuthenticatedAppPotriviriNoiRoute: AuthenticatedAppPotriviriNoiRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
   AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRouteWithChildren,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
@@ -5166,6 +5209,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBlogOgSplatRoute: ApiPublicBlogOgSplatRoute,
   ApiPublicCronAccountDeletionRoute: ApiPublicCronAccountDeletionRoute,
   ApiPublicCronAcpEnrichRoute: ApiPublicCronAcpEnrichRoute,
+  ApiPublicCronActiveMatchRoute: ApiPublicCronActiveMatchRoute,
   ApiPublicCronChatEmailRoute: ApiPublicCronChatEmailRoute,
   ApiPublicCronCommissionRatesRoute: ApiPublicCronCommissionRatesRoute,
   ApiPublicCronHouseraAvailabilityRoute: ApiPublicCronHouseraAvailabilityRoute,

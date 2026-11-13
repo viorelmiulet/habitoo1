@@ -15,6 +15,7 @@ export const AI_FEATURE_KEYS = [
   "acp_ai",
   "ai_listing_autofill",
   "ai_lead_assist",
+  "ai_active_matching",
 ] as const;
 
 export type AiFeatureKey = (typeof AI_FEATURE_KEYS)[number];
@@ -66,6 +67,11 @@ export const AI_FEATURES: { key: AiFeatureKey; label: string; description: strin
     key: "ai_lead_assist",
     label: "Asistent lead-uri",
     description: "Citește mesajele primite din portaluri, extrage cererea clientului și pregătește o ciornă de răspuns.",
+  },
+  {
+    key: "ai_active_matching",
+    label: "Potriviri active",
+    description: "Anunță agentul când o proprietate nouă sau mai ieftină se potrivește cu o cerere și pregătește mesajul către client.",
   },
 ];
 

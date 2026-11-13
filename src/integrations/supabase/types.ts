@@ -654,6 +654,188 @@ export type Database = {
           },
         ]
       }
+      active_match_alerts: {
+        Row: {
+          agent_id: string | null
+          contact_id: string | null
+          created_at: string
+          draft: string | null
+          draft_is_ai: boolean
+          id: string
+          misses: Json
+          notified_at: string | null
+          organization_id: string
+          price_drop_notified_at: string | null
+          property_id: string
+          reasons: Json
+          request_id: string
+          score: number
+          sent_at: string | null
+          status: string
+          trigger: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          draft?: string | null
+          draft_is_ai?: boolean
+          id?: string
+          misses?: Json
+          notified_at?: string | null
+          organization_id: string
+          price_drop_notified_at?: string | null
+          property_id: string
+          reasons?: Json
+          request_id: string
+          score: number
+          sent_at?: string | null
+          status?: string
+          trigger: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          draft?: string | null
+          draft_is_ai?: boolean
+          id?: string
+          misses?: Json
+          notified_at?: string | null
+          organization_id?: string
+          price_drop_notified_at?: string | null
+          property_id?: string
+          reasons?: Json
+          request_id?: string
+          score?: number
+          sent_at?: string | null
+          status?: string
+          trigger?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_match_alerts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_match_alerts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_match_alerts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_match_alerts_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      active_match_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          locked_until: string | null
+          organization_id: string
+          property_id: string | null
+          request_id: string | null
+          status: string
+          trigger: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          locked_until?: string | null
+          organization_id: string
+          property_id?: string | null
+          request_id?: string | null
+          status?: string
+          trigger: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          locked_until?: string | null
+          organization_id?: string
+          property_id?: string | null
+          request_id?: string | null
+          status?: string
+          trigger?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_match_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_match_queue_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_match_queue_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      active_match_settings: {
+        Row: {
+          min_score: number
+          organization_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          min_score?: number
+          organization_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          min_score?: number
+          organization_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_match_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activities: {
         Row: {
           assigned_to: string | null
@@ -12841,6 +13023,27 @@ export type Database = {
           _ttl_seconds?: number
         }
         Returns: boolean
+      }
+      active_match_claim: {
+        Args: { _limit?: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          id: string
+          locked_until: string | null
+          organization_id: string
+          property_id: string | null
+          request_id: string | null
+          status: string
+          trigger: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "active_match_queue"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       admin_change_user_organization: {
         Args: { _new_org: string; _user_id: string }

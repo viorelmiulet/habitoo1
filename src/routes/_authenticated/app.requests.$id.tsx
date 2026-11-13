@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ActiveMatchAlertList } from "@/components/app/active-matching/ActiveMatchAlerts";
 
 const priorityLabels: Record<string, string> = {
   low: "Scăzută",
@@ -351,6 +352,11 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
           )
         }
       />
+
+      <section className="space-y-2" aria-label="Potriviri noi pentru această cerere">
+        <h2 className="text-sm font-semibold">Potriviri noi</h2>
+        <ActiveMatchAlertList status="all" requestId={request.id} />
+      </section>
 
       <div className="space-y-4 rounded-[14px] border border-border bg-card p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-3">
