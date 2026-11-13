@@ -1,5 +1,11 @@
-import { AI_MEDIA_MODELS, MediaProviderError, downloadAiMedia, mediaError, readAiMediaPrediction, startAiMediaPrediction, type AiMediaKind } from "./providers.server";
+import { AI_MEDIA_MODELS, MediaProviderError, downloadAiMedia, mediaError, validateAiMediaBytes, readAiMediaPrediction, startAiMediaPrediction, type AiMediaKind } from "./providers.server";
 import { mediaQuotaError } from "./quota";
+import { loadAiMediaModelSettings } from "./model-settings.server";
+
+/** Rânduri create cu furnizorul anterior: nu mai pot fi urmărite. */
+export function isLegacyMediaModel(model: unknown): boolean {
+  return typeof model === "string" && (/^minimax/i.test(model) || model === "image-01");
+}
 
 // Caller client handles rows (RLS); privileged client only writes usage and media.
 type MediaContext = { supabase: any; userId: string };
@@ -16,8 +22,8 @@ async function usage(admin: any, row: any, userId: string, result: { success: bo
   const { error } = insert ? await query.insert(event) : await query.update(event).eq("capability", "ai_media").eq("extra_info->>generation_id", row.id);
   if (error) throw new MediaProviderError("usage_failed", "Înregistrarea consumului nu a putut fi salvată. Încearcă din nou.");
 }
-async function saveOutput(admin: any, row: any, url: string): Promise<string> {
-  const file = await downloadAiMedia(url, row.kind);
+async function saveOutput(admin: any, row: any, source: string | Uint8Array): Promise<string> {
+  const file = typeof source === "string" ? await downloadAiMedia(source, row.kind) : validateAiMediaBytes(source, row.kind);
   const path = `${row.organization_id}/${row.created_by}/${row.id}.${file.extension}`;
   const { error } = await admin.storage.from("ai-media").upload(path, file.bytes, { contentType: file.contentType, upsert: true });
   if (error) throw new MediaProviderError("upload_failed", "Rezultatul nu a putut fi salvat. Încearcă din nou.");
@@ -34,7 +40,8 @@ async function settle(context: MediaContext, admin: any, row: any, output: strin
   if (data?.length) await usage(admin, row, row.created_by, { success: !error, status: error ? "failed" : "succeeded", errorCode: error?.code }, false);
 }
 export async function startMediaGeneration(context: MediaContext, admin: any, organizationId: string, input: { kind: AiMediaKind; prompt: string; sourcePath: string | null }) {
-  const model = AI_MEDIA_MODELS[input.kind];
+  const settings = await loadAiMediaModelSettings();
+  const model = { id: input.kind === "marketing_image" ? settings.image : input.kind === "photo_video" ? settings.video : AI_MEDIA_MODELS[input.kind].id };
   const { data: row, error: insertError } = await context.supabase.from("ai_media_generations").insert({ organization_id: organizationId, created_by: context.userId, kind: input.kind, prompt: input.prompt, source_url: input.sourcePath, model: model.id, status: "running" }).select("*").single();
   if (insertError || !row) return { ok: false as const, message: mediaQuotaError(insertError?.message ?? "") ?? "Generarea nu a putut fi înregistrată." };
   try {
@@ -46,12 +53,12 @@ export async function startMediaGeneration(context: MediaContext, admin: any, or
       if (error || !data?.signedUrl) throw new MediaProviderError("source_unreadable", "Fotografia încărcată nu a putut fi citită.");
       sourceUrl = data.signedUrl;
     }
-    const prediction = await startAiMediaPrediction({ kind: input.kind, prompt: input.prompt, sourceUrl });
+    const prediction = await startAiMediaPrediction({ kind: input.kind, prompt: input.prompt, sourceUrl, model: model.id });
     if (prediction.status === "running") {
       const { error } = await context.supabase.from("ai_media_generations").update({ prediction_id: prediction.id }).eq("id", row.id);
       if (error) throw new MediaProviderError("row_update_failed", "Referința generării video nu a putut fi salvată.");
-    } else if (prediction.outputUrl) {
-      const output = await saveOutput(admin, row, prediction.outputUrl);
+    } else if (prediction.inline || prediction.outputUrl) {
+      const output = await saveOutput(admin, row, prediction.inline ?? prediction.outputUrl!);
       await settle(context, admin, row, output);
     }
     return { ok: true as const, id: row.id as string };
@@ -64,13 +71,13 @@ export async function startMediaGeneration(context: MediaContext, admin: any, or
 export async function refreshMediaGeneration(context: MediaContext, admin: any, row: any) {
   // The unchanged UI may refresh an image row while its synchronous call is
   // still downloading. Likewise video submission has not yet saved task_id.
-  if (row.model === AI_MEDIA_MODELS[row.kind as AiMediaKind]?.id && (row.kind !== "photo_video" || !row.prediction_id)) return { ok: true as const };
+  if (!isLegacyMediaModel(row.model) && (row.kind !== "photo_video" || !row.prediction_id)) return { ok: true as const };
   try {
     // Historical tasks cannot be queried on another provider. No outbound legacy calls.
-    if (row.kind !== "photo_video" || row.model !== AI_MEDIA_MODELS.photo_video.id) throw new MediaProviderError("legacy_task", "Această generare veche nu mai poate fi urmărită. Pornește o generare nouă.");
+    if (row.kind !== "photo_video" || isLegacyMediaModel(row.model) || !String(row.model).includes("/")) throw new MediaProviderError("legacy_task", "Această generare veche nu mai poate fi urmărită. Pornește o generare nouă.");
     if (!row.prediction_id) throw new MediaProviderError("task_missing", "Generarea nu are o referință video.");
-    const prediction = await readAiMediaPrediction(row.prediction_id);
-    if (prediction.status === "failed") throw new MediaProviderError(prediction.errorCode ?? "minimax_status_failed", "MiniMax nu a putut finaliza videoclipul. Încearcă din nou.");
+    const prediction = await readAiMediaPrediction(row.prediction_id, row.model);
+    if (prediction.status === "failed") throw new MediaProviderError(prediction.errorCode ?? "fal_status_failed", "Serviciul video nu a putut finaliza clipul. Încearcă din nou.");
     if (prediction.status === "succeeded" && prediction.outputUrl) await settle(context, admin, row, await saveOutput(admin, row, prediction.outputUrl));
     return { ok: true as const };
   } catch (error) {

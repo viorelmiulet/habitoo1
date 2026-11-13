@@ -1,4 +1,4 @@
-/** Studio AI: authenticated agency rows, private output storage, MiniMax and fal. */
+/** Studio AI: authenticated agency rows, private output storage, Gemini and fal. */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 

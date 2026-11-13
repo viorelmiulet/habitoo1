@@ -2,7 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { NARRATION_BUCKET, NARRATION_FEATURE, NARRATION_MODEL, validateNarration, type NarrationItem, type NarrationVoice } from "./video-narration";
 import { isAiFeatureEnabled } from "./ai/features/features.server";
-import { generateMiniMaxNarration, narrationConfigured } from "./video-narration-minimax.server";
+import { generateGeminiNarration, narrationConfigured } from "./video-narration-gemini.server";
+import { loadAiMediaModelSettings } from "./ai/media/model-settings.server";
 
 type Client = SupabaseClient<Database>;
 export async function narrationAccess(client: Client, userId: string, propertyId: string) {
@@ -31,26 +32,27 @@ export async function startNarrationCore(client: Client, userId: string, input: 
   const invalid = validateNarration(input.text, input.seconds); if (invalid) throw new Error(invalid);
   if (!narrationConfigured()) throw new Error("AI nu este configurat.");
   const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
-  const { data: id, error } = await admin.rpc("reserve_video_narration", { p_org: org, p_property: input.propertyId, p_user: userId, p_key: input.requestKey, p_text: input.text.trim(), p_voice: input.voice, p_duration: input.seconds, p_model: NARRATION_MODEL });
+  const voiceModel = (await loadAiMediaModelSettings()).voice || NARRATION_MODEL;
+  const { data: id, error } = await admin.rpc("reserve_video_narration", { p_org: org, p_property: input.propertyId, p_user: userId, p_key: input.requestKey, p_text: input.text.trim(), p_voice: input.voice, p_duration: input.seconds, p_model: voiceModel });
   if (error || !id) throw new Error(error?.message ?? "Generarea nu a putut fi pornită.");
   const { data: claimed } = await admin.from("video_narrations").update({ prediction_id: "starting" }).eq("id", id).is("prediction_id", null).select("id,usage_event_id").maybeSingle();
   if (claimed) {
     const startedAt = Date.now();
-    const path = `${org}/${input.propertyId}/${id}.mp3`;
+    const path = `${org}/${input.propertyId}/${id}.wav`;
     let uploaded = false;
     try {
-      const audio = await generateMiniMaxNarration(input.text, input.voice);
-      const { error: upload } = await admin.storage.from(NARRATION_BUCKET).upload(path, audio.bytes, { contentType: "audio/mpeg", upsert: true });
+      const audio = await generateGeminiNarration(input.text, input.voice, voiceModel);
+      const { error: upload } = await admin.storage.from(NARRATION_BUCKET).upload(path, audio.bytes, { contentType: audio.contentType, upsert: true });
       if (upload) throw new Error("Vocea nu a putut fi salvată.");
       uploaded = true;
       const { error: saved } = await admin.from("video_narrations").update({ status: "succeeded", storage_path: path, error: null }).eq("id", id);
       if (saved) throw new Error("Vocea nu a putut fi salvată.");
-      if (claimed.usage_event_id) await admin.from("ai_usage_events").update({ provider: "minimax", model: NARRATION_MODEL, success: true, latency_ms: Date.now() - startedAt, extra_info: { usage_characters: audio.usageCharacters } }).eq("id", claimed.usage_event_id);
+      if (claimed.usage_event_id) await admin.from("ai_usage_events").update({ provider: "gemini", model: voiceModel, success: true, latency_ms: Date.now() - startedAt, extra_info: { usage_characters: audio.usageCharacters } }).eq("id", claimed.usage_event_id);
     } catch (e) {
       if (uploaded) await admin.storage.from(NARRATION_BUCKET).remove([path]);
       const message = e instanceof Error ? e.message : "Generarea a eșuat.";
       await admin.from("video_narrations").update({ status: "failed", error: message }).eq("id", id);
-      if (claimed.usage_event_id) await admin.from("ai_usage_events").update({ provider: "minimax", model: NARRATION_MODEL, success: false, latency_ms: Date.now() - startedAt }).eq("id", claimed.usage_event_id);
+      if (claimed.usage_event_id) await admin.from("ai_usage_events").update({ provider: "gemini", model: voiceModel, success: false, latency_ms: Date.now() - startedAt }).eq("id", claimed.usage_event_id);
       throw new Error(message);
     }
   }

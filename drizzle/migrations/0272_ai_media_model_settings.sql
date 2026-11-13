@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_model_settings ADD COLUMN IF NOT EXISTS image_model text, ADD COLUMN IF NOT EXISTS video_model text, ADD COLUMN IF NOT EXISTS voice_model text;

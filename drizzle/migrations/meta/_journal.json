@@ -1905,6 +1905,13 @@
       "when": 1794597426212,
       "tag": "0271_ai_model_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 272,
+      "version": "7",
+      "when": 1794599932821,
+      "tag": "0272_ai_media_model_settings",
+      "breakpoints": true
     }
   ]
 }

@@ -21,7 +21,7 @@ describe("narațiune video", () => {
   it("prețul apare numai cu bifa activă", () => { expect(buildNarrationText(listing, true, 60)).toContain("120.000 euro"); expect(buildNarrationText(listing, false, 60)).not.toContain("120.000"); });
   it("respinge telefoane și emailuri în text editat", () => { expect(validateNarration("Sună 0722123456", 10)).not.toBeNull(); expect(validateNarration("Scrie ana@example.com", 10)).not.toBeNull(); });
   it("plafonul zilnic per agenție este 20", () => { expect(NARRATION_DAILY_LIMIT).toBe(20); });
-  it("folosește MiniMax în română cu două voci distincte", () => { const a = buildSpeechInput("Bună", "female"), b = buildSpeechInput("Bună", "male"); expect(a.language_boost).toBe("Romanian"); expect(b.language_boost).toBe("Romanian"); expect(a.voice_id).not.toBe(b.voice_id); expect(a.audio_format).toBe("mp3"); });
+  it("folosește Gemini TTS în română cu două voci distincte", () => { const a = buildSpeechInput("Bună", "female"), b = buildSpeechInput("Bună", "male"); expect(a.generationConfig.speechConfig.languageCode).toBe("ro-RO"); expect(a.generationConfig.responseModalities).toEqual(["AUDIO"]); expect(a.contents[0].parts[0].text).toContain("Bună"); expect(a.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName).not.toBe(b.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName); });
 });
 describe("muzică sub voce", () => {
   it("reduce muzica în timpul vocii și revine după", () => { expect(musicGainAt(1, 4, 12)).toBe(0.18); expect(musicGainAt(4.175, 4, 12)).toBeCloseTo(0.59); expect(musicGainAt(5, 4, 12)).toBe(1); });

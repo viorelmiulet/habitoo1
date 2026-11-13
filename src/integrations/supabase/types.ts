@@ -1074,25 +1074,34 @@ export type Database = {
           fallback_model: string | null
           fast_model: string | null
           id: boolean
+          image_model: string | null
           standard_model: string | null
           updated_at: string
           updated_by: string | null
+          video_model: string | null
+          voice_model: string | null
         }
         Insert: {
           fallback_model?: string | null
           fast_model?: string | null
           id?: boolean
+          image_model?: string | null
           standard_model?: string | null
           updated_at?: string
           updated_by?: string | null
+          video_model?: string | null
+          voice_model?: string | null
         }
         Update: {
           fallback_model?: string | null
           fast_model?: string | null
           id?: boolean
+          image_model?: string | null
           standard_model?: string | null
           updated_at?: string
           updated_by?: string | null
+          video_model?: string | null
+          voice_model?: string | null
         }
         Relationships: []
       }

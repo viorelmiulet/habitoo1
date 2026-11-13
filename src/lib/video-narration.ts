@@ -2,14 +2,15 @@ import { formatFloorLabel } from "@/lib/property-floor";
 import type { VideoListing } from "@/lib/property-video";
 
 export const NARRATION_FEATURE = "ai_video_voice" as const;
-export const NARRATION_MODEL = "speech-2.8-turbo";
+export const NARRATION_MODEL = "gemini-2.5-flash-preview-tts";
 export const NARRATION_BUCKET = "video-narration";
 export const NARRATION_DAILY_LIMIT = 20;
 export const NARRATION_VOICES = {
-  female: { label: "Feminină · blândă", id: "Romanian_female_2_sample1" },
-  male: { label: "Masculină · neutră", id: "Romanian_male_1_sample2" },
-  female_youth: { label: "Feminină · veselă", id: "Romanian_female_1_sample4" },
-  male_youth: { label: "Masculină · energică", id: "Romanian_male_2_sample1" },
+  // Voci predefinite Gemini TTS (româna este suportată de model).
+  female: { label: "Feminină · blândă", id: "Sulafat" },
+  male: { label: "Masculină · neutră", id: "Charon" },
+  female_youth: { label: "Feminină · veselă", id: "Leda" },
+  male_youth: { label: "Masculină · energică", id: "Puck" },
 } as const;
 export type NarrationVoice = keyof typeof NARRATION_VOICES;
 export function narrationWordCount(text: string) { return text.trim() ? text.trim().split(/\s+/u).length : 0; }
@@ -33,7 +34,12 @@ export function buildNarrationText(listing: VideoListing, showPrice: boolean, se
   ].filter((v): v is string => Boolean(v));
   return facts.join(". ").replace(/[.!?]+$/u, "").split(/\s+/u).slice(0, narrationWordLimit(seconds)).join(" ") + ".";
 }
+export const NARRATION_STYLE = "Citește în limba română, clar, cald și profesionist, ca într-o prezentare imobiliară:";
+/** Corpul cererii Gemini TTS (generateContent, ieșire audio). */
 export function buildSpeechInput(text: string, voice: NarrationVoice) {
-  return { text: text.trim(), voice_id: NARRATION_VOICES[voice].id, language_boost: "Romanian", speed: 1, volume: 1, pitch: 0, audio_format: "mp3", channel: "mono" };
+  return {
+    contents: [{ role: "user", parts: [{ text: `${NARRATION_STYLE}\n${text.trim()}` }] }],
+    generationConfig: { responseModalities: ["AUDIO"], speechConfig: { languageCode: "ro-RO", voiceConfig: { prebuiltVoiceConfig: { voiceName: NARRATION_VOICES[voice].id } } } },
+  };
 }
 export type NarrationItem = { id: string; text: string; voice: NarrationVoice; duration_sec: number; status: "running" | "succeeded" | "failed"; error: string | null; outputUrl: string | null };

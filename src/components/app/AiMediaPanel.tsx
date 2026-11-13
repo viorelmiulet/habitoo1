@@ -1,5 +1,5 @@
 /**
- * Studio AI — generare de media cu MiniMax și fal.
+ * Studio AI — generare de media cu Gemini și fal.
  *
  * Interfața nu atinge providerul: încărcarea fotografiei merge în stocarea
  * agenției, iar generarea și copierea rezultatului se fac prin server functions.

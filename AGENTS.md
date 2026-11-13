@@ -32,7 +32,7 @@
 - ZonaTa uses a scoped durable attempt journal. Why: interrupted jobs must leave evidence.
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
 - Completed videos store caller-owned metadata and server-resolved music snapshots in generated_video_clips, not media; history uses caller RLS and never publishes. Why: include unpublished clips and retain soundtrack identity after library edits.
-- Video narration uses a direct MiniMax TTS server boundary with validated hex decoding, atomic organization-locked reservations and character usage, caller-RLS private audio signing, and one offline audio mix for both encoders. Why: preserve quotas and privacy without provider prediction polling.
+- Video narration: direct Gemini TTS (model from `ai_model_settings`), validated base64, PCM→WAV, org-locked reservations, caller-RLS signing, one offline mix. Why: quotas, privacy, decodable audio.
 - No global `entities` aliases/overrides: use distinct exports.
 - Contracts: encrypted IDs/RLS, locked per-kind numbers; viewing table parser shared by preview/PDF. Why: privacy/fidelity.
 - PortalLogo shares assets; overview uses registry. Why: same access.
@@ -58,7 +58,7 @@
 - Internal AI fallback restarts complete read/generation callbacks before persistence or approval; native assistant blocks and tool IDs stay in memory. ID vision uses high-detail attachments; ACP interpretation uses the same registry, one JSON correction and final-provider usage/model. Other contracts keep their providers. Why: prevent mixed histories, duplicate actions and identity-image persistence while preserving deterministic ACP values.
 - AI music uses a server-only direct fal ACE-Step call (no queue, 110 s timeout), handler-scoped FAL_KEY, 30 successes/day, inactive tracks and failure cleanup; recoverable failures return safe-message DTOs and record stage codes in ai_usage_events.extra_info, never provider bodies; unexpected errors also record sanitized error_name/message. Why: preserve privacy and actionable production diagnostics.
 
-- Studio AI uses direct MiniMax images/Hailuo tasks and fal Kontext, private media and one terminal-updated usage event. Monthly reservations lock the agency before insertion; failed rows free slots, archived successes retain consumption; quotas use Romania months. SuperAdmin alone edits limits. Why: no duplicate usage, races or refunds.
+- Studio AI uses Gemini inline images, fal queue video and fal Kontext (models in `ai_model_settings`), private media and one terminal-updated usage event. Monthly reservations lock the agency before insertion; failed rows free slots, archived successes retain consumption; quotas use Romania months. SuperAdmin alone edits limits. Why: no duplicate usage, races or refunds.
 - Galleries share PhotoViewer; client offers follow src/lib/AGENTS.md; guide clicks stay safe. Why: privacy.
 - Lists share ListPagination/use-list-state; geography uses scoped choices/invoker RPCs (src/lib/AGENTS.md). Why: safe OR/counts.
 - Public SSR/feeds read the DB via `publicRead` (timeout, logged fallback); `public_llms_statistics` reads an hourly cron cache. Why: no 500s under load.

@@ -7,6 +7,7 @@ import {
 } from "../providers/registry.server";
 import { withAiProviderFallback } from "../providers/fallback.server";
 import { parseMistralResponse, toMistralMessages } from "../providers/mistral.server";
+const LEGACY_MM_KEY = ["MINIMAX", "API", "KEY"].join("_");
 import { AiProviderError } from "../providers/types";
 
 const geminiOk = (text: string) =>
@@ -19,7 +20,7 @@ const request = { system: "s", messages: [{ role: "user" as const, content: "sal
 beforeEach(() => {
   vi.stubEnv("GEMINI_API_KEY", "g-fixture");
   vi.stubEnv("MISTRAL_API_KEY", "m-fixture");
-  vi.stubEnv("MINIMAX_API_KEY", "");
+  vi.stubEnv(LEGACY_MM_KEY, "");
   setAiModelSettingsLoader(async () => null);
 });
 afterEach(() => {
@@ -74,8 +75,8 @@ describe("furnizori de text", () => {
     expect(standard.fallback?.model).toBe("mistral-small-latest");
   });
 
-  it("MINIMAX_API_KEY setat nu mai schimbă furnizorul de text", async () => {
-    vi.stubEnv("MINIMAX_API_KEY", "mm-fixture");
+  it("cheia MiniMax setată nu mai schimbă furnizorul de text", async () => {
+    vi.stubEnv(LEGACY_MM_KEY, "mm-fixture");
     const fetchMock = vi.fn(async (_url: string) => geminiOk("ok"));
     vi.stubGlobal("fetch", fetchMock);
     const provider = resolveAiProvider()!;

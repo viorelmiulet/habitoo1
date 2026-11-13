@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MediaProviderError } from "./providers.server";
 const mocks = vi.hoisted(() => ({ start: vi.fn(), read: vi.fn(), download: vi.fn() }));
 vi.mock("./providers.server", async importOriginal => ({ ...await importOriginal<typeof import("./providers.server")>(), startAiMediaPrediction: mocks.start, readAiMediaPrediction: mocks.read, downloadAiMedia: mocks.download }));
+vi.mock("./model-settings.server", async () => { const { AI_MEDIA_MODEL_DEFAULTS } = await import("./models"); return { loadAiMediaModelSettings: async () => ({ ...AI_MEDIA_MODEL_DEFAULTS }) }; });
 import { refreshMediaGeneration, startMediaGeneration } from "./generation.server";
+const VIDEO = "fal-ai/kling-video/v2.5-turbo/standard/image-to-video";
 function fixture() {
   const rows: any[] = [], events: any[] = [];
   const upload = vi.fn().mockResolvedValue({ error: null });
@@ -37,15 +39,15 @@ describe("Studio generation rows, private files and one usage event", () => {
     expect(f.rows[0]).toMatchObject({ status: "succeeded", output_url: "org/user/row-0.png" });
     expect(f.upload).toHaveBeenCalledTimes(1);
     expect(f.events).toHaveLength(1);
-    expect(f.events[0]).toMatchObject({ capability: "ai_media", provider: kind === "marketing_image" ? "minimax" : "fal", model: kind === "marketing_image" ? "image-01" : "fal-ai/flux-pro/kontext", success: true });
+    expect(f.events[0]).toMatchObject({ capability: "ai_media", provider: kind === "marketing_image" ? "gemini" : "fal", model: kind === "marketing_image" ? "gemini-2.5-flash-image" : "fal-ai/flux-pro/kontext", success: true });
     expect(f.events[0].latency_ms).toBeGreaterThanOrEqual(0);
   });
   it("stores task_id, then completes video with the same single usage event", async () => {
-    const f = fixture(); mocks.start.mockResolvedValue({ id: "minimax-task", status: "running", outputUrl: null });
+    const f = fixture(); mocks.start.mockResolvedValue({ id: "fal-task", status: "running", outputUrl: null });
     await startMediaGeneration(f.context, f.admin, "org", { kind: "photo_video", prompt: "test", sourcePath: "org/user/source" });
-    expect(f.rows[0]).toMatchObject({ prediction_id: "minimax-task", status: "running", model: "MiniMax-Hailuo-2.3-Fast" });
+    expect(f.rows[0]).toMatchObject({ prediction_id: "fal-task", status: "running", model: VIDEO });
     expect(mocks.read).not.toHaveBeenCalled();
-    mocks.read.mockResolvedValue({ id: "minimax-task", status: "succeeded", outputUrl: "https://media.example/video" });
+    mocks.read.mockResolvedValue({ id: "fal-task", status: "succeeded", outputUrl: "https://media.example/video" });
     await refreshMediaGeneration(f.context, f.admin, { ...f.rows[0] });
     expect(f.rows[0].status).toBe("succeeded"); expect(f.events).toHaveLength(1); expect(f.events[0].success).toBe(true);
   });
@@ -57,7 +59,7 @@ describe("Studio generation rows, private files and one usage event", () => {
   });
   it.each(["marketing_image", "photo_enhance", "photo_video"] as const)("does not fail an in-flight %s submission on a concurrent UI refresh", async kind => {
     const f = fixture();
-    expect(await refreshMediaGeneration(f.context, f.admin, { id: "in-flight", kind, model: kind === "marketing_image" ? "image-01" : kind === "photo_enhance" ? "fal-ai/flux-pro/kontext" : "MiniMax-Hailuo-2.3-Fast", prediction_id: null })).toEqual({ ok: true });
+    expect(await refreshMediaGeneration(f.context, f.admin, { id: "in-flight", kind, model: kind === "marketing_image" ? "gemini-2.5-flash-image" : kind === "photo_enhance" ? "fal-ai/flux-pro/kontext" : VIDEO, prediction_id: null })).toEqual({ ok: true });
     expect(mocks.read).not.toHaveBeenCalled(); expect(f.events).toHaveLength(0); expect(f.upload).not.toHaveBeenCalled();
   });
   it("records upload_failed without a succeeded row", async () => {
@@ -72,8 +74,8 @@ describe("Studio generation rows, private files and one usage event", () => {
   it("keeps video running on a transient status error, with a diagnostic code", async () => {
     const f = fixture(); mocks.start.mockResolvedValue({ id: "task", status: "running", outputUrl: null });
     await startMediaGeneration(f.context, f.admin, "org", { kind: "photo_video", prompt: "", sourcePath: "org/user/source" });
-    mocks.read.mockRejectedValue(new MediaProviderError("minimax_timeout", "Încearcă din nou.", true));
+    mocks.read.mockRejectedValue(new MediaProviderError("fal_timeout", "Încearcă din nou.", true));
     await refreshMediaGeneration(f.context, f.admin, { ...f.rows[0] });
-    expect(f.rows[0].status).toBe("running"); expect(f.events[0].extra_info.error_code).toBe("minimax_timeout");
+    expect(f.rows[0].status).toBe("running"); expect(f.events[0].extra_info.error_code).toBe("fal_timeout");
   });
 });

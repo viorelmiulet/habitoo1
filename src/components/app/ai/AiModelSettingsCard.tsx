@@ -11,12 +11,18 @@ import { QueryError } from "@/components/app/QueryError";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { getAiModelSettings, saveAiModelSettings, testAiModel } from "@/lib/ai/models.functions";
-import type { AiModelSlot } from "@/lib/ai/providers/models";
+import type { AiModelSlot as TextSlot } from "@/lib/ai/providers/models";
+import type { AiMediaModelSlot } from "@/lib/ai/media/models";
+
+type AiModelSlot = TextSlot | AiMediaModelSlot;
 
 const FIELDS: { slot: AiModelSlot; label: string; hint: string }[] = [
   { slot: "fast", label: "Model rapid (Gemini)", hint: "Clasificare, extragere de date, răspunsuri scurte, scoruri." },
   { slot: "standard", label: "Model standard (Gemini)", hint: "Agenții CRM, Manager și Marketing, descrieri, ACP AI, imagini." },
   { slot: "fallback", label: "Model rezervă (Mistral)", hint: "Folosit doar când Gemini este temporar indisponibil." },
+  { slot: "image", label: "Model imagini (Gemini)", hint: "Imagini de marketing în Studio AI. Testul verifică doar accesul la model." },
+  { slot: "video", label: "Model video (fal)", hint: "Video din poză în Studio AI. Testul nu generează niciun clip." },
+  { slot: "voice", label: "Model voce (Gemini TTS)", hint: "Narațiunea în română din videoclipuri." },
 ];
 
 export function AiModelSettingsCard() {
@@ -25,7 +31,7 @@ export function AiModelSettingsCard() {
   const test = useServerFn(testAiModel);
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["superadmin", "ai-models"], queryFn: () => load() });
-  const [values, setValues] = useState<Record<AiModelSlot, string>>({ fast: "", standard: "", fallback: "" });
+  const [values, setValues] = useState<Record<AiModelSlot, string>>({ fast: "", standard: "", fallback: "", image: "", video: "", voice: "" });
   const [results, setResults] = useState<Partial<Record<AiModelSlot, { ok: boolean; message: string }>>>({});
   const [testing, setTesting] = useState<AiModelSlot | null>(null);
 
@@ -59,7 +65,7 @@ export function AiModelSettingsCard() {
       <CardHeader>
         <CardTitle>Modele AI</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Google Gemini este furnizorul principal, iar Mistral rezerva. Un câmp gol folosește modelul implicit.
+          Text: Google Gemini principal, Mistral rezervă. Media: imagini și voce cu Gemini, video cu fal. Un câmp gol folosește modelul implicit.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -72,6 +78,9 @@ export function AiModelSettingsCard() {
             <div className="flex flex-wrap gap-2 text-sm">
               <Badge variant={query.data.geminiConfigured ? "default" : "secondary"}>
                 Gemini · {query.data.geminiConfigured ? "configurat" : "neconfigurat"}
+              </Badge>
+              <Badge variant={query.data.falConfigured ? "default" : "secondary"}>
+                fal · {query.data.falConfigured ? "configurat" : "neconfigurat"}
               </Badge>
               <Badge variant={query.data.mistralConfigured ? "default" : "secondary"}>
                 Mistral (rezervă) · {query.data.mistralConfigured ? "configurat" : "neconfigurat"}
