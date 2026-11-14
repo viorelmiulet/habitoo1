@@ -17,6 +17,7 @@ export const AI_FEATURE_KEYS = [
   "ai_lead_assist",
   "ai_active_matching",
   "ai_owner_report",
+  "ai_daily_brief",
 ] as const;
 
 export type AiFeatureKey = (typeof AI_FEATURE_KEYS)[number];
@@ -78,6 +79,11 @@ export const AI_FEATURES: { key: AiFeatureKey; label: string; description: strin
     key: "ai_owner_report",
     label: "Raport proprietar",
     description: "Pregătește în fiecare luni raportul săptămânal pentru proprietar, din datele reale ale proprietății.",
+  },
+  {
+    key: "ai_daily_brief",
+    label: "Rezumat zilnic",
+    description: "O frază AI de rezumat în cardul „Azi” de pe Acasă (1 credit pe zi).",
   },
 ];
 

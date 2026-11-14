@@ -3242,6 +3242,42 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_briefs: {
+        Row: {
+          ai_attempted: boolean
+          ai_sentence: string | null
+          brief_date: string
+          created_at: string
+          data: Json
+          id: string
+          organization_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_attempted?: boolean
+          ai_sentence?: string | null
+          brief_date: string
+          created_at?: string
+          data?: Json
+          id?: string
+          organization_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_attempted?: boolean
+          ai_sentence?: string | null
+          brief_date?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          organization_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string

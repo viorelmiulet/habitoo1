@@ -1947,6 +1947,13 @@
       "when": 1794608594711,
       "tag": "0277_owner_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 278,
+      "version": "7",
+      "when": 1794683314016,
+      "tag": "0278_daily_briefs",
+      "breakpoints": true
     }
   ]
 }
