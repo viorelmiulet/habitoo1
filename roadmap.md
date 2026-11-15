@@ -1,3 +1,8 @@
+## HD1 — Fotografii rapide HomeDirect
+- [x] Cache limitat pentru redirecturi și semnături, cu verificările publice păstrate
+- [x] URL direct doar în publicarea HomeDirect; 9 teste noi izolate trec, fără publicare
+- [x] Fotografie reală: redirect repetat 5–9 ms, descărcare JPEG 200; prima cerere rămâne lentă, cache per instanță; producția nemăsurată deoarece nu se publică
+
 ## AI8b — Încheiere rezumat Azi
 - [x] Acces agenție activă, claim atomic prin ai_attempted, Actualizează fără AI
 - [x] 11 teste exclusiv daily-brief cu date simulate; fără AI real sau publicare, build OK

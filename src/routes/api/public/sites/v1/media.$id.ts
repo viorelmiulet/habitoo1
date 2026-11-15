@@ -3,8 +3,6 @@
 // nici credentiale de storage. Servește numai imagini marcate pentru publicare,
 // ne-confidențiale, care aparțin unei proprietăți eligibile pentru feed.
 import { createFileRoute } from "@tanstack/react-router";
-import { isPropertyFeedEligible } from "@/lib/site-feed/mapper";
-import { watermarkFromOrg } from "@/lib/watermark";
 
 
 export const Route = createFileRoute("/api/public/sites/v1/media/$id")({
@@ -21,54 +19,15 @@ export const Route = createFileRoute("/api/public/sites/v1/media/$id")({
         }
 
         try {
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data: image } = await supabaseAdmin
-            .from("property_images")
-            .select(
-              "id, url, storage_path, property_id, organization_id, include_in_publish, is_confidential",
-            )
-            .eq("id", id)
-            .maybeSingle();
-          if (!image || image.include_in_publish !== true || image.is_confidential === true) {
-            return new Response("Not found", { status: 404 });
-          }
-
-          const { data: property } = await supabaseAdmin
-            .from("properties")
-            .select("publish_status, deleted_at, status")
-            .eq("id", image.property_id)
-            .maybeSingle();
-          if (!property || !isPropertyFeedEligible(property)) {
-            return new Response("Not found", { status: 404 });
-          }
-
-          let target = image.url;
-          if (image.storage_path) {
-            // Watermark doar pe varianta servită portalurilor; originalul rămâne intact.
-            let path = image.storage_path;
-            const { data: org } = await supabaseAdmin
-              .from("organizations")
-              .select(
-                "logo_path, watermark_enabled, watermark_position, watermark_scale_percent, watermark_opacity_percent, watermark_margin_percent",
-              )
-              .eq("id", image.organization_id)
-              .maybeSingle();
-            const cfg = watermarkFromOrg(org);
-            if (cfg.enabled) {
-              const { ensureWatermarkedPath } = await import("@/lib/watermark.server");
-              path = (await ensureWatermarkedPath(supabaseAdmin, image.storage_path, cfg)) ?? path;
-            }
-            const { signed } = await import("@/lib/site-feed/media-redirect.server");
-            const url = await signed(supabaseAdmin, "property-media", path, resize);
-            if (url) target = url;
-          }
+          const { propertyMediaTarget } = await import("@/lib/site-feed/property-media.server");
+          const target = await propertyMediaTarget(id, resize);
           if (!target) return new Response("Not found", { status: 404 });
 
           return new Response(null, {
             status: 302,
             headers: {
               location: target,
-              "cache-control": "public, max-age=3600",
+              "cache-control": "public, max-age=60",
             },
           });
         } catch (error) {

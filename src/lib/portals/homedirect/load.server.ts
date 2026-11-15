@@ -37,11 +37,11 @@ export type HomedirectPrepared = {
 };
 
 /** Tot ce trebuie pentru o proprietate (fără apeluri de scriere la HomeDirect). */
-export async function prepareHomedirect(db: any, row: PropertyRow): Promise<HomedirectPrepared> {
+export async function prepareHomedirect(db: any, row: PropertyRow, directImages = false): Promise<HomedirectPrepared> {
   const needsRate = [row.currency, row.sale_currency, row.rent_currency].some((c) => (c ?? "").toUpperCase() === "RON");
   const [{ data: images }, { data: org }, { data: profile }, rate, location] = await Promise.all([
     db.from("property_images").select("*").eq("organization_id", row.organization_id).eq("property_id", row.id),
-    db.from("organizations").select("id,name,email,phone,material_phone,logo_url,logo_path,watermark_enabled").eq("id", row.organization_id).maybeSingle(),
+    db.from("organizations").select("id,name,email,phone,material_phone,logo_url,logo_path,watermark_enabled,watermark_position,watermark_scale_percent,watermark_opacity_percent,watermark_margin_percent").eq("id", row.organization_id).maybeSingle(),
     row.assigned_to
       ? db.from("profiles").select("id,full_name,email,phone,avatar_url").eq("id", row.assigned_to).maybeSingle()
       : Promise.resolve({ data: null }),
@@ -57,6 +57,10 @@ export async function prepareHomedirect(db: any, row: PropertyRow): Promise<Home
     ),
   ]);
   const pics = imo24ImageUrls((images ?? []) as never, { baseUrl: CRM_URL, watermark: watermarkFromOrg(org as never).enabled });
+  if (directImages) {
+    const { directHomedirectImages } = await import("./images.server");
+    pics.urls = await directHomedirectImages(db, pics.urls, images ?? [], row, org);
+  }
   const mapped = mapPropertyToHomedirect(row, { location, images: pics.urls, eurRonRate: needsRate ? (rate ?? null) : undefined });
   const agency = org ? homedirectAgencyPayload(org, agencyLogoFeedUrl(org.id, !!(org.logo_path || org.logo_url), CRM_URL)) : null;
   const agent = profile ? homedirectAgentPayload(profile, agentPhotoUrl(profile, CRM_URL)) : null;
@@ -93,7 +97,7 @@ export async function buildHomedirectBodies(input: { organizationId: string; pro
     .eq("id", input.propertyId).eq("organization_id", input.organizationId).maybeSingle();
   if (!p) return { ok: false, reasons: ["Proprietatea nu a fost găsită."] };
   if (!isPropertyFeedEligible(p)) return { ok: false, reasons: ["Oferta nu este publicabilă: verifică statusul și publicarea pe site."] };
-  const prep = await prepareHomedirect(db, p as PropertyRow);
+  const prep = await prepareHomedirect(db, p as PropertyRow, true);
   if (prep.reasons.length || !prep.mapped.ok || !prep.agency || !prep.agent) return { ok: false, reasons: prep.reasons };
   const accounts = { agency: prep.agency, agent: prep.agent, organizationId: input.organizationId, userId: p.assigned_to as string };
   return {
