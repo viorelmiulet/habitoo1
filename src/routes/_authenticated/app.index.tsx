@@ -12,9 +12,14 @@ import { ManagerDashboard } from "@/components/app/dashboard/ManagerDashboard";
 import { HomeDashboard } from "@/components/app/dashboard/HomeDashboard";
 import { appHead } from "@/components/app/app-head";
 import { dashboardHomeFor } from "@/lib/superadmin-status";
+import { DailyBriefCard } from "@/components/app/dashboard/DailyBriefCard";
 
 export const Route = createFileRoute("/_authenticated/app/")({
-  head: () => appHead("Habitoo CRM — panou principal"),
+  head: () => {
+    const head = appHead("Azi și agenda ta — Habitoo CRM");
+    const description = "Rezumatul zilnic Habitoo CRM: activități, lead-uri, potriviri și proprietăți care au nevoie de atenție.";
+    return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: "Azi și agenda ta — Habitoo CRM" }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] };
+  },
   component: DashboardPage,
 });
 
@@ -31,6 +36,7 @@ function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {user.organization?.id ? <DailyBriefCard userId={user.userId} organizationId={user.organization.id} /> : null}
       <HomeDashboard organizationId={user.organization?.id} firstName={firstName} />
       <div data-tour="dashboard-work" className="space-y-6">
         {user.role === "agent" ? <AgentDashboard /> : <ManagerDashboard />}
