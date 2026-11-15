@@ -32,7 +32,7 @@ export async function loadRepublishCandidates(admin: Admin, input: {
   let locallyBlocked = new Set<string>();
   for (let i = 0; i < failedIds.length; i += 200) {
     const { data: logs } = await admin.from("portal_operation_logs").select("property_id,portal,success,error_code,http_status")
-      .eq("organization_id", input.organizationId).in("property_id", failedIds.slice(i, i + 200)).order("created_at", { ascending: false }).limit(5000);
+      .eq("organization_id", input.organizationId).in("property_id", failedIds.slice(i, i + 200)).not("operation", "like", "step:%").order("created_at", { ascending: false }).limit(5000);
     locallyBlocked = new Set([...locallyBlocked, ...locallyBlockedPairs(logs ?? [])]);
   }
   return selectRepublishPairs({

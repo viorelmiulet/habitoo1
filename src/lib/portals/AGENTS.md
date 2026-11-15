@@ -97,3 +97,4 @@
 - Publish jobs: Imobiliare/portal apply runs under a 2-minute job deadline (ZonaTa excluded), thrown errors are saved in Romanian, and the claim closes jobs after 2 silent lease expiries; card promotions that are unknown or refused only warn. Why: dead workers must not leave jobs running and promotions never block publication.
 
 - Heavy photo portals: at most one per worker run (claim `_exclude_portals`); feed portals stay parallel. Why: parallel galleries killed the Worker.
+- Imobiliare in-memory write locks have a TTL and waiters, durable-lock RPCs and storage reads time out (wait.ts); publish stages log `step:*` rows, excluded from health/republish reads. Why: a frozen run must not block later jobs forever, and stalls must show their stage.

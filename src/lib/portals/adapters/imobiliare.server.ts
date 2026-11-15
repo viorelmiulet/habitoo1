@@ -45,6 +45,7 @@ import {
 } from "../imobiliare/auth.server";
 import { withImobiliareWriteLock } from "../imobiliare/client.server";
 import { withDurableImobiliareLock } from "../imobiliare/lock.server";
+import { logImobiliareStep, type ImobiliareStep } from "../imobiliare/steps.server";
 import {
   readCategoryCatalog,
   refreshCategoryCatalog,
@@ -286,7 +287,9 @@ export async function publishPlan(input: {
   const steps: string[] = [];
   let mediaResponse: unknown = null;
   let mediaWarning: string | null = null;
+  const step = async (name: ImobiliareStep) => logImobiliareStep(await admin(), { organizationId: ctx.organizationId, propertyId: input.ref.propertyId, actorId: input.ref.actorId ?? null, step: name, reference: plan.customReference });
 
+  await step(mode === "create" ? "create" : "update");
   let created = await imobiliareAuthedRequest(session, {
     method: mode === "create" ? "POST" : "PUT",
     path: mode === "create" ? listingPath() : listingPath(plan.customReference),
@@ -307,6 +310,7 @@ export async function publishPlan(input: {
   steps.push(mode === "create" ? "anunț creat (draft)" : "anunț actualizat");
 
   if (images.length > 0) {
+    await step("gallery");
     const media = await sendImobiliareGallery(session, ctx, plan.customReference, images);
     if (!media.ok) return { ok: false, fail: media.fail };
     mediaResponse = media.body;
@@ -323,6 +327,7 @@ export async function publishPlan(input: {
   }
 
   // Fără acest pas anunțul rămâne invizibil, deși API-ul nu semnalează eroare.
+  await step("promotion_online");
   const promoted = await publishImobiliareOnline({ admin: await admin(), session,
     organizationId: ctx.organizationId, propertyId: input.ref.propertyId,
     reference: plan.customReference, actorId: input.ref.actorId ?? null,
@@ -371,8 +376,11 @@ async function write(
     if (floorReasons.length) {
       return { ok: false, code: "VALIDATION_ERROR", message: floorReasons.join(" "), detail: "eligibility" };
     }
+    const step = (name: ImobiliareStep) => logImobiliareStep(db, { organizationId: ctx.organizationId, propertyId: ref.propertyId, actorId: ref.actorId ?? null, step: name });
+    await step("session");
     const ready = await prepare(ctx);
     if (!ready.ok) return ready.result;
+    await step("photos");
     const media = await encodeImobiliareImages({
       admin: db,
       organizationId: ctx.organizationId,
@@ -387,6 +395,7 @@ async function write(
       return { ok: false, code: "VALIDATION_ERROR", message: `0/${media.expected} poze trimise — ${media.warnings.join(" ")}`, detail: "medias_prepare" };
     }
 
+    await step("payload");
     const payload = await buildImobiliarePayload({
       admin: db,
       session: ready.session,

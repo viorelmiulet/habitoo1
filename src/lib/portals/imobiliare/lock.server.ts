@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { PortalError } from "../errors";
 import { IMOBILIARE_PORTAL_KEY } from "./config";
+import { IMOBILIARE_BLOCKED_MESSAGE, IMOBILIARE_WAIT_MS, withImobiliareTimeout } from "./wait";
 
 type Admin = SupabaseClient<Database>;
 
@@ -12,13 +13,13 @@ export async function withDurableImobiliareLock<T>(input: {
   run: () => Promise<T>;
 }): Promise<T> {
   const ownerToken = crypto.randomUUID();
-  const { data, error } = await input.admin.rpc("acquire_portal_operation_lock" as never, {
+  const { data, error } = await withImobiliareTimeout(input.admin.rpc("acquire_portal_operation_lock" as never, {
     _organization_id: input.organizationId,
     _portal: IMOBILIARE_PORTAL_KEY,
     _lock_key: input.reference,
     _owner_token: ownerToken,
     _ttl_seconds: 120,
-  } as never);
+  } as never), IMOBILIARE_WAIT_MS, IMOBILIARE_BLOCKED_MESSAGE);
   if (error) {
     throw new PortalError(
       "PORTAL_ERROR",
@@ -34,11 +35,12 @@ export async function withDurableImobiliareLock<T>(input: {
   try {
     return await input.run();
   } finally {
-    await input.admin.rpc("release_portal_operation_lock" as never, {
+    // Release is best effort: the row's TTL frees it if this call hangs or fails.
+    await withImobiliareTimeout(input.admin.rpc("release_portal_operation_lock" as never, {
       _organization_id: input.organizationId,
       _portal: IMOBILIARE_PORTAL_KEY,
       _lock_key: input.reference,
       _owner_token: ownerToken,
-    } as never);
+    } as never), IMOBILIARE_WAIT_MS, IMOBILIARE_BLOCKED_MESSAGE).catch(() => undefined);
   }
 }

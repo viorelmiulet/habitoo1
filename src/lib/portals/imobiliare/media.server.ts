@@ -12,6 +12,7 @@ import { ensureWatermarkedPath } from "@/lib/watermark.server";
 import { watermarkFromOrg } from "@/lib/watermark";
 import { isImageFeedEligible, type PropertyImageRow } from "@/lib/site-feed/mapper";
 import { IMOBILIARE_MAX_IMAGES } from "./config";
+import { IMOBILIARE_WAIT_MS, withImobiliareTimeout } from "./wait";
 import { fitImobiliareGallery } from "./media-compression.server";
 
 type Admin = SupabaseClient<Database>;
@@ -91,14 +92,14 @@ export async function encodeImobiliareImages(input: {
       dataError = true;
       continue;
     }
-    const watermarked = await ensureWatermarkedPath(input.admin, row.storage_path, cfg);
+    const watermarked = await withImobiliareTimeout(ensureWatermarkedPath(input.admin, row.storage_path, cfg), 30_000, `Pregătirea pozei ${eligible.indexOf(row) + 1} (filigran) nu s-a terminat în 30 de secunde.`);
     const path = watermarked ?? row.storage_path;
     let data: Blob | null = null;
     let lastError: unknown = null;
     for (let attempt = 0; attempt <= IMOBILIARE_DOWNLOAD_RETRY_DELAYS_MS.length; attempt += 1) {
       if (attempt > 0) await sleep(IMOBILIARE_DOWNLOAD_RETRY_DELAYS_MS[attempt - 1]!);
       try {
-        const result = await input.admin.storage.from(MEDIA_BUCKET).download(path);
+        const result = await withImobiliareTimeout(input.admin.storage.from(MEDIA_BUCKET).download(path), IMOBILIARE_WAIT_MS, "Descărcarea pozei din storage nu a răspuns în 20 de secunde.");
         if (!result.error && result.data) { data = result.data; break; }
         lastError = result.error;
       } catch (error) {
@@ -112,7 +113,7 @@ export async function encodeImobiliareImages(input: {
       transient = true;
       continue;
     }
-    const bytes = new Uint8Array(await data.arrayBuffer());
+    const bytes = new Uint8Array(await withImobiliareTimeout(data.arrayBuffer(), IMOBILIARE_WAIT_MS, "Citirea pozei din storage nu s-a terminat în 20 de secunde."));
     const position = eligible.indexOf(row) + 1;
     const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)))
       .map((b) => b.toString(16).padStart(2, "0")).join("");

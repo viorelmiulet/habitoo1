@@ -82,7 +82,7 @@ async function loadConnectionHealth(admin: Admin): Promise<ConnHealth[]> {
           .select("success,error_code,http_status,error_message")
           .eq("organization_id", c.organization_id)
           .eq("portal", c.portal)
-          .order("created_at", { ascending: false })
+          .not("operation", "like", "step:%").order("created_at", { ascending: false })
           .limit(3);
         if (oErr) throw new Error(`Interogările dashboardului au eșuat — operații: ${oErr.message}`);
         const kind = connectionFailureKind({

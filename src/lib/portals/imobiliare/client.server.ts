@@ -8,6 +8,7 @@
 import { PortalError } from "../errors";
 import { IMOBILIARE_BASE_URL } from "./config";
 import { relayFetch } from "../relay.server";
+import { IMOBILIARE_BLOCKED_MESSAGE, IMOBILIARE_LOCK_TTL_MS, IMOBILIARE_WAIT_MS, withImobiliareTimeout } from "./wait";
 import { withPortalDeadline, PORTAL_CALL_TIMEOUT_MS } from "../publication-resilience";
 import {
   classifyImobiliareNetworkError,
@@ -57,16 +58,24 @@ function hitCounter(store: Map<string, Counter>, key: string, limit: number): bo
   return current.count > limit;
 }
 
-/** Scrierile pe același anunț se serializează: fără race conditions. */
-const locks = new Map<string, Promise<unknown>>();
+/**
+ * Scrierile pe același anunț se serializează. Each holder has a TTL and every waiter
+ * gives up after IMOBILIARE_WAIT_MS, so a run frozen by the Worker never blocks forever.
+ */
+const locks = new Map<string, { done: Promise<unknown>; expiresAt: number }>();
 
 export async function withImobiliareWriteLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
-  const previous = locks.get(key) ?? Promise.resolve();
-  const current = previous.then(fn, fn);
-  locks.set(
-    key,
-    current.catch(() => undefined),
-  );
+  const held = locks.get(key);
+  if (held && held.expiresAt > Date.now()) {
+    await withImobiliareTimeout(held.done, Math.min(IMOBILIARE_WAIT_MS, held.expiresAt - Date.now()), IMOBILIARE_BLOCKED_MESSAGE)
+      .catch((error) => {
+        if (error instanceof PortalError && error.code === "TIMEOUT") throw error;
+      });
+  }
+  const current = fn();
+  const entry = { done: current.catch(() => undefined), expiresAt: Date.now() + IMOBILIARE_LOCK_TTL_MS };
+  locks.set(key, entry);
+  void entry.done.then(() => { if (locks.get(key) === entry) locks.delete(key); });
   return current;
 }
 
