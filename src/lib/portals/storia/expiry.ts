@@ -1,5 +1,13 @@
 export const STORIA_EXPIRED_REASON = "Expirat pe Storia (fără autoprelungire)";
 
+/**
+ * Filtrul server pentru anunțurile debifate automat la expirarea Storia:
+ * doar retragerile cu motivul de expirare, nu și cele manuale.
+ */
+export function storiaExpiredListingFilter() {
+  return { portal: "storia", status: "withdrawn", reason: STORIA_EXPIRED_REASON } as const;
+}
+
 export function storiaValidTo(raw: unknown): string | null {
   const rec = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
   const state = rec.state && typeof rec.state === "object" ? rec.state as Record<string, unknown> : {};

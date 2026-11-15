@@ -20,6 +20,8 @@ export const PROMOTION_FILTER_NONE = "none";
 /** Prelungirea automată Storia: NU e promovare (nu intră în „Orice”/„Fără”). */
 export const STORIA_AUTO_RENEW_ON = "storia:auto_renew_on";
 export const STORIA_AUTO_RENEW_OFF = "storia:auto_renew_off";
+/** Anunțuri debifate automat la expirarea confirmată de Storia (regula ST1c). */
+export const STORIA_EXPIRED = "storia:expired";
 
 export type PromotionFilterOption = { value: string; label: string };
 export type PromotionFilterGroup = {
@@ -65,6 +67,7 @@ export function promotionFilterGroups(
       options: [
         { value: STORIA_AUTO_RENEW_ON, label: "Prelungire automată activată" },
         { value: STORIA_AUTO_RENEW_OFF, label: "Prelungire automată dezactivată" },
+        { value: STORIA_EXPIRED, label: "Expirate" },
       ],
     });
   }
@@ -90,6 +93,8 @@ export type PromotionSelection = {
   flagPortals: string[];
   /** Valori efective ale prelungirii automate Storia căutate. */
   storiaAutoRenew: boolean[];
+  /** Anunțuri Storia debifate automat la expirare (motivul STORIA_EXPIRED_REASON). */
+  storiaExpired: boolean;
   errorPortals: string[];
 };
 
@@ -102,11 +107,13 @@ export function parsePromotionSelection(raw: string): PromotionSelection {
     imobiliareServices: [],
     flagPortals: [],
     storiaAutoRenew: [],
+    storiaExpired: false,
     errorPortals: [],
   };
   for (const value of values) {
     if (value === PROMOTION_FILTER_ANY) selection.any = true;
     else if (value === PROMOTION_FILTER_NONE) selection.none = true;
+    else if (value === STORIA_EXPIRED) selection.storiaExpired = true;
     else if (value === STORIA_AUTO_RENEW_ON || value === STORIA_AUTO_RENEW_OFF) {
       const wanted = value === STORIA_AUTO_RENEW_ON;
       if (!selection.storiaAutoRenew.includes(wanted)) selection.storiaAutoRenew.push(wanted);
@@ -135,6 +142,7 @@ export function promotionSelectionIsEmpty(selection: PromotionSelection): boolea
     selection.imobiliareServices.length === 0 &&
     selection.flagPortals.length === 0 &&
     selection.storiaAutoRenew.length === 0 &&
+    !selection.storiaExpired &&
     selection.errorPortals.length === 0
   );
 }
@@ -205,6 +213,7 @@ export function matchingPropertyIds(
   errors: readonly PromotionErrorRow[],
   allPropertyIds: readonly string[] = [],
   portalStateIds?: readonly string[],
+  storiaExpiredIds?: readonly string[],
 ): string[] {
   const sets: Set<string>[] = [];
   if (selection.any || selection.none || selection.imobiliareServices.length || selection.flagPortals.length) {
@@ -214,6 +223,9 @@ export function matchingPropertyIds(
   }
   if (selection.storiaAutoRenew.length) {
     sets.push(new Set([...autoRenew].filter(([, value]) => selection.storiaAutoRenew.includes(value)).map(([id]) => id)));
+  }
+  if (selection.storiaExpired) {
+    sets.push(new Set(storiaExpiredIds ?? []));
   }
   if (selection.errorPortals.length || portalStateIds !== undefined) {
     sets.push(new Set([...(portalStateIds ?? []), ...errors.filter((row) => row.enabled && row.status === "error" && selection.errorPortals.includes(row.portal_key)).map((row) => row.property_id)]));
@@ -363,7 +375,7 @@ export function serializePromotionValues(values: string[]): string {
  * față de serviciile concrete; serviciile se combină liber între ele.
  */
 export function togglePromotionValue(current: string[], value: string): string[] {
-  const independent = (v: string) => /:(published|unpublished|error)$/.test(v) || v === STORIA_AUTO_RENEW_ON || v === STORIA_AUTO_RENEW_OFF;
+  const independent = (v: string) => /:(published|unpublished|error)$/.test(v) || v === STORIA_AUTO_RENEW_ON || v === STORIA_AUTO_RENEW_OFF || v === STORIA_EXPIRED;
   const special = value === PROMOTION_FILTER_ANY || value === PROMOTION_FILTER_NONE;
   if (current.includes(value)) return current.filter((v) => v !== value);
   if (independent(value)) return [...current, value];

@@ -30,6 +30,7 @@ import {
   type PromotionRows,
   type PropertyPromotionBadge,
 } from "@/lib/portals/promotion-filter";
+import { storiaExpiredListingFilter } from "@/lib/portals/storia/expiry";
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -142,7 +143,7 @@ export const getPromotionFilterOptions = createServerFn({ method: "POST" })
   });
 
 const promotionValuesSchema = z
-  .array(z.string().regex(/^(any|none|imobiliare_ro:[a-z0-9_]+|[a-z0-9_]+:(promoted|published|unpublished|error)|storia:auto_renew_(on|off))$/))
+  .array(z.string().regex(/^(any|none|imobiliare_ro:[a-z0-9_]+|[a-z0-9_]+:(promoted|published|unpublished|error)|storia:(auto_renew_(on|off)|expired))$/))
   .max(100);
 
 /**
@@ -173,7 +174,8 @@ export const getPropertyIdsByPromotion = createServerFn({ method: "POST" })
     if (promotionSelectionIsEmpty(selection) && stateFilters.length === 0) return [];
     const admin = await loadAdmin();
     const hasPromotions = selection.any || selection.none || selection.imobiliareServices.length > 0 || selection.flagPortals.length > 0;
-    const [rows, autoRenew, errors, all, states] = await Promise.all([
+    const expiredFilter = storiaExpiredListingFilter();
+    const [rows, autoRenew, errors, all, states, storiaExpired] = await Promise.all([
       hasPromotions ? fetchPromotionRows(organizationId) : Promise.resolve({ listings: [], states: [], publications: [] }),
       selection.storiaAutoRenew.length ? fetchStoriaAutoRenewValues(organizationId) : Promise.resolve(new Map<string, boolean>()),
       selection.errorPortals.length ? fetchAllRows((a, b) =>
@@ -195,9 +197,20 @@ export const getPropertyIdsByPromotion = createServerFn({ method: "POST" })
           .range(a, b),
       ) : Promise.resolve([]),
       stateFilters.some((f) => f.state !== "error") ? computeOrgPortalStates(organizationId) : Promise.resolve(new Map()),
+      selection.storiaExpired ? fetchAllRows((a, b) =>
+        admin
+          .from("portal_listings")
+          .select("property_id")
+          .eq("organization_id", organizationId)
+          .eq("portal", expiredFilter.portal)
+          .eq("status", expiredFilter.status)
+          .eq("withdraw_reason", expiredFilter.reason)
+          .order("id")
+          .range(a, b),
+      ) : Promise.resolve([]),
     ]);
     const stateIds = stateFilters.length ? [...states].filter(([, cells]) => stateFilters.some((f) => f.state !== "error" && matchesPortalFilter(cells, f))).map(([id]) => id) : undefined;
-    return matchingPropertyIds(selection, buildPromotionInfos(rows), autoRenew, errors, all.map((row) => row.id), stateIds);
+    return matchingPropertyIds(selection, buildPromotionInfos(rows), autoRenew, errors, all.map((row) => row.id), stateIds, (storiaExpired as { property_id: string }[]).map((row) => row.property_id));
   });
 
 /** Etichetele „Promovat” pentru rândurile din pagina curentă a listei. */
@@ -217,13 +230,30 @@ export const getPropertyPromotionBadges = createServerFn({ method: "POST" })
       data.organizationId,
     );
     if (data.propertyIds.length === 0) return {};
-    const rows = await fetchPromotionRows(organizationId);
+    const admin = await loadAdmin();
+    const expiredFilter = storiaExpiredListingFilter();
+    const [rows, expiredRows] = await Promise.all([
+      fetchPromotionRows(organizationId),
+      fetchAllRows((a, b) =>
+        admin
+          .from("portal_listings")
+          .select("property_id")
+          .eq("organization_id", organizationId)
+          .eq("portal", expiredFilter.portal)
+          .eq("status", expiredFilter.status)
+          .eq("withdraw_reason", expiredFilter.reason)
+          .in("property_id", data.propertyIds)
+          .order("id")
+          .range(a, b),
+      ),
+    ]);
+    const expiredIds = new Set((expiredRows as { property_id: string }[]).map((row) => row.property_id));
     const infos = buildPromotionInfos(rows);
     const result: Record<string, PropertyPromotionBadge[]> = {};
     for (const propertyId of data.propertyIds) {
       const info = infos.get(propertyId);
-      if (!info) continue;
-      const badges = promotionBadgesFor(info);
+      const badges = info ? promotionBadgesFor(info) : [];
+      if (expiredIds.has(propertyId)) badges.push({ portalId: "storia", label: "Expirat pe Storia" });
       if (badges.length > 0) result[propertyId] = badges;
     }
     return result;
