@@ -1,3 +1,11 @@
+## OC1 — Contact proprietar la preluare
+- [x] Helper tranzacțional comun captură/MAP aplicat: telefon RO, deduplicare per agenție, proprietar existent păstrat, fără acord implicit
+- [x] Rubrica Proprietar redenumită Contacte, cu etichetă Proprietar și citire directă după ID, telefon, fișă, apel și WhatsApp
+- [x] 7 teste noi izolate trec pe migrarea aplicată; build OK, fără publicare sau importuri reale
+- [ ] Extensie: codul popup/extragerii nu există în repo; necesită sursa extensiei actuale pentru actualizare și creștere versiune
+- [ ] Verificare vizuală în cont: nu există utilizator asociat solicitantului; necesită autentificare în previzualizare
+- MAP existent importă din listings, nu market_listings; telefoane prezente în Homezz (452) și Facebook (594). Anuntul acceptă telefon, dar zero valori actuale; OLX/Storia/Imobiliare/Imoradar/Romimo fără telefon în MAP. market_listings fără coloană telefon și fără flux de import CRM; un singur raw_data Romimo are o cheie de contact, neverificat ca telefon valid.
+
 ## ST1c — Expirare confirmată de Storia
 - [x] Cron 334 eliminat, funcții/triggere fixe eliminate, expires_at gol și deprecated; numai toate uuid-urile outdated debifează atomic
 - [x] Webhook/meta comune, valid_to informativ, avertisment tranzacție parțială, autoprelungire protejată și OLX direct independent

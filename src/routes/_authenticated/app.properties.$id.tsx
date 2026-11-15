@@ -273,7 +273,7 @@ function PropertyDetailContent() {
   const { data, isLoading } = useQuery({
     queryKey: ["property", id],
     queryFn: async () => {
-      const [property, activities, leads, requests, contacts, audit, imageCount] = await Promise.all([
+      const [property, activities, leads, requests, audit, imageCount] = await Promise.all([
         supabase.from("properties").select("*").eq("id", id).maybeSingle(),
         supabase
           .from("activities")
@@ -282,7 +282,6 @@ function PropertyDetailContent() {
           .order("starts_at", { ascending: false }),
         supabase.from("leads").select("*").eq("property_id", id),
         supabase.from("requests").select("*").eq("status", "active"),
-        supabase.from("contacts").select("id,first_name,last_name,phone,email,whatsapp"),
         supabase
           .from("audit_logs")
           .select("*")
@@ -295,12 +294,18 @@ function PropertyDetailContent() {
           .eq("property_id", id),
       ]);
       if (property.error) throw property.error;
+      // Fetch the linked owner directly: an agency-wide capped contact list can omit them.
+      const ownerId = property.data?.owner_contact_id;
+      const contacts = ownerId
+        ? await supabase.from("contacts").select("id,first_name,last_name,phone,email,whatsapp").eq("id", ownerId).maybeSingle()
+        : { data: null, error: null };
+      if (contacts.error) throw contacts.error;
       return {
         property: property.data,
         activities: activities.data ?? [],
         leads: leads.data ?? [],
         requests: requests.data ?? [],
-        contacts: contacts.data ?? [],
+        contacts: contacts.data ? [contacts.data] : [],
         audit: audit.data ?? [],
         imageCount: imageCount.count ?? 0,
       };
@@ -1363,7 +1368,7 @@ function PropertyDetailContent() {
                 </section>
 
                 <section className="panel px-5 py-[18px]">
-                  <h2 className="font-sans text-base font-bold">Proprietar</h2>
+                  <div className="flex items-center justify-between gap-3"><h2 className="font-sans text-base font-bold">Contacte</h2>{ownerContact ? <StatusBadge tone="neutral">Proprietar</StatusBadge> : null}</div>
                   <PropertyCaptureSource propertyId={property.id} />
                   {ownerContact ? <><div className="mt-3 text-sm"><Link to="/app/contacts/$id" params={{ id: ownerContact.id }} className="font-bold hover:text-primary">{ownerContact.first_name} {ownerContact.last_name}</Link><p className="mt-1 text-muted-foreground">{ownerContact.phone ?? "Fără telefon"}</p></div><div className="mt-4 grid grid-cols-2 gap-2">{ownerContact.phone ? <Button variant="outline" asChild><a href={`tel:${ownerContact.phone}`}><Phone /> Sună</a></Button> : null}{(ownerContact.whatsapp ?? ownerContact.phone) ? <Button variant="outline" asChild><a href={`https://wa.me/${(ownerContact.whatsapp ?? ownerContact.phone ?? "").replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle /> WhatsApp</a></Button> : null}</div></> : <><p className="mt-3 text-sm text-muted-foreground">Niciun proprietar asociat</p><Button variant="outline" className="mt-4 w-full" onClick={() => { startEdit(); setTab("overview"); }}>Adaugă proprietar</Button></>}
                 </section>

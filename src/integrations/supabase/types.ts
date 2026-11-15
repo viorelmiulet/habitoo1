@@ -13268,6 +13268,17 @@ export type Database = {
         Args: { _request_id: string }
         Returns: string
       }
+      attach_import_owner: {
+        Args: {
+          _org: string
+          _owner: Json
+          _property: string
+          _site: string
+          _source: string
+          _user: string
+        }
+        Returns: string
+      }
       bootstrap_agency: {
         Args: {
           _agency_name: string
