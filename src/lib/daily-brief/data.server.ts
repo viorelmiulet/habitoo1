@@ -2,8 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { stagnantLeads } from "@/lib/ai/agents/crm/insights";
 import { CRM_DEFAULT_STALE_DAYS } from "@/lib/ai/agents/crm/filters";
-import { nextDay, romaniaMidnightUtc } from "@/lib/owner-reports/report";
-import { assembleBrief, briefDate, uniquePortalErrors, type BriefTeamRow } from "./brief";
+import { nextDay, romaniaClock, romaniaMidnightUtc } from "@/lib/owner-reports/report";
+import { assembleBrief, uniquePortalErrors, type BriefTeamRow } from "./brief";
 
 type Db = SupabaseClient<Database>;
 // Complete pagination, always caller-RLS plus explicit organization/user filters.
@@ -18,7 +18,7 @@ async function rows<T>(query: (from: number, to: number) => PromiseLike<{ data: 
 }
 
 export async function loadDailyBrief(db: Db, organizationId: string, userId: string, now = new Date()) {
-  const day = briefDate(now);
+  const day = romaniaClock(now).date;
   const from = romaniaMidnightUtc(day), to = romaniaMidnightUtc(nextDay(day));
   const last24h = new Date(now.getTime() - 86400000).toISOString();
   const [activities, leads, properties, images, publications, jobs, matches, reports, admin] = await Promise.all([

@@ -1,1 +1,1 @@
-- Daily briefs use caller-RLS, explicit user/organization filters and shared deterministic CRM insights; a unique daily insert claims the single AI attempt, while refresh updates only facts. Why: private summaries, no duplicate charges and no AI-derived priorities.
+- Daily briefs use active-org auth, caller-RLS, explicit user/organization filters and shared deterministic CRM insights; an atomic false-to-true ai_attempted update claims one daily AI attempt, while refresh updates only facts. Why: private summaries, no duplicate charges and no AI-derived priorities.

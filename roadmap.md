@@ -1,3 +1,7 @@
+## AI8b — Încheiere rezumat Azi
+- [x] Acces agenție activă, claim atomic prin ai_attempted, Actualizează fără AI
+- [x] 11 teste exclusiv daily-brief cu date simulate; fără AI real sau publicare, build OK
+
 ## AI8 — Rezumat zilnic Azi
 - [x] Date personale complete, secțiune Echipă și cache zilnic cu frază AI unică
 - [x] Card Acasă, actualizare doar date și legături directe
