@@ -39,7 +39,7 @@ export function assembleBrief(input: {
 }): DailyBriefData {
   const items: BriefAction[] = [];
   const add = (kind: BriefActionKind, label: string, to: string, at: string, search?: Record<string, string>) => items.push({ kind, label, to, at, search });
-  for (const a of input.activities.filter(a => a.kind === "viewing")) add("viewing", a.title, "/app/activities", a.starts_at, { activity: a.id });
+  for (const a of input.activities.filter(a => a.kind === "viewing")) add("viewing", a.title, "/app/activities", a.starts_at, { q: a.title, period: "today" });
   for (const l of input.leads) {
     if (l.next_followup_at && l.next_followup_at < input.now.toISOString()) add("overdue", `Relansează ${l.name}`, "/app/leads", l.next_followup_at, { lead: l.id });
     if (l.stage === "new" && !l.last_interaction_at) add("new_lead", `Răspunde: ${l.name}`, "/app/leads", l.created_at, { lead: l.id });

@@ -11,13 +11,17 @@ export async function generateDailySentence(organizationId: string, userId: stri
       const { withAiProviderFallback } = await import("@/lib/ai/providers/fallback.server");
       const provider = resolveAiProvider("fast");
       if (!provider) throw new Error("AI indisponibil");
+      const started = Date.now();
       const r = await withAiProviderFallback(provider, p => p.generate({
         system: "Scrie o singură propoziție scurtă în română pentru ziua agentului imobiliar. Folosește exclusiv numărătorile primite. Prioritizează restanțele și lead-urile nerăspunse. Nu inventa cifre, nume sau activități. Fără markdown. Răspunde numai cu propoziția.",
         messages: [{ role: "user", content: JSON.stringify(counts) }], tools: [], maxOutputTokens: 200,
       }));
       const text = r.result.text.trim().replace(/\s+/g, " ");
       const allowed = new Set(Object.values(counts).map(String));
-      if (!text || text.length > 300 || (text.match(/\d+/g) ?? []).some(n => !allowed.has(n))) throw new Error("Rezumat invalid");
+      const valid = !!text && text.length <= 300 && !(text.match(/\d+/g) ?? []).some(n => !allowed.has(n));
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.from("ai_usage_events").insert({ organization_id: organizationId, user_id: userId, provider: r.provider.id, model: r.provider.model, capability: "ai_daily_brief", input_tokens: r.result.inputTokens, output_tokens: r.result.outputTokens, tokens_unknown: r.result.inputTokens === null && r.result.outputTokens === null, latency_ms: Date.now() - started, success: valid, fallback_used: r.fallbackUsed, tool_calls: 0 });
+      if (!valid) throw new Error("Rezumat invalid");
       return text;
     }),
   });

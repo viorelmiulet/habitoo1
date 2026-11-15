@@ -1,7 +1,8 @@
 ## AI8 — Rezumat zilnic Azi
-- [ ] Date personale complete, secțiune Echipă și cache zilnic cu frază AI unică
-- [ ] Card Acasă, actualizare doar date și legături directe
-- [ ] Numai teste rezumat zilnic, verificare în cont fără apeluri AI reale, salvare fără publicare
+- [x] Date personale complete, secțiune Echipă și cache zilnic cu frază AI unică
+- [x] Card Acasă, actualizare doar date și legături directe
+- [x] Numai teste rezumat zilnic; fără apeluri AI reale sau publicare
+- [ ] Verificare în cont: sesiunea solicitantului nu poate fi creată (niciun cont asociat); necesită autentificare în previzualizare
 
 ## Outreach — Campanii email (fără trimitere)
 - [x] Schemă Superadmin, import CSV și excluderi globale cu audit atomic
