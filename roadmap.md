@@ -1,3 +1,9 @@
+## ST1 — Expirare Storia fără autoprelungire
+- [x] Stare/data per anunț, debifare atomică și notificare unică, fără retragere
+- [x] Webhook și reconcile comune; data/Expirat în Promovare; 4 teste noi cu bază izolată, fără publicare
+- [x] OLX exportat ține de Storia; OLX direct rămâne independent; la două tranzacții se debifează numai după expirarea ambelor
+- [ ] Confirmare vizuală pe anunț expirat real: nu s-au schimbat date reale și nu s-a apelat Storia; disponibilă după publicare explicită
+
 ## HD1 — Fotografii rapide HomeDirect
 - [x] Cache limitat pentru redirecturi și semnături, cu verificările publice păstrate
 - [x] URL direct doar în publicarea HomeDirect; 9 teste noi izolate trec, fără publicare

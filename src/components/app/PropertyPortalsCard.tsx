@@ -100,6 +100,7 @@ function syncAgo(iso: string) {
 
 /** Starea concretă a portalului, în cuvinte, pentru rândul din listă. */
 function stateSentence(cell: PropertyPortalCell, selected: boolean) {
+  if (cell.storiaExpiredDeselected) return "Expirat pe Storia (fără autoprelungire).";
   if (cell.availability !== "available") return "Integrarea nu este încă disponibilă.";
   if (!cell.configured)
     return selected
@@ -135,6 +136,7 @@ const STATE_VIEW: Record<PropertyPortalCell["state"], { label: string; pill: Sta
 
 function operationLabel(operation: string): string {
   const labels: Record<string, string> = {
+    expire: "Expirare",
     publish: "Publicare",
     update: "Actualizare",
     withdraw: "Retragere",
@@ -1000,6 +1002,7 @@ export const PropertyPortalsCard = forwardRef<
                   (cell.availability === "available" && value && !cell.configured));
               const latestOperationFailedFor = (id: string) => !hideDeselectedError && latestOperationByPortal.get(id)?.success === false;
               const stateView =
+                cell.storiaExpiredDeselected ? { label: "Expirat", pill: "inactive" as StatusPillState } :
                 cell.apiPublication ? { label: publicationLabels[cell.apiPublication.status], pill: (cell.apiPublication.status === "published" ? "published" : cell.apiPublication.status === "rejected" ? "error" : cell.apiPublication.status === "pending_review" ? "pending" : "inactive") as StatusPillState } : cell.portalId === "vumsi" && cell.selected && vumsiView && !(latestOperationFailedFor(cell.portalId) && vumsiView.pill !== "error")
                   ? { label: vumsiView.label, pill: vumsiView.pill as StatusPillState }
                   : cell.portalId === "housera" && cell.houseraView
@@ -1077,6 +1080,7 @@ export const PropertyPortalsCard = forwardRef<
                         {cell.mediaWarning && !problem && !latestOperationFailed ? (
                           <p className="mt-1 break-words text-xs font-medium text-warning-foreground">{cell.mediaWarning}</p>
                         ) : null}
+                        {cell.portalId === "storia" && cell.storiaValidTo ? <p className="mt-1 text-xs text-muted-foreground">Expiră la: {formatDateTime(cell.storiaValidTo)}</p> : null}
                         {(cell.portalId === "imobiliare_ro" || cell.portalId === "imo24") && (cell.lastError || latestOperationFailed) ? <p role="alert" className="mt-2 break-words text-xs text-destructive">{cell.lastError ?? latestOperation?.errorMessage}</p> : null}
                         {cell.portalId === "imo24" && !cell.lastError && latestOperation?.success === true && latestOperation.errorMessage ? <p className="mt-2 break-words text-xs text-muted-foreground">{latestOperation.errorMessage}</p> : null}
                         {cell.portalId === "imobiliare_ro" && cell.configured && !hideDeselectedError ? (

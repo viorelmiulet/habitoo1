@@ -2219,6 +2219,8 @@ import {
 import { houseraWithdrawnView, type HouseraView } from "@/lib/portals/housera/status-view";
 
 export type PropertyPortalCell = {
+  storiaValidTo?: string | null;
+  storiaExpiredDeselected?: boolean;
   apiPublication?: import("@/lib/partner-api/feedback").PublicationFeedback;
   houseraView?: HouseraView;
   imobiliareMode?: ImobiliarePublicationMode;
@@ -2485,7 +2487,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         .in("property_id", data.propertyIds),
       admin
         .from("portal_listings")
-        .select("property_id, portal, status, last_sync_at, last_error, last_warning, external_id, public_url, portal_offers, imobiliare_mode")
+        .select("property_id, portal, status, last_sync_at, last_error, last_warning, external_id, public_url, portal_offers, imobiliare_mode, valid_to, withdraw_reason")
         .eq("organization_id", organizationId)
         .in("property_id", data.propertyIds),
       admin
@@ -2568,6 +2570,10 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
             imobiliareConfirmedMode: listing?.imobiliare_mode === "imoradar_only" ? "imoradar_only" as const : "combined" as const,
           } : {}),
           ...(portal.id === "housera" ? { houseraView: houseraWithdrawnView(listingStatus, parsePortalOffers(listing?.portal_offers), listing?.external_id) } : {}),
+          ...(portal.id === "storia" ? {
+            storiaValidTo: listing?.valid_to ?? null,
+            storiaExpiredDeselected: pub?.enabled !== true && listing?.withdraw_reason === "Expirat pe Storia (fără autoprelungire)",
+          } : {}),
           portalName: portalDisplayName(portal.id),
           logo: portal.logo,
           availability: portal.status,

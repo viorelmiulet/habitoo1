@@ -15,6 +15,7 @@ import type { PortalErrorCode } from "../errors";
 import { olxAuthorizedRequest } from "./oauth.server";
 import type { StoriaTransaction } from "./taxonomy";
 import type { StoriaAdvert } from "./mapper";
+import { storiaValidTo } from "./expiry";
 
 /** Statusurile documentate în „advert status codes”. */
 export const STORIA_STATUS_MESSAGE: Record<string, string> = {
@@ -273,6 +274,7 @@ export async function activateAdvert(
 }
 
 export type AdvertMeta = {
+  validTo?: string | null;
   uuid: string;
   lastActionStatus: string | null;
   code: string | null;
@@ -305,6 +307,7 @@ export async function readAdvertMeta(
   const visible = state["visible_in_profile"];
   return {
     uuid,
+    validTo: storiaValidTo(rec),
     visibleInProfile:
       typeof visible === "boolean"
         ? visible

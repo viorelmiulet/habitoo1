@@ -558,7 +558,7 @@ export async function processLifecycle(
     };
   }
 
-  const code = pick(shape.data, ["code", "status", "advert.code"]);
+  const code = pick(shape.data, ["code", "status", "advert.code", "state.code"]);
   const now = new Date().toISOString();
 
   // Memorăm doar forma canonică `ADSLUG:`; mesajele folosesc același slug.
@@ -594,6 +594,13 @@ export async function processLifecycle(
   const urlPatch = shape.publicUrl ? { public_url: shape.publicUrl } : {};
   const scope = (q: any) =>
     q.eq("organization_id", match.organizationId).eq("property_id", match.propertyId);
+
+  const { recordStoriaExpiry } = await import("./expiry.server");
+  const expiryHandled = await recordStoriaExpiry(admin, {
+    organizationId: match.organizationId, propertyId: match.propertyId,
+    advertUuid: shape.advertUuid, code, data: shape.data, eventAt: shape.eventTimestampMs,
+  });
+  if (expiryHandled) return { processed: true, note: "expirare Storia fără autoprelungire tratată, fără retragere" };
 
   // Erori de publicare (`*_error`, inclusiv erorile de imagine): nu au `data.code`.
   if (isStoriaErrorEvent(shape.eventType)) {

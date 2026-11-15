@@ -1,5 +1,8 @@
 # Portal rules
 
+- Storia expiration uses the service-only transactional `storia_record_expiry` RPC from lifecycle and meta reconcile; it records per-advert code/valid_to and deselects only when every saved transaction expired and property auto-renew is explicitly false, logging/notifying only on enabled→false. OLX exports share Storia; olx_direct is independent. Why: no outbound withdrawal, partial-transaction loss or duplicate alerts.
+- Public media caches access 60s and signatures 24h minus 5min; only HomeDirect sends direct URLs. Why: fast rehosting with shared privacy/watermark checks.
+
 - Imobiliare single-transaction replacement checks saved offer transactions, drafts and journals the old reference before publishing a deterministic transaction-suffixed reference; persistence excludes replaced offers. Why: retries reuse the same new reference without overwriting the opposite transaction.
 
 - ClickImob, Imobli, Locuit and Imobiliare+ share a portal-parameterized index, signed-token resolver and feed-only adapter; each keeps its own secret, signing namespace, token prefix, publication filter and index-state key; Imobiliare+ stays off public pages until the portal confirms. Why: reuse identical grace/selection behavior without cross-portal access or changing ClickImob contracts.

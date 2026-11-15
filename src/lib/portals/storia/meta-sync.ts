@@ -5,6 +5,7 @@
  * apoi exact ca o notificare reală. Doar citiri (GET) către Storia.
  */
 
+import { storiaValidTo } from "./expiry";
 export const STORIA_META_PENDING_WINDOW_MS = 48 * 60 * 60 * 1000;
 /** Maximum 2 cereri pe secundă per agenție. */
 export const STORIA_META_MIN_GAP_MS = 500;
@@ -19,6 +20,7 @@ export type StoriaMetaRecord = {
   lastError: string | null;
   /** max(last_action_at, modified_at), ms. */
   changedAtMs: number | null;
+  validTo?: string | null;
 };
 
 type Json = Record<string, unknown>;
@@ -58,6 +60,7 @@ export function parseStoriaMetaRecord(raw: unknown, fallbackUuid?: string): Stor
       str(moderation["reason"]) ?? str(moderation["description"]) ?? readError(moderation["reasons"]),
     lastError: readError(rec["last_error"]),
     changedAtMs: times.length ? Math.max(...times) : null,
+    validTo: storiaValidTo(rec),
   };
 }
 
@@ -71,6 +74,7 @@ export function metaToNotification(meta: StoriaMetaRecord): Json {
     data: {
       uuid: meta.uuid,
       ...(meta.code ? { code: meta.code } : {}),
+      ...(meta.validTo ? { valid_to: meta.validTo } : {}),
       ...(meta.url ? { url: meta.url } : {}),
       ...(meta.moderationReason ? { moderation: { reason: meta.moderationReason } } : {}),
     },

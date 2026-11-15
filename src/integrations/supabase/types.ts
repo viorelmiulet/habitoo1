@@ -8806,8 +8806,10 @@ export type Database = {
           public_url: string | null
           published_at: string | null
           status: string
+          storia_advert_states: Json
           updated_at: string
           updated_by: string | null
+          valid_to: string | null
           withdraw_reason: string | null
         }
         Insert: {
@@ -8827,8 +8829,10 @@ export type Database = {
           public_url?: string | null
           published_at?: string | null
           status?: string
+          storia_advert_states?: Json
           updated_at?: string
           updated_by?: string | null
+          valid_to?: string | null
           withdraw_reason?: string | null
         }
         Update: {
@@ -8848,8 +8852,10 @@ export type Database = {
           public_url?: string | null
           published_at?: string | null
           status?: string
+          storia_advert_states?: Json
           updated_at?: string
           updated_by?: string | null
+          valid_to?: string | null
           withdraw_reason?: string | null
         }
         Relationships: [
@@ -14655,6 +14661,17 @@ export type Database = {
           _reason: string
         }
         Returns: Json
+      }
+      storia_record_expiry: {
+        Args: {
+          p_code?: string
+          p_event_at?: string
+          p_org: string
+          p_property: string
+          p_uuid?: string
+          p_valid_to?: string
+        }
+        Returns: boolean
       }
       storia_webhook_retry_arm: { Args: never; Returns: undefined }
       storia_webhook_retry_tick: { Args: never; Returns: undefined }
