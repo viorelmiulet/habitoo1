@@ -95,3 +95,5 @@
 - Vumsi agencies are `company_type: real_estate`: sent on company POST, else one PATCH tracked by `vumsi_accounts.company_type_synced_at` (failure only warns); omitted when the nomenclature snapshot lists company_types without it. Why: one-time migration without blocking listings.
 
 - Publish jobs: Imobiliare/portal apply runs under a 2-minute job deadline (ZonaTa excluded), thrown errors are saved in Romanian, and the claim closes jobs after 2 silent lease expiries; card promotions that are unknown or refused only warn. Why: dead workers must not leave jobs running and promotions never block publication.
+
+- Heavy photo portals: at most one per worker run (claim `_exclude_portals`); feed portals stay parallel. Why: parallel galleries killed the Worker.

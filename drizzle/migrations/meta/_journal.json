@@ -1989,6 +1989,13 @@
       "when": 1794773976301,
       "tag": "0283_publish_job_silent_attempts",
       "breakpoints": true
+    },
+    {
+      "idx": 284,
+      "version": "7",
+      "when": 1794774993717,
+      "tag": "0284_publish_claim_exclude_heavy",
+      "breakpoints": true
     }
   ]
 }

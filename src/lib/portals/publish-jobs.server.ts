@@ -147,6 +147,19 @@ export async function runPool<T>(
   return ran;
 }
 
+/**
+ * Portals whose jobs download, encode or upload photos. At most one of these runs
+ * per worker invocation: several galleries in parallel exhausted Worker memory/CPU.
+ * Feed-only portals (ClickImob family, dynamic feeds) stay parallel.
+ */
+export const HEAVY_PUBLISH_PORTALS: readonly string[] = [
+  "imobiliare_ro", "vumsi", "homedirect", "storia", "olx_direct", "vdi", "homepitch", "imove", "imospot",
+  "imo24", "imopedia", "lacheie", "primulanunt", "romimo", "zonata", "ofera", "zup", "housera",
+];
+export function isHeavyPublishJob(job: Pick<PublishJobRow, "portal_key">): boolean {
+  return HEAVY_PUBLISH_PORTALS.includes(job.portal_key);
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
 
@@ -160,15 +173,29 @@ export async function runPortalPublishWorker(
   const started = Date.now();
   const stats = { claimed: 0, done: 0, failed: 0, retried: 0 };
 
+  // Claims are serialized so the "one heavy job per run" flag cannot race.
+  let heavyTaken = false;
+  let claimChain: Promise<unknown> = Promise.resolve();
+  const claimOne = (): Promise<PublishJobRow[]> => {
+    const next = claimChain.then(async () => {
+      const { data, error } = await admin.rpc("claim_portal_publish_jobs", {
+        _limit: 1,
+        _lease_seconds: PUBLISH_JOB_LEASE_SECONDS,
+        ...(heavyTaken ? { _exclude_portals: [...HEAVY_PUBLISH_PORTALS] } : {}),
+      });
+      if (error) throw new Error(error.message);
+      const rows = (data ?? []) as PublishJobRow[];
+      if (rows.some(isHeavyPublishJob)) heavyTaken = true;
+      return rows;
+    });
+    claimChain = next.catch(() => undefined);
+    return next;
+  };
+
   // Independent lanes: two slow jobs never create a batch barrier for the third lane.
   await Promise.all(Array.from({ length: concurrency }, async () => {
   while (Date.now() - started < budgetMs) {
-    const { data, error } = await admin.rpc("claim_portal_publish_jobs", {
-      _limit: 1,
-      _lease_seconds: PUBLISH_JOB_LEASE_SECONDS,
-    });
-    if (error) throw new Error(error.message);
-    const jobs = (data ?? []) as PublishJobRow[];
+    const jobs = await claimOne();
     if (jobs.length === 0) break;
     stats.claimed += jobs.length;
 

@@ -13476,7 +13476,11 @@ export type Database = {
         }
       }
       claim_portal_publish_jobs: {
-        Args: { _lease_seconds: number; _limit: number }
+        Args: {
+          _exclude_portals?: string[]
+          _lease_seconds: number
+          _limit: number
+        }
         Returns: {
           attempts: number
           cancelled_at: string | null

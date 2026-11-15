@@ -25,12 +25,13 @@ function mimeFromPath(path: string): string {
 }
 
 function toBase64(bytes: Uint8Array): string {
-  let binary = "";
-  const chunk = 0x8000;
+  // Encode in 3-byte-aligned slices so no full-size binary string is held alongside the result.
+  const chunk = 0x8000 * 3;
+  const parts: string[] = [];
   for (let index = 0; index < bytes.length; index += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(index, index + chunk));
+    parts.push(btoa(String.fromCharCode(...bytes.subarray(index, index + chunk))));
   }
-  return btoa(binary);
+  return parts.join("");
 }
 
 /** Pauzele dintre reîncercările unei descărcări din storage (3 reîncercări). */
