@@ -1,3 +1,7 @@
+## ST1b — Termen fix Storia
+- [x] Termen 30 zile la publicare, recalculare la autoprelungire, expirare atomică orară fără API; cron 334
+- [x] Afișare și 4 teste izolate actualizate trec; build OK; fără publicare
+
 ## ST1 — Expirare Storia fără autoprelungire
 - [x] Stare/data per anunț, debifare atomică și notificare unică, fără retragere
 - [x] Webhook și reconcile comune; data/Expirat în Promovare; 4 teste noi cu bază izolată, fără publicare

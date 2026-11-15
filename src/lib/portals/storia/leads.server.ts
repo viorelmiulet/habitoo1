@@ -596,11 +596,15 @@ export async function processLifecycle(
     q.eq("organization_id", match.organizationId).eq("property_id", match.propertyId);
 
   const { recordStoriaExpiry } = await import("./expiry.server");
-  const expiryHandled = await recordStoriaExpiry(admin, {
+  await recordStoriaExpiry(admin, {
     organizationId: match.organizationId, propertyId: match.propertyId,
     advertUuid: shape.advertUuid, code, data: shape.data, eventAt: shape.eventTimestampMs,
   });
-  if (expiryHandled) return { processed: true, note: "expirare Storia fără autoprelungire tratată, fără retragere" };
+  if (code === "outdated" || code === "expired") {
+    const { data: property } = await admin.from("properties").select("storia_auto_renew")
+      .eq("id", match.propertyId).eq("organization_id", match.organizationId).maybeSingle();
+    if (property?.storia_auto_renew === false) return { processed: true, note: "expirare API informativă; termenul CRM de 30 zile decide debifarea" };
+  }
 
   // Erori de publicare (`*_error`, inclusiv erorile de imagine): nu au `data.code`.
   if (isStoriaErrorEvent(shape.eventType)) {

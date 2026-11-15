@@ -1961,6 +1961,13 @@
       "when": 1794726441389,
       "tag": "0279_storia_expiry_deselect",
       "breakpoints": true
+    },
+    {
+      "idx": 280,
+      "version": "7",
+      "when": 1794726732541,
+      "tag": "0280_storia_fixed_expiry",
+      "breakpoints": true
     }
   ]
 }

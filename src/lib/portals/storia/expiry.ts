@@ -9,8 +9,11 @@ export function storiaValidTo(raw: unknown): string | null {
   return Number.isFinite(time) ? new Date(time).toISOString() : null;
 }
 
-export function shouldDeselectStoria(input: { autoRenew: boolean | null; enabled: boolean; adverts: { code: string | null; validTo: string | null }[]; now: number }) {
-  return input.autoRenew === false && input.enabled && input.adverts.length > 0 && input.adverts.every(a =>
-    a.code === "outdated" || a.code === "expired" || (a.validTo !== null && Date.parse(a.validTo) <= input.now),
-  );
+export function storiaExpiresAt(publishedAt: string | null, autoRenew: boolean | null): string | null {
+  if (autoRenew !== false || !publishedAt || !Number.isFinite(Date.parse(publishedAt))) return null;
+  return new Date(Date.parse(publishedAt) + 30 * 86400_000).toISOString();
+}
+
+export function shouldDeselectStoria(input: { autoRenew: boolean | null; enabled: boolean; expiresAt: string | null; now: number }) {
+  return input.autoRenew === false && input.enabled && input.expiresAt !== null && Date.parse(input.expiresAt) <= input.now;
 }

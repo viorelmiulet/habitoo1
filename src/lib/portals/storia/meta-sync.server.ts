@@ -38,11 +38,10 @@ export async function applyStoriaMeta(
   if (!row) return { uuid: meta.uuid, propertyId: null, status: null, note: "anunț inexistent în Habitoo — ignorat" };
   const mapped = storiaListingStatus(meta.code);
   const { recordStoriaExpiry } = await import("./expiry.server");
-  const expiryHandled = await recordStoriaExpiry(supabaseAdmin, {
+  await recordStoriaExpiry(supabaseAdmin, {
     organizationId, propertyId: row.property_id, advertUuid: meta.uuid,
     code: meta.code, data: { valid_to: meta.validTo }, eventAt: meta.changedAtMs,
   });
-  if (expiryHandled) return { uuid: meta.uuid, propertyId: row.property_id, status: "withdrawn", note: "expirare Storia tratată fără retragere" };
   if (metaSyncDecision(meta, { status: row.status, lastEventAt: row.last_event_at, publicUrl: row.public_url }, mapped) === "skip") {
     return { uuid: meta.uuid, propertyId: row.property_id, status: row.status, note: "fără schimbare / notificare mai nouă — neatins" };
   }
@@ -117,8 +116,6 @@ export async function reconcileStoriaAccounts() {
   const summary: { organizationId: string; pages: number; records: number; applied: number; complete: boolean; olx?: unknown }[] = [];
   await Promise.all(
     (conns ?? []).map(async ({ organization_id: orgId }) => {
-      const { reconcileStoredStoriaExpiry } = await import("./expiry.server");
-      await reconcileStoredStoriaExpiry(supabaseAdmin, orgId);
       if (!(await loadStoriaTokens(orgId).catch(() => null))) return;
       try {
         const { records, pages, complete } = await fetchAllStoriaMeta(
@@ -131,7 +128,6 @@ export async function reconcileStoriaAccounts() {
           if (r.propertyId && !r.note.startsWith("fără schimbare")) applied++;
         }
         const { recoverOlxLinks } = await import("./vas.server");
-        await reconcileStoredStoriaExpiry(supabaseAdmin, orgId);
         const olx = await recoverOlxLinks(supabaseAdmin, orgId, (path) => olxAuthorizedRequest(orgId, "GET", path), sleep);
         summary.push({ organizationId: orgId, pages, records: records.length, applied, complete, olx });
       } catch (error) {

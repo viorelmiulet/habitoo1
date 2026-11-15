@@ -8792,6 +8792,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          expires_at: string | null
           external_id: string | null
           id: string
           imobiliare_mode: string | null
@@ -8815,6 +8816,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          expires_at?: string | null
           external_id?: string | null
           id?: string
           imobiliare_mode?: string | null
@@ -8838,6 +8840,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          expires_at?: string | null
           external_id?: string | null
           id?: string
           imobiliare_mode?: string | null
@@ -14661,6 +14664,10 @@ export type Database = {
           _reason: string
         }
         Returns: Json
+      }
+      storia_expire_due: {
+        Args: { p_limit?: number; p_now?: string }
+        Returns: number
       }
       storia_record_expiry: {
         Args: {
