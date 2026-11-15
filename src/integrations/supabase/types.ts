@@ -14665,10 +14665,6 @@ export type Database = {
         }
         Returns: Json
       }
-      storia_expire_due: {
-        Args: { p_limit?: number; p_now?: string }
-        Returns: number
-      }
       storia_record_expiry: {
         Args: {
           p_code?: string

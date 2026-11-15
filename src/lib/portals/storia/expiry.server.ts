@@ -1,7 +1,7 @@
 import { storiaValidTo } from "./expiry";
 type Admin = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
 
-/** Informational API valid_to only; never deselects a publication. */
+/** Atomic per-UUID API state; true means outdated was handled (including partial/renewal/stale), so callers must not overwrite the aggregate or republish. */
 export async function recordStoriaExpiry(admin: Admin, input: {
   organizationId: string; propertyId: string; advertUuid: string | null;
   code: string | null; data?: unknown; eventAt?: number | null;

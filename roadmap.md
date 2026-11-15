@@ -1,3 +1,8 @@
+## ST1c — Expirare confirmată de Storia
+- [x] Cron 334 eliminat, funcții/triggere fixe eliminate, expires_at gol și deprecated; numai toate uuid-urile outdated debifează atomic
+- [x] Webhook/meta comune, valid_to informativ, avertisment tranzacție parțială, autoprelungire protejată și OLX direct independent
+- [x] 9 teste exclusiv expirare cu handler-ele reale și bază izolată; verificări schemă/cron confirmate, fără publicare sau apeluri Storia
+
 ## ST1b — Termen fix Storia
 - [x] Termen 30 zile la publicare, recalculare la autoprelungire, expirare atomică orară fără API; cron 334
 - [x] Afișare și 4 teste izolate actualizate trec; build OK; fără publicare

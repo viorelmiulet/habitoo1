@@ -35,13 +35,18 @@ export async function applyStoriaMeta(
     .ilike("external_id", `%${meta.uuid}%`)
     .limit(1);
   const row = rows?.[0];
-  if (!row) return { uuid: meta.uuid, propertyId: null, status: null, note: "anunț inexistent în Habitoo — ignorat" };
+  if (!row || !Object.values(parseAdvertRefs(row.external_id)).some(uuid => uuid?.toLowerCase() === meta.uuid.toLowerCase())) return { uuid: meta.uuid, propertyId: null, status: null, note: "anunț inexistent în Habitoo — ignorat" };
   const mapped = storiaListingStatus(meta.code);
   const { recordStoriaExpiry } = await import("./expiry.server");
-  await recordStoriaExpiry(supabaseAdmin, {
+  const expiryHandled = await recordStoriaExpiry(supabaseAdmin, {
     organizationId, propertyId: row.property_id, advertUuid: meta.uuid,
     code: meta.code, data: { valid_to: meta.validTo }, eventAt: meta.changedAtMs,
   });
+  if (expiryHandled) {
+    const { data: current } = await supabaseAdmin.from("portal_listings").select("status")
+      .eq("organization_id", organizationId).eq("property_id", row.property_id).eq("portal", "storia").maybeSingle();
+    return { uuid: meta.uuid, propertyId: row.property_id, status: current?.status ?? row.status, note: "outdated Storia procesat atomic, fără retragere sau republicare" };
+  }
   if (metaSyncDecision(meta, { status: row.status, lastEventAt: row.last_event_at, publicUrl: row.public_url }, mapped) === "skip") {
     return { uuid: meta.uuid, propertyId: row.property_id, status: row.status, note: "fără schimbare / notificare mai nouă — neatins" };
   }

@@ -4,6 +4,7 @@ import { imobiliarePromotionChangesSchema, imobiliarePublicationModeSchema, imob
 import { HOMEDIRECT_KEY_MISSING_MESSAGE, homedirectKeyMissing } from "@/lib/portals/homedirect/config";
 import { OFERA_MISSING_MESSAGE, oferaConfigured, oferaProviderId } from "@/lib/portals/ofera/config";
 import { visibleOlxLinks } from "@/lib/portals/storia/vas";
+import { storiaExpirySummary } from "@/lib/portals/storia/expiry";
 import { zupConfigured, ZUP_MISSING_MESSAGE } from "@/lib/portals/zup/config";
 import { portalCanPublish, publishUnavailableMessage } from "@/lib/portals/registry";
 import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/offer-links";
@@ -2219,7 +2220,8 @@ import {
 import { houseraWithdrawnView, type HouseraView } from "@/lib/portals/housera/status-view";
 
 export type PropertyPortalCell = {
-  storiaExpiresAt?: string | null;
+  storiaValidTo?: string | null;
+  storiaPartiallyExpired?: boolean;
   storiaExpiredDeselected?: boolean;
   apiPublication?: import("@/lib/partner-api/feedback").PublicationFeedback;
   houseraView?: HouseraView;
@@ -2487,7 +2489,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         .in("property_id", data.propertyIds),
       admin
         .from("portal_listings")
-        .select("property_id, portal, status, last_sync_at, last_error, last_warning, external_id, public_url, portal_offers, imobiliare_mode, expires_at, withdraw_reason")
+        .select("property_id, portal, status, last_sync_at, last_error, last_warning, external_id, public_url, portal_offers, imobiliare_mode, valid_to, storia_advert_states, withdraw_reason")
         .eq("organization_id", organizationId)
         .in("property_id", data.propertyIds),
       admin
@@ -2571,7 +2573,8 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           } : {}),
           ...(portal.id === "housera" ? { houseraView: houseraWithdrawnView(listingStatus, parsePortalOffers(listing?.portal_offers), listing?.external_id) } : {}),
           ...(portal.id === "storia" ? {
-            storiaExpiresAt: listing?.expires_at ?? null,
+            storiaValidTo: listing?.valid_to ?? null,
+            storiaPartiallyExpired: pub?.enabled === true && storiaExpirySummary(listing?.external_id ?? null, listing?.storia_advert_states).partial,
             storiaExpiredDeselected: pub?.enabled !== true && listing?.withdraw_reason === "Expirat pe Storia (fără autoprelungire)",
           } : {}),
           portalName: portalDisplayName(portal.id),

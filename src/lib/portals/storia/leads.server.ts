@@ -123,7 +123,7 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
   const advertCandidate = isMessage
     ? (pick(data, ["uuid", "advert_uuid", "advert.uuid"]) ?? pick(root, ["object_id", "objectId"]))
     : (pick(root, ["object_id", "objectId"]) ??
-      pick(data, ["advert_id", "advertId", "advert.uuid", "advert.id", "id"]));
+      pick(data, ["uuid", "advert_id", "advertId", "advert.uuid", "advert.id", "id"]));
 
   const publicUrl = pick(data, ["url", "advert.url", "state.url"]);
   // `ad_id` numeric → slug în baza 62; alfanumeric → folosit direct.
@@ -568,6 +568,15 @@ export async function processLifecycle(
   }
   const externalId = learned;
 
+  // Expiration ordering is per UUID: the two transactions may arrive out of order.
+  // Handle it before the legacy aggregate timestamp guard, and never withdraw remotely.
+  const { recordStoriaExpiry } = await import("./expiry.server");
+  const expiryHandled = await recordStoriaExpiry(admin, {
+    organizationId: match.organizationId, propertyId: match.propertyId,
+    advertUuid: shape.advertUuid, code, data: shape.data, eventAt: shape.eventTimestampMs,
+  });
+  if (expiryHandled) return { processed: true, note: "Stare outdated Storia memorată; debifare numai după expirarea tuturor tranzacțiilor, fără autoprelungire" };
+
   // Ordinea nu e garantată: un eveniment mai vechi decât ultimul aplicat pe
   // anunț nu suprascrie o stare mai nouă.
   if (shape.eventTimestampMs !== null) {
@@ -594,17 +603,6 @@ export async function processLifecycle(
   const urlPatch = shape.publicUrl ? { public_url: shape.publicUrl } : {};
   const scope = (q: any) =>
     q.eq("organization_id", match.organizationId).eq("property_id", match.propertyId);
-
-  const { recordStoriaExpiry } = await import("./expiry.server");
-  await recordStoriaExpiry(admin, {
-    organizationId: match.organizationId, propertyId: match.propertyId,
-    advertUuid: shape.advertUuid, code, data: shape.data, eventAt: shape.eventTimestampMs,
-  });
-  if (code === "outdated" || code === "expired") {
-    const { data: property } = await admin.from("properties").select("storia_auto_renew")
-      .eq("id", match.propertyId).eq("organization_id", match.organizationId).maybeSingle();
-    if (property?.storia_auto_renew === false) return { processed: true, note: "expirare API informativă; termenul CRM de 30 zile decide debifarea" };
-  }
 
   // Erori de publicare (`*_error`, inclusiv erorile de imagine): nu au `data.code`.
   if (isStoriaErrorEvent(shape.eventType)) {

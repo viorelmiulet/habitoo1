@@ -1,6 +1,6 @@
 # Portal rules
 
-- Storia fixed expiration uses published_at + 720 hours only for explicit auto-renew=false; listing/renewal triggers maintain expires_at, and hourly SQL-only storia_expire_due deselects/logs/notifies atomically on enabled→false. API valid_to stays informational, not a decision input; olx_direct remains independent. Why: fixed 30-day rule without portal calls or duplicate alerts.
+- Storia expiration uses only API outdated per saved SALE/RENT UUID; webhook and meta share service-only storia_record_expiry with per-UUID ordering and atomic enabled→false logs/audit/notification only when every current UUID is outdated and property auto-renew=false. valid_to is informational; fixed expires_at is retired; outdated bypasses remote withdrawal/republish, partial expiry warns without changing aggregate status, and olx_direct remains independent. Why: portal-confirmed expiration without duplicate alerts or premature deselection.
 - Public media caches access 60s and signatures 24h minus 5min; only HomeDirect sends direct URLs. Why: fast rehosting with shared privacy/watermark checks.
 
 - Imobiliare single-transaction replacement checks saved offer transactions, drafts and journals the old reference before publishing a deterministic transaction-suffixed reference; persistence excludes replaced offers. Why: retries reuse the same new reference without overwriting the opposite transaction.

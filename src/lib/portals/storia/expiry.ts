@@ -9,11 +9,16 @@ export function storiaValidTo(raw: unknown): string | null {
   return Number.isFinite(time) ? new Date(time).toISOString() : null;
 }
 
-export function storiaExpiresAt(publishedAt: string | null, autoRenew: boolean | null): string | null {
-  if (autoRenew !== false || !publishedAt || !Number.isFinite(Date.parse(publishedAt))) return null;
-  return new Date(Date.parse(publishedAt) + 30 * 86400_000).toISOString();
+export function storiaExpirySummary(externalId: string | null, rawStates: unknown) {
+  const refs = (externalId ?? "").split("|").flatMap(part => {
+    const [transaction, uuid] = part.split(":");
+    return (transaction === "SALE" || transaction === "RENT") && uuid ? [uuid.toLowerCase()] : [];
+  });
+  const states = rawStates && typeof rawStates === "object" ? rawStates as Record<string, { code?: string }> : {};
+  const outdated = refs.filter(uuid => states[uuid]?.code === "outdated").length;
+  return { allOutdated: refs.length > 0 && outdated === refs.length, partial: outdated > 0 && outdated < refs.length };
 }
 
-export function shouldDeselectStoria(input: { autoRenew: boolean | null; enabled: boolean; expiresAt: string | null; now: number }) {
-  return input.autoRenew === false && input.enabled && input.expiresAt !== null && Date.parse(input.expiresAt) <= input.now;
+export function shouldDeselectStoria(input: { autoRenew: boolean | null; enabled: boolean; externalId: string | null; states: unknown }) {
+  return input.autoRenew === false && input.enabled && storiaExpirySummary(input.externalId, input.states).allOutdated;
 }
