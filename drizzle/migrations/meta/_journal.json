@@ -1982,6 +1982,13 @@
       "when": 1794750115489,
       "tag": "0282_import_owner_contact",
       "breakpoints": true
+    },
+    {
+      "idx": 283,
+      "version": "7",
+      "when": 1794773976301,
+      "tag": "0283_publish_job_silent_attempts",
+      "breakpoints": true
     }
   ]
 }

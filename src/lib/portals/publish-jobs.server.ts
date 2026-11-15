@@ -17,6 +17,30 @@ export const PUBLISH_JOB_BUDGET_MS = 25_000;
 export const PUBLISH_JOB_LEASE_SECONDS = 300;
 /** Încercări totale = 1 + 3 reluări. */
 export const PUBLISH_JOB_MAX_ATTEMPTS = 4;
+/** A job whose lease expired this many times without a saved result is closed as an error (SQL claim). */
+export const PUBLISH_JOB_MAX_SILENT_ATTEMPTS = 2;
+/** Hard cap for one job: a hung promise becomes a saved error instead of a silent `running`. */
+export const PUBLISH_JOB_DEADLINE_MS = 120_000;
+export const PUBLISH_JOB_DEADLINE_MESSAGE = "Publicarea nu s-a terminat în 2 minute și a fost oprită. Reia actualizarea.";
+
+export class PublishJobDeadlineError extends Error {
+  constructor() { super(PUBLISH_JOB_DEADLINE_MESSAGE); this.name = "PublishJobDeadlineError"; }
+}
+
+/** Resolves with the job result or rejects with a Romanian deadline error. */
+export async function withJobDeadline<T>(run: () => Promise<T>, ms = PUBLISH_JOB_DEADLINE_MS): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new PublishJobDeadlineError()), ms); });
+  try { return await Promise.race([run(), expired]); } finally { clearTimeout(timer); }
+}
+
+/** Messages saved on the job are always Romanian and readable. */
+export function thrownJobMessage(thrown: unknown): string {
+  if (thrown instanceof PublishJobDeadlineError) return thrown.message;
+  const raw = thrown instanceof Error ? thrown.message.trim() : "";
+  if (raw && /[ăâîșțĂÂÎȘȚ]|\b(nu|eroare|portal|anunț)\b/i.test(raw)) return raw.slice(0, 500);
+  return `Eroare neașteptată la publicare${raw ? ` (${raw.slice(0, 200)})` : ""}. Reia actualizarea.`;
+}
 
 export type PublishJobRow = {
   id: string;
@@ -69,9 +93,7 @@ export function decideJobResult(
   }
   const message =
     thrown !== undefined
-      ? thrown instanceof Error
-        ? thrown.message
-        : "Eroare la publicare."
+      ? thrownJobMessage(thrown)
       : (outcome?.message ?? "Publicarea a eșuat.");
   const portalId = job.portal_key ?? outcome?.portalId ?? null;
   const failure = {
@@ -91,6 +113,7 @@ export function decideJobResult(
       ? { status: "error", ok: false, message: message.slice(0, 500) }
       : { status: "queued", retryInMs: delay, message };
   }
+  if (thrown instanceof PublishJobDeadlineError) return { status: "error", ok: false, message };
   const transient = isRetryablePortalBulkError(failure);
   if (transient && job.attempts < PUBLISH_JOB_MAX_ATTEMPTS) {
     return { status: "queued", retryInMs: publishRetryDelayMs(job.attempts), message };
@@ -162,7 +185,7 @@ export async function runPortalPublishWorker(
           const { runZonataLoggedJob } = await import("./zonata/job-log.server");
           outcome = await runZonataLoggedJob(admin, job, apply);
         } else {
-          outcome = await apply(job);
+          outcome = await withJobDeadline(() => apply(job));
         }
       } catch (e) {
         thrown = e;

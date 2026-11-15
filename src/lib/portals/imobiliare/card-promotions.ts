@@ -21,6 +21,19 @@ export const imobiliarePromotionChangesSchema = z.record(z.union([z.boolean(), z
   }
 });
 
+/** Keeps valid card promotions; unknown keys or wrong value types become warnings, never errors. */
+export function sanitizeImobiliarePromotionChanges(raw: unknown): { changes: ImobiliarePromotionChanges; skipped: { promotionId: string; message: string }[] } {
+  const changes: ImobiliarePromotionChanges = {};
+  const skipped: { promotionId: string; message: string }[] = [];
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return { changes, skipped };
+  for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
+    const parsed = imobiliarePromotionChangesSchema.safeParse({ [id]: value });
+    if (parsed.success) changes[id] = parsed.data[id] as boolean | number;
+    else skipped.push({ promotionId: id, message: `Promovarea „${id}” nu a fost aplicată: valoare necunoscută pentru Imobiliare.ro.` });
+  }
+  return { changes, skipped };
+}
+
 export function imobiliarePromotionChanges(rows: { id: string; value: boolean | number | null }[], drafts: ImobiliarePromotionChanges, published: boolean): ImobiliarePromotionChanges {
   const changes: ImobiliarePromotionChanges = {};
   for (const row of rows) {

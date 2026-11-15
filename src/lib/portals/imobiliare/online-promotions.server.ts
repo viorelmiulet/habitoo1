@@ -4,7 +4,7 @@ import type { ImobiliareSession } from "./auth.server";
 import { imobiliareAuthedRequest } from "./auth.server";
 import { promotionsPath } from "./config";
 import { imobiliarePromotion, imobiliarePromotionPatch } from "./promotions";
-import { imobiliareDestinationStatus, imobiliarePromotionChangesSchema, type ImobiliarePromotionChanges, type ImobiliarePublicationMode } from "./card-promotions";
+import { imobiliareDestinationStatus, sanitizeImobiliarePromotionChanges, type ImobiliarePromotionChanges, type ImobiliarePublicationMode } from "./card-promotions";
 import { confirmImobiliareListingPromotion, fetchImobiliareListingPromotions, fetchImobiliareSlotMembership, validateImobiliareListingPromotion, type PromotionWriteInput } from "./promotions.server";
 import { mergeImobiliarePromotionState } from "./promotions";
 import { warningsForImobiliareService } from "./online-promotions";
@@ -23,7 +23,10 @@ export async function publishImobiliareOnline(input: {
   propertyId: string; reference: string; actorId: string | null; changes: ImobiliarePromotionChanges;
   mode?: ImobiliarePublicationMode;
 }) {
-  const changes = imobiliarePromotionChangesSchema.parse(input.mode === "imoradar_only" ? {} : input.changes);
+  // Unknown or malformed promotions never block publication: they become warnings.
+  const sanitized = sanitizeImobiliarePromotionChanges(input.mode === "imoradar_only" ? {} : input.changes);
+  const changes = sanitized.changes;
+  const skipped: { promotionId: string; message: string }[] = [...sanitized.skipped];
   const entries: PromotionWriteInput[] = [];
   const promotions: Record<string, boolean | number> = {};
   if (Object.keys(changes).length) {
@@ -43,7 +46,7 @@ export async function publishImobiliareOnline(input: {
       const entry: PromotionWriteInput = { ...input, definition, value, current,
         allocation: { propertyId: input.propertyId, ...(id === "promote_imoradar" ? { skipRules: true } : {}) } };
       const allowed = await validateImobiliareListingPromotion(entry);
-      if (!allowed.ok) return { ok: false as const, message: allowed.message, status: 422, body: null, classification: { code: allowed.code, message: allowed.message } };
+      if (!allowed.ok) { skipped.push({ promotionId: id, message: allowed.message }); continue; }
       entries.push(entry);
       Object.assign(promotions, imobiliarePromotionPatch(definition, value).promotions);
     }
@@ -53,7 +56,7 @@ export async function publishImobiliareOnline(input: {
     method: "POST", path: promotionsPath(input.reference), connectionKey: input.organizationId,
     body: { ...imobiliareDestinationStatus(input.mode), ...(entries.length ? { promotions } : {}) },
   });
-  const promotionErrors: { promotionId: string; message: string }[] = [];
+  const promotionErrors: { promotionId: string; message: string }[] = [...skipped];
   if (response.ok && entries.length) {
     const { logOperation } = await import("@/lib/portals.functions");
     const { invalidatePromotionUsageCache } = await import("../promotions/allocation.server");
