@@ -1,3 +1,9 @@
+## EX1 — Redenumire „Habitoo Captură” → „Habitoo Catch”
+- [x] Numele nou în toate textele afișate: /extensie-chrome (titlu, meta, pași), Setări → Profil, ecranul „Permite”, notificarea fără dispozitive, politica de confidențialitate
+- [x] Neschimbate: URL /extensie-chrome, ID Chrome Web Store, endpointuri /api/public/extension/v1/*, tabele, sursa contactelor „Captură <site>”, activitatea „Importat cu extensia Chrome din …”
+- [x] Fără versiune minimă/recomandată în cod (doar versiunea instalată citită din atributul data-habitoo-extension); build OK, verificat în browser pe ambele pagini publice
+- [ ] Setări și ecranul „Permite” nu au fost văzute autentificat: niciun utilizator asociat solicitantului
+
 ## OC1 — Contact proprietar la preluare
 - [x] Helper tranzacțional comun captură/MAP aplicat: telefon RO, deduplicare per agenție, proprietar existent păstrat, fără acord implicit
 - [x] Rubrica Proprietar redenumită Contacte, cu etichetă Proprietar și citire directă după ID, telefon, fișă, apel și WhatsApp

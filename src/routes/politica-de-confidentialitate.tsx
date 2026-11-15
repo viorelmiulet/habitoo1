@@ -272,7 +272,7 @@ const sections: LegalSection[] = [
   },
   {
     id: "extensie-chrome",
-    title: "Extensia Chrome Habitoo Captură",
+    title: "Extensia Chrome Habitoo Catch",
     body: (
       <>
         <h3>Ce face extensia</h3>

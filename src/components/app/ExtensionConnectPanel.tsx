@@ -29,7 +29,7 @@ export function ExtensionConnectPanel({ nonce }: { nonce?: string }) {
   return (
     <div className="mx-auto max-w-lg px-4 py-16">
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h1 className="text-xl font-semibold">Conectează extensia Habitoo Captură</h1>
+        <h1 className="text-xl font-semibold">Conectează extensia Habitoo Catch</h1>
         {!valid ? (
           <div className="mt-4">
             <p className="text-sm text-destructive">Link de conectare invalid. Pornește conectarea din nou din extensie.</p>
@@ -47,7 +47,7 @@ export function ExtensionConnectPanel({ nonce }: { nonce?: string }) {
         ) : (
           <>
             <p className="mt-4 text-sm text-muted-foreground">
-              Extensia Habitoo Captură cere acces la contul tău: creează proprietăți ciornă și contacte în numele tău și citește anunțurile tale active
+              Extensia Habitoo Catch cere acces la contul tău: creează proprietăți ciornă și contacte în numele tău și citește anunțurile tale active
             </p>
             {state === "error" && <p className="mt-3 text-sm text-destructive">Nu am putut conecta extensia. Încearcă din nou.</p>}
             <div className="mt-6 flex gap-3">

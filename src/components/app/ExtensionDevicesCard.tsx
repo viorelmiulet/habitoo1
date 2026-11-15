@@ -13,7 +13,7 @@ export function ExtensionDevicesCard() {
   const m = useMutation({ mutationFn: (id: string) => revoke({ data: { id } }), onSuccess: () => qc.invalidateQueries({ queryKey: ["extension-tokens"] }) });
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Se încarcă…</p>;
   const rows = q.data ?? [];
-  if (!rows.length) return <p className="text-sm text-muted-foreground">Niciun dispozitiv conectat. Instalează extensia Habitoo Captură și apasă „Conectează” în ea.</p>;
+  if (!rows.length) return <p className="text-sm text-muted-foreground">Niciun dispozitiv conectat. Instalează extensia Habitoo Catch și apasă „Conectează” în ea.</p>;
   return (
     <ul className="divide-y divide-border">
       {rows.map((r) => (

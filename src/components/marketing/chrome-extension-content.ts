@@ -4,8 +4,8 @@ import type { FaqItem } from "@/components/marketing/FaqSection";
 /** Adresa din Chrome Web Store. */
 export const CHROME_EXTENSION_URL = "https://chromewebstore.google.com/detail/halmjojklfjnnmjojpeboeaopkabmlee";
 export const CHROME_EXTENSION_PATH = "/extensie-chrome";
-export const CHROME_EXTENSION_TITLE = "Extensia Chrome Habitoo Captură";
-export const CHROME_EXTENSION_META_TITLE = "Extensia Chrome Habitoo Captură — import anunțuri și postări Facebook | Habitoo CRM";
+export const CHROME_EXTENSION_TITLE = "Extensia Chrome Habitoo Catch";
+export const CHROME_EXTENSION_META_TITLE = "Extensia Chrome Habitoo Catch — import anunțuri și postări Facebook | Habitoo CRM";
 export const CHROME_EXTENSION_DESCRIPTION =
   "Importă cu un clic anunțul ales de pe OLX, Storia, Publi24 sau Imobiliare.ro în Habitoo și postează-ți ofertele în grupuri Facebook cu datele tale de contact.";
 
@@ -20,7 +20,7 @@ export function extensionInstalledVersion(attr: string | null | undefined): stri
 }
 
 export const extensionSteps = [
-  { title: "Instalează", text: "Adaugi extensia Habitoo Captură în Chrome din Chrome Web Store." },
+  { title: "Instalează", text: "Adaugi extensia Habitoo Catch în Chrome din Chrome Web Store." },
   { title: "Conectează contul", text: "Apeși „Conectează” în extensie și confirmi cu „Permite” în Habitoo. Nu copiezi nicio cheie." },
   { title: "Importă anunțul cu un clic", text: "Pe pagina anunțului apeși butonul Habitoo, verifici datele și le salvezi ca proprietate ciornă, cu poze și contactul proprietarului." },
 ];

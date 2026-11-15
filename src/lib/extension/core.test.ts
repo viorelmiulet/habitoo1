@@ -15,7 +15,7 @@ async function setup(over: { token?: Partial<ExtTokenRow>; account?: Partial<Ext
   return { token, store, req, revoke };
 }
 
-describe("extensie Habitoo Captură", () => {
+describe("extensie Habitoo Catch", () => {
   it("token valid → /me 200 cu utilizator și agenție, fără token în răspuns", async () => {
     const { store, req, token } = await setup();
     const log = vi.spyOn(console, "log"); const warn = vi.spyOn(console, "warn"); const err = vi.spyOn(console, "error");

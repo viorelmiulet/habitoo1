@@ -1,4 +1,4 @@
-// Extensia Chrome „Habitoo Captură” — logică pură (fără DB), testabilă.
+// Extensia Chrome „Habitoo Catch” — logică pură (fără DB), testabilă.
 import { orgBlockReason } from "@/lib/org-access";
 
 export const EXTENSION_API_BASE = "/api/public/extension/v1";
