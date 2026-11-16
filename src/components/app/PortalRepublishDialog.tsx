@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { getRepublishBatch, getRepublishPreview, startRepublish, stopRepublishBatch } from "@/lib/portals/republish.functions";
 import { cn } from "@/lib/utils";
+import { splitRepublishSkipped } from "@/lib/portals/republish";
 import { useCurrentUser } from "@/hooks/use-session";
 
 type Scope = "mine" | "all";
@@ -108,7 +109,7 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
     onError: (error: Error) => toastError(error),
   });
   const toggle = (id: string) => setPortalFilter((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
-  const blocked = Boolean(preview?.activeBatchId) || mutation.isPending || (preview?.listings ?? 0) + (preview?.perPortal.reduce((s, p) => s + p.autoPull, 0) ?? 0) === 0;
+  const blocked = Boolean(preview?.activeBatchId) || mutation.isPending || (preview?.listings ?? 0) === 0;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -116,14 +117,18 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
         <DialogHeader className="shrink-0 pr-6">
           <DialogTitle className="font-display">Republică anunțurile</DialogTitle>
           <DialogDescription>Retrimite pe portaluri anunțurile deja publicate, cu datele actuale, și reîncearcă o dată anunțurile selectate a căror publicare a fost respinsă. Nu retrage și nu folosește promovări plătite.</DialogDescription>
+          <p className="text-xs text-muted-foreground">Portalurile cu feed (ClickImob, Imobli, Locuit etc.) preiau automat modificările, nu e nevoie de republicare.</p>
         </DialogHeader>
         {batch ? (
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 text-sm">
             <p className="font-semibold">{batch.status === "done" ? "Republicare terminată" : "Republicare în curs…"}</p>
             {batch.stalled ? <p role="alert" className="font-semibold text-destructive">Republicarea pare blocată</p> : null}
-            <p>{batch.succeeded} reușite · {batch.failed} erori · {batch.skipped} sărite{batch.pending ? ` · ${batch.pending} în așteptare` : ""} (din {batch.total})</p>
+            <p>{batch.succeeded} reușite · {batch.failed} erori · {(() => { const sk = splitRepublishSkipped(batch.skippedItems); return `${sk.busy.length} deja în curs${sk.other.length ? ` · ${sk.other.length} sărite` : ""}`; })()}{batch.pending ? ` · ${batch.pending} în așteptare` : ""} (din {batch.total})</p>
             {batch.errors.length ? <section><p className="font-semibold text-destructive">Erori</p><ul className="max-h-40 space-y-1 overflow-auto">{batch.errors.map((e, i) => <li key={i}>{e.listing} · {e.portal}: {e.message}</li>)}</ul></section> : null}
-            {batch.skippedItems.length ? <section><p className="font-semibold">Sărite</p><ul className="max-h-40 space-y-1 overflow-auto text-muted-foreground">{batch.skippedItems.map((e, i) => <li key={i}>{e.listing} · {e.portal}: {e.message}</li>)}</ul></section> : null}
+            {(() => { const sk = splitRepublishSkipped(batch.skippedItems); return (<>
+            {sk.busy.length ? <section><p className="font-semibold">Deja în curs de sincronizare</p><ul className="max-h-40 space-y-1 overflow-auto text-muted-foreground">{sk.busy.map((e, i) => <li key={i}>{e.listing} · {e.portal}: {e.message}</li>)}</ul></section> : null}
+            {sk.other.length ? <section><p className="font-semibold">Sărite</p><ul className="max-h-40 space-y-1 overflow-auto text-muted-foreground">{sk.other.map((e, i) => <li key={i}>{e.listing} · {e.portal}: {e.message}</li>)}</ul></section> : null}
+            </>); })()}
           </div>
         ) : (
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1 text-sm">
@@ -152,7 +157,6 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
                     <li key={p.portalId} className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1">{p.name}</span><span className="shrink-0 text-right tabular-nums">{republishCountText(p.queued, p.retry ?? 0)}</span></li>
                   ))}
                 </ul>
-                {(() => { const auto = preview.perPortal.filter((p) => p.queued === 0 && (p.retry ?? 0) === 0 && p.autoPull > 0); return auto.length ? <p className="mt-2 border-t border-border pt-2 text-xs text-muted-foreground">Se actualizează automat la următoarea preluare: {auto.map((p) => `${p.name} (${p.autoPull})`).join(", ")}</p> : null; })()}
               </div>
             ) : null}
             {mutation.error ? <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 font-medium text-destructive">{startErrorText(mutation.error)}</p> : null}

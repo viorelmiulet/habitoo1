@@ -129,3 +129,15 @@ export function republishStartArgs(input: {
     _busy_message: input.busyMessage,
   };
 }
+
+/** Republish batch content: feed portals pull changes themselves, so they are left out entirely. */
+export function republishBatchPairs(pairs: { queued: RepublishPair[]; retry: RepublishPair[] }) {
+  return [...pairs.queued, ...pairs.retry].filter((p) => !isAutoPullPortal(p.portalId));
+}
+
+export const REPUBLISH_BUSY_MESSAGE = "Se sincronizează deja; sărit.";
+/** Splits stored skipped items: busy ones vs. other (old batches may hold feed-portal items). */
+export function splitRepublishSkipped<T extends { message: string }>(items: T[]) {
+  const busy = items.filter((i) => i.message === REPUBLISH_BUSY_MESSAGE);
+  return { busy, other: items.filter((i) => i.message !== REPUBLISH_BUSY_MESSAGE) };
+}
