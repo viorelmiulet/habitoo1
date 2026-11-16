@@ -25,6 +25,7 @@ import {
   EXCLUSION_REASON_LABEL,
   FACEBOOK_CATALOG_STATE_LABEL,
   type FacebookCatalogState,
+  facebookProductsCatalogUrl,
 } from "@/lib/facebook-catalog-status";
 
 const PILL: Record<FacebookCatalogState, StatusPillState> = {
