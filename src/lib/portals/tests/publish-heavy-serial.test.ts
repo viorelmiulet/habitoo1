@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HEAVY_PUBLISH_PORTALS, runPortalPublishWorker, type PublishJobRow } from "../publish-jobs.server";
+import { HEAVY_PUBLISH_PORTALS, MAX_PARALLEL_HEAVY, runPortalPublishWorker, type PublishJobRow } from "../publish-jobs.server";
 
 function makeAdmin(keys: string[]) {
   const queue = keys.map((portal_key, i) => ({ id: `j${i}`, portal_key, organization_id: "o", property_id: "p",
@@ -19,44 +19,27 @@ function makeAdmin(keys: string[]) {
   return { admin, queue, claims };
 }
 
-describe("IM3: photo-heavy publish jobs never run in parallel", () => {
-  it("runs at most one heavy job per run while feed jobs stay parallel", async () => {
-    const heavy = ["imobiliare_ro", "vumsi", "homedirect"];
-    const feeds = ["clickimob", "imobli", "locuit", "imobiliaremilitari", "bazaruldecase"];
-    const { admin, queue } = makeAdmin([...heavy, ...feeds]);
-    let heavyNow = 0, heavyMax = 0, feedNow = 0, feedMax = 0;
-    const ran: string[] = [];
+describe("IM7: heavy jobs are capped in flight, not per run", () => {
+  it("one run processes all 10 heavy jobs with concurrency <= MAX_PARALLEL_HEAVY", async () => {
+    const heavy = Array.from({ length: 10 }, (_, i) => ["imobiliare_ro", "vumsi", "primulanunt"][i % 3]!);
+    const light = Array.from({ length: 10 }, (_, i) => ["homedirect", "homepitch", "clickimob", "storia", "locuit"][i % 5]!);
+    const { admin, queue } = makeAdmin([...heavy, ...light]);
+    let heavyNow = 0, heavyMax = 0, heavyDone = 0, lightDone = 0;
     await runPortalPublishWorker(admin, async (job) => {
       const isHeavy = HEAVY_PUBLISH_PORTALS.includes(job.portal_key);
-      if (isHeavy) heavyMax = Math.max(heavyMax, ++heavyNow); else feedMax = Math.max(feedMax, ++feedNow);
-      await new Promise((r) => setTimeout(r, isHeavy ? 30 : 10));
-      if (isHeavy) heavyNow--; else feedNow--;
-      ran.push(job.portal_key);
+      if (isHeavy) heavyMax = Math.max(heavyMax, ++heavyNow);
+      await new Promise((r) => setTimeout(r, isHeavy ? 15 : 5));
+      if (isHeavy) { heavyNow--; heavyDone++; } else lightDone++;
       return { portalId: job.portal_key, ok: true, action: "published" } as never;
-    }, { budgetMs: 5_000 });
-    expect(heavyMax).toBe(1);
-    expect(feedMax).toBeGreaterThan(1);
-    expect(ran.filter((k) => heavy.includes(k))).toHaveLength(1);
-    expect(feeds.every((k) => ran.includes(k))).toBe(true);
-    // The two remaining heavy jobs stay queued for later runs.
-    expect(queue.map((j) => j.portal_key).sort()).toEqual(heavy.filter((k) => ran.indexOf(k) < 0).sort());
-  });
-
-  it("consecutive runs process the remaining heavy jobs one at a time", async () => {
-    const { admin, queue } = makeAdmin(["imobiliare_ro", "vumsi", "homedirect"]);
-    let now = 0, max = 0;
-    for (let run = 0; run < 3; run++) {
-      await runPortalPublishWorker(admin, async (job) => {
-        max = Math.max(max, ++now); await new Promise((r) => setTimeout(r, 5)); now--;
-        return { portalId: job.portal_key, ok: true, action: "published" } as never;
-      }, { budgetMs: 5_000 });
-    }
-    expect(max).toBe(1);
+    }, { budgetMs: 10_000 });
+    expect(MAX_PARALLEL_HEAVY).toBe(2);
+    expect(heavyDone).toBe(10);
+    expect(lightDone).toBe(10);
+    expect(heavyMax).toBeLessThanOrEqual(MAX_PARALLEL_HEAVY);
     expect(queue).toHaveLength(0);
   });
 
-  it("lists every photo-uploading portal named in the incident", () => {
-    for (const key of ["imobiliare_ro", "vumsi", "homedirect", "storia", "vdi", "homepitch"]) expect(HEAVY_PUBLISH_PORTALS).toContain(key);
-    expect(HEAVY_PUBLISH_PORTALS).not.toContain("clickimob");
+  it("only byte-processing portals are heavy", () => {
+    expect([...HEAVY_PUBLISH_PORTALS].sort()).toEqual(["imobiliare_ro", "primulanunt", "vumsi"]);
   });
 });

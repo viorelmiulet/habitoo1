@@ -152,10 +152,12 @@ export async function runPool<T>(
  * per worker invocation: several galleries in parallel exhausted Worker memory/CPU.
  * Feed-only portals (ClickImob family, dynamic feeds) stay parallel.
  */
-export const HEAVY_PUBLISH_PORTALS: readonly string[] = [
-  "imobiliare_ro", "vumsi", "homedirect", "storia", "olx_direct", "vdi", "homepitch", "imove", "imospot",
-  "imo24", "imopedia", "lacheie", "primulanunt", "romimo", "zonata", "ofera", "zup", "housera",
-];
+/** Only portals whose adapter downloads/encodes image bytes inside the worker.
+ * imobiliare_ro: base64 gallery; vumsi: multipart upload per photo; primulanunt: multipart upload.
+ * URL-only portals (HomeDirect signed URLs, HomePitch, Storia, OLX, feeds…) are light. */
+export const HEAVY_PUBLISH_PORTALS: readonly string[] = ["imobiliare_ro", "vumsi", "primulanunt"];
+/** Max heavy jobs in flight at once; a run keeps claiming heavy jobs while budget remains. */
+export const MAX_PARALLEL_HEAVY = 2;
 export function isHeavyPublishJob(job: Pick<PublishJobRow, "portal_key">): boolean {
   return HEAVY_PUBLISH_PORTALS.includes(job.portal_key);
 }
@@ -173,19 +175,19 @@ export async function runPortalPublishWorker(
   const started = Date.now();
   const stats = { claimed: 0, done: 0, failed: 0, retried: 0 };
 
-  // Claims are serialized so the "one heavy job per run" flag cannot race.
-  let heavyTaken = false;
+  // Claims are serialized so the in-flight heavy counter cannot race.
+  let heavyInFlight = 0;
   let claimChain: Promise<unknown> = Promise.resolve();
   const claimOne = (): Promise<PublishJobRow[]> => {
     const next = claimChain.then(async () => {
       const { data, error } = await admin.rpc("claim_portal_publish_jobs", {
         _limit: 1,
         _lease_seconds: PUBLISH_JOB_LEASE_SECONDS,
-        ...(heavyTaken ? { _exclude_portals: [...HEAVY_PUBLISH_PORTALS] } : {}),
+        ...(heavyInFlight >= MAX_PARALLEL_HEAVY ? { _exclude_portals: [...HEAVY_PUBLISH_PORTALS] } : {}),
       });
       if (error) throw new Error(error.message);
       const rows = (data ?? []) as PublishJobRow[];
-      if (rows.some(isHeavyPublishJob)) heavyTaken = true;
+      heavyInFlight += rows.filter(isHeavyPublishJob).length;
       return rows;
     });
     claimChain = next.catch(() => undefined);
@@ -194,8 +196,12 @@ export async function runPortalPublishWorker(
 
   // Independent lanes: two slow jobs never create a batch barrier for the third lane.
   await Promise.all(Array.from({ length: concurrency }, async () => {
+  let laneHeavy = 0;
+  try {
   while (Date.now() - started < budgetMs) {
+    if (laneHeavy) { heavyInFlight -= laneHeavy; laneHeavy = 0; }
     const jobs = await claimOne();
+    laneHeavy = jobs.filter(isHeavyPublishJob).length;
     if (jobs.length === 0) break;
     stats.claimed += jobs.length;
 
@@ -275,6 +281,9 @@ export async function runPortalPublishWorker(
         created_by: job.requested_by,
       });
     }
+  }
+  } finally {
+    heavyInFlight -= laneHeavy;
   }
   }));
   return stats;
