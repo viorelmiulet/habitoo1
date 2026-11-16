@@ -23,6 +23,7 @@ import { leadStageLabels, propertyStatusLabels, propertyStatusTone } from "@/lib
 import { cn } from "@/lib/utils";
 import { tipOfTheDay } from "./daily-tips";
 import { DailyNoteCard } from "./DailyNoteCard";
+import { ExtensionPromoCard } from "./ExtensionPromoCard";
 import { HabitooNewsCard } from "./HabitooNewsCard";
 import { greetingFor } from "./greeting";
 import { dailyAdditions, leadSourceLabel, monthComparison, relativeTime, trendLabel } from "./home-stats";
@@ -297,6 +298,9 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
               )}
             </section>
           </div>
+
+          {/* 6. Extensia Chrome Habitoo Catch */}
+          <ExtensionPromoCard />
         </>
       )}
     </div>

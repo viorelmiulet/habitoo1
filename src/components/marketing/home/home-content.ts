@@ -81,6 +81,14 @@ export const HOME_FEATURES: HomeCard[] = [
   { icon: BarChart3, title: "Rapoarte", text: "Portofoliul, activitatea și rezultatele agenției, la zi." },
 ];
 
+/** Secțiunea „Habitoo Catch” de pe pagina principală. */
+export const HOME_EXTENSION = {
+  title: "Habitoo Catch: anunțuri preluate dintr-un click",
+  description:
+    "Habitoo Catch este extensia Chrome gratuită pentru agențiile Habitoo. Deschizi anunțul pe un portal imobiliar și îl preiei direct în CRM, cu datele, pozele și prețul completate. Proprietarul se salvează automat ca contact al proprietății, iar dublurile sunt evitate.",
+  bullets: ["Preluare într-un click", "Proprietar salvat automat ca contact", "Conectare sigură cu contul Habitoo"],
+} as const;
+
 export const HOME_STEPS = [
   ["Adaugi proprietatea", "Completezi datele și fotografiile o singură dată."],
   ["AI-ul te ajută cu textele și pozele", "Descrieri, titluri și fotografii mai bune, pe care le aprobi tu."],

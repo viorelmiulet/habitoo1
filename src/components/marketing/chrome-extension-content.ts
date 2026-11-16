@@ -2,7 +2,7 @@
 import type { FaqItem } from "@/components/marketing/FaqSection";
 
 /** Adresa din Chrome Web Store. */
-export const CHROME_EXTENSION_URL = "https://chromewebstore.google.com/detail/halmjojklfjnnmjojpeboeaopkabmlee";
+export const CHROME_EXTENSION_URL = "https://chromewebstore.google.com/detail/habitoo-catch/halmjojklfjnnmjojpeboeaopkabmlee";
 export const CHROME_EXTENSION_PATH = "/extensie-chrome";
 export const CHROME_EXTENSION_TITLE = "Extensia Chrome Habitoo Catch";
 export const CHROME_EXTENSION_META_TITLE = "Extensia Chrome Habitoo Catch — import anunțuri și postări Facebook | Habitoo CRM";

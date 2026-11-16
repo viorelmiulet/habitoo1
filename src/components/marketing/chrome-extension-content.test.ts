@@ -7,7 +7,7 @@ describe("extensie Chrome — pagina publică", () => {
     expect(buildSitemapXml([], new Date("2026-11-09T00:00:00Z"))).toContain("<loc>https://www.habitoo.ro/extensie-chrome</loc>");
   });
   it("butonul „Adaugă în Chrome” e activ și duce la Chrome Web Store", () => {
-    expect(CHROME_EXTENSION_URL).toBe("https://chromewebstore.google.com/detail/halmjojklfjnnmjojpeboeaopkabmlee");
+    expect(CHROME_EXTENSION_URL).toBe("https://chromewebstore.google.com/detail/habitoo-catch/halmjojklfjnnmjojpeboeaopkabmlee");
     expect(chromeInstallButton()).toEqual({ disabled: false, label: "Adaugă în Chrome", href: CHROME_EXTENSION_URL });
     expect(chromeInstallButton("")).toEqual({ disabled: true, label: "În curând în Chrome Web Store", href: null });
   });

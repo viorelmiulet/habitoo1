@@ -12,7 +12,8 @@ import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Eyebrow, Section, SectionHeading } from "@/components/marketing/Section";
 import { DashboardMock } from "@/components/marketing/mockups/DashboardMock";
 import { AiTypingPanel } from "./AiTypingPanel";
-import { AI_CARDS, HOME_FAQ, HOME_FEATURES, HOME_STEPS } from "./home-content";
+import { AI_CARDS, HOME_EXTENSION, HOME_FAQ, HOME_FEATURES, HOME_STEPS } from "./home-content";
+import { CHROME_EXTENSION_PATH, CHROME_EXTENSION_URL } from "@/components/marketing/chrome-extension-content";
 import { portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
 import type { PortalDefinition } from "@/lib/portals/registry";
 
@@ -131,6 +132,39 @@ export function HomeContent({ dynamic }: { dynamic: PortalDefinition[] }) {
         </Section>
 
         <IntegratedPortalsSection dynamic={dynamic} />
+
+        <Section id="habitoo-catch" tone="muted">
+          <Container>
+            <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
+              <SectionHeading
+                align="left"
+                eyebrow="Extensie Chrome"
+                title={HOME_EXTENSION.title}
+                text={HOME_EXTENSION.description}
+              />
+              <div className="hp-card">
+                <ul className="space-y-3">
+                  {HOME_EXTENSION.bullets.map((bullet) => (
+                    <li key={bullet} className="flex items-center gap-3 text-sm font-medium text-navy">
+                      <CircleCheck className="size-5 shrink-0 text-gold-dark" aria-hidden />
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <Button asChild size="lg" className="h-12 rounded-full bg-gold px-7 text-base text-gold-foreground hover:bg-gold/90">
+                    <a href={CHROME_EXTENSION_URL} target="_blank" rel="noopener noreferrer">
+                      Adaugă în Chrome <ArrowRight />
+                    </a>
+                  </Button>
+                  <Button asChild size="lg" variant="outline" className="h-12 rounded-full px-7 text-base">
+                    <a href={CHROME_EXTENSION_PATH}>Află mai multe</a>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Container>
+        </Section>
 
         <Section id="cum-functioneaza" tone="muted" className="relative overflow-hidden">
           <Container>
