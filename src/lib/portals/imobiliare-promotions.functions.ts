@@ -76,6 +76,8 @@ export type ImobiliarePromotionsView = {
   syncedAt: string | null;
   /** `true` = portalul nu a raportat starea NICIUNUI serviciu pe această ofertă. */
   stateUnreported: boolean;
+  /** Anunțurile standard ale abonamentului (slotul de bază), citite live; `null` = necunoscut. */
+  baseSlots?: { total: number; used: number; available: number } | null;
 };
 
 function emptyView(message: string): ImobiliarePromotionsView {
@@ -164,7 +166,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
     z
-      .object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() })
+      .object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid(), fresh: z.boolean().optional() })
       .parse(input),
   )
   .handler(async ({ data, context }): Promise<ImobiliarePromotionsView> => {
@@ -178,6 +180,11 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
       agentOnly,
       userId: context.userId,
     });
+    if (data.fresh) {
+      // „Reîmprospătează sloturi”: nothing memoised may answer this read.
+      const { invalidateImobiliareSlotCaches } = await import("@/lib/portals/imobiliare/slot-cache.server");
+      await invalidateImobiliareSlotCaches(organizationId);
+    }
     const prepared = await prepare(organizationId, data.propertyId, true);
     if (!prepared.ok) return prepared.view;
 
@@ -342,6 +349,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
       syncedAt,
       // Mesajul „starea nu a fost raportată” se arată o singură dată, sus.
       stateUnreported: promotions.length > 0 && promotions.every((row) => row.value === null),
+      baseSlots: inventories.get("starter")?.inventory ?? null,
     };
   });
 

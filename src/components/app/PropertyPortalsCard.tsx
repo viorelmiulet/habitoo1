@@ -408,6 +408,18 @@ export const PropertyPortalsCard = forwardRef<
   const imobiliarePublished = imobiliareCell?.state === "published" && !imobiliareModeChanged;
   const promotionQueryKey = ["property-imobiliare-promotions", organizationId, propertyId] as const;
   const imobiliareView = useQuery({ queryKey: promotionQueryKey, queryFn: () => loadImobiliarePromotions({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }), enabled: imobiliareSelected && imobiliareMode !== "imoradar_only" });
+  const [refreshingSlots, setRefreshingSlots] = useState(false);
+  const refreshImobiliareSlots = async () => {
+    setRefreshingSlots(true);
+    try {
+      const fresh = await loadImobiliarePromotions({ data: { propertyId, fresh: true, ...(organizationId ? { organizationId } : {}) } });
+      queryClient.setQueryData(promotionQueryKey, fresh);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sloturile nu au putut fi citite de la Imobiliare.ro.");
+    } finally {
+      setRefreshingSlots(false);
+    }
+  };
   const imoradarPreference = useQuery({ queryKey: ["imoradar-preference", propertyId, organizationId ?? null], queryFn: () => loadImoradarPreference({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }), enabled: imobiliareSelected && imobiliareMode !== "imoradar_only" });
   const [imobiliareDrafts, setImobiliareDrafts] = useState<ImobiliarePromotionChanges>({});
   useEffect(() => { setImobiliareDrafts({}); setImobiliareModeDraft(null); }, [propertyId]);
@@ -1263,7 +1275,7 @@ export const PropertyPortalsCard = forwardRef<
                         <Label className="flex items-center gap-2 text-xs" htmlFor="imobiliare-mode-imoradar"><RadioGroupItem id="imobiliare-mode-imoradar" value="imoradar_only" />Doar imoradar24</Label>
                       </RadioGroup>
                       <div data-tour="promo-imobiliare">
-                      <PropertyImobiliarePromotionsCard view={imobiliareView.data} drafts={effectiveImobiliareDrafts} disabled={!editing || !canManage || busy || imobiliareMode === "imoradar_only"} errors={promotionErrors} onChange={(id, next) => setImobiliareDrafts((draft) => ({ ...draft, [id]: next }))} onRefresh={() => void imobiliareView.refetch()} loading={imobiliareMode !== "imoradar_only" && imobiliareView.isFetching} loadError={imobiliareMode !== "imoradar_only" && imobiliareView.error instanceof Error ? imobiliareView.error.message : undefined} />
+                      <PropertyImobiliarePromotionsCard view={imobiliareView.data} drafts={effectiveImobiliareDrafts} disabled={!editing || !canManage || busy || imobiliareMode === "imoradar_only"} errors={promotionErrors} onChange={(id, next) => setImobiliareDrafts((draft) => ({ ...draft, [id]: next }))} onRefresh={() => void refreshImobiliareSlots()} loading={imobiliareMode !== "imoradar_only" && (imobiliareView.isFetching || refreshingSlots)} loadError={imobiliareMode !== "imoradar_only" && imobiliareView.error instanceof Error ? imobiliareView.error.message : undefined} />
                       </div>
                     </> : null}
 

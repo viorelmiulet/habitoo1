@@ -72,6 +72,7 @@ import {
 import { buildImobiliareOffer, parsePortalOffers, type PortalOffer } from "../imobiliare/offer-links";
 import { imobiliareFloorReasons } from "../imobiliare/mapper";
 import { publishImobiliareOnline, withdrawImobiliareDestinations } from "../imobiliare/online-promotions.server";
+import { invalidateImobiliareSlotCaches } from "../imobiliare/slot-cache.server";
 
 type PortalFailShape = Extract<PortalResult<never>, { ok: false }>;
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
@@ -541,6 +542,9 @@ async function write(
       message: normalized.message,
       detail: normalized.detail,
     };
+  } finally {
+    // Any publication outcome (including slot refusals) may change capacity.
+    await invalidateImobiliareSlotCaches(ctx.organizationId);
   }
 }
 
@@ -569,6 +573,7 @@ async function withdraw(
   try {
     // Retragere = trecerea în draft: reversibilă, fără pierderea anunțului.
     let lastResponse: { body: unknown; status: number } | null = null;
+    const imoradarWarnings: string[] = [];
     for (const externalId of externalIds) {
       const db = await admin();
       const response = await withDurableImobiliareLock({
@@ -581,6 +586,7 @@ async function withdraw(
           ),
       });
       if (!response.ok) return failFrom(response, `withdraw:${externalId}`);
+      if ("imoradarWarning" in response && typeof response.imoradarWarning === "string") imoradarWarnings.push(response.imoradarWarning);
       lastResponse = response;
     }
     return {
@@ -588,7 +594,7 @@ async function withdraw(
       data: {
         externalId: serializeImobiliareReferences(externalIds),
         live: true,
-        detail: "Anunțul a fost trecut în draft la Imobiliare.ro (retras din public).",
+        detail: ["Anunțul a fost trecut în draft la Imobiliare.ro și imoradar24 (retras din public).", ...new Set(imoradarWarnings)].join(" "),
         // Starea salvată local folosește vocabularul CRM, nu al portalului.
         portalStatus: "withdrawn",
         httpStatus: lastResponse?.status ?? null,
@@ -598,6 +604,8 @@ async function withdraw(
   } catch (error) {
     const normalized = toPortalError(error);
     return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+  } finally {
+    await invalidateImobiliareSlotCaches(ctx.organizationId);
   }
 }
 
@@ -610,6 +618,7 @@ export async function deleteImobiliareListing(
   if (!ready.ok) return ready.result;
   const db = await admin();
   const externalIds = parseImobiliareReferences(externalId);
+  try {
   for (const reference of externalIds) {
     const response = await withDurableImobiliareLock({
       admin: db,
@@ -625,6 +634,9 @@ export async function deleteImobiliareListing(
         ),
     });
     if (!response.ok) return failFrom(response, `delete:${reference}`);
+  }
+  } finally {
+    await invalidateImobiliareSlotCaches(ctx.organizationId);
   }
   return {
     ok: true,

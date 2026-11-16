@@ -65,7 +65,7 @@ describe("initial online contract", () => {
     expect(writes()[0].body).toEqual({ status: "online", promotions: { bonus: true } });
     expect(state.request.mock.calls.some(call => call[1].path.includes("/slots/bonus"))).toBe(false);
   });
-  it("preserves the exact standard-slot rejection without extra capacity reads", async () => {
+  it("preserves the exact standard-slot rejection when standard slots still have room", async () => {
     const original = state.request.getMockImplementation();
     state.request.mockImplementation(async (session, call) => call.method === "POST" && call.path.endsWith("/promotions")
       ? { ok: false, status: 422, body: {}, classification: { code: "VALIDATION_ERROR", message: "Nu aveți suficiente sloturi pentru a publica această ofertă" } } : original?.(session, call));
@@ -73,7 +73,8 @@ describe("initial online contract", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("Expected failure");
     expect(result.fail.message).toBe("Nu aveți suficiente sloturi pentru a publica această ofertă");
-    expect(state.request.mock.calls.some(call => call[1].path.includes("/slots/"))).toBe(false);
+    // IM6: the refusal is diagnosed live; standard slots have room here, so the portal's message stays.
+    expect(state.request.mock.calls.some(call => call[1].path.endsWith("/slots/starter"))).toBe(true);
     expect(state.saved).toEqual([]);
   });
   it("Top Listing warning does not reject online or confirm Top Listing, while Bonus is saved", async () => {

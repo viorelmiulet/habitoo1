@@ -17,6 +17,11 @@ export function clearImobiliareAccountCache() {
   cache.clear();
 }
 
+/** Drops the memoised `/me` for one agency (after withdraw/delete/publish/slot errors). */
+export function invalidateImobiliareAccountCache(organizationId: string) {
+  cache.delete(organizationId);
+}
+
 /** `null` = portalul nu a răspuns; apelantul NU trage nicio concluzie. */
 export async function fetchImobiliareAccount(
   session: ImobiliareSession,

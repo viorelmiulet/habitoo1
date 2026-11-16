@@ -23,8 +23,9 @@ export function PropertyImobiliarePromotionsCard({ view, drafts, disabled, error
   return <div className="relative z-10 mt-3 border-t border-border pt-3" aria-label="Promovări Imobiliare.ro">
     <div className="mb-2 flex items-center justify-between gap-2">
       <span className="text-xs font-semibold">Promovări</span>
-      <Button type="button" variant="ghost" size="icon" className="size-8" title="Actualizează locurile libere" aria-label="Actualizează locurile libere" disabled={loading || disabled} onClick={onRefresh}><RefreshCw className="size-3.5" /></Button>
+      <Button type="button" variant="outline" size="sm" className="min-h-11 gap-1.5 sm:min-h-9" title="Citește sloturile direct de la Imobiliare.ro" disabled={loading} onClick={onRefresh}><RefreshCw className={`size-3.5${loading ? " animate-spin" : ""}`} />Reîmprospătează sloturi</Button>
     </div>
+    {view.baseSlots ? <p className="mb-2 text-xs text-muted-foreground">Anunțuri standard în abonament: <span className="font-medium text-foreground">{view.baseSlots.available}/{view.baseSlots.total} libere</span> ({view.baseSlots.used} folosite)</p> : null}
     <ul className="space-y-2">{rows.map((row) => {
       const wanted = drafts[row.id] ?? row.value;
       const active = row.value === true || (typeof row.value === "number" && row.value > 0);
