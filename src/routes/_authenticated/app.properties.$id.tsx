@@ -48,7 +48,7 @@ import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
 import { ListingAutofillCard } from "@/components/app/ai/ListingAutofillCard";
 import { AiFieldMarksContext } from "@/components/app/ai/AiFieldMarks";
-import { applyAutofillProposal, clearAutofillField, currentAutofillValues, type AutofillSetters } from "@/components/app/ai/listing-autofill-apply";
+import { applyAutofillProposal, autofillKnownValues, clearAutofillField, currentAutofillValues, type AutofillSetters } from "@/components/app/ai/listing-autofill-apply";
 import { PropertyAcpCard } from "@/components/app/PropertyAcpCard";
 import { PropertyPromotionTab } from "@/components/app/PropertyPromotionTab";
 import { MarketingAgentPanel } from "@/components/app/MarketingAgentPanel";
@@ -1225,6 +1225,7 @@ function PropertyDetailContent() {
                 onRemoveField={(key) => { clearAutofillField(key, autofillSetters); setAiMarked((m) => m.filter((k) => k !== key)); }}
                 onAcceptAll={() => setAiMarked([])}
                 missing={(completeness?.items ?? []).filter((item) => !item.done).map((item) => item.label)}
+                formContext={() => ({ title: draft.title, description: draft.description, known: autofillKnownValues(currentAutofillValues(details, { title: draft.title, description: draft.description, city: draft.city, district: draft.district, address: draft.address }, tx)) })}
               />
               <PropertyFormLayout
                 aside={<>

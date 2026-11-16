@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ListingAutofillCard } from "@/components/app/ai/ListingAutofillCard";
 import { AiFieldMarksContext, AiMark } from "@/components/app/ai/AiFieldMarks";
-import { applyAutofillProposal, clearAutofillField, type AutofillSetters } from "@/components/app/ai/listing-autofill-apply";
+import { applyAutofillProposal, autofillKnownValues, clearAutofillField, currentAutofillValues, type AutofillSetters } from "@/components/app/ai/listing-autofill-apply";
 import { uploadPropertyPhotos } from "@/lib/property-photo-upload";
 import {
   PropertyDetailsFields,
@@ -127,6 +127,14 @@ function NewPropertyPage() {
     setDetails: (fn) => setDetails((d) => fn(d)),
     setText: (patch) => setForm((f) => ({ ...f, ...patch })),
     setTx,
+  };
+
+  // Câmpurile completate de agent; tipul implicit și tranzacția implicită nu contează ca alegeri.
+  const newFormCurrent = () => {
+    const c = currentAutofillValues(details as Record<string, unknown>, { title: form.title, description: form.description, city: form.city, district: form.district, address: form.address }, tx);
+    delete c["transaction"];
+    if (c["property_type"] === "apartment") delete c["property_type"];
+    return c;
   };
 
   const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
@@ -260,7 +268,7 @@ function NewPropertyPage() {
           photos={pendingPhotos}
           onPhotosChange={setPendingPhotos}
           onProposal={(p) => {
-            const { proposal, keys } = applyAutofillProposal(p, autofillSetters);
+            const { proposal, keys } = applyAutofillProposal(p, autofillSetters, newFormCurrent());
             setAiMarked(keys);
             return proposal;
           }}
@@ -268,6 +276,7 @@ function NewPropertyPage() {
           onRemoveField={(key) => { clearAutofillField(key, autofillSetters); setAiMarked((m) => m.filter((k) => k !== key)); }}
           onAcceptAll={() => setAiMarked([])}
           missing={completeness.items.filter((i) => !i.done).map((i) => i.label)}
+          formContext={() => ({ title: form.title, description: form.description, known: autofillKnownValues(newFormCurrent()) })}
         />
         <PropertyFormLayout
           aside={<div data-tour="new-general"><FormSection title="Informații generale">

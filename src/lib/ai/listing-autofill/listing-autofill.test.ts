@@ -91,7 +91,7 @@ describe("Anunț din poze și voce", () => {
       ],
       title: "Apartament 2 camere",
     }, { spokenText: "2 camere, 1 baie, 75000 euro", photoCount: 0 })!;
-    const filtered = onlyEmptyFields(proposal, { rooms: 3, bathrooms: null, price: 80000, title: "Titlul meu" });
+    const filtered = onlyEmptyFields(proposal, { rooms: 3, bathrooms: null, price: 80000, currency: "set", title: "Titlul meu" });
     expect(filtered.values).toEqual({ bathrooms: 1 });
     expect(filtered.title).toBeNull();
 

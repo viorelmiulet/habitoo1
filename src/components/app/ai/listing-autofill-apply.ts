@@ -24,6 +24,17 @@ export function currentAutofillValues(details: Record<string, unknown>, text: Re
   return { ...details, ...text, transaction: "set", price: rent ? tx.rent_price : tx.sale_price, currency: (rent ? tx.rent_price : tx.sale_price) == null ? null : "set" };
 }
 
+/** Valorile completate, trimise modelului ca context (fără câmpuri goale). */
+export function autofillKnownValues(current: Record<string, unknown>): Record<string, string | number | boolean | string[] | null> {
+  const out: Record<string, string | number | boolean | string[] | null> = {};
+  for (const [k, v] of Object.entries(current)) {
+    if (k === "title" || k === "description" || v === null || v === undefined || v === "" || v === "set") continue;
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") out[k] = typeof v === "string" ? v.slice(0, 500) : v;
+    else if (Array.isArray(v) && v.length && v.every((x) => typeof x === "string")) out[k] = (v as string[]).slice(0, 60).map((x) => x.slice(0, 200));
+  }
+  return out;
+}
+
 /** Pune propunerea în formular și întoarce cheile marcate „AI”. */
 export function applyAutofillProposal(raw: AutofillProposal, setters: AutofillSetters, current?: Record<string, unknown>): { proposal: AutofillProposal; keys: string[] } {
   const proposal = current ? onlyEmptyFields(raw, current) : raw;
@@ -35,7 +46,7 @@ export function applyAutofillProposal(raw: AutofillProposal, setters: AutofillSe
   if (Object.keys(details).length) setters.setDetails((d) => ({ ...d, ...details }));
   const text = { ...location, ...(proposal.title ? { title: proposal.title } : {}), ...(proposal.description ? { description: proposal.description } : {}) };
   if (Object.keys(text).length) setters.setText(text);
-  if (Object.keys(tx).length) setters.setTx((t) => applyAutofillTx(t, tx, Boolean(current)));
+  if (Object.keys(tx).length) setters.setTx((t) => applyAutofillTx(t, tx, Boolean(current && "transaction" in current)));
   return { proposal, keys: [...Object.keys(proposal.values), ...Object.keys(text).filter((k) => k === "title" || k === "description")] };
 }
 

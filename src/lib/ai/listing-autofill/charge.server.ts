@@ -20,7 +20,7 @@ export function providerAcceptsImages(provider: AIProvider): boolean {
 
 /** Rezerva fără suport de imagini primește doar textul (descrierea agentului). */
 export function inputForProvider(provider: AIProvider, input: AutofillInput): AutofillInput {
-  return providerAcceptsImages(provider) ? input : { images: [], audio: null, text: input.text };
+  return providerAcceptsImages(provider) ? input : { images: [], audio: null, text: input.text, context: input.context };
 }
 
 export async function executeListingAutofill(

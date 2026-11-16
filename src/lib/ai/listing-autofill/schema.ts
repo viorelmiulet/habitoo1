@@ -11,6 +11,7 @@ import { z } from "zod";
 import * as taxonomy from "@/lib/property-taxonomy";
 import { propertyTypeLabels } from "@/lib/labels";
 import { ENERGY_CLASS_OPTIONS } from "@/lib/property-energy-class";
+import { deriveAutofillValues, extractStatedFacts, numberStatedIn, type StatedFacts } from "./facts";
 import { buildMarketingFactSheet, validateMarketingFacts } from "@/lib/ai/agents/marketing/facts";
 
 export const AUTOFILL_MAX_PHOTOS = 20;
@@ -27,7 +28,7 @@ type FieldDef = { kind: FieldKind; label: string; options?: readonly string[]; f
 
 const sel = (label: string, options: readonly string[], extra: Partial<FieldDef> = {}): FieldDef => ({ kind: "select", label, options, ...extra });
 const multi = (label: string, options: readonly string[], fromPhotos = true): FieldDef => ({ kind: "multi", label, options, fromPhotos });
-const num = (label: string, explicit = false): FieldDef => ({ kind: "number", label, explicit });
+const num = (label: string, explicit = false, fromPhotos = false): FieldDef => ({ kind: "number", label, explicit, fromPhotos });
 const bool = (label: string, fromPhotos = true): FieldDef => ({ kind: "boolean", label, fromPhotos });
 
 /** Câmpurile formularului pe care AI-ul le poate propune, cu nomenclatorul lor. */
@@ -67,8 +68,8 @@ export const AUTOFILL_FIELDS: Record<string, FieldDef> = {
   misc_features: multi("Diverse", taxonomy.miscFeatureOptions, false),
   rooms: num("Camere"),
   bedrooms: num("Dormitoare"),
-  kitchens: num("Bucătării"),
-  bathrooms: num("Băi"),
+  kitchens: num("Bucătării", false, true),
+  bathrooms: num("Băi", false, true),
   balconies: num("Balcoane"),
   terraces: num("Terase"),
   parking_spaces: num("Parcări"),
@@ -96,10 +97,14 @@ export const AUTOFILL_FIELDS: Record<string, FieldDef> = {
 };
 
 export type AutofillConfidence = "high" | "medium";
+/** Sursa fiecărei propuneri: descriere/titlu, voce sau text dictat, poze, deducție logică. */
+export type AutofillSource = "text" | "spoken" | "photos" | "derived";
+export const AUTOFILL_SOURCE_LABELS: Record<AutofillSource, string> = { text: "din descriere", spoken: "din voce", photos: "din poze", derived: "dedus" };
 export type AutofillValue = string | number | boolean | string[];
 export type AutofillProposal = {
   values: Record<string, AutofillValue>;
   confidence: Record<string, AutofillConfidence>;
+  sources: Record<string, AutofillSource>;
   title: string | null;
   description: string | null;
   /** Indicii pozelor trimise, în ordinea propusă (coperta prima). */
@@ -114,7 +119,7 @@ export const autofillResponseSchema = z.object({
     key: z.string(),
     value: z.union([z.string(), z.number(), z.boolean(), z.array(z.string()), z.null()]),
     confidence: z.enum(["high", "medium", "low"]),
-    source: z.enum(["spoken", "photos"]),
+    source: z.enum(["spoken", "text", "photos"]),
   })).max(120),
   title: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
@@ -132,10 +137,7 @@ function spokenNumbers(text: string): string {
 }
 
 function numberStated(spoken: string, value: number): boolean {
-  const normalized = spokenNumbers(spoken);
-  const variants = new Set([String(value), String(value).replace(".", ",")]);
-  if (value >= 1000 && value % 1000 === 0) variants.add(`${value / 1000} mii`);
-  return [...variants].some((v) => new RegExp(`(^|[^\\d])${v.replace(".", "\\.")}([^\\d]|$)`).test(normalized));
+  return numberStatedIn(spoken, value);
 }
 
 function toNum(value: unknown): number | null {
@@ -150,6 +152,10 @@ function toNum(value: unknown): number | null {
 export type AutofillContext = {
   /** Textul scris de agent plus transcrierea vocii (singura sursă pentru fapte explicite). */
   spokenText: string;
+  /** Titlul, descrierea și valorile deja scrise în formular (sursa „text”). */
+  contextText?: string;
+  /** Valorile curente din formular, pentru deducții pe câmpuri goale. */
+  current?: Record<string, unknown>;
   photoCount: number;
 };
 
@@ -161,16 +167,21 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
   const parsed = autofillResponseSchema.safeParse(raw);
   if (!parsed.success) return null;
   const response = parsed.data;
-  const spoken = [ctx.spokenText, response.transcript ?? ""].join(" \n ");
+  const agentSpoken = [ctx.spokenText, response.transcript ?? ""].join(" \n ");
+  const spoken = [agentSpoken, ctx.contextText ?? ""].join(" \n ");
+  const spokenFacts = extractStatedFacts(agentSpoken);
+  const textFacts = extractStatedFacts(ctx.contextText ?? "");
+  const facts: StatedFacts = { ...textFacts, ...spokenFacts };
   const hasSpoken = plain(spoken).replace(/\\n/g, "").trim().length > 0;
   const values: Record<string, AutofillValue> = {};
   const confidence: Record<string, AutofillConfidence> = {};
+  const sources: Record<string, AutofillSource> = {};
   const ignored: string[] = [];
 
   for (const field of response.fields) {
     const def = AUTOFILL_FIELDS[field.key];
     if (!def || field.confidence === "low" || field.value === null || field.key in values) { ignored.push(field.key); continue; }
-    const fromSpoken = field.source === "spoken";
+    const fromSpoken = field.source === "spoken" || field.source === "text";
     if (fromSpoken && !hasSpoken) { ignored.push(field.key); continue; }
     if (!fromSpoken && !def.fromPhotos) { ignored.push(field.key); continue; }
     if (def.explicit && !fromSpoken) { ignored.push(field.key); continue; }
@@ -181,7 +192,7 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
       if (value && field.key === "floor_label") {
         const label = plain(String(value));
         const digit = label.match(/\d+/)?.[0];
-        const stated = digit ? numberStated(spoken, Number(digit)) : plain(spoken).includes(label.split(" ")[0]!);
+        const stated = facts.floor_label === value || (digit ? numberStated(spoken, Number(digit)) : plain(spoken).includes(label.split(" ")[0]!));
         if (!stated) value = null;
       }
     } else if (def.kind === "multi") {
@@ -191,7 +202,8 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
     } else if (def.kind === "number") {
       const n = toNum(field.value);
       const valid = n !== null && n >= (field.key === "floor" ? -5 : 0) && n < 100_000_000;
-      value = valid && (!def.explicit || numberStated(spoken, n!)) && (fromSpoken ? numberStated(spoken, n!) : true) ? n : null;
+      const stated = valid && ((facts as Record<string, number | undefined>)[field.key] === n || numberStated(spoken, n!));
+      value = valid && (!def.explicit || stated) && (fromSpoken ? stated : true) ? n : null;
     } else if (def.kind === "boolean") {
       value = field.value === true ? true : null;
     } else {
@@ -200,7 +212,26 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
     }
     if (value === null) { ignored.push(field.key); continue; }
     values[field.key] = value as AutofillValue;
-    confidence[field.key] = field.confidence;
+    // Din poze: doar „de verificat”.
+    confidence[field.key] = fromSpoken ? field.confidence : "medium";
+    sources[field.key] = fromSpoken ? (field.source as AutofillSource) : "photos";
+  }
+
+  // Fapte explicite citite determinist, pe care modelul le-a omis.
+  for (const [key, v] of Object.entries(facts)) {
+    if (key in values || v === undefined || !AUTOFILL_FIELDS[key]) continue;
+    values[key] = v as AutofillValue;
+    confidence[key] = "high";
+    sources[key] = key in spokenFacts && (spokenFacts as Record<string, unknown>)[key] === v ? "spoken" : "text";
+  }
+
+  // Deducții logice sigure, doar pe câmpuri goale.
+  const derived = deriveAutofillValues({ ...(ctx.current ?? {}), ...values }, spoken);
+  for (const [key, v] of Object.entries(derived)) {
+    if (key in values || !AUTOFILL_FIELDS[key]) continue;
+    values[key] = v;
+    confidence[key] = "high";
+    sources[key] = "derived";
   }
 
   // Titlu și descriere: doar din fapte (regulile AI Marketing).
@@ -226,7 +257,7 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
     photoOrder = full.some((v, i) => v !== i) ? full : null;
   }
 
-  return { values, confidence, title, description, photoOrder, ignored };
+  return { values, confidence, sources, title, description, photoOrder, ignored };
 }
 
 function isEmpty(value: unknown): boolean {
@@ -237,15 +268,18 @@ function isEmpty(value: unknown): boolean {
 export function onlyEmptyFields(proposal: AutofillProposal, current: Record<string, unknown>): AutofillProposal {
   const values: Record<string, AutofillValue> = {};
   const confidence: Record<string, AutofillConfidence> = {};
+  const sources: Record<string, AutofillSource> = {};
   for (const [key, value] of Object.entries(proposal.values)) {
     if (!isEmpty(current[key])) continue;
     values[key] = value;
     confidence[key] = proposal.confidence[key]!;
+    if (proposal.sources?.[key]) sources[key] = proposal.sources[key]!;
   }
   return {
     ...proposal,
     values,
     confidence,
+    sources,
     title: isEmpty(current["title"]) ? proposal.title : null,
     description: isEmpty(current["description"]) ? proposal.description : null,
   };

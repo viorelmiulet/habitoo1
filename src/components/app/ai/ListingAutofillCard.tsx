@@ -21,9 +21,11 @@ import {
   AUTOFILL_IMAGE_MAX_EDGE,
   AUTOFILL_MAX_AUDIO_SECONDS,
   AUTOFILL_MAX_PHOTOS,
+  AUTOFILL_SOURCE_LABELS,
   autofillFieldLabel,
   type AutofillProposal,
 } from "@/lib/ai/listing-autofill/schema";
+import type { AutofillFormContext } from "@/lib/ai/listing-autofill/autofill.server";
 
 async function blobToBase64(blob: Blob): Promise<string> {
   const buffer = new Uint8Array(await blob.arrayBuffer());
@@ -58,9 +60,11 @@ type Props = {
   onRemoveField: (key: string) => void;
   onAcceptAll: () => void;
   missing: string[];
+  /** Titlul, descrierea și valorile deja completate în formular, trimise ca context. */
+  formContext?: () => AutofillFormContext;
 };
 
-export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propertyId, onProposal, marked, onRemoveField, onAcceptAll, missing }: Props) {
+export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propertyId, onProposal, marked, onRemoveField, onAcceptAll, missing, formContext }: Props) {
   const { isEnabled, isLoading } = useAiFeatures();
   const queryClient = useQueryClient();
   const run = useServerFn(autofillListing);
@@ -101,7 +105,8 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
   if (isLoading || !isEnabled("ai_listing_autofill")) return null;
 
   const photoCount = mode === "new" ? photos.length : existingImages.length;
-  const hasInput = photoCount > 0 || Boolean(audio) || text.trim().length > 0;
+  const ctxNow = formContext?.();
+  const hasInput = photoCount > 0 || Boolean(audio) || text.trim().length > 0 || Boolean(ctxNow?.description?.trim() || ctxNow?.title?.trim());
 
   const stop = () => {
     recorderRef.current?.stop();
@@ -168,6 +173,7 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
         images,
         audio: audio ? { mimeType: audio.blob.type || "audio/webm", base64: await blobToBase64(audio.blob), durationSec: audio.duration } : null,
         text,
+        context: formContext?.(),
       } });
       if (!result.ok) { setError(result.message); return; }
       const shown = onProposal(result.proposal);
@@ -250,7 +256,7 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
       {applied ? <div className="space-y-2 rounded-card border border-border bg-muted/40 p-3 text-sm" data-testid="autofill-summary">
         <p className="font-medium">Completat de AI ({markedNow.length})</p>
         {markedNow.length ? <ul className="flex flex-wrap gap-1.5">{markedNow.map((key) => <li key={key} className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-1">
-          {autofillFieldLabel(key)}{applied.confidence[key] === "medium" ? <span className="text-muted-foreground"> · de verificat</span> : null}
+          {autofillFieldLabel(key)}{applied.sources?.[key] ? <span className="text-muted-foreground"> · {AUTOFILL_SOURCE_LABELS[applied.sources[key]!]}</span> : null}{applied.confidence[key] === "medium" ? <span className="text-muted-foreground"> · de verificat</span> : null}
           <button type="button" aria-label={`Șterge ${autofillFieldLabel(key)}`} onClick={() => onRemoveField(key)}><X className="size-3" /></button>
         </li>)}</ul> : <p className="text-muted-foreground">Nicio propunere rămasă.</p>}
         {missing.length ? <p><span className="font-medium">Lipsește încă:</span> {missing.join(", ")}</p> : null}
