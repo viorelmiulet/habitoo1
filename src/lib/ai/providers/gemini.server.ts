@@ -25,6 +25,9 @@ export const GEMINI_TIMEOUT_MS = 60_000;
 /** Raționament minim: latență și cost reduse pe free tier. */
 export const GEMINI_THINKING_LEVEL = "low";
 
+/** O singură reîncercare pe același model la 503 (supraîncărcare). */
+export const GEMINI_RETRY_503_DELAY_MS = 1500;
+
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 type GeminiContent = { role: "user" | "model"; parts: Record<string, unknown>[] };
@@ -85,7 +88,12 @@ export function geminiThinkingConfig(model: string): Record<string, unknown> {
   return /^gemini-[12]\./.test(model) ? { thinkingBudget: 0 } : { thinkingLevel: GEMINI_THINKING_LEVEL };
 }
 
-export function createGeminiProvider(apiKey: string, model = GEMINI_DEFAULT_MODEL): AIProvider {
+export function createGeminiProvider(
+  apiKey: string,
+  model = GEMINI_DEFAULT_MODEL,
+  options: { retryDelayMs?: number } = {},
+): AIProvider {
+  const retryDelayMs = options.retryDelayMs ?? GEMINI_RETRY_503_DELAY_MS;
   return {
     id: "gemini",
     model,
@@ -102,7 +110,8 @@ export function createGeminiProvider(apiKey: string, model = GEMINI_DEFAULT_MODE
         },
       };
 
-      let response: Response;
+      let response!: Response;
+      for (let attempt = 0; attempt < 2; attempt++) {
       try {
         response = await fetch(`${API_BASE}/${model}:generateContent`, {
           method: "POST",
@@ -121,12 +130,16 @@ export function createGeminiProvider(apiKey: string, model = GEMINI_DEFAULT_MODE
         }
         throw new AiProviderError("Serviciul AI nu a putut fi contactat.", undefined, true);
       }
+      if (response.status !== 503 || attempt > 0) break;
+      console.error(`[ai] gemini 503 (${model}), reîncerc o dată`);
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+      }
 
       if (!response.ok) {
         const hasAttachments = request.messages.some((message) => message.role === "user" && message.attachments?.length);
         const detail = hasAttachments ? "" : await response.text().catch(() => "");
         // Detaliul rămâne în logurile serverului, fără cheie.
-        console.error(`[ai] gemini ${response.status}: ${detail.slice(0, 400)}`);
+        console.error(`[ai] gemini ${response.status} (${model}): ${detail.slice(0, 400)}`);
         throw new AiProviderError(
           `Providerul AI a răspuns cu ${response.status}.`,
           response.status,

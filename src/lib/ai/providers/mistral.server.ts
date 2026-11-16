@@ -13,6 +13,10 @@ import {
 } from "./types";
 
 export const MISTRAL_DEFAULT_MODEL = "mistral-small-latest";
+/** Modelele Mistral care acceptă imagini (Pixtral, Small 3.1+, Medium 3+). */
+export function mistralSupportsImages(model: string): boolean {
+  return /pixtral|mistral-(small|medium)/i.test(model);
+}
 export const MISTRAL_MAX_OUTPUT_TOKENS = 2048;
 const MISTRAL_TIMEOUT_MS = 60_000;
 const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";

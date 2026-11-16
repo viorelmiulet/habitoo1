@@ -57,6 +57,8 @@ export type AiGenerateResult = {
 };
 
 export type AIProvider = {
+  /** false = modelul nu acceptă imagini (apelantul trimite doar text). Implicit: acceptă. */
+  supportsImages?: boolean;
   /** Identificator scurt salvat în usage și audit. */
   readonly id: string;
   readonly model: string;

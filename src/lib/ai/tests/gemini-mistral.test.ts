@@ -50,7 +50,8 @@ describe("furnizori de text", () => {
     expect(out.provider.id).toBe("mistral");
     expect(out.provider.model).toBe("mistral-small-latest");
     expect(out.result.text).toBe("din rezervă");
-    expect(String(fetchMock.mock.calls[1]?.[0])).toBe("https://api.mistral.ai/v1/chat/completions");
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain("generativelanguage"); // o reîncercare la 503
+    expect(String(fetchMock.mock.calls[2]?.[0])).toBe("https://api.mistral.ai/v1/chat/completions");
   });
 
   it("Gemini 400 → fără rezervă, eroare", async () => {
