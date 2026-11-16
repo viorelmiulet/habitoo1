@@ -1,4 +1,5 @@
 import { currentPartnerKeyError } from "@/lib/portals/partner-key-status";
+import { shouldRewithdrawInactive } from "@/lib/portals/withdraw-retry";
 import { publicationReason as awaitReason } from "@/lib/partner-api/feedback";
 import { imobiliarePromotionChangesSchema, imobiliarePublicationModeSchema, imobiliarePortalDecidesSlots, type ImobiliarePublicationMode, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
 import { HOMEDIRECT_KEY_MISSING_MESSAGE, homedirectKeyMissing } from "@/lib/portals/homedirect/config";
@@ -3245,8 +3246,14 @@ export async function applyPortalSelectionForOrg(input: {
           (l) => l.portal === definition.id && (l.status === "published" || l.status === "updated"),
         );
 
-        // A. false → false: nimic.
-        if (!wanted.enabled && !previous) continue;
+        // A. false → false: nimic (IM8: Imobiliare.ro retras local, dar cu external_id → reapelăm retragerea).
+        if (!wanted.enabled && !previous && !shouldRewithdrawInactive({
+          portalId: definition.id,
+          listingStatus: savedListing?.status ?? null,
+          externalId: (savedListing as { external_id?: string | null } | undefined)?.external_id ?? null,
+          publicationEnabled: savedPublication?.enabled ?? null,
+          publicationMode: savedPublication?.imobiliare_mode ?? null,
+        })) continue;
 
         // Locuri de publicare: doar trecerea neselectat → selectat consumă un loc.
         if (wanted.enabled && !previous && !imobiliarePortalDecidesSlots(definition.id, imobiliareMode, wanted.imobiliarePromotions)) {
