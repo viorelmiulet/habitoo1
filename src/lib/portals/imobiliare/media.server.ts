@@ -3,7 +3,9 @@
  *
  * Citim fișierul din storage-ul propriu, aplicăm watermark-ul agenției dacă e
  * activ (exact ca la feedurile publice) și codificăm `data:image/...;base64,`.
- * Galerie completă într-o cerere; comprimare JPEG numai când depășește bugetul.
+ * Galerie completă într-o cerere. Pozele vin deja redimensionate din storage
+ * (transformare de imagini, după filigran); comprimarea JPEG în worker rămâne doar
+ * rezervă, o singură dată pe poză, când originalele nu încap în buget.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
@@ -14,6 +16,10 @@ import { isImageFeedEligible, type PropertyImageRow } from "@/lib/site-feed/mapp
 import { IMOBILIARE_MAX_IMAGES } from "./config";
 import { IMOBILIARE_WAIT_MS, withImobiliareTimeout } from "./wait";
 import { fitImobiliareGallery } from "./media-compression.server";
+import type { ImobiliareStep } from "./steps.server";
+
+/** Variant requested from storage image transformation (format kept as origin). */
+export const IMOBILIARE_PHOTO_TRANSFORM = { width: 1600, height: 1600, resize: "contain", quality: 80, format: "origin" } as const;
 
 type Admin = SupabaseClient<Database>;
 
@@ -54,6 +60,8 @@ export async function encodeImobiliareImages(input: {
   propertyId: string;
   /** Doar pentru teste. */
   sleep?: (ms: number) => Promise<void>;
+  /** Jurnal de pași (fără date personale): numărul pozei. */
+  onStep?: (step: Extract<ImobiliareStep, "photo_resize" | "photo_compress">, photo: number) => Promise<void> | void;
 }): Promise<{ images: EncodedImage[]; warnings: string[]; expected: number; transient?: boolean }> {
   const sleep = input.sleep ?? defaultSleep;
   let transient = false;
@@ -94,9 +102,21 @@ export async function encodeImobiliareImages(input: {
     }
     const watermarked = await withImobiliareTimeout(ensureWatermarkedPath(input.admin, row.storage_path, cfg), 30_000, `Pregătirea pozei ${eligible.indexOf(row) + 1} (filigran) nu s-a terminat în 30 de secunde.`);
     const path = watermarked ?? row.storage_path;
+    const position0 = eligible.indexOf(row) + 1;
+    await input.onStep?.("photo_resize", position0);
     let data: Blob | null = null;
+    try {
+      const result = await withImobiliareTimeout(
+        input.admin.storage.from(MEDIA_BUCKET).download(path, { transform: { ...IMOBILIARE_PHOTO_TRANSFORM } }),
+        IMOBILIARE_WAIT_MS,
+        "Redimensionarea pozei din storage nu a răspuns în 20 de secunde.",
+      );
+      if (!result.error && result.data && result.data.size > 0) { data = result.data; }
+    } catch {
+      // Transformarea indisponibilă: revenim la original mai jos.
+    }
     let lastError: unknown = null;
-    for (let attempt = 0; attempt <= IMOBILIARE_DOWNLOAD_RETRY_DELAYS_MS.length; attempt += 1) {
+    for (let attempt = 0; !data && attempt <= IMOBILIARE_DOWNLOAD_RETRY_DELAYS_MS.length; attempt += 1) {
       if (attempt > 0) await sleep(IMOBILIARE_DOWNLOAD_RETRY_DELAYS_MS[attempt - 1]!);
       try {
         const result = await withImobiliareTimeout(input.admin.storage.from(MEDIA_BUCKET).download(path), IMOBILIARE_WAIT_MS, "Descărcarea pozei din storage nu a răspuns în 20 de secunde.");
@@ -141,7 +161,11 @@ export async function encodeImobiliareImages(input: {
   const meta = images.length === 0 ? { transient: transient && !dataError } : {};
   if (images.length === 0) return { images, warnings, expected: expectedUnique, ...meta };
   try {
-    return { images: fitImobiliareGallery(images), warnings, expected: expectedUnique };
+    const fitted = await fitImobiliareGallery(images, undefined, {
+      maxSide: IMOBILIARE_PHOTO_TRANSFORM.width,
+      onCompress: (n) => input.onStep?.("photo_compress", n),
+    });
+    return { images: fitted, warnings, expected: expectedUnique };
   } catch (error) {
     return { images: [], expected: expectedUnique, warnings: [...warnings, error instanceof Error ? error.message : "Comprimarea galeriei a eșuat."] };
   }

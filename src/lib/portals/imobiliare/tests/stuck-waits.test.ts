@@ -44,7 +44,7 @@ describe("IM4: Imobiliare.ro waits never hang forever", () => {
       storage: { from: () => ({ download: () => new Promise(() => {}) }) },
     };
     const run = encodeImobiliareImages({ admin: admin as never, organizationId: "o", propertyId: "p", sleep: async () => {} } as never);
-    await vi.advanceTimersByTimeAsync(IMOBILIARE_WAIT_MS * 5);
+    await vi.advanceTimersByTimeAsync(IMOBILIARE_WAIT_MS * 6);
     const result = await run;
     expect(result.images).toHaveLength(0);
     expect(result.warnings.join(" ")).toMatch(/nu a putut fi descărcată/);

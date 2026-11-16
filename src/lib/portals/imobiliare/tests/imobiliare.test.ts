@@ -294,13 +294,13 @@ describe("agenți", () => {
 /* -------------------------------- imagini --------------------------------- */
 
 describe("galerie completă", () => {
-  it("păstrează toate cele 8 imagini în aceeași ordine într-un singur payload", () => {
+  it("păstrează toate cele 8 imagini în aceeași ordine într-un singur payload", async () => {
     const images = Array.from({ length: 8 }, (_, index) => ({
       imageId: String(index),
       bytes: 1000,
       dataUrl: `data:image/jpeg;base64,AAA${index}`,
     }));
-    expect(fitImobiliareGallery(images)).toEqual(images);
+    await expect(fitImobiliareGallery(images)).resolves.toEqual(images);
     expect(mediaRequestBytes(images)).toBe(new TextEncoder().encode(JSON.stringify({ images: images.map(image => image.dataUrl) })).byteLength);
   });
 });

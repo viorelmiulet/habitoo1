@@ -45,14 +45,14 @@ describe("Imobiliare replacement gallery", () => {
     expect((await sendImobiliareGallery({} as never, ctx, "HB-1111", Array.from({ length: 31 }, () => images[0] ?? { dataUrl: "", bytes: 0 }))).ok).toBe(false);
     expect(request).not.toHaveBeenCalled();
   });
-  it("compresses oversized JPEG to max 1920 while retaining every image ID and order", () => {
+  it("compresses oversized JPEG to max 1920 while retaining every image ID and order", async () => {
     const width = 1921, height = 2;
     const raster = new Uint8Array(width * height * 4).fill(255);
     const encoded = jpeg.encode({ data: raster, width, height }, 100).data;
     const photo = { imageId: "first", bytes: encoded.length, dataUrl: `data:image/jpeg;base64,${Buffer.from(encoded).toString("base64")}` };
     const second = { ...photo, imageId: "second" };
     const budget = mediaRequestBytes([photo, second]) - 1;
-    const fitted = fitImobiliareGallery([photo, second], budget);
+    const fitted = await fitImobiliareGallery([photo, second], budget);
     expect(fitted.map(image => image.imageId)).toEqual(["first", "second"]);
     expect(mediaRequestBytes(fitted)).toBeLessThanOrEqual(budget);
     const decoded = jpeg.decode(Buffer.from(fitted[0]?.dataUrl.split(",")[1] ?? "", "base64"));

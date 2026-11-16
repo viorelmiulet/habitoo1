@@ -7,12 +7,14 @@ export function mediaRequestBytes(images: { dataUrl: string }[]): number {
   return new TextEncoder().encode(JSON.stringify({ images: images.map(image => image.dataUrl) })).byteLength;
 }
 
-/** Pure JS, sequential decoding: no native dependencies or concurrent large rasters. */
-function compressedJpeg(image: GalleryImage, quality: number): GalleryImage {
-  const comma = image.dataUrl.indexOf(",");
-  const bytes = Uint8Array.from(atob(image.dataUrl.slice(comma + 1)), ch => ch.charCodeAt(0));
-  let raster: { data: ArrayLike<number>; width: number; height: number };
-  if (image.dataUrl.startsWith("data:image/png;")) {
+/** Bytes of the base64 payload carried by a data URL. */
+function dataUrlBytes(dataUrl: string): Uint8Array {
+  const comma = dataUrl.indexOf(",");
+  return Uint8Array.from(atob(dataUrl.slice(comma + 1)), ch => ch.charCodeAt(0));
+}
+
+function decodeRaster(bytes: Uint8Array, mime: string): { data: ArrayLike<number>; width: number; height: number } {
+  if (mime === "image/png") {
     const png = decodePng(bytes);
     const data = new Uint8Array(png.width * png.height * 4);
     const channels = png.channels;
@@ -27,13 +29,29 @@ function compressedJpeg(image: GalleryImage, quality: number): GalleryImage {
       }
       data[i * 4 + 3] = 255;
     }
-    raster = { data, width: png.width, height: png.height };
-  } else if (/^data:image\/jpe?g;/.test(image.dataUrl)) {
-    raster = jpeg.decode(bytes, { useTArray: true, formatAsRGBA: true, maxMemoryUsageInMB: 96 });
-  } else {
-    throw new Error("O fotografie nu poate fi comprimată în JPEG; păstrează galeria și încarcă acea fotografie ca JPEG sau PNG.");
+    return { data, width: png.width, height: png.height };
   }
-  const ratio = Math.min(1, 1920 / Math.max(raster.width, raster.height));
+  if (mime === "image/jpeg") return jpeg.decode(bytes, { useTArray: true, formatAsRGBA: true, maxMemoryUsageInMB: 96 });
+  throw new Error("O fotografie nu poate fi comprimată în JPEG; păstrează galeria și încarcă acea fotografie ca JPEG sau PNG.");
+}
+
+/** Approximate JPEG bits per pixel by quality (photographic content). */
+const QUALITY_BPP: readonly [number, number][] = [[82, 1.7], [70, 1.25], [55, 0.95], [40, 0.75], [25, 0.55], [15, 0.4]];
+
+/** Highest quality whose estimated output fits `targetBytes` for `pixels` (pure). */
+export function jpegQualityForTarget(pixels: number, targetBytes: number): number {
+  for (const [quality, bpp] of QUALITY_BPP) if ((pixels * bpp) / 8 <= targetBytes) return quality;
+  return QUALITY_BPP[QUALITY_BPP.length - 1]![0];
+}
+
+/**
+ * Compress one photo exactly once: a single decode, nearest-neighbour downscale to
+ * `maxSide`, a single encode at the quality estimated for `targetBytes`. The raster is
+ * local, so it is released before the next photo is processed.
+ */
+export function compressPhotoOnce(bytes: Uint8Array, mime: string, targetBytes: number, maxSide = 1920): Uint8Array {
+  const raster = decodeRaster(bytes, mime);
+  const ratio = Math.min(1, maxSide / Math.max(raster.width, raster.height));
   const width = Math.max(1, Math.round(raster.width * ratio));
   const height = Math.max(1, Math.round(raster.height * ratio));
   const data = new Uint8Array(width * height * 4);
@@ -42,15 +60,37 @@ function compressedJpeg(image: GalleryImage, quality: number): GalleryImage {
     const dest = (y * width + x) * 4;
     for (let c = 0; c < 4; c++) data[dest + c] = raster.data[src + c] ?? 255;
   }
-  const encoded = jpeg.encode({ data, width, height }, quality).data;
-  return { ...image, bytes: encoded.byteLength, dataUrl: `data:image/jpeg;base64,${Buffer.from(encoded).toString("base64")}` };
+  const quality = jpegQualityForTarget(width * height, targetBytes);
+  return new Uint8Array(jpeg.encode({ data, width, height }, quality).data);
 }
 
-export function fitImobiliareGallery(images: GalleryImage[], budget = IMOBILIARE_MAX_MEDIA_REQUEST_BYTES): GalleryImage[] {
+/** Base64 + JSON overhead: 4/3 inflation plus a small allowance per image. */
+const binaryShare = (budgetBytes: number, count: number) => Math.floor(((budgetBytes - 64 - count * 32) * 3) / 4);
+
+export const OVER_BUDGET_MESSAGE = "Galeria completă depășește dimensiunea permisă chiar și după comprimare JPEG; nicio fotografie nu a fost trimisă sau omisă.";
+
+/**
+ * Single pass: photos already within their share stay untouched; each larger photo is
+ * decoded at most once and re-encoded once. No gallery-wide retry loop over qualities.
+ */
+export async function fitImobiliareGallery(
+  images: GalleryImage[],
+  budget = IMOBILIARE_MAX_MEDIA_REQUEST_BYTES,
+  options: { maxSide?: number; onCompress?: (position: number) => Promise<void> | void } = {},
+): Promise<GalleryImage[]> {
   if (mediaRequestBytes(images) <= budget) return images;
-  for (const quality of [82, 70, 55, 40, 25]) {
-    const compressed = images.map(image => compressedJpeg(image, quality));
-    if (mediaRequestBytes(compressed) <= budget) return compressed;
+  const share = binaryShare(budget, images.length);
+  const perPhoto = Math.floor(share / Math.max(1, images.length));
+  const out: GalleryImage[] = [];
+  for (const [index, image] of images.entries()) {
+    const bytes = dataUrlBytes(image.dataUrl);
+    if (bytes.byteLength <= perPhoto) { out.push(image); continue; }
+    // Step log is awaited before the synchronous work, so a killed run shows the photo number.
+    await options.onCompress?.(index + 1);
+    const mime = /^data:image\/png;/.test(image.dataUrl) ? "image/png" : /^data:image\/jpe?g;/.test(image.dataUrl) ? "image/jpeg" : "other";
+    const encoded = compressPhotoOnce(bytes, mime, perPhoto, options.maxSide ?? 1920);
+    out.push({ ...image, bytes: encoded.byteLength, dataUrl: `data:image/jpeg;base64,${Buffer.from(encoded).toString("base64")}` });
   }
-  throw new Error("Galeria completă depășește dimensiunea permisă chiar și după comprimare JPEG; nicio fotografie nu a fost trimisă sau omisă.");
+  if (mediaRequestBytes(out) <= budget) return out;
+  throw new Error(OVER_BUDGET_MESSAGE);
 }

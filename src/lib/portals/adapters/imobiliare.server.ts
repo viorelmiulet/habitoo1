@@ -376,7 +376,7 @@ async function write(
     if (floorReasons.length) {
       return { ok: false, code: "VALIDATION_ERROR", message: floorReasons.join(" "), detail: "eligibility" };
     }
-    const step = (name: ImobiliareStep) => logImobiliareStep(db, { organizationId: ctx.organizationId, propertyId: ref.propertyId, actorId: ref.actorId ?? null, step: name });
+    const step = (name: ImobiliareStep, photo?: number) => logImobiliareStep(db, { organizationId: ctx.organizationId, propertyId: ref.propertyId, actorId: ref.actorId ?? null, step: name, photo });
     await step("session");
     const ready = await prepare(ctx);
     if (!ready.ok) return ready.result;
@@ -385,6 +385,7 @@ async function write(
       admin: db,
       organizationId: ctx.organizationId,
       propertyId: ref.propertyId,
+      onStep: (name, photo) => step(name, photo),
     });
     // Nicio poză pregătită: nu înlocuim galeria cu una goală (eroare, ca până acum).
     if (media.images.length === 0 && media.expected > 0) {
