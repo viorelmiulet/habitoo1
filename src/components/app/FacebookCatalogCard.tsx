@@ -164,18 +164,30 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
         <p className="text-sm font-medium">Adresa feed-ului</p>
         {d.feedUrl ? (
           <div className="space-y-2">
-            <div className="flex min-w-0 max-w-full flex-col gap-2 sm:flex-row">
-              <Input
-                readOnly
-                value={d.feedUrl}
-                aria-label="Adresa feedului Catalog Facebook"
-                className="w-full min-w-0 max-w-full flex-1 truncate font-mono text-xs"
-                onFocus={(e) => e.currentTarget.select()}
-              />
-              <Button variant="outline" onClick={() => copy(d.feedUrl!)}>
-                <Copy className="size-4" /> Copiază
-              </Button>
-            </div>
+            {[
+              { label: "Catalog de tip Anunțuri imobiliare (Home Listings)", url: d.feedUrl },
+              { label: "Catalog de tip Produse (e-commerce)", url: facebookProductsCatalogUrl(d.feedUrl) },
+            ].map((item) => (
+              <div key={item.label} className="space-y-1">
+                <p className="text-xs text-muted-foreground">{item.label}</p>
+                <div className="flex min-w-0 max-w-full flex-col gap-2 sm:flex-row">
+                  <Input
+                    readOnly
+                    value={item.url}
+                    aria-label={item.label}
+                    className="w-full min-w-0 max-w-full flex-1 truncate font-mono text-xs"
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                  <Button variant="outline" onClick={() => copy(item.url)}>
+                    <Copy className="size-4" /> Copiază
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground">
+              Folosește linkul potrivit tipului de catalog ales în Meta Commerce Manager. Dacă vezi
+              «Lipsește ID-ul de conținut», catalogul e de tip Produse și ai nevoie de al doilea link.
+            </p>
             <Button
               variant="ghost"
               size="sm"

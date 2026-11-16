@@ -46,6 +46,11 @@ export function facebookCatalogUrl(token: string): string {
   return `${FACEBOOK_CATALOG_PUBLIC_ORIGIN}${FACEBOOK_CATALOG_PATH}?token=${encodeURIComponent(token)}`;
 }
 
+/** Varianta pentru cataloagele Meta de tip „Produse” (e-commerce). */
+export function facebookProductsCatalogUrl(feedUrl: string): string {
+  return `${feedUrl}&format=products`;
+}
+
 /** Cheia rândului din `portal_publications` care marchează opt-in-ul în Catalogul Facebook. */
 export const FACEBOOK_CATALOG_PORTAL_KEY = "facebook_catalog";
 

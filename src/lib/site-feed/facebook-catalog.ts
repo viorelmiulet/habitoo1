@@ -240,3 +240,100 @@ export function exclusionDetail(result: FacebookCatalogResult): string {
   const e = result.excluded;
   return `excluded=${result.excludedTotal};no_price=${e.no_price};no_coordinates=${e.no_coordinates};no_images=${e.no_images};no_city=${e.no_city}`;
 }
+
+/* ---------- Format „Produse” (catalog e-commerce Meta) ---------- */
+
+export const FACEBOOK_PRODUCTS_MAX_ADDITIONAL_IMAGES = 10;
+
+export const FACEBOOK_PRODUCTS_COLUMNS = [
+  "id",
+  "title",
+  "description",
+  "availability",
+  "condition",
+  "price",
+  "link",
+  "image_link",
+  "additional_image_link",
+  "brand",
+  "google_product_category",
+  "custom_label_0",
+  "custom_label_1",
+  "custom_label_2",
+  "custom_label_3",
+] as const;
+
+const NEW_CONSTRUCTION_STAGES = new Set(["În construcție", "Proiect"]);
+
+/** Fără markdown (titluri, liste, bold/italic, linkuri) peste textul fără HTML. */
+export function stripMarkdown(value: string): string {
+  return value
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/(\*\*|__)(.*?)\1/g, "$2")
+    .replace(/(\*|_)(\S.*?\S|\S)\1/g, "$2")
+    .replace(/`+/g, "")
+    .trim();
+}
+
+const PROPERTY_TYPE_LABEL: Record<string, string> = {
+  apartment: "Apartament",
+  studio: "Garsonieră",
+  house: "Casă",
+  villa: "Vilă",
+  land: "Teren",
+  commercial: "Spațiu comercial",
+  office: "Birou",
+};
+
+export function buildFacebookProductsCsv(input: {
+  properties: PropertyRow[];
+  imagesByProperty: Map<string, PropertyImageRow[]>;
+  baseUrl: string;
+  publicSiteUrl: string;
+  brand: string;
+}): FacebookCatalogResult {
+  // Aceleași reguli de excludere ca formatul implicit.
+  const base = buildFacebookCatalogCsv(input);
+  const excludedIds = new Set((base.excludedItems ?? []).map((e) => e.id));
+  const lines = [FACEBOOK_PRODUCTS_COLUMNS.join(",")];
+  for (const p of input.properties) {
+    if (excludedIds.has(p.id)) continue;
+    const offer = pickOffer(p);
+    if (!offer) continue;
+    const images = (input.imagesByProperty.get(p.id) ?? [])
+      .filter(isImageFeedEligible)
+      .sort((a, b) =>
+        a.is_primary === b.is_primary
+          ? (a.position ?? 0) - (b.position ?? 0)
+          : a.is_primary
+            ? -1
+            : 1,
+      )
+      .slice(0, 1 + FACEBOOK_PRODUCTS_MAX_ADDITIONAL_IMAGES)
+      .map((img) => feedImageUrl(input.baseUrl, img.id));
+    const stage = (p as { construction_stage?: string | null }).construction_stage ?? null;
+    const rooms = (p as { rooms?: number | null }).rooms ?? null;
+    const row: (string | number | null)[] = [
+      p.reference ?? p.id,
+      (p.title ?? "").slice(0, 150),
+      stripMarkdown(plainText(p.description)).slice(0, 9999),
+      "in stock",
+      stage && NEW_CONSTRUCTION_STAGES.has(stage) ? "new" : "used",
+      `${formatAmount(offer.amount)} ${offer.currency}`,
+      offerUrl(input.publicSiteUrl, p.id),
+      images[0] ?? "",
+      images.slice(1).join(","),
+      input.brand,
+      "Real Estate",
+      offer.mode === "sale" ? "Vânzare" : "Închiriere",
+      PROPERTY_TYPE_LABEL[p.property_type ?? ""] ?? p.property_type ?? "",
+      metaCity(p.city).city,
+      rooms,
+    ];
+    lines.push(row.map(csvField).join(","));
+  }
+  return { ...base, csv: `${lines.join("\r\n")}\r\n` };
+}

@@ -1,6 +1,6 @@
 import { errorResponse, type FeedAuthOk } from "@/lib/site-feed/auth.server";
 import { feedUrlsForRequest } from "@/lib/site-feed/config";
-import { buildFacebookCatalogCsv, exclusionDetail } from "@/lib/site-feed/facebook-catalog";
+import { buildFacebookCatalogCsv, buildFacebookProductsCsv, exclusionDetail } from "@/lib/site-feed/facebook-catalog";
 import {
   FEED_PUBLIC_STATUSES,
   type PropertyImageRow,
@@ -25,7 +25,24 @@ export async function handleFacebookCatalog(
   );
 
   const { baseUrl, publicSiteUrl } = feedUrlsForRequest(new URL(request.url));
-  const result = buildFacebookCatalogCsv({ properties, imagesByProperty, baseUrl, publicSiteUrl });
+  const products = new URL(request.url).searchParams.get("format") === "products";
+  let result;
+  if (products) {
+    const { data: org } = await supabaseAdmin
+      .from("organizations")
+      .select("name")
+      .eq("id", auth.organizationId)
+      .maybeSingle();
+    result = buildFacebookProductsCsv({
+      properties,
+      imagesByProperty,
+      baseUrl,
+      publicSiteUrl,
+      brand: org?.name ?? "",
+    });
+  } else {
+    result = buildFacebookCatalogCsv({ properties, imagesByProperty, baseUrl, publicSiteUrl });
+  }
 
   return {
     response: new Response(result.csv, {
@@ -38,7 +55,7 @@ export async function handleFacebookCatalog(
       },
     }),
     items: result.included,
-    detail: exclusionDetail(result),
+    detail: products ? `format=products;${exclusionDetail(result)}` : exclusionDetail(result),
   };
 }
 
