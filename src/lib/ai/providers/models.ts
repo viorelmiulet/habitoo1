@@ -4,8 +4,8 @@ export type AiModelSlot = AiModelClass | "fallback";
 export type AiModelSettings = Record<AiModelSlot, string>;
 
 export const AI_MODEL_DEFAULTS: AiModelSettings = {
-  fast: "gemini-2.5-flash-lite",
-  standard: "gemini-2.5-flash",
+  fast: "gemini-3.5-flash-lite",
+  standard: "gemini-3.5-flash",
   fallback: "mistral-small-latest",
 };
 

@@ -15,7 +15,7 @@ import {
 import { parseGeminiResponse } from "./gemini.parse";
 
 /** Model implicit; modelele active se aleg din SuperAdmin → AI. */
-export const GEMINI_DEFAULT_MODEL = "gemini-2.5-flash";
+export const GEMINI_DEFAULT_MODEL = "gemini-3.5-flash";
 /**
  * Free tier: răspunsuri scurte, cost minim. Bugetul acoperă și tokenii de
  * raționament ai modelelor Gemini 3, de aceea nu este mai mic.

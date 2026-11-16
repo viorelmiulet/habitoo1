@@ -71,7 +71,7 @@ describe("furnizori de text", () => {
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain("/gemini-fast-saved:generateContent");
     const standard = resolveAiProvider("standard")!;
     await standard.generate(request);
-    expect(standard.model).toBe("gemini-2.5-flash");
+    expect(standard.model).toBe("gemini-3.5-flash");
     expect(standard.fallback?.model).toBe("mistral-small-latest");
   });
 
