@@ -50,6 +50,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: {} } }));
 import { AgentDashboard } from "./AgentDashboard";
 import { ManagerDashboard } from "./ManagerDashboard";
 import { HomeDashboard } from "./HomeDashboard";
+import { CHROME_EXTENSION_URL } from "@/components/marketing/chrome-extension-content";
 
 let root: ReturnType<typeof createRoot> | null = null;
 
@@ -75,6 +76,18 @@ describe("pagina Acasă", () => {
     expect(document.body.textContent).toContain("Iată ce se întâmplă azi în agenția ta.");
     expect(document.querySelector('a[href="/app/properties/new"]')?.textContent).toContain("Adaugă proprietate");
     expect(document.querySelector('a[href="/app/requests"]')?.textContent).toContain("Adaugă cerere");
+  });
+
+  it("cardul Habitoo Catch e primul element, deasupra bannerului de salut", () => {
+    render(<HomeDashboard organizationId="o1" firstName="Ana" />);
+    const page = document.querySelector('[data-tour="dashboard-overview"]');
+    const card = page?.querySelector("section:first-child");
+    expect(card?.querySelector(`a[href="${CHROME_EXTENSION_URL}"]`)).not.toBeNull();
+    const h1 = document.querySelector("h1");
+    expect(card).not.toBeNull();
+    expect(h1).not.toBeNull();
+    // Încărcare: datele lipseau (useHomeDashboard mockuit cu isLoading: true) și cardul tot apare.
+    expect(card!.compareDocumentPosition(h1!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("extrasele pe rol nu adaugă alte titluri de pagină", () => {

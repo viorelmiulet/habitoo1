@@ -140,6 +140,9 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
 
   return (
     <div className="min-w-0 space-y-6" data-tour="dashboard-overview">
+      {/* Extensia Chrome Habitoo Catch – primul element, vizibil și în starea de încărcare */}
+      <ExtensionPromoCard />
+
       {/* 1. Banner de salut */}
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy to-navy-muted/90 p-6 text-on-navy shadow-sm sm:p-8">
         <div aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-gold" />
@@ -298,9 +301,6 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
               )}
             </section>
           </div>
-
-          {/* 6. Extensia Chrome Habitoo Catch */}
-          <ExtensionPromoCard />
         </>
       )}
     </div>
