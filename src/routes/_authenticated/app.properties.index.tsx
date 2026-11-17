@@ -56,7 +56,9 @@ import { PortalBulkSelectionDialog } from "@/components/app/PortalBulkSelectionD
 import { StoriaAutoRenewBulkDialog } from "@/components/app/StoriaAutoRenewBulkDialog";
 import { PortalRepublishButton } from "@/components/app/PortalRepublishDialog";
 import { StatusBadge } from "@/components/app/StatusBadge";
-import { PortalLogoStack } from "@/components/app/PortalLogo";
+import { CHROME_EXTENSION_URL } from "@/components/marketing/chrome-extension-content";
+import { missingEssentials } from "@/components/app/dashboard/home-recommendations";
+import { PORTAL_SQUARE_CLASS, sheetCompleteness, sheetTone } from "@/lib/property-sheet-completeness";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -380,9 +382,24 @@ function PropertiesPage() {
     queryFn: () => loadPromotionIds({ data: { organizationId: orgId, values: promotionValues } }),
   });
 
+  // Banda AI: proprietăți active cu fișa incompletă (aceeași regulă ca pe Acasă).
+  const [onlyIncomplete, setOnlyIncomplete] = useState(false);
+  const { data: incompleteIds = [] } = useQuery({
+    queryKey: ["properties-incomplete", orgId],
+    enabled: Boolean(orgId),
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("properties")
+        .select("id,floor,surface,usable_surface,rooms,features,property_type")
+        .eq("organization_id", orgId as string).is("deleted_at", null).eq("status", "active").limit(1000);
+      if (error) throw error;
+      return (data ?? []).filter((x) => missingEssentials({ id: x.id, title: "", floor: x.floor, surface: x.usable_surface ?? x.surface, rooms: x.rooms, features: x.features ?? [], propertyType: x.property_type }).length > 0).map((x) => x.id);
+    },
+  });
+
   const { data: result, isLoading: listLoading } = useQuery({
     // (isLoading de mai jos combină și încărcarea filtrelor de portaluri/promovare)
-    queryKey: ["properties", orgId, filters, sort, page, PAGE_SIZE, favoriteIds, promotionIds],
+    queryKey: ["properties", orgId, filters, sort, page, PAGE_SIZE, favoriteIds, promotionIds, onlyIncomplete ? incompleteIds : null],
     enabled:
       Boolean(orgId) &&
       !portalOptionsLoading && !promotionOptionsLoading &&
@@ -401,6 +418,10 @@ function PropertiesPage() {
       if (filters.favoritesOnly) {
         if (favoriteIds.length === 0) return { rows: [], count: 0 };
         query = query.in("id", favoriteIds);
+      }
+      if (onlyIncomplete) {
+        if (incompleteIds.length === 0) return { rows: [], count: 0 };
+        query = query.in("id", incompleteIds);
       }
       if (promotionValues.length > 0) {
         if (!promotionIds || promotionIds.length === 0) return { rows: [], count: 0 };
@@ -676,13 +697,16 @@ function PropertiesPage() {
   return (
     <>
       <PageHeader
-        title="Proprietăți"
+        title={<span className="inline-flex items-baseline gap-3">Proprietăți<span className="font-mono text-base font-normal text-muted-foreground">{total}</span></span>}
         description="Portofoliul agenției, cu filtrare avansată, editare rapidă și acțiuni în masă."
         actions={
           <>
             <PortalRepublishButton organizationId={orgId} reportBatchId={search.republicare} />
             <Button variant="outline" size="sm" onClick={exportCsv} data-tour="properties-export">
               <Download className="size-4" /> Export CSV
+            </Button>
+            <Button variant="outline" size="sm" asChild className="border-gold/60 text-gold-dark hover:bg-gold/10">
+              <a href={CHROME_EXTENSION_URL} target="_blank" rel="noopener noreferrer">Preia cu Habitoo Catch</a>
             </Button>
             <Button size="sm" asChild data-tour="property-add">
               <Link to="/app/properties/new">Adaugă proprietate</Link>
@@ -692,6 +716,17 @@ function PropertiesPage() {
       />
 
       <div className="space-y-4">
+        {incompleteIds.length > 0 || onlyIncomplete ? (
+          <div data-testid="properties-ai-band" className="flex flex-col gap-3 rounded-card border border-ai/30 bg-ai/5 px-4 py-3 sm:flex-row sm:items-center">
+            <p className="min-w-0 flex-1 text-sm">
+              <span className="font-semibold text-ai">✦ {incompleteIds.length} {incompleteIds.length === 1 ? "fișă incompletă poate fi completată" : "fișe incomplete pot fi completate"} cu AI</span>
+              <span className="text-muted-foreground"> — lipsesc etajul, suprafața, camerele sau dotările.</span>
+            </p>
+            <Button size="sm" variant="outline" aria-pressed={onlyIncomplete} onClick={() => { setPage(0); setOnlyIncomplete((v) => !v); }} className="shrink-0 border-ai/50 text-ai hover:bg-ai/10 hover:text-ai">
+              {onlyIncomplete ? "Arată toate" : "Completează cu AI"}
+            </Button>
+          </div>
+        ) : null}
         <PropertyFilterPanel
           applied={filters}
           placeValue={placeValue}
@@ -850,10 +885,10 @@ function PropertiesPage() {
         ) : view === "list" ? (
           <>
             <div className={cn(
-              "hidden items-center gap-[18px] border-b border-border px-[18px] py-3 text-xs font-bold tracking-[0.08em] text-navy-muted uppercase lg:grid",
+              "hidden items-center gap-[18px] border-b border-border px-[18px] py-3 font-mono text-[11px] font-medium tracking-[0.08em] text-navy-muted uppercase lg:grid",
               portals.hasPortals
-                ? "lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_150px_170px_36px]"
-                : "lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_170px_36px]",
+                ? "lg:grid-cols-[20px_56px_minmax(0,1fr)_130px_130px_110px_150px_36px]"
+                : "lg:grid-cols-[20px_56px_minmax(0,1fr)_130px_110px_150px_36px]",
             )}>
               <Checkbox
                 checked={allSelected}
@@ -864,6 +899,7 @@ function PropertiesPage() {
               <span>Proprietate</span>
               <span className="text-right">Preț</span>
               {portals.hasPortals ? <span>Portaluri</span> : null}
+              <span>Fișă</span>
               <span>Agent</span>
               <span aria-hidden />
             </div>
@@ -887,8 +923,8 @@ function PropertiesPage() {
                   <li
                     key={p.id}
                     className={cn(
-                      "relative grid grid-cols-2 items-center gap-[18px] border-b border-border px-[18px] py-[14px] text-sm transition-colors last:border-b-0 hover:bg-muted lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_170px_36px]",
-                      portals.hasPortals && "lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_150px_170px_36px]",
+                      "relative grid grid-cols-2 items-center gap-[18px] border-b border-border px-[18px] py-[14px] text-sm transition-colors last:border-b-0 hover:bg-muted lg:grid-cols-[20px_56px_minmax(0,1fr)_130px_110px_150px_36px]",
+                      portals.hasPortals && "lg:grid-cols-[20px_56px_minmax(0,1fr)_130px_130px_110px_150px_36px]",
                       selected.includes(p.id) && "bg-accent hover:bg-accent",
                     )}
                   >
@@ -900,12 +936,12 @@ function PropertiesPage() {
                       aria-label={`Selectează ${p.reference ?? p.title}`}
                       className="absolute top-5 right-16 z-10 bg-surface lg:static"
                     />
-                    <div className="relative col-span-2 aspect-[16/10] w-full lg:col-span-1 lg:h-24 lg:w-[132px] lg:aspect-auto">
+                    <div className="relative col-span-2 aspect-[16/10] w-full lg:col-span-1 lg:h-[42px] lg:w-[56px] lg:aspect-auto">
                       <PropertyThumb
                         propertyId={p.id}
                         title={p.title}
                         cover={coverOf(p.id)}
-                        className="size-full rounded-[10px]"
+                        className="size-full rounded-[8px]"
                       />
                       <Button
                         type="button"
@@ -913,7 +949,7 @@ function PropertiesPage() {
                         size="icon"
                         onClick={() => toggleFavorite.mutate(p.id)}
                         aria-label={favoriteIds.includes(p.id) ? "Elimină din favorite" : "Adaugă la favorite"}
-                        className="absolute top-2 left-2 size-[30px] min-h-0 rounded-full border border-border bg-surface shadow-sm hover:bg-surface"
+                        className="absolute top-2 left-2 size-[30px] min-h-0 rounded-full border border-border bg-surface shadow-sm hover:bg-surface lg:hidden"
                       >
                         <Star className={cn("size-4 text-muted-foreground", favoriteIds.includes(p.id) && "fill-warning text-warning")} />
                       </Button>
@@ -934,7 +970,7 @@ function PropertiesPage() {
                       >
                         {p.title}
                       </Link>
-                      {details ? <p className="mt-1 truncate text-[13px] text-muted-foreground">{details}</p> : null}
+                      <p className="mt-1 truncate text-[13px] text-muted-foreground">{p.reference ? <span className="mr-1.5 font-mono text-xs text-foreground/80">{p.reference}</span> : null}{details}</p>
                     </div>
                     <div className="col-span-2 text-left lg:col-span-1 lg:text-right">
                       <p className="font-display text-[18px] leading-tight font-extrabold">{price.main}{price.suffix ? <span className="ml-1 font-sans text-xs font-normal text-muted-foreground">{price.suffix}</span> : null}</p>
@@ -942,45 +978,44 @@ function PropertiesPage() {
                     </div>
                     {portals.hasPortals ? (
                       <div className="min-w-0 self-end lg:self-center">
-                        {selectedPortals.length > 0 ? <div className="flex flex-wrap gap-1.5">{selectedPortals.map((cell) => {
-                          const link = portalListingLink(cell);
-                          const logoBox = (
-                            <>
-                              <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={24} />
-                              <span className={cn("absolute right-0 bottom-0 size-[11px] rounded-full border-2 border-surface", {
-                                "bg-success": portalDotTone(cell.state) === "success",
-                                "bg-warning": portalDotTone(cell.state) === "warning",
-                                "bg-destructive": portalDotTone(cell.state) === "danger",
-                                "bg-muted-foreground": portalDotTone(cell.state) === "neutral",
-                              })} />
-                            </>
-                          );
-                          return (
-                          <Tooltip key={cell.portalId}>
-                            <TooltipTrigger asChild>
-                              {link.href ? (
-                                <a
-                                  href={link.href}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  aria-label={`Vezi anunțul pe ${cell.portalName}`}
-                                  className="relative inline-flex rounded-lg border border-border bg-surface p-1 transition-colors hover:border-primary"
-                                >
-                                  {logoBox}
-                                </a>
-                              ) : (
-                                <span className="relative inline-flex rounded-lg border border-border bg-surface p-1">
-                                  {logoBox}
-                                </span>
-                              )}
-                            </TooltipTrigger>
-                            <TooltipContent>{link.tooltip ?? `${cell.portalName}: ${portalStateLabel(cell.state)}`}</TooltipContent>
-                          </Tooltip>
-                          );
-                        })}</div> : null}
+                        {portalCells.length > 0 ? (
+                          <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap gap-1">
+                              {portalCells.map((cell) => {
+                                const link = portalListingLink(cell);
+                                const square = <span className={cn("block size-3 rounded-[3px]", PORTAL_SQUARE_CLASS[portalDotTone(cell.state)])} />;
+                                return (
+                                  <Tooltip key={cell.portalId}>
+                                    <TooltipTrigger asChild>
+                                      {link.href ? (
+                                        <a href={link.href} target="_blank" rel="noopener noreferrer" title={cell.portalName} aria-label={`${cell.portalName}: ${portalStateLabel(cell.state)}`} className="inline-flex p-0.5">{square}</a>
+                                      ) : (
+                                        <span title={cell.portalName} aria-label={`${cell.portalName}: ${portalStateLabel(cell.state)}`} className="inline-flex p-0.5">{square}</span>
+                                      )}
+                                    </TooltipTrigger>
+                                    <TooltipContent>{link.tooltip ?? `${cell.portalName}: ${portalStateLabel(cell.state)}`}</TooltipContent>
+                                  </Tooltip>
+                                );
+                              })}
+                            </div>
+                            <span className="font-mono text-xs text-muted-foreground">{publishedPortals.length}/{portalCells.length}</span>
+                          </div>
+                        ) : null}
                         {portalError ? <p className="mt-1.5 truncate text-xs font-semibold text-destructive">Eroare pe {portalError.portalName}</p> : publishedPortals.length > 0 ? <p className="mt-1.5 text-xs font-semibold text-success">Publicat pe {publishedPortals.length} {publishedPortals.length === 1 ? "portal" : "portaluri"}</p> : <p className="mt-1.5 text-xs text-muted-foreground">Nepublicată · <a href={`/app/properties/${p.id}?tab=publishing`} className="font-semibold text-primary hover:underline">Publică pe portaluri</a></p>}
                       </div>
                     ) : null}
+                    {(() => {
+                      const pct = sheetCompleteness({ floor: p.floor, surface: p.usable_surface ?? p.surface, rooms: p.rooms, features: p.features ?? [], propertyType: p.property_type });
+                      const tone = sheetTone(pct);
+                      return (
+                        <div className="min-w-0 self-end lg:self-center" aria-label={`Fișă completă ${pct}%`}>
+                          <span className="font-mono text-xs">{pct}%</span>
+                          <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-muted">
+                            <span className={cn("block h-full rounded-full", tone === "success" ? "bg-success" : tone === "ai" ? "bg-ai" : "bg-gold")} style={{ width: `${pct}%` }} />
+                          </span>
+                        </div>
+                      );
+                    })()}
                     <div className="flex min-w-0 items-center gap-2 self-end lg:self-center">
                       <UserAvatar name={agentName(p.assigned_to)} className="size-8 bg-sidebar text-sidebar-foreground" textClassName="text-xs font-bold" />
                       <div className="min-w-0"><p className="truncate text-[13px] font-semibold">{agentName(p.assigned_to)}</p><p className="truncate text-xs text-muted-foreground">Actualizat {relativeDays(p.updated_at)}</p></div>
