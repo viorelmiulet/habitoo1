@@ -77,6 +77,8 @@ import { DocumentsPanel } from "@/components/app/DocumentsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { PropertySheetHeader } from "@/components/app/property-sheet/PropertySheetHeader";
+import { PropertyPublishSummaryCard } from "@/components/app/property-sheet/PropertyPublishSummaryCard";
 import { PropertyFormLayout, PropertyTitleDescriptionPanel } from "@/components/app/PropertyFormLayout";
 import { PropertyMainPhoto } from "@/components/app/PropertyMainPhoto";
 import { propertyTabFromSearch } from "@/lib/property-tabs";
@@ -878,12 +880,17 @@ function PropertyDetailContent() {
 
   return (
     <>
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
-        <nav aria-label="Breadcrumb" className="min-w-0 text-sm text-muted-foreground">
-          <Link to="/app/properties" className="hover:text-foreground">Proprietăți</Link>
-          <span aria-hidden className="mx-2">/</span>
-          <span className="truncate text-foreground">{property.reference ?? "Fără referință"}</span>
-        </nav>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 max-md:grid-cols-1">
+        <PropertySheetHeader
+          reference={property.reference ?? "Fără referință"}
+          title={property.title}
+          status={<StatusBadge tone={propertyStatusTone[property.status]} dot>{propertyStatusLabels[property.status]}</StatusBadge>}
+          sheet={{ floor: property.floor, surface: property.usable_surface ?? property.surface, rooms: property.rooms, features: property.features ?? [], propertyType: property.property_type }}
+          actions={<>
+            {editing ? <Button type="submit" form="property-details-form" variant="outline" disabled={save.isPending}>Salvează</Button> : null}
+            <Button className="bg-gold text-gold-foreground hover:bg-gold/90" disabled={publish.isPending || save.isPending} onClick={() => publish.mutate()}>Publică</Button>
+          </>}
+        />
         <div className="flex shrink-0 gap-2">
           {previousProperty ? (
             <Button variant="outline" size="compact" className="max-sm:size-11 max-sm:p-0" asChild>
@@ -912,7 +919,6 @@ function PropertyDetailContent() {
               {property.negotiable ? <StatusBadge tone="info">Negociabil</StatusBadge> : null}
               {property.collaboration ? <StatusBadge tone="primary">{property.collab_commission_percent ? `Colaborare · ${property.collab_commission_percent}%` : "Colaborare"}</StatusBadge> : null}
             </div>
-            <h1 className="mt-4 text-[28px] leading-[1.15] font-bold md:text-[32px]">{property.title}</h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
               {locationLabel ? <span className="inline-flex items-center gap-1"><MapPin className="size-4" aria-hidden />{locationLabel}</span> : null}
               {property.reference ? <><span aria-hidden>·</span><span>{property.reference}</span></> : null}
@@ -1222,6 +1228,7 @@ function PropertyDetailContent() {
                   localitySirutaCode: location.localitySirutaCode ?? undefined,
                 } })}
               />
+              <PropertyPublishSummaryCard propertyId={id} onOpenAll={() => setTab("publishing")} />
               {completeness ? <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} /> : null}
             </aside>
             <AiFieldMarksContext.Provider value={aiMarks}>

@@ -352,11 +352,9 @@ export function PropertyMediaManager({
                             </div>
                           )}
                         </button>
-                        {isFirst ? (
-                          <span className="absolute top-2 left-2 rounded-full bg-navy px-2.5 py-0.5 text-[11px] font-bold text-gold">
-                            Copertă
-                          </span>
-                        ) : null}
+                        <span className="absolute top-2 left-2 rounded-full bg-navy px-2.5 py-0.5 font-mono text-[11px] font-bold text-gold">
+                          {String(idx + 1).padStart(2, "0")}{isFirst ? " · COPERTĂ" : ""}
+                        </span>
                         {img.is_confidential ? (
                           <span className="absolute top-2 right-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                             <EyeOff className="size-3" />
