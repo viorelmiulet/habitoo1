@@ -7,6 +7,7 @@ import { Container, Section } from "@/components/marketing/Section";
 import { publicHead, SITE_URL } from "@/components/marketing/public-head";
 import { FEATURE_PAGE_ALIASES, featureEntryByKey, featurePageBySlug, type FeaturePage } from "@/lib/marketing/feature-pages";
 import { integrationPageBySlug } from "@/lib/portals/integration-pages";
+import { PublicAnswer } from "@/components/marketing/PublicAnswer";
 
 function featureJsonLd(page: FeaturePage) {
   return [
@@ -61,7 +62,8 @@ function FeaturePageView() {
   const { slug } = Route.useLoaderData();
   const page = featurePageBySlug(slug);
   if (!page) throw notFound();
-  const links = page.related.map(related).filter((x): x is { name: string; href: string } => !!x);
+  const candidates = [...page.related, "proprietati", "contacte", "cereri", "potriviri-automate"];
+  const links = candidates.map(related).filter((x): x is { name: string; href: string } => !!x && x.href !== `/functionalitati/${slug}`).filter((x, index, all) => all.findIndex(y => y.href === x.href) === index).slice(0, 4);
   return (
     <PublicLayout>
       <section className="mk-page-hero border-b">
@@ -71,6 +73,7 @@ function FeaturePageView() {
             <Link to="/functionalitati" className="hover:underline">Funcționalități</Link> › <span>{page.name}</span>
           </nav>
           <h1 className="text-4xl font-semibold tracking-tight text-balance text-navy sm:text-5xl">{page.h1}</h1>
+          <PublicAnswer path={`/functionalitati/${slug}`} />
           <div className="mt-6 max-w-3xl space-y-4 text-base leading-relaxed text-foreground sm:text-lg">
             {page.intro.map((p) => <p key={p}>{p}</p>)}
           </div>
@@ -107,7 +110,7 @@ function FeaturePageView() {
       {links.length > 0 && (
         <Section className="pt-0 sm:pt-0 lg:pt-0">
           <Container>
-            <h2 className="text-2xl font-semibold tracking-tight text-navy">Funcții înrudite</h2>
+            <h2 className="text-2xl font-semibold tracking-tight text-navy">Vezi și</h2>
             <ul className="mt-4 flex flex-wrap gap-2">
               {links.map((l) => (
                 <li key={l.href}><a href={l.href} className="panel inline-block px-3 py-2 text-sm font-medium text-navy hover:shadow-soft">{l.name}</a></li>

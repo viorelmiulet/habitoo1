@@ -6,6 +6,7 @@
  * - X-Robots-Tag: noindex, nofollow pe HTML-ul de pe crm.* (nu pe /api/public, media).
  */
 import { PUBLIC_SITE_URL, isCrmHostname } from "./host";
+import { isMarketingPath, PUBLIC_PAGE_CACHE } from "./marketing/public-http";
 
 export const APEX_HOST = "habitoo.ro";
 
@@ -227,8 +228,7 @@ export function shouldTagNoindex(request: Request, response: Response): boolean 
   return (response.headers.get("content-type") ?? "").toLowerCase().includes("text/html");
 }
 
-export const PUBLIC_CACHE_CONTROL = "public, s-maxage=300, stale-while-revalidate=86400";
-const CACHEABLE_PAGES = new Set(["/", "/functionalitati", "/preturi", "/despre", "/contact", "/integrari", "/blog", "/termeni", "/politica-de-confidentialitate"]);
+export const PUBLIC_CACHE_CONTROL = PUBLIC_PAGE_CACHE;
 
 /** Cache public doar pentru paginile de marketing, fără sesiune și fără răspuns personalizat. */
 export function publicCacheControl(request: Request, response: Response): string | null {
@@ -237,9 +237,9 @@ export function publicCacheControl(request: Request, response: Response): string
   if (response.status !== 200 || response.headers.has("set-cookie")) return null;
   if (!(response.headers.get("content-type") ?? "").includes("text/html")) return null;
   const path = normalizePath(new URL(request.url).pathname);
-  if (!CACHEABLE_PAGES.has(path) && !/^\/blog\/[^/]+$/.test(path)) return null;
+  if (!isMarketingPath(path)) return null;
   if (request.headers.get("authorization")) return null;
   const cookie = request.headers.get("cookie") ?? "";
-  if (/(?:^|;\s*)(?:sb-[^=]*|[^=]*auth-token[^=]*|habitoo[^=]*session[^=]*)=/i.test(cookie)) return null;
+  if (cookie) return null;
   return PUBLIC_CACHE_CONTROL;
 }

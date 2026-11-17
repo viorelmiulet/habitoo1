@@ -27,6 +27,7 @@ import { Route as FunctionalitatiRouteImport } from './routes/functionalitati'
 import { Route as ImportProprietatiRouteImport } from './routes/import-proprietati'
 import { Route as IntegrariRouteImport } from './routes/integrari'
 import { Route as IntrebariFrecventeRouteImport } from './routes/intrebari-frecvente'
+import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PoliticaDeConfidentialitateRouteImport } from './routes/politica-de-confidentialitate'
@@ -335,6 +336,11 @@ const IntegrariRoute = IntegrariRouteImport.update({
 const IntrebariFrecventeRoute = IntrebariFrecventeRouteImport.update({
   id: '/intrebari-frecvente',
   path: '/intrebari-frecvente',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsFullDottxtRoute = LlmsFullDottxtRouteImport.update({
+  id: '/llms-full.txt',
+  path: '/llms-full.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
@@ -1595,6 +1601,7 @@ export interface FileRoutesByFullPath {
   '/import-proprietati': typeof ImportProprietatiRoute
   '/integrari': typeof IntegrariRoute
   '/intrebari-frecvente': typeof IntrebariFrecventeRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
   '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
@@ -1831,6 +1838,7 @@ export interface FileRoutesByTo {
   '/import-proprietati': typeof ImportProprietatiRoute
   '/integrari': typeof IntegrariRoute
   '/intrebari-frecvente': typeof IntrebariFrecventeRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
   '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
@@ -2067,6 +2075,7 @@ export interface FileRoutesById {
   '/import-proprietati': typeof ImportProprietatiRoute
   '/integrari': typeof IntegrariRoute
   '/intrebari-frecvente': typeof IntrebariFrecventeRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
   '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
@@ -2306,6 +2315,7 @@ export interface FileRouteTypes {
     | '/import-proprietati'
     | '/integrari'
     | '/intrebari-frecvente'
+    | '/llms-full.txt'
     | '/llms.txt'
     | '/login'
     | '/politica-de-confidentialitate'
@@ -2542,6 +2552,7 @@ export interface FileRouteTypes {
     | '/import-proprietati'
     | '/integrari'
     | '/intrebari-frecvente'
+    | '/llms-full.txt'
     | '/llms.txt'
     | '/login'
     | '/politica-de-confidentialitate'
@@ -2777,6 +2788,7 @@ export interface FileRouteTypes {
     | '/import-proprietati'
     | '/integrari'
     | '/intrebari-frecvente'
+    | '/llms-full.txt'
     | '/llms.txt'
     | '/login'
     | '/politica-de-confidentialitate'
@@ -3016,6 +3028,7 @@ export interface RootRouteChildren {
   ImportProprietatiRoute: typeof ImportProprietatiRoute
   IntegrariRoute: typeof IntegrariRoute
   IntrebariFrecventeRoute: typeof IntrebariFrecventeRoute
+  LlmsFullDottxtRoute: typeof LlmsFullDottxtRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   LoginRoute: typeof LoginRoute
   PoliticaDeConfidentialitateRoute: typeof PoliticaDeConfidentialitateRoute
@@ -3278,6 +3291,13 @@ declare module '@tanstack/react-router' {
       path: '/intrebari-frecvente'
       fullPath: '/intrebari-frecvente'
       preLoaderRoute: typeof IntrebariFrecventeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms-full.txt': {
+      id: '/llms-full.txt'
+      path: '/llms-full.txt'
+      fullPath: '/llms-full.txt'
+      preLoaderRoute: typeof LlmsFullDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/llms.txt': {
@@ -5204,6 +5224,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImportProprietatiRoute: ImportProprietatiRoute,
   IntegrariRoute: IntegrariRoute,
   IntrebariFrecventeRoute: IntrebariFrecventeRoute,
+  LlmsFullDottxtRoute: LlmsFullDottxtRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
   LoginRoute: LoginRoute,
   PoliticaDeConfidentialitateRoute: PoliticaDeConfidentialitateRoute,

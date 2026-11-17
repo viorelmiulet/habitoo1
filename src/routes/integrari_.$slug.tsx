@@ -7,6 +7,7 @@ import { publicHead } from "@/components/marketing/public-head";
 import { dynamicIntegrationPageBySlug, integrationPageAliasTarget, integrationPageBySlug as staticPageBySlug, RELATED_CTA_TEXT } from "@/lib/portals/integration-pages";
 import { integrationJsonLd } from "@/lib/portals/integration-jsonld";
 import { getPublicDynamicFeedPortals } from "@/lib/dynamic-feed-portals.functions";
+import { PublicAnswer } from "@/components/marketing/PublicAnswer";
 
 /** Pagini statice din registru sau pagini ale portalurilor adăugate din SuperAdmin. */
 function integrationPageBySlug(slug: string) {
@@ -56,7 +57,8 @@ function H2({ children }: { children: React.ReactNode }) {
 
 function IntegrationPage() {
   const { slug, logoUrl } = Route.useLoaderData();
-  const page = integrationPageBySlug(slug)!;
+  const page = integrationPageBySlug(slug);
+  if (!page) throw notFound();
   return (
     <PublicLayout>
       <section className="mk-page-hero border-b">
@@ -75,6 +77,7 @@ function IntegrationPage() {
               Integrare {page.name} cu Habitoo CRM
             </h1>
           </div>
+          <PublicAnswer path={`/integrari/${slug}`} />
           {page.announcement ? (
             <p role="note" className="mt-6 max-w-3xl rounded-lg border border-border bg-muted px-4 py-3 font-medium text-foreground">
               {page.announcement}
@@ -131,15 +134,16 @@ function IntegrationPage() {
       </Section>
       <Section>
         <Container className="max-w-3xl space-y-4">
-          <H2>Alte integrări</H2>
+          <H2>Vezi și</H2>
           <ul className="flex flex-wrap gap-3">
-            {page.related.map((r) => (
+            {page.related.slice(0, 3).map((r) => (
               <li key={r.slug}>
                 <Link to="/integrari/$slug" params={{ slug: r.slug }} className="panel inline-block px-4 py-2 text-sm font-semibold text-navy hover:underline">
                   {r.name}
                 </Link>
               </li>
             ))}
+            <li><Link to="/functionalitati/$slug" params={{ slug: "proprietati" }} className="panel inline-block px-4 py-2 text-sm font-semibold text-navy hover:underline">Gestiunea proprietăților</Link></li>
           </ul>
           <p className="text-sm">
             <Link to="/integrari" className="text-primary underline">Toate integrările</Link>

@@ -1,10 +1,14 @@
-import { featurePaths, FEATURES_LASTMOD } from "@/lib/marketing/feature-pages";
-import { DYNAMIC_INTEGRATION_PAGES, INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD } from "@/lib/portals/integration-pages";
+import { featurePaths } from "@/lib/marketing/feature-pages";
+import { DYNAMIC_INTEGRATION_PAGES, INTEGRATION_PAGES } from "@/lib/portals/integration-pages";
 import type { BlogStatus } from "@/lib/blog";
 import { PLAN_KEYS, PLAN_LABELS, PLAN_PRICES, planAgentLimitLabel } from "@/lib/plans";
 import { marketSourceName } from "@/lib/market/sources";
 import { SITE_NAME, LEGAL_NAME, COMPANY_TAX_ID, COMPANY_REGISTER_ID, FACEBOOK_URL, GOOGLE_PROFILE_URL } from "@/components/marketing/public-identity";
 import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY } from "@/components/marketing/structured-data";
+import { contentModified, CONTENT_MODIFIED } from "@/lib/marketing/content-revisions";
+import { publicPagePhotos } from "@/components/marketing/public-page-photos";
+import { blogCoverUrl } from "@/lib/blog";
+import type { PublicPartner } from "@/lib/public-partners";
 
 export const BLOG_SITE_URL = "https://www.habitoo.ro";
 
@@ -15,6 +19,7 @@ export type DiscoverableBlogPost = {
   status: BlogStatus;
   published_at: string | null;
   updated_at: string;
+  cover_image_url?: string | null;
 };
 
 export function selectDiscoverablePosts(posts: DiscoverableBlogPost[], now = new Date()) {
@@ -40,64 +45,56 @@ export function escapeXml(value: string) {
  * Actualizează valoarea când schimbi conținutul paginii respective.
  * `/blog` folosește data celui mai recent articol modificat.
  */
-export const PAGE_LASTMOD: Record<string, string> = {
-  "/": "2026-10-10",
-  "/functionalitati": "2026-10-10",
-  "/anunturi-proprietari": "2026-10-25",
-  "/analiza-comparativa-de-piata": "2026-10-25",
-  "/colaborare-intre-agentii": "2026-10-26",
-  "/comisioane-agenti-imobiliari": "2026-10-27",
-  "/import-proprietati": "2026-10-27",
-  "/preturi": "2026-10-04",
-  "/despre": "2026-09-27",
-  "/contact": "2026-09-27",
-  "/integrari": "2026-11-07",
-  "/dezvoltatori": "2026-11-07",
-  "/extensie-chrome": "2026-11-08",
-  "/intrebari-frecvente": "2026-10-10",
-  "/termeni": "2026-10-05",
-  "/politica-de-confidentialitate": "2026-11-08",
-};
+export const PAGE_LASTMOD = CONTENT_MODIFIED;
 
 const publicPages = ["/", "/functionalitati", "/anunturi-proprietari", "/analiza-comparativa-de-piata", "/colaborare-intre-agentii", "/comisioane-agenti-imobiliari", "/import-proprietati", "/preturi", "/despre", "/contact", "/integrari", "/extensie-chrome", "/dezvoltatori", "/intrebari-frecvente", "/blog", "/termeni", "/politica-de-confidentialitate"];
 
 const featurePagePaths = featurePaths();
 const integrationPaths = [...INTEGRATION_PAGES, ...DYNAMIC_INTEGRATION_PAGES].map((p) => `/integrari/${p.slug}`);
 
-function urlXml(path: string, lastmod: string | null) {
-  return `  <url>\n    <loc>${escapeXml(`${BLOG_SITE_URL}${path}`)}</loc>${lastmod ? `\n    <lastmod>${escapeXml(lastmod)}</lastmod>` : ""}\n  </url>`;
+const PAGE_IMAGES: Record<string, string> = {
+  "/functionalitati": publicPagePhotos.features.src, "/preturi": publicPagePhotos.pricing.src,
+  "/analiza-comparativa-de-piata": publicPagePhotos.acp.src, "/despre": publicPagePhotos.about.src,
+  "/contact": publicPagePhotos.contact.src, "/blog": publicPagePhotos.blog.src,
+  "/comisioane-agenti-imobiliari": publicPagePhotos.commissions.src, "/import-proprietati": publicPagePhotos.propertyImport.src,
+};
+function urlXml(path: string, lastmod: string | null, image?: string | null) {
+  const imageUrl = image ? new URL(image, BLOG_SITE_URL).href : null;
+  return `  <url>\n    <loc>${escapeXml(`${BLOG_SITE_URL}${path}`)}</loc>${lastmod ? `\n    <lastmod>${escapeXml(lastmod)}</lastmod>` : ""}${imageUrl ? `\n    <image:image><image:loc>${escapeXml(imageUrl)}</image:loc></image:image>` : ""}\n  </url>`;
 }
+const URLSET = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">';
 
 function latestPostDate(posts: DiscoverableBlogPost[], now: Date) {
   const times = selectDiscoverablePosts(posts, now).map((p) => new Date(p.updated_at).getTime());
   return times.length ? new Date(Math.max(...times)).toISOString() : null;
 }
 
-export function buildStaticSitemapXml(hasPartners = false, posts: DiscoverableBlogPost[] = [], now = new Date()) {
-  const pages = [...publicPages, ...(hasPartners ? ["/agentii"] : []), ...featurePagePaths, ...integrationPaths];
+export function buildStaticSitemapXml(hasPartners = false, posts: DiscoverableBlogPost[] = [], now = new Date(), partners: PublicPartner[] = []) {
+  const profiles = partners.filter(p => p.slug).map(p => `/agentii/${p.slug}`);
+  const pages = [...publicPages, ...(hasPartners ? ["/agentii"] : []), ...featurePagePaths, ...integrationPaths, ...profiles];
   const urls = pages.map((path) =>
-    urlXml(path, path === "/blog" ? latestPostDate(posts, now) : (PAGE_LASTMOD[path] ?? (path.startsWith("/integrari/") ? INTEGRATION_PAGES_LASTMOD : path.startsWith("/functionalitati/") ? FEATURES_LASTMOD : null))),
+    urlXml(path, path === "/blog" ? latestPostDate(posts, now) : (contentModified(path) ?? null), PAGE_IMAGES[path]),
   );
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${URLSET}\n${urls.join("\n")}\n</urlset>\n`;
 }
 
 export function buildBlogSitemapXml(posts: DiscoverableBlogPost[], now = new Date()) {
   const urls = selectDiscoverablePosts(posts, now).map((post) =>
-    urlXml(`/blog/${post.slug}`, new Date(post.updated_at).toISOString()),
+    urlXml(`/blog/${post.slug}`, new Date(post.updated_at).toISOString(), blogCoverUrl(post.cover_image_url ?? null)),
   );
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${URLSET}\n${urls.join("\n")}\n</urlset>\n`;
 }
 
 export function buildSitemapIndexXml() {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>${BLOG_SITE_URL}/sitemap-pages.xml</loc></sitemap>\n  <sitemap><loc>${BLOG_SITE_URL}/sitemap-blog.xml</loc></sitemap>\n</sitemapindex>\n`;
 }
 
-export function buildSitemapXml(posts: DiscoverableBlogPost[], now = new Date(), hasPartners = false) {
+export function buildSitemapXml(posts: DiscoverableBlogPost[], now = new Date(), hasPartners = false, partners: PublicPartner[] = []) {
   const articles = selectDiscoverablePosts(posts, now);
   if (articles.length > 500) return buildSitemapIndexXml();
-  const staticXml = buildStaticSitemapXml(hasPartners, posts, now).replace(/^<\?xml[^>]+>\n|<urlset[^>]+>\n|\n<\/urlset>\n$/g, "");
+  const staticXml = buildStaticSitemapXml(hasPartners, posts, now, partners).replace(/^<\?xml[^>]+>\n|<urlset[^>]+>\n|\n<\/urlset>\n$/g, "");
   const blogXml = buildBlogSitemapXml(articles, now).replace(/^<\?xml[^>]+>\n|<urlset[^>]+>\n|\n<\/urlset>\n$/g, "");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${staticXml}${blogXml ? `\n${blogXml}` : ""}\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${URLSET}\n${staticXml}${blogXml ? `\n${blogXml}` : ""}\n</urlset>\n`;
 }
 
 export type LlmsStatistics = {
@@ -123,6 +120,7 @@ export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartne
 > Habitoo CRM este un CRM imobiliar cu AI, în limba română, pentru agențiile și agenții imobiliari din România. Reunește proprietățile, clienții, cererile, lead-urile și echipa, publică anunțurile pe portalurile imobiliare și adună anunțurile de la proprietari din mai multe portaluri.
 
 ## Pagini principale
+- [Conținut public complet în Markdown](${BLOG_SITE_URL}/llms-full.txt): Pagini principale, prețuri, funcționalități, integrări și întrebări frecvente.
 - [Habitoo CRM — prima pagină](${BLOG_SITE_URL}/): CRM imobiliar pentru agențiile din România.
 - [Funcționalități Habitoo CRM](${BLOG_SITE_URL}/functionalitati): Proprietăți, clienți, cereri, lead-uri și activitatea echipei.
 - [Anunțuri de la proprietari pentru agenții imobiliare](${BLOG_SITE_URL}/anunturi-proprietari): Surse, cifre live, filtre pe zone și import în portofoliu cu acordul proprietarului.

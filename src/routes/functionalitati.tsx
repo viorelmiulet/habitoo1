@@ -67,7 +67,7 @@ function FeatureLink({ entry, children, className }: { entry: FeatureEntry; chil
   return <a href={featureHref(entry)} className={className}>{children}</a>;
 }
 
-const TITLE = "Funcționalități — Habitoo CRM imobiliar";
+const TITLE = "Funcționalități CRM imobiliar pentru agenții | Habitoo";
 const DESCRIPTION =
   "Modulele Habitoo, CRM imobiliar complet: proprietăți cu media manager, contacte 360°, cereri, pipeline de lead-uri, matching automat, calendar și rapoarte.";
 

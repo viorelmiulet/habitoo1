@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { PublicAnswer } from "./PublicAnswer";
 
 export function Container({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -74,6 +75,7 @@ export function SectionHeading({
       >
         {title}
       </Tag>
+      {Tag === "h1" ? <PublicAnswer /> : null}
       {text ? (
         <p
           className={cn(

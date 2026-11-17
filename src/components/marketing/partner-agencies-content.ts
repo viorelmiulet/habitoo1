@@ -7,7 +7,7 @@
 
 export const PUBLIC_PARTNER_AGENCIES_PATH = "/agentii";
 
-export const PUBLIC_PARTNER_AGENCIES_TITLE = "Agenții partenere | Habitoo CRM";
+export const PUBLIC_PARTNER_AGENCIES_TITLE = "Agenții imobiliare partenere care folosesc Habitoo CRM";
 
 export const PUBLIC_PARTNER_AGENCIES_DESCRIPTION =
   "Agențiile imobiliare care lucrează cu Habitoo CRM, ce oferă parteneriatul și cum apare o agenție în lista publică.";

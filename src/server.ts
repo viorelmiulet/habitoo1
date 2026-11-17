@@ -4,6 +4,8 @@ import { runWithRequestContext } from "./lib/after-response";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { decideEdge, publicCacheControl, shouldTagNoindex } from "./lib/host-policy";
+import { permanentPublicRedirect } from "./lib/marketing/public-http";
+import { runAfterResponse } from "./lib/after-response";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -38,7 +40,7 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 }
 
 function withPrivateDocumentCache(response: Response, request: Request): Response {
-  if (request.method !== "GET") return response;
+  if (request.method !== "GET" && request.method !== "HEAD") return response;
   const pathname = new URL(request.url).pathname;
   const isPrivateDocument =
     pathname === "/login" ||
@@ -54,7 +56,7 @@ function withPrivateDocumentCache(response: Response, request: Request): Respons
   if (!isPrivateDocument) return response;
 
   const headers = new Headers(response.headers);
-  headers.set("cache-control", "private, no-store, max-age=0");
+  headers.set("cache-control", "no-store");
   headers.set("pragma", "no-cache");
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
@@ -95,9 +97,19 @@ export default {
         request,
       );
     }
+    const trailingSlash = permanentPublicRedirect(request);
+    if (trailingSlash) return trailingSlash;
     try {
       const handler = await getServerEntry();
       const response = await runWithRequestContext(ctx, () => handler.fetch(request, env, ctx));
+      // Observe only the published public origin, never editor previews or CRM requests.
+      if (new URL(request.url).hostname === "www.habitoo.ro" && response.status === 200 && response.headers.get("content-type")?.includes("text/html")) {
+        runWithRequestContext(ctx, () => runAfterResponse(async () => {
+          const { notifyIndexNow } = await import("./lib/marketing/indexnow.server");
+          const { staticContentRevisions } = await import("./lib/marketing/indexnow");
+          await notifyIndexNow(staticContentRevisions());
+        }));
+      }
       return withNoindexHeader(
         withPublicCache(withPrivateDocumentCache(await normalizeCatastrophicSsrResponse(response), request), request),
         request,

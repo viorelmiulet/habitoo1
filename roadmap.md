@@ -1,3 +1,11 @@
+## SEO1 — SEO tehnic și AEO public
+- [x] Redirect 308 pentru slash final; cache public 600s și /app no-store, verificate HTTP
+- [x] Rezumate 40–60 cuvinte, date editoriale comune, entități și FAQ dezvoltatori
+- [x] 58 imagini OG, sitemap 64 URL-uri/14 imagini, profiluri opt-in, llms-full 200 și legături interne
+- [ ] IndexNow: secret creat și trimitere/deduplicare pregătite; activare blocată deoarece verificarea cere expunerea publică a cheii private. Nicio trimitere reală, nici fișier public cu secret.
+- [x] 8 teste exclusiv SEO1 trec; build OK, pagini desktop/telefon fără erori sau overflow; fără publicare
+- [x] Commit la încheiere; toate modificările site-ului live necesită următoarea publicare
+
 ## AG1 — Lista agențiilor publice
 - [x] Toate agențiile reale neascunse, ordine acces activ apoi alfabetică; fără status public
 - [x] Profiluri inactive fără agenți/contact; oraș public; număr/JSON-LD/sitemap folosesc aceeași listă. Profilurile nu erau și nu sunt în sitemap; pagina profilului nu afișează anunțuri.

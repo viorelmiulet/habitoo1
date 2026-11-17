@@ -77,6 +77,13 @@ export const saveBlogPost = createServerFn({ method: "POST" }).middleware([requi
   const query = data.id ? supabaseAdmin.from("blog_posts").update(payload).eq("id", data.id) : supabaseAdmin.from("blog_posts").insert(payload);
   const { data: row, error } = await query.select(rowFields).single();
   if (error) throw new Error(error.message);
+  if (row.status === "published" && row.published_at && new Date(row.published_at).getTime() <= Date.now()) {
+    const { runAfterResponse } = await import("@/lib/after-response");
+    runAfterResponse(async () => {
+      const { notifyIndexNow } = await import("@/lib/marketing/indexnow.server");
+      await notifyIndexNow([{ url: `https://www.habitoo.ro/blog/${row.slug}`, revision: row.updated_at }]);
+    });
+  }
   return mapPost(row as Record<string, unknown>);
 });
 

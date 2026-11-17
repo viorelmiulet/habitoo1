@@ -49,7 +49,7 @@ async function readDiscoverableBlogPosts(limit?: number): Promise<DiscoverableBl
   for (let from = 0; ; from += pageSize) {
     let query = db
       .from("blog_posts")
-      .select("slug,title,excerpt,status,published_at,updated_at")
+      .select("slug,title,excerpt,status,published_at,updated_at,cover_image_url")
       .eq("status", "published")
       .lte("published_at", new Date().toISOString())
       .order("published_at", { ascending: false })

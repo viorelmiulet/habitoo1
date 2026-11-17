@@ -11970,6 +11970,39 @@ export type Database = {
           },
         ]
       }
+      seo_indexnow_lock: {
+        Row: {
+          held_until: string
+          id: boolean
+        }
+        Insert: {
+          held_until?: string
+          id?: boolean
+        }
+        Update: {
+          held_until?: string
+          id?: boolean
+        }
+        Relationships: []
+      }
+      seo_indexnow_receipts: {
+        Row: {
+          revision: string
+          sent_at: string
+          url: string
+        }
+        Insert: {
+          revision: string
+          sent_at?: string
+          url: string
+        }
+        Update: {
+          revision?: string
+          sent_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       site_feed_access_logs: {
         Row: {
           created_at: string
@@ -14605,6 +14638,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      seo_indexnow_claim: { Args: never; Returns: boolean }
       set_organization_subscription: {
         Args: { _org: string; _term: string }
         Returns: string

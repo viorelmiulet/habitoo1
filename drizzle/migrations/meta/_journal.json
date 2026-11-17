@@ -2010,6 +2010,13 @@
       "when": 1794900368693,
       "tag": "0286_public_partners_retain_real_agencies",
       "breakpoints": true
+    },
+    {
+      "idx": 287,
+      "version": "7",
+      "when": 1794901029467,
+      "tag": "0287_seo_indexnow_receipts",
+      "breakpoints": true
     }
   ]
 }

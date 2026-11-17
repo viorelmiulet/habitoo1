@@ -37,7 +37,7 @@ import { publicHead } from "@/components/marketing/public-head";
 import { CrmLink } from "@/components/marketing/CrmLink";
 import { submitContactRequest } from "@/lib/contact.functions";
 
-const TITLE = "Contact și demonstrație — Habitoo CRM";
+const TITLE = "Contact și demonstrație CRM imobiliar | Habitoo CRM";
 const DESCRIPTION =
   "Solicită o demonstrație Habitoo CRM sau pune-ne o întrebare despre produs și planuri. Îți răspundem cu o prezentare adaptată agenției tale.";
 

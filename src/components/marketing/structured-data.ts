@@ -1,5 +1,6 @@
 import { PLAN_AGENT_LIMITS, PLAN_LABELS, PLAN_PRICES, type PlanKey } from "@/lib/plans";
 import { SITE_NAME, SITE_URL, LEGAL_NAME, COMPANY_TAX_ID, COMPANY_REGISTER_ID, FACEBOOK_URL, GOOGLE_PROFILE_URL } from "./public-identity";
+import { CHROME_EXTENSION_URL } from "./chrome-extension-content";
 export { FACEBOOK_URL, GOOGLE_PROFILE_URL } from "./public-identity";
 
 /** Identități comune cu aceleași @id pe toate paginile publice. */
@@ -22,13 +23,15 @@ export function homeIdentityJsonLd(description: string): Ld[] {
       "@type": "Organization",
       "@id": ORG_ID,
       name: SITE_NAME,
+      alternateName: ["Habitoo", "Habitoo CRM"],
       legalName: LEGAL_NAME,
       taxID: COMPANY_TAX_ID,
       identifier: { "@type": "PropertyValue", propertyID: "Registrul Comerțului", value: COMPANY_REGISTER_ID },
       address: { "@type": "PostalAddress", addressLocality: "Dudu, comuna Chiajna", addressRegion: "Ilfov", addressCountry: "RO" },
       url: `${SITE_URL}/`,
-      logo: `${SITE_URL}/assets/habitoo-logo.png`,
-      sameAs: [FACEBOOK_URL, GOOGLE_PROFILE_URL],
+      logo: { "@type": "ImageObject", url: `${SITE_URL}/assets/habitoo-logo.png` },
+      areaServed: { "@type": "Country", name: "România" },
+      sameAs: [FACEBOOK_URL, GOOGLE_PROFILE_URL, CHROME_EXTENSION_URL],
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "customer support",

@@ -16,7 +16,7 @@ import { publicHead } from "@/components/marketing/public-head";
 import { PLAN_AGENT_LIMITS, PLAN_LABELS, PLAN_PRICES, type PlanKey } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
-const TITLE = "Prețuri și planuri — Habitoo CRM";
+const TITLE = "Prețuri CRM imobiliar: planuri Basic, Pro, Unlimited";
 const DESCRIPTION =
   "Planurile Habitoo CRM: Basic 10€, Pro 40€ și Unlimited 100€ pe lună, cu 50% reducere la plata anuală. Alege planul potrivit pentru agenția ta imobiliară.";
 
