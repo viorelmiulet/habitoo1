@@ -79,13 +79,13 @@ function FeatureGroupFields({ group, value, onChange, idPrefix }: {
           <li key={option} className={cn(optionClass, "bg-accent text-accent-foreground")}><Check className="size-4 shrink-0" aria-hidden="true" /><span>{option}</span></li>
         ))}</ul> : group.single ? <>
           <RadioGroup aria-labelledby={headingId} value={selected[0] ?? ""} onValueChange={(option) => onChange({ [group.field]: option || null })} className={optionsClass}>
-            {group.options.map((option) => <Label data-feature-chip key={option} htmlFor={`${idPrefix}-${group.field}-${option}`} className={cn(optionClass, "cursor-pointer", selected.includes(option) ? "bg-accent text-accent-foreground" : "hover:bg-muted")}>
+            {group.options.map((option) => <Label key={option} htmlFor={`${idPrefix}-${group.field}-${option}`} className={cn(optionClass, "cursor-pointer", selected.includes(option) ? "bg-accent text-accent-foreground" : "hover:bg-muted")}>
               <RadioGroupItem className="size-[22px] shrink-0 focus-visible:ring-2" id={`${idPrefix}-${group.field}-${option}`} value={option} /><span className="min-w-0">{option}</span>
             </Label>)}
           </RadioGroup>
           <div className="h-11"><Button type="button" variant="link" className={cn("h-11 px-2 text-xs font-normal underline", selected.length === 0 && "invisible")} onClick={() => onChange({ [group.field]: null })} aria-label={`Șterge selecția ${group.title}`}>Șterge selecția</Button></div>
         </> : <div role="group" aria-labelledby={headingId} className={optionsClass}>
-          {group.options.map((option) => <Label data-feature-chip key={option} htmlFor={`${idPrefix}-${group.field}-${option}`} className={cn(optionClass, "cursor-pointer", selected.includes(option) ? "bg-accent text-accent-foreground" : "hover:bg-muted")}>
+          {group.options.map((option) => <Label key={option} htmlFor={`${idPrefix}-${group.field}-${option}`} className={cn(optionClass, "cursor-pointer", selected.includes(option) ? "bg-accent text-accent-foreground" : "hover:bg-muted")}>
             <Checkbox className="size-[22px] focus-visible:ring-2" id={`${idPrefix}-${group.field}-${option}`} checked={selected.includes(option)} onCheckedChange={(checked) => onChange({ [group.field]: checked === true ? [...new Set([...selected, option])] : selected.filter((item) => item !== option) })} /><span className="min-w-0">{option}</span>
           </Label>)}
         </div>}

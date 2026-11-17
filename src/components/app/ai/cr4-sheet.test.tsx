@@ -2,7 +2,6 @@
 import { describe, expect, it } from "vitest";
 import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { readFileSync } from "node:fs";
 import { AiFieldMarksContext, AiMark } from "./AiFieldMarks";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -33,17 +32,4 @@ describe("CR4 — fișa proprietății", () => {
     act(() => root.unmount());
   });
 
-  it("pe lățime mică panoul AI e randat înaintea formularului (ordine în DOM)", () => {
-    for (const file of ["src/routes/_authenticated/app.properties.new.tsx", "src/routes/_authenticated/app.properties.$id.tsx"]) {
-      const src = readFileSync(file, "utf8");
-      const panel = src.indexOf('data-testid="sheet-ai-panel"');
-      const autofill = src.indexOf("<ListingAutofillCard", panel);
-      const form = src.indexOf("<HintedForm", panel);
-      expect(panel).toBeGreaterThan(-1);
-      expect(autofill).toBeGreaterThan(panel);
-      expect(autofill).toBeLessThan(form);
-      // pe desktop coloana trece în dreapta doar prin lg:order-last
-      expect(src.slice(panel, panel + 200)).toContain("lg:order-last");
-    }
-  });
 });

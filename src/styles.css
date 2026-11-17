@@ -1021,7 +1021,6 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
 .mk-root .ds-cover-frame { padding: 14px; }
 
 /* CR4 — fișa: câmpurile goale din caracteristici au bordură punctată (tema închisă). */
-html.app-deep :where([data-tour="edit-details"], [data-tour="new-details"]) input:placeholder-shown:not(:focus) { border-style: dashed; }
 
 /* CR7: bula Agentului AI. */
 .ai-agent-bubble { background-color: #0B1220; border-color: rgba(91, 228, 255, 0.45); color: #EAF0FF; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 24px rgba(91, 228, 255, 0.22); }
@@ -1031,10 +1030,3 @@ html.app-deep :where([data-tour="edit-details"], [data-tour="new-details"]) inpu
 /* Când o bară de salvare fixă e vizibilă jos, bula urcă deasupra ei. */
 body:has([data-bottom-save-bar]) .ai-agent-bubble { bottom: calc(env(safe-area-inset-bottom) + 9rem); }
 
-/* CR10 — fișa proprietății: carduri, chip-uri de dotări (doar tema închisă a CRM-ului). */
-html.dark.app-deep [data-form-card] {
-  background: linear-gradient(180deg, rgba(17, 26, 46, 0.6), rgba(11, 18, 32, 0.7));
-  border-color: rgba(148, 180, 255, 0.13);
-}
-html.dark.app-deep [data-feature-chip] { border: 1px solid rgba(148, 180, 255, 0.13); border-radius: 999px; }
-html.dark.app-deep [data-feature-chip]:has([data-state="checked"]) { background: #1A2440; border-color: rgba(148, 180, 255, 0.35); color: #EAF0FF; }

@@ -2,6 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, Suspense } from "react";
 import { createRoot } from "react-dom/client";
+import expectedOrder from "./new-form-field-order.json";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -18,7 +19,7 @@ vi.mock("@/integrations/supabase/client", () => {
 });
 vi.mock("@/hooks/use-session", () => ({ useCurrentUser: () => ({ data: { userId: "u1", organization: { id: "o1" }, profile: { full_name: "Ana" }, roles: [] } }) }));
 
-describe("/app/properties/new", () => {
+describe("/app/properties/new (CR13: așezarea inițială)", () => {
   it("se randează fără eroare", async () => {
     window.matchMedia ??= ((q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })) as never;
     globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as never;
@@ -33,5 +34,8 @@ describe("/app/properties/new", () => {
     if (errors.length) console.log("ERR", errors[0]);
     expect(errors).toEqual([]);
     expect(div.textContent).toContain("Adaugă proprietate");
+    const ids = [...div.querySelectorAll("form [id]")].map((e) => e.id).filter((id) => !id.startsWith("radix") && !/^:/.test(id));
+    // Ordinea de referință: formularul de la commit-ul b35ecb13 (înainte de CR4).
+    expect(ids).toEqual(expectedOrder);
   });
 });

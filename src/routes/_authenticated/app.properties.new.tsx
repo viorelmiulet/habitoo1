@@ -20,7 +20,7 @@ import {
 } from "@/components/app/PropertyTransactionFields";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
-import { PropertySheetHeader } from "@/components/app/property-sheet/PropertySheetHeader";
+import { PageHeader } from "@/components/app/PageHeader";
 import { FORM_ACTIONS_BAR, FormSection } from "@/components/app/FormSection";
 import { HintedForm } from "@/components/app/HintedForm";
 import { Button } from "@/components/ui/button";
@@ -242,17 +242,28 @@ function NewPropertyPage() {
 
   return (
     <>
-      <PropertySheetHeader
+      <PageHeader
         title="Adaugă proprietate"
-        sheet={{ floor: (details.floor as number | null) ?? null, surface: ((details.usable_surface ?? details.surface) as number | null) ?? null, rooms: (details.rooms as number | null) ?? null, features: ((details as Record<string, unknown>).features as string[] | undefined) ?? [], propertyType: (details.property_type as string | null) ?? null }}
-        actions={<>
-          <Button variant="outline" onClick={() => navigate({ to: "/app/properties" })}>Renunță</Button>
-          <Button type="submit" form="property-new-form" variant="outline" disabled={create.isPending}>Salvează</Button>
-        </>}
+        description="Completează datele esențiale; restul pot fi editate ulterior din pagina proprietății."
+        actions={
+          <Button variant="outline" size="sm" onClick={() => navigate({ to: "/app/properties" })}>
+            Renunță
+          </Button>
+        }
       />
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <aside data-testid="sheet-ai-panel" className="min-w-0 space-y-4 lg:sticky lg:top-[7.5rem] lg:order-last lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto">
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <aside className="min-w-0 lg:sticky lg:top-[7.5rem] lg:order-last">
+        <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} />
+      </aside>
+      <HintedForm
+        className="min-w-0 space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          create.mutate();
+        }}
+      >
+        <AiFieldMarksContext.Provider value={aiMarks}>
         <ListingAutofillCard
           mode="new"
           photos={pendingPhotos}
@@ -271,17 +282,6 @@ function NewPropertyPage() {
             localitySirutaCode: location.localitySirutaCode ?? undefined,
           } })}
         />
-        <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} />
-      </aside>
-      <HintedForm
-        id="property-new-form"
-        className="min-w-0 space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
-        <AiFieldMarksContext.Provider value={aiMarks}>
         <PropertyFormLayout
           aside={<div data-tour="new-general"><FormSection title="Informații generale">
           <div className="grid gap-4">

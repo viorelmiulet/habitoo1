@@ -19,15 +19,15 @@ export function FormSection({
   actions?: ReactNode;
 }) {
   return (
-    <section data-form-card className={cn("min-w-0 overflow-hidden rounded-[14px] border border-border bg-card text-[15px] [&_input]:rounded-[10px] [&_textarea]:rounded-[10px] [&_button[role=combobox]]:rounded-[10px] [&_input:not([type=checkbox]):not([type=radio])]:h-10 [&_input]:text-[15px] [&_button[role=combobox]]:h-10 [&_button[role=combobox]]:text-[15px]", className)}>
-      <header className="flex min-w-0 items-center justify-between gap-3 px-[18px] pt-[18px] sm:px-5 sm:pt-5">
+    <section className={cn("min-w-0 overflow-hidden rounded-[14px] border border-border bg-card text-[15px] [&_input]:rounded-[10px] [&_textarea]:rounded-[10px] [&_button[role=combobox]]:rounded-[10px] [&_input:not([type=checkbox]):not([type=radio])]:h-10 [&_input]:text-[15px] [&_button[role=combobox]]:h-10 [&_button[role=combobox]]:text-[15px]", className)}>
+      <header className="flex min-w-0 items-center justify-between gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
         <div className="min-w-0">
-          <h2 className="font-display text-[17px] font-bold text-foreground">{title}</h2>
+          <h2 className="font-sans text-base font-bold text-foreground">{title}</h2>
           {description ? <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p> : null}
         </div>
         {actions ? <div className="shrink-0">{actions}</div> : null}
       </header>
-      <div className="space-y-4 p-[18px] sm:p-5">{children}</div>
+      <div className="space-y-4 p-4 sm:p-5">{children}</div>
     </section>
   );
 }
@@ -37,17 +37,8 @@ export function FormSection({
 export const FORM_ACTIONS_BAR = "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end max-sm:sticky max-sm:bottom-[calc(4rem+env(safe-area-inset-bottom))] max-sm:z-20 max-sm:-mx-4 max-sm:border-t max-sm:border-border max-sm:bg-card max-sm:px-4 max-sm:py-3";
 
 export function FormRow({ label, htmlFor, children, labelClassName, compact }: { label: ReactNode; htmlFor?: string; children: ReactNode; labelClassName?: string; /** Etichetă ~140px și câmp de maximum ~240px, pentru valori scurte. */ compact?: boolean }) {
-  if (compact) {
-    // Fișa proprietății: eticheta deasupra, la stânga, pe un rând; câmpul pe toată lățimea celulei.
-    return (
-      <div data-form-row="stacked" className="flex min-w-0 flex-col gap-1.5">
-        <label htmlFor={htmlFor} className={cn("min-w-0 truncate whitespace-nowrap text-left text-[13px] font-medium text-muted-foreground", labelClassName)}>{label}</label>
-        <div className="min-w-0 [&_input]:min-h-10 [&_input]:w-full [&_button[role=combobox]]:min-h-10 [&_button[role=combobox]]:w-full">{children}</div>
-      </div>
-    );
-  }
   return (
-    <div className={cn("grid min-h-10 min-w-0 grid-cols-1 items-center gap-x-3 gap-y-1", "sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}>
+    <div className={cn("grid min-h-10 min-w-0 grid-cols-1 items-center gap-x-3 gap-y-1", compact ? "sm:grid-cols-[140px_minmax(0,240px)]" : "sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}>
       <label htmlFor={htmlFor} className={cn("min-w-0 text-left text-[15px] text-foreground sm:text-right", labelClassName)}>{label}</label>
       <div className="min-w-0">{children}</div>
     </div>

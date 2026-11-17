@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
+import { FormSection } from "@/components/app/FormSection";
 import { useAiFeatures } from "@/hooks/use-ai-features";
 import { supabase } from "@/integrations/supabase/client";
 import { MEDIA_BUCKET, compressImage, signedUrls } from "@/lib/storage";
@@ -184,13 +185,9 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
   const visibleRows = showAll ? summaryRows : summaryRows.slice(0, 8);
 
   return (
-    <section data-testid="listing-autofill-card" aria-label="Completare cu AI" className="space-y-4 rounded-card border border-ai/40 bg-ai/5 p-4">
-      <div>
-        <p className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.16em] text-ai uppercase"><span aria-hidden className="size-1.5 animate-pulse rounded-full bg-ai motion-reduce:animate-none" />Habitoo AI</p>
-        <h2 className="mt-1 text-base font-semibold">Completare cu AI</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Din titlu, descriere, poze și istoricul proprietăților de la aceeași adresă.</p>
-      </div>
-      <div className="grid gap-4">
+    <div data-testid="listing-autofill-card">
+    <FormSection title="Completează cu AI" description="Încarcă pozele și scrie câteva fraze. AI-ul propune valori; tu le verifici înainte de salvare.">
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Poze {photoCount ? `(${Math.min(photoCount, AUTOFILL_MAX_PHOTOS)})` : ""}</Label>
           {mode === "new" ? <>
@@ -198,14 +195,12 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
             <div className="flex flex-wrap gap-2">
               {previews.map((url, i) => <div key={url} className="relative size-16 overflow-hidden rounded-control border border-border">
                 <img src={url} alt={`Poza ${i + 1}`} className="size-full object-cover" />
-                <span className="absolute top-0.5 left-0.5 rounded bg-background/80 px-1 font-mono text-[9px] text-foreground">{i + 1}</span>
-                {i === 0 ? <span className="absolute bottom-0 left-0 right-0 bg-primary/85 text-center font-mono text-[9px] tracking-wide text-primary-foreground uppercase">{originalPhotos && !coverPreserved ? "Copertă · AI" : "Copertă"}</span> : null}
+                {i === 0 ? <span className="absolute bottom-0 left-0 right-0 bg-primary/85 text-center text-[10px] text-primary-foreground">Copertă</span> : null}
                 {i > 0 ? <Button type="button" size="icon" variant="secondary" disabled={busy} title="Alege coperta" aria-label={`Alege poza ${i + 1} drept copertă`} className="absolute bottom-0 left-0 size-5" onClick={() => { const chosen = photos[i]; if (!chosen) return; manualCover.current = chosen; onPhotosChange?.([chosen, ...photos.filter((p) => p !== chosen)]); }}><ImagePlus className="size-3" /></Button> : null}
                 <Button type="button" size="icon" variant="secondary" disabled={busy} aria-label={`Elimină poza ${i + 1}`} className="absolute right-0.5 top-0.5 size-5 rounded-full" onClick={() => onPhotosChange?.(photos.filter((_, j) => j !== i))}><X className="size-3" /></Button>
               </div>)}
               <Button type="button" variant="outline" className="size-16 flex-col gap-0.5 p-0 text-[11px]" onClick={() => fileRef.current?.click()}><ImagePlus className="size-4" />Adaugă</Button>
             </div>
-            {originalPhotos ? <p className="font-mono text-[11px] text-ai">ordine propusă de AI</p> : null}
             <p className="text-xs text-muted-foreground">Pozele se adaugă în galeria proprietății la salvare.</p>
           </> : <p className="text-sm text-muted-foreground">{existingImages.length ? `Se analizează ${existingImages.length} fotografii din galeria proprietății.` : "Proprietatea nu are încă fotografii. Încarcă-le din fila Media."}</p>}
         </div>
@@ -215,15 +210,14 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
         </div>
       </div>
       {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
+        <div className="flex flex-wrap gap-2">
           <Button type="button" disabled={!hasInput || busy} onClick={() => void submit()}>
             {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
             {mode === "new" ? "Completează cu AI" : "Completează câmpurile goale cu AI"}
           </Button>
-          {applied ? <span role="status" className="font-mono text-xs text-success">✓ Completat · {summaryRows.length} {summaryRows.length === 1 ? "câmp" : "câmpuri"}</span> : null}
         </div>
-        {applied ? <div className="flex-1 space-y-2 rounded-card border border-border bg-background/60 p-3 text-sm" data-testid="autofill-summary">
+        {applied ? <div className="flex-1 space-y-2 rounded-card border border-border bg-muted/40 p-3 text-sm" data-testid="autofill-summary">
           <p className="font-medium">Completat de AI: {autofillCountLabel(summaryRows.length)}</p>
           {coverPreserved ? <p className="text-xs text-muted-foreground">Coperta aleasă de tine a rămas neschimbată.</p> : null}
           {summaryRows.length || originalPhotos ? <>
@@ -231,7 +225,7 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
               {visibleRows.map((row) => <li key={row.key} className="flex items-center gap-1.5 rounded-control bg-background px-2 py-1">
                 <span className="min-w-0 flex-1 truncate">
                   <span className="font-medium">{row.label}:</span> {row.value}
-                  {row.source ? <span className="font-mono text-[11px] text-ai"> · {row.source}</span> : null}
+                  {row.source ? <span className="text-muted-foreground"> · {row.source}</span> : null}
                   {row.check ? <span className="text-muted-foreground"> · de verificat</span> : null}
                 </span>
                 <button type="button" aria-label={`Anulează ${row.label}`} className="shrink-0 rounded-full p-0.5 hover:bg-muted" onClick={() => onRemoveField(row.key)}><X className="size-3" /></button>
@@ -247,7 +241,7 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
           {summaryRows.length ? <Button type="button" size="sm" variant="outline" onClick={onAcceptAll}>Acceptă tot</Button> : null}
         </div> : null}
       </div>
-      <p className="text-xs text-muted-foreground">Nimic nu se publică fără aprobarea ta.</p>
-    </section>
+    </FormSection>
+    </div>
   );
 }
