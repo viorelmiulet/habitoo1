@@ -138,6 +138,11 @@
   --color-on-navy: var(--on-navy);
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
+  --color-ai: var(--ai);
+  --color-ai-foreground: var(--ai-foreground);
+  --color-plate: var(--plate);
+  --color-plate-foreground: var(--plate-foreground);
+  --color-status-sold: var(--status-sold);
   --color-gold-dark: var(--gold-dark);
   --color-gold-tint: var(--gold-tint);
   --color-on-navy: var(--on-navy);
@@ -221,6 +226,11 @@
   --gold-tint: #F6EEDF;
   --gold-foreground: #0E1E2B;
   --on-navy: #FFFFFF;
+  --ai: #0E7490;
+  --ai-foreground: #FFFFFF;
+  --plate: #FFFFFF;
+  --plate-foreground: #1A2440;
+  --status-sold: #6D5BD0;
 }
 
 .dark {
@@ -283,6 +293,124 @@
   --gold-tint: #2B2416;
   --gold-foreground: #0E1E2B;
   --on-navy: #FFFFFF;
+}
+
+/* ============================================================
+ * CR1 — „Deep Space” pentru aplicația CRM autentificată.
+ * `app-deep` stă pe <html> doar cât e montat AppShell și tema e întunecată,
+ * deci acoperă și Dialog/Popover/Sheet/Select/Tooltip/Sonner (portaluri în body).
+ * Site-ul public (.mk-root) își redefinește propriile tokenuri și nu e afectat.
+ * ============================================================ */
+html.dark.app-deep {
+  --background: #05080F;
+  --foreground: #EAF0FF;
+  --surface: #0B1220;
+  --surface-foreground: #EAF0FF;
+  --card: #0B1220;
+  --card-foreground: #EAF0FF;
+  --popover: #0B1220;
+  --popover-foreground: #EAF0FF;
+  --overlay: rgb(2 4 10 / 0.7);
+  --primary: #E0B25C;
+  --primary-foreground: #1A1206;
+  --secondary: #111A2E;
+  --secondary-foreground: #EAF0FF;
+  --muted: #0E1628;
+  --muted-foreground: #A9B6D3;
+  --faint: #8E9CBB;
+  --accent: rgba(91, 228, 255, 0.08);
+  --accent-foreground: #EAF0FF;
+  --destructive: #FF8A80;
+  --destructive-foreground: #1A0705;
+  --danger-border: rgba(255, 138, 128, 0.4);
+  --danger-tint: rgba(255, 138, 128, 0.1);
+  --success: #4ADE9B;
+  --success-foreground: #04170E;
+  --warning: #E0B25C;
+  --warning-foreground: #E0B25C;
+  --warning-text: #E0B25C;
+  --info: #A9B6D3;
+  --info-foreground: #0E1628;
+  --neutral: #A9B6D3;
+  --neutral-foreground: #0E1628;
+  --border: rgba(148, 180, 255, 0.12);
+  --input: rgba(148, 180, 255, 0.2);
+  --input-error: #FF8A80;
+  --ring: #5BE4FF;
+  --control-disabled: #0E1628;
+  --control-disabled-foreground: #8E9CBB;
+  --chart-1: #5BE4FF;
+  --chart-2: #E0B25C;
+  --chart-3: #9D8CFF;
+  --chart-4: #4ADE9B;
+  --chart-5: #8E9CBB;
+  --sidebar: #070B15;
+  --sidebar-foreground: #A9B6D3;
+  --sidebar-primary: #5BE4FF;
+  --sidebar-primary-foreground: #05080F;
+  --sidebar-accent: rgba(91, 228, 255, 0.08);
+  --sidebar-accent-foreground: #EAF0FF;
+  --sidebar-border: rgba(148, 180, 255, 0.12);
+  --sidebar-ring: #5BE4FF;
+  --navy: #070B15;
+  --navy-foreground: #A9B6D3;
+  --navy-muted: #8E9CBB;
+  --gold: #E0B25C;
+  --gold-dark: #E0B25C;
+  --gold-tint: rgba(224, 178, 92, 0.12);
+  --gold-foreground: #1A1206;
+  --ai: #5BE4FF;
+  --ai-foreground: #05080F;
+  --plate: #F4F6FB;
+  --plate-foreground: #1A2440;
+  --status-sold: #9D8CFF;
+  --ds-text-3: #8E9CBB;
+  color-scheme: dark;
+}
+html.app-deep body {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  background-color: #05080F;
+  background-image:
+    radial-gradient(60% 40% at 70% -10%, rgba(91, 228, 255, 0.06), transparent 70%),
+    linear-gradient(rgba(148, 180, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 180, 255, 0.035) 1px, transparent 1px);
+  background-size: auto, 64px 64px, 64px 64px;
+  background-attachment: fixed;
+}
+html.app-deep [data-app-shell].bg-background { background-color: transparent; }
+html.app-deep [data-app-shell] > div > header.bg-background { background-color: rgba(5, 8, 15, 0.85); backdrop-filter: blur(10px); }
+html.app-deep :where(h1, h2, h3, .font-display, [data-slot="card-title"]) { font-family: "Space Grotesk", "Inter", sans-serif; letter-spacing: -0.015em; }
+html.app-deep .font-mono, html.app-deep kbd, html.app-deep code { font-family: "JetBrains Mono", ui-monospace, monospace; }
+/* Carduri: gradient discret. */
+html.app-deep [data-slot="card"], html.app-deep .panel {
+  background-image: linear-gradient(180deg, rgba(17, 26, 46, 0.7), rgba(11, 18, 32, 0.7));
+  background-color: transparent;
+  border-color: rgba(148, 180, 255, 0.12);
+}
+/* Popover-ele și dialogurile rămân opace pentru lizibilitate. */
+html.app-deep :where([role="dialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper] > *) { box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
+/* Câmpuri. */
+html.app-deep :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]), textarea, select, button[role="combobox"]) { background-color: #0B1220; }
+html.app-deep :where(input, textarea, select, button[role="combobox"]):focus-visible { border-color: #5BE4FF; box-shadow: 0 0 0 3px rgba(91, 228, 255, 0.18); outline: none; }
+/* Tabele: antet mono, rânduri cu bordură discretă. */
+html.app-deep thead th { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #8E9CBB; }
+html.app-deep tbody tr { border-color: rgba(148, 180, 255, 0.08); }
+/* Taburi: activ = linie aurie dedesubt. */
+html.app-deep [role="tablist"] [role="tab"][data-state="active"] { box-shadow: inset 0 -2px 0 #E0B25C; }
+/* Meniu lateral: element activ cu fundal cyan 8% și bară cyan 2px. */
+html.app-deep [data-nav-row][aria-current="page"] { background-color: rgba(91, 228, 255, 0.08); box-shadow: inset 2px 0 0 #5BE4FF; color: #EAF0FF; }
+html.app-deep [data-nav-row][aria-current="page"] svg { color: #5BE4FF; }
+/* Câmpuri completate de AI (marcajele existente AiMark). */
+html.app-deep .ai-mark { background-color: rgba(91, 228, 255, 0.1); color: #5BE4FF; font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 500; }
+html.app-deep :where(div, fieldset):has(> label .ai-mark) :where(input, textarea, button[role="combobox"]) {
+  border-color: rgba(91, 228, 255, 0.45);
+  background-color: rgba(91, 228, 255, 0.07);
+}
+/* Plăcuțe deschise pentru logo-uri. */
+html.app-deep .bg-plate { border-radius: 10px; color: #1A2440; }
+@media (prefers-reduced-motion: reduce) {
+  html.app-deep *, html.app-deep *::before, html.app-deep *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
 @layer base {

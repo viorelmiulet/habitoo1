@@ -87,7 +87,7 @@ export function AppShell({
   return (
     <TooltipProvider delayDuration={150}>
       <OnboardingTourProvider user={user} openMenu={() => setMenuOpen(true)} closeMenu={() => setMenuOpen(false)}>
-        <div className="min-h-screen bg-background">
+        <div data-app-shell className="min-h-screen bg-background">
           <a
             href="#continut"
             className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:text-primary-foreground"

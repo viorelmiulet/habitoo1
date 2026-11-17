@@ -99,7 +99,7 @@ export function PortalLogo({ portalId, name, fallback, size = 32, className, alt
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-white dark:border-transparent",
+        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-plate dark:border-transparent",
         !src || failed ? "bg-muted text-[0.7rem] font-semibold text-foreground" : null,
         className,
       )}

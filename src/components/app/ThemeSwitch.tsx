@@ -1,13 +1,13 @@
-/** Comutator temă cu trei poziții (Luminos / Automat / Întunecat) din meniul lateral. */
-import { Contrast as CircleHalf, Moon, SunMedium } from "lucide-react";
+/** Comutator temă „Întunecată / Luminoasă” (meniul utilizatorului). */
+import { Moon, SunMedium } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useTheme, type ThemePreference } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
 export const THEME_OPTIONS: { value: ThemePreference; label: string; icon: typeof Moon }[] = [
-  { value: "light", label: "Luminos", icon: SunMedium },
-  { value: "system", label: "Automat (după dispozitiv)", icon: CircleHalf },
-  { value: "dark", label: "Întunecat", icon: Moon },
+  { value: "dark", label: "Întunecată", icon: Moon },
+  { value: "light", label: "Luminoasă", icon: SunMedium },
 ];
 
 export function nextTheme(current: ThemePreference): ThemePreference {
@@ -19,7 +19,7 @@ export function ThemeSwitch({ collapsed = false }: { collapsed?: boolean }) {
   const { preference, setPreference } = useTheme();
 
   if (collapsed) {
-    const active = THEME_OPTIONS.find((o) => o.value === preference) ?? THEME_OPTIONS[1]!;
+    const active = THEME_OPTIONS.find((o) => o.value === preference) ?? THEME_OPTIONS[0]!;
     const next = THEME_OPTIONS.find((o) => o.value === nextTheme(preference))!;
     const Icon = active.icon;
     return (
@@ -66,5 +66,24 @@ export function ThemeSwitch({ collapsed = false }: { collapsed?: boolean }) {
         );
       })}
     </div>
+  );
+}
+
+/** Element de meniu „Temă: Întunecată / Luminoasă” pentru meniul utilizatorului. */
+export function ThemeMenuItems() {
+  const Item = DropdownMenuItem;
+  const { preference, setPreference } = useTheme();
+  const current = preference === "light" ? "light" : "dark";
+  return (
+    <>
+      {THEME_OPTIONS.map((o) => {
+        const Icon = o.icon;
+        return (
+          <Item key={o.value} role="menuitemradio" aria-checked={current === o.value} onSelect={(e) => { e.preventDefault(); setPreference(o.value); }}>
+            <Icon aria-hidden /> Temă: {o.label}{current === o.value ? <span className="ml-auto font-mono text-[10px] text-muted-foreground">activă</span> : null}
+          </Item>
+        );
+      })}
+    </>
   );
 }

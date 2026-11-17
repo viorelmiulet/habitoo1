@@ -10,7 +10,7 @@ describe("meniul lateral compact", () => {
       "Acasă", "Proprietăți", "Lead-uri", "Clienți", "Contracte", "Calendar", "Matching",
       "Colaborare", "Anunțuri particulari", "ACP", "Asistent AI", "Comisioane", "Rapoarte", "Setări",
     ]);
-    expect(agencyNav.filter(g => g.section).map(g => g.section)).toEqual(["Creștere", "Agenție"]);
+    expect(agencyNav.filter(g => g.section).map(g => g.section)).toEqual(["Principal", "Organizare", "Piață și marketing", "Cont"]);
     expect(agencyNav.find(g => g.title === "Clienți")?.items.map(i => i.to)).toEqual(["/app/contacts", "/app/requests"]);
     expect(agencyNav.find(g => !g.title && g.items.some(i => i.to === "/app/contracts"))?.items.map(i => i.to)).toEqual(["/app/contracts"]);
     expect(agencyNav.find(g => g.title === "Calendar")?.items.map(i => i.to)).toEqual(["/app/calendar", "/app/activities"]);

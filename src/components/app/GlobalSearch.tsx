@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Building2, CalendarClock, Search, UserRound, Target, Flame } from "lucide-react";
+import { Building2, CalendarClock, Search, Sparkles, UserRound, Target, Flame } from "lucide-react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -162,9 +162,9 @@ export function GlobalSearch({ compact = false }: { compact?: boolean } = {}) {
           variant="outline"
           className="h-10 w-full min-w-0 justify-start gap-2.5 px-3 text-sm font-normal text-muted-foreground hover:border-primary/40 hover:text-foreground"
         >
-          <Search className="size-4" />
-          <span className="min-w-0 truncate">Caută proprietăți, clienți, lead-uri…</span>
-          <kbd className="ml-auto hidden rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium sm:inline">
+          <Sparkles className="size-4 text-ai" aria-hidden />
+          <span className="min-w-0 truncate">Întreabă Agentul AI sau caută proprietăți, clienți, cereri…</span>
+          <kbd className="ml-auto hidden rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium sm:inline">
             ⌘K
           </kbd>
         </Button>

@@ -59,7 +59,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { CurrentUser } from "@/hooks/use-session";
-import { ThemeSwitch } from "@/components/app/ThemeSwitch";
+import { ThemeMenuItems } from "@/components/app/ThemeSwitch";
+import sidebarMarkDark from "@/assets/brand/habitoo-mark-dark.png.asset.json";
 import { planLabel } from "@/lib/plans";
 import {
   activeNavigationPath,
@@ -72,7 +73,7 @@ export type NavGroup = { title?: string; section?: string; collapsible?: boolean
 export type ShellVariant = "agency" | "platform";
 
 export const agencyNav: NavGroup[] = [
-  { items: [{ label: "Acasă", to: "/app", icon: Gauge, exact: true }] },
+  { section: "Principal", items: [{ label: "Acasă", to: "/app", icon: Gauge, exact: true }] },
   { title: "Proprietăți", collapsible: true, items: [
     { label: "Toate proprietățile", to: "/app/properties", icon: Building2 },
     { label: "Adaugă proprietate", to: "/app/properties/new", icon: PlusCircle },
@@ -84,13 +85,13 @@ export const agencyNav: NavGroup[] = [
     { label: "Cereri", to: "/app/requests", icon: Target },
     { label: "Potriviri noi", to: "/app/potriviri-noi", icon: Sparkles },
   ] },
-  { items: [{ label: "Contracte", to: "/app/contracts", icon: FileSignature }] },
+  { section: "Organizare", items: [{ label: "Contracte", to: "/app/contracts", icon: FileSignature }] },
   { title: "Calendar", collapsible: true, items: [
     { label: "Calendar", to: "/app/calendar", icon: CalendarDays },
     { label: "Activități", to: "/app/activities", icon: ListChecks },
   ] },
   { items: [{ label: "Matching", to: "/app/matching", icon: Sparkles }] },
-  { section: "Creștere", items: [{ label: "Colaborare", to: "/app/collaboration", icon: Handshake }] },
+  { section: "Piață și marketing", items: [{ label: "Colaborare", to: "/app/collaboration", icon: Handshake }] },
   { items: [{ label: "Anunțuri particulari", to: "/app/anunturi-particulari", icon: Newspaper }] },
   { title: "ACP", collapsible: true, items: [
     { label: "Analiză nouă", to: "/app/acp/new", icon: Sparkles },
@@ -103,7 +104,7 @@ export const agencyNav: NavGroup[] = [
     { label: "Habitoo AI", to: "/app/ai", icon: Bot },
     { label: "Studio AI", to: "/app/ai-media", icon: Wand2 },
   ] },
-  { section: "Agenție", items: [{ label: "Comisioane", to: "/app/comisioane", icon: Coins }] },
+  { section: "Cont", items: [{ label: "Comisioane", to: "/app/comisioane", icon: Coins }] },
   { title: "Rapoarte", collapsible: true, items: [
     { label: "Rapoarte", to: "/app/reports", icon: ChartBar },
     { label: "Obiective", to: "/app/goals", icon: Layers },
@@ -289,6 +290,8 @@ function AccountMenu({
             </Link>
           </DropdownMenuItem>
         ) : null}
+        <ThemeMenuItems />
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <a href="https://docs.lovable.dev" target="_blank" rel="noreferrer">
             <HelpCircle /> Ajutor
@@ -401,7 +404,7 @@ export function AppSidebar({
             {badge ? (
               <span
                 className={cn(
-                  "ml-auto flex h-5 min-w-5 items-center justify-center rounded-pill bg-gold px-1 text-[10px] font-semibold text-gold-foreground",
+                  "ml-auto flex h-5 min-w-5 items-center justify-center rounded-pill bg-gold px-1 font-mono text-[10px] font-semibold text-gold-foreground",
                   collapsed && "absolute top-0 right-0",
                 )}
               >
@@ -436,11 +439,27 @@ export function AppSidebar({
           )}
         >
           <img src={collapsed ? sidebarMark.url : sidebarLogo.url} alt="Habitoo CRM"
-            className={cn("object-contain", collapsed ? "size-10" : "h-auto w-40 max-w-full")}
+            className={cn("object-contain dark:hidden", collapsed ? "size-10" : "h-auto w-40 max-w-full")}
             loading="eager" decoding="async" />
+          <span className={cn("hidden items-center gap-2 dark:flex", collapsed ? "" : "w-full")}>
+            <img src={sidebarMarkDark.url} alt={collapsed ? "Habitoo CRM" : ""} className="size-8 object-contain" loading="eager" decoding="async" />
+            {collapsed ? null : <>
+              <span className="font-display text-xl font-bold tracking-tight text-sidebar-accent-foreground">habitoo</span>
+              <span className="rounded border border-ai/40 px-1.5 py-0.5 font-mono text-[10px] tracking-wider text-ai">AI CRM</span>
+            </>}
+          </span>
         </Link>
-        {collapsed ? null : <p className="mt-2 truncate text-center text-xs font-medium text-sidebar-foreground">{organizationName}</p>}
-        <div className="mt-3"><ThemeSwitch collapsed={collapsed} /></div>
+        {collapsed ? null : (
+          <div data-testid="agency-selector" className="mt-3 flex w-full items-center gap-2.5 rounded-control border border-sidebar-border bg-sidebar-accent/40 px-2.5 py-2">
+            <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-md bg-gold font-mono text-xs font-semibold text-gold-foreground">
+              {organizationName.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold text-sidebar-accent-foreground">{organizationName}</span>
+              {!isPlatform && user ? <span className="block truncate text-[11px] text-sidebar-foreground/70">Plan {planLabel(user.organization?.plan)} · {roleLabel}</span> : null}
+            </span>
+          </div>
+        )}
       </div>
 
       <nav
@@ -512,7 +531,7 @@ export function AppSidebar({
             const contentId = `sidebar-group-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
             return (
               <div key={title} className="mb-1">
-                {group.section ? <p className="px-2.5 pt-4 pb-1 text-[10px] font-semibold text-navy-muted uppercase">{group.section}</p> : null}
+                {group.section ? <p className="sidebar-section-label px-2.5 pt-4 pb-1 font-mono text-[10px] font-medium tracking-[0.16em] text-navy-muted uppercase">{group.section}</p> : null}
                 <Button
                   type="button"
                   data-tour={`group:${title === "Proprietăți" ? "Portofoliu" : title}`}
@@ -546,7 +565,7 @@ export function AppSidebar({
 
           return (
             <div key={title ?? index} className="mb-1">
-              {group.section ? (collapsed ? <div className="mx-2 my-2 h-px bg-sidebar-border" aria-hidden /> : <p className="px-2.5 pt-4 pb-1 text-[10px] font-semibold text-navy-muted uppercase">{group.section}</p>) : null}
+              {group.section ? (collapsed ? <div className="mx-2 my-2 h-px bg-sidebar-border" aria-hidden /> : <p className="sidebar-section-label px-2.5 pt-4 pb-1 font-mono text-[10px] font-medium tracking-[0.16em] text-navy-muted uppercase">{group.section}</p>) : null}
               {title && !collapsed && !expandable ? (
                 <p className="px-2.5 pt-2 pb-1 text-[10px] font-semibold tracking-[0.14em] text-navy-muted uppercase">
                   {title}
@@ -566,6 +585,15 @@ export function AppSidebar({
         ) : null}
       </nav>
 
+      {!isPlatform && !collapsed ? (
+        <div data-testid="sidebar-ai-agent" className="ai-agent-card mx-2 mb-2 rounded-card border border-ai/30 bg-ai/5 p-3">
+          <p className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.16em] text-ai uppercase"><span aria-hidden className="size-1.5 rounded-full bg-ai" />Agentul AI</p>
+          <p className="mt-1.5 text-xs text-sidebar-foreground">Întreabă orice despre clienți, cereri și proprietăți.</p>
+          <Button asChild size="sm" className="mt-2.5 h-10 w-full bg-ai font-semibold text-ai-foreground hover:bg-ai/90">
+            <Link to="/app/ai" onClick={onNavigate}>Deschide Agentul AI</Link>
+          </Button>
+        </div>
+      ) : null}
       <div className="border-t border-sidebar-border p-2">
 
         {user ? (
