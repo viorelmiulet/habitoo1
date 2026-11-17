@@ -19,10 +19,9 @@ import { autofillListing } from "@/lib/ai/listing-autofill/autofill.functions";
 import {
   AUTOFILL_IMAGE_MAX_EDGE,
   AUTOFILL_MAX_PHOTOS,
-  AUTOFILL_SOURCE_LABELS,
-  autofillFieldLabel,
   type AutofillProposal,
 } from "@/lib/ai/listing-autofill/schema";
+import { autofillCountLabel, autofillSummaryRows } from "@/lib/ai/listing-autofill/summary";
 import type { AutofillFormContext } from "@/lib/ai/listing-autofill/autofill.server";
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -64,6 +63,7 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
   const [error, setError] = useState<string | null>(null);
   const [photoOrder, setPhotoOrder] = useState<number[] | null>(null);
   const [applied, setApplied] = useState<AutofillProposal | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const existing = useQuery({
     queryKey: ["property-images", propertyId],
@@ -119,6 +119,7 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
       if (!result.ok) { setError(result.message); return; }
       const shown = onProposal(result.proposal);
       setApplied(shown);
+      setShowAll(false);
       setPhotoOrder(result.proposal.photoOrder);
       const count = Object.keys(shown.values).length + (shown.title ? 1 : 0) + (shown.description ? 1 : 0);
       toast.success(count ? `AI-ul a propus ${count} câmpuri. Verifică-le înainte de salvare.` : "AI-ul nu a găsit câmpuri noi de completat.");
@@ -149,7 +150,8 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
     }
   };
 
-  const markedNow = marked.filter((k) => applied && (k in applied.values || k === "title" || k === "description"));
+  const summaryRows = applied ? autofillSummaryRows(applied, marked) : [];
+  const visibleRows = showAll ? summaryRows : summaryRows.slice(0, 8);
 
   return (
     <div data-testid="listing-autofill-card">
@@ -176,22 +178,37 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
         </div>
       </div>
       {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" disabled={!hasInput || busy} onClick={() => void submit()}>
-          {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
-          {mode === "new" ? "Completează cu AI" : "Completează câmpurile goale cu AI"}
-        </Button>
-        {photoOrder ? <Button type="button" variant="outline" onClick={() => void applyOrder()}>Aplică ordinea propusă a pozelor</Button> : null}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" disabled={!hasInput || busy} onClick={() => void submit()}>
+            {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
+            {mode === "new" ? "Completează cu AI" : "Completează câmpurile goale cu AI"}
+          </Button>
+          {photoOrder ? <Button type="button" variant="outline" onClick={() => void applyOrder()}>Aplică ordinea propusă a pozelor</Button> : null}
+        </div>
+        {applied ? <div className="flex-1 space-y-2 rounded-card border border-border bg-muted/40 p-3 text-sm" data-testid="autofill-summary">
+          <p className="font-medium">Completat de AI: {autofillCountLabel(summaryRows.length)}</p>
+          {summaryRows.length || photoOrder ? <>
+            <ul className="space-y-1">
+              {visibleRows.map((row) => <li key={row.key} className="flex items-center gap-1.5 rounded-control bg-background px-2 py-1">
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="font-medium">{row.label}:</span> {row.value}
+                  {row.source ? <span className="text-muted-foreground"> · {row.source}</span> : null}
+                  {row.check ? <span className="text-muted-foreground"> · de verificat</span> : null}
+                </span>
+                <button type="button" aria-label={`Anulează ${row.label}`} className="shrink-0 rounded-full p-0.5 hover:bg-muted" onClick={() => onRemoveField(row.key)}><X className="size-3" /></button>
+              </li>)}
+              {photoOrder ? <li className="flex items-center gap-1.5 rounded-control bg-background px-2 py-1">
+                <span className="min-w-0 flex-1 truncate"><span className="font-medium">Ordinea pozelor:</span> schimbată (coperta nouă)</span>
+                <button type="button" aria-label="Anulează ordinea propusă a pozelor" className="shrink-0 rounded-full p-0.5 hover:bg-muted" onClick={() => setPhotoOrder(null)}><X className="size-3" /></button>
+              </li> : null}
+            </ul>
+            {summaryRows.length > 8 ? <button type="button" className="text-xs text-muted-foreground underline-offset-2 hover:underline" onClick={() => setShowAll((v) => !v)}>{showAll ? "Arată mai puțin" : `Arată tot (${summaryRows.length})`}</button> : null}
+          </> : <p className="text-muted-foreground">Nu am găsit câmpuri noi de completat.</p>}
+          {missing.length ? <p><span className="font-medium">Lipsește încă:</span> {missing.join(", ")}</p> : null}
+          {summaryRows.length ? <Button type="button" size="sm" variant="outline" onClick={onAcceptAll}>Acceptă tot</Button> : null}
+        </div> : null}
       </div>
-      {applied ? <div className="space-y-2 rounded-card border border-border bg-muted/40 p-3 text-sm" data-testid="autofill-summary">
-        <p className="font-medium">Completat de AI ({markedNow.length})</p>
-        {markedNow.length ? <ul className="flex flex-wrap gap-1.5">{markedNow.map((key) => <li key={key} className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-1">
-          {autofillFieldLabel(key)}{applied.sources?.[key] ? <span className="text-muted-foreground"> · {AUTOFILL_SOURCE_LABELS[applied.sources[key]!]}</span> : null}{applied.confidence[key] === "medium" ? <span className="text-muted-foreground"> · de verificat</span> : null}
-          <button type="button" aria-label={`Șterge ${autofillFieldLabel(key)}`} onClick={() => onRemoveField(key)}><X className="size-3" /></button>
-        </li>)}</ul> : <p className="text-muted-foreground">Nicio propunere rămasă.</p>}
-        {missing.length ? <p><span className="font-medium">Lipsește încă:</span> {missing.join(", ")}</p> : null}
-        {markedNow.length ? <Button type="button" size="sm" variant="outline" onClick={onAcceptAll}>Acceptă tot</Button> : null}
-      </div> : null}
     </FormSection>
     </div>
   );
