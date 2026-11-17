@@ -1,0 +1,2 @@
+import { defineConfig } from "vitest/config";
+export default defineConfig({ resolve: { alias: { "@": new URL("./src", import.meta.url).pathname } }, test: { environment: "node", include: ["src/lib/public-agencies-selection.test.ts", "src/lib/public-partners.test.ts", "src/routes/-agentii-page.test.ts"], testTimeout: 15000 } });

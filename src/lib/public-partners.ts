@@ -14,9 +14,8 @@ export function partnerLogoUrl(id: string): string {
 export function toPublicPartners(
   rows: { id: string; name: string; has_logo: boolean; public_slug: string | null }[],
 ): PublicPartner[] {
-  return rows
-    .map((r) => ({ name: r.name, logoUrl: r.has_logo ? partnerLogoUrl(r.id) : null, slug: r.public_slug }))
-    .sort((a, b) => a.name.localeCompare(b.name, "ro"));
+  // The public RPC orders by current access then name without exposing status.
+  return rows.map((r) => ({ name: r.name, logoUrl: r.has_logo ? partnerLogoUrl(r.id) : null, slug: r.public_slug }));
 }
 
 export function partnerInitials(name: string): string {

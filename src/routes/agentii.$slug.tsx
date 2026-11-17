@@ -91,7 +91,7 @@ function AgentCard({ agent }: { agent: PublicAgencyAgent }) {
 }
 
 function AgencyProfilePage() {
-  const { agency, agents } = Route.useLoaderData();
+  const { agency, agents, city } = Route.useLoaderData();
   return (
     <PublicLayout homeHeader footerDescription="Agenții imobiliare care lucrează cu Habitoo CRM.">
       <section className="mk-page-hero border-b">
@@ -112,6 +112,7 @@ function AgencyProfilePage() {
             <div className="min-w-0">
               <h1 className="break-words font-display text-4xl font-semibold text-navy sm:text-5xl">{agency.name}</h1>
               <p className="mt-3 text-lg text-muted-foreground">Agenție imobiliară parteneră Habitoo CRM.</p>
+              {city ? <p className="mt-2 text-muted-foreground">{city}</p> : null}
             </div>
           </div>
         </div>
@@ -121,7 +122,7 @@ function AgencyProfilePage() {
           {agency.description ? (
             <p className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">{agency.description}</p>
           ) : null}
-          <div className="space-y-5">
+          {agents.length > 0 ? <div className="space-y-5">
             <h2 className="font-display text-2xl font-semibold text-navy">Agenți</h2>
             {agents.length === 0 ? (
               <p className="text-muted-foreground">Niciun agent publicat încă.</p>
@@ -132,7 +133,7 @@ function AgencyProfilePage() {
                 ))}
               </ul>
             )}
-          </div>
+          </div> : null}
           <Link to="/agentii" className="inline-block text-sm font-semibold text-accent-foreground underline">
             Înapoi la lista agențiilor
           </Link>

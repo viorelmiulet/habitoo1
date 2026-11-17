@@ -27,7 +27,7 @@ describe("pagina publică a agențiilor partenere", () => {
   });
 
   it("spune explicit cum apare o agenție în listă", () => {
-    expect(content).toContain("Cont activ sau în perioada de probă");
+    expect(content).toContain("Agențiile reale rămân în listă");
     expect(content).toContain("Fără cerere de înscriere și fără taxă");
     expect(content).toContain("Pagină proprie de profil, opțională");
     expect(content).toContain("Datele de contact nu se publică");

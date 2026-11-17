@@ -21,7 +21,7 @@
 - Collaboration auto-activation lives only in the DB (insert trigger `properties_auto_collaboration`, RPC `collaboration_auto_activate`), copying the agency default commission only when none is explicit; `collaboration_opted_out` is never overridden. Why: one rule for all inserts.
 - `HomeHeader` only on homepage/blog; else `PublicHeader`. Why: isolate overlay.
 - Public photos share PublicPhotoHeading and a leaf asset registry; publicHead defaults elsewhere. Why: consistent previews.
-- Public agency pages: `/agentii` and public logo reads use `public_partner_eligible`; `public_partner_agencies` returns a slug only for enabled profiles. `/agentii/$slug` remains opt-in via `public_agency_profile`/`public_agency_agents`; agent phone only with `public_show_phone`. Why: list eligibility is independent of optional profile/contact disclosure.
+- Public agency list/logo/profile share eligibility; RPC ordering is preserved without exposing status. Profiles remain opt-in; agent contacts additionally require current access. Why: inactive visibility must not expose contact or alter private access.
 - Social posters share a dialog-scoped decoded-image pool for thumbnails/PNG; styles/templates persist locally and latest blob stays in memory. Why: avoid duplicate downloads and use the same poster at every destination.
 
 - Superadmin mail replies use a single nonmodal MailReplyWindow and the unchanged replyMail contract, with a stable draft send key and synchronous in-flight lock. Why: preserve draft state and prevent duplicate submissions without changing server behavior.

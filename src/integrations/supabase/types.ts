@@ -14247,6 +14247,7 @@ export type Database = {
           phone: string
         }[]
       }
+      public_agency_city: { Args: { _slug: string }; Returns: string }
       public_agency_profile: {
         Args: { _slug: string }
         Returns: {
@@ -14267,6 +14268,10 @@ export type Database = {
           name: string
           public_slug: string
         }[]
+      }
+      public_partner_current_access: {
+        Args: { o: Database["public"]["Tables"]["organizations"]["Row"] }
+        Returns: boolean
       }
       public_partner_eligible: {
         Args: { o: Database["public"]["Tables"]["organizations"]["Row"] }

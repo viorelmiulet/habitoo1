@@ -1,3 +1,9 @@
+## AG1 — Lista agențiilor publice
+- [x] Toate agențiile reale neascunse, ordine acces activ apoi alfabetică; fără status public
+- [x] Profiluri inactive fără agenți/contact; oraș public; număr/JSON-LD/sitemap folosesc aceeași listă. Profilurile nu erau și nu sunt în sitemap; pagina profilului nu afișează anunțuri.
+- [x] Lista reală desktop/telefon: 5 agenții, DENDY și Daniel prezente, JSON-LD și sitemap confirmate; fără erori sau depășire lățime
+- [x] 20 teste exclusiv noi/modificate trec, build OK; fără publicare. Niciun profil activat în datele reale: protecția profilurilor inactive verificată în baza izolată, fără activarea lor; commit la încheiere.
+
 ## AI19 — Timp de răspuns și rezervă autofill
 - [x] Diagnostic: Mistral neconfigurat, fallback absent; 503 și retry principal 60s×2. Corpul Google/poze/durate individuale nepăstrate; depășirea Worker neconfirmată.
 - [x] Rezervă Mistral sau flash-lite, 15s principal + 0,5s pauză + 8s rezervă; istoric limitat 1,5s; catalog compact, 4500 tokenuri, low deja existent

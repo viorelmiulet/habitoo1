@@ -9,12 +9,22 @@ import {
   type PublicPartner,
 } from "@/lib/public-partners";
 
-/** Citire anonimă prin funcția publică `public_partner_agencies` (fără acces la tabele). */
-export async function loadPublicPartners(): Promise<PublicPartner[]> {
+/** Publishable keys are opaque: public reads send apikey, never Bearer <key>. */
+function publicPartnerClient() {
   const url = process.env["SUPABASE_URL"];
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) throw new Error("Configurația publică lipsește.");
-  const db = createClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  return createClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: (input, init) => {
+    const headers = new Headers(init?.headers);
+    if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization");
+    headers.set("apikey", key);
+    return fetch(input, { ...init, headers });
+  } } });
+}
+
+/** Citire anonimă prin funcția publică `public_partner_agencies` (fără acces la tabele). */
+export async function loadPublicPartners(): Promise<PublicPartner[]> {
+  const db = publicPartnerClient();
   const { data, error } = await db.rpc("public_partner_agencies");
   if (error) throw new Error("Lista agențiilor partenere nu a putut fi încărcată.");
   return toPublicPartners(data ?? []);
@@ -26,18 +36,18 @@ export async function loadPublicPartners(): Promise<PublicPartner[]> {
  */
 export async function loadAgencyProfile(
   slug: string,
-): Promise<{ agency: PublicAgencyProfile; agents: PublicAgencyAgent[] } | null> {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) throw new Error("Configurația publică lipsește.");
-  const db = createClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+): Promise<{ agency: PublicAgencyProfile; agents: PublicAgencyAgent[]; city: string | null } | null> {
+  const db = publicPartnerClient();
   const { data, error } = await db.rpc("public_agency_profile", { _slug: slug });
   if (error) throw new Error("Profilul agenției nu a putut fi încărcat.");
   const row = (data ?? [])[0];
   if (!row) return null;
-  const { data: agents, error: agentsError } = await db.rpc("public_agency_agents", { _org: row.id });
-  if (agentsError) throw new Error("Profilul agenției nu a putut fi încărcat.");
-  return { agency: toPublicAgencyProfile(row), agents: toPublicAgencyAgents(agents) };
+  const [agentResult, cityResult] = await Promise.all([
+    db.rpc("public_agency_agents", { _org: row.id }),
+    db.rpc("public_agency_city", { _slug: slug }),
+  ]);
+  if (agentResult.error || cityResult.error) throw new Error("Profilul agenției nu a putut fi încărcat.");
+  return { agency: toPublicAgencyProfile(row), agents: toPublicAgencyAgents(agentResult.data), city: cityResult.data };
 }
 
 /** Pentru sitemap și llms.txt: `/agentii` apare doar dacă există cel puțin un partener. */

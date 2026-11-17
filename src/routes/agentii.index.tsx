@@ -103,7 +103,7 @@ function PartnersPage() {
           />
           {partners.length > 0 ? (
             <p className="mt-6 text-sm font-semibold text-navy">
-              {partners.length} {partners.length === 1 ? "agenție" : "agenții"} active acum în platformă.
+              {partners.length} {partners.length === 1 ? "agenție parteneră" : "agenții partenere"} Habitoo.
             </p>
           ) : null}
         </Container>
@@ -117,7 +117,7 @@ function PartnersPage() {
                 Lista se completează pe măsură ce agențiile își deschid contul în Habitoo.
               </h2>
               <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground">
-                O agenție apare aici automat când are cont activ sau este în perioada de probă — fără dosar de
+                O agenție reală apare aici automat când își deschide contul — fără dosar de
                 înscriere, fără aprobare și fără taxă de listare. Spune-ne ce cauți și îți spunem ce agenții
                 partenere lucrează în zona ta, sau creează contul agenției tale și intri în listă imediat.
               </p>

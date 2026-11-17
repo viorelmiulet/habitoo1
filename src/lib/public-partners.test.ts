@@ -25,16 +25,16 @@ describe("parteneri publici", () => {
     expect(partnerInitials(result[0]?.name ?? "")).toBe("DI");
   });
 
-  it("pagina primește doar nume, slug și logo, sortate alfabetic", () => {
+  it("pagina primește doar nume, slug și logo, păstrând ordinea funcției publice", () => {
     const out = toPublicPartners([
       { id: "00000000-0000-0000-0000-000000000002", name: "Zeta", has_logo: false, public_slug: "zeta" },
       { id: "00000000-0000-0000-0000-000000000001", name: "Alfa", has_logo: true, public_slug: null },
     ]);
-    expect(out.map((p) => p.name)).toEqual(["Alfa", "Zeta"]);
+    expect(out.map((p) => p.name)).toEqual(["Zeta", "Alfa"]);
     for (const p of out) expect(Object.keys(p).sort()).toEqual([...PUBLIC_PARTNER_KEYS].sort());
-    expect(out[0]!.logoUrl).toBe("/api/public/partner-logo/00000000-0000-0000-0000-000000000001");
-    expect(out[0]!.slug).toBeNull();
-    expect(out[1]!.slug).toBe("zeta");
+    expect(out[1]?.logoUrl).toBe("/api/public/partner-logo/00000000-0000-0000-0000-000000000001");
+    expect(out[1]?.slug).toBeNull();
+    expect(out[0]?.slug).toBe("zeta");
     expect(partnerInitials("MRM Imobiliare")).toBe("MI");
   });
 
