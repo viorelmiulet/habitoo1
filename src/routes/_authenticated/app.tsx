@@ -20,8 +20,7 @@ import { mustCompleteUserProfile } from "@/lib/user-profile";
 import { CompanyAnafSync } from "@/components/app/CompanyAnafSync";
 import { AiCreditsBanner } from "@/components/app/ai/AiCreditsBanner";
 import { usePresenceHeartbeat } from "@/hooks/use-presence-heartbeat";
-import { Messenger } from "@/components/app/chat/Messenger";
-import { messengerVisible } from "@/lib/chat/chat-rules";
+import { AiAgentBubble } from "@/components/app/ai-bubble/AiAgentBubble";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => appHead("Habitoo CRM — aplicație"),
@@ -91,7 +90,7 @@ function AppLayout() {
       {user.role === "agency_admin" && !user.impersonation && user.organization?.ai_enabled ? <AiCreditsBanner /> : null}
       <Outlet />
       <PortalBulkWatcher />
-      {messengerVisible({ isSuperadmin: user.isSuperadmin, hasOrganization: Boolean(user.organization), impersonating: Boolean(user.impersonation) }) ? <Messenger user={user} /> : null}
+      <AiAgentBubble />
       {user.role === "agency_admin" && !user.impersonation ? <CompanyAnafSync org={user.organization} /> : null}
     </AppShell>
   );
