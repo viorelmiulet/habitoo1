@@ -972,12 +972,12 @@ function Field({
       <div className="flex flex-wrap items-center gap-2">
         <Label>{label}</Label>
         {badge === "verified" ? (
-          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+          <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
             verificat
           </span>
         ) : null}
         {badge === "pending" ? (
-          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+          <span className="rounded-full bg-gold-tint px-2 py-0.5 text-[10px] font-medium text-warning-text">
             de verificat
           </span>
         ) : null}
@@ -988,7 +988,7 @@ function Field({
         onChange={(event) => onChange(event.target.value)}
       />
       {warning ? (
-        <p className="flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+        <p className="flex items-start gap-1.5 text-[11px] text-warning-text">
           <AlertTriangle className="mt-0.5 size-3 shrink-0" />
           {warning}
         </p>

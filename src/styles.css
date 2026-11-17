@@ -408,6 +408,17 @@ html.app-deep :where(div, fieldset):has(> label .ai-mark) :where(input, textarea
   background-color: rgba(91, 228, 255, 0.07);
 }
 /* Plăcuțe deschise pentru logo-uri. */
+/* CR5: badge-uri de status, taburi segmentate și filtre chip în toate ecranele CRM. */
+html.app-deep [data-slot="badge"] { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; border-color: transparent; }
+html.app-deep [data-slot="badge"][data-variant="default"] { background-color: rgba(224, 178, 92, 0.14); color: #E0B25C; border-color: rgba(224, 178, 92, 0.3); }
+html.app-deep [data-slot="badge"][data-variant="success"] { background-color: rgba(74, 222, 155, 0.12); color: #4ADE9B; border-color: rgba(74, 222, 155, 0.28); }
+html.app-deep [data-slot="badge"][data-variant="warning"] { background-color: rgba(224, 178, 92, 0.12); color: #E0B25C; border-color: rgba(224, 178, 92, 0.28); }
+html.app-deep [data-slot="badge"][data-variant="destructive"] { background-color: rgba(255, 138, 128, 0.12); color: #FF8A80; border-color: rgba(255, 138, 128, 0.28); }
+html.app-deep [data-slot="badge"]:is([data-variant="info"], [data-variant="secondary"]) { background-color: rgba(148, 180, 255, 0.08); color: #A9B6D3; border-color: rgba(148, 180, 255, 0.16); }
+html.app-deep [data-slot="badge"][data-variant="outline"] { border-color: rgba(148, 180, 255, 0.2); color: #C9D3EA; }
+html.app-deep [role="tablist"][data-variant="segmented"] { background-color: rgba(11, 18, 32, 0.8); border: 1px solid rgba(148, 180, 255, 0.1); }
+html.app-deep [role="tablist"][data-variant="segmented"] [role="tab"][data-state="active"] { box-shadow: none; background-color: rgba(224, 178, 92, 0.12); border-color: rgba(224, 178, 92, 0.35); color: #E0B25C; }
+html.app-deep :where(button, a)[aria-pressed="true"], html.app-deep [data-state="on"]:where(button) { border-color: #5BE4FF; background-color: rgba(91, 228, 255, 0.08); color: #EAF0FF; }
 html.app-deep .bg-plate { border-radius: 10px; color: #1A2440; }
 @media (prefers-reduced-motion: reduce) {
   html.app-deep *, html.app-deep *::before, html.app-deep *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
