@@ -1,0 +1,1 @@
+- Public theme: scoped `.mk-root` tokens + `ds-*` utilities in src/styles.css, never global `:root`. Why: CRM keeps its palette.
