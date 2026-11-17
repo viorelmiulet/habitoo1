@@ -252,18 +252,8 @@ function NewPropertyPage() {
         }
       />
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-      <aside className="min-w-0 lg:sticky lg:top-[7.5rem] lg:order-last">
-        <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} />
-      </aside>
-      <HintedForm
-        className="min-w-0 space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
-        <AiFieldMarksContext.Provider value={aiMarks}>
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <aside data-testid="sheet-ai-panel" className="min-w-0 space-y-4 lg:sticky lg:top-[7.5rem] lg:order-last lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto">
         <ListingAutofillCard
           mode="new"
           photos={pendingPhotos}
@@ -282,6 +272,16 @@ function NewPropertyPage() {
             localitySirutaCode: location.localitySirutaCode ?? undefined,
           } })}
         />
+        <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} />
+      </aside>
+      <HintedForm
+        className="min-w-0 space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          create.mutate();
+        }}
+      >
+        <AiFieldMarksContext.Provider value={aiMarks}>
         <PropertyFormLayout
           aside={<div data-tour="new-general"><FormSection title="Informații generale">
           <div className="grid gap-4">

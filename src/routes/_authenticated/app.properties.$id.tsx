@@ -1203,23 +1203,8 @@ function PropertyDetailContent() {
 
         <TabsContent value="overview" className="space-y-6" data-tour="property-overview">
           {editing ? (
-            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-            {completeness ? <aside className="min-w-0 lg:sticky lg:top-[7.5rem] lg:order-last">
-              <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} />
-            </aside> : null}
-            <AiFieldMarksContext.Provider value={aiMarks}>
-            <HintedForm
-              id="property-details-form"
-              className="min-w-0 space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!hasTransactionSelection(tx)) {
-                  toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
-                  return;
-                }
-                save.mutate(buildEditPatch());
-              }}
-            >
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <aside data-testid="sheet-ai-panel" className="min-w-0 space-y-4 lg:sticky lg:top-[7.5rem] lg:order-last lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto">
               <ListingAutofillCard
                 mode="edit"
                 propertyId={id}
@@ -1237,6 +1222,21 @@ function PropertyDetailContent() {
                   localitySirutaCode: location.localitySirutaCode ?? undefined,
                 } })}
               />
+              {completeness ? <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} /> : null}
+            </aside>
+            <AiFieldMarksContext.Provider value={aiMarks}>
+            <HintedForm
+              id="property-details-form"
+              className="min-w-0 space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!hasTransactionSelection(tx)) {
+                  toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
+                  return;
+                }
+                save.mutate(buildEditPatch());
+              }}
+            >
               <PropertyFormLayout
                 aside={<>
                   <PropertyMainPhoto propertyId={id} title={property.title} />

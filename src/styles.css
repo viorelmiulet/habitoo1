@@ -1008,3 +1008,6 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
 .mk-root .ds-cover-fallback { background: #0E1628; color: #EAF0FF; }
 .mk-root .integration-node .text-navy, .mk-root .integration-node span.font-semibold, .mk-root .integration-map-listing .text-navy { color: #1A2440; }
 .mk-root .ds-cover-frame { padding: 14px; }
+
+/* CR4 — fișa: câmpurile goale din caracteristici au bordură punctată (tema închisă). */
+html.app-deep :where([data-tour="edit-details"], [data-tour="new-details"]) input:placeholder-shown:not(:focus) { border-style: dashed; }
