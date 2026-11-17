@@ -174,3 +174,29 @@ async function saveMapping(
     { onConflict: "organization_id,profile_id" },
   );
 }
+
+/** RP2: retransmite datele curente ale agentului (nume, email, telefon) la Imobiliare.ro. */
+export async function updateImobiliareAgent(input: {
+  session: ImobiliareSession;
+  organizationId: string;
+  agentId: number;
+  profile: { full_name: string | null; email: string | null; phone: string | null };
+}): Promise<{ ok: true } | { ok: false; message: string }> {
+  const email = input.profile.email?.trim().toLowerCase() ?? "";
+  const phone = normalizeImobiliarePhone(input.profile.phone);
+  const whatsapp = normalizeImobiliareMobile(input.profile.phone);
+  if (!phone || !whatsapp) return { ok: false, message: noPhoneMessage(input.profile.full_name) };
+  const res = await imobiliareAuthedRequest(input.session, {
+    method: "PUT",
+    path: `${IMOBILIARE_PATHS.agents}/${input.agentId}`,
+    connectionKey: input.organizationId,
+    body: {
+      name: input.profile.full_name?.trim() || email,
+      ...(email ? { email } : {}),
+      phones: [{ value: phone, type: "phone_number" }],
+      whatsapp_number: whatsapp,
+    },
+  });
+  if (res.ok) return { ok: true };
+  return { ok: false, message: res.classification?.message ?? `Imobiliare.ro a răspuns HTTP ${res.status}.` };
+}

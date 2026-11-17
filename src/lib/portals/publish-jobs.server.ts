@@ -168,7 +168,7 @@ type Admin = any;
 export async function runPortalPublishWorker(
   admin: Admin,
   apply: PublishApplyFn,
-  opts: { concurrency?: number; budgetMs?: number; portalName?: (id: string) => string } = {},
+  opts: { concurrency?: number; budgetMs?: number; portalName?: (id: string) => string; agentSync?: import("./agent-sync").AgentSyncDeps } = {},
 ): Promise<{ claimed: number; done: number; failed: number; retried: number }> {
   const concurrency = Math.min(opts.concurrency ?? PUBLISH_JOB_CONCURRENCY, 3);
   const budgetMs = opts.budgetMs ?? PUBLISH_JOB_BUDGET_MS;
@@ -218,7 +218,12 @@ export async function runPortalPublishWorker(
           const { runZonataLoggedJob } = await import("./zonata/job-log.server");
           outcome = await runZonataLoggedJob(admin, job, apply);
         } else {
-          outcome = await withJobDeadline(() => apply(job));
+          const { withRepublishAgentSync } = await import("./agent-sync");
+          const agentSync = opts.agentSync ?? (job.republish_batch_id
+            ? (await import("./agent-sync.server")).realAgentSyncDeps(admin)
+            : null);
+          outcome = await withJobDeadline(() =>
+            agentSync ? withRepublishAgentSync(job, apply, agentSync) : apply(job));
         }
       } catch (e) {
         thrown = e;
