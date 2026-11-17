@@ -92,6 +92,14 @@ describe("meniul lateral randat", () => {
     expect(document.querySelector('[data-tour="nav:/app/collaboration"]')).not.toBeNull();
     expect(document.body.textContent).toContain("MVA Imobiliare");
   });
+  it('nu randează cardul „Agentul AI" din meniu, nici extins nici restrâns', () => {
+    renderSidebar(agencyNavFor(true), false);
+    expect(document.querySelector('[data-testid="sidebar-ai-agent"]')).toBeNull();
+    expect(document.body.textContent).not.toContain("Deschide Agentul AI");
+    renderSidebar(agencyNavFor(true), true);
+    expect(document.querySelector('[data-testid="sidebar-ai-agent"]')).toBeNull();
+    expect(document.body.textContent).not.toContain("Deschide Agentul AI");
+  });
   it("restrâns folosește iconița deschisă, iar meniul extins logo-ul lat", () => {
     renderSidebar(agencyNavFor(true), true);
     const mark = document.querySelector<HTMLImageElement>('a[aria-label="Habitoo CRM — acasă"] img');

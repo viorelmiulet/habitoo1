@@ -585,15 +585,6 @@ export function AppSidebar({
         ) : null}
       </nav>
 
-      {!isPlatform && !collapsed ? (
-        <div data-testid="sidebar-ai-agent" className="ai-agent-card mx-2 mb-2 rounded-card border border-ai/30 bg-ai/5 p-3">
-          <p className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.16em] text-ai uppercase"><span aria-hidden className="size-1.5 rounded-full bg-ai" />Agentul AI</p>
-          <p className="mt-1.5 text-xs text-sidebar-foreground">Întreabă orice despre clienți, cereri și proprietăți.</p>
-          <Button asChild size="sm" className="mt-2.5 h-10 w-full bg-ai font-semibold text-ai-foreground hover:bg-ai/90">
-            <Link to="/app/ai" onClick={onNavigate}>Deschide Agentul AI</Link>
-          </Button>
-        </div>
-      ) : null}
       <div className="border-t border-sidebar-border p-2">
 
         {user ? (
