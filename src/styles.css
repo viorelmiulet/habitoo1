@@ -763,7 +763,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
   color: var(--ds-text);
   font-family: var(--font-sans);
 }
-.mk-root :where(h1, h2, h3, .font-display) { font-family: var(--font-display); letter-spacing: -0.025em; color: var(--ds-text); }
+.mk-root :where(h1, h2, h3, .font-display):not(.font-mono) { font-family: var(--font-display); letter-spacing: -0.025em; color: var(--ds-text); }
 .mk-root h1 { font-weight: 700; }
 .mk-root :where(h2, h3) { font-weight: 600; }
 .mk-root :where(.text-navy, .text-surface, .text-foreground) { color: var(--ds-text); }
