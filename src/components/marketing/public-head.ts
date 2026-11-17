@@ -41,7 +41,7 @@ export function publicHead({
   noindex,
 }: PublicHeadOptions) {
   const url = `${SITE_URL}${path === "/" ? "/" : path}`;
-  const image = coverPaths.has(path) ? `${SITE_URL}/assets/page-og/${path === "/" ? "home" : path.slice(1).replaceAll("/", "--")}.jpg` : _ogImage;
+  const image = coverPaths.has(path) ? `${SITE_URL}/assets/page-og/${path === "/" ? "home" : path.slice(1).replaceAll("/", "--")}.jpg?v=rd2` : _ogImage;
   const modified = contentModified(path);
   const nodes = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
   const pageId = `${url}#webpage`;
@@ -58,6 +58,7 @@ export function publicHead({
     { property: "og:site_name", content: SITE_NAME },
     { property: "og:locale", content: "ro_RO" },
     { name: "twitter:card", content: "summary_large_image" },
+    { name: "theme-color", content: "#05080F" },
     { name: "twitter:title", content: ogTitle ?? title },
     { name: "twitter:description", content: ogDescription ?? description },
   ];

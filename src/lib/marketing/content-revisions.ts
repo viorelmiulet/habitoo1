@@ -1,6 +1,6 @@
 /** Editorial dates: change only when the corresponding page content changes. */
 export const CONTENT_MODIFIED: Record<string, string> = {
-  "/": "2026-10-10", "/functionalitati": "2026-11-17",
+  "/": "2026-11-17", "/functionalitati": "2026-11-17",
   "/anunturi-proprietari": "2026-11-17", "/analiza-comparativa-de-piata": "2026-11-17",
   "/colaborare-intre-agentii": "2026-11-17", "/comisioane-agenti-imobiliari": "2026-11-17",
   "/import-proprietati": "2026-11-17", "/preturi": "2026-11-17", "/despre": "2026-09-27",
