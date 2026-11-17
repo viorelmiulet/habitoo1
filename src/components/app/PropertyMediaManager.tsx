@@ -29,6 +29,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { moveItem, withPrimaryFirst } from "@/lib/media-order";
+import { rememberManualCover } from "@/lib/ai/listing-autofill/photo-order";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
@@ -206,6 +207,7 @@ export function PropertyMediaManager({
 
   const reorder = useMutation({
     onMutate: (ordered: ImageRow[]) => {
+      if (ordered[0] && ordered[0].id !== images[0]?.id) rememberManualCover(propertyId, ordered[0].id);
       queryClient.setQueryData(queryKey, withPrimaryFirst(ordered));
     },
     mutationFn: async (ordered: ImageRow[]) => {

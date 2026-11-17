@@ -8,6 +8,7 @@
  * explicit în textul agentului sau în transcrierea vocii, niciodată din poze.
  */
 import { z } from "zod";
+import { validatedPhotoOrder } from "./photo-order";
 import { normalizeListingText } from "@/lib/ai/text-correction/text";
 import * as taxonomy from "@/lib/property-taxonomy";
 import { propertyTypeLabels } from "@/lib/labels";
@@ -300,14 +301,8 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
     if (basics.length) { values.utilities = basics; confidence.utilities = "medium"; sources.utilities = "derived"; }
   }
 
-  let photoOrder: number[] | null = null;
-  const order = response.photo_order ?? null;
-  if (order && ctx.photoCount > 1) {
-    const unique = [...new Set(order.filter((i) => i >= 0 && i < ctx.photoCount))];
-    const rest = Array.from({ length: ctx.photoCount }, (_, i) => i).filter((i) => !unique.includes(i));
-    const full = [...unique, ...rest];
-    photoOrder = full.some((v, i) => v !== i) ? full : null;
-  }
+  const order = validatedPhotoOrder(response.photo_order, ctx.photoCount);
+  const photoOrder = order?.some((v, i) => v !== i) ? order : null;
 
   return { values, confidence, sources, title: title ? normalizeListingText(title) : null, description: description ? normalizeListingText(description) : null, photoOrder, ignored };
 }

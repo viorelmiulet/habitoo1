@@ -58,7 +58,9 @@ REGULI:
 - Prioritate: alegerea agentului > text explicit > istoric al aceluiași imobil > poze > deducție. Istoricul este furnizat separat și se aplică în cod; nu îl retranscrie ca text explicit și nu copia din el etajul, suprafețele, prețul, camerele sau finisajele interioare.
 - Dacă nu ești sigur, pune confidence "low" sau omite câmpul.
 - Titlul și descrierea în română, doar cu fapte din câmpurile propuse și din ce a spus agentul; fără promisiuni, superlative, distanțe sau facilități de zonă nespuse.
-- "photo_order": indicii pozelor (de la 0) în ordinea recomandată; prima = coperta, cea mai reprezentativă.
+- "photo_order": o permutare completă a tuturor indicilor pozelor (de la 0), fiecare exact o dată; null dacă nu poți recomanda o ordine.
+- Coperta: cea mai reprezentativă și atractivă fotografie, de obicei livingul sau camera principală, luminoasă, clară, orizontală, fără oameni sau obiecte personale în prim-plan. La case/vile preferă fațada sau exteriorul dacă arată bine. Nu alege baie, hol, plan, document, captură de ecran, fotografie întunecată sau neclară.
+- Restul în ordinea logică de vizitare: living → bucătărie → dormitoare → băi → balcon/terasă → exterior/clădire → planuri și documente. Fotografiile foarte slabe (neclare, întunecate, duplicate) merg la final; nu le elimina.
 CÂMPURI PERMISE:
 `;
 

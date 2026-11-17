@@ -15,6 +15,7 @@ import { useAiFeatures } from "@/hooks/use-ai-features";
 import { supabase } from "@/integrations/supabase/client";
 import { MEDIA_BUCKET, compressImage, signedUrls } from "@/lib/storage";
 import { reorderPropertyPhotos } from "@/lib/property-photo-upload";
+import { manualCoverFor, orderedPhotos } from "@/lib/ai/listing-autofill/photo-order";
 import { autofillListing } from "@/lib/ai/listing-autofill/autofill.functions";
 import {
   AUTOFILL_IMAGE_MAX_EDGE,
@@ -61,7 +62,11 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [photoOrder, setPhotoOrder] = useState<number[] | null>(null);
+  const [originalPhotos, setOriginalPhotos] = useState<File[] | string[] | null>(null);
+  const [coverPreserved, setCoverPreserved] = useState(false);
+  const manualCover = useRef<File | undefined>(undefined);
+  const currentPhotos = useRef(photos);
+  currentPhotos.current = photos;
   const [applied, setApplied] = useState<AutofillProposal | null>(null);
   const [showAll, setShowAll] = useState(false);
 
@@ -69,7 +74,8 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
     queryKey: ["property-images", propertyId],
     enabled: mode === "edit" && Boolean(propertyId),
     queryFn: async () => {
-      const { data, error: e } = await supabase.from("property_images").select("id,storage_path,position").eq("property_id", propertyId!).order("position", { ascending: true });
+      if (!propertyId) return [];
+      const { data, error: e } = await supabase.from("property_images").select("id,storage_path,position").eq("property_id", propertyId).order("position", { ascending: true });
       if (e) throw e;
       return (data ?? []) as { id: string; storage_path: string | null; position: number }[];
     },
@@ -95,18 +101,21 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
     const next = [...photos, ...Array.from(list).filter((f) => f.type.startsWith("image/"))];
     if (next.length > AUTOFILL_MAX_PHOTOS) toast.info(`Analizăm primele ${AUTOFILL_MAX_PHOTOS} poze.`);
     onPhotosChange(next);
-    setPhotoOrder(null);
   };
 
   const submit = async () => {
     setError(null);
     setBusy(true);
+    const photosAtRun = [...photos];
+    const galleryAtRun = [...(existing.data ?? [])];
     try {
       let files: File[] = photos.slice(0, AUTOFILL_MAX_PHOTOS);
       if (mode === "edit") {
-        const signed = await signedUrls(MEDIA_BUCKET, existingImages.map((i) => i.storage_path!));
+        const signed = await signedUrls(MEDIA_BUCKET, existingImages.flatMap((i) => i.storage_path ? [i.storage_path] : []));
         files = await Promise.all(existingImages.map(async (img, i) => {
-          const blob = await (await fetch(signed[img.storage_path!]!)).blob();
+          const url = img.storage_path ? signed[img.storage_path] : undefined;
+          if (!url) throw new Error("Fotografie indisponibilă.");
+          const blob = await (await fetch(url)).blob();
           return new File([blob], `foto-${i}.jpg`, { type: blob.type || "image/jpeg" });
         }));
       }
@@ -120,7 +129,28 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
       const shown = onProposal(result.proposal);
       setApplied(shown);
       setShowAll(false);
-      setPhotoOrder(result.proposal.photoOrder);
+      setOriginalPhotos(null);
+      setCoverPreserved(false);
+      try {
+        if (mode === "new" && currentPhotos.current.length === photosAtRun.length && currentPhotos.current.every((p, i) => p === photosAtRun[i])) {
+          const cover = manualCover.current;
+          const next = orderedPhotos(photosAtRun, photosAtRun.slice(0, AUTOFILL_MAX_PHOTOS), result.proposal.photoOrder, cover);
+          if (next && onPhotosChange) { onPhotosChange(next); setOriginalPhotos(photosAtRun); }
+          if (cover && result.proposal.photoOrder) setCoverPreserved(true);
+        } else if (mode === "edit" && propertyId) {
+          const ids = galleryAtRun.map((img) => img.id);
+          const latest = queryClient.getQueryData<typeof galleryAtRun>(["property-images", propertyId]);
+          if (!latest || latest.length !== ids.length || latest.some((img, i) => img.id !== ids[i])) return;
+          const cover = manualCoverFor(propertyId);
+          const next = orderedPhotos(ids, existingImages.map((img) => img.id), result.proposal.photoOrder, cover);
+          if (next) {
+            await reorderPropertyPhotos(next);
+            setOriginalPhotos(ids);
+            await queryClient.invalidateQueries({ queryKey: ["property-images", propertyId] });
+          }
+          if (cover && result.proposal.photoOrder) setCoverPreserved(true);
+        }
+      } catch { toast.error("Ordinea nu a putut fi aplicată. Încearcă din nou."); }
       const count = Object.keys(shown.values).length + (shown.title ? 1 : 0) + (shown.description ? 1 : 0);
       toast.success(count ? `AI-ul a propus ${count} câmpuri. Verifică-le înainte de salvare.` : "AI-ul nu a găsit câmpuri noi de completat.");
     } catch {
@@ -130,24 +160,25 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
     }
   };
 
-  const applyOrder = async () => {
-    if (!photoOrder) return;
+  const undoOrder = async () => {
+    if (!originalPhotos || busy) return;
     if (mode === "new") {
-      onPhotosChange?.(photoOrder.map((i) => photos[i]!).concat(photos.slice(photoOrder.length)));
-      setPhotoOrder(null);
-      toast.success("Ordinea propusă a fost aplicată. Prima poză va fi coperta.");
+      const before = originalPhotos.filter((p): p is File => typeof p !== "string");
+      const now = currentPhotos.current;
+      onPhotosChange?.([...before.filter((p) => now.includes(p)), ...now.filter((p) => !before.includes(p))]);
+      setOriginalPhotos(null);
       return;
     }
+    setBusy(true);
     try {
-      const ids = photoOrder.map((i) => existingImages[i]!.id);
-      const rest = (existing.data ?? []).map((i) => i.id).filter((id) => !ids.includes(id));
-      await reorderPropertyPhotos([...ids, ...rest]);
+      const before = originalPhotos.filter((p): p is string => typeof p === "string");
+      const now = (existing.data ?? []).map((p) => p.id);
+      await reorderPropertyPhotos([...before.filter((id) => now.includes(id)), ...now.filter((id) => !before.includes(id))]);
       await queryClient.invalidateQueries({ queryKey: ["property-images", propertyId] });
-      setPhotoOrder(null);
-      toast.success("Ordinea fotografiilor a fost aplicată.");
+      setOriginalPhotos(null);
     } catch {
-      toast.error("Ordinea nu a putut fi aplicată. Încearcă din nou.");
-    }
+      toast.error("Ordinea inițială nu a putut fi restaurată. Încearcă din nou.");
+    } finally { setBusy(false); }
   };
 
   const summaryRows = applied ? autofillSummaryRows(applied, marked) : [];
@@ -165,7 +196,8 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
               {previews.map((url, i) => <div key={url} className="relative size-16 overflow-hidden rounded-control border border-border">
                 <img src={url} alt={`Poza ${i + 1}`} className="size-full object-cover" />
                 {i === 0 ? <span className="absolute bottom-0 left-0 right-0 bg-primary/85 text-center text-[10px] text-primary-foreground">Copertă</span> : null}
-                <button type="button" aria-label={`Elimină poza ${i + 1}`} className="absolute right-0.5 top-0.5 rounded-full bg-background/90 p-0.5" onClick={() => onPhotosChange?.(photos.filter((_, j) => j !== i))}><X className="size-3" /></button>
+                {i > 0 ? <Button type="button" size="icon" variant="secondary" disabled={busy} title="Alege coperta" aria-label={`Alege poza ${i + 1} drept copertă`} className="absolute bottom-0 left-0 size-5" onClick={() => { const chosen = photos[i]; if (!chosen) return; manualCover.current = chosen; onPhotosChange?.([chosen, ...photos.filter((p) => p !== chosen)]); }}><ImagePlus className="size-3" /></Button> : null}
+                <Button type="button" size="icon" variant="secondary" disabled={busy} aria-label={`Elimină poza ${i + 1}`} className="absolute right-0.5 top-0.5 size-5 rounded-full" onClick={() => onPhotosChange?.(photos.filter((_, j) => j !== i))}><X className="size-3" /></Button>
               </div>)}
               <Button type="button" variant="outline" className="size-16 flex-col gap-0.5 p-0 text-[11px]" onClick={() => fileRef.current?.click()}><ImagePlus className="size-4" />Adaugă</Button>
             </div>
@@ -184,11 +216,11 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
             {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
             {mode === "new" ? "Completează cu AI" : "Completează câmpurile goale cu AI"}
           </Button>
-          {photoOrder ? <Button type="button" variant="outline" onClick={() => void applyOrder()}>Aplică ordinea propusă a pozelor</Button> : null}
         </div>
         {applied ? <div className="flex-1 space-y-2 rounded-card border border-border bg-muted/40 p-3 text-sm" data-testid="autofill-summary">
           <p className="font-medium">Completat de AI: {autofillCountLabel(summaryRows.length)}</p>
-          {summaryRows.length || photoOrder ? <>
+          {coverPreserved ? <p className="text-xs text-muted-foreground">Coperta aleasă de tine a rămas neschimbată.</p> : null}
+          {summaryRows.length || originalPhotos ? <>
             <ul className="space-y-1">
               {visibleRows.map((row) => <li key={row.key} className="flex items-center gap-1.5 rounded-control bg-background px-2 py-1">
                 <span className="min-w-0 flex-1 truncate">
@@ -198,9 +230,9 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
                 </span>
                 <button type="button" aria-label={`Anulează ${row.label}`} className="shrink-0 rounded-full p-0.5 hover:bg-muted" onClick={() => onRemoveField(row.key)}><X className="size-3" /></button>
               </li>)}
-              {photoOrder ? <li className="flex items-center gap-1.5 rounded-control bg-background px-2 py-1">
-                <span className="min-w-0 flex-1 truncate"><span className="font-medium">Ordinea pozelor:</span> schimbată (coperta nouă)</span>
-                <button type="button" aria-label="Anulează ordinea propusă a pozelor" className="shrink-0 rounded-full p-0.5 hover:bg-muted" onClick={() => setPhotoOrder(null)}><X className="size-3" /></button>
+              {originalPhotos ? <li className="flex items-center gap-1.5 rounded-control bg-background px-2 py-1">
+                <span className="min-w-0 flex-1"><span className="font-medium">Ordinea pozelor:</span> schimbată{coverPreserved ? " (coperta păstrată)" : " (coperta nouă)"}</span>
+                <Button type="button" size="icon" variant="ghost" disabled={busy} aria-label="Anulează ordinea propusă a pozelor" className="size-6 shrink-0 rounded-full" onClick={() => void undoOrder()}><X className="size-3" /></Button>
               </li> : null}
             </ul>
             {summaryRows.length > 8 ? <button type="button" className="text-xs text-muted-foreground underline-offset-2 hover:underline" onClick={() => setShowAll((v) => !v)}>{showAll ? "Arată mai puțin" : `Arată tot (${summaryRows.length})`}</button> : null}

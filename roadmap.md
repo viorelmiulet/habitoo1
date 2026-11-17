@@ -1,3 +1,8 @@
+## AI18 — Ordinea automată a pozelor
+- [x] Aplicare automată creare/editare, anulare în memorie și protecție copertă manuală
+- [x] Prompt și validare strictă photo_order, teste țintite; fără publicare
+- [ ] Verificare în formular autentificat: solicitantul nu are cont disponibil pentru autentificare în previzualizare; fluxurile creare/editare sunt verificate prin teste cu răspunsuri simulate, fără scrieri reale.
+
 ## AI17 — Completare aprofundată
 - [x] Tabel de reguli și prioritate agent > text > istoric > poze > deducții; prompt aprofundat și 8000 tokenuri
 - [x] Istoric prin accesul agentului, aceeași organizație, adresă apoi <30m, maximum 20; rezumat și context formular
