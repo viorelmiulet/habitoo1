@@ -10,6 +10,7 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
+- Text correction shares pure guards and form approval. Why: never auto-save changed facts.
 - Media/expiry rules: src/lib/portals/AGENTS.md. Why: scoped portal policies.
 - Property status sold/rented/archived enqueues `portal_status_withdraw_items` (armed cron) withdrawing via `applyPortalSelectionForOrg` enabled:false; no auto-republish. Why: same path as manual deselect, with retries.
 - Property deletion is soft: only RPCs `delete_property`/`restore_property` touch `deleted_at` (guard trigger + RLS hide deleted rows from non-superadmins); portal withdrawals reuse `enqueueStatusWithdrawals` with reason `deleted`. Why: only superadmin restores or hard-deletes, and restore never republishes.

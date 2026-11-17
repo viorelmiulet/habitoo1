@@ -1,3 +1,9 @@
+## AI15 — Corectarea formei textului
+- [x] Corectare titlu/descriere cu previzualizare în formularul comun, credite text_fast și rezervă existentă; activare prin ai_marketing
+- [x] Normalizare deterministă, validarea numerelor/lungimii/contactelor și normalizare autofill
+- [x] Teste noi fără AI real, build OK; fără publicare
+- [ ] Verificare în cont: solicitantul nu are cont asociat; necesită autentificare în previzualizare. Aplicarea/anularea verificate cu răspuns simulat în testul componentei.
+
 ## EX1 — Redenumire „Habitoo Captură” → „Habitoo Catch”
 - [x] Numele nou în toate textele afișate: /extensie-chrome (titlu, meta, pași), Setări → Profil, ecranul „Permite”, notificarea fără dispozitive, politica de confidențialitate
 - [x] Neschimbate: URL /extensie-chrome, ID Chrome Web Store, endpointuri /api/public/extension/v1/*, tabele, sursa contactelor „Captură <site>”, activitatea „Importat cu extensia Chrome din …”

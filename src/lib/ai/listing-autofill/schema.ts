@@ -8,6 +8,7 @@
  * explicit în textul agentului sau în transcrierea vocii, niciodată din poze.
  */
 import { z } from "zod";
+import { normalizeListingText } from "@/lib/ai/text-correction/text";
 import * as taxonomy from "@/lib/property-taxonomy";
 import { propertyTypeLabels } from "@/lib/labels";
 import { ENERGY_CLASS_OPTIONS } from "@/lib/property-energy-class";
@@ -254,7 +255,7 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
     photoOrder = full.some((v, i) => v !== i) ? full : null;
   }
 
-  return { values, confidence, sources, title, description, photoOrder, ignored };
+  return { values, confidence, sources, title: title ? normalizeListingText(title) : null, description: description ? normalizeListingText(description) : null, photoOrder, ignored };
 }
 
 function isEmpty(value: unknown): boolean {
