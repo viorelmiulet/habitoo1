@@ -16,6 +16,11 @@ const inputSchema = z.object({
     title: z.string().max(500).optional(),
     description: z.string().max(20000).optional(),
     known: z.record(z.string(), z.union([z.string().max(500), z.number(), z.boolean(), z.array(z.string().max(200)).max(60), z.null()])).optional(),
+    location: z.object({
+      propertyId: z.string().uuid().optional(), address: z.string().max(500).optional(), city: z.string().max(200).optional(),
+      street: z.string().max(300).optional(), streetNumber: z.string().max(50).optional(), residentialComplex: z.string().max(300).optional(),
+      lat: z.number().min(-90).max(90).optional(), lng: z.number().min(-180).max(180).optional(), localitySirutaCode: z.number().int().optional(),
+    }).optional(),
   }).optional(),
 });
 
@@ -39,10 +44,16 @@ export const autofillListing = createServerFn({ method: "POST" })
     if (!provider) return { ok: false, message: "Serviciul AI nu este configurat momentan." };
 
     const { executeListingAutofill } = await import("./charge.server");
+    const { loadAutofillHistory } = await import("./history.server");
+    const enrichment = await loadAutofillHistory(context.supabase, organizationId, data.context?.location).catch(() => {
+      console.error("[ai_listing_autofill] history unavailable");
+      return { history: { values: {}, confidence: {} }, urban: false };
+    });
     return executeListingAutofill({ organizationId, userId: context.userId }, provider, {
       images: data.images,
       text: data.text,
       context: data.context,
+      ...enrichment,
     }).catch((error: unknown) => {
       console.error("[ai_listing_autofill] failed", error instanceof Error ? error.name : "error");
       return { ok: false as const, message: error instanceof Error && error.name === "AiCreditsExhaustedError" ? error.message : AUTOFILL_INVALID_MESSAGE };

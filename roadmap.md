@@ -1,3 +1,10 @@
+## AI17 — Completare aprofundată
+- [x] Tabel de reguli și prioritate agent > text > istoric > poze > deducții; prompt aprofundat și 8000 tokenuri
+- [x] Istoric prin accesul agentului, aceeași organizație, adresă apoi <30m, maximum 20; rezumat și context formular
+- [x] 16 teste noi fără apeluri reale, inclusiv citire simulată și aplicare în formular; fără publicare
+- Nu există residential_complex în schema actuală: potrivirea după complex nu se activează. Pază/acces cu cartelă nu au opțiuni în nomenclator; nu sunt mapate la alte dotări. Pod folosește câmpul existent has_loft, curte opțiunea Imobil.
+- [ ] Verificare vizuală cu cont și istoric real: necesită autentificarea solicitantului; testele folosesc date simulate, fără salvări.
+
 ## AI16 — Camere și dormitoare
 - [x] Completare suplimentară: camere/dormitoare din poze și texte generate validate, medium/derived, cu prioritate pentru agent; 37 teste modificate, inclusiv aplicare în draft cu furnizor simulat
 - [x] Titlul ajunge în context; forma „3 camere” este recunoscută deja. Lipsesc singular/prescurtări/studio/dormitoare și deducții; zero nu era gol. Formularul nou nu inițializează camere/dormitoare cu numere.

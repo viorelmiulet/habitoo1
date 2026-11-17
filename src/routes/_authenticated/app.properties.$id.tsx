@@ -1232,7 +1232,10 @@ function PropertyDetailContent() {
                 onRemoveField={(key) => { clearAutofillField(key, autofillSetters); setAiMarked((m) => m.filter((k) => k !== key)); }}
                 onAcceptAll={() => setAiMarked([])}
                 missing={(completeness?.items ?? []).filter((item) => !item.done).map((item) => item.label)}
-                formContext={() => ({ title: draft.title, description: draft.description, known: autofillKnownValues(editAutofillCurrent()) })}
+                formContext={() => ({ title: draft.title, description: draft.description, known: autofillKnownValues(editAutofillCurrent()), location: {
+                  propertyId: id, address: draft.address, city: location.localityName || draft.city, lat: coords?.lat, lng: coords?.lng,
+                  localitySirutaCode: location.localitySirutaCode ?? undefined,
+                } })}
               />
               <PropertyFormLayout
                 aside={<>

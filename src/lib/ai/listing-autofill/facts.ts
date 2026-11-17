@@ -4,6 +4,7 @@
  */
 import { FLOOR_LABEL_NUMBER, syncFloor } from "@/lib/property-floor";
 import { isAutofillFieldEmpty } from "./empty";
+import * as taxonomy from "@/lib/property-taxonomy";
 
 export function plainRo(value: string): string {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
@@ -128,14 +129,74 @@ const TYPE_WORDS: [RegExp, string][] = [
   [/\bbirou\b/, "office"],
 ];
 
+type FeatureRule = { pattern?: RegExp; condition?: (known: Record<string, unknown>) => boolean; key: string; value: string | boolean; multi?: boolean };
+/** Exact taxonomy values; extend here, never invent an unavailable option. */
+export const AUTOFILL_FEATURE_RULES: FeatureRule[] = [
+  { condition: (k) => Number(k.building_floors) >= 4 || Number(k.floor) >= 4, key: "building_amenities", value: taxonomy.buildingAmenityOptions[3], multi: true },
+  { pattern: /\b(?:lift|ascensor)\b/, key: "building_amenities", value: "Lift", multi: true },
+  { pattern: /\bcentrala (?:proprie|termica)\b/, key: "heating_systems", value: "Centrală proprie", multi: true },
+  { pattern: /\b(?:termoficare|radet)\b/, key: "heating_systems", value: "Termoficare", multi: true },
+  { pattern: /\b(?:aer conditionat|ac|clima)\b/, key: "cooling_systems", value: "Aer condiționat", multi: true },
+  { pattern: /\bfibra optica\b/, key: "utilities", value: "Fibră optică", multi: true },
+  { pattern: /\binternet\b/, key: "utilities", value: "Acces internet", multi: true },
+  { pattern: /\bcanalizare\b/, key: "utilities", value: "Canalizare", multi: true },
+  { pattern: /\bgaz(?:e)?\b/, key: "utilities", value: "Gaz", multi: true },
+  { pattern: /\bapa curenta\b/, key: "utilities", value: "Apă", multi: true },
+  { pattern: /\b(?:curent|electricitate)\b/, key: "utilities", value: "Curent electric", multi: true },
+  { pattern: /\b(?:transport in comun|metrou|autobuz|tramvai|stb)\b/, key: "street_arrangement", value: taxonomy.streetArrangementOptions[5], multi: true },
+  { pattern: /\bparcare subterana\b/, key: "parking", value: "Parcare subterană" },
+  { pattern: /\bloc de parcare\b/, key: "parking", value: "Loc de parcare" },
+  { pattern: /\bboxa\b/, key: "additional_spaces", value: "Boxă la subsol", multi: true },
+  { pattern: /\bdebara\b/, key: "additional_spaces", value: "Debara", multi: true },
+  { pattern: /\bpod\b/, key: "has_loft", value: true },
+  { pattern: /\bcurte\b/, key: "building_amenities", value: "Curte", multi: true },
+  { pattern: /\binterfon\b/, key: "building_amenities", value: "Interfon", multi: true },
+  { pattern: /\bvideointerfon\b/, key: "building_amenities", value: "Videointerfon", multi: true },
+  { pattern: /\btermopan\b/, key: "windows", value: "Termopan", multi: true },
+  { pattern: /\b(?:parchet|laminat)\b/, key: "floor_finishes", value: "Parchet", multi: true },
+  { pattern: /\bgresie\b/, key: "floor_finishes", value: "Gresie", multi: true },
+  { pattern: /\bfaianta\b/, key: "wall_finishes", value: "Faianță", multi: true },
+  { pattern: /\bnemobilat\w*\b/, key: "furnishing", value: "Nemobilat" },
+  { pattern: /\bpartial mobilat\w*\b/, key: "furnishing", value: "Parțial" },
+  { pattern: /\bmobilat\w*\b/, key: "furnishing", value: "Complet" },
+  { pattern: /\butilat\w*\b/, key: "kitchen_features", value: "Utilată", multi: true },
+  ...taxonomy.applianceOptions.map((value) => ({ pattern: new RegExp(`\\b${plainRo(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`), key: "appliances", value, multi: true })),
+];
+
+export function textDeniesOption(text: string, value: string): boolean {
+  const t = plainRo(text);
+  const aliases: Record<string, string> = { "Curent electric": "curent(?: electric)?|electricitate", "Apă": "apa(?: curenta)?", "Gaz": "gaz(?:e)?", "Centrală proprie": "centrala(?: proprie| termica)?", "Termoficare": "termoficare|radet", "Aer condiționat": "aer conditionat|ac|clima", "Lift": "lift|ascensor" };
+  const option = aliases[value] ?? plainRo(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\b(?:fara|nu (?:are|exista|dispune de)|lipsa|neconectat la|nu este racordat la)\\s+(?:${option})\\b|\\b(?:${option})\\s+(?:nu exista|lipseste)\\b`).test(t);
+}
+
+/** Lexical rules are explicit evidence, but labelled derived because code maps the options. */
+export function deriveTextFeatures(known: Record<string, unknown>, text: string): Record<string, string | number | boolean | string[]> {
+  const t = plainRo(text), out: Record<string, string | number | boolean | string[]> = {};
+  for (const rule of AUTOFILL_FEATURE_RULES) {
+    if (!rule.pattern || !rule.pattern.test(t) || !isAutofillFieldEmpty(known, rule.key)) continue;
+    if (typeof rule.value === "string" && textDeniesOption(t, rule.value)) continue;
+    if (rule.multi && typeof rule.value === "string") {
+      const existing = out[rule.key];
+      out[rule.key] = [...new Set([...(Array.isArray(existing) ? existing : []), rule.value])];
+    } else if (!(rule.key in out)) out[rule.key] = rule.value;
+  }
+  if (isAutofillFieldEmpty(known, "parking_spaces") && /\b(?:1|un) loc de parcare\b|\bloc de parcare\b|\bparcare subterana\b/.test(t) && !/\b\d+ locuri de parcare\b/.test(t) && !/\bfara (?:loc de )?parcare\b/.test(t)) out.parking_spaces = 1;
+  return out;
+}
+
 /**
  * Deducții sigure pe câmpuri goale. `known` = valorile deja în formular plus cele propuse.
  * Întoarce doar câmpurile noi.
  */
-export function deriveAutofillValues(known: Record<string, unknown>, text: string): Record<string, string | number | boolean> {
+export function deriveAutofillValues(known: Record<string, unknown>, text: string): Record<string, string | number | boolean | string[]> {
   const t = normalizeFactsText(text);
   const empty = (k: string) => isAutofillFieldEmpty(known, k);
-  const out: Record<string, string | number | boolean> = {};
+  const out: Record<string, string | number | boolean | string[]> = { ...deriveTextFeatures(known, text) };
+  for (const rule of AUTOFILL_FEATURE_RULES) {
+    if (!rule.condition?.(known) || !isAutofillFieldEmpty(known, rule.key) || rule.key in out || typeof rule.value !== "string" || textDeniesOption(text, rule.value)) continue;
+    out[rule.key] = rule.multi ? [rule.value] : rule.value;
+  }
   const put = (k: string, v: string | number | boolean) => { if (empty(k) && !(k in out)) out[k] = v; };
 
   const label = typeof known["floor_label"] === "string" ? (known["floor_label"] as string) : null;

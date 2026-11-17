@@ -277,7 +277,10 @@ function NewPropertyPage() {
           onRemoveField={(key) => { clearAutofillField(key, autofillSetters); setAiMarked((m) => m.filter((k) => k !== key)); }}
           onAcceptAll={() => setAiMarked([])}
           missing={completeness.items.filter((i) => !i.done).map((i) => i.label)}
-          formContext={() => ({ title: form.title, description: form.description, known: autofillKnownValues(newFormCurrent()) })}
+          formContext={() => ({ title: form.title, description: form.description, known: autofillKnownValues(newFormCurrent()), location: {
+            address: form.address, city: location.localityName || form.city, lat: coords?.lat, lng: coords?.lng,
+            localitySirutaCode: location.localitySirutaCode ?? undefined,
+          } })}
         />
         <PropertyFormLayout
           aside={<div data-tour="new-general"><FormSection title="Informații generale">

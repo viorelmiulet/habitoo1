@@ -12,7 +12,8 @@ import { normalizeListingText } from "@/lib/ai/text-correction/text";
 import * as taxonomy from "@/lib/property-taxonomy";
 import { propertyTypeLabels } from "@/lib/labels";
 import { ENERGY_CLASS_OPTIONS } from "@/lib/property-energy-class";
-import { deriveAutofillValues, extractStatedFacts, numberStatedIn, type StatedFacts } from "./facts";
+import { deriveAutofillValues, deriveTextFeatures, textDeniesOption, extractStatedFacts, numberStatedIn, type StatedFacts } from "./facts";
+import { HISTORY_FIELDS, type HistoryProposal } from "./history";
 import { isAutofillFieldEmpty } from "./empty";
 import { buildMarketingFactSheet, validateMarketingFacts } from "@/lib/ai/agents/marketing/facts";
 
@@ -47,10 +48,10 @@ export const AUTOFILL_FIELDS: Record<string, FieldDef> = {
   floor_label: sel("Etaj", taxonomy.floorLabelOptions, { explicit: true }),
   finish_state: sel("Stare finisaje", taxonomy.finishStateOptions, { fromPhotos: true }),
   furnishing: sel("Mobilat", taxonomy.furnishingOptions, { fromPhotos: true }),
-  utilities: multi("Utilități", taxonomy.utilityOptions, false),
+  utilities: multi("Utilități", taxonomy.utilityOptions),
   heating_systems: multi("Sistem încălzire", taxonomy.heatingOptions),
   cooling_systems: multi("Climatizare", taxonomy.coolingOptions),
-  insulation: multi("Izolații", taxonomy.insulationOptions, false),
+  insulation: multi("Izolații", taxonomy.insulationOptions),
   wall_finishes: multi("Pereți", taxonomy.wallFinishOptions),
   floor_finishes: multi("Podele", taxonomy.floorFinishOptions),
   windows: multi("Ferestre", taxonomy.windowOptions),
@@ -60,11 +61,13 @@ export const AUTOFILL_FIELDS: Record<string, FieldDef> = {
   interior_doors: multi("Uși interior", taxonomy.interiorDoorOptions),
   additional_spaces: multi("Spații adiționale", taxonomy.additionalSpaceOptions),
   kitchen_features: multi("Bucătărie", taxonomy.kitchenOptions),
-  metering: multi("Contorizare", taxonomy.meteringOptions, false),
+  metering: multi("Contorizare", taxonomy.meteringOptions),
   appliances: multi("Electrocasnice", taxonomy.applianceOptions),
-  building_amenities: multi("Imobil", taxonomy.buildingAmenityOptions, false),
+  building_amenities: multi("Imobil", taxonomy.buildingAmenityOptions),
+  street_arrangement: multi("Amenajare străzi", taxonomy.streetArrangementOptions),
+  has_loft: bool("Pod", false),
   views: multi("Priveliște", taxonomy.viewOptions),
-  misc_features: multi("Diverse", taxonomy.miscFeatureOptions, false),
+  misc_features: multi("Diverse", taxonomy.miscFeatureOptions),
   rooms: num("Camere", false, true),
   bedrooms: num("Dormitoare", false, true),
   kitchens: num("Bucătării", false, true),
@@ -97,8 +100,8 @@ export const AUTOFILL_FIELDS: Record<string, FieldDef> = {
 
 export type AutofillConfidence = "high" | "medium";
 /** Sursa fiecărei propuneri: descriere/titlu, text scris în asistent, poze, deducție logică. */
-export type AutofillSource = "text" | "spoken" | "photos" | "derived";
-export const AUTOFILL_SOURCE_LABELS: Record<AutofillSource, string> = { text: "din descriere", spoken: "din text", photos: "din poze", derived: "dedus" };
+export type AutofillSource = "text" | "spoken" | "photos" | "derived" | "history";
+export const AUTOFILL_SOURCE_LABELS: Record<AutofillSource, string> = { text: "din descriere", spoken: "din text", photos: "din poze", derived: "dedus", history: "din istoric" };
 export type AutofillValue = string | number | boolean | string[];
 export type AutofillProposal = {
   values: Record<string, AutofillValue>;
@@ -119,7 +122,7 @@ export const autofillResponseSchema = z.object({
     value: z.union([z.string(), z.number(), z.boolean(), z.array(z.string()), z.null()]),
     confidence: z.enum(["high", "medium", "low"]),
     source: z.enum(["spoken", "text", "photos"]),
-  })).max(120),
+  })).max(240),
   title: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
   photo_order: z.array(z.number().int()).nullable().optional(),
@@ -156,6 +159,8 @@ export type AutofillContext = {
   /** Valorile curente din formular, pentru deducții pe câmpuri goale. */
   current?: Record<string, unknown>;
   photoCount: number;
+  history?: HistoryProposal;
+  urban?: boolean;
 };
 
 /**
@@ -199,7 +204,7 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
       }
     } else if (def.kind === "multi") {
       const list = Array.isArray(field.value) ? field.value : typeof field.value === "string" ? [field.value] : [];
-      const kept = [...new Set(list.filter((v) => def.options!.includes(v)))];
+      const kept = [...new Set(list.filter((v) => def.options?.includes(v) && !textDeniesOption(spoken, v)))];
       value = kept.length ? kept : null;
     } else if (def.kind === "number") {
       const n = toNum(field.value);
@@ -226,6 +231,27 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
     values[key] = v as AutofillValue;
     confidence[key] = "high";
     sources[key] = key in spokenFacts && (spokenFacts as Record<string, unknown>)[key] === v ? "spoken" : "text";
+  }
+
+  // Lexical evidence has priority over history/photos while retaining the code-derived label.
+  const textFeatures = deriveTextFeatures(ctx.current ?? {}, spoken);
+  for (const [key, value] of Object.entries(textFeatures)) {
+    values[key] = value;
+    confidence[key] = "high";
+    sources[key] = "derived";
+  }
+  for (const [key, rawValue] of Object.entries(ctx.history?.values ?? {})) {
+    if (!(HISTORY_FIELDS as readonly string[]).includes(key)) continue;
+    if (!isAutofillFieldEmpty(ctx.current ?? {}, key) || key in textFeatures || (key in values && sources[key] !== "photos")) continue;
+    const def = AUTOFILL_FIELDS[key];
+    if (!def) continue;
+    const value = Array.isArray(rawValue) ? rawValue.filter((v) => def.options?.includes(v) && (key !== "heating_systems" || v === "Termoficare") && (key !== "street_arrangement" || v === "Mijloace de transport în comun") && !textDeniesOption(spoken, v)) : rawValue;
+    if (Array.isArray(value) && !value.length || typeof value === "string" && textDeniesOption(spoken, value)) continue;
+    // An explicitly different heating system must never inherit district heating.
+    if (key === "heating_systems" && /centrala proprie|centrala termica/.test(plain(spoken))) continue;
+    values[key] = value;
+    confidence[key] = ctx.history?.confidence[key] ?? "medium";
+    sources[key] = "history";
   }
 
   // Titlu și descriere: doar din fapte (regulile AI Marketing).
@@ -268,6 +294,10 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
     const reviewable = ["rooms", "bedrooms"].includes(key) && ["rooms", "bedrooms", "property_type"].some((dependency) => confidence[dependency] === "medium" && dependency in available);
     confidence[key] = reviewable ? "medium" : "high";
     sources[key] = "derived";
+  }
+  if (ctx.urban && isAutofillFieldEmpty(ctx.current ?? {}, "utilities") && !("utilities" in values) && !("utilities" in (ctx.history?.values ?? {})) && !/put|fosa|fara utilitati|utilitati in zona|ne(?:conectat|racordat)/.test(plain(spoken))) {
+    const basics = ["Curent electric", "Apă", "Canalizare"].filter((v) => !textDeniesOption(spoken, v));
+    if (basics.length) { values.utilities = basics; confidence.utilities = "medium"; sources.utilities = "derived"; }
   }
 
   let photoOrder: number[] | null = null;

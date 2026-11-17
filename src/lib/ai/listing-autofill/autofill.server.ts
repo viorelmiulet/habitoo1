@@ -2,6 +2,7 @@
  * Apelul AI pentru „Completează cu AI”. Pozele merg inline, doar în memorie.
  */
 import type { AIProvider, AiProviderAttachment } from "@/lib/ai/providers/types";
+import type { AutofillLocation, HistoryProposal } from "./history";
 import {
   AUTOFILL_INVALID_MESSAGE,
   autofillCatalogForPrompt,
@@ -14,6 +15,8 @@ export type AutofillInput = {
   text: string;
   /** Titlul, descrierea și valorile deja completate în formular. */
   context?: AutofillFormContext;
+  history?: HistoryProposal;
+  urban?: boolean;
 };
 
 export type AutofillFormContext = {
@@ -21,6 +24,7 @@ export type AutofillFormContext = {
   description?: string;
   /** Valorile deja completate (cheie → valoare), ca context. */
   known?: Record<string, string | number | boolean | string[] | null>;
+  location?: AutofillLocation;
 };
 
 /** Textul din formular folosit și la validarea faptelor (sursa „text”). */
@@ -50,6 +54,8 @@ REGULI:
 - Propune obligatoriu rooms și bedrooms când pot fi stabilite din text sau poze; la apartamente 2 camere → 1 dormitor, 3 → 2, 4 → 3. Camerele/dormitoarele din poze au source "photos", confidence "medium"; nu număra aceeași încăpere de mai multe ori. Textul explicit și alegerile agentului au prioritate. Nu inventa numere când nu pot fi stabilite.
 - Din poze (source "photos", confidence "medium") deduci doar finisaje, dotări, mobilare, stare, priveliște, electrocasnice, open_kitchen, bathroom_window, balcony și numărul de camere/dormitoare/băi/bucătării, doar dacă pozele arată clar încăperi distincte.
 - Nu repeta valorile deja completate în formular.
+- Parcurge FIECARE câmp multi: utilities, heating_systems, cooling_systems, insulation, wall_finishes, floor_finishes, windows, blinds, shutters, entry_door, interior_doors, kitchen_features, metering, appliances, building_amenities, street_arrangement, views, misc_features, additional_spaces. Propune TOATE opțiunile susținute, nu doar prima. Inclusiv utilități, izolații, contorizare, imobil și diverse din poze când se văd clar contoare, interfon, lift, centrală; source photos și confidence medium. Nu confunda dotările nevăzute cu cele absente; respectă negațiile.
+- Prioritate: alegerea agentului > text explicit > istoric al aceluiași imobil > poze > deducție. Istoricul este furnizat separat și se aplică în cod; nu îl retranscrie ca text explicit și nu copia din el etajul, suprafețele, prețul, camerele sau finisajele interioare.
 - Dacă nu ești sigur, pune confidence "low" sau omite câmpul.
 - Titlul și descrierea în română, doar cu fapte din câmpurile propuse și din ce a spus agentul; fără promisiuni, superlative, distanțe sau facilități de zonă nespuse.
 - "photo_order": indicii pozelor (de la 0) în ordinea recomandată; prima = coperta, cea mai reprezentativă.
@@ -66,11 +72,12 @@ export function buildAutofillRequest(input: AutofillInput) {
   if (ctxText) parts.push(`Titlul și descrierea din formular (source "text"): """${ctxText}"""`);
   const known = knownForPrompt(input.context?.known);
   if (known) parts.push(`Valori deja completate (nu le schimba): ${known}`);
+  if (input.history && Object.keys(input.history.values).length) parts.push(`Din istoricul contului, același imobil: ${knownForPrompt(input.history.values).slice(0, 1500)}. Sursa istoric este aplicată de cod.`);
   return {
     system: AUTOFILL_SYSTEM + autofillCatalogForPrompt(),
     messages: [{ role: "user" as const, content: parts.join("\n"), attachments }],
     tools: [],
-    maxOutputTokens: 4000,
+    maxOutputTokens: 8000,
   };
 }
 
@@ -94,6 +101,8 @@ export async function runListingAutofill(provider: AIProvider, input: AutofillIn
     contextText: autofillContextText(input.context),
     current: input.context?.known ?? undefined,
     photoCount: input.images.length,
+    history: input.history,
+    urban: input.urban,
   });
   if (!proposal) return { ok: false, message: AUTOFILL_INVALID_MESSAGE };
   return { ok: true, proposal, usage: { input: result.inputTokens, output: result.outputTokens } };
