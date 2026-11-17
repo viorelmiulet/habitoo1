@@ -30,7 +30,7 @@ export function autofillContextText(ctx: AutofillFormContext | undefined): strin
 }
 
 function knownForPrompt(known: AutofillFormContext["known"]): string {
-  const rows = Object.entries(known ?? {}).filter(([, v]) => v !== null && v !== "" && !(Array.isArray(v) && v.length === 0));
+  const rows = Object.entries(known ?? {}).filter(([k, v]) => k !== "__autofillChosen" && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0));
   return rows.map(([k, v]) => `${k}=${JSON.stringify(v)}`).join("; ").slice(0, 2000);
 }
 
@@ -46,6 +46,7 @@ REGULI:
 - Sursa: "text" = din descrierea/titlul formularului; "spoken" = din textul scris de agent în asistent; "photos" = din poze.
 - Prețul, adresa, localitatea, zona, etajul, anul și suprafețele se completează DOAR dacă apar explicit în text (source "spoken"/"text"). Nu le ghici niciodată din poze.
 - La „P/4”: floor_label = "Parter", floor = 0, building_floors = 4. Numeralele scrise cu litere („etajul trei”) devin cifre. „Etaj intermediar” nu completează numărul.
+- Completează rooms și bedrooms și din titlu/descriere, cu cifre sau numerale românești: „3 camere”, „trei camere”, „3 cam.”, „ap. 3 camere”, „1 cameră”; dormitoare: „două dormitoare”, „3 dorm.”. Garsonieră/studio → rooms=1, bedrooms=1. Apartament N camere (N≥2), fără dormitoare explicite → bedrooms=N−1. Dormitoarele explicite au prioritate; D dormitoare fără camere la apartament → rooms=D+1. La casă/vilă nu deduce dormitoarele din camere. Doar câmpuri goale; codul verifică și aplică deducțiile, nu ghici alte numere.
 - Din poze (source "photos", confidence "medium") deduci doar finisaje, dotări, mobilare, stare, priveliște, electrocasnice, open_kitchen, bathroom_window, balcony și numărul de băi/bucătării, doar dacă pozele arată clar încăperi distincte.
 - Nu repeta valorile deja completate în formular.
 - Dacă nu ești sigur, pune confidence "low" sau omite câmpul.

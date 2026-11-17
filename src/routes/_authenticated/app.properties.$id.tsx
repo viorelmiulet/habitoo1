@@ -49,6 +49,7 @@ import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
 import { ListingAutofillCard } from "@/components/app/ai/ListingAutofillCard";
 import { AiFieldMarksContext } from "@/components/app/ai/AiFieldMarks";
 import { applyAutofillProposal, autofillKnownValues, clearAutofillField, currentAutofillValues, type AutofillSetters } from "@/components/app/ai/listing-autofill-apply";
+import { withoutUnchosenDefaults } from "@/lib/ai/listing-autofill/empty";
 import { PropertyAcpCard } from "@/components/app/PropertyAcpCard";
 import { PropertyPromotionTab } from "@/components/app/PropertyPromotionTab";
 import { MarketingAgentPanel } from "@/components/app/MarketingAgentPanel";
@@ -368,6 +369,11 @@ function PropertyDetailContent() {
   const [location, setLocation] = useState<LocationValue>(emptyLocation);
   // Secțiunile de detalii (Detalii / Suprafețe / Clădire / Utilități / Finisaje / Dotări).
   const [details, setDetails] = useState<PropertyDetailsValue>({});
+  const chosenDetails = useRef(new Set<string>());
+  const editAutofillCurrent = () => withoutUnchosenDefaults(
+    currentAutofillValues(details, { title: draft.title, description: draft.description, city: draft.city, district: draft.district, address: draft.address }, tx),
+    {}, chosenDetails.current,
+  );
   // Vânzare / închiriere (pot fi active simultan), fiecare cu preț și monedă.
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
   // Poziția pe hartă (Leaflet/OpenStreetMap) și precizia locației, în modul editare.
@@ -386,6 +392,7 @@ function PropertyDetailContent() {
   const startEdit = () => {
     if (!property || property.id !== id) return;
     formPropertyIdRef.current = property.id;
+    chosenDetails.current.clear();
     setDraftAgent(property.assigned_to ?? "");
     setDraft({
       title: property.title,
@@ -1217,7 +1224,7 @@ function PropertyDetailContent() {
                 mode="edit"
                 propertyId={id}
                 onProposal={(p) => {
-                  const { proposal, keys } = applyAutofillProposal(p, autofillSetters, currentAutofillValues(details, { title: draft.title, description: draft.description, city: draft.city, district: draft.district, address: draft.address }, tx));
+                  const { proposal, keys } = applyAutofillProposal(p, autofillSetters, editAutofillCurrent());
                   setAiMarked(keys);
                   return proposal;
                 }}
@@ -1225,7 +1232,7 @@ function PropertyDetailContent() {
                 onRemoveField={(key) => { clearAutofillField(key, autofillSetters); setAiMarked((m) => m.filter((k) => k !== key)); }}
                 onAcceptAll={() => setAiMarked([])}
                 missing={(completeness?.items ?? []).filter((item) => !item.done).map((item) => item.label)}
-                formContext={() => ({ title: draft.title, description: draft.description, known: autofillKnownValues(currentAutofillValues(details, { title: draft.title, description: draft.description, city: draft.city, district: draft.district, address: draft.address }, tx)) })}
+                formContext={() => ({ title: draft.title, description: draft.description, known: autofillKnownValues(editAutofillCurrent()) })}
               />
               <PropertyFormLayout
                 aside={<>
@@ -1251,7 +1258,10 @@ function PropertyDetailContent() {
                   <PropertyDetailsFields
                     idPrefix="edit"
                     value={details}
-                    onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+                    onChange={(patch) => {
+                      Object.keys(patch).forEach((key) => chosenDetails.current.add(key));
+                      setDetails((d) => ({ ...d, ...patch }));
+                    }}
                   />
                 </div>}
               >

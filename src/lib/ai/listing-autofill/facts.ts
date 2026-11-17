@@ -3,6 +3,7 @@
  * deducții logice sigure. Pur, fără AI: completează doar ce e scris clar.
  */
 import { FLOOR_LABEL_NUMBER, syncFloor } from "@/lib/property-floor";
+import { isAutofillFieldEmpty } from "./empty";
 
 export function plainRo(value: string): string {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
@@ -34,6 +35,7 @@ export type StatedFacts = Partial<{
   build_year: number;
   renovation_year: number;
   rooms: number;
+  bedrooms: number;
 }>;
 
 function floorLabelFor(floor: number): string | null {
@@ -99,8 +101,8 @@ export function extractStatedFacts(text: string): StatedFacts {
   }
 
   // Camere
-  if ((m = t.match(/\b(\d{1,2})\s*camere\b/))) f.rooms = Number(m[1]);
-  else if (/\bgarsonier/.test(t)) f.rooms = 1;
+  if ((m = t.match(/\b(\d{1,2})\s*(?:camere|camera|cam)\b\.?/))) f.rooms = Number(m[1]);
+  if ((m = t.match(/\b(\d{1,2})\s*(?:dormitoare|dormitor|dorm)\b\.?/))) f.bedrooms = Number(m[1]);
   return f;
 }
 
@@ -113,8 +115,8 @@ export function numberStatedIn(text: string, value: number): boolean {
 }
 
 const TYPE_WORDS: [RegExp, string][] = [
-  [/\bgarsonier/, "studio"],
-  [/\bapartament/, "apartment"],
+  [/\b(?:garsonier\w*|studio)\b/, "studio"],
+  [/\b(?:apartament\w*|ap)\b/, "apartment"],
   [/\b(casa|vila|case|vile)\b/, "house"],
   [/\bteren\b/, "land"],
   [/\bspatiu comercial\b/, "commercial"],
@@ -127,7 +129,7 @@ const TYPE_WORDS: [RegExp, string][] = [
  */
 export function deriveAutofillValues(known: Record<string, unknown>, text: string): Record<string, string | number | boolean> {
   const t = normalizeFactsText(text);
-  const empty = (k: string) => known[k] === undefined || known[k] === null || known[k] === "" || (Array.isArray(known[k]) && (known[k] as unknown[]).length === 0);
+  const empty = (k: string) => isAutofillFieldEmpty(known, k);
   const out: Record<string, string | number | boolean> = {};
   const put = (k: string, v: string | number | boolean) => { if (empty(k) && !(k in out)) out[k] = v; };
 
@@ -140,7 +142,21 @@ export function deriveAutofillValues(known: Record<string, unknown>, text: strin
   }
   if (floor !== null && !label) { const l = floorLabelFor(floor); if (l) put("floor_label", l); }
 
-  if (/\bgarsonier/.test(t) || known["property_type"] === "studio") put("rooms", 1);
+  const types = [...new Set(TYPE_WORDS.filter(([re]) => re.test(t)).map(([, k]) => k))];
+  const type = types.includes("studio") ? "studio" : types.length === 1 ? types[0] : null;
+  const effectiveType = types.includes("house") ? "house" : known["property_type"] || type;
+  const stated = extractStatedFacts(text);
+  if (stated.rooms !== undefined) put("rooms", stated.rooms);
+  if (stated.bedrooms !== undefined) put("bedrooms", stated.bedrooms);
+  if (effectiveType === "studio") {
+    put("rooms", 1);
+    put("bedrooms", 1);
+  } else if (effectiveType === "apartment") {
+    const rooms = empty("rooms") ? out["rooms"] : known["rooms"];
+    const bedrooms = empty("bedrooms") ? out["bedrooms"] : known["bedrooms"];
+    if (typeof rooms === "number" && rooms >= 2) put("bedrooms", rooms - 1);
+    if (typeof bedrooms === "number" && bedrooms >= 1) put("rooms", bedrooms + 1);
+  }
   if (typeof known["balconies"] === "number" && (known["balconies"] as number) > 0 && known["balcony"] !== true) out["balcony"] = true;
 
   if (typeof known["price"] === "number") {
@@ -155,8 +171,6 @@ export function deriveAutofillValues(known: Record<string, unknown>, text: strin
   const rent = /\b(inchiriere|chirie|inchiriat|inchiriez)\b/.test(t);
   if (sale !== rent) put("transaction", sale ? "sale" : "rent");
 
-  const types = [...new Set(TYPE_WORDS.filter(([re]) => re.test(t)).map(([, k]) => k))];
-  const type = types.includes("studio") ? "studio" : types.length === 1 ? types[0]! : null;
   if (type) put("property_type", type);
   return out;
 }

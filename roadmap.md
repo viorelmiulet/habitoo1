@@ -1,3 +1,9 @@
+## AI16 — Camere și dormitoare
+- [x] Titlul ajunge în context; forma „3 camere” este recunoscută deja. Lipsesc singular/prescurtări/studio/dormitoare și deducții; zero nu era gol. Formularul nou nu inițializează camere/dormitoare cu numere.
+- [x] Parser/deducții și valori implicite nealese tratate ca goale; alegeri manuale păstrate în creare/editare
+- [x] 28 teste noi fără apeluri reale, inclusiv titlu → furnizor simulat → formular; fără publicare
+- [ ] Verificare vizuală autentificată: sesiunea proprie nu poate fi creată deoarece solicitantul nu are cont asociat; fluxul verificat prin test fără salvări.
+
 ## AI15 — Corectarea formei textului
 - [x] Corectare titlu/descriere cu previzualizare în formularul comun, credite text_fast și rezervă existentă; activare prin ai_marketing
 - [x] Normalizare deterministă, validarea numerelor/lungimii/contactelor și normalizare autofill

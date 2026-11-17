@@ -1,7 +1,8 @@
 import { notifyLeadMatchesForProperty } from "@/components/app/LeadMatches";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { withoutUnchosenDefaults } from "@/lib/ai/listing-autofill/empty";
 import { ListingAutofillCard } from "@/components/app/ai/ListingAutofillCard";
 import { AiFieldMarksContext, AiMark } from "@/components/app/ai/AiFieldMarks";
 import { applyAutofillProposal, autofillKnownValues, clearAutofillField, currentAutofillValues, type AutofillSetters } from "@/components/app/ai/listing-autofill-apply";
@@ -71,6 +72,8 @@ export const Route = createFileRoute("/_authenticated/app/properties/new")({
   component: NewPropertyPage,
 });
 
+const NEW_DETAILS_DEFAULTS: PropertyDetailsValue = { property_type: "apartment" };
+
 function NewPropertyPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -102,9 +105,8 @@ function NewPropertyPage() {
   // Secțiunile de detalii (Detalii / Suprafețe / Clădire / Utilități / Finisaje / Dotări).
   // Toate caracteristicile proprietății se completează aici, o singură dată:
   // tip, camere, băi, etaj, suprafețe, an construcție, facilități.
-  const [details, setDetails] = useState<PropertyDetailsValue>({
-    property_type: "apartment",
-  });
+  const [details, setDetails] = useState<PropertyDetailsValue>(NEW_DETAILS_DEFAULTS);
+  const chosenDetails = useRef(new Set<string>());
   // Vânzare / închiriere (pot fi active simultan), fiecare cu preț și monedă.
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
   // Localizarea oficială (nomenclator SIRUTA); textul din `city`/`county` rămâne sincronizat cu selecția.
@@ -133,8 +135,7 @@ function NewPropertyPage() {
   const newFormCurrent = () => {
     const c = currentAutofillValues(details as Record<string, unknown>, { title: form.title, description: form.description, city: form.city, district: form.district, address: form.address }, tx);
     delete c["transaction"];
-    if (c["property_type"] === "apartment") delete c["property_type"];
-    return c;
+    return withoutUnchosenDefaults(c, NEW_DETAILS_DEFAULTS, chosenDetails.current);
   };
 
   const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
@@ -318,7 +319,10 @@ function NewPropertyPage() {
           details={<PropertyDetailsFields
             idPrefix="new"
             value={details}
-            onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+            onChange={(patch) => {
+              Object.keys(patch).forEach((key) => chosenDetails.current.add(key));
+              setDetails((d) => ({ ...d, ...patch }));
+            }}
           />}
         >
         <PropertyTitleDescriptionPanel

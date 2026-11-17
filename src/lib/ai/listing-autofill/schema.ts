@@ -13,6 +13,7 @@ import * as taxonomy from "@/lib/property-taxonomy";
 import { propertyTypeLabels } from "@/lib/labels";
 import { ENERGY_CLASS_OPTIONS } from "@/lib/property-energy-class";
 import { deriveAutofillValues, extractStatedFacts, numberStatedIn, type StatedFacts } from "./facts";
+import { isAutofillFieldEmpty } from "./empty";
 import { buildMarketingFactSheet, validateMarketingFacts } from "@/lib/ai/agents/marketing/facts";
 
 export const AUTOFILL_MAX_PHOTOS = 20;
@@ -177,6 +178,8 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
   const ignored: string[] = [];
 
   for (const field of response.fields) {
+    // Counts are grounded in lexical facts/derivations, never arbitrary digits elsewhere.
+    if (field.key === "rooms" || field.key === "bedrooms") continue;
     const def = AUTOFILL_FIELDS[field.key];
     if (!def || field.confidence === "low" || field.value === null || field.key in values) { ignored.push(field.key); continue; }
     const fromSpoken = field.source === "spoken" || field.source === "text";
@@ -224,7 +227,8 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
   }
 
   // Deducții logice sigure, doar pe câmpuri goale.
-  const derived = deriveAutofillValues({ ...(ctx.current ?? {}), ...values }, spoken);
+  const available = onlyEmptyFields({ values, confidence, sources, title: null, description: null, photoOrder: null, ignored }, ctx.current ?? {}).values;
+  const derived = deriveAutofillValues({ ...(ctx.current ?? {}), ...available }, spoken);
   for (const [key, v] of Object.entries(derived)) {
     if (key in values || !AUTOFILL_FIELDS[key]) continue;
     values[key] = v;
@@ -268,7 +272,7 @@ export function onlyEmptyFields(proposal: AutofillProposal, current: Record<stri
   const confidence: Record<string, AutofillConfidence> = {};
   const sources: Record<string, AutofillSource> = {};
   for (const [key, value] of Object.entries(proposal.values)) {
-    if (!isEmpty(current[key])) continue;
+    if (!isAutofillFieldEmpty(current, key)) continue;
     values[key] = value;
     confidence[key] = proposal.confidence[key]!;
     if (proposal.sources?.[key]) sources[key] = proposal.sources[key]!;
