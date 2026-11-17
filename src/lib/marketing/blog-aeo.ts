@@ -40,11 +40,21 @@ export function normalizeFaq(value: unknown): BlogFaq[] {
 const STOP = new Set(["pentru", "care", "este", "sunt", "unei", "unui", "acest", "aceasta", "cum", "ce", "din", "sau", "mai", "fara", "prin", "lor", "tale", "tau"]);
 const words = (text: string) => new Set(text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 3 && !STOP.has(w)));
 
-/** Three related posts by shared title words, then same category, then recency. */
+/** Three related posts: same category first, then most recent (candidate order). */
 export function relatedPosts<T extends Pick<BlogPost, "id" | "title" | "category">>(post: T, candidates: T[], limit = 3): T[] {
-  const own = words(post.title);
-  return candidates.filter((c) => c.id !== post.id).map((c, index) => ({ c, index, score: [...words(c.title)].filter((w) => own.has(w)).length * 2 + (c.category === post.category ? 1 : 0) }))
-    .sort((a, b) => b.score - a.score || a.index - b.index).slice(0, limit).map((x) => x.c);
+  const others = candidates.filter((c) => c.id !== post.id);
+  return [...others.filter((c) => c.category === post.category), ...others.filter((c) => c.category !== post.category)].slice(0, limit);
+}
+
+const dayRo = (value: string) => new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Bucharest" }).format(new Date(value));
+/** „de Echipa Habitoo · Publicat X · Actualizat Y”; Actualizat only when the day differs. */
+export function blogByline(publishedAt: string | null, updatedAt: string | null): string {
+  const parts = [`de ${BLOG_AUTHOR_NAME}`];
+  const pub = publishedAt ? dayRo(publishedAt) : null;
+  if (pub) parts.push(`Publicat ${pub}`);
+  const upd = updatedAt ? dayRo(updatedAt) : null;
+  if (upd && upd !== pub) parts.push(`Actualizat ${upd}`);
+  return parts.join(" · ");
 }
 
 /** A feature only when its name clearly appears in the title or category. */
@@ -59,7 +69,7 @@ export function relatedFeature(post: Pick<BlogPost, "title" | "category">): { sl
 
 export function blogPostingJsonLd(post: Pick<BlogPost, "slug" | "title" | "published_at" | "updated_at">, opts: { description: string; image?: string | null; words: number }) {
   const url = `${BLOG_SITE}/blog/${post.slug}`;
-  return { "@type": "BlogPosting", "@id": `${url}#article`, headline: post.title, description: opts.description, ...(opts.image ? { image: opts.image } : {}), datePublished: post.published_at, dateModified: post.updated_at, author: BLOG_AUTHOR, publisher: { "@type": "Organization", "@id": BLOG_ORG_ID, name: "Habitoo", logo: { "@type": "ImageObject", url: `${BLOG_SITE}/assets/habitoo-logo.png` } }, mainEntityOfPage: { "@type": "WebPage", "@id": url }, inLanguage: "ro", wordCount: opts.words };
+  return { "@type": "BlogPosting", "@id": `${url}#article`, headline: post.title, description: opts.description, ...(opts.image ? { image: opts.image } : {}), datePublished: post.published_at, dateModified: post.updated_at, author: BLOG_AUTHOR, publisher: { "@type": "Organization", "@id": BLOG_ORG_ID, name: "Habitoo", logo: { "@type": "ImageObject", url: `${BLOG_SITE}/assets/habitoo-logo.png` } }, mainEntityOfPage: { "@type": "WebPage", "@id": url }, inLanguage: "ro-RO", wordCount: opts.words };
 }
 
 export function blogBreadcrumbJsonLd(post: Pick<BlogPost, "slug" | "title">) {

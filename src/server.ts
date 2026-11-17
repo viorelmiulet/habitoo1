@@ -100,7 +100,7 @@ export default {
         request,
       );
     }
-    const keyFile = indexNowKeyResponse(new URL(request.url).pathname, process.env["INDEXNOW_KEY"]);
+    const keyFile = indexNowKeyResponse(new URL(request.url).pathname, process.env["INDEXNOW_KEY"], new URL(request.url).hostname);
     if (keyFile) return keyFile;
     const trailingSlash = permanentPublicRedirect(request);
     if (trailingSlash) return trailingSlash;

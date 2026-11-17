@@ -1,5 +1,6 @@
 /** Serves the public IndexNow verification file; any other key-shaped name gets 404. */
-export function indexNowKeyResponse(pathname: string, key: string | undefined): Response | null {
+export function indexNowKeyResponse(pathname: string, key: string | undefined, hostname = "www.habitoo.ro"): Response | null {
+  if (hostname !== "www.habitoo.ro") return null;
   const match = /^\/([A-Za-z0-9-]{8,128})\.txt$/.exec(pathname);
   if (!match || !key) return null;
   if (match[1] === key) return new Response(key, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" } });
