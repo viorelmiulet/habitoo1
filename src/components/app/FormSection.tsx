@@ -37,8 +37,17 @@ export function FormSection({
 export const FORM_ACTIONS_BAR = "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end max-sm:sticky max-sm:bottom-[calc(4rem+env(safe-area-inset-bottom))] max-sm:z-20 max-sm:-mx-4 max-sm:border-t max-sm:border-border max-sm:bg-card max-sm:px-4 max-sm:py-3";
 
 export function FormRow({ label, htmlFor, children, labelClassName, compact }: { label: ReactNode; htmlFor?: string; children: ReactNode; labelClassName?: string; /** Etichetă ~140px și câmp de maximum ~240px, pentru valori scurte. */ compact?: boolean }) {
+  if (compact) {
+    // Fișa proprietății: eticheta deasupra, la stânga, pe un rând; câmpul pe toată lățimea celulei.
+    return (
+      <div data-form-row="stacked" className="flex min-w-0 flex-col gap-1.5">
+        <label htmlFor={htmlFor} className={cn("min-w-0 truncate whitespace-nowrap text-left text-[13px] font-medium text-muted-foreground", labelClassName)}>{label}</label>
+        <div className="min-w-0 [&_input]:min-h-10 [&_input]:w-full [&_button[role=combobox]]:min-h-10 [&_button[role=combobox]]:w-full">{children}</div>
+      </div>
+    );
+  }
   return (
-    <div className={cn("grid min-h-10 min-w-0 grid-cols-1 items-center gap-x-3 gap-y-1", compact ? "sm:grid-cols-[140px_minmax(0,240px)]" : "sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}>
+    <div className={cn("grid min-h-10 min-w-0 grid-cols-1 items-center gap-x-3 gap-y-1", "sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}>
       <label htmlFor={htmlFor} className={cn("min-w-0 text-left text-[15px] text-foreground sm:text-right", labelClassName)}>{label}</label>
       <div className="min-w-0">{children}</div>
     </div>

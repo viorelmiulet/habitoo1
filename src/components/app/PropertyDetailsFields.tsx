@@ -238,7 +238,7 @@ function DeclarationFields({ ctx, type }: { ctx: FieldCtx; type: string }) {
   const flood = ctx.str("flood_risk");
   const floodValue = flood === "true" ? "yes" : flood === "false" ? "no" : NONE;
   return (
-    <div className="space-y-1 border-t border-border pt-3">
+    <div data-fields-grid className="grid grid-cols-2 gap-x-3 gap-y-3 border-t border-border pt-3 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
       {showFlood && (
         <FormRow compact htmlFor={`${ctx.idPrefix}-flood_risk`} label="Zonă cu risc de inundație">
           <Select
@@ -315,7 +315,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       <div data-details-layout className="grid min-w-0 items-start gap-4 min-[1280px]:grid-cols-2">
       <div data-tour={idPrefix === "new" ? "new-details" : undefined} className="min-w-0">
       <FormSection title="Detalii">
-        <div className="space-y-1">
+        <div data-fields-grid className="grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
           <FormRow compact htmlFor={`${idPrefix}-property_type`} label={<>Tip apartament / imobil<AiMark field="property_type" /></>}>
             <Select value={ctx.str("property_type")} onValueChange={(v) => setField("property_type", v)}>
               <SelectTrigger id={`${idPrefix}-property_type`} className={CONTROL}>
@@ -356,7 +356,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       </div>
       <div data-details-column="secondary" className="flex min-w-0 flex-col gap-4">
       <FormSection title="Suprafețe">
-        <div className="space-y-1">
+        <div data-fields-grid className="grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
           <NumberField ctx={ctx} field="usable_surface" label="Suprafață utilă (m²)" />
           <NumberField ctx={ctx} field="built_surface" label="Construită (m²)" />
           <NumberField ctx={ctx} field="total_usable_surface" label="Utilă totală (m²)" />
@@ -367,7 +367,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         </div>
       </FormSection>
       <FormSection title="Clădire">
-        <div className="space-y-1">
+        <div data-fields-grid className="grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
           <SelectField ctx={ctx} field="construction_stage" label="Stadiu construcție" options={constructionStageOptions} />
           <SelectField ctx={ctx} field="building_type" label="Tip" options={buildingTypeOptions} />
           <SelectField ctx={ctx} field="building_structure" label="Structură" options={buildingStructureOptions} />
