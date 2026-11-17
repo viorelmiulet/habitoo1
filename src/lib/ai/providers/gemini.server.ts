@@ -106,16 +106,16 @@ export function createGeminiProvider(
         generationConfig: {
           temperature: 0.2,
           maxOutputTokens: request.maxOutputTokens ?? GEMINI_MAX_OUTPUT_TOKENS,
-          thinkingConfig: geminiThinkingConfig(model),
+          thinkingConfig: request.thinkingLevel && !/^gemini-[12]\./.test(model) ? { thinkingLevel: request.thinkingLevel } : geminiThinkingConfig(model),
         },
       };
 
-      let response!: Response;
+      let response: Response | undefined;
       for (let attempt = 0; attempt < 2; attempt++) {
       try {
         response = await fetch(`${API_BASE}/${model}:generateContent`, {
           method: "POST",
-          signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+          signal: request.signal ?? AbortSignal.timeout(request.timeoutMs ?? GEMINI_TIMEOUT_MS),
           headers: {
             "Content-Type": "application/json",
             // Cheia merge în header, nu în URL: nu apare în loguri de request.
@@ -130,11 +130,12 @@ export function createGeminiProvider(
         }
         throw new AiProviderError("Serviciul AI nu a putut fi contactat.", undefined, true);
       }
-      if (response.status !== 503 || attempt > 0) break;
+      if (response.status !== 503 || attempt > 0 || request.retry503 === false) break;
       console.error(`[ai] gemini 503 (${model}), reîncerc o dată`);
       await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
       }
 
+      if (!response) throw new AiProviderError("Serviciul AI nu a putut fi contactat.", undefined, true);
       if (!response.ok) {
         const hasAttachments = request.messages.some((message) => message.role === "user" && message.attachments?.length);
         const detail = hasAttachments ? "" : await response.text().catch(() => "");

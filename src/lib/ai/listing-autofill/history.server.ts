@@ -4,12 +4,14 @@ import { HISTORY_FIELDS, historyConsensus, selectHistoryRows, historyMatch, type
 import { plainRo } from "./facts";
 
 /** Caller RLS plus explicit organization scope; narrow projections, no addresses in AI summary. */
-export async function loadAutofillHistory(client: SupabaseClient<Database>, organizationId: string, location?: AutofillLocation) {
+export async function loadAutofillHistory(client: SupabaseClient<Database>, organizationId: string, location?: AutofillLocation, signal?: AbortSignal) {
   const empty: HistoryProposal = { values: {}, confidence: {} };
   if (!location) return { history: empty, urban: false };
   let urban = false;
   if (location.localitySirutaCode) {
-    const { data } = await client.from("ro_localities").select("medium,type").eq("siruta_code", location.localitySirutaCode).maybeSingle();
+    let query = client.from("ro_localities").select("medium,type").eq("siruta_code", location.localitySirutaCode);
+    if (signal) query = query.abortSignal(signal);
+    const { data } = await query.maybeSingle();
     urban = Boolean(data && (/urban/.test(plainRo(data.medium ?? "")) || /^(oras|municipiu)/.test(plainRo(data.type))));
   }
   // residential_complex is absent in the current schema; address then <30m remain available.
@@ -18,6 +20,7 @@ export async function loadAutofillHistory(client: SupabaseClient<Database>, orga
     const rows: HistoryRow[] = [];
     for (let offset = 0; ; offset += 200) {
       let query = client.from("properties").select(columns).eq("organization_id", organizationId).is("deleted_at", null).order("id").range(offset, offset + 199);
+      if (signal) query = query.abortSignal(signal);
       if (location.propertyId) query = query.neq("id", location.propertyId);
       if (mode === "address") {
         if (!location.city || !location.address && !location.street) return rows;

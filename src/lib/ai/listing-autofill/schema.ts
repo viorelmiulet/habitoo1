@@ -335,9 +335,8 @@ export function onlyEmptyFields(proposal: AutofillProposal, current: Record<stri
 /** Nomenclatorul trimis modelului în instrucțiuni. */
 export function autofillCatalogForPrompt(): string {
   return Object.entries(AUTOFILL_FIELDS).map(([key, def]) => {
-    const rule = def.explicit ? " [DOAR dacă e spus explicit]" : def.fromPhotos ? " [se poate deduce din poze]" : " [doar din text]";
-    const opts = def.options ? `: ${def.kind === "multi" ? "listă din " : "una din "}${def.options.map((o) => JSON.stringify(o)).join(", ")}` : def.kind === "number" ? ": număr" : def.kind === "boolean" ? ": true" : ": text exact spus";
-    return `- ${key} (${def.label})${opts}${rule}`;
+    const source = def.explicit ? "explicit" : def.fromPhotos ? "text/poze" : "text";
+    return `${key}|${def.kind}|${source}${def.options ? `|${JSON.stringify(def.options)}` : ""}`;
   }).join("\n");
 }
 

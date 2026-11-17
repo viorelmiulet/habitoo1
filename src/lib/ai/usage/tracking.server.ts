@@ -16,6 +16,7 @@ export type AiUsageRow = {
   /** Marcaj explicit: providerul nu a raportat tokeni pentru această cerere. */
   tokens_unknown?: boolean;
   fallback_used?: boolean;
+  extra_info?: Record<string, unknown>;
 };
 
 type UsageWriter = {

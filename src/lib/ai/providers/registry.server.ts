@@ -164,3 +164,10 @@ export function resolveAiProvider(modelClass: AiModelClass = "standard"): AIProv
   if (!gKey) return fallback ?? null;
   return lazyProvider("gemini", modelClass, (model) => createGeminiProvider(gKey, model), fallback);
 }
+
+/** Autofill-only reserve when Mistral is not configured; do not alter other features. */
+export function resolveAutofillReserve(primary: AIProvider): AIProvider | undefined {
+  if (primary.fallback) return primary.fallback;
+  const key = geminiKey();
+  return key ? createGeminiProvider(key, "gemini-3.5-flash-lite") : undefined;
+}

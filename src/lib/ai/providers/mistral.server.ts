@@ -150,7 +150,7 @@ export function createMistralProvider(apiKey: string, model = MISTRAL_DEFAULT_MO
       try {
         response = await fetch(MISTRAL_URL, {
           method: "POST",
-          signal: AbortSignal.timeout(MISTRAL_TIMEOUT_MS),
+          signal: request.signal ?? AbortSignal.timeout(request.timeoutMs ?? MISTRAL_TIMEOUT_MS),
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
           body: JSON.stringify(body),
         });

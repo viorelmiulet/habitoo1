@@ -13229,6 +13229,7 @@ export type Database = {
       }
       ai_credit_limit: { Args: { p_org: string }; Returns: number }
       ai_credit_month: { Args: { p_at?: string }; Returns: string }
+      ai_credit_refund_stale: { Args: never; Returns: number }
       ai_credit_reserve: {
         Args: {
           p_action: string

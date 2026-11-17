@@ -41,7 +41,7 @@ export async function settleAiCredits(id: string, success: boolean, client?: Rpc
   await admin.rpc("ai_credit_settle", { p_id: id, p_success: success });
 }
 
-export type AiFailureUsageInfo = { provider?: string; model?: string; capability?: string };
+export type AiFailureUsageInfo = { provider?: string; model?: string; capability?: string; attempts?: { provider: string; model: string; status: number | string; ms: number }[]; latencyMs?: number };
 export type UsageInsertClient = {
   from: (table: "ai_usage_events") => { insert: (row: Record<string, unknown>) => PromiseLike<{ error: { message: string } | null }> };
 };
@@ -76,9 +76,9 @@ export async function recordAiFailureUsage(
       input_tokens: null,
       output_tokens: null,
       tokens_unknown: true,
-      latency_ms: 0,
+      latency_ms: info.latencyMs ?? 0,
       tool_calls: 0,
-      extra_info: { action, http_status: typeof status === "number" ? status : null, error: shortAiErrorMessage(error) },
+      extra_info: { action, http_status: typeof status === "number" ? status : null, error: shortAiErrorMessage(error), ...(info.attempts ? { attempts: info.attempts } : {}) },
     });
     if (insertError) console.error("[ai] failure usage insert failed", insertError.message);
   } catch (writeError) {

@@ -39,6 +39,11 @@ export type AiGenerateRequest = {
   messages: AiProviderMessage[];
   tools: AiToolDeclaration[];
   maxOutputTokens?: number;
+  /** Per-call controls; other AI features retain their existing defaults. */
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  retry503?: boolean;
+  thinkingLevel?: "low";
 };
 
 export type AiGenerateResult = {

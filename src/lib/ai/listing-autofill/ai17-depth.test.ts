@@ -109,20 +109,22 @@ describe("AI17 — deeper autofill and private history", () => {
     expect(textDeniesOption("nu are lift", "Lift")).toBe(true);
     expect(deriveAutofillValues({ building_floors: 8 }, "fără lift").building_amenities).toBeUndefined();
   });
-  it("deep request has 8000 tokens and private allowlisted history summary", () => {
+  it("deep request has 4500 tokens and private allowlisted history summary", () => {
     const history = historyConsensus([row("a"), row("b")], location);
     const request = buildAutofillRequest({ images: [], text: "", history });
-    expect(request.maxOutputTokens).toBe(8000);
+    expect(request.maxOutputTokens).toBe(4500);
     expect(request.messages[0]?.content).toContain("Din istoricul contului, același imobil");
     expect(request.messages[0]?.content).not.toContain("Strada Test");
   });
   it("caller-RLS history query scopes org, deleted and current and ignores far rows", async () => {
     const calls: unknown[][] = [];
     const chain: Record<string, unknown> = {};
-    for (const method of ["select", "eq", "is", "order", "range", "neq", "ilike", "gte", "lte"]) chain[method] = (...args: unknown[]) => { calls.push([method, ...args]); return chain; };
+    for (const method of ["select", "eq", "is", "order", "range", "neq", "ilike", "gte", "lte", "abortSignal"]) chain[method] = (...args: unknown[]) => { calls.push([method, ...args]); return chain; };
     chain.then = (resolve: (r: unknown) => void) => resolve({ data: [row("a"), row("b")], error: null });
     const client = { from: vi.fn(() => chain) } as unknown as Parameters<typeof loadAutofillHistory>[0];
-    const result = await loadAutofillHistory(client, "org", { ...location, propertyId: "current" });
+    const signal = new AbortController().signal;
+    const result = await loadAutofillHistory(client, "org", { ...location, propertyId: "current" }, signal);
+    expect(calls).toContainEqual(["abortSignal", signal]);
     expect(calls).toEqual(expect.arrayContaining([["eq", "organization_id", "org"], ["is", "deleted_at", null], ["neq", "id", "current"]]));
     expect(result.history.confidence.heating_systems).toBe("high");
   });

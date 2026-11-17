@@ -1,7 +1,7 @@
 /**
  * Apelul AI pentru „Completează cu AI”. Pozele merg inline, doar în memorie.
  */
-import type { AIProvider, AiProviderAttachment } from "@/lib/ai/providers/types";
+import type { AIProvider, AiProviderAttachment, AiGenerateRequest } from "@/lib/ai/providers/types";
 import type { AutofillLocation, HistoryProposal } from "./history";
 import {
   AUTOFILL_INVALID_MESSAGE,
@@ -79,7 +79,9 @@ export function buildAutofillRequest(input: AutofillInput) {
     system: AUTOFILL_SYSTEM + autofillCatalogForPrompt(),
     messages: [{ role: "user" as const, content: parts.join("\n"), attachments }],
     tools: [],
-    maxOutputTokens: 8000,
+    maxOutputTokens: 4500,
+    thinkingLevel: "low" as const,
+    retry503: false,
   };
 }
 
@@ -96,8 +98,8 @@ export function parseJsonLoose(text: string): unknown {
 }
 
 /** Rulează modelul și validează răspunsul. Un răspuns invalid nu aruncă: întoarce ok=false. */
-export async function runListingAutofill(provider: AIProvider, input: AutofillInput): Promise<AutofillResult & { usage?: { input: number | null; output: number | null } }> {
-  const result = await provider.generate(buildAutofillRequest(input));
+export async function runListingAutofill(provider: AIProvider, input: AutofillInput, controls: Pick<AiGenerateRequest, "signal" | "timeoutMs"> = {}): Promise<AutofillResult & { usage?: { input: number | null; output: number | null } }> {
+  const result = await provider.generate({ ...buildAutofillRequest(input), ...controls });
   const proposal = sanitizeAutofillResponse(parseJsonLoose(result.text), {
     spokenText: input.text,
     contextText: autofillContextText(input.context),

@@ -45,17 +45,23 @@ export const autofillListing = createServerFn({ method: "POST" })
 
     const { executeListingAutofill } = await import("./charge.server");
     const { loadAutofillHistory } = await import("./history.server");
-    const enrichment = await loadAutofillHistory(context.supabase, organizationId, data.context?.location).catch(() => {
+    const historyController = new AbortController();
+    let historyTimer: ReturnType<typeof setTimeout> | undefined;
+    const historyDeadline = new Promise<never>((_, reject) => {
+      historyTimer = setTimeout(() => { reject(new Error("History timeout")); historyController.abort(); }, 1500);
+    });
+    const enrichment = await Promise.race([loadAutofillHistory(context.supabase, organizationId, data.context?.location, historyController.signal), historyDeadline]).catch(() => {
       console.error("[ai_listing_autofill] history unavailable");
       return { history: { values: {}, confidence: {} }, urban: false };
-    });
+    }).finally(() => { if (historyTimer !== undefined) clearTimeout(historyTimer); });
     return executeListingAutofill({ organizationId, userId: context.userId }, provider, {
       images: data.images,
       text: data.text,
       context: data.context,
       ...enrichment,
-    }).catch((error: unknown) => {
+    }).catch(async (error: unknown) => {
       console.error("[ai_listing_autofill] failed", error instanceof Error ? error.name : "error");
-      return { ok: false as const, message: error instanceof Error && error.name === "AiCreditsExhaustedError" ? error.message : AUTOFILL_INVALID_MESSAGE };
+      const { autofillFailureMessage } = await import("./charge.server");
+      return { ok: false as const, message: error instanceof Error && error.name === "AiCreditsExhaustedError" ? error.message : autofillFailureMessage(error) };
     });
   });

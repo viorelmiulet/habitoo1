@@ -1,3 +1,10 @@
+## AI19 — Timp de răspuns și rezervă autofill
+- [x] Diagnostic: Mistral neconfigurat, fallback absent; 503 și retry principal 60s×2. Corpul Google/poze/durate individuale nepăstrate; depășirea Worker neconfirmată.
+- [x] Rezervă Mistral sau flash-lite, 15s principal + 0,5s pauză + 8s rezervă; istoric limitat 1,5s; catalog compact, 4500 tokenuri, low deja existent
+- [x] Jurnal attempts și mărimi fără conținut, mesaj supraîncărcare; rezervarea 07:15:22 restituită, cron activ 5 minute / vechime 10 minute
+- [x] 25 teste exclusiv noi/modificate trec; build OK; commit pregătit, fără publicare sau apeluri AI reale
+- Latența reală și fluxul autentificat nu au fost verificate: verificarea cerută este fără apeluri reale; bugetul providerilor este 23,5s, separat de citiri/taxare/rețea.
+
 ## AI18 — Ordinea automată a pozelor
 - [x] Aplicare automată creare/editare, anulare în memorie și protecție copertă manuală
 - [x] Prompt și validare strictă photo_order, teste țintite; fără publicare
