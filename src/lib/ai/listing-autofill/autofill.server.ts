@@ -1,6 +1,5 @@
 /**
- * Apelul AI pentru „Anunț din poze și voce”. Pozele și audio-ul merg inline,
- * doar în memorie: nimic din audio nu se păstrează după procesare.
+ * Apelul AI pentru „Completează cu AI”. Pozele merg inline, doar în memorie.
  */
 import type { AIProvider, AiProviderAttachment } from "@/lib/ai/providers/types";
 import {
@@ -12,7 +11,6 @@ import {
 
 export type AutofillInput = {
   images: { mimeType: string; base64: string }[];
-  audio: { mimeType: string; base64: string } | null;
   text: string;
   /** Titlul, descrierea și valorile deja completate în formular. */
   context?: AutofillFormContext;
@@ -39,15 +37,14 @@ function knownForPrompt(known: AutofillFormContext["known"]): string {
 export type AutofillResult = { ok: true; proposal: AutofillProposal } | { ok: false; message: string };
 
 export const AUTOFILL_SYSTEM = `Ești asistentul Habitoo care completează formularul unei proprietăți imobiliare din România.
-Primești poze, opțional o înregistrare vocală și/sau un text scris de agent, plus titlul, descrierea și valorile deja completate în formular.
+Primești poze și/sau un text scris de agent, plus titlul, descrierea și valorile deja completate în formular.
 Răspunde DOAR cu un obiect JSON strict, fără alt text, cu forma:
-{"transcript": string|null, "fields": [{"key": string, "value": ..., "confidence": "high"|"medium"|"low", "source": "text"|"spoken"|"photos"}], "title": string|null, "description": string|null, "photo_order": number[]|null}
+{"fields": [{"key": string, "value": ..., "confidence": "high"|"medium"|"low", "source": "text"|"spoken"|"photos"}], "title": string|null, "description": string|null, "photo_order": number[]|null}
 REGULI:
 - Folosește doar cheile și valorile din lista de mai jos, scrise exact.
-- "transcript": transcrierea fidelă a vocii, cu cifre (ex. „75000 euro”), sau null.
 - Citește atent descrierea și titlul existente și extrage TOATE faptele explicite de acolo (etaj „3/8”, „P/4”, „parter”, suprafețe „65 mp utili”, an „bloc din 1985”, camere, băi, preț, tranzacție). Completează cât mai multe câmpuri permise.
-- Sursa: "text" = din descrierea/titlul formularului; "spoken" = din voce sau din textul scris de agent în asistent; "photos" = din poze.
-- Prețul, adresa, localitatea, zona, etajul, anul și suprafețele se completează DOAR dacă apar explicit în voce sau text (source "spoken"/"text"). Nu le ghici niciodată din poze.
+- Sursa: "text" = din descrierea/titlul formularului; "spoken" = din textul scris de agent în asistent; "photos" = din poze.
+- Prețul, adresa, localitatea, zona, etajul, anul și suprafețele se completează DOAR dacă apar explicit în text (source "spoken"/"text"). Nu le ghici niciodată din poze.
 - La „P/4”: floor_label = "Parter", floor = 0, building_floors = 4. Numeralele scrise cu litere („etajul trei”) devin cifre. „Etaj intermediar” nu completează numărul.
 - Din poze (source "photos", confidence "medium") deduci doar finisaje, dotări, mobilare, stare, priveliște, electrocasnice, open_kitchen, bathroom_window, balcony și numărul de băi/bucătării, doar dacă pozele arată clar încăperi distincte.
 - Nu repeta valorile deja completate în formular.
@@ -59,10 +56,8 @@ CÂMPURI PERMISE:
 
 export function buildAutofillRequest(input: AutofillInput) {
   const attachments: AiProviderAttachment[] = input.images.map((img) => ({ mimeType: img.mimeType, base64: img.base64, detail: "low" }));
-  if (input.audio) attachments.push({ mimeType: input.audio.mimeType, base64: input.audio.base64 });
   const parts = [
     `Poze atașate: ${input.images.length} (indici 0–${Math.max(0, input.images.length - 1)}).`,
-    input.audio ? "Înregistrarea vocală a agentului este atașată după poze." : "Nu există înregistrare vocală.",
     input.text.trim() ? `Textul agentului: """${input.text.trim().slice(0, 2000)}"""` : "Nu există text scris.",
   ];
   const ctxText = autofillContextText(input.context);

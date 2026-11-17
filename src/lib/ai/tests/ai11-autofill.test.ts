@@ -28,7 +28,7 @@ describe("AI11 listing_autofill", () => {
     };
     const primary = { ...createGeminiProvider("k", "gemini-3.5-flash", { retryDelayMs: 1 }), fallback };
     const sink = usageSink();
-    const result = await executeListingAutofill(actor, primary, { images: [img], audio: null, text: "" }, { client: credits, usageClient: sink.client });
+    const result = await executeListingAutofill(actor, primary, { images: [img], text: "" }, { client: credits, usageClient: sink.client });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(String((fetchMock.mock.calls[1] as unknown[])[0])).toContain("gemini-3.5-flash:generateContent");
     expect(fallbackCalls).toHaveLength(1);
@@ -54,7 +54,7 @@ describe("AI11 listing_autofill", () => {
       generate: async (r) => { calls.push(r); return { text: '{"fields":[]}', toolCalls: [], inputTokens: 1, outputTokens: 1 }; },
     };
     const primary: AIProvider = { id: "gemini", model: "gemini-3.5-flash", supportsTools: true, fallback, generate: async () => { throw new AiProviderError("x", 503, true); } };
-    await executeListingAutofill(actor, primary, { images: [img, img], audio: null, text: "2 camere" }, { client: credits, usageClient: usageSink().client });
+    await executeListingAutofill(actor, primary, { images: [img, img], text: "2 camere" }, { client: credits, usageClient: usageSink().client });
     const msg = calls[0]!.messages[0] as { content: string; attachments: unknown[] };
     expect(msg.attachments).toEqual([]);
     expect(msg.content).toContain("2 camere");
@@ -63,7 +63,7 @@ describe("AI11 listing_autofill", () => {
   it("isSuccess=false fără excepție → usage success:false cu provider și model", async () => {
     const primary: AIProvider = { id: "gemini", model: "gemini-3.5-flash", supportsTools: true, generate: async () => ({ text: "nu e json", toolCalls: [], inputTokens: 1, outputTokens: 1 }) };
     const sink = usageSink();
-    const r = await executeListingAutofill(actor, primary, { images: [img], audio: null, text: "" }, { client: credits, usageClient: sink.client });
+    const r = await executeListingAutofill(actor, primary, { images: [img], text: "" }, { client: credits, usageClient: sink.client });
     expect(r.ok).toBe(false);
     expect(sink.rows).toHaveLength(1);
     expect(sink.rows[0]).toMatchObject({ provider: "gemini", model: "gemini-3.5-flash", success: false, capability: "listing_autofill" });
@@ -73,7 +73,7 @@ describe("AI11 listing_autofill", () => {
   it("excepție → usage success:false cu providerul real", async () => {
     const primary: AIProvider = { id: "gemini", model: "gemini-3.5-flash", supportsTools: true, generate: async () => { throw new AiProviderError("Providerul AI a răspuns cu 400.", 400, false); } };
     const sink = usageSink();
-    await expect(executeListingAutofill(actor, primary, { images: [img], audio: null, text: "" }, { client: credits, usageClient: sink.client })).rejects.toThrow();
+    await expect(executeListingAutofill(actor, primary, { images: [img], text: "" }, { client: credits, usageClient: sink.client })).rejects.toThrow();
     expect(sink.rows[0]).toMatchObject({ provider: "gemini", model: "gemini-3.5-flash", success: false });
   });
 });

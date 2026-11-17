@@ -1,5 +1,5 @@
 /**
- * „Anunț din poze și voce” — contractul pur (browser-safe) dintre modelul AI
+ * „Completează cu AI” — contractul pur (browser-safe) dintre modelul AI
  * și formularul proprietății.
  *
  * Modelul propune; acest modul păstrează doar câmpurile existente ale
@@ -15,13 +15,10 @@ import { deriveAutofillValues, extractStatedFacts, numberStatedIn, type StatedFa
 import { buildMarketingFactSheet, validateMarketingFacts } from "@/lib/ai/agents/marketing/facts";
 
 export const AUTOFILL_MAX_PHOTOS = 20;
-export const AUTOFILL_MAX_AUDIO_SECONDS = 120;
 export const AUTOFILL_IMAGE_MAX_EDGE = 1024;
-export const AUTOFILL_AUDIO_MIME = ["audio/webm", "audio/ogg", "audio/mp4", "audio/x-m4a", "audio/m4a", "audio/aac"] as const;
 
 export const AUTOFILL_INVALID_MESSAGE = "Nu am putut completa automat. Încearcă din nou sau completează manual.";
-export const AUTOFILL_AUDIO_TOO_LONG_MESSAGE = "Înregistrarea depășește 2 minute. Înregistrează din nou, mai pe scurt.";
-export const AUTOFILL_EMPTY_MESSAGE = "Adaugă cel puțin o poză sau descrie proprietatea (voce sau text).";
+export const AUTOFILL_EMPTY_MESSAGE = "Adaugă cel puțin o poză sau scrie câteva cuvinte despre proprietate.";
 
 type FieldKind = "select" | "multi" | "number" | "boolean" | "text";
 type FieldDef = { kind: FieldKind; label: string; options?: readonly string[]; fromPhotos?: boolean; explicit?: boolean };
@@ -97,9 +94,9 @@ export const AUTOFILL_FIELDS: Record<string, FieldDef> = {
 };
 
 export type AutofillConfidence = "high" | "medium";
-/** Sursa fiecărei propuneri: descriere/titlu, voce sau text dictat, poze, deducție logică. */
+/** Sursa fiecărei propuneri: descriere/titlu, text scris în asistent, poze, deducție logică. */
 export type AutofillSource = "text" | "spoken" | "photos" | "derived";
-export const AUTOFILL_SOURCE_LABELS: Record<AutofillSource, string> = { text: "din descriere", spoken: "din voce", photos: "din poze", derived: "dedus" };
+export const AUTOFILL_SOURCE_LABELS: Record<AutofillSource, string> = { text: "din descriere", spoken: "din text", photos: "din poze", derived: "dedus" };
 export type AutofillValue = string | number | boolean | string[];
 export type AutofillProposal = {
   values: Record<string, AutofillValue>;
@@ -288,7 +285,7 @@ export function onlyEmptyFields(proposal: AutofillProposal, current: Record<stri
 /** Nomenclatorul trimis modelului în instrucțiuni. */
 export function autofillCatalogForPrompt(): string {
   return Object.entries(AUTOFILL_FIELDS).map(([key, def]) => {
-    const rule = def.explicit ? " [DOAR dacă e spus explicit]" : def.fromPhotos ? " [se poate deduce din poze]" : " [doar din voce/text]";
+    const rule = def.explicit ? " [DOAR dacă e spus explicit]" : def.fromPhotos ? " [se poate deduce din poze]" : " [doar din text]";
     const opts = def.options ? `: ${def.kind === "multi" ? "listă din " : "una din "}${def.options.map((o) => JSON.stringify(o)).join(", ")}` : def.kind === "number" ? ": număr" : def.kind === "boolean" ? ": true" : ": text exact spus";
     return `- ${key} (${def.label})${opts}${rule}`;
   }).join("\n");

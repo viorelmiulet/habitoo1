@@ -1,11 +1,11 @@
 /**
- * Cardul „Completează cu AI”: poze + voce/text → propuneri în formular.
+ * Cardul „Completează cu AI”: poze + text → propuneri în formular.
  * Nimic nu se salvează aici; agentul verifică și apasă „Salvează”.
  */
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ImagePlus, Loader2, Mic, Sparkles, Square, Trash2, X } from "lucide-react";
+import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -17,9 +17,7 @@ import { MEDIA_BUCKET, compressImage, signedUrls } from "@/lib/storage";
 import { reorderPropertyPhotos } from "@/lib/property-photo-upload";
 import { autofillListing } from "@/lib/ai/listing-autofill/autofill.functions";
 import {
-  AUTOFILL_AUDIO_TOO_LONG_MESSAGE,
   AUTOFILL_IMAGE_MAX_EDGE,
-  AUTOFILL_MAX_AUDIO_SECONDS,
   AUTOFILL_MAX_PHOTOS,
   AUTOFILL_SOURCE_LABELS,
   autofillFieldLabel,
@@ -37,14 +35,6 @@ async function blobToBase64(blob: Blob): Promise<string> {
 async function prepareImage(file: File) {
   const { blob } = await compressImage(file, AUTOFILL_IMAGE_MAX_EDGE, 0.78);
   return { mimeType: "image/jpeg" as const, base64: await blobToBase64(blob) };
-}
-
-function pickRecorderMime(): string {
-  if (typeof MediaRecorder === "undefined") return "";
-  for (const type of ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"]) {
-    if (MediaRecorder.isTypeSupported(type)) return type;
-  }
-  return "";
 }
 
 type Props = {
@@ -70,16 +60,10 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
   const run = useServerFn(autofillListing);
   const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
-  const [recording, setRecording] = useState(false);
-  const [seconds, setSeconds] = useState(0);
-  const [audio, setAudio] = useState<{ blob: Blob; url: string; duration: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [photoOrder, setPhotoOrder] = useState<number[] | null>(null);
   const [applied, setApplied] = useState<AutofillProposal | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const startedRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const existing = useQuery({
     queryKey: ["property-images", propertyId],
@@ -99,53 +83,12 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
     setPreviews(urls);
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [mode, photos]);
-  useEffect(() => () => { if (audio) URL.revokeObjectURL(audio.url); }, [audio]);
-  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); recorderRef.current?.stream.getTracks().forEach((t) => t.stop()); }, []);
 
   if (isLoading || !isEnabled("ai_listing_autofill")) return null;
 
   const photoCount = mode === "new" ? photos.length : existingImages.length;
   const ctxNow = formContext?.();
-  const hasInput = photoCount > 0 || Boolean(audio) || text.trim().length > 0 || Boolean(ctxNow?.description?.trim() || ctxNow?.title?.trim());
-
-  const stop = () => {
-    recorderRef.current?.stop();
-    if (timerRef.current) clearInterval(timerRef.current);
-    setRecording(false);
-  };
-
-  const start = async () => {
-    setError(null);
-    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setError("Browserul nu permite înregistrarea vocală. Scrie descrierea în câmpul de text.");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = pickRecorderMime();
-      const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
-      const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
-      recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const duration = (Date.now() - startedRef.current) / 1000;
-        const blob = new Blob(chunks, { type: recorder.mimeType || mime || "audio/webm" });
-        setAudio((old) => { if (old) URL.revokeObjectURL(old.url); return { blob, url: URL.createObjectURL(blob), duration }; });
-      };
-      recorderRef.current = recorder;
-      startedRef.current = Date.now();
-      setSeconds(0);
-      recorder.start();
-      setRecording(true);
-      timerRef.current = setInterval(() => {
-        const s = Math.floor((Date.now() - startedRef.current) / 1000);
-        setSeconds(s);
-        if (s >= AUTOFILL_MAX_AUDIO_SECONDS) stop();
-      }, 250);
-    } catch {
-      setError("Nu am primit acces la microfon. Poți scrie descrierea în câmpul de text.");
-    }
-  };
+  const hasInput = photoCount > 0 || text.trim().length > 0 || Boolean(ctxNow?.description?.trim() || ctxNow?.title?.trim());
 
   const addPhotos = (list: FileList | null) => {
     if (!list || !onPhotosChange) return;
@@ -157,7 +100,6 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
 
   const submit = async () => {
     setError(null);
-    if (audio && audio.duration > AUTOFILL_MAX_AUDIO_SECONDS + 1) { setError(AUTOFILL_AUDIO_TOO_LONG_MESSAGE); return; }
     setBusy(true);
     try {
       let files: File[] = photos.slice(0, AUTOFILL_MAX_PHOTOS);
@@ -171,7 +113,6 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
       const images = await Promise.all(files.map(prepareImage));
       const result = await run({ data: {
         images,
-        audio: audio ? { mimeType: audio.blob.type || "audio/webm", base64: await blobToBase64(audio.blob), durationSec: audio.duration } : null,
         text,
         context: formContext?.(),
       } });
@@ -179,8 +120,6 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
       const shown = onProposal(result.proposal);
       setApplied(shown);
       setPhotoOrder(result.proposal.photoOrder);
-      // Audio-ul nu se păstrează după procesare.
-      setAudio((old) => { if (old) URL.revokeObjectURL(old.url); return null; });
       const count = Object.keys(shown.values).length + (shown.title ? 1 : 0) + (shown.description ? 1 : 0);
       toast.success(count ? `AI-ul a propus ${count} câmpuri. Verifică-le înainte de salvare.` : "AI-ul nu a găsit câmpuri noi de completat.");
     } catch {
@@ -214,7 +153,7 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
 
   return (
     <div data-testid="listing-autofill-card">
-    <FormSection title="Completează cu AI" description="Încarcă pozele și dictează sau scrie câteva fraze. AI-ul propune valori; tu le verifici înainte de salvare.">
+    <FormSection title="Completează cu AI" description="Încarcă pozele și scrie câteva fraze. AI-ul propune valori; tu le verifici înainte de salvare.">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Poze {photoCount ? `(${Math.min(photoCount, AUTOFILL_MAX_PHOTOS)})` : ""}</Label>
@@ -231,23 +170,14 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
             <p className="text-xs text-muted-foreground">Pozele se adaugă în galeria proprietății la salvare.</p>
           </> : <p className="text-sm text-muted-foreground">{existingImages.length ? `Se analizează ${existingImages.length} fotografii din galeria proprietății.` : "Proprietatea nu are încă fotografii. Încarcă-le din fila Media."}</p>}
         </div>
-        <div className="space-y-2">
-          <Label>Voce (max. 2 minute)</Label>
-          <div className="flex flex-wrap items-center gap-2">
-            {recording ? <Button type="button" variant="destructive" size="sm" onClick={stop}><Square /> Oprește ({seconds}s)</Button>
-              : <Button type="button" variant="outline" size="sm" onClick={() => void start()}><Mic /> {audio ? "Înregistrează din nou" : "Începe înregistrarea"}</Button>}
-            {audio && !recording ? <>
-              <audio controls src={audio.url} className="h-9 max-w-full" />
-              <Button type="button" variant="ghost" size="icon" aria-label="Șterge înregistrarea" onClick={() => setAudio(null)}><Trash2 /></Button>
-            </> : null}
-          </div>
+        <div className="flex flex-col gap-2">
           <Label htmlFor={`${mode}-autofill-text`}>Descrie proprietatea în câteva cuvinte</Label>
-          <Textarea id={`${mode}-autofill-text`} rows={3} value={text} maxLength={4000} onChange={(e) => setText(e.target.value)} placeholder="Ex.: 2 camere, 75.000 euro, etaj 3, renovat recent" />
+          <Textarea id={`${mode}-autofill-text`} rows={5} className="min-h-28 flex-1" value={text} maxLength={4000} onChange={(e) => setText(e.target.value)} placeholder="Ex.: 2 camere, 75.000 euro, etaj 3, renovat recent" />
         </div>
       </div>
       {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
       <div className="flex flex-wrap gap-2">
-        <Button type="button" disabled={!hasInput || busy || recording} onClick={() => void submit()}>
+        <Button type="button" disabled={!hasInput || busy} onClick={() => void submit()}>
           {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
           {mode === "new" ? "Completează cu AI" : "Completează câmpurile goale cu AI"}
         </Button>

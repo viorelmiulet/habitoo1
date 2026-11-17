@@ -30,10 +30,16 @@ describe("cardul Completează cu AI", () => {
     const el = await render();
     expect(el.querySelector("[data-testid=listing-autofill-card]")).toBeNull();
   });
-  it("fără poze și fără text/voce → butonul este dezactivat", async () => {
+  it("fără poze și fără text → butonul este dezactivat", async () => {
     enabled.value = true;
     const el = await render();
     const button = [...el.querySelectorAll("button")].find((b) => b.textContent?.includes("Completează cu AI"));
     expect(button?.disabled).toBe(true);
+  });
+  it("cardul nu mai afișează înregistrarea vocală", async () => {
+    enabled.value = true;
+    const el = await render();
+    expect(el.textContent).not.toContain("Începe înregistrarea");
+    expect(el.textContent).not.toContain("Voce");
   });
 });
