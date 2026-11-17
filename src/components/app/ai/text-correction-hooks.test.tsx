@@ -16,9 +16,9 @@ describe("CR11 TextCorrectionControl", () => {
     const div = document.createElement("div");
     const root = createRoot(div, { onUncaughtError: (e) => errors.push(e) });
     const qc = new QueryClient();
-    const view = (v: string) => <QueryClientProvider client={qc}><TextCorrectionControl field="title" value={v} onApply={() => {}} /></QueryClientProvider>;
+    const view = (v: string) => <QueryClientProvider client={qc}><TextCorrectionControl field="description" value={v} onApply={() => {}} /></QueryClientProvider>;
     act(() => root.render(view("")));
-    act(() => root.render(view("A")));
+    act(() => root.render(view("text lipit")));
     expect(errors).toEqual([]);
     expect(div.textContent).toContain("Corectează textul");
   });
