@@ -1,3 +1,4 @@
+export type BlogFaq = { q: string; a: string };
 export type BlogStatus = "draft" | "published";
 
 export type BlogPost = {
@@ -15,6 +16,7 @@ export type BlogPost = {
   reading_minutes: number;
   seo_title: string | null;
   seo_description: string | null;
+  faq?: BlogFaq[];
   created_at: string;
   updated_at: string;
 };

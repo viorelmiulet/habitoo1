@@ -1,4 +1,5 @@
 import { PublicPhotoHeading } from "@/components/marketing/PublicPhotoHeading";
+import { BLOG_AUTHOR } from "@/lib/marketing/blog-aeo";
 import { publicPagePhotos, publicPhotoHead } from "@/components/marketing/public-page-photos";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -18,7 +19,7 @@ const roDate = (value: string | null) => value ? new Intl.DateTimeFormat("ro-RO"
 
 export const Route = createFileRoute("/blog/")({
   loader: () => listPublishedBlogPosts(),
-  head: ({ loaderData }) => publicHead({ ...publicPhotoHead(publicPagePhotos.blog), path: "/blog", title: TITLE, description: DESCRIPTION, jsonLd: { "@context": "https://schema.org", "@type": "Blog", "@id": `${SITE_URL}/blog#blog`, isPartOf: { "@id": WEBSITE_ID }, name: "Blog Habitoo", description: DESCRIPTION, url: `${SITE_URL}/blog`, publisher: { "@id": ORG_ID }, blogPost: (loaderData ?? []).map((post) => ({ "@type": "BlogPosting", author: { "@id": ORG_ID }, publisher: { "@id": ORG_ID }, headline: post.title, url: `${SITE_URL}/blog/${post.slug}`, datePublished: post.published_at, dateModified: post.updated_at })) } }),
+  head: ({ loaderData }) => publicHead({ ...publicPhotoHead(publicPagePhotos.blog), path: "/blog", title: TITLE, description: DESCRIPTION, jsonLd: { "@context": "https://schema.org", "@type": "Blog", "@id": `${SITE_URL}/blog#blog`, isPartOf: { "@id": WEBSITE_ID }, name: "Blog Habitoo", description: DESCRIPTION, url: `${SITE_URL}/blog`, publisher: { "@id": ORG_ID }, blogPost: (loaderData ?? []).map((post) => ({ "@type": "BlogPosting", author: BLOG_AUTHOR, publisher: { "@id": ORG_ID }, headline: post.title, url: `${SITE_URL}/blog/${post.slug}`, datePublished: post.published_at, dateModified: post.updated_at })) } }),
   component: BlogPage,
 });
 

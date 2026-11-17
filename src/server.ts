@@ -6,6 +6,9 @@ import { renderErrorPage } from "./lib/error-page";
 import { decideEdge, publicCacheControl, shouldTagNoindex } from "./lib/host-policy";
 import { permanentPublicRedirect } from "./lib/marketing/public-http";
 import { runAfterResponse } from "./lib/after-response";
+import { indexNowKeyResponse } from "./lib/marketing/indexnow-key";
+
+let staticIndexNowChecked = false;
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -97,13 +100,16 @@ export default {
         request,
       );
     }
+    const keyFile = indexNowKeyResponse(new URL(request.url).pathname, process.env["INDEXNOW_KEY"]);
+    if (keyFile) return keyFile;
     const trailingSlash = permanentPublicRedirect(request);
     if (trailingSlash) return trailingSlash;
     try {
       const handler = await getServerEntry();
       const response = await runWithRequestContext(ctx, () => handler.fetch(request, env, ctx));
       // Observe only the published public origin, never editor previews or CRM requests.
-      if (new URL(request.url).hostname === "www.habitoo.ro" && response.status === 200 && response.headers.get("content-type")?.includes("text/html")) {
+      if (new URL(request.url).hostname === "www.habitoo.ro" && response.status === 200 && response.headers.get("content-type")?.includes("text/html") && !staticIndexNowChecked) {
+        staticIndexNowChecked = true;
         runWithRequestContext(ctx, () => runAfterResponse(async () => {
           const { notifyIndexNow } = await import("./lib/marketing/indexnow.server");
           const { staticContentRevisions } = await import("./lib/marketing/indexnow");

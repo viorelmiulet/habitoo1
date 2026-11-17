@@ -4,16 +4,17 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { normalizeFaq } from "@/lib/marketing/blog-aeo";
 import { blogCoverUrl, calculateReadingMinutes, type BlogPost } from "@/lib/blog";
 
-const rowFields = "id,slug,title,excerpt,content,cover_image_url,category,author_name,status,published_at,reading_minutes,seo_title,seo_description,created_at,updated_at";
+const rowFields = "id,slug,title,excerpt,content,cover_image_url,category,author_name,status,published_at,reading_minutes,seo_title,seo_description,faq,created_at,updated_at";
 
 function publicClient() {
   return createClient<Database>(process.env['SUPABASE_URL']!, process.env['SUPABASE_PUBLISHABLE_KEY']!, { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } });
 }
 
 function mapPost(row: Record<string, unknown>): BlogPost {
-  return { ...(row as unknown as BlogPost), cover_image_url: blogCoverUrl((row.cover_image_url as string | null) ?? null) };
+  return { ...(row as unknown as BlogPost), cover_image_url: blogCoverUrl((row.cover_image_url as string | null) ?? null), faq: normalizeFaq(row.faq) };
 }
 
 export const listPublishedBlogPosts = createServerFn({ method: "GET" }).handler(async () => {
@@ -39,8 +40,8 @@ export const getPublishedBlogPost = createServerFn({ method: "GET" })
     const post = mapPost(row as Record<string, unknown>);
     const similar = await publicRead("blog_posts similar", async () => (await db.from("blog_posts").select(rowFields).eq("status", "published").lte("published_at", new Date().toISOString()).neq("id", post.id).order("published_at", { ascending: false }).limit(12)).data, null);
     const candidates = (similar ?? []).map((item) => mapPost(item as Record<string, unknown>));
-    const sameCategory = candidates.filter((item) => item.category === post.category);
-    return { post: { ...post, contentHtml: renderSafeBlogContent(post.content) }, similar: [...sameCategory, ...candidates.filter((item) => item.category !== post.category)].slice(0, 3) };
+    const { relatedPosts } = await import("@/lib/marketing/blog-aeo");
+    return { post: { ...post, contentHtml: renderSafeBlogContent(post.content) }, similar: relatedPosts(post, candidates, 3) };
   });
 
 type AuthContext = { supabase: { rpc: (fn: "is_superadmin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }> }; userId: string };
@@ -66,7 +67,7 @@ export const getAdminBlogPost = createServerFn({ method: "GET" }).middleware([re
     return { ...post, contentHtml: renderSafeBlogContent(post.content) };
   });
 
-const postInput = z.object({ id: z.string().uuid().optional(), slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug invalid.").max(180), title: z.string().trim().min(3).max(180), excerpt: z.string().trim().min(10).max(500), content: z.string().trim().min(50), cover_image_url: z.string().trim().max(1000).nullable(), category: z.string().trim().min(2).max(80), author_name: z.string().trim().min(2).max(100), status: z.enum(["draft", "published"]), published_at: z.string().datetime().nullable(), seo_title: z.string().trim().max(180).nullable(), seo_description: z.string().trim().max(320).nullable() });
+const postInput = z.object({ id: z.string().uuid().optional(), slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug invalid.").max(180), title: z.string().trim().min(3).max(180), excerpt: z.string().trim().min(10).max(500), content: z.string().trim().min(50), cover_image_url: z.string().trim().max(1000).nullable(), category: z.string().trim().min(2).max(80), author_name: z.string().trim().min(2).max(100), status: z.enum(["draft", "published"]), published_at: z.string().datetime().nullable(), seo_title: z.string().trim().max(180).nullable(), seo_description: z.string().trim().max(320).nullable(), faq: z.array(z.object({ q: z.string().trim().min(3).max(300), a: z.string().trim().min(3).max(2000) })).max(20).optional() });
 
 export const saveBlogPost = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data) => postInput.parse(data)).handler(async ({ data, context }) => {
   await assertSuperadmin(context as AuthContext);

@@ -4,4 +4,5 @@
 
 - Editorial contentModified drives visible dates, WebPage and sitemap; public cache lives in the existing server entry and excludes session HTML. Why: truthful dates and private-cache isolation.
 - llms-full uses registries, shared FAQ, public aggregate statistics and reviewed Markdown extracted from public pages, excluding mock account previews. Why: complete public content only.
-- IndexNow uses service-only revision receipts and a lock, disabled until public verification-key disclosure is resolved. Why: no secret exposure or preview submissions.
+- IndexNow uses service-only revision receipts and a lock; the key file is served from the server entry (the key is public by protocol), static revisions are checked once per isolate and blog saves notify. Why: deduplicated batches without preview submissions.
+- Blog article AEO (author organization, summary, TOC, JSON-LD, related, FAQ) lives in the pure blog-aeo module. Why: testable without rendering.
