@@ -61,7 +61,7 @@ function PartnerCard({ partner }: { partner: PublicPartner }) {
         {partner.logoUrl ? (
           <img src={partner.logoUrl} alt={`Logo ${partner.name}`} loading="lazy" className="size-full object-contain" />
         ) : (
-          <span className="flex size-full items-center justify-center rounded-xl bg-gold-tint font-display text-3xl font-semibold text-accent-foreground" aria-hidden>
+          <span className="flex size-full items-center justify-center rounded-xl ds-plate-initials font-display text-3xl font-semibold" aria-hidden>
             {partnerInitials(partner.name)}
           </span>
         )}
@@ -102,7 +102,7 @@ function PartnersPage() {
             text="Agențiile imobiliare care lucrează zilnic în Habitoo CRM: își publică anunțurile pe portaluri, colaborează cu alte agenții și își urmăresc lead-urile și comisioanele din același sistem."
           />
           {partners.length > 0 ? (
-            <p className="mt-6 text-sm font-semibold text-navy">
+            <p className="mt-6 text-center font-mono text-sm ds-text-2">
               {partners.length} {partners.length === 1 ? "agenție parteneră" : "agenții partenere"} Habitoo.
             </p>
           ) : null}

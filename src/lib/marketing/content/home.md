@@ -12,7 +12,7 @@ Apartament luminos cu 3 camere, 78 mp utili, la 5 minute de metrou. Bucătărie 
 
 AI-ul propune, tu aprobi Aprobă descrierea
 
-* 27 de portaluri integrate
+* {{PORTALS_LABEL}} integrate
 * 90 de zile gratuit, fără card
 * Date separate pe agenții
 
@@ -96,7 +96,7 @@ Portofoliul, activitatea și rezultatele agenției, la zi.
 
 Integrări
 
-## CRM-ul imobiliar cu cele mai multe integrări: 27 de portaluri dintr-un singur loc
+## CRM-ul imobiliar cu cele mai multe integrări: {{PORTALS_LABEL}} dintr-un singur loc
 
 Introduci proprietatea o dată și ajunge pe toate portalurile alese, cu actualizare și retragere automată. Cererile clienților de pe portalurile care le trimit intră direct în CRM.
 

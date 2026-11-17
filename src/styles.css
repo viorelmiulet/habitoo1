@@ -504,12 +504,15 @@
 .reveal-in {
   opacity: 1;
   transform: none;
+  animation: reveal-up 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
+@keyframes reveal-up { from { opacity: 0.35; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal-pending,
   .reveal-in {
     transition: none;
+    animation: none;
     opacity: 1;
     transform: none;
   }
@@ -848,3 +851,32 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
 @media (prefers-reduced-motion: reduce) {
   .mk-root .ds-live-dot, .mk-root .ds-scanline::after, .mk-root .ds-cursor { animation: none; }
 }
+
+/* RD2 — componente comune ale paginilor interne publice (scoped .mk-root). */
+.mk-root .ds-photo-frame { border-color: rgba(148, 180, 255, 0.18); }
+.mk-root .ds-photo-overlay { background: linear-gradient(0deg, #05080F 0%, rgba(5, 8, 15, 0.35) 38%, transparent 70%), rgba(91, 228, 255, 0.08); }
+.mk-root .ds-chip { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--ds-text); background: rgba(5, 8, 15, 0.72); border: 1px solid var(--ds-line-strong); border-radius: 8px; padding: 4px 8px; }
+/* Text pe plăcuțe deschise: întotdeauna închis. */
+.mk-root :where(.ds-logo-plate, .ds-plate, .integration-node, .integration-map-listing) { color: #1A2440; }
+.mk-root .integration-node, .mk-root .integration-map-listing { background: #F4F6FB; border-color: transparent; }
+.mk-root :where(.integration-node, .integration-map-listing) :where(.text-navy, .text-foreground, h3, p, span) { color: #1A2440; }
+.mk-root :where(.integration-node, .integration-map-listing) .text-muted-foreground { color: #3D4A5C; }
+.mk-root :where(.integration-node, .integration-map-listing) .text-success { color: #0F7A45; }
+.mk-root .ds-plate-initials { background: #E3E9F5; color: #1A2440; }
+/* Carduri de funcționalitate. */
+.mk-root .ds-feature-card { transition: border-color .2s; }
+.mk-root .ds-feature-card:hover { border-color: rgba(148, 180, 255, 0.4); }
+.mk-root .ds-icon-tile { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px; color: var(--ds-cyan); background: rgba(91, 228, 255, 0.08); border: 1px solid rgba(91, 228, 255, 0.2); }
+/* Tabele publice. */
+.mk-root .ds-table-box { overflow-x: auto; max-width: 100%; border: 1px solid var(--ds-line); border-radius: 20px; background: var(--ds-card); }
+.mk-root .ds-table thead th { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ds-text-3); font-weight: 500; }
+.mk-root .ds-table tbody tr { border-color: var(--ds-line); }
+.mk-root .ds-table tbody tr:nth-child(even) { background: rgba(148, 180, 255, 0.025); }
+/* Coperți blog: cadru închis cu padding. */
+.mk-root .ds-cover-frame { background: #0E1628; padding: 10px; }
+.mk-root .ds-cover-frame > * { border-radius: 14px; }
+/* Blocuri de cod (dezvoltatori). */
+.mk-root pre { background: #0B1220; border: 1px solid var(--ds-line); border-radius: 14px; color: #CBD6EE; }
+.mk-root .ds-cover-fallback { background: #0E1628; color: #EAF0FF; }
+.mk-root .integration-node .text-navy, .mk-root .integration-node span.font-semibold, .mk-root .integration-map-listing .text-navy { color: #1A2440; }
+.mk-root .ds-cover-frame { padding: 14px; }

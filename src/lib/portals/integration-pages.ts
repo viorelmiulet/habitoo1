@@ -862,3 +862,9 @@ export function integrationFeatures(p: IntegrationPage) {
     leads: LEAD_PORTALS.has(p.portalId) || !!p.definition.receives_leads,
   };
 }
+
+/** Recalculează în text numărul static de portaluri cu portalurile dinamice publice (aceeași sursă ca homepage și /integrari). */
+export function withPublicPortalCount(text: string, dynamic: PortalDefinition[] = []): string {
+  // Registrul poate primi portaluri dinamice la rulare: înlocuim orice „N (de) portaluri”, nu doar valoarea statică.
+  return text.replace(/\b\d+(?: de)? portaluri\b/g, portalsLabel(publicPortalCount(dynamic)));
+}

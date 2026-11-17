@@ -6,7 +6,9 @@ import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section } from "@/components/marketing/Section";
 import { publicHead, SITE_URL } from "@/components/marketing/public-head";
 import { FEATURE_PAGE_ALIASES, featureEntryByKey, featurePageBySlug, type FeaturePage } from "@/lib/marketing/feature-pages";
-import { integrationPageBySlug } from "@/lib/portals/integration-pages";
+import { integrationPageBySlug, withPublicPortalCount } from "@/lib/portals/integration-pages";
+import { getPublicDynamicFeedPortals } from "@/lib/dynamic-feed-portals.functions";
+import { Eyebrow } from "@/components/marketing/Section";
 import { PublicAnswer } from "@/components/marketing/PublicAnswer";
 
 function featureJsonLd(page: FeaturePage) {
@@ -25,12 +27,12 @@ function featureJsonLd(page: FeaturePage) {
 }
 
 export const Route = createFileRoute("/functionalitati_/$slug")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
     const alias = FEATURE_PAGE_ALIASES[params.slug];
     if (alias) throw redirect({ to: "/functionalitati/$slug", params: { slug: alias }, statusCode: 301 });
     const page = featurePageBySlug(params.slug);
     if (!page) throw notFound();
-    return { slug: page.slug };
+    return { slug: page.slug, dynamic: await getPublicDynamicFeedPortals() };
   },
   head: ({ loaderData }) => {
     const page = loaderData ? featurePageBySlug(loaderData.slug) : null;
@@ -59,7 +61,8 @@ function related(slug: string): { name: string; href: string } | null {
 }
 
 function FeaturePageView() {
-  const { slug } = Route.useLoaderData();
+  const { slug, dynamic = [] } = Route.useLoaderData();
+  const t = (text: string) => withPublicPortalCount(text, dynamic);
   const page = featurePageBySlug(slug);
   if (!page) throw notFound();
   const candidates = [...page.related, "proprietati", "contacte", "cereri", "potriviri-automate"];
@@ -72,21 +75,23 @@ function FeaturePageView() {
             <Link to="/" className="hover:underline">Acasă</Link> ›{" "}
             <Link to="/functionalitati" className="hover:underline">Funcționalități</Link> › <span>{page.name}</span>
           </nav>
+          <Eyebrow className="mb-4">Funcționalități</Eyebrow>
           <h1 className="text-4xl font-semibold tracking-tight text-balance text-navy sm:text-5xl">{page.h1}</h1>
           <PublicAnswer path={`/functionalitati/${slug}`} />
           <div className="mt-6 max-w-3xl space-y-4 text-base leading-relaxed text-foreground sm:text-lg">
-            {page.intro.map((p) => <p key={p}>{p}</p>)}
+            {page.intro.map((p) => <p key={p}>{t(p)}</p>)}
           </div>
         </Container>
       </section>
       <Section>
         <Container>
           <h2 className="text-2xl font-semibold tracking-tight text-navy">Ce câștigi</h2>
-          <ul className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-6 grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {page.benefits.map((b) => (
-              <li key={b.title} className="panel p-5">
-                <h3 className="flex items-center gap-2 font-semibold text-navy"><Check className="size-4 text-success" />{b.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{b.text}</p>
+              <li key={b.title} className="ds-card ds-feature-card flex h-full flex-col p-5">
+                <span className="ds-icon-tile" aria-hidden><Check className="size-5" /></span>
+                <h3 className="mt-4 font-semibold text-navy">{b.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{t(b.text)}</p>
               </li>
             ))}
           </ul>
@@ -97,10 +102,10 @@ function FeaturePageView() {
           <h2 className="text-2xl font-semibold tracking-tight text-navy">Cum funcționează</h2>
           <ol className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {page.steps.map((s, i) => (
-              <li key={s.title} className="panel p-5">
-                <span className="text-sm font-semibold text-gold-dark">Pasul {i + 1}</span>
+              <li key={s.title} className="ds-card h-full p-5">
+                <span className="font-mono text-xs ds-ai">{String(i + 1).padStart(2, "0")} / Pasul {i + 1}</span>
                 <h3 className="mt-1 font-semibold text-navy">{s.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{s.text}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{t(s.text)}</p>
               </li>
             ))}
           </ol>
@@ -113,7 +118,7 @@ function FeaturePageView() {
             <h2 className="text-2xl font-semibold tracking-tight text-navy">Vezi și</h2>
             <ul className="mt-4 flex flex-wrap gap-2">
               {links.map((l) => (
-                <li key={l.href}><a href={l.href} className="panel inline-block px-3 py-2 text-sm font-medium text-navy hover:shadow-soft">{l.name}</a></li>
+                <li key={l.href}><a href={l.href} className="ds-card ds-feature-card inline-flex items-center gap-1 px-4 py-2.5 text-sm font-medium text-navy">{l.name} <span className="ds-ai" aria-hidden>→</span></a></li>
               ))}
             </ul>
           </Container>

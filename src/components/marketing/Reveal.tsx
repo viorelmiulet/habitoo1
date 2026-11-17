@@ -2,8 +2,8 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Discreet scroll-reveal. Content is visible by default (SSR / no-JS safe);
- * elements below the fold get a short fade-up when they enter the viewport.
+ * Discreet scroll-reveal. Content is never hidden (SSR / no-JS / full-page capture safe);
+ * elements below the fold only get a short fade-up animation when they enter the viewport.
  * Respects prefers-reduced-motion.
  */
 export function Reveal({
@@ -27,12 +27,10 @@ export function Reveal({
     // Already on screen: never hide content the visitor can see.
     if (rect.top < window.innerHeight * 0.92) return;
 
-    el.classList.add("reveal-pending");
-    const io = new IntersectionObserver(
+        const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            el.classList.remove("reveal-pending");
             el.classList.add("reveal-in");
             io.disconnect();
           }

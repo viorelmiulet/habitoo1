@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-route
 import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { CtaBand } from "@/components/marketing/CtaBand";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
-import { Container, Section } from "@/components/marketing/Section";
+import { Eyebrow, Container, Section } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
 import { dynamicIntegrationPageBySlug, integrationPageAliasTarget, integrationPageBySlug as staticPageBySlug, RELATED_CTA_TEXT } from "@/lib/portals/integration-pages";
 import { integrationJsonLd } from "@/lib/portals/integration-jsonld";
@@ -67,6 +67,7 @@ function IntegrationPage() {
             <Link to="/" className="hover:underline">Acasă</Link> ›{" "}
             <Link to="/integrari" className="hover:underline">Integrări</Link> › <span>{page.name}</span>
           </nav>
+          <Eyebrow className="mb-4">Integrări</Eyebrow>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
             {logoUrl ? (
               <span className="ds-plate inline-flex shrink-0 items-center px-4 py-3"><img src={logoUrl} alt={`Logo ${page.name}`} width={200} height={64} className="h-14 w-auto max-w-[200px] object-contain" /></span>
@@ -138,12 +139,12 @@ function IntegrationPage() {
           <ul className="flex flex-wrap gap-3">
             {page.related.slice(0, 3).map((r) => (
               <li key={r.slug}>
-                <Link to="/integrari/$slug" params={{ slug: r.slug }} className="panel inline-block px-4 py-2 text-sm font-semibold text-navy hover:underline">
+                <Link to="/integrari/$slug" params={{ slug: r.slug }} className="ds-card ds-feature-card inline-block px-4 py-2.5 text-sm font-semibold text-navy">
                   {r.name}
                 </Link>
               </li>
             ))}
-            <li><Link to="/functionalitati/$slug" params={{ slug: "proprietati" }} className="panel inline-block px-4 py-2 text-sm font-semibold text-navy hover:underline">Gestiunea proprietăților</Link></li>
+            <li><Link to="/functionalitati/$slug" params={{ slug: "proprietati" }} className="ds-card ds-feature-card inline-block px-4 py-2.5 text-sm font-semibold text-navy">Gestiunea proprietăților</Link></li>
           </ul>
           <p className="text-sm">
             <Link to="/integrari" className="text-primary underline">Toate integrările</Link>

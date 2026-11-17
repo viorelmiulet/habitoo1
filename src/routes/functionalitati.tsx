@@ -47,8 +47,11 @@ import { PropertiesMock } from "@/components/marketing/mockups/PropertiesMock";
 import { ReportsMock } from "@/components/marketing/mockups/ReportsMock";
 import { cn } from "@/lib/utils";
 import { FEATURE_CATEGORIES, FEATURE_ENTRIES, featureHref, featurePageForSection, type FeatureEntry } from "@/lib/marketing/feature-pages";
-import { portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
+import { portalsLabel, publicPortalCount, withPublicPortalCount } from "@/lib/portals/integration-pages";
 import { SITE_URL } from "@/components/marketing/public-head";
+import { getPublicDynamicFeedPortals } from "@/lib/dynamic-feed-portals.functions";
+
+export const withPortalCount = withPublicPortalCount;
 
 const N = publicPortalCount();
 const INTRO = `Habitoo reunește într-un singur loc toate modulele de care are nevoie agenția, inclusiv publicarea pe ${portalsLabel(N)}, cele mai multe integrări dintre CRM-urile imobiliare din România.`;
@@ -72,6 +75,7 @@ const DESCRIPTION =
   "Modulele Habitoo, CRM imobiliar complet: proprietăți cu media manager, contacte 360°, cereri, pipeline de lead-uri, matching automat, calendar și rapoarte.";
 
 export const Route = createFileRoute("/functionalitati")({
+  loader: () => getPublicDynamicFeedPortals(),
   head: () =>
     publicHead({
       ...publicPhotoHead(publicPagePhotos.features),
@@ -262,6 +266,7 @@ const platform = [
 ];
 
 function FeaturesPage() {
+  const dynamic = Route.useLoaderData() ?? [];
   return (
     <PublicLayout>
       <section className="mk-page-hero relative overflow-hidden border-b">
@@ -279,7 +284,7 @@ function FeaturesPage() {
             text="Fiecare modul funcționează împreună cu celelalte: proprietățile alimentează matching-ul, cererile generează lead-uri, iar activitățile apar în calendar și în rapoarte."
           />
           </PublicPhotoHeading>
-          <p className="mx-auto mt-6 max-w-3xl text-center text-base text-foreground sm:text-lg">{INTRO}</p>
+          <p className="mx-auto mt-6 max-w-3xl text-center text-base text-foreground sm:text-lg">{withPortalCount(INTRO, dynamic)}</p>
           <nav
             aria-label="Module"
             className="mx-auto mt-10 flex max-w-4xl flex-wrap justify-center gap-2"
@@ -299,15 +304,16 @@ function FeaturesPage() {
 
       <Section>
         <Container className="space-y-12">
-          {FEATURE_CATEGORIES.map((cat) => (
+          {FEATURE_CATEGORIES.map((cat, ci) => (
             <div key={cat}>
-              <h2 className="text-2xl font-semibold tracking-tight text-navy">{cat}</h2>
-              <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <h2 className="text-2xl font-semibold tracking-tight text-navy"><span className="mr-2 font-mono text-base font-medium ds-ai">{String(ci + 1).padStart(2, "0")} /</span>{cat}</h2>
+              <ul className="mt-5 grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {FEATURE_ENTRIES.filter((e) => e.category === cat).map((e) => (
-                  <li key={e.key} className="panel flex flex-col p-5">
-                    <h3 className="font-semibold text-navy">{e.name}</h3>
-                    <p className="mt-2 flex-1 text-sm text-muted-foreground">{e.summary}</p>
-                    <FeatureLink entry={e} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">Află mai multe <ArrowRight className="size-4" /></FeatureLink>
+                  <li key={e.key} className="ds-card ds-feature-card flex h-full flex-col p-5" data-feature-card>
+                    <span className="ds-icon-tile" aria-hidden><Sparkles className="size-5" /></span>
+                    <h3 className="mt-4 font-semibold text-navy">{e.name}</h3>
+                    <p className="mt-2 flex-1 text-sm text-muted-foreground">{withPortalCount(e.summary, dynamic)}</p>
+                    <FeatureLink entry={e} className="mt-3 inline-flex items-center gap-1 text-sm font-medium ds-ai hover:underline">Află mai multe <ArrowRight className="size-4" /></FeatureLink>
                   </li>
                 ))}
               </ul>

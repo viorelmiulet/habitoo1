@@ -1,8 +1,8 @@
-# Integrări cu 27 de portaluri imobiliare din România
+# Integrări cu {{PORTALS_LABEL}} imobiliare din România
 
 Habitoo CRM are cele mai multe integrări cu portalurile imobiliare din România.
 
-Introduci anunțul o singură dată în Habitoo și îl publici pe 27 de portaluri imobiliare din România, cu actualizare și retragere automată.
+Introduci anunțul o singură dată în Habitoo și îl publici pe {{PORTALS_LABEL}} imobiliare din România, cu actualizare și retragere automată.
 
 [Creează agenția](/register) [Solicită o demonstrație](/contact?interes=demo)
 
@@ -339,11 +339,11 @@ Catalog Facebook: alegi anunțurile pentru reclame. Cele dezactivate sau vândut
 
 ### Pe câte portaluri pot publica din Habitoo?
 
-Din Habitoo poți publica pe 27 de portaluri imobiliare din România și internaționale. Lista completă, cu ce face fiecare integrare, este pe această pagină.
+Din Habitoo poți publica pe {{PORTALS_LABEL}} imobiliare din România și internaționale. Lista completă, cu ce face fiecare integrare, este pe această pagină.
 
 ### Câte portaluri are Habitoo față de alte CRM-uri?
 
-Habitoo este conectat la 27 de portaluri, cele mai multe dintre CRM-urile imobiliare din România, iar lista completă e pe această pagină.
+Habitoo este conectat la {{PORTALS_LABEL}}, cele mai multe dintre CRM-urile imobiliare din România, iar lista completă e pe această pagină.
 
 ### Costă ceva în plus integrările?
 

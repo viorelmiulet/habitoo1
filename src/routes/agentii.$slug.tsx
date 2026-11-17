@@ -65,7 +65,7 @@ function AgentCard({ agent }: { agent: PublicAgencyAgent }) {
     <li className="flex min-w-0 flex-col gap-3 rounded-[22px] border border-border bg-card p-5 shadow-soft">
       <div className="flex min-w-0 items-center gap-3">
         <span
-          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gold-tint font-display text-sm font-semibold text-accent-foreground"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full ds-plate-initials font-display text-sm font-semibold"
           aria-hidden
         >
           {partnerInitials(agent.fullName)}
@@ -102,7 +102,7 @@ function AgencyProfilePage() {
                 <img src={agency.logoUrl} alt={`Logo ${agency.name}`} className="size-full object-contain" />
               ) : (
                 <span
-                  className="flex size-full items-center justify-center rounded-xl bg-gold-tint font-display text-3xl font-semibold text-accent-foreground"
+                  className="flex size-full items-center justify-center rounded-xl ds-plate-initials font-display text-3xl font-semibold"
                   aria-hidden
                 >
                   {partnerInitials(agency.name)}

@@ -4,7 +4,7 @@ Funcționalități
 
 Fiecare modul funcționează împreună cu celelalte: proprietățile alimentează matching-ul, cererile generează lead-uri, iar activitățile apar în calendar și în rapoarte.
 
-Habitoo reunește într-un singur loc toate modulele de care are nevoie agenția, inclusiv publicarea pe 27 de portaluri, cele mai multe integrări dintre CRM-urile imobiliare din România.
+Habitoo reunește într-un singur loc toate modulele de care are nevoie agenția, inclusiv publicarea pe {{PORTALS_LABEL}}, cele mai multe integrări dintre CRM-urile imobiliare din România.
 
  [Proprietăți](/functionalitati/proprietati) [Contacte](/functionalitati/contacte) [Cereri](/functionalitati/cereri) [Lead-uri](/functionalitati/lead-uri) [Matching](/functionalitati/potriviri-automate) [Activități](/functionalitati/activitati) [Calendar](/functionalitati/calendar) [Obiective](/functionalitati/obiective) [Dashboard](/functionalitati/dashboard) [Rapoarte](/functionalitati/rapoarte)
 
@@ -12,7 +12,7 @@ Habitoo reunește într-un singur loc toate modulele de care are nevoie agenția
 
 * ### Publicare pe portaluri
 
-  Publici proprietățile pe 26 de portaluri imobiliare direct din Habitoo, cu actualizare și retragere automată.
+  Publici proprietățile pe {{PORTALS_LABEL}} imobiliare direct din Habitoo, cu actualizare și retragere automată.
 
   [Află mai multe](/integrari)
 * ### Import proprietăți

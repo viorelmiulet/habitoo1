@@ -1,5 +1,6 @@
 import { FEATURE_PAGES } from "./feature-pages";
-import { INTEGRATION_PAGES, DYNAMIC_INTEGRATION_PAGES } from "@/lib/portals/integration-pages";
+import { INTEGRATION_PAGES, DYNAMIC_INTEGRATION_PAGES, portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
+import type { PortalDefinition } from "@/lib/portals/registry";
 import { PLAN_KEYS, PLAN_LABELS, PLAN_PRICES, planAgentLimitLabel } from "@/lib/plans";
 import { contentModified } from "./content-revisions";
 import type { LlmsStatistics } from "@/lib/blog-discovery";
@@ -15,11 +16,12 @@ function faqMarkdown(items: { q: string; a: string }[]) {
 function section(path: string, title: string, body: string) {
   return `## ${title}\n\nSource: ${SITE}${path}\n${contentModified(path) ? `\nActualizat: ${contentModified(path)}\n` : ""}\n${body}`;
 }
-export function buildLlmsFullTxt(statistics: LlmsStatistics | null = null, observedAt = "2026-11-17T00:00:00Z") {
+export function buildLlmsFullTxt(statistics: LlmsStatistics | null = null, observedAt = "2026-11-17T00:00:00Z", dynamic?: PortalDefinition[]) {
+  const portals = portalsLabel(publicPortalCount(dynamic));
   const main = Object.entries(documents).map(([file, body]) => {
     const slug = file.split("/").pop()?.replace(/\.md$/, "") ?? "home";
     const statText = slug === "anunturi-proprietari" ? ownerStatisticsText(statistics, observedAt) : publicMarketText(statistics, observedAt);
-    const text = slug === "intrebari-frecvente" ? PUBLIC_FAQ_GROUPS.map(group=>`### ${group.title}\n\n${faqMarkdown(group.faqs)}`).join("\n\n") : body.replaceAll("{{PUBLIC_STATISTICS}}", statText);
+    const text = slug === "intrebari-frecvente" ? PUBLIC_FAQ_GROUPS.map(group=>`### ${group.title}\n\n${faqMarkdown(group.faqs)}`).join("\n\n") : body.replaceAll("{{PUBLIC_STATISTICS}}", statText).replaceAll("{{PORTALS_LABEL}}", portals);
     return section(slug === "home" ? "/" : `/${slug}`, slug === "home" ? "Habitoo CRM" : slug.replaceAll("-", " "), text);
   });
   const prices = PLAN_KEYS.map(key => `${PLAN_LABELS[key]}: ${PLAN_PRICES[key].monthly} €/lună; ${PLAN_PRICES[key].annualMonthly * 12} €/an; ${planAgentLimitLabel(key)}.`).join("\n\n");
@@ -27,6 +29,6 @@ export function buildLlmsFullTxt(statistics: LlmsStatistics | null = null, obser
   const integrations = [...INTEGRATION_PAGES, ...DYNAMIC_INTEGRATION_PAGES].map(p => section(`/integrari/${p.slug}`, p.name, [...p.intro, p.whyHabitoo, "### Ce poți face", ...p.canDo, "### Cum lucrezi", ...p.dailyWork, "### Activare", p.activationText, ...p.notes, faqMarkdown(p.faq)].join("\n\n")));
   return ["# Habitoo CRM — conținut public complet", "> CRM imobiliar în limba română, pentru agenții și agenți imobiliari din România.", ...main, `## Prețuri și planuri\n\n${prices}`, "## Funcționalități", ...features, "## Integrări", ...integrations].join("\n\n---\n\n") + "\n";
 }
-export function llmsFullResponse(statistics: LlmsStatistics | null = null, observedAt?: string) {
-  return new Response(buildLlmsFullTxt(statistics, observedAt), { headers: { "Content-Type": "text/markdown; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=600, stale-while-revalidate=86400" } });
+export function llmsFullResponse(statistics: LlmsStatistics | null = null, observedAt?: string, dynamic?: PortalDefinition[]) {
+  return new Response(buildLlmsFullTxt(statistics, observedAt, dynamic), { headers: { "Content-Type": "text/markdown; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=600, stale-while-revalidate=86400" } });
 }

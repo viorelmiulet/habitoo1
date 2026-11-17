@@ -14,6 +14,14 @@ import { Container, Section, SectionHeading } from "@/components/marketing/Secti
 import { publicHead } from "@/components/marketing/public-head";
 import { pageJsonLd } from "@/components/marketing/structured-data";
 import { getPublicDynamicFeedPortals } from "@/lib/dynamic-feed-portals.functions";
+import { hasPortalLogo, portalLogoSrc } from "@/components/app/PortalLogo";
+
+/** Plăcuță deschisă cu logo-ul real + numele dedesubt; fără logo rămâne chip-ul text. */
+export function PortalChip({ portalId, name, logoUrl }: { portalId: string; name: string; logoUrl?: string | null }) {
+  const src = logoUrl || (hasPortalLogo(portalId) ? portalLogoSrc(portalId) : undefined);
+  if (!src) return <span className="ds-card inline-block px-3 py-2 text-sm font-medium text-navy">{name}</span>;
+  return <span className="ds-card ds-feature-card flex w-36 flex-col items-center gap-2 p-2.5"><span className="ds-logo-plate w-full" data-logo-plate><img src={src} alt={`Logo ${name}`} width={120} height={36} loading="lazy" decoding="async" /></span><span className="w-full truncate text-center font-mono text-xs ds-text-2">{name}</span></span>;
+}
 
 export const PORTAL_COUNT = publicPortalCount([]);
 const N = PORTAL_COUNT;
@@ -104,11 +112,11 @@ function IntegrationsPage() {
             <div key={g.title}>
               <h2 className="text-2xl font-semibold tracking-tight text-navy">{g.title}</h2>
               <p className="mt-2 max-w-3xl text-base text-muted-foreground">{g.text}</p>
-              <ul className="mt-4 flex flex-wrap gap-2">
+              <ul className="mt-4 flex flex-wrap gap-3">
                 {g.pages.map((p) => (
-                  <li key={p.slug}><Link to="/integrari/$slug" params={{ slug: p.slug }} className="panel inline-block px-3 py-2 text-sm font-medium text-navy hover:shadow-soft">{p.name}</Link></li>
+                  <li key={p.slug}><Link to="/integrari/$slug" params={{ slug: p.slug }} className="block rounded-[20px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><PortalChip portalId={p.portalId} name={p.name} /></Link></li>
                 ))}
-                {g !== GROUPS[0] && dynamic.map(p => dynamicIntegrationPageBySlug(p.id) ? <li key={p.id}><Link to="/integrari/$slug" params={{ slug: p.id }} className="panel inline-block px-3 py-2 text-sm font-medium text-navy hover:shadow-soft">{p.display_name}</Link></li> : <li key={p.id}><a href={p.website} target="_blank" rel="noopener noreferrer" className="panel inline-block px-3 py-2 text-sm font-medium text-navy">{p.display_name}</a></li>)}
+                {g !== GROUPS[0] && dynamic.map(p => dynamicIntegrationPageBySlug(p.id) ? <li key={p.id}><Link to="/integrari/$slug" params={{ slug: p.id }} className="block rounded-[20px]"><PortalChip portalId={p.id} name={p.display_name} logoUrl={p.logo_url} /></Link></li> : <li key={p.id}><a href={p.website} target="_blank" rel="noopener noreferrer" className="block rounded-[20px]"><PortalChip portalId={p.id} name={p.display_name} logoUrl={p.logo_url} /></a></li>)}
               </ul>
             </div>
           ))}
@@ -117,8 +125,8 @@ function IntegrationsPage() {
       <Section tone="muted">
         <Container>
           <h2 className="text-2xl font-semibold tracking-tight text-navy">Ce face fiecare integrare</h2>
-          <div className="mt-6 w-full max-w-full overflow-x-auto rounded-lg border bg-card">
-            <table className="w-full min-w-[560px] text-sm">
+          <div className="ds-table-box mt-6 w-full">
+            <table className="ds-table w-full min-w-[560px] text-sm">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
                   <th className="p-3 font-medium">Portal</th><th className="p-3 text-center font-medium">Publicare</th><th className="p-3 text-center font-medium">Actualizare automată</th><th className="p-3 text-center font-medium">Retragere</th><th className="p-3 text-center font-medium">Cereri clienți în CRM</th>
@@ -131,12 +139,12 @@ function IntegrationsPage() {
                     <tr key={p.slug} className="border-b last:border-0">
                       <td className="p-3"><Link to="/integrari/$slug" params={{ slug: p.slug }} className="font-medium text-navy hover:underline">{p.name}</Link></td>
                       {[f.publish, f.update, f.withdraw, f.leads].map((v, i) => (
-                        <td key={i} className="p-3 text-center">{v ? <Check className="inline size-4 text-primary" aria-label="Da" /> : <Minus className="inline size-4 text-muted-foreground" aria-label="Nu" />}</td>
+                        <td key={i} className="p-3 text-center">{v ? <Check className="inline size-4 ds-ai" aria-label="Da" /> : <Minus className="inline size-4 ds-text-3" aria-label="Nu" />}</td>
                       ))}
                     </tr>
                   );
                 })}
-                {dynamic.map(p => <tr key={p.id} className="border-b last:border-0"><td className="p-3 font-medium text-navy">{dynamicIntegrationPageBySlug(p.id) ? <Link to="/integrari/$slug" params={{ slug: p.id }} className="hover:underline">{p.display_name}</Link> : p.display_name}</td>{[true, true, true, true].map((_, i) => <td key={i} className="p-3 text-center"><Check className="inline size-4 text-primary" aria-label="Da" /></td>)}</tr>)}
+                {dynamic.map(p => <tr key={p.id} className="border-b last:border-0"><td className="p-3 font-medium text-navy">{dynamicIntegrationPageBySlug(p.id) ? <Link to="/integrari/$slug" params={{ slug: p.id }} className="hover:underline">{p.display_name}</Link> : p.display_name}</td>{[true, true, true, true].map((_, i) => <td key={i} className="p-3 text-center"><Check className="inline size-4 ds-ai" aria-label="Da" /></td>)}</tr>)}
               </tbody>
             </table>
           </div>
@@ -147,7 +155,7 @@ function IntegrationsPage() {
           <h2 className="text-2xl font-semibold tracking-tight text-navy">De ce contează</h2>
           <div className="mt-6 grid gap-6 md:grid-cols-3">
             {WHY.map((w) => (
-              <div key={w.title} className="panel p-5"><h3 className="font-semibold text-navy">{w.title}</h3><p className="mt-2 text-sm text-muted-foreground">{w.text}</p></div>
+              <div key={w.title} className="ds-card ds-feature-card h-full p-5"><h3 className="font-semibold text-navy">{w.title}</h3><p className="mt-2 text-sm text-muted-foreground">{w.text}</p></div>
             ))}
           </div>
         </Container>

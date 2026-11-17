@@ -62,9 +62,11 @@ describe("/functionalitati", () => {
     expect(count).toBeGreaterThanOrEqual(500);
     expect(count).toBeLessThanOrEqual(800);
     expect(text).not.toMatch(/\b(API|feed|OAuth|JSON|XML)\b/i);
-    for (const paragraph of page.intro) expect(html).toContain(paragraph);
-    for (const b of page.benefits) expect(html).toContain(b.text);
-    for (const s of page.steps) expect(html).toContain(s.text);
+    // Numărul de portaluri se recalculează la randare cu portalurile dinamice publice.
+    const n = (t: string) => t.replace(/\b\d+(?: de)? portaluri\b/g, "N portaluri");
+    for (const paragraph of page.intro) expect(n(html)).toContain(n(paragraph));
+    for (const b of page.benefits) expect(n(html)).toContain(n(b.text));
+    for (const s of page.steps) expect(n(html)).toContain(n(s.text));
     for (const f of page.faq) expect(html).toContain(f.a);
     expect(page.related.length).toBeGreaterThanOrEqual(3);
     expect(page.related.length).toBeLessThanOrEqual(5);
