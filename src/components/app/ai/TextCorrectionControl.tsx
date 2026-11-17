@@ -17,6 +17,8 @@ export function TextCorrectionControl({ field, value, onApply }: { field: "title
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ original: string; corrected: string; message?: string } | null>(null);
+  // Toate hook-urile înainte de orice return (altfel React #310 la primul caracter tastat).
+  const [corrected, setCorrected] = useState(false);
   if (isLoading || !isEnabled("ai_marketing") || !value.trim()) return null;
   const active = preview?.original === value ? preview : null;
   const correct = async () => {
@@ -36,7 +38,6 @@ export function TextCorrectionControl({ field, value, onApply }: { field: "title
       void queryClient.invalidateQueries({ queryKey: ["ai-credits"] });
     }
   };
-  const [corrected, setCorrected] = useState(false);
   const changes = active ? diffWordsWithSpace(active.original, active.corrected) : [];
   return <div className="min-w-0 space-y-2">
     <Button type="button" size="sm" variant="ghost" className="h-8 px-2 text-xs" disabled={busy} onClick={correct}>
