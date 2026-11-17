@@ -1,4 +1,5 @@
 ## AI16 — Camere și dormitoare
+- [x] Completare suplimentară: camere/dormitoare din poze și texte generate validate, medium/derived, cu prioritate pentru agent; 37 teste modificate, inclusiv aplicare în draft cu furnizor simulat
 - [x] Titlul ajunge în context; forma „3 camere” este recunoscută deja. Lipsesc singular/prescurtări/studio/dormitoare și deducții; zero nu era gol. Formularul nou nu inițializează camere/dormitoare cu numere.
 - [x] Parser/deducții și valori implicite nealese tratate ca goale; alegeri manuale păstrate în creare/editare
 - [x] 28 teste noi fără apeluri reale, inclusiv titlu → furnizor simulat → formular; fără publicare

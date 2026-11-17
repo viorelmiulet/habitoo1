@@ -25,7 +25,7 @@ describe("AI16 — deterministic room counts", () => {
   });
 
   it("derived sources for studio and apartment bedrooms; explicit bedrooms win over model guesses", () => {
-    expect(proposal("Garsonieră Militari").sources).toMatchObject({ rooms: "derived", bedrooms: "derived" });
+    expect(proposal("Garsonieră Militari").sources).toMatchObject({ rooms: "text", bedrooms: "derived" });
     expect(proposal("Apartament 3 camere").sources).toMatchObject({ rooms: "text", bedrooms: "derived" });
     expect(proposal("ap. trei camere, 2 dormitoare", {}, [
       { key: "bedrooms", value: 3, confidence: "high", source: "text" },
@@ -43,6 +43,58 @@ describe("AI16 — deterministic room counts", () => {
 
   it.each(["2 dormitoare", "două dormitoare", "3 dorm."])("recognizes %s", (text) => {
     expect(extractStatedFacts(text).bedrooms).toBe(text.startsWith("3") ? 3 : 2);
+  });
+
+  it.each(["un dormitor", "1 dormitor"])("recognizes %s as one bedroom", (text) => {
+    expect(extractStatedFacts(text).bedrooms).toBe(1);
+  });
+
+  it("generated title fills 3/2 as derived medium when the original title is empty", () => {
+    const p = sanitizeAutofillResponse({ fields: [], title: "Apartament 3 camere, Militari" }, { spokenText: "", photoCount: 3 });
+    expect(p?.title).toBe("Apartament 3 camere, Militari");
+    expect(p?.values).toMatchObject({ rooms: 3, bedrooms: 2, property_type: "apartment" });
+    expect(p?.sources).toMatchObject({ rooms: "derived", bedrooms: "derived", property_type: "derived" });
+    expect(p?.confidence).toMatchObject({ rooms: "medium", bedrooms: "medium", property_type: "medium" });
+  });
+
+  it("accepted generated description contributes explicit bedrooms before deductions", () => {
+    const p = sanitizeAutofillResponse({ fields: [], description: "Apartament cu trei camere și un dormitor." }, { spokenText: "", photoCount: 3 });
+    expect(p?.values).toMatchObject({ rooms: 3, bedrooms: 1 });
+    expect(p?.confidence).toMatchObject({ rooms: "medium", bedrooms: "medium" });
+  });
+
+  it("photo counts are medium and explicit agent text overrides them", () => {
+    const fields = [{ key: "rooms", value: 4, confidence: "high", source: "photos" }, { key: "bedrooms", value: 3, confidence: "high", source: "photos" }];
+    const photos = sanitizeAutofillResponse({ fields }, { spokenText: "", photoCount: 4 });
+    expect(photos?.values).toMatchObject({ rooms: 4, bedrooms: 3 });
+    expect(photos?.confidence).toMatchObject({ rooms: "medium", bedrooms: "medium" });
+    expect(photos?.sources).toMatchObject({ rooms: "photos", bedrooms: "photos" });
+    const explicit = sanitizeAutofillResponse({ fields }, { spokenText: "Apartament 3 camere, 2 dormitoare", photoCount: 4 });
+    expect(explicit?.values).toMatchObject({ rooms: 3, bedrooms: 2 });
+    expect(explicit?.confidence).toMatchObject({ rooms: "high", bedrooms: "high" });
+  });
+
+  it("bedroom derived from a photo room count remains medium", () => {
+    const p = sanitizeAutofillResponse({ fields: [{ key: "rooms", value: 3, source: "photos", confidence: "high" }] }, { spokenText: "", current: { property_type: "apartment" }, photoCount: 3 });
+    expect(p?.values).toMatchObject({ rooms: 3, bedrooms: 2 });
+    expect(p?.confidence.bedrooms).toBe("medium");
+  });
+
+  it("never extracts generated prices, floor or surfaces, including from rejected text", () => {
+    const p = sanitizeAutofillResponse({ fields: [], title: "Apartament 3 camere", description: "Apartament cu 3 camere, 80 mp, etaj 4, 90000 euro." }, { spokenText: "", photoCount: 3 });
+    expect(p?.description).toBeNull();
+    expect(p?.values.rooms).toBe(3);
+    expect(p?.values.usable_surface).toBeUndefined();
+    expect(p?.values.floor).toBeUndefined();
+    expect(p?.values.price).toBeUndefined();
+  });
+
+  it("generated and photo proposals never overwrite an agent choice", () => {
+    const current = { rooms: 4, bedrooms: 3, property_type: "apartment" };
+    const p = sanitizeAutofillResponse({ fields: [{ key: "rooms", value: 2, source: "photos", confidence: "medium" }], title: "Apartament 2 camere" }, { spokenText: "", current, photoCount: 3 });
+    if (!p) throw new Error("Missing proposal");
+    expect(onlyEmptyFields(p, current).values.rooms).toBeUndefined();
+    expect(onlyEmptyFields(p, current).values.bedrooms).toBeUndefined();
   });
 
   it("explicit bedrooms without rooms imply D+1 only at apartment", () => {
@@ -104,5 +156,22 @@ describe("AI16 — deterministic room counts", () => {
       setDetails: (fn) => { details = fn(details); }, setText: vi.fn(), setTx: (fn) => { fn(emptyTransaction); },
     }, current);
     expect(details).toMatchObject({ rooms: 3, bedrooms: 2 });
+  });
+
+  it("empty title → generated title → real draft gets 3/2 with review markers", async () => {
+    let details: Record<string, unknown> = {};
+    let title = "";
+    const generate = vi.fn(async () => ({ text: '{"fields":[],"title":"Apartament 3 camere, Militari"}', toolCalls: [], inputTokens: 1, outputTokens: 1 }));
+    const result = await runListingAutofill({ id: "test", model: "test", supportsTools: false, generate }, {
+      images: [{ mimeType: "image/jpeg", base64: "AA==" }], text: "", context: { title: "" },
+    });
+    if (!result.ok) throw new Error(result.message);
+    const applied = applyAutofillProposal(result.proposal, {
+      setDetails: (fn) => { details = fn(details); }, setText: (patch) => { title = patch.title ?? title; }, setTx: vi.fn(),
+    }, {});
+    expect(title).toBe("Apartament 3 camere, Militari");
+    expect(details).toMatchObject({ rooms: 3, bedrooms: 2 });
+    expect(applied.keys).toEqual(expect.arrayContaining(["rooms", "bedrooms", "title"]));
+    expect(applied.proposal.confidence).toMatchObject({ rooms: "medium", bedrooms: "medium" });
   });
 });

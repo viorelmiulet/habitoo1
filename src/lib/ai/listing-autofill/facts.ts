@@ -10,7 +10,7 @@ export function plainRo(value: string): string {
 }
 
 const WORD_NUMBERS: Record<string, number> = {
-  unu: 1, una: 1, doi: 2, doua: 2, trei: 3, patru: 4, cinci: 5, sase: 6, sapte: 7, opt: 8, noua: 9, zece: 10,
+  un: 1, unu: 1, una: 1, doi: 2, doua: 2, trei: 3, patru: 4, cinci: 5, sase: 6, sapte: 7, opt: 8, noua: 9, zece: 10,
   unsprezece: 11, doisprezece: 12, douasprezece: 12, treisprezece: 13, paisprezece: 14, cincisprezece: 15,
   saisprezece: 16, saptesprezece: 17, optsprezece: 18, nouasprezece: 19, douazeci: 20,
 };
@@ -36,6 +36,7 @@ export type StatedFacts = Partial<{
   renovation_year: number;
   rooms: number;
   bedrooms: number;
+  property_type: string;
 }>;
 
 function floorLabelFor(floor: number): string | null {
@@ -102,7 +103,11 @@ export function extractStatedFacts(text: string): StatedFacts {
 
   // Camere
   if ((m = t.match(/\b(\d{1,2})\s*(?:camere|camera|cam)\b\.?/))) f.rooms = Number(m[1]);
+  else if (/\b(?:garsonier\w*|studio)\b/.test(t)) f.rooms = 1;
   if ((m = t.match(/\b(\d{1,2})\s*(?:dormitoare|dormitor|dorm)\b\.?/))) f.bedrooms = Number(m[1]);
+  const types = [...new Set(TYPE_WORDS.filter(([re]) => re.test(t)).map(([, key]) => key))];
+  if (types.includes("studio")) f.property_type = "studio";
+  else if (types.length === 1) f.property_type = types[0];
   return f;
 }
 

@@ -65,8 +65,8 @@ export const AUTOFILL_FIELDS: Record<string, FieldDef> = {
   building_amenities: multi("Imobil", taxonomy.buildingAmenityOptions, false),
   views: multi("Priveliște", taxonomy.viewOptions),
   misc_features: multi("Diverse", taxonomy.miscFeatureOptions, false),
-  rooms: num("Camere"),
-  bedrooms: num("Dormitoare"),
+  rooms: num("Camere", false, true),
+  bedrooms: num("Dormitoare", false, true),
   kitchens: num("Bucătării", false, true),
   bathrooms: num("Băi", false, true),
   balconies: num("Balcoane"),
@@ -178,13 +178,14 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
   const ignored: string[] = [];
 
   for (const field of response.fields) {
-    // Counts are grounded in lexical facts/derivations, never arbitrary digits elsewhere.
-    if (field.key === "rooms" || field.key === "bedrooms") continue;
+    // Text counts are parsed deterministically; photo counts remain reviewable proposals.
+    if ((field.key === "rooms" || field.key === "bedrooms") && field.source !== "photos") continue;
     const def = AUTOFILL_FIELDS[field.key];
     if (!def || field.confidence === "low" || field.value === null || field.key in values) { ignored.push(field.key); continue; }
     const fromSpoken = field.source === "spoken" || field.source === "text";
     if (fromSpoken && !hasSpoken) { ignored.push(field.key); continue; }
     if (!fromSpoken && !def.fromPhotos) { ignored.push(field.key); continue; }
+    if (!fromSpoken && ctx.photoCount === 0) { ignored.push(field.key); continue; }
     if (def.explicit && !fromSpoken) { ignored.push(field.key); continue; }
 
     let value: unknown = null;
@@ -220,34 +221,53 @@ export function sanitizeAutofillResponse(raw: unknown, ctx: AutofillContext): Au
 
   // Fapte explicite citite determinist, pe care modelul le-a omis.
   for (const [key, v] of Object.entries(facts)) {
-    if (key in values || v === undefined || !AUTOFILL_FIELDS[key]) continue;
+    if (v === undefined || !AUTOFILL_FIELDS[key]) continue;
+    if (key in values && !["rooms", "bedrooms", "property_type"].includes(key)) continue;
     values[key] = v as AutofillValue;
     confidence[key] = "high";
     sources[key] = key in spokenFacts && (spokenFacts as Record<string, unknown>)[key] === v ? "spoken" : "text";
-  }
-
-  // Deducții logice sigure, doar pe câmpuri goale.
-  const available = onlyEmptyFields({ values, confidence, sources, title: null, description: null, photoOrder: null, ignored }, ctx.current ?? {}).values;
-  const derived = deriveAutofillValues({ ...(ctx.current ?? {}), ...available }, spoken);
-  for (const [key, v] of Object.entries(derived)) {
-    if (key in values || !AUTOFILL_FIELDS[key]) continue;
-    values[key] = v;
-    confidence[key] = "high";
-    sources[key] = "derived";
   }
 
   // Titlu și descriere: doar din fapte (regulile AI Marketing).
   let title = response.title?.trim().slice(0, 120) || null;
   let description = response.description?.trim().slice(0, 4000) || null;
   if (title || description) {
+    // Narrow exception: generated room counts may be reviewed, never generated prices/surfaces/floors.
+    const generatedCandidates = extractStatedFacts([title, description].filter(Boolean).join("\n"));
+    const reviewCounts = Object.fromEntries(["rooms", "bedrooms"].flatMap((key) => {
+      const value = generatedCandidates[key as "rooms" | "bedrooms"];
+      return value !== undefined && !(key in values) && isAutofillFieldEmpty(ctx.current ?? {}, key) ? [[key, value]] : [];
+    }));
     const facts = buildMarketingFactSheet({
-      ...values,
+      ...deriveAutofillValues({ ...(ctx.current ?? {}), ...values }, spoken),
+      ...(ctx.current ?? {}), ...reviewCounts, ...values,
       transaction_kind: values["transaction"],
       description: ctx.spokenText || response.transcript || null,
       features: Object.entries(values).flatMap(([k, v]) => (AUTOFILL_FIELDS[k]?.kind === "multi" ? (v as string[]) : AUTOFILL_FIELDS[k]?.kind === "select" && typeof v === "string" ? [v] : [])),
     });
     if (title && validateMarketingFacts(title, facts).status === "invalid") { ignored.push("title"); title = null; }
     if (description && validateMarketingFacts(description, facts).status === "invalid") { ignored.push("description"); description = null; }
+  }
+
+  // Only accepted generated text contributes these three reviewable fields.
+  const generated = extractStatedFacts([title, description].filter(Boolean).join("\n"));
+  for (const key of ["rooms", "bedrooms", "property_type"] as const) {
+    const value = generated[key];
+    if (value === undefined || key in values || !isAutofillFieldEmpty(ctx.current ?? {}, key)) continue;
+    values[key] = value;
+    confidence[key] = "medium";
+    sources[key] = "derived";
+  }
+
+  // Derive after generated counts, preserving explicit bedrooms and caller choices.
+  const available = onlyEmptyFields({ values, confidence, sources, title: null, description: null, photoOrder: null, ignored }, ctx.current ?? {}).values;
+  const derived = deriveAutofillValues({ ...(ctx.current ?? {}), ...available }, spoken);
+  for (const [key, value] of Object.entries(derived)) {
+    if (key in values || !AUTOFILL_FIELDS[key]) continue;
+    values[key] = value;
+    const reviewable = ["rooms", "bedrooms"].includes(key) && ["rooms", "bedrooms", "property_type"].some((dependency) => confidence[dependency] === "medium" && dependency in available);
+    confidence[key] = reviewable ? "medium" : "high";
+    sources[key] = "derived";
   }
 
   let photoOrder: number[] | null = null;
