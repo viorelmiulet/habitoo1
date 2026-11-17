@@ -118,8 +118,7 @@ export function LoginPage() {
   };
 
   return (
-    <main className="login-backdrop relative min-h-svh overflow-x-hidden bg-navy text-navy-foreground">
-      <div className="absolute inset-0 bg-navy/75" aria-hidden="true" />
+    <main className="mk-root relative min-h-svh overflow-x-hidden">
       <div className="relative mx-auto grid min-h-svh w-full max-w-[1440px] items-center gap-8 px-4 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(420px,520px)] lg:gap-16 lg:px-14 xl:gap-24 xl:px-20">
         <section className="mx-auto w-full max-w-xl pt-3 lg:mx-0 lg:pt-0" aria-labelledby="login-intro-title">
           <div className="hidden items-center gap-3 lg:flex">

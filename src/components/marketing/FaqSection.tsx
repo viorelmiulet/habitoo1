@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
 
 export type FaqItem = {
@@ -31,17 +31,14 @@ export function FaqSection({ items, title = "Ce ne întreabă de obicei agenții
     <Section>
       <Container className="max-w-3xl">
         <SectionHeading eyebrow="Întrebări frecvente" title={title} />
-        <div className="mt-10 divide-y divide-border border-y border-border">
+        <div className="mt-10 space-y-3">
           {items.map((item) => (
-            <details key={item.q} className="group py-1">
+            <details key={item.q} className="ds-card group px-5 sm:px-6">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-left [&::-webkit-details-marker]:hidden">
                 <h3 className="text-base font-semibold text-navy">{item.q}</h3>
-                <ChevronDown
-                  aria-hidden
-                  className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
-                />
+                <Plus aria-hidden className="size-4 shrink-0 ds-ai transition-transform group-open:rotate-45 motion-reduce:transition-none" />
               </summary>
-              <p className="pb-5 text-base leading-relaxed text-muted-foreground">{item.a}</p>
+              <p className="pb-5 text-[15px] leading-relaxed text-muted-foreground">{item.a}</p>
             </details>
           ))}
         </div>

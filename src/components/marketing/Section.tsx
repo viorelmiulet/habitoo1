@@ -18,18 +18,13 @@ export function Eyebrow({
   tone?: "primary" | "gold" | "light";
 }) {
   const tones = {
-    primary: "border-primary/20 bg-primary/8 text-primary",
-    gold: "border-gold/30 bg-gold/10 text-gold",
-    light: "border-navy-foreground/15 bg-navy-foreground/8 text-navy-foreground",
+    primary: "ds-ai",
+    gold: "text-gold",
+    light: "ds-ai",
   };
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold tracking-wide uppercase",
-        tones[tone],
-        className,
-      )}
-    >
+    <span className={cn("ds-eyebrow inline-flex items-center gap-2 [&_svg]:hidden", tones[tone], className)}>
+      <span aria-hidden>//</span>
       {children}
     </span>
   );

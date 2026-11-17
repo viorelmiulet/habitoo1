@@ -68,6 +68,11 @@ const PORTAL_LOGOS: Record<string, string> = {
   vumsi: vumsiLogo,
 };
 
+/** URL-ul logo-ului local al portalului, dacă există. */
+export function portalLogoSrc(portalId: string): string | undefined {
+  return PORTAL_LOGOS[portalId];
+}
+
 /** Există logo local pentru portalul dat? */
 export function hasPortalLogo(portalId: string): boolean {
   return Boolean(PORTAL_LOGOS[portalId]);

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Facebook } from "lucide-react";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import darkLogo from "@/assets/brand/habitoo-logo-dark.png.asset.json";
 import { openCookiePreferences } from "@/lib/cookie-consent";
 import { FACEBOOK_URL } from "./structured-data";
 import { GOOGLE_PROFILE_URL, LEGAL_NAME, COMPANY_TAX_ID, COMPANY_REGISTER_ID } from "./public-identity";
@@ -17,12 +17,12 @@ export function PublicFooter({ description = "CRM imobiliar pentru agențiile di
     getHasPublicPartners().then(setHasPartners, () => setHasPartners(false));
   }, []);
   return (
-    <footer className="border-t border-border bg-card">
+    <footer className="border-t border-border bg-background/60">
       <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <Link to="/" className="block w-40" aria-label="Habitoo CRM — pagina principală">
-              <BrandLogo />
+              <img src={darkLogo.url} alt="Habitoo CRM" width={160} height={75} loading="lazy" decoding="async" className="block h-auto w-40" />
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
               {description}
@@ -36,7 +36,7 @@ export function PublicFooter({ description = "CRM imobiliar pentru agențiile di
           </div>
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-7">
             <div>
-              <h3 className="font-sans text-xs font-semibold tracking-wider text-navy uppercase">Funcționalități</h3>
+              <h3 className="font-mono text-[11px] font-medium tracking-[0.14em] ds-text-3 uppercase">Funcționalități</h3>
               <ul className="mt-4 space-y-2.5">
                 {FEATURE_ENTRIES.slice(0, 8).map((e) => (
                   <li key={e.key}>
@@ -47,7 +47,7 @@ export function PublicFooter({ description = "CRM imobiliar pentru agențiile di
             </div>
             {footerColumns.map((col) => (
               <div key={col.title}>
-                <h3 className="font-sans text-xs font-semibold tracking-wider text-navy uppercase">
+                <h3 className="font-mono text-[11px] font-medium tracking-[0.14em] ds-text-3 uppercase">
                   {col.title}
                 </h3>
                 <ul className="mt-4 space-y-2.5">

@@ -20,11 +20,18 @@ import { PLAN_PRICES } from "@/lib/plans";
 const html = renderToString(<HomeContent dynamic={[]} />);
 
 describe("pagina principală (SSR)", () => {
-  it("are H1-ul nou cu „CRM imobiliar” și „AI”", () => {
+  it("are H1-ul din macheta Deep Space", () => {
     const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1].replace(/<[^>]+>/g, "") ?? "";
-    expect(h1).toBe("CRM imobiliar cu AI pentru agențiile din România");
-    expect(html).toContain("Începe gratuit");
-    expect(html).toContain("Vezi cum funcționează");
+    expect(h1).toBe("CRM-ul imobiliar full AI. Tu decizi. AI-ul execută.");
+    expect(html).toContain("Începe gratuit 90 de zile");
+    expect(html).toContain("Vezi AI-ul în acțiune");
+  });
+
+  it("secțiunea de integrări randează logo-uri reale (img), nu doar text", () => {
+    const section = html.slice(html.indexOf('id="portaluri"'), html.indexOf('id="habitoo-catch"'));
+    const imgs = section.match(/<img\b[^>]*alt="Logo [^"]+"/g) ?? [];
+    expect(imgs.length).toBeGreaterThanOrEqual(10);
+    expect(section).toContain("Numele și logo-urile portalurilor aparțin deținătorilor lor.");
   });
 
   it("titlul și descrierea conțin „CRM imobiliar” și „AI”", () => {
@@ -37,12 +44,13 @@ describe("pagina principală (SSR)", () => {
   it("are secțiunea Habitoo AI cu mesajul de încredere", () => {
     expect(html).toContain('id="habitoo-ai"');
     expect(html).toContain("agentul decide.");
-    expect(html).toContain("AI-ul propune, tu aprobi. Nimic nu se trimite fără acordul tău.");
+    expect(html).toContain("AI-ul propune, tu aprobi.");
     for (const title of ["Agentul AI CRM", "AI Marketing", "Studio AI", "Voce AI în română", "Comentariu AI în ACP"]) expect(html).toContain(title);
   });
 
   it("numărul de portaluri vine din sursa existentă", () => {
-    expect(html).toContain(`${portalsLabel(publicPortalCount([]))} integrate`);
+    expect(html).toContain(`>${publicPortalCount([])}</p>`);
+    expect(html).toContain(portalsLabel(publicPortalCount([])));
   });
 
   it("prețurile rămân neschimbate și fiecare plan are Habitoo AI inclus", () => {

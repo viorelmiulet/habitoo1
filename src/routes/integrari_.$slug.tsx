@@ -69,7 +69,7 @@ function IntegrationPage() {
           </nav>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
             {logoUrl ? (
-              <img src={logoUrl} alt={`Logo ${page.name}`} className="h-16 w-auto max-w-[200px] shrink-0 object-contain" />
+              <span className="ds-plate inline-flex shrink-0 items-center px-4 py-3"><img src={logoUrl} alt={`Logo ${page.name}`} width={200} height={64} className="h-14 w-auto max-w-[200px] object-contain" /></span>
             ) : (
               <PortalLogoStack portalId={page.portalId} name={page.name} size={64} className="shrink-0" />
             )}

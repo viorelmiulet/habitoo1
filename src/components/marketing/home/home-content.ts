@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3, Bot, Building2, FileSignature, Handshake, Home, IdCard, Kanban, LineChart, Link2, Megaphone, Mic, Puzzle, Sparkles, Users, Wand2,
+  BarChart3, Bot, ImageIcon, ListChecks, PenLine, Building2, FileSignature, Handshake, Home, IdCard, Kanban, LineChart, Link2, Megaphone, Mic, Puzzle, Sparkles, Users, Wand2,
 } from "lucide-react";
 import type { FaqItem } from "@/components/marketing/FaqSection";
 
@@ -60,9 +60,12 @@ export type HomeCard = { icon: LucideIcon; title: string; text: string; wide?: b
 
 /** Doar funcții AI care există în aplicație. */
 export const AI_CARDS: HomeCard[] = [
-  { icon: Bot, title: "Agentul AI CRM", text: "Răspunde la întrebări despre clienți, cereri, lead-uri și priorități, din datele agenției tale." },
+  { icon: ListChecks, title: "Completare automată a fișei", text: "Camere, dormitoare, etaj, lift, utilități și dotări, deduse din titlu, descriere, poze și istoricul proprietăților din cont." },
+  { icon: PenLine, title: "Corectarea textului", text: "Titluri scrise doar cu majuscule și descrieri fără punctuație devin anunțuri curate, fără să schimbe sensul." },
+  { icon: ImageIcon, title: "Cea mai bună copertă", text: "Pozele sunt reordonate, iar prima imagine este cea care vinde. Coperta aleasă de tine rămâne neatinsă." },
   { icon: Megaphone, title: "AI Marketing", text: "Titluri, descrieri și postări pentru anunțuri, pe tonul ales de tine." },
   { icon: Wand2, title: "Studio AI", text: "Îmbunătățirea pozelor, video din poză și imagini de marketing." },
+  { icon: Bot, title: "Agentul AI CRM", text: "Răspunde la întrebări despre clienți, cereri, lead-uri și priorități, din datele agenției tale." },
   { icon: Mic, title: "Voce AI în română", text: "Narațiune pentru videoclipurile proprietăților." },
   { icon: LineChart, title: "Comentariu AI în ACP", text: "Explicații AI pe analiza comparativă de preț, peste calculul ofertelor reale." },
   { icon: IdCard, title: "Acte de identitate în contracte", text: "Datele din actul de identitate se citesc automat și le verifici înainte de salvare." },
@@ -90,8 +93,9 @@ export const HOME_EXTENSION = {
 } as const;
 
 export const HOME_STEPS = [
-  ["Adaugi proprietatea", "Completezi datele și fotografiile o singură dată."],
-  ["AI-ul te ajută cu textele și pozele", "Descrieri, titluri și fotografii mai bune, pe care le aprobi tu."],
-  ["Publici și urmărești lead-urile", "Anunțul ajunge pe portaluri, iar cererile intră direct în CRM."],
+  ["Preiei", "Din Chrome cu Habitoo Catch, din alt CRM prin import sau manual."],
+  ["AI-ul completează", "Fișa, textul și pozele, cu fiecare câmp marcat ca „Completat de AI”."],
+  ["Publici", "Pe portalurile alese, cu actualizare și retragere automată."],
+  ["Închizi", "Potrivire automată cerere–proprietate, lead-uri și pipeline până la tranzacție."],
 ] as const;
 

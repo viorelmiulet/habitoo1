@@ -1,6 +1,6 @@
-import { ArrowRight, CircleCheck, Link2, ShieldCheck, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, Check, Play, ShieldCheck } from "lucide-react";
+import markDark from "@/assets/brand/habitoo-mark-dark.png.asset.json";
 import { CookieConsent } from "@/components/marketing/CookieConsent";
 import { CrmLink } from "@/components/marketing/CrmLink";
 import { FaqSection } from "@/components/marketing/FaqSection";
@@ -9,205 +9,237 @@ import { HomeHeader } from "@/components/marketing/HomeHeader";
 import { HomePricingSection } from "@/components/marketing/HomePricingSection";
 import { PublicFooter } from "@/components/marketing/PublicFooter";
 import { Reveal } from "@/components/marketing/Reveal";
-import { Container, Eyebrow, Section, SectionHeading } from "@/components/marketing/Section";
-import { DashboardMock } from "@/components/marketing/mockups/DashboardMock";
-import { AiTypingPanel } from "./AiTypingPanel";
+import { Container, Eyebrow, Section } from "@/components/marketing/Section";
 import { AI_CARDS, HOME_EXTENSION, HOME_FAQ, HOME_FEATURES, HOME_STEPS } from "./home-content";
 import { CHROME_EXTENSION_PATH, CHROME_EXTENSION_URL } from "@/components/marketing/chrome-extension-content";
 import { portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
 import type { PortalDefinition } from "@/lib/portals/registry";
 
-export function HomeContent({ dynamic }: { dynamic: PortalDefinition[] }) {
-  const portalCount = publicPortalCount(dynamic);
-  const trust = [
-    { icon: Link2, label: `${portalsLabel(portalCount)} integrate` },
-    { icon: CircleCheck, label: "90 de zile gratuit, fără card" },
-    { icon: ShieldCheck, label: "Date separate pe agenții" },
+/** Consola AI din hero: ilustrație statică, fără funcționalitate. */
+function AiConsole() {
+  const steps: [string, string][] = [
+    ["Câmpuri completate din text și poze", "19 câmpuri"],
+    ["Lift și dotări deduse din istoricul adresei", "din istoric"],
+    ["Titlu și descriere corectate", "majuscule · punctuație"],
+    ["Poze reordonate, coperta aleasă", "14 poze"],
   ];
   return (
-    <div className="mk-root min-h-screen overflow-x-hidden bg-background text-foreground">
-      <a href="#continut" className="sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:not-sr-only focus:rounded-full focus:bg-background focus:px-4 focus:py-2">
+    <div aria-hidden className="ds-panel overflow-hidden border-[color:rgba(91,228,255,0.28)] shadow-[0_40px_120px_-40px_rgba(91,228,255,0.25)]">
+      <div className="flex items-center gap-3 border-b border-border px-5 py-3.5">
+        <span className="flex gap-1.5"><i className="size-2.5 rounded-full bg-[color:var(--ds-line-strong)]" /><i className="size-2.5 rounded-full bg-[color:var(--ds-line-strong)]" /><i className="size-2.5 rounded-full bg-[color:var(--ds-line-strong)]" /></span>
+        <span className="truncate font-mono text-xs ds-text-3">crm.habitoo.ro / proprietăți / nouă</span>
+        <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-xs ds-ai"><span className="ds-live-dot" /> Agent AI</span>
+      </div>
+      <div className="space-y-4 p-4 sm:p-5">
+        <p className="ml-auto max-w-[92%] rounded-2xl border border-border bg-[color:rgba(30,44,78,0.55)] px-4 py-3 text-[15px] leading-relaxed">
+          Completează fișa din anunț și pregătește-l pentru Imobiliare.ro și Storia.<span className="ds-cursor ml-1" />
+        </p>
+        <div className="ds-card p-4">
+          <p className="font-mono text-[11px] tracking-[0.12em] ds-ai uppercase">✦ Habitoo AI · rulare</p>
+          <ul className="mt-3 space-y-2.5 text-sm">
+            {steps.map(([label, meta]) => (
+              <li key={label} className="flex items-center gap-3">
+                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[color:rgba(91,228,255,0.14)] ds-ai"><Check className="size-3" /></span>
+                <span className="min-w-0 flex-1">{label}</span>
+                <span className="hidden font-mono text-[11px] ds-text-3 sm:inline">{meta}</span>
+              </li>
+            ))}
+            <li className="flex items-center gap-3">
+              <span className="grid size-5 shrink-0 place-items-center rounded-full border-2 border-[color:var(--ds-cyan)]"><span className="size-1.5 rounded-full bg-[color:var(--ds-cyan)]" /></span>
+              <span className="min-w-0 flex-1">Pregătire pentru Imobiliare.ro și Storia</span>
+              <span className="hidden font-mono text-[11px] ds-text-3 sm:inline">aștept aprobarea</span>
+            </li>
+          </ul>
+          <div className="ds-scanline mt-4" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[1.3fr_1fr]">
+          <div className="rounded-2xl border border-[color:rgba(224,178,92,0.35)] bg-[color:rgba(224,178,92,0.05)] p-4">
+            <p className="font-mono text-[11px] tracking-[0.12em] text-gold uppercase">Previzualizare anunț</p>
+            <p className="mt-1.5 font-display text-base font-semibold">Apartament 3 camere, 78 mp, lângă metrou</p>
+            <p className="mt-1 text-xs ds-text-2">Etaj 4/8 · lift · parcare inclusă</p>
+          </div>
+          <div className="grid gap-2">
+            <span className="ds-btn ds-btn-ai">Aprobă și publică</span>
+            <span className="ds-btn ds-btn-ghost">Revizuiește</span>
+          </div>
+        </div>
+        <p className="font-mono text-[11px] ds-text-3">AI-ul propune, tu aprobi. Nimic nu se trimite fără acordul tău.</p>
+      </div>
+    </div>
+  );
+}
+
+export function HomeContent({ dynamic }: { dynamic: PortalDefinition[] }) {
+  const portalCount = publicPortalCount(dynamic);
+  const facts = [
+    { value: String(portalCount), label: "portaluri integrate" },
+    { value: "90 zile", label: "gratuit, fără card bancar" },
+    { value: "1 click", label: "preluare cu Habitoo Catch" },
+    { value: "100%", label: "date izolate per agenție" },
+  ];
+  return (
+    <div className="mk-root min-h-screen overflow-x-hidden">
+      <a href="#continut" className="sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:not-sr-only focus:rounded-lg focus:bg-background focus:px-4 focus:py-2">
         Sari la conținut
       </a>
       <HomeHeader />
       <main id="continut">
-        <section className="hp-hero-bg relative overflow-hidden pt-[88px] text-navy-foreground lg:pt-[104px]">
-          <div aria-hidden className="home-grid pointer-events-none absolute inset-0 opacity-40" />
-          <div aria-hidden className="home-glow home-glow-one" />
-          <Container className="relative grid items-center gap-12 pb-24 pt-8 lg:min-h-[760px] lg:grid-cols-[1fr_1fr] lg:gap-14 lg:pb-32 lg:pt-12">
+        <section className="relative pt-[88px] lg:pt-[104px]">
+          <Container className="grid items-center gap-12 pb-20 pt-8 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:pb-28 lg:pt-14">
             <div className="max-w-2xl">
-              <Eyebrow tone="gold">
-                <Sparkles className="size-3.5" aria-hidden /> Habitoo AI
-              </Eyebrow>
-              <h1 className="mt-6 text-[36px] leading-[1.08] font-semibold tracking-[-0.02em] text-balance text-surface md:text-[44px] xl:text-[56px]">
-                CRM imobiliar cu <span className="text-gold-gradient">AI</span> pentru agențiile din România
+              <span className="inline-flex items-center gap-2 rounded-full border border-[color:var(--ds-line-strong)] bg-[color:rgba(11,18,32,0.6)] px-3.5 py-1.5 font-mono text-xs ds-text-2">
+                <span className="ds-live-dot" /> Habitoo AI · agentul tău lucrează acum
+              </span>
+              <h1 className="mt-7 text-[40px] leading-[1.04] text-balance sm:text-[52px] xl:text-[68px]">
+                CRM-ul imobiliar <span className="ds-ai">full AI.</span> Tu decizi. AI-ul execută.
               </h1>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-navy-foreground sm:text-lg">
-                Introduci proprietatea o dată, o publici pe toate portalurile, iar AI-ul te ajută cu restul: texte, poze și follow-up-uri.
+              <p className="mt-6 max-w-xl text-base leading-relaxed ds-text-2 sm:text-lg">
+                Introduci proprietatea o dată. AI-ul completează fișa din text, poze și istoricul agenției, corectează anunțul, alege cea mai bună copertă și îl pregătește pentru {portalsLabel(portalCount)}. Tu doar aprobi.
               </p>
-              <div className="mt-8 grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:flex">
-                <Button asChild size="lg" className="h-12 rounded-full bg-gold px-7 text-base text-gold-foreground shadow-raised hover:bg-gold/90">
-                  <CrmLink to="/register">Începe gratuit <ArrowRight /></CrmLink>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-navy-foreground/30 bg-transparent px-7 text-base text-navy-foreground hover:bg-surface/10 hover:text-surface">
-                  <a href="#cum-functioneaza">Vezi cum funcționează</a>
-                </Button>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <CrmLink to="/register" className="ds-btn ds-btn-primary h-12 px-6">Începe gratuit 90 de zile <ArrowRight className="size-4" /></CrmLink>
+                <a href="#habitoo-ai" className="ds-btn ds-btn-ghost h-12 px-6"><Play className="size-4" /> Vezi AI-ul în acțiune</a>
               </div>
+              <p className="mt-6 font-mono text-xs leading-relaxed ds-text-3">
+                Fără card bancar · Habitoo AI inclus în toate planurile · Date izolate per agenție
+              </p>
             </div>
-
-            <div className="home-dashboard-stage relative mx-auto w-full max-w-3xl pb-24 sm:pb-16 lg:pb-0">
-              <div className="home-dashboard-transform rounded-[28px] border border-gold/30 bg-background/10 p-2 shadow-float backdrop-blur-sm">
-                <DashboardMock />
-              </div>
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-2 sm:translate-x-0 lg:-right-6 lg:-bottom-10">
-                <AiTypingPanel />
-              </div>
-            </div>
+            <AiConsole />
           </Container>
         </section>
 
-        <section className="relative z-10 -mt-8 pb-12 sm:pb-16">
+        <section aria-label="Pe scurt" className="border-y border-border bg-[color:rgba(11,18,32,0.55)]">
           <Container>
-            <ul className="grid overflow-hidden rounded-[28px] border border-gold/20 bg-card shadow-float sm:grid-cols-3">
-              {trust.map((item) => (
-                <li key={item.label} className="flex min-h-20 items-center gap-3 border-b border-border p-5 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-gold-tint text-gold-dark">
-                    <item.icon className="size-5" />
-                  </span>
-                  <span className="text-sm font-bold text-navy">{item.label}</span>
+            <ul className="grid grid-cols-2 gap-y-8 py-10 lg:grid-cols-4">
+              {facts.map((f) => (
+                <li key={f.label}>
+                  <p className="font-display text-4xl font-bold tracking-[-0.03em] sm:text-[44px]">{f.value}</p>
+                  <p className="mt-2 font-mono text-xs ds-text-3">{f.label}</p>
                 </li>
               ))}
             </ul>
           </Container>
         </section>
 
-        <section id="habitoo-ai" className="px-3 py-6 sm:px-6">
-          <div className="hp-hero-bg relative mx-auto max-w-7xl overflow-hidden rounded-[36px] px-5 py-16 text-navy-foreground sm:px-10 lg:py-24">
-            <div aria-hidden className="home-glow home-glow-two" />
-            <div className="relative">
-              <SectionHeading
-                tone="light"
-                eyebrow={<Eyebrow tone="gold"><Sparkles className="size-3.5" aria-hidden /> Habitoo AI</Eyebrow>}
-                title={<>AI-ul lucrează pentru agent, <span className="text-gold">agentul decide.</span></>}
-                text="Funcții AI incluse în Habitoo, gândite pentru munca de zi cu zi a agenției."
-              />
-              <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {AI_CARDS.map((card, index) => (
-                  <Reveal key={card.title} delay={index * 50} className={card.wide ? "lg:col-span-2" : undefined}>
-                    <article className="hp-card-dark">
-                      <span className="grid size-12 place-items-center rounded-2xl bg-gold/15 text-gold">
-                        <card.icon className="size-5" />
-                      </span>
-                      <h3 className="mt-5 text-xl text-surface">{card.title}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-navy-foreground">{card.text}</p>
-                    </article>
-                  </Reveal>
-                ))}
-              </div>
-              <p className="mx-auto mt-10 flex max-w-2xl items-start justify-center gap-2 text-center text-base font-semibold text-surface">
-                <ShieldCheck className="mt-0.5 size-5 shrink-0 text-gold" aria-hidden />
-                AI-ul propune, tu aprobi. Nimic nu se trimite fără acordul tău.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <Section id="functionalitati" className="pt-16">
+        <Section id="habitoo-ai">
           <Container>
-            <SectionHeading eyebrow="Funcționalități" title={<>Tot ce folosește agenția, <span className="text-gold">într-un singur loc</span></>} text="Instrumentele zilnice lucrează împreună, fără pași complicați." />
-            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {HOME_FEATURES.map((feature, index) => (
-                <Reveal key={feature.title} delay={index * 40} className={feature.wide ? "sm:col-span-2" : undefined}>
-                  <article className="hp-card">
-                    <span className="grid size-12 place-items-center rounded-2xl bg-gold-tint text-gold-dark">
-                      <feature.icon className="size-5" />
-                    </span>
-                    <h3 className="mt-5 text-xl text-navy">{feature.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.text}</p>
+            <div className="grid gap-6 lg:grid-cols-2 lg:items-end">
+              <div>
+                <Eyebrow>Habitoo AI</Eyebrow>
+                <h2 className="mt-4 text-3xl text-balance sm:text-5xl">AI-ul lucrează pentru agent, agentul decide.</h2>
+              </div>
+              <p className="text-base leading-relaxed ds-text-2 sm:text-lg">Funcții AI incluse în Habitoo, gândite pentru munca de zi cu zi a agenției.</p>
+            </div>
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {AI_CARDS.map((card, index) => (
+                <Reveal key={card.title} delay={index * 40} className="h-full">
+                  <article className="ds-card h-full p-6">
+                    <div className="flex items-start justify-between">
+                      <span className="grid size-11 place-items-center rounded-xl border border-[color:rgba(91,228,255,0.3)] bg-[color:rgba(91,228,255,0.06)] ds-ai">
+                        <card.icon className="size-5" aria-hidden />
+                      </span>
+                      <span className="font-mono text-[11px] ds-text-3">AI·{String(index + 1).padStart(2, "0")}</span>
+                    </div>
+                    <h3 className="mt-5 text-lg">{card.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed ds-text-2">{card.text}</p>
                   </article>
                 </Reveal>
               ))}
             </div>
+            <p className="mt-6 flex items-start gap-3 rounded-[20px] border border-[color:rgba(91,228,255,0.25)] bg-[color:rgba(91,228,255,0.04)] px-5 py-4 text-[15px]">
+              <ShieldCheck className="mt-0.5 size-5 shrink-0 ds-ai" aria-hidden />
+              <span><strong>AI-ul propune, tu aprobi.</strong> Nimic nu se trimite fără acordul tău.</span>
+            </p>
           </Container>
         </Section>
 
-        <IntegratedPortalsSection dynamic={dynamic} />
-
-        <Section id="habitoo-catch" tone="muted">
+        <Section id="cum-functioneaza" className="pt-0 sm:pt-0 lg:pt-0">
           <Container>
-            <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
-              <SectionHeading
-                align="left"
-                eyebrow="Extensie Chrome"
-                title={HOME_EXTENSION.title}
-                text={HOME_EXTENSION.description}
-              />
-              <div className="hp-card">
-                <ul className="space-y-3">
-                  {HOME_EXTENSION.bullets.map((bullet) => (
-                    <li key={bullet} className="flex items-center gap-3 text-sm font-medium text-navy">
-                      <CircleCheck className="size-5 shrink-0 text-gold-dark" aria-hidden />
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <Button asChild size="lg" className="h-12 rounded-full bg-gold px-7 text-base text-gold-foreground hover:bg-gold/90">
-                    <a href={CHROME_EXTENSION_URL} target="_blank" rel="noopener noreferrer">
-                      Adaugă în Chrome <ArrowRight />
-                    </a>
-                  </Button>
-                  <Button asChild size="lg" variant="outline" className="h-12 rounded-full px-7 text-base">
-                    <a href={CHROME_EXTENSION_PATH}>Află mai multe</a>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Container>
-        </Section>
-
-        <Section id="cum-functioneaza" tone="muted" className="relative overflow-hidden">
-          <Container>
-            <SectionHeading eyebrow="Cum funcționează" title={<>Trei pași, cu <span className="text-gold">AI</span> alături</>} text="Începi simplu și păstrezi totul la îndemână." />
-            <ol className="relative mt-14 grid gap-5 lg:grid-cols-3">
+            <Eyebrow>Flux</Eyebrow>
+            <h2 className="mt-4 max-w-3xl text-3xl text-balance sm:text-5xl">De la anunț la tranzacție, în patru pași.</h2>
+            <ol className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
               {HOME_STEPS.map(([title, text], index) => (
-                <li key={title}>
-                  <Reveal delay={index * 70} className="h-full">
-                    <div className="hp-card text-center">
-                      <span className="mx-auto grid size-16 place-items-center rounded-full border border-gold/30 bg-background text-3xl font-semibold text-gold shadow-soft">{index + 1}</span>
-                      <h3 className="mt-5 text-xl text-navy">{title}</h3>
-                      <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">{text}</p>
-                    </div>
-                  </Reveal>
+                <li key={title} className="relative">
+                  <div className="flex items-center">
+                    <span className="grid size-14 shrink-0 place-items-center rounded-full border border-[color:rgba(91,228,255,0.35)] bg-background font-mono text-sm ds-ai">{String(index + 1).padStart(2, "0")}</span>
+                    <span aria-hidden className={`hidden h-px flex-1 lg:block ${index === HOME_STEPS.length - 1 ? "bg-gradient-to-r from-[color:rgba(224,178,92,0.6)] to-transparent" : "bg-gradient-to-r from-[color:rgba(91,228,255,0.5)] to-[color:rgba(91,228,255,0.2)]"}`} />
+                  </div>
+                  <h3 className="mt-6 text-xl">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed ds-text-2">{text}</p>
                 </li>
               ))}
             </ol>
           </Container>
         </Section>
 
+        <Section id="functionalitati" className="pt-0 sm:pt-0 lg:pt-0">
+          <Container>
+            <Eyebrow className="text-gold">Platforma</Eyebrow>
+            <div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+              <h2 className="max-w-3xl text-3xl text-balance sm:text-5xl">Tot ce folosește agenția, într-un singur loc.</h2>
+              <Link to="/functionalitati" className="inline-flex min-h-11 items-center gap-2 text-[15px] font-medium text-gold">Toate funcționalitățile <ArrowRight className="size-4" /></Link>
+            </div>
+            <ul className="mt-12 grid overflow-hidden rounded-[24px] border border-border sm:grid-cols-2 lg:grid-cols-4">
+              {HOME_FEATURES.map((feature, index) => (
+                <li key={feature.title} className="border-b border-border p-6 sm:border-r [&:nth-child(2n)]:sm:border-r-0 lg:[&:nth-child(2n)]:border-r lg:[&:nth-child(4n)]:border-r-0">
+                  <p className="font-mono text-[11px] ds-text-3">{String(index + 1).padStart(2, "0")}</p>
+                  <h3 className="mt-4 text-lg">{feature.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed ds-text-2">{feature.text}</p>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </Section>
+
+        <IntegratedPortalsSection dynamic={dynamic} />
+
+        <section id="habitoo-catch" className="py-12 sm:py-16">
+          <Container>
+            <div className="grid items-center gap-10 rounded-[28px] border border-[color:rgba(224,178,92,0.3)] bg-gradient-to-br from-[color:rgba(224,178,92,0.07)] to-transparent p-6 sm:p-10 lg:grid-cols-[1.2fr_1fr] lg:p-12">
+              <div>
+                <Eyebrow className="text-gold">Extensie Chrome</Eyebrow>
+                <h2 className="mt-4 text-3xl text-balance sm:text-4xl">{HOME_EXTENSION.title}</h2>
+                <p className="mt-4 text-base leading-relaxed ds-text-2">{HOME_EXTENSION.description}</p>
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                  <a href={CHROME_EXTENSION_URL} target="_blank" rel="noopener noreferrer" className="ds-btn ds-btn-primary">Adaugă în Chrome <ArrowRight className="size-4" /></a>
+                  <a href={CHROME_EXTENSION_PATH} className="ds-btn ds-btn-ghost border-[color:rgba(224,178,92,0.4)]">Află mai multe</a>
+                </div>
+              </div>
+              <div className="ds-card p-5">
+                <div className="flex items-center gap-2.5">
+                  <img src={markDark.url} alt="" width={24} height={23} loading="lazy" className="h-6 w-auto" />
+                  <span className="font-display font-semibold">Habitoo Catch</span>
+                </div>
+                <ul className="mt-4 space-y-3">
+                  {HOME_EXTENSION.bullets.map((bullet) => (
+                    <li key={bullet} className="flex items-center gap-3 text-sm">
+                      <Check className="size-4 shrink-0 ds-ai" aria-hidden /> {bullet}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </Container>
+        </section>
+
         <HomePricingSection />
         <FaqSection items={HOME_FAQ} />
 
-        <section className="px-3 pb-16 sm:px-6 sm:pb-20 lg:px-8 lg:pb-28">
-          <div className="hp-hero-bg relative mx-auto max-w-7xl overflow-hidden rounded-[36px] px-6 py-16 text-center shadow-float sm:px-12 lg:py-24">
-            <div aria-hidden className="home-grid pointer-events-none absolute inset-0 opacity-30" />
-            <div aria-hidden className="home-glow home-glow-two" />
-            <div className="relative mx-auto max-w-3xl">
-              <span className="mx-auto mb-8 inline-flex items-center justify-center rounded-[22px] border border-gold/40 bg-background px-5 py-3 shadow-soft">
-                <BrandLogo fullIdentity className="h-10 w-auto lg:h-12" />
-              </span>
-              <h2 className="text-3xl text-surface sm:text-5xl">Gata să-ți organizezi <span className="text-gold">agenția?</span></h2>
-              <p className="mx-auto mt-5 max-w-xl text-base text-navy-foreground sm:text-lg">Începe cu echipa ta, cu Habitoo AI inclus, și păstrează fiecare oportunitate aproape.</p>
-              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-                <Button asChild size="lg" className="h-12 rounded-full bg-gold px-7 text-base text-gold-foreground hover:bg-gold/90">
-                  <CrmLink to="/register">Începe gratuit <ArrowRight /></CrmLink>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-navy-foreground/30 bg-transparent px-7 text-base text-navy-foreground hover:bg-surface/10 hover:text-surface">
-                  <CrmLink to="/login">Autentificare</CrmLink>
-                </Button>
+        <section className="pb-16 sm:pb-20 lg:pb-28">
+          <Container>
+            <div className="ds-panel relative overflow-hidden px-6 py-16 text-center sm:px-12 lg:py-20">
+              <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(40%_60%_at_50%_30%,rgba(91,228,255,0.1),transparent_70%)]" />
+              <div className="relative mx-auto max-w-3xl">
+                <img src={markDark.url} alt="" width={64} height={62} loading="lazy" className="mx-auto mb-8 h-16 w-auto" />
+                <h2 className="text-3xl text-balance sm:text-5xl">Gata să-ți organizezi agenția?</h2>
+                <p className="mx-auto mt-5 max-w-xl text-base ds-text-2 sm:text-lg">Începe cu echipa ta, cu Habitoo AI inclus, și păstrează fiecare oportunitate aproape.</p>
+                <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                  <CrmLink to="/register" className="ds-btn ds-btn-primary h-12 px-6">Începe gratuit <ArrowRight className="size-4" /></CrmLink>
+                  <CrmLink to="/login" className="ds-btn ds-btn-ghost h-12 px-6">Autentificare</CrmLink>
+                </div>
               </div>
             </div>
-          </div>
+          </Container>
         </section>
       </main>
       <PublicFooter />

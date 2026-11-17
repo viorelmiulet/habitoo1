@@ -20,14 +20,14 @@ export function CtaBand({
     <section className="py-16 sm:py-20 lg:py-24">
       <Container>
         <Reveal>
-          <div className="mk-navy-bg relative overflow-hidden rounded-3xl px-6 py-14 text-center shadow-float sm:px-12 lg:px-20 lg:py-20">
+          <div className="mk-navy-bg relative overflow-hidden rounded-[28px] px-6 py-14 text-center shadow-float sm:px-12 lg:px-20 lg:py-20">
             <div
               aria-hidden
-              className="pointer-events-none absolute -top-24 right-0 size-72 rounded-full bg-gold/20 blur-3xl"
+              className="pointer-events-none absolute -top-24 right-0 size-72 rounded-full bg-[color:rgba(91,228,255,0.12)] blur-3xl"
             />
             <div
               aria-hidden
-              className="pointer-events-none absolute -bottom-24 left-0 size-72 rounded-full bg-primary/30 blur-3xl"
+              className="pointer-events-none absolute -bottom-24 left-0 size-72 rounded-full bg-gold/10 blur-3xl"
             />
             <div className="relative mx-auto max-w-3xl">
               <h2 className="text-3xl font-semibold tracking-tight text-balance text-navy-foreground sm:text-4xl lg:text-5xl">

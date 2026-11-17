@@ -16,7 +16,7 @@ export function IntegrationsOverview({ dynamic = [] }: { dynamic?: PortalDefinit
       <ul className="my-5 flex flex-wrap gap-2">{item.badges.map((badge) => <li key={badge} className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-foreground"><Check className="size-3 shrink-0 text-success" />{badge}</li>)}</ul>
       <Button asChild variant="link" className="mt-auto h-auto justify-start self-start p-0 text-gold-dark"><Link to="/integrari/$slug" params={{ slug: item.slug }} aria-label={`Vezi detalii: ${item.name}`}>Vezi detalii <ArrowUpRight className="size-4" /></Link></Button>
     </li>)}{section === INTEGRATION_SECTIONS[0] && dynamic.map(portal => <li key={portal.id} className="flex min-w-0 flex-col rounded-lg border border-border bg-card p-6" data-integration={portal.id}>
-      {portal.logo_url && <img src={portal.logo_url} alt={`Logo ${portal.display_name}`} className="mb-4 size-10 object-contain" />}
+      {portal.logo_url && <span className="ds-plate mb-4 inline-flex size-12 items-center justify-center p-1.5"><img src={portal.logo_url} alt={`Logo ${portal.display_name}`} width={40} height={40} loading="lazy" className="size-full object-contain" /></span>}
       <h3 className="text-lg font-semibold text-navy">{portal.display_name}</h3>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{portal.description}</p>
       <ul className="my-5 flex flex-wrap gap-2">{integrationBadges(portal).map(badge => <li key={badge} className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs"><Check className="size-3 text-success" />{badge}</li>)}</ul>

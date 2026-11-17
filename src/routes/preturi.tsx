@@ -1,13 +1,10 @@
-import { PublicPhotoHeading } from "@/components/marketing/PublicPhotoHeading";
 import { publicPagePhotos, publicPhotoHead } from "@/components/marketing/public-page-photos";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Check, MessageCircle } from "lucide-react";
+import { ArrowRight, Check, MessageCircle, Users } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { CtaBand } from "@/components/marketing/CtaBand";
 import { LaunchOfferBadge } from "@/components/marketing/LaunchOfferBadge";
 import { FaqSection, faqPageJsonLd, type FaqItem } from "@/components/marketing/FaqSection";
-import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
@@ -113,194 +110,129 @@ const faq: FaqItem[] = [
 ];
 
 
-/** Un card de plan cu propriul comutator Lunar / Anual, independent de celelalte. */
-function PlanCard({ plan: p }: { plan: (typeof plans)[number] }) {
-  const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
+const includedAi = [
+  "Completare automată a fișei din text, poze și istoric",
+  "Corectarea titlului și a descrierii",
+  "Reordonarea pozelor și alegerea copertei",
+  "AI Marketing, Studio AI și Agentul AI CRM",
+];
+
+type Cycle = "monthly" | "annual";
+
+/** Un card de plan; perioada vine din comutatorul comun al paginii. */
+function PlanCard({ plan: p, cycle }: { plan: (typeof plans)[number]; cycle: Cycle }) {
   const price = PLAN_PRICES[p.key];
   const monthly = cycle === "annual" ? price.annualMonthly : price.monthly;
 
   return (
     <div
       className={cn(
-        "relative flex h-full flex-col rounded-3xl border p-7",
-        p.featured ? "mk-navy-bg border-navy shadow-float" : "border-border bg-card shadow-soft",
+        "ds-card relative flex h-full flex-col p-7",
+        p.featured && "border-[color:var(--ds-cyan)] bg-[linear-gradient(180deg,rgba(91,228,255,0.07),rgba(11,18,32,0.75))] shadow-[0_30px_90px_-40px_rgba(91,228,255,0.45)]",
       )}
     >
-      {p.featured ? (
-        <span className="absolute -top-3 left-7 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-gold-foreground">
-          Recomandat
-        </span>
-      ) : null}
-      <h2 className={cn("text-xl font-semibold", p.featured ? "text-navy-foreground" : "text-navy")}>
-        {PLAN_LABELS[p.key]}
-      </h2>
-
-      {/* Comutator propriu, doar pentru acest plan. */}
-      <div
-        className={cn(
-          "mt-4 flex w-fit items-center gap-1 rounded-full border p-1",
-          p.featured ? "border-navy-foreground/25 bg-navy-foreground/10" : "border-border bg-muted",
-        )}
-      >
-        {(["monthly", "annual"] as const).map((c) => (
-          <button
-            key={c}
-            type="button"
-            aria-pressed={cycle === c}
-            onClick={() => setCycle(c)}
-            className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-              cycle === c
-                ? p.featured
-                  ? "bg-gold text-gold-foreground"
-                  : "bg-navy text-navy-foreground"
-                : p.featured
-                  ? "text-navy-muted hover:text-navy-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {c === "monthly" ? "Lunar" : "Anual · -50%"}
-          </button>
-        ))}
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-2xl">{PLAN_LABELS[p.key]}</h2>
+        {p.featured ? (
+          <span className="rounded-full bg-[color:var(--ds-cyan)] px-2.5 py-1 font-mono text-[10px] font-medium tracking-wider text-[#04131A] uppercase">Recomandat</span>
+        ) : null}
       </div>
-
-      <p
-        className={cn("mt-3 text-sm", p.featured ? "text-navy-muted" : "text-muted-foreground")}
-      >
-        {p.audience}
+      <p className="mt-3 text-sm leading-relaxed ds-text-2">{p.audience}</p>
+      <p className="mt-8 flex items-baseline gap-1.5 font-display text-5xl font-bold tracking-[-0.04em]">
+        {monthly} €
+        <span className="font-sans text-base font-normal tracking-normal ds-text-2">/lună</span>
       </p>
-      <p
-        className={cn(
-          "mt-6 flex items-baseline gap-1.5 text-4xl font-semibold tracking-tight",
-          p.featured ? "text-navy-foreground" : "text-navy",
-        )}
-      >
-        {monthly}€
-        <span
-          className={cn(
-            "text-base font-medium",
-            p.featured ? "text-navy-muted" : "text-muted-foreground",
-          )}
-        >
-          /lună
-        </span>
-      </p>
-      <p
-        className={cn("mt-1.5 text-sm", p.featured ? "text-navy-muted" : "text-muted-foreground")}
-      >
+      <p className="mt-3 font-mono text-xs ds-text-3">
         {cycle === "annual"
           ? `Facturat anual, ${price.annualMonthly * 12}€/an (în loc de ${price.monthly}€/lună)`
           : "Facturat lunar"}
       </p>
-      <p
-        className={cn(
-          "mt-5 text-sm font-medium",
-          p.featured ? "text-navy-foreground" : "text-foreground",
-        )}
-      >
+      <p className="mt-6 flex items-center gap-2.5 rounded-xl border border-border bg-[color:rgba(5,8,15,0.6)] px-4 py-3 text-[15px] font-semibold">
+        <Users className="size-4 ds-ai" aria-hidden />
         {p.key === "unlimited" ? "Agenți fără limită" : `Până la ${PLAN_AGENT_LIMITS[p.key]} agenți`}
       </p>
-      <ul className="mt-4 space-y-2.5">
-        {p.highlights.map((h) => (
-          <li
-            key={h}
-            className={cn(
-              "flex items-start gap-2.5 text-sm",
-              p.featured ? "text-navy-foreground" : "text-foreground",
-            )}
-          >
-            <Check className={cn("mt-0.5 size-4 shrink-0", p.featured ? "text-gold" : "text-success")} />
+      <ul className="mt-5 space-y-2.5">
+        {[...p.highlights, "Habitoo AI inclus"].map((h) => (
+          <li key={h} className="flex items-start gap-2.5 text-sm">
+            <Check className="mt-0.5 size-4 shrink-0 ds-ai" aria-hidden />
             {h}
           </li>
         ))}
       </ul>
       <div className="mt-8 flex flex-1 flex-col justify-end gap-2">
-        <Button
-          asChild
-          className={cn("h-11", p.featured ? "bg-gold text-gold-foreground hover:bg-gold/90" : navyButton)}
-        >
-          <Link to="/register">
-            Cere un cont <ArrowRight />
-          </Link>
-        </Button>
-        <p
-          className={cn(
-            "text-center text-xs font-medium",
-            p.featured ? "text-navy-foreground" : "text-success",
-          )}
-        >
-          90 de zile gratuit, fără card bancar
-        </p>
-        <Button
-          asChild
-          variant="ghost"
-          className={cn(
-            "h-10",
-            p.featured &&
-              "text-navy-foreground hover:bg-navy-foreground/10 hover:text-navy-foreground",
-          )}
-        >
-          <Link to="/contact" search={{ interes: "preturi" }}>
-            <MessageCircle /> Vorbește cu noi
-          </Link>
-        </Button>
+        <Link to="/register" className={cn("ds-btn h-12", p.featured ? "ds-btn-ai" : "ds-btn-ghost")}>
+          Cere un cont <ArrowRight className="size-4" />
+        </Link>
+        <p className="text-center text-xs ds-text-3">90 de zile gratuit, fără card bancar</p>
+        <Link to="/contact" search={{ interes: "preturi" }} className="ds-btn h-10 text-sm ds-text-2 hover:text-foreground">
+          <MessageCircle className="size-4" /> Vorbește cu noi
+        </Link>
       </div>
     </div>
   );
 }
 
 function PricingPage() {
+  const [cycle, setCycle] = useState<Cycle>("monthly");
   return (
     <PublicLayout>
-      <section className="mk-page-hero relative overflow-hidden border-b">
-        <div
-          aria-hidden
-          className="mk-dots pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"
-        />
-        <Container className="relative py-16 sm:py-20 lg:py-24">
-          <PublicPhotoHeading photo={publicPagePhotos.pricing}>
+      <section className="relative">
+        <Container className="relative flex flex-col items-center py-16 text-center sm:py-20 lg:py-24">
+          <LaunchOfferBadge className="mb-7" />
           <SectionHeading
-            align="left"
             as="h1"
-            eyebrow="Prețuri"
-            title="Trei planuri simple, cu prețuri clare"
-            text="Alege plata lunară sau anuală pentru fiecare plan. La plata anuală tariful lunar scade cu 50%, iar factura se emite o singură dată pentru 12 luni. Toate planurile încep cu 90 de zile gratuite."
+            title={<>Un preț pe agenție. <span className="ds-ai">AI-ul e inclus.</span></>}
+            text="Alege plata lunară sau anuală. La plata anuală tariful lunar scade cu 50%, iar factura se emite o singură dată pentru 12 luni. Toate planurile încep cu 90 de zile gratuite."
+            className="[&_[data-public-answer]]:mx-auto [&_[data-public-answer]]:text-left"
           />
-          </PublicPhotoHeading>
+          <div role="group" aria-label="Perioada de plată" className="mt-9 inline-flex items-center gap-1 rounded-[14px] border border-border bg-[color:rgba(11,18,32,0.7)] p-1">
+            {(["monthly", "annual"] as const).map((c) => (
+              <button
+                key={c}
+                type="button"
+                aria-pressed={cycle === c}
+                onClick={() => setCycle(c)}
+                className={cn(
+                  "min-h-11 rounded-[10px] px-5 text-sm font-semibold transition-colors",
+                  cycle === c ? "bg-[color:var(--ds-cyan)] text-[#04131A]" : "ds-text-2 hover:text-foreground",
+                )}
+              >
+                {c === "monthly" ? "Lunar" : "Anual · -50%"}
+              </button>
+            ))}
+          </div>
         </Container>
       </section>
 
-      <Section className="pt-12 sm:pt-16">
+      <Section className="pt-0 sm:pt-0 lg:pt-0">
         <Container>
-          <LaunchOfferBadge className="mb-8" />
           <div className="grid gap-6 lg:grid-cols-3">
             {plans.map((p, i) => (
               <Reveal key={p.key} delay={i * 70} className="h-full">
-                <PlanCard plan={p} />
+                <PlanCard plan={p} cycle={cycle} />
               </Reveal>
             ))}
           </div>
         </Container>
       </Section>
 
-
-      <Section tone="muted">
+      <Section className="pt-0 sm:pt-0 lg:pt-0">
         <Container className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <SectionHeading
               align="left"
-              eyebrow="Inclus"
+              eyebrow="Inclus în toate planurile"
               title="Toate planurile includ modulele de bază ale CRM-ului"
               text="Diferențele dintre planuri țin de dimensiunea echipei, de nevoile de configurare și de suport, nu de funcționalitățile esențiale."
             />
           </div>
           <ul className="grid gap-3 sm:grid-cols-2 lg:col-span-7">
-            {included.map((item) => (
+            {[...includedAi.map((t) => ["AI", t] as const), ...included.map((t) => ["CRM", t] as const)].map(([tag, item]) => (
               <li
                 key={item}
-                className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-sm"
+                className={cn("flex items-start gap-3 rounded-[14px] border p-4 text-sm", tag === "AI" ? "border-[color:rgba(91,228,255,0.3)] bg-[color:rgba(91,228,255,0.04)]" : "border-border bg-[color:rgba(11,18,32,0.6)]")}
               >
-                <Check className="mt-0.5 size-4 shrink-0 text-success" />
+                <span className={cn("rounded-md border px-1.5 py-0.5 font-mono text-[10px]", tag === "AI" ? "border-[color:rgba(91,228,255,0.4)] ds-ai" : "border-border ds-text-3")}>{tag}</span>
                 <span>{item}</span>
               </li>
             ))}
@@ -308,7 +240,7 @@ function PricingPage() {
         </Container>
       </Section>
 
-      <FaqSection items={faq} />
+      <FaqSection items={faq} title="Întrebări despre prețuri" />
 
       <CtaBand
         title="Hai să găsim împreună planul potrivit pentru agenția ta."

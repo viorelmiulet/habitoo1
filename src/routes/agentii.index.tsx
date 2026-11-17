@@ -57,7 +57,7 @@ export const Route = createFileRoute("/agentii/")({
 function PartnerCard({ partner }: { partner: PublicPartner }) {
   const body = (
     <>
-      <div className="flex aspect-square w-full max-w-36 items-center justify-center overflow-hidden rounded-2xl border border-border bg-background p-3">
+      <div className="flex aspect-square w-full max-w-36 items-center justify-center overflow-hidden ds-plate border p-3">
         {partner.logoUrl ? (
           <img src={partner.logoUrl} alt={`Logo ${partner.name}`} loading="lazy" className="size-full object-contain" />
         ) : (
