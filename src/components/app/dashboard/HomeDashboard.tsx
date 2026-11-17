@@ -8,11 +8,16 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
-  Lightbulb,
-  Plus,
+  FileText,
+  Link2,
+  PenLine,
+  Sparkles,
   UserRound,
   Users,
 } from "lucide-react";
+import { PortalLogo } from "@/components/app/PortalLogo";
+import { getPortalDefinition } from "@/lib/portals/registry";
+import { buildRecommendations, type Recommendation } from "./home-recommendations";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -21,14 +26,14 @@ import { HOME_STAGES, useHomeDashboard, type HomeMetric } from "@/hooks/use-home
 import { formatMoney, formatTime, relativeDays } from "@/lib/format";
 import { leadStageLabels, propertyStatusLabels, propertyStatusTone } from "@/lib/labels";
 import { cn } from "@/lib/utils";
-import { tipOfTheDay } from "./daily-tips";
 import { DailyNoteCard } from "./DailyNoteCard";
 import { ExtensionPromoCard } from "./ExtensionPromoCard";
 import { HabitooNewsCard } from "./HabitooNewsCard";
-import { greetingFor } from "./greeting";
+import { dashboardDateLabel, greetingFor } from "./greeting";
 import { dailyAdditions, leadSourceLabel, monthComparison, relativeTime, trendLabel } from "./home-stats";
 
 const CARD = "rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6";
+const MONO = "font-mono text-[11px] tracking-wide text-muted-foreground";
 
 const STAGE_STYLE: Record<(typeof HOME_STAGES)[number], string> = {
   new: "bg-info/10 text-info border-info/20",
@@ -84,7 +89,7 @@ function Sparkline({ values }: { values: number[] }) {
   const step = w / (values.length - 1 || 1);
   const points = values.map((v, i) => `${(i * step).toFixed(1)},${(h - 2 - (v / max) * (h - 4)).toFixed(1)}`).join(" ");
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-8 w-full text-gold" preserveAspectRatio="none" aria-hidden>
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-8 w-full text-ai" preserveAspectRatio="none" aria-hidden>
       <polyline points={points} fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
     </svg>
   );
@@ -111,12 +116,12 @@ function MetricCard({
   return (
     <Link to={to} search={search as never} className={cn(CARD, "block min-w-0 transition-shadow hover:border-gold/50 hover:shadow-md")}>
       <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-sm text-muted-foreground">{label}</p>
-        <Icon className="size-4 shrink-0 text-gold-dark" aria-hidden />
+        <p className="flex min-w-0 items-center gap-2 truncate text-sm text-muted-foreground"><Icon className="size-4 shrink-0" aria-hidden />{label}</p>
+        <span className="shrink-0 rounded-md bg-success/10 px-1.5 py-0.5 font-mono text-[11px] text-success">+{series[series.length - 1]} azi</span>
       </div>
-      <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-3xl font-bold tabular-nums">{metric.total}</span>
-        <span className="text-sm font-medium text-success">+{series[series.length - 1]} azi</span>
+      <div className="mt-2 flex items-end justify-between gap-3">
+        <span className="font-display text-4xl font-bold tabular-nums">{metric.total}</span>
+        <div className="w-28 shrink-0"><Sparkline values={series} /></div>
       </div>
       <p
         className={cn(
@@ -126,116 +131,171 @@ function MetricCard({
       >
         {trend.text}
       </p>
-      <div className="mt-3">
-        <Sparkline values={series} />
-      </div>
     </Link>
   );
+}
+
+const KIND_BAR: Record<string, string> = {
+  viewing: "bg-ai",
+  call: "bg-gold",
+  meeting: "bg-success",
+};
+
+const REC_ICON: Record<Recommendation["kind"], typeof Users> = { matches: Link2, incomplete: FileText, caps: PenLine };
+
+function RecommendationRow({ rec }: { rec: Recommendation }) {
+  const Icon = REC_ICON[rec.kind];
+  return (
+    <li className="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-background/40 p-4 sm:flex-row sm:items-center">
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-ai/10 text-ai"><Icon className="size-4" aria-hidden /></span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold">{rec.title}</p>
+        <p className="text-sm text-muted-foreground">{rec.text}</p>
+      </div>
+      <Button asChild variant="outline" size="sm" className="shrink-0 border-ai/50 text-ai hover:bg-ai/10 hover:text-ai">
+        {rec.kind === "matches"
+          ? <Link to="/app/potriviri-noi">{rec.action}</Link>
+          : <Link to="/app/properties/$id" params={{ id: rec.propertyId }}>{rec.action}</Link>}
+      </Button>
+    </li>
+  );
+}
+
+function portalLabel(key: string) {
+  return getPortalDefinition(key)?.display_name ?? key;
 }
 
 export function HomeDashboard({ organizationId, firstName }: { organizationId?: string | null; firstName: string }) {
   const { data, isLoading } = useHomeDashboard(organizationId);
   const coverFor = usePropertyCovers((data?.latestProperties ?? []).map((p) => p.id));
   const now = new Date();
+  const recs = data ? buildRecommendations({ properties: data.recProperties, matches: data.newMatches }) : [];
+  const maxStage = Math.max(1, ...(data?.stages ?? []).map((s) => s.count));
 
   return (
     <div className="min-w-0 space-y-6" data-tour="dashboard-overview">
       {/* Extensia Chrome Habitoo Catch – primul element, vizibil și în starea de încărcare */}
       <ExtensionPromoCard />
 
-      {/* 1. Banner de salut */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy to-navy-muted/90 p-6 text-on-navy shadow-sm sm:p-8">
-        <div aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-gold" />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:items-center">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-balance sm:text-3xl">
-              {greetingFor(now)}, {firstName}!
-            </h1>
-            <p className="mt-1 text-navy-foreground">Iată ce se întâmplă azi în agenția ta.</p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Button asChild className="bg-gold text-gold-foreground hover:bg-gold/90">
-                <Link to="/app/properties/new">
-                  <Plus className="size-4" /> Adaugă proprietate
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="border-on-navy/30 bg-transparent text-on-navy hover:bg-on-navy/10 hover:text-on-navy">
-                <Link to="/app/requests" search={{ new: true }}>
-                  <Plus className="size-4" /> Adaugă cerere
-                </Link>
-              </Button>
-            </div>
-          </div>
-          <div className="min-w-0 rounded-xl border border-gold/30 bg-on-navy/5 p-4">
-            <p className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gold uppercase">
-              <Lightbulb className="size-4" aria-hidden /> Mesajul zilei
-            </p>
-            <p className="mt-2 text-sm leading-relaxed">{tipOfTheDay(now)}</p>
-          </div>
-        </div>
-      </section>
+      {/* 1. Antet: dată, salut, recomandări */}
+      <header className="min-w-0">
+        <p className="font-mono text-xs tracking-[0.14em] text-muted-foreground uppercase">{dashboardDateLabel(now)}</p>
+        <h1 className="mt-1 text-2xl font-bold text-balance sm:text-3xl">{greetingFor(now)}, {firstName}</h1>
+        <p className="mt-1 text-muted-foreground">
+          {data
+            ? recs.length
+              ? <>Agentul AI a pregătit <strong className="text-ai">{recs.length} {recs.length === 1 ? "recomandare" : "recomandări"}</strong> pentru tine.</>
+              : "Totul e la zi."
+            : "Se pregătesc recomandările…"}
+        </p>
+      </header>
 
       {isLoading || !data ? (
         <div className="space-y-6">
-          <div className="grid gap-4 lg:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}</div>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-40 rounded-2xl" />)}</div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}</div>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">{[0, 1].map((i) => <Skeleton key={i} className="h-72 rounded-2xl" />)}</div>
         </div>
       ) : (
         <>
-          {/* 2. Agenda, noutăți, notița zilei */}
-          <div className="grid gap-4 lg:grid-cols-3">
+          {/* 3. Indicatori */}
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard label="Proprietăți active" metric={data.metrics.properties} icon={Building2} to="/app/properties" now={now} />
+            <MetricCard label="Lead-uri deschise" metric={data.metrics.leads} icon={Users} to="/app/leads" search={{ deschise: true }} now={now} />
+            <MetricCard label="Cereri active" metric={data.metrics.requests} icon={ClipboardList} to="/app/requests" now={now} />
+            <MetricCard label="Contacte" metric={data.metrics.contacts} icon={UserRound} to="/app/contacts" now={now} />
+          </div>
+
+          {/* 4. Recomandări + 5. Agenda */}
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+            <section className={cn(CARD, "min-w-0 border-ai/30")} data-testid="home-recommendations">
+              <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
+                <h2 className="flex items-center gap-2 text-base font-semibold"><Sparkles className="size-4 text-ai" aria-hidden />Agentul AI recomandă</h2>
+                <span className={MONO}>reguli din datele tale</span>
+              </div>
+              {recs.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">Totul e la zi.</p>
+              ) : (
+                <ul className="space-y-3">{recs.map((r) => <RecommendationRow key={r.kind} rec={r} />)}</ul>
+              )}
+            </section>
+
             <section className={cn(CARD, "min-w-0")}>
-              <CardTitle icon={CalendarDays} title="Agenda ta de azi" />
+              <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
+                <h2 className="text-base font-semibold">Agenda de azi</h2>
+                <Link to="/app/calendar" className="shrink-0 text-sm font-medium text-primary hover:underline">Calendar →</Link>
+              </div>
               {data.today.length === 0 ? (
                 <EmptyNote icon={CalendarDays} title="Nicio activitate pentru azi" text="Ziua ta e liberă. Adaugă o activitate ca să începi." />
               ) : (
-                <ol className="space-y-2.5">
+                <ol className="divide-y divide-border">
                   {data.today.map((a) => (
-                    <li key={a.id} className="flex min-w-0 items-center gap-3 text-sm">
-                      <span className="w-12 shrink-0 font-semibold tabular-nums text-gold-dark">{formatTime(a.startsAt)}</span>
-                      <span className="min-w-0 truncate">{a.title}</span>
+                    <li key={a.id} className="flex min-w-0 gap-4 py-3 first:pt-0 last:pb-0">
+                      <span className="w-12 shrink-0 pt-0.5 font-mono text-xs tabular-nums text-muted-foreground">{formatTime(a.startsAt)}</span>
+                      <span aria-hidden className={cn("w-0.5 shrink-0 rounded-full", KIND_BAR[a.kind] ?? "bg-muted-foreground/50")} />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">{a.title}</p>
+                        {a.description ? <p className="truncate text-sm text-muted-foreground">{a.description}</p> : null}
+                      </div>
                     </li>
                   ))}
                 </ol>
               )}
-              <div className="mt-4 flex flex-wrap justify-between gap-2 border-t border-border pt-3 text-sm font-medium">
-                <Link to="/app/activities" search={{ new: true }} className="text-primary hover:underline">
-                  + Adaugă activitate
-                </Link>
-                <Link to="/app/activities" className="text-gold-dark hover:underline">
-                  Vezi agenda →
-                </Link>
-              </div>
             </section>
+          </div>
+
+          {/* 6. Pipeline + 7. Portaluri */}
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+            <section className={cn(CARD, "min-w-0")}>
+              <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
+                <h2 className="text-base font-semibold">Pipeline lead-uri</h2>
+                <Link to="/app/leads" className="shrink-0 text-sm font-medium text-primary hover:underline">Toate lead-urile →</Link>
+              </div>
+              <ul className="space-y-3">
+                {data.stages.map((s) => (
+                  <li key={s.stage}>
+                    <Link to="/app/leads" search={{ stage: s.stage }} className="grid grid-cols-[6.5rem_minmax(0,1fr)_2rem] items-center gap-3 text-sm hover:text-primary">
+                      <span className="truncate">{leadStageLabels[s.stage]}</span>
+                      <span className="h-2 overflow-hidden rounded-full bg-muted">
+                        <span className="block h-full rounded-full bg-ai" style={{ width: `${(s.count / maxStage) * 100}%` }} />
+                      </span>
+                      <span className="text-right font-mono text-xs tabular-nums">{s.count}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className={cn(CARD, "min-w-0")}>
+              <h2 className="mb-4 text-base font-semibold">Publicări pe portaluri</h2>
+              {data.portals.length === 0 ? (
+                <EmptyNote icon={Building2} title="Nicio publicare activă pe portaluri." />
+              ) : (
+                <ul className="space-y-2.5">
+                  {data.portals.map((p) => {
+                    const tone = p.errors ? "bg-destructive" : p.pending ? "bg-gold" : "bg-success";
+                    return (
+                      <li key={p.portalKey} className="flex min-w-0 items-center gap-3 text-sm">
+                        <span className="flex h-8 w-24 shrink-0 items-center justify-center rounded-lg bg-plate px-2">
+                          <PortalLogo portalId={p.portalKey} name={portalLabel(p.portalKey)} size={24} className="border-0" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                          <span className="text-foreground">{portalLabel(p.portalKey)}</span> · {p.active} active
+                          {p.pending ? ` · ${p.pending} în așteptare` : ""}
+                          {p.errors ? ` · ${p.errors} ${p.errors === 1 ? "eroare" : "erori"}${p.lastError ? `: ${p.lastError.slice(0, 80)}` : ""}` : ""}
+                        </span>
+                        <span aria-label={p.errors ? "Eroare" : p.pending ? "În așteptare" : "OK"} className={cn("size-2 shrink-0 rounded-full", tone)} />
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
             <HabitooNewsCard className={cn(CARD, "min-w-0")} />
             <DailyNoteCard className={cn(CARD, "min-w-0")} />
           </div>
-
-          {/* 3. Cifre */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Proprietăți active" metric={data.metrics.properties} icon={Building2} to="/app/properties" now={now} />
-            <MetricCard label="Cereri active" metric={data.metrics.requests} icon={ClipboardList} to="/app/requests" now={now} />
-            <MetricCard label="Lead-uri deschise" metric={data.metrics.leads} icon={Users} to="/app/leads" search={{ deschise: true }} now={now} />
-            <MetricCard label="Contacte" metric={data.metrics.contacts} icon={UserRound} to="/app/contacts" now={now} />
-          </div>
-
-          {/* 4. Etapele lead-urilor */}
-          <section className={CARD}>
-            <CardTitle icon={Users} title="Etapele lead-urilor" />
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {data.stages.map((s) => (
-                <Link
-                  key={s.stage}
-                  to="/app/leads"
-                  search={{ stage: s.stage }}
-                  className={cn("rounded-xl border px-4 py-3 transition-transform hover:-translate-y-0.5", STAGE_STYLE[s.stage])}
-                >
-                  <p className="truncate text-sm font-medium">{leadStageLabels[s.stage]}</p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums">{s.count}</p>
-                </Link>
-              ))}
-            </div>
-          </section>
-
           {/* 5. Ultimele proprietăți și cereri */}
           <div className="grid gap-4 lg:grid-cols-2">
             <section className={cn(CARD, "min-w-0")}>

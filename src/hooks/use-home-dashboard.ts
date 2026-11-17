@@ -4,6 +4,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { RecMatch, RecProperty } from "@/components/app/dashboard/home-recommendations";
 
 export const HOME_STAGES = ["new", "contacted", "viewing", "offer", "negotiation"] as const;
 const ACTIVE_REQUEST_STATUSES = ["new", "active", "working"];
@@ -30,7 +31,9 @@ export type HomeLead = {
   createdAt: string;
 };
 
-export type HomeActivity = { id: string; title: string; startsAt: string };
+export type HomeActivity = { id: string; title: string; startsAt: string; kind: string; description: string | null };
+
+export type HomePortalRow = { portalKey: string; active: number; pending: number; errors: number; lastError: string | null };
 
 export type HomeDashboardData = {
   metrics: { properties: HomeMetric; requests: HomeMetric; leads: HomeMetric; contacts: HomeMetric };
@@ -38,7 +41,24 @@ export type HomeDashboardData = {
   latestProperties: HomeProperty[];
   latestLeads: HomeLead[];
   today: HomeActivity[];
+  /** Proprietăți active (pentru recomandările deterministe). */
+  recProperties: RecProperty[];
+  /** Potriviri noi (status „new”) din matching-ul activ. */
+  newMatches: RecMatch[];
+  portals: HomePortalRow[];
 };
+
+export function summarizePublications(rows: { portal_key: string; status: string; last_error: string | null }[]): HomePortalRow[] {
+  const map = new Map<string, HomePortalRow>();
+  for (const r of rows) {
+    const e = map.get(r.portal_key) ?? { portalKey: r.portal_key, active: 0, pending: 0, errors: 0, lastError: null };
+    if (r.status === "error") { e.errors += 1; e.lastError ??= r.last_error; }
+    else if (r.status === "published" || r.status === "active") e.active += 1;
+    else e.pending += 1;
+    map.set(r.portal_key, e);
+  }
+  return [...map.values()].sort((a, b) => b.active - a.active);
+}
 
 export function useHomeDashboard(organizationId?: string | null) {
   return useQuery({
@@ -67,7 +87,7 @@ export function useHomeDashboard(organizationId?: string | null) {
       const contacts = () =>
         supabase.from("contacts").select("created_at", { count: "exact" }).eq("organization_id", org);
 
-      const [p, r, l, c, latestP, latestL, today, profiles, ...stageRes] = await Promise.all([
+      const [p, r, l, c, latestP, latestL, today, profiles, recP, matches, pubs, ...stageRes] = await Promise.all([
         props().gte("created_at", since).limit(5000),
         reqs().gte("created_at", since).limit(5000),
         leads().gte("created_at", since).limit(5000),
@@ -79,11 +99,19 @@ export function useHomeDashboard(organizationId?: string | null) {
         supabase.from("leads").select("id,name,source,property_id,stage,assigned_to,created_at")
           .eq("organization_id", org).is("deleted_at", null)
           .order("created_at", { ascending: false }).limit(5),
-        supabase.from("activities").select("id,title,starts_at")
+        supabase.from("activities").select("id,title,starts_at,kind,description")
           .eq("organization_id", org)
           .gte("starts_at", dayStart.toISOString()).lt("starts_at", dayEnd.toISOString())
           .order("starts_at", { ascending: true }).limit(20),
         supabase.from("profiles").select("id,full_name").eq("organization_id", org),
+        supabase.from("properties").select("id,title,reference,floor,surface,usable_surface,rooms,features,property_type")
+          .eq("organization_id", org).is("deleted_at", null).eq("status", "active")
+          .order("updated_at", { ascending: false }).limit(200),
+        supabase.from("active_match_alerts").select("property_id,property:properties(title)")
+          .eq("status", "new").order("created_at", { ascending: false }).limit(200),
+        supabase.from("portal_publications").select("portal_key,status,last_error")
+          .eq("organization_id", org).eq("enabled", true)
+          .not("portal_key", "in", "(facebook_catalog,agency_site)").limit(5000),
         ...HOME_STAGES.map((stage) =>
           supabase.from("leads").select("id", { count: "exact", head: true })
             .eq("organization_id", org).is("deleted_at", null).eq("stage", stage),
@@ -132,7 +160,14 @@ export function useHomeDashboard(organizationId?: string | null) {
           agent: x.assigned_to ? (names.get(x.assigned_to) ?? null) : null,
           createdAt: x.created_at,
         })),
-        today: (today.data ?? []).map((a) => ({ id: a.id, title: a.title, startsAt: a.starts_at })),
+        today: (today.data ?? []).map((a) => ({ id: a.id, title: a.title, startsAt: a.starts_at, kind: a.kind, description: a.description })),
+        recProperties: (recP.data ?? []).map((x) => ({
+          id: x.id, title: x.title, ref: x.reference, floor: x.floor,
+          surface: x.usable_surface ?? x.surface, rooms: x.rooms, features: x.features ?? [], propertyType: x.property_type,
+        })),
+        newMatches: ((matches.data ?? []) as unknown as { property_id: string; property: { title: string } | null }[])
+          .map((m) => ({ propertyId: m.property_id, propertyTitle: m.property?.title ?? null })),
+        portals: summarizePublications(pubs.data ?? []),
       };
     },
   });

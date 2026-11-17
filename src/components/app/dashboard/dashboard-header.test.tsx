@@ -68,14 +68,11 @@ afterEach(() => {
 });
 
 describe("pagina Acasă", () => {
-  it("un singur h1 cu salutul și butoanele rapide", () => {
+  it("un singur h1 cu salutul după ora locală", () => {
     render(<HomeDashboard organizationId="o1" firstName="Ana" />);
     const h1 = document.querySelectorAll("h1");
     expect(h1).toHaveLength(1);
-    expect(h1[0].textContent).toMatch(/^Bună (dimineața|ziua|seara), Ana!$/);
-    expect(document.body.textContent).toContain("Iată ce se întâmplă azi în agenția ta.");
-    expect(document.querySelector('a[href="/app/properties/new"]')?.textContent).toContain("Adaugă proprietate");
-    expect(document.querySelector('a[href="/app/requests"]')?.textContent).toContain("Adaugă cerere");
+    expect(h1[0].textContent).toMatch(/^Bună (dimineața|ziua|seara), Ana$/);
   });
 
   it("cardul Habitoo Catch e primul element, deasupra bannerului de salut", () => {

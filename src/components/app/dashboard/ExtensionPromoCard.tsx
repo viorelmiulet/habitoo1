@@ -14,14 +14,14 @@ export function ExtensionPromoCard({ className }: { className?: string }) {
   const q = useQuery({ queryKey: ["extension-tokens"], queryFn: () => list() });
   const connected = (q.data ?? []).length > 0;
   return (
-    <section className={cn("rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6", className)}>
+    <section className={cn("rounded-2xl border border-gold/40 bg-gold-tint p-5 shadow-sm sm:p-6", className)}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gold-tint text-gold-dark">
             <Puzzle className="size-5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <h2 className="text-base font-semibold">Habitoo Catch – extensia Chrome</h2>
+            <h2 className="font-display text-base font-semibold">Habitoo Catch · extensia Chrome</h2>
             <p className="text-sm text-muted-foreground">
               {connected
                 ? "Extensia este conectată."
