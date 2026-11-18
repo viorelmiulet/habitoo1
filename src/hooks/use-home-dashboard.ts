@@ -33,8 +33,6 @@ export type HomeLead = {
 
 export type HomeActivity = { id: string; title: string; startsAt: string; kind: string; description: string | null };
 
-export type HomePortalRow = { portalKey: string; active: number; pending: number; errors: number; lastError: string | null };
-
 export type HomeDashboardData = {
   metrics: { properties: HomeMetric; requests: HomeMetric; leads: HomeMetric; contacts: HomeMetric };
   stages: { stage: (typeof HOME_STAGES)[number]; count: number }[];
@@ -45,20 +43,7 @@ export type HomeDashboardData = {
   recProperties: RecProperty[];
   /** Potriviri noi (status „new”) din matching-ul activ. */
   newMatches: RecMatch[];
-  portals: HomePortalRow[];
 };
-
-export function summarizePublications(rows: { portal_key: string; status: string; last_error: string | null }[]): HomePortalRow[] {
-  const map = new Map<string, HomePortalRow>();
-  for (const r of rows) {
-    const e = map.get(r.portal_key) ?? { portalKey: r.portal_key, active: 0, pending: 0, errors: 0, lastError: null };
-    if (r.status === "error") { e.errors += 1; e.lastError ??= r.last_error; }
-    else if (r.status === "published" || r.status === "active") e.active += 1;
-    else e.pending += 1;
-    map.set(r.portal_key, e);
-  }
-  return [...map.values()].sort((a, b) => b.active - a.active);
-}
 
 export function useHomeDashboard(organizationId?: string | null) {
   return useQuery({
@@ -87,7 +72,7 @@ export function useHomeDashboard(organizationId?: string | null) {
       const contacts = () =>
         supabase.from("contacts").select("created_at", { count: "exact" }).eq("organization_id", org);
 
-      const [p, r, l, c, latestP, latestL, today, profiles, recP, matches, pubs, ...stageRes] = await Promise.all([
+      const [p, r, l, c, latestP, latestL, today, profiles, recP, matches, ...stageRes] = await Promise.all([
         props().gte("created_at", since).limit(5000),
         reqs().gte("created_at", since).limit(5000),
         leads().gte("created_at", since).limit(5000),
@@ -109,9 +94,6 @@ export function useHomeDashboard(organizationId?: string | null) {
           .order("updated_at", { ascending: false }).limit(200),
         supabase.from("active_match_alerts").select("property_id,property:properties(title)")
           .eq("status", "new").order("created_at", { ascending: false }).limit(200),
-        supabase.from("portal_publications").select("portal_key,status,last_error")
-          .eq("organization_id", org).eq("enabled", true)
-          .not("portal_key", "in", "(facebook_catalog,agency_site)").limit(5000),
         ...HOME_STAGES.map((stage) =>
           supabase.from("leads").select("id", { count: "exact", head: true })
             .eq("organization_id", org).is("deleted_at", null).eq("stage", stage),
@@ -167,7 +149,6 @@ export function useHomeDashboard(organizationId?: string | null) {
         })),
         newMatches: ((matches.data ?? []) as unknown as { property_id: string; property: { title: string } | null }[])
           .map((m) => ({ propertyId: m.property_id, propertyTitle: m.property?.title ?? null })),
-        portals: summarizePublications(pubs.data ?? []),
       };
     },
   });

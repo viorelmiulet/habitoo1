@@ -15,8 +15,6 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
-import { PortalLogo } from "@/components/app/PortalLogo";
-import { getPortalDefinition } from "@/lib/portals/registry";
 import { buildRecommendations, type Recommendation } from "./home-recommendations";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -161,10 +159,6 @@ function RecommendationRow({ rec }: { rec: Recommendation }) {
   );
 }
 
-function portalLabel(key: string) {
-  return getPortalDefinition(key)?.display_name ?? key;
-}
-
 export function HomeDashboard({ organizationId, firstName }: { organizationId?: string | null; firstName: string }) {
   const { data, isLoading } = useHomeDashboard(organizationId);
   const coverFor = usePropertyCovers((data?.latestProperties ?? []).map((p) => p.id));
@@ -243,54 +237,26 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
             </section>
           </div>
 
-          {/* 6. Pipeline + 7. Portaluri */}
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-            <section className={cn(CARD, "min-w-0")}>
-              <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
-                <h2 className="text-base font-semibold">Pipeline lead-uri</h2>
-                <Link to="/app/leads" className="shrink-0 text-sm font-medium text-primary hover:underline">Toate lead-urile →</Link>
-              </div>
-              <ul className="space-y-3">
-                {data.stages.map((s) => (
-                  <li key={s.stage}>
-                    <Link to="/app/leads" search={{ stage: s.stage }} className="grid grid-cols-[6.5rem_minmax(0,1fr)_2rem] items-center gap-3 text-sm hover:text-primary">
-                      <span className="truncate">{leadStageLabels[s.stage]}</span>
-                      <span className="h-2 overflow-hidden rounded-full bg-muted">
-                        <span className="block h-full rounded-full bg-ai" style={{ width: `${(s.count / maxStage) * 100}%` }} />
-                      </span>
-                      <span className="text-right font-mono text-xs tabular-nums">{s.count}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section className={cn(CARD, "min-w-0")}>
-              <h2 className="mb-4 text-base font-semibold">Publicări pe portaluri</h2>
-              {data.portals.length === 0 ? (
-                <EmptyNote icon={Building2} title="Nicio publicare activă pe portaluri." />
-              ) : (
-                <ul className="space-y-2.5">
-                  {data.portals.map((p) => {
-                    const tone = p.errors ? "bg-destructive" : p.pending ? "bg-gold" : "bg-success";
-                    return (
-                      <li key={p.portalKey} className="flex min-w-0 items-center gap-3 text-sm">
-                        <span className="flex h-8 w-24 shrink-0 items-center justify-center rounded-lg bg-plate px-2">
-                          <PortalLogo portalId={p.portalKey} name={portalLabel(p.portalKey)} size={24} className="border-0" />
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                          <span className="text-foreground">{portalLabel(p.portalKey)}</span> · {p.active} active
-                          {p.pending ? ` · ${p.pending} în așteptare` : ""}
-                          {p.errors ? ` · ${p.errors} ${p.errors === 1 ? "eroare" : "erori"}${p.lastError ? `: ${p.lastError.slice(0, 80)}` : ""}` : ""}
-                        </span>
-                        <span aria-label={p.errors ? "Eroare" : p.pending ? "În așteptare" : "OK"} className={cn("size-2 shrink-0 rounded-full", tone)} />
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-          </div>
+          {/* 6. Pipeline lead-uri */}
+          <section className={cn(CARD, "min-w-0")}>
+            <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
+              <h2 className="text-base font-semibold">Pipeline lead-uri</h2>
+              <Link to="/app/leads" className="shrink-0 text-sm font-medium text-primary hover:underline">Toate lead-urile →</Link>
+            </div>
+            <ul className="space-y-3">
+              {data.stages.map((s) => (
+                <li key={s.stage}>
+                  <Link to="/app/leads" search={{ stage: s.stage }} className="grid grid-cols-[6.5rem_minmax(0,1fr)_2rem] items-center gap-3 text-sm hover:text-primary">
+                    <span className="truncate">{leadStageLabels[s.stage]}</span>
+                    <span className="h-2 overflow-hidden rounded-full bg-muted">
+                      <span className="block h-full rounded-full bg-ai" style={{ width: `${(s.count / maxStage) * 100}%` }} />
+                    </span>
+                    <span className="text-right font-mono text-xs tabular-nums">{s.count}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <HabitooNewsCard className={cn(CARD, "min-w-0")} />
