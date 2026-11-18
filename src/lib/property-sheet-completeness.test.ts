@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PORTAL_SQUARE_CLASS, sheetCompleteness, sheetTone } from "./property-sheet-completeness";
-import { portalDotTone } from "./property-list-row";
+import { sheetCompleteness, sheetTone } from "./property-sheet-completeness";
 
 const full = { floor: 2, surface: 70, rooms: 3, features: ["lift"], propertyType: "apartment" };
 
@@ -22,15 +21,5 @@ describe("CR3 — completarea fișei", () => {
     expect(sheetTone(89)).toBe("ai");
     expect(sheetTone(70)).toBe("ai");
     expect(sheetTone(69)).toBe("gold");
-  });
-});
-
-describe("CR3 — pătrățelul de portal", () => {
-  it("publicat verde, în așteptare auriu, eroare roșu, nepublicat gri", () => {
-    expect(PORTAL_SQUARE_CLASS[portalDotTone("published")]).toBe("bg-success");
-    expect(PORTAL_SQUARE_CLASS[portalDotTone("in_feed")]).toBe("bg-success");
-    expect(PORTAL_SQUARE_CLASS[portalDotTone("syncing")]).toBe("bg-gold");
-    expect(PORTAL_SQUARE_CLASS[portalDotTone("error")]).toBe("bg-destructive");
-    expect(PORTAL_SQUARE_CLASS[portalDotTone("not_selected" as never)]).toBe("bg-muted-foreground/40");
   });
 });

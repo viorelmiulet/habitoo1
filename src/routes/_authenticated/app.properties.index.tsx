@@ -59,7 +59,7 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { CHROME_EXTENSION_URL } from "@/components/marketing/chrome-extension-content";
 import { missingEssentials } from "@/components/app/dashboard/home-recommendations";
 import { PortalLogoLinks } from "@/components/app/properties/PortalLogoLinks";
-import { sheetCompleteness, sheetTone } from "@/lib/property-sheet-completeness";
+import { ListCompletenessCell, useCompletenessExtras } from "@/components/app/property-list/ListCompleteness";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -452,6 +452,8 @@ function PropertiesPage() {
   });
   // Coverul fiecărei proprietăți din pagina curentă (is_primary → prima poziție).
   const coverOf = usePropertyCovers(rows.map((r) => r.id));
+  // Agregatele pentru „Grad de completare” (poze, copertă, contract), în lot pe pagină.
+  const extrasOf = useCompletenessExtras(rows.map((r) => r.id));
   // Selecția de portaluri per proprietate (portal_publications) + starea reală (portal_listings).
   // Apare doar dacă Superadmin a activat cel puțin un portal pentru agenție.
   const portals = usePropertyPortals(rows.map((r) => r.id));
@@ -983,18 +985,7 @@ function PropertiesPage() {
                         {portalError ? <p className="mt-1.5 truncate text-xs font-semibold text-destructive">Eroare pe {portalError.portalName}</p> : publishedPortals.length > 0 ? <p className="mt-1.5 text-xs font-semibold text-success">Publicat pe {publishedPortals.length} {publishedPortals.length === 1 ? "portal" : "portaluri"}</p> : <p className="mt-1.5 text-xs text-muted-foreground">Nepublicată · <a href={`/app/properties/${p.id}?tab=publishing`} className="font-semibold text-primary hover:underline">Publică pe portaluri</a></p>}
                       </div>
                     ) : null}
-                    {(() => {
-                      const pct = sheetCompleteness({ floor: p.floor, surface: p.usable_surface ?? p.surface, rooms: p.rooms, features: p.features ?? [], propertyType: p.property_type });
-                      const tone = sheetTone(pct);
-                      return (
-                        <div className="min-w-0 self-end lg:self-center" aria-label={`Fișă completă ${pct}%`}>
-                          <span className="font-mono text-xs">{pct}%</span>
-                          <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-muted">
-                            <span className={cn("block h-full rounded-full", tone === "success" ? "bg-success" : tone === "ai" ? "bg-ai" : "bg-gold")} style={{ width: `${pct}%` }} />
-                          </span>
-                        </div>
-                      );
-                    })()}
+                    <ListCompletenessCell row={p as Record<string, unknown>} extra={extrasOf(p.id)} />
                     <div className="flex min-w-0 items-center gap-2 self-end lg:self-center">
                       <UserAvatar name={agentName(p.assigned_to)} className="size-8 bg-sidebar text-sidebar-foreground" textClassName="text-xs font-bold" />
                       <div className="min-w-0"><p className="truncate text-[13px] font-semibold">{agentName(p.assigned_to)}</p><p className="truncate text-xs text-muted-foreground">Actualizat {relativeDays(p.updated_at)}</p></div>
