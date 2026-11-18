@@ -60,7 +60,7 @@ describe("Acasă: elemente readuse (CR16)", () => {
     root = createRoot(host);
     act(() => root?.render(<HomeDashboard organizationId="o1" firstName="Ana" />));
     const hrefs = [...document.querySelectorAll("a")].map((a) => [a.getAttribute("href"), a.textContent ?? ""]);
-    const has = (href: string, text: string) => hrefs.some(([h, t]) => h === href && t.includes(text));
+    const has = (href: string, text: string) => hrefs.some(([h, t]) => h === href && (t ?? "").includes(text));
     expect(has("/app/properties/new", "Adaugă proprietate")).toBe(true);
     expect(has("/app/requests?new=true", "Adaugă cerere")).toBe(true);
     expect(has("/app/activities?new=true", "+ Adaugă activitate")).toBe(true);
