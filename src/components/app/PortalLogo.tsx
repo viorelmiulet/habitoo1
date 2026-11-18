@@ -133,20 +133,22 @@ export function PortalLogoStack({
   name,
   size = 32,
   className,
+  alt,
 }: {
   portalId: string;
   name: string;
   size?: number;
   className?: string;
+  alt?: string;
 }) {
   const ids = portalLogoIds(portalId);
   if (ids.length === 1) {
-    return <PortalLogo portalId={portalId} name={name} size={size} className={className} />;
+    return <PortalLogo portalId={portalId} name={name} size={size} className={className} alt={alt} />;
   }
   return (
     <span className={cn("inline-flex shrink-0 items-center gap-1", className)}>
       {ids.map((id) => (
-        <PortalLogo key={id} portalId={id} name={name} size={size} />
+        <PortalLogo key={id} portalId={id} name={name} size={size} alt={alt} />
       ))}
     </span>
   );

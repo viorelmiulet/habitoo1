@@ -58,7 +58,8 @@ import { PortalRepublishButton } from "@/components/app/PortalRepublishDialog";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { CHROME_EXTENSION_URL } from "@/components/marketing/chrome-extension-content";
 import { missingEssentials } from "@/components/app/dashboard/home-recommendations";
-import { PORTAL_SQUARE_CLASS, sheetCompleteness, sheetTone } from "@/lib/property-sheet-completeness";
+import { PortalLogoLinks } from "@/components/app/properties/PortalLogoLinks";
+import { sheetCompleteness, sheetTone } from "@/lib/property-sheet-completeness";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -978,29 +979,7 @@ function PropertiesPage() {
                     </div>
                     {portals.hasPortals ? (
                       <div className="min-w-0 self-end lg:self-center">
-                        {portalCells.length > 0 ? (
-                          <div className="flex items-center gap-2">
-                            <div className="flex flex-wrap gap-1">
-                              {portalCells.map((cell) => {
-                                const link = portalListingLink(cell);
-                                const square = <span className={cn("block size-3 rounded-[3px]", PORTAL_SQUARE_CLASS[portalDotTone(cell.state)])} />;
-                                return (
-                                  <Tooltip key={cell.portalId}>
-                                    <TooltipTrigger asChild>
-                                      {link.href ? (
-                                        <a href={link.href} target="_blank" rel="noopener noreferrer" title={cell.portalName} aria-label={`${cell.portalName}: ${portalStateLabel(cell.state)}`} className="inline-flex p-0.5">{square}</a>
-                                      ) : (
-                                        <span title={cell.portalName} aria-label={`${cell.portalName}: ${portalStateLabel(cell.state)}`} className="inline-flex p-0.5">{square}</span>
-                                      )}
-                                    </TooltipTrigger>
-                                    <TooltipContent>{link.tooltip ?? `${cell.portalName}: ${portalStateLabel(cell.state)}`}</TooltipContent>
-                                  </Tooltip>
-                                );
-                              })}
-                            </div>
-                            <span className="font-mono text-xs text-muted-foreground">{publishedPortals.length}/{portalCells.length}</span>
-                          </div>
-                        ) : null}
+                        <PortalLogoLinks cells={selectedPortals} />
                         {portalError ? <p className="mt-1.5 truncate text-xs font-semibold text-destructive">Eroare pe {portalError.portalName}</p> : publishedPortals.length > 0 ? <p className="mt-1.5 text-xs font-semibold text-success">Publicat pe {publishedPortals.length} {publishedPortals.length === 1 ? "portal" : "portaluri"}</p> : <p className="mt-1.5 text-xs text-muted-foreground">Nepublicată · <a href={`/app/properties/${p.id}?tab=publishing`} className="font-semibold text-primary hover:underline">Publică pe portaluri</a></p>}
                       </div>
                     ) : null}
