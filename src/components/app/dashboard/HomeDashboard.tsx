@@ -9,7 +9,9 @@ import {
   CalendarDays,
   ClipboardList,
   FileText,
+  Lightbulb,
   Link2,
+  Plus,
   PenLine,
   Sparkles,
   UserRound,
@@ -28,6 +30,7 @@ import { DailyNoteCard } from "./DailyNoteCard";
 import { ExtensionPromoCard } from "./ExtensionPromoCard";
 import { HabitooNewsCard } from "./HabitooNewsCard";
 import { dashboardDateLabel, greetingFor } from "./greeting";
+import { tipOfTheDay } from "./daily-tips";
 import { dailyAdditions, leadSourceLabel, monthComparison, relativeTime, trendLabel } from "./home-stats";
 
 const CARD = "rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6";
@@ -172,7 +175,8 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
       <ExtensionPromoCard />
 
       {/* 1. Antet: dată, salut, recomandări */}
-      <header className="min-w-0">
+      <header className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:items-start">
+        <div className="min-w-0">
         <p className="font-mono text-xs tracking-[0.14em] text-muted-foreground uppercase">{dashboardDateLabel(now)}</p>
         <h1 className="mt-1 text-2xl font-bold text-balance sm:text-3xl">{greetingFor(now)}, {firstName}</h1>
         <p className="mt-1 text-muted-foreground">
@@ -182,6 +186,25 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
               : "Totul e la zi."
             : "Se pregătesc recomandările…"}
         </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button asChild>
+              <Link to="/app/properties/new">
+                <Plus className="size-4" /> Adaugă proprietate
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/app/requests" search={{ new: true }}>
+                <Plus className="size-4" /> Adaugă cerere
+              </Link>
+            </Button>
+          </div>
+        </div>
+        <div className="min-w-0 rounded-xl border border-gold/30 bg-card p-4">
+          <p className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gold uppercase">
+            <Lightbulb className="size-4" aria-hidden /> Mesajul zilei
+          </p>
+          <p className="mt-2 text-sm leading-relaxed">{tipOfTheDay(now)}</p>
+        </div>
       </header>
 
       {isLoading || !data ? (
@@ -234,6 +257,14 @@ export function HomeDashboard({ organizationId, firstName }: { organizationId?: 
                   ))}
                 </ol>
               )}
+              <div className="mt-4 flex flex-wrap justify-between gap-2 border-t border-border pt-3 text-sm font-medium">
+                <Link to="/app/activities" search={{ new: true }} className="text-primary hover:underline">
+                  + Adaugă activitate
+                </Link>
+                <Link to="/app/activities" className="text-gold-dark hover:underline">
+                  Vezi agenda →
+                </Link>
+              </div>
             </section>
           </div>
 

@@ -888,8 +888,8 @@ function PropertiesPage() {
             <div className={cn(
               "hidden items-center gap-[18px] border-b border-border px-[18px] py-3 font-mono text-[11px] font-medium tracking-[0.08em] text-navy-muted uppercase lg:grid",
               portals.hasPortals
-                ? "lg:grid-cols-[20px_56px_minmax(0,1fr)_130px_130px_110px_150px_36px]"
-                : "lg:grid-cols-[20px_56px_minmax(0,1fr)_130px_110px_150px_36px]",
+                ? "lg:grid-cols-[20px_132px_minmax(0,1fr)_130px_130px_100px_150px_36px]"
+                : "lg:grid-cols-[20px_132px_minmax(0,1fr)_130px_100px_150px_36px]",
             )}>
               <Checkbox
                 checked={allSelected}
@@ -924,8 +924,8 @@ function PropertiesPage() {
                   <li
                     key={p.id}
                     className={cn(
-                      "relative grid grid-cols-2 items-center gap-[18px] border-b border-border px-[18px] py-[14px] text-sm transition-colors last:border-b-0 hover:bg-muted lg:grid-cols-[20px_56px_minmax(0,1fr)_130px_110px_150px_36px]",
-                      portals.hasPortals && "lg:grid-cols-[20px_56px_minmax(0,1fr)_130px_130px_110px_150px_36px]",
+                      "relative grid grid-cols-2 items-center gap-[18px] border-b border-border px-[18px] py-[14px] text-sm transition-colors last:border-b-0 hover:bg-muted lg:grid-cols-[20px_132px_minmax(0,1fr)_130px_100px_150px_36px]",
+                      portals.hasPortals && "lg:grid-cols-[20px_132px_minmax(0,1fr)_130px_130px_100px_150px_36px]",
                       selected.includes(p.id) && "bg-accent hover:bg-accent",
                     )}
                   >
@@ -937,12 +937,12 @@ function PropertiesPage() {
                       aria-label={`Selectează ${p.reference ?? p.title}`}
                       className="absolute top-5 right-16 z-10 bg-surface lg:static"
                     />
-                    <div className="relative col-span-2 aspect-[16/10] w-full lg:col-span-1 lg:h-[42px] lg:w-[56px] lg:aspect-auto">
+                    <div className="relative col-span-2 aspect-[16/10] w-full lg:col-span-1 lg:h-24 lg:w-[132px] lg:aspect-auto">
                       <PropertyThumb
                         propertyId={p.id}
                         title={p.title}
                         cover={coverOf(p.id)}
-                        className="size-full rounded-[8px]"
+                        className="size-full rounded-[10px]"
                       />
                       <Button
                         type="button"
@@ -950,7 +950,7 @@ function PropertiesPage() {
                         size="icon"
                         onClick={() => toggleFavorite.mutate(p.id)}
                         aria-label={favoriteIds.includes(p.id) ? "Elimină din favorite" : "Adaugă la favorite"}
-                        className="absolute top-2 left-2 size-[30px] min-h-0 rounded-full border border-border bg-surface shadow-sm hover:bg-surface lg:hidden"
+                        className="absolute top-2 left-2 size-[30px] min-h-0 rounded-full border border-border bg-surface shadow-sm hover:bg-surface"
                       >
                         <Star className={cn("size-4 text-muted-foreground", favoriteIds.includes(p.id) && "fill-warning text-warning")} />
                       </Button>
