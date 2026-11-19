@@ -2024,6 +2024,20 @@
       "when": 1794933756374,
       "tag": "0288_blog_posts_faq",
       "breakpoints": true
+    },
+    {
+      "idx": 289,
+      "version": "7",
+      "when": 1795100576700,
+      "tag": "0289_migration",
+      "breakpoints": true
+    },
+    {
+      "idx": 290,
+      "version": "7",
+      "when": 1795100627155,
+      "tag": "0290_migration",
+      "breakpoints": true
     }
   ]
 }

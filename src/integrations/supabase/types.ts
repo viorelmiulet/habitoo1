@@ -14774,12 +14774,21 @@ export type Database = {
       subscription_enforce_daily: { Args: never; Returns: Json }
       subscription_request_org: { Args: never; Returns: string }
       subscription_request_summary: { Args: never; Returns: Json }
+      superadmin_agency_agent_stats: { Args: { _org: string }; Returns: Json }
+      superadmin_agency_stats: {
+        Args: { _include_demo?: boolean }
+        Returns: Json
+      }
       superadmin_delete_organization: {
         Args: { _actor?: string; _org: string }
         Returns: Json
       }
       superadmin_delete_user: {
         Args: { _actor?: string; _reassign_to?: string; _user: string }
+        Returns: Json
+      }
+      superadmin_platform_totals: {
+        Args: { _include_demo?: boolean }
         Returns: Json
       }
       superadmin_reassign_user_data: {
