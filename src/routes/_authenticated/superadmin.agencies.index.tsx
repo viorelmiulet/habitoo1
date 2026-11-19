@@ -22,6 +22,7 @@ import { PLAN_LABELS, normalizePlan } from "@/lib/plans";
 import { orgStatusBadge } from "@/lib/superadmin-status";
 import { appHead } from "@/components/app/app-head";
 import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
+import { AgencyStatsTable } from "@/components/superadmin/AgencyStatsTable";
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies/")({
   head: () => appHead("Habitoo CRM — agenții"),
@@ -223,7 +224,11 @@ function AgenciesPage() {
         )}
       </SuperadminSection>
 
-      <SuperadminSection title="Agenții" description="Apasă pe o agenție pentru pagina ei de detaliu.">
+      <SuperadminSection title="Utilizare per agenție" description="Anunțuri, publicări, lead-uri, agenți și activitate. Apasă pe nume pentru detaliu sau pe „Agenți” pentru echipă.">
+        <AgencyStatsTable />
+      </SuperadminSection>
+
+      <SuperadminSection title="Toate agențiile" description="Inclusiv arhivate și în așteptare. Apasă pe o agenție pentru pagina ei de detaliu.">
         <div className="mb-4 grid gap-3 rounded-[14px] border border-border bg-card p-4 md:grid-cols-[minmax(0,1fr)_200px_auto] md:items-center">
           <div className="relative min-w-0">
             <Search className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground" />

@@ -158,7 +158,6 @@ export const superadminNav: NavGroup[] = [
     items: [
       { label: "Agenții", to: "/superadmin/agencies", icon: Building2 },
       { label: "Stare agenții", to: "/superadmin/stare-agentii", icon: ChartBar },
-      { label: "Statistici", to: "/superadmin/statistici", icon: ChartBar },
       { label: "Cereri abonament", to: "/superadmin/cereri-abonament", icon: CalendarDays },
       { label: "Utilizatori", to: "/superadmin/users", icon: Users },
       { label: "Portaluri", to: "/superadmin/portals", icon: PlugZap },
