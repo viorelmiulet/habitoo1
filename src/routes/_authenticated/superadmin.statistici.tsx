@@ -30,7 +30,7 @@ const STATUS: Record<string, string> = {
 const ORG_STATUS: Record<string, string> = {
   active: "Activă", trial: "Trial", suspended: "Suspendată", pending_approval: "În așteptare", cancelled: "Anulată",
 };
-const portalName = (k: string) => getPortalDefinition(k)?.name ?? k;
+const portalName = (k: string) => getPortalDefinition(k)?.display_name ?? k;
 
 type Col = { key: string; label: string; num?: (r: AgencyStatsRow) => number; cell: (r: AgencyStatsRow) => React.ReactNode; csv: (r: AgencyStatsRow) => string | number };
 const COLS: Col[] = [
