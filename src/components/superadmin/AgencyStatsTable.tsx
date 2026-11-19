@@ -25,6 +25,14 @@ const ORG_STATUS: Record<string, string> = {
 };
 const portalName = (k: string) => getPortalDefinition(k)?.display_name ?? k;
 
+/** Eticheta pentru importurile Habitoo Catch din ultimele 30 de zile, cu acordul numeralelor. */
+export function catchImportsLabel(n: number): string {
+  if (n === 1) return "1 import";
+  const lastTwo = n % 100;
+  const needsDe = lastTwo === 0 || (lastTwo >= 20 && lastTwo <= 99);
+  return `${n}${needsDe ? " de" : ""} importuri`;
+}
+
 type Col = { key: string; label: string; num?: (r: AgencyStatsRow) => number; cell: (r: AgencyStatsRow) => React.ReactNode; csv: (r: AgencyStatsRow) => string | number };
 const COLS: Col[] = [
   { key: "listings", label: "Anunțuri act./total", num: (r) => r.listings_active,
@@ -41,7 +49,7 @@ const COLS: Col[] = [
   { key: "por", label: "Portaluri", num: (r) => r.portals.length, cell: (r) => <span title={r.portals.map(portalName).join("\n") || "niciunul"}>{r.portals.length}</span>, csv: (r) => r.portals.map(portalName).join("; ") },
   { key: "last", label: "Ultima activitate", num: (r) => (r.last_activity_at ? Date.parse(r.last_activity_at) : 0), cell: (r) => (r.last_activity_at ? formatDateTime(r.last_activity_at) : "—"), csv: (r) => r.last_activity_at ?? "" },
   { key: "plan", label: "Plan · stare", cell: (r) => <span>{planLabel(r.plan)} · {r.is_trial && r.status === "active" ? "Trial" : ORG_STATUS[r.status] ?? r.status}{r.subscription_expires_at ? ` · exp. ${formatDate(r.subscription_expires_at)}` : ""}</span>, csv: (r) => `${planLabel(r.plan)} ${ORG_STATUS[r.status] ?? r.status} ${r.subscription_expires_at ?? ""}` },
-  { key: "catch", label: "Habitoo Catch (30z)", num: (r) => r.catch_imports_30d, cell: (r) => `${r.catch_enabled ? "da" : "nu"} · ${r.catch_imports_30d}`, csv: (r) => `${r.catch_enabled ? "da" : "nu"} ${r.catch_imports_30d}` },
+  { key: "catch", label: "Habitoo Catch (30z)", num: (r) => r.catch_imports_30d, cell: (r) => `${r.catch_enabled ? "da" : "nu"} · ${catchImportsLabel(r.catch_imports_30d)}`, csv: (r) => `${r.catch_enabled ? "da" : "nu"} ${r.catch_imports_30d}` },
   { key: "ai", label: "AI · credite lună", num: (r) => r.ai_credits_month, cell: (r) => `${r.ai_enabled === false ? "oprit" : "pornit"} · ${r.ai_credits_month}`, csv: (r) => `${r.ai_enabled === false ? "oprit" : "pornit"} ${r.ai_credits_month}` },
 ];
 
