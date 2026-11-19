@@ -4,8 +4,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { computeCompleteness, completenessInputFromRow } from "@/lib/property-completeness";
-import { sheetTone } from "@/lib/property-sheet-completeness";
+import { computeCompleteness, completenessInputFromRow, sheetTone } from "@/lib/property-completeness";
 import { cn } from "@/lib/utils";
 
 export type CompletenessExtra = { hasCover: boolean; imageCount: number; hasContract: boolean };

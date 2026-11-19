@@ -2,13 +2,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-
-/** Pragurile de culoare ale barei: verde ≥90, cyan ≥70, auriu sub 70 (ca în lista Proprietăți). */
-export function sheetTone(percent: number): "success" | "ai" | "gold" {
-  if (percent >= 90) return "success";
-  if (percent >= 70) return "ai";
-  return "gold";
-}
+import { sheetTone } from "@/lib/property-completeness";
 
 export function PropertySheetHeader({ reference, title, status, percent, actions }: {
   reference?: string | null; title: string; status?: ReactNode; percent: number; actions?: ReactNode;

@@ -86,6 +86,13 @@ export function computeCompleteness(input: CompletenessInput): CompletenessResul
   };
 }
 
+/** Pragurile de culoare ale barei de completare: verde ≥90, cyan ≥70, auriu sub 70 (listă și antetul fișei). */
+export function sheetTone(percent: number): "success" | "ai" | "gold" {
+  if (percent >= 90) return "success";
+  if (percent >= 70) return "ai";
+  return "gold";
+}
+
 export function missingRequiredMessage(result: CompletenessResult): string | null {
   if (!result.missingRequired.length) return null;
   return `Completează câmpurile obligatorii: ${result.missingRequired.map((i) => i.label).join(", ")}`;
