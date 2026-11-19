@@ -11,15 +11,21 @@ vi.mock("@/lib/portals.functions", () => ({ getPropertiesPortalMatrix: vi.fn() }
 
 import { PropertySheetHeader } from "./PropertySheetHeader";
 import { PublishSummaryView } from "./PropertyPublishSummaryCard";
-import { sheetCompleteness } from "@/lib/property-sheet-completeness";
+import { computeCompleteness, completenessInputFromRow } from "@/lib/property-completeness";
 
 describe("CR10 fișa proprietății", () => {
-  it("antetul arată procentul din sheetCompleteness", () => {
-    const sheet = { floor: 2, surface: 60, rooms: null, features: [], propertyType: "apartment" };
-    const pct = sheetCompleteness(sheet);
-    const d = render(<PropertySheetHeader reference="RF-1" title="Apartament" sheet={sheet} />);
+  it("antetul arată procentul real, egal cu cardul Grad de completare", () => {
+    const row = {
+      property_type: "apartment", title: "Apartament 2 camere", for_sale: true, for_rent: false,
+      sale_price: 90000, rent_price: null, city: "Cluj-Napoca", assigned_to: "agent-1",
+      usable_surface: 54, land_surface: null, description: null, rooms: 2, energy_class: null,
+      lat: null, lng: null,
+    };
+    const pct = computeCompleteness(completenessInputFromRow(row, { hasCover: false, imageCount: 3, hasContract: false })).percent;
+    const d = render(<PropertySheetHeader reference="RF-1" title="Apartament 2 camere" percent={pct} />);
     expect(d.querySelector("[data-testid=sheet-completeness]")?.getAttribute("aria-label")).toBe(`Fișă completă ${pct}%`);
     expect(pct).toBeLessThan(100);
+    expect(pct).toBeGreaterThan(0);
   });
 
   it("cardul Publicare arată N din M selectate (doar portaluri active)", () => {

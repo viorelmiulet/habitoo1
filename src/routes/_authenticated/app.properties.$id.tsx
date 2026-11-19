@@ -885,7 +885,7 @@ function PropertyDetailContent() {
           reference={property.reference ?? "Fără referință"}
           title={property.title}
           status={<StatusBadge tone={propertyStatusTone[property.status]} dot>{propertyStatusLabels[property.status]}</StatusBadge>}
-          sheet={{ floor: property.floor, surface: property.usable_surface ?? property.surface, rooms: property.rooms, features: property.features ?? [], propertyType: property.property_type }}
+          percent={completeness?.percent ?? 0}
           actions={<>
             {editing ? <Button type="submit" form="property-details-form" variant="outline" disabled={save.isPending}>Salvează</Button> : null}
             <Button className="bg-gold text-gold-foreground hover:bg-gold/90" disabled={publish.isPending || save.isPending} onClick={() => publish.mutate()}>Publică</Button>

@@ -2,12 +2,18 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { sheetCompleteness, sheetTone, type SheetInput } from "@/lib/property-sheet-completeness";
 
-export function PropertySheetHeader({ reference, title, status, sheet, actions }: {
-  reference?: string | null; title: string; status?: ReactNode; sheet: SheetInput; actions?: ReactNode;
+/** Pragurile de culoare ale barei: verde ≥90, cyan ≥70, auriu sub 70 (ca în lista Proprietăți). */
+export function sheetTone(percent: number): "success" | "ai" | "gold" {
+  if (percent >= 90) return "success";
+  if (percent >= 70) return "ai";
+  return "gold";
+}
+
+export function PropertySheetHeader({ reference, title, status, percent, actions }: {
+  reference?: string | null; title: string; status?: ReactNode; percent: number; actions?: ReactNode;
 }) {
-  const pct = sheetCompleteness(sheet);
+  const pct = Math.max(0, Math.min(100, Math.round(percent)));
   const tone = sheetTone(pct);
   return (
     <div className="flex flex-wrap items-end justify-between gap-4" data-sheet-header>
