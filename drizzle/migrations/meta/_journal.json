@@ -2122,6 +2122,13 @@
       "when": 1795196959632,
       "tag": "0302_ans5_clone_properties_to_development",
       "breakpoints": true
+    },
+    {
+      "idx": 303,
+      "version": "7",
+      "when": 1795199839252,
+      "tag": "0303_ans6_clone_keeps_publish_status",
+      "breakpoints": true
     }
   ]
 }
