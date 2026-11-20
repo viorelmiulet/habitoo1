@@ -3281,6 +3281,179 @@ export type Database = {
         }
         Relationships: []
       }
+      development_images: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          development_id: string
+          height: number | null
+          id: string
+          is_primary: boolean
+          organization_id: string
+          position: number
+          storage_path: string
+          updated_at: string
+          url: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          development_id: string
+          height?: number | null
+          id?: string
+          is_primary?: boolean
+          organization_id: string
+          position?: number
+          storage_path: string
+          updated_at?: string
+          url: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          development_id?: string
+          height?: number | null
+          id?: string
+          is_primary?: boolean
+          organization_id?: string
+          position?: number
+          storage_path?: string
+          updated_at?: string
+          url?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "development_images_development_id_fkey"
+            columns: ["development_id"]
+            isOneToOne: false
+            referencedRelation: "developments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_images_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      developments: {
+        Row: {
+          address: string | null
+          amenities: string[]
+          assigned_to: string | null
+          buildings_count: number | null
+          city: string | null
+          construction_stage: string | null
+          county: string | null
+          county_siruta_code: number | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          deleted_at: string | null
+          delivery_date: string | null
+          description: string | null
+          developer_name: string | null
+          district: string | null
+          floors_count: number | null
+          id: string
+          lat: number | null
+          lng: number | null
+          locality_siruta_code: number | null
+          location_precise: boolean
+          name: string
+          organization_id: string
+          price_from: number | null
+          price_to: number | null
+          status: string
+          street: string | null
+          street_number: string | null
+          total_units: number | null
+          uat_siruta_code: number | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          amenities?: string[]
+          assigned_to?: string | null
+          buildings_count?: number | null
+          city?: string | null
+          construction_stage?: string | null
+          county?: string | null
+          county_siruta_code?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deleted_at?: string | null
+          delivery_date?: string | null
+          description?: string | null
+          developer_name?: string | null
+          district?: string | null
+          floors_count?: number | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          locality_siruta_code?: number | null
+          location_precise?: boolean
+          name: string
+          organization_id: string
+          price_from?: number | null
+          price_to?: number | null
+          status?: string
+          street?: string | null
+          street_number?: string | null
+          total_units?: number | null
+          uat_siruta_code?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          amenities?: string[]
+          assigned_to?: string | null
+          buildings_count?: number | null
+          city?: string | null
+          construction_stage?: string | null
+          county?: string | null
+          county_siruta_code?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deleted_at?: string | null
+          delivery_date?: string | null
+          description?: string | null
+          developer_name?: string | null
+          district?: string | null
+          floors_count?: number | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          locality_siruta_code?: number | null
+          location_precise?: boolean
+          name?: string
+          organization_id?: string
+          price_from?: number | null
+          price_to?: number | null
+          status?: string
+          street?: string | null
+          street_number?: string | null
+          total_units?: number | null
+          uat_siruta_code?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "developments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           created_at: string
@@ -10431,6 +10604,7 @@ export type Database = {
           deleted_by: string | null
           description: string | null
           destination: string | null
+          development_id: string | null
           district: string | null
           energy_class: string | null
           entry_door: string[]
@@ -10469,6 +10643,7 @@ export type Database = {
           lng: number | null
           locality_siruta_code: number | null
           location_precise: boolean
+          market: string | null
           metering: string[]
           misc_features: string[]
           negotiable: boolean
@@ -10568,6 +10743,7 @@ export type Database = {
           deleted_by?: string | null
           description?: string | null
           destination?: string | null
+          development_id?: string | null
           district?: string | null
           energy_class?: string | null
           entry_door?: string[]
@@ -10606,6 +10782,7 @@ export type Database = {
           lng?: number | null
           locality_siruta_code?: number | null
           location_precise?: boolean
+          market?: string | null
           metering?: string[]
           misc_features?: string[]
           negotiable?: boolean
@@ -10705,6 +10882,7 @@ export type Database = {
           deleted_by?: string | null
           description?: string | null
           destination?: string | null
+          development_id?: string | null
           district?: string | null
           energy_class?: string | null
           entry_door?: string[]
@@ -10743,6 +10921,7 @@ export type Database = {
           lng?: number | null
           locality_siruta_code?: number | null
           location_precise?: boolean
+          market?: string | null
           metering?: string[]
           misc_features?: string[]
           negotiable?: boolean
@@ -10807,6 +10986,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "ro_counties"
             referencedColumns: ["siruta_code"]
+          },
+          {
+            foreignKeyName: "properties_development_id_fkey"
+            columns: ["development_id"]
+            isOneToOne: false
+            referencedRelation: "developments"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "properties_locality_siruta_code_fkey"
@@ -13313,6 +13499,10 @@ export type Database = {
         Args: { _request_id: string }
         Returns: string
       }
+      attach_development_units: {
+        Args: { _detach?: boolean; _development: string; _properties: string[] }
+        Returns: undefined
+      }
       attach_import_owner: {
         Args: {
           _org: string
@@ -13344,6 +13534,10 @@ export type Database = {
         Returns: boolean
       }
       can_access_contract: { Args: { _contract_id: string }; Returns: boolean }
+      can_access_development: {
+        Args: { _edit?: boolean; _id: string }
+        Returns: boolean
+      }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       can_see_property_reports: {
         Args: { _property: string }
@@ -13717,8 +13911,11 @@ export type Database = {
       }
       cron_nonce_issue: { Args: { _purpose: string }; Returns: string }
       current_org: { Args: never; Returns: string }
+      delete_development: { Args: { _id: string }; Returns: undefined }
       delete_lead: { Args: { _id: string }; Returns: string }
       delete_property: { Args: { _id: string }; Returns: string }
+      development_summaries: { Args: { _ids: string[] }; Returns: Json }
+      development_unit_summary: { Args: { _id: string }; Returns: Json }
       email_job_finish: {
         Args: { _error?: string; _job_id: string; _ok: boolean }
         Returns: undefined
@@ -14362,6 +14559,10 @@ export type Database = {
         Args: { _job_id: string }
         Returns: undefined
       }
+      reorder_development_images: {
+        Args: { _id: string; _images: string[] }
+        Returns: undefined
+      }
       reserve_video_narration: {
         Args: {
           p_duration: number
@@ -14514,6 +14715,7 @@ export type Database = {
           deleted_by: string | null
           description: string | null
           destination: string | null
+          development_id: string | null
           district: string | null
           energy_class: string | null
           entry_door: string[]
@@ -14552,6 +14754,7 @@ export type Database = {
           lng: number | null
           locality_siruta_code: number | null
           location_precise: boolean
+          market: string | null
           metering: string[]
           misc_features: string[]
           negotiable: boolean

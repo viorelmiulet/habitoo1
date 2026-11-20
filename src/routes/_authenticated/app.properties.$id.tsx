@@ -152,6 +152,7 @@ import { notifyLeadMatchesForProperty, useActiveLeadSources } from "@/components
 import { buildLeadMatchRows } from "@/lib/lead-matching";
 import { appHead } from "@/components/app/app-head";
 import { announceGuideContext } from "@/lib/onboarding-tour";
+import { DevelopmentSelect } from "@/components/app/developments/DevelopmentSelect";
 
 function cleanLocation(district: string | null, city: string | null): string {
   const normalizedCity = (city ?? "")
@@ -397,6 +398,7 @@ function PropertyDetailContent() {
     chosenDetails.current.clear();
     setDraftAgent(property.assigned_to ?? "");
     setDraft({
+      development_id: property.development_id ?? "",
       title: property.title,
       price: property.price ? String(property.price) : "",
       city: property.city ?? "",
@@ -494,6 +496,7 @@ function PropertyDetailContent() {
           ? { postal_code: null, postal_code_source: null, postal_code_resolved_from: null }
           : { postal_code: typedPostal, postal_code_source: "manual" };
     return {
+      development_id: draft.development_id || null,
       title: draft.title,
       ...transactionPayload(tx),
       city: location.localityName || draft.city || null,
@@ -1124,6 +1127,7 @@ function PropertyDetailContent() {
               <Button type="submit" className="w-full sm:w-auto" disabled={save.isPending} data-tour="edit-save">Salvează</Button>
             </div>
           </HintedForm> : <FormSection title="Localizare">
+            <DevelopmentSelect orgId={property.organization_id} value={property.development_id} />
             <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,552px)_minmax(0,1fr)]">
             <dl className="min-w-0 space-y-3">
               {[
@@ -1248,6 +1252,7 @@ function PropertyDetailContent() {
                 aside={<>
                   <PropertyMainPhoto propertyId={id} title={property.title} />
                   <div className="space-y-1.5 text-[15px]">
+                    <DevelopmentSelect orgId={property.organization_id} value={draft.development_id} onChange={value => setDraft(d => ({ ...d, development_id: value ?? "" }))} />
                     <FormRow htmlFor="edit-status" label="Status">
                       <Select value={property.status} onValueChange={(key) => isWithdrawStatus(key) ? setPendingStatus(key as "sold" | "rented" | "archived") : changeStatus.mutate(key)}>
                         <SelectTrigger id="edit-status" className="h-10 rounded-[10px] text-[15px]"><SelectValue /></SelectTrigger>

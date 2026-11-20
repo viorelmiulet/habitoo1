@@ -1,0 +1,12 @@
+CREATE OR REPLACE FUNCTION public.development_unit_summary(_id uuid) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$ DECLARE result jsonb; sale boolean; BEGIN
+ IF NOT public.can_access_development(_id) THEN RAISE EXCEPTION 'Acces refuzat'; END IF;
+ SELECT EXISTS(SELECT 1 FROM public.properties WHERE development_id=_id AND deleted_at IS NULL AND status='active' AND for_sale AND sale_price>0) INTO sale;
+ WITH units AS (SELECT *, CASE WHEN sale THEN CASE WHEN for_sale THEN sale_price END ELSE CASE WHEN for_rent THEN rent_price END END amount, CASE WHEN sale THEN coalesce(sale_currency,currency,'EUR') ELSE coalesce(rent_currency,currency,'EUR') END cur FROM public.properties WHERE development_id=_id AND deleted_at IS NULL)
+ SELECT jsonb_build_object('active',count(*) FILTER(WHERE status='active'),'total',count(*),'price_from',CASE WHEN count(DISTINCT cur) FILTER(WHERE status='active' AND amount>0)=1 THEN min(amount) FILTER(WHERE status='active' AND amount>0) END,'price_to',CASE WHEN count(DISTINCT cur) FILTER(WHERE status='active' AND amount>0)=1 THEN max(amount) FILTER(WHERE status='active' AND amount>0) END,'currency',CASE WHEN count(DISTINCT cur) FILTER(WHERE status='active' AND amount>0)=1 THEN min(cur) FILTER(WHERE status='active' AND amount>0) END,'transaction',CASE WHEN sale THEN 'sale' ELSE 'rent' END) INTO result FROM units;
+ RETURN result;
+END $$;
+CREATE FUNCTION public.development_summaries(_ids uuid[]) RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
+ SELECT coalesce(jsonb_object_agg(id::text,public.development_unit_summary(id)),'{}'::jsonb) FROM public.developments WHERE id=ANY(_ids) AND public.can_access_development(id);
+$$;
+REVOKE ALL ON FUNCTION public.development_summaries(uuid[]) FROM PUBLIC; GRANT EXECUTE ON FUNCTION public.development_summaries(uuid[]) TO authenticated;
+ALTER TABLE public.developments ADD CONSTRAINT development_counts_valid CHECK((buildings_count IS NULL OR buildings_count>=0) AND (floors_count IS NULL OR floors_count>=0) AND (total_units IS NULL OR total_units>=0)), ADD CONSTRAINT development_prices_valid CHECK((price_from IS NULL OR price_from>=0) AND (price_to IS NULL OR price_to>=0) AND (price_from IS NULL OR price_to IS NULL OR price_from<=price_to));

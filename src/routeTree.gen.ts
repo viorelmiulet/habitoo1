@@ -104,6 +104,9 @@ import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
 import { Route as AuthenticatedAppContractsIndexRouteImport } from './routes/_authenticated/app.contracts.index'
 import { Route as AuthenticatedAppContractsIdRouteImport } from './routes/_authenticated/app.contracts.$id'
+import { Route as AuthenticatedAppDevelopmentsIndexRouteImport } from './routes/_authenticated/app.developments.index'
+import { Route as AuthenticatedAppDevelopmentsIdRouteImport } from './routes/_authenticated/app.developments.$id'
+import { Route as AuthenticatedAppDevelopmentsNewRouteImport } from './routes/_authenticated/app.developments.new'
 import { Route as AuthenticatedAppExtensieConectareRouteImport } from './routes/_authenticated/app.extensie.conectare'
 import { Route as AuthenticatedAppPortaluriPortalIdRouteImport } from './routes/_authenticated/app.portaluri.$portalId'
 import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_authenticated/app.properties.index'
@@ -760,6 +763,24 @@ const AuthenticatedAppContractsIdRoute =
   AuthenticatedAppContractsIdRouteImport.update({
     id: '/contracts/$id',
     path: '/contracts/$id',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppDevelopmentsIndexRoute =
+  AuthenticatedAppDevelopmentsIndexRouteImport.update({
+    id: '/developments/',
+    path: '/developments/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppDevelopmentsIdRoute =
+  AuthenticatedAppDevelopmentsIdRouteImport.update({
+    id: '/developments/$id',
+    path: '/developments/$id',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppDevelopmentsNewRoute =
+  AuthenticatedAppDevelopmentsNewRouteImport.update({
+    id: '/developments/new',
+    path: '/developments/new',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppExtensieConectareRoute =
@@ -1682,6 +1703,8 @@ export interface FileRoutesByFullPath {
   '/app/anunturi-particulari/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/app/developments/$id': typeof AuthenticatedAppDevelopmentsIdRoute
+  '/app/developments/new': typeof AuthenticatedAppDevelopmentsNewRoute
   '/app/extensie/conectare': typeof AuthenticatedAppExtensieConectareRoute
   '/app/portaluri/$portalId': typeof AuthenticatedAppPortaluriPortalIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -1745,6 +1768,7 @@ export interface FileRoutesByFullPath {
   '/app/acp/': typeof AuthenticatedAppAcpIndexRoute
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
+  '/app/developments/': typeof AuthenticatedAppDevelopmentsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/app/team/': typeof AuthenticatedAppTeamIndexRoute
   '/superadmin/agencies/': typeof AuthenticatedSuperadminAgenciesIndexRoute
@@ -1917,6 +1941,8 @@ export interface FileRoutesByTo {
   '/app/anunturi-particulari/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/app/developments/$id': typeof AuthenticatedAppDevelopmentsIdRoute
+  '/app/developments/new': typeof AuthenticatedAppDevelopmentsNewRoute
   '/app/extensie/conectare': typeof AuthenticatedAppExtensieConectareRoute
   '/app/portaluri/$portalId': typeof AuthenticatedAppPortaluriPortalIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -1980,6 +2006,7 @@ export interface FileRoutesByTo {
   '/app/acp': typeof AuthenticatedAppAcpIndexRoute
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
   '/app/contracts': typeof AuthenticatedAppContractsIndexRoute
+  '/app/developments': typeof AuthenticatedAppDevelopmentsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
   '/app/team': typeof AuthenticatedAppTeamIndexRoute
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesIndexRoute
@@ -2158,6 +2185,8 @@ export interface FileRoutesById {
   '/_authenticated/app/anunturi-particulari_/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/_authenticated/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
+  '/_authenticated/app/developments/$id': typeof AuthenticatedAppDevelopmentsIdRoute
+  '/_authenticated/app/developments/new': typeof AuthenticatedAppDevelopmentsNewRoute
   '/_authenticated/app/extensie/conectare': typeof AuthenticatedAppExtensieConectareRoute
   '/_authenticated/app/portaluri/$portalId': typeof AuthenticatedAppPortaluriPortalIdRoute
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -2221,6 +2250,7 @@ export interface FileRoutesById {
   '/_authenticated/app/acp/': typeof AuthenticatedAppAcpIndexRoute
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/_authenticated/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
+  '/_authenticated/app/developments/': typeof AuthenticatedAppDevelopmentsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/_authenticated/app/team/': typeof AuthenticatedAppTeamIndexRoute
   '/_authenticated/superadmin/agencies/': typeof AuthenticatedSuperadminAgenciesIndexRoute
@@ -2399,6 +2429,8 @@ export interface FileRouteTypes {
     | '/app/anunturi-particulari/$id'
     | '/app/contacts/$id'
     | '/app/contracts/$id'
+    | '/app/developments/$id'
+    | '/app/developments/new'
     | '/app/extensie/conectare'
     | '/app/portaluri/$portalId'
     | '/app/properties/$id'
@@ -2462,6 +2494,7 @@ export interface FileRouteTypes {
     | '/app/acp/'
     | '/app/contacts/'
     | '/app/contracts/'
+    | '/app/developments/'
     | '/app/properties/'
     | '/app/team/'
     | '/superadmin/agencies/'
@@ -2634,6 +2667,8 @@ export interface FileRouteTypes {
     | '/app/anunturi-particulari/$id'
     | '/app/contacts/$id'
     | '/app/contracts/$id'
+    | '/app/developments/$id'
+    | '/app/developments/new'
     | '/app/extensie/conectare'
     | '/app/portaluri/$portalId'
     | '/app/properties/$id'
@@ -2697,6 +2732,7 @@ export interface FileRouteTypes {
     | '/app/acp'
     | '/app/contacts'
     | '/app/contracts'
+    | '/app/developments'
     | '/app/properties'
     | '/app/team'
     | '/superadmin/agencies'
@@ -2874,6 +2910,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/anunturi-particulari_/$id'
     | '/_authenticated/app/contacts/$id'
     | '/_authenticated/app/contracts/$id'
+    | '/_authenticated/app/developments/$id'
+    | '/_authenticated/app/developments/new'
     | '/_authenticated/app/extensie/conectare'
     | '/_authenticated/app/portaluri/$portalId'
     | '/_authenticated/app/properties/$id'
@@ -2937,6 +2975,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/acp/'
     | '/_authenticated/app/contacts/'
     | '/_authenticated/app/contracts/'
+    | '/_authenticated/app/developments/'
     | '/_authenticated/app/properties/'
     | '/_authenticated/app/team/'
     | '/_authenticated/superadmin/agencies/'
@@ -3843,6 +3882,27 @@ declare module '@tanstack/react-router' {
       path: '/contracts/$id'
       fullPath: '/app/contracts/$id'
       preLoaderRoute: typeof AuthenticatedAppContractsIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/developments/': {
+      id: '/_authenticated/app/developments/'
+      path: '/developments'
+      fullPath: '/app/developments/'
+      preLoaderRoute: typeof AuthenticatedAppDevelopmentsIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/developments/$id': {
+      id: '/_authenticated/app/developments/$id'
+      path: '/developments/$id'
+      fullPath: '/app/developments/$id'
+      preLoaderRoute: typeof AuthenticatedAppDevelopmentsIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/developments/new': {
+      id: '/_authenticated/app/developments/new'
+      path: '/developments/new'
+      fullPath: '/app/developments/new'
+      preLoaderRoute: typeof AuthenticatedAppDevelopmentsNewRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/extensie/conectare': {
@@ -4904,6 +4964,8 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAnunturiParticulariIdRoute: typeof AuthenticatedAppAnunturiParticulariIdRoute
   AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
   AuthenticatedAppContractsIdRoute: typeof AuthenticatedAppContractsIdRoute
+  AuthenticatedAppDevelopmentsIdRoute: typeof AuthenticatedAppDevelopmentsIdRoute
+  AuthenticatedAppDevelopmentsNewRoute: typeof AuthenticatedAppDevelopmentsNewRoute
   AuthenticatedAppExtensieConectareRoute: typeof AuthenticatedAppExtensieConectareRoute
   AuthenticatedAppPortaluriPortalIdRoute: typeof AuthenticatedAppPortaluriPortalIdRoute
   AuthenticatedAppPropertiesIdRoute: typeof AuthenticatedAppPropertiesIdRoute
@@ -4911,6 +4973,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAcpIndexRoute: typeof AuthenticatedAppAcpIndexRoute
   AuthenticatedAppContactsIndexRoute: typeof AuthenticatedAppContactsIndexRoute
   AuthenticatedAppContractsIndexRoute: typeof AuthenticatedAppContractsIndexRoute
+  AuthenticatedAppDevelopmentsIndexRoute: typeof AuthenticatedAppDevelopmentsIndexRoute
   AuthenticatedAppPropertiesIndexRoute: typeof AuthenticatedAppPropertiesIndexRoute
   AuthenticatedAppAcpDatePiataIdRoute: typeof AuthenticatedAppAcpDatePiataIdRoute
   AuthenticatedAppAcpDatePiataIndexRoute: typeof AuthenticatedAppAcpDatePiataIndexRoute
@@ -4946,6 +5009,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
     AuthenticatedAppAnunturiParticulariIdRoute,
   AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,
   AuthenticatedAppContractsIdRoute: AuthenticatedAppContractsIdRoute,
+  AuthenticatedAppDevelopmentsIdRoute: AuthenticatedAppDevelopmentsIdRoute,
+  AuthenticatedAppDevelopmentsNewRoute: AuthenticatedAppDevelopmentsNewRoute,
   AuthenticatedAppExtensieConectareRoute:
     AuthenticatedAppExtensieConectareRoute,
   AuthenticatedAppPortaluriPortalIdRoute:
@@ -4955,6 +5020,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAcpIndexRoute: AuthenticatedAppAcpIndexRoute,
   AuthenticatedAppContactsIndexRoute: AuthenticatedAppContactsIndexRoute,
   AuthenticatedAppContractsIndexRoute: AuthenticatedAppContractsIndexRoute,
+  AuthenticatedAppDevelopmentsIndexRoute:
+    AuthenticatedAppDevelopmentsIndexRoute,
   AuthenticatedAppPropertiesIndexRoute: AuthenticatedAppPropertiesIndexRoute,
   AuthenticatedAppAcpDatePiataIdRoute: AuthenticatedAppAcpDatePiataIdRoute,
   AuthenticatedAppAcpDatePiataIndexRoute:

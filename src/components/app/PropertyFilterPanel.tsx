@@ -33,6 +33,8 @@ import {
 } from "@/lib/property-filter-query";
 import type { SearchPlaceOption } from "@/lib/search-places";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { developmentsOptions } from "@/lib/developments";
 
 export type PropertyFilterPanelProps = {
   applied: PropertyListFilters;
@@ -109,6 +111,7 @@ function MultiSelect({ id, label, empty, options, value, onChange }: { id: strin
 }
 
 export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
+  const { data: developments = [] } = useQuery(developmentsOptions());
   const { applied, placeValue, onApply, onTab, onReset, placeOptions, showAgent } = props;
   const appliedKey = JSON.stringify([applied, placeValue]);
   const [draft, setDraft] = useState<PropertyListFilters>({ ...applied, locuri: placeValue });
@@ -156,6 +159,9 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
             </Row>
           </div>
           <div data-filter-column="2" className="mt-2 space-y-2 md:mt-0">
+            <Row label="Ansamblu" htmlFor="pf-development">
+              <SimpleSelect id="pf-development" value={draft.development || "all"} active={Boolean(draft.development && draft.development !== "all")} onChange={(v) => set("development", v)} options={[["all", "Toate"], ...developments.map(d => [d.id, d.name] as [string, string])]} />
+            </Row>
             <Row label="Tip proprietate" htmlFor="pf-type">
               <SimpleSelect id="pf-type" value={draft.type} active={draft.type !== "all"} onChange={(v) => set("type", v)} options={[["all", "Toate"], ...typeChoices.map((t) => [t, propertyTypeLabels[t] ?? t] as [string, string])]} />
             </Row>

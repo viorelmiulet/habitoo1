@@ -76,6 +76,7 @@ export const agencyNav: NavGroup[] = [
   { section: "Principal", items: [{ label: "Acasă", to: "/app", icon: Gauge, exact: true }] },
   { title: "Proprietăți", collapsible: true, items: [
     { label: "Toate proprietățile", to: "/app/properties", icon: Building2 },
+    { label: "Ansambluri", to: "/app/developments", icon: Layers },
     { label: "Adaugă proprietate", to: "/app/properties/new", icon: PlusCircle },
     { label: "Clipurile mele", to: "/app/clipurile-mele", icon: Film },
   ] },

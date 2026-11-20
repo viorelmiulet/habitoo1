@@ -1,7 +1,9 @@
 import { notifyLeadMatchesForProperty } from "@/components/app/LeadMatches";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { DevelopmentSelect } from "@/components/app/developments/DevelopmentSelect";
+import { developmentOptions } from "@/lib/developments";
 import { withoutUnchosenDefaults } from "@/lib/ai/listing-autofill/empty";
 import { ListingAutofillCard } from "@/components/app/ai/ListingAutofillCard";
 import { AiFieldMarksContext, AiMark } from "@/components/app/ai/AiFieldMarks";
@@ -57,6 +59,7 @@ function postalNotice(report: { status: string; reasonLabel: string } | null): v
 }
 
 export const Route = createFileRoute("/_authenticated/app/properties/new")({
+  validateSearch: (search: Record<string, unknown>): { development?: string } => ({ development: typeof search.development === "string" && /^[0-9a-f-]{36}$/i.test(search.development) ? search.development : undefined }),
   head: () => {
     const title = "Habitoo CRM — proprietate nouă";
     const description = "Adaugă o proprietate în portofoliul agenției în Habitoo CRM.";
@@ -75,6 +78,10 @@ export const Route = createFileRoute("/_authenticated/app/properties/new")({
 const NEW_DETAILS_DEFAULTS: PropertyDetailsValue = { property_type: "apartment" };
 
 function NewPropertyPage() {
+  const search = Route.useSearch();
+  const [developmentId, setDevelopmentId] = useState<string | null>(search.development ?? null);
+  const { data: development } = useQuery({ ...developmentOptions(search.development ?? ""), enabled: Boolean(search.development) });
+  const seededDevelopment = useRef<string | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
@@ -116,6 +123,14 @@ function NewPropertyPage() {
   const [locationPrecise, setLocationPrecise] = useState(false);
   // Seed stabil pentru aproximarea zonei înainte ca proprietatea să aibă id.
   const [mapSeed] = useState(() => `new-${Math.random().toString(36).slice(2)}`);
+  useEffect(() => {
+    if (!development || seededDevelopment.current === development.id) return;
+    seededDevelopment.current = development.id;
+    setLocation({ countyName: development.county ?? "", countySirutaCode: development.county_siruta_code, uatSirutaCode: development.uat_siruta_code, localitySirutaCode: development.locality_siruta_code, localityName: development.city ?? "" });
+    setForm(f => ({ ...f, city: development.city ?? "", county: development.county ?? "", district: development.district ?? "", address: development.address ?? "" }));
+    if (development.lat != null && development.lng != null) setCoords({ lat: development.lat, lng: development.lng });
+    setLocationPrecise(development.location_precise);
+  }, [development]);
 
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -182,6 +197,8 @@ function NewPropertyPage() {
         .from("properties")
         .insert({
           organization_id: user.organization.id,
+          development_id: developmentId,
+          ...(developmentId ? { market: "primary", street: development?.street, street_number: development?.street_number } : {}),
           assigned_to: user.userId,
           created_by: user.userId,
           reference,
@@ -285,6 +302,7 @@ function NewPropertyPage() {
         <PropertyFormLayout
           aside={<div data-tour="new-general"><FormSection title="Informații generale">
           <div className="grid gap-4">
+            <DevelopmentSelect orgId={user?.organization?.id} value={developmentId} onChange={setDevelopmentId} />
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => set("status", v)}>

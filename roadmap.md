@@ -1,3 +1,9 @@
+## ANS1 — Ansambluri
+- [x] Schemă, acces pe agenție/agent, atașare atomică, ștergere logică și interval automat la citire, fără amestecarea monedelor
+- [x] Listă/fișă, fotografii, unități, selector și filtru în Proprietăți
+- [x] 11 teste noi izolate trec; schema confirmată și build OK; commit la încheiere, fără publicare
+- [ ] Verificare vizuală autentificată: solicitantul nu are cont asociat pentru sesiune; browserul fără sesiune rămâne gol, fără erori raportate. Salvarea formularului este verificată doar prin test simulat, nu cu date reale.
+
 ## SA2 — Statistici doar pentru agenții active
 - [x] Regulă comună SQL/TS, agregate active și listă separată de agenții inactive; acces exclusiv SuperAdmin
 - [x] Taburi Active / Expirate și suspendate, număr și căutare, CSV, fără panou de agenți pentru inactive

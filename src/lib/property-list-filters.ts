@@ -3,6 +3,7 @@ import { isListPageSize } from "@/lib/list-page-size";
 import { z } from "zod";
 
 export type PropertyListFilters = {
+  development: string;
   q: string;
   status: string;
   transaction: string;
@@ -39,6 +40,7 @@ export type PropertyListFilters = {
 };
 
 export const emptyPropertyListFilters: PropertyListFilters = {
+  development: "all",
   q: "",
   status: "all",
   transaction: "all",
@@ -91,6 +93,7 @@ const optionalSearchPage = z.preprocess(
 );
 
 export const propertyListSearchSchema = z.object({
+  development: optionalSearchString,
   republicare: z.string().uuid().optional().catch(undefined),
   q: optionalSearchString,
   status: optionalSearchString,
