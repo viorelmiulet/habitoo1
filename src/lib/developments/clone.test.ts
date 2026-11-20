@@ -38,6 +38,25 @@ describe("cloneToDevelopmentCore", () => {
   });
 });
 
+describe("preselecția pentru copia unui anunț publicat", () => {
+  it("bifează Storia și feed-urile fără eroarea „nu este publicabilă”", async () => {
+    const feeds = allPortals().filter((d) => d.status === "available" && d.id !== "storia" && isFeedPullPortal(d)).map((d) => d.id).slice(0, 2);
+    const activated = new Set(["storia", ...feeds]);
+    const expected = clonePortalIds(activated, allPortals());
+    expect(expected).toContain("storia");
+    for (const f of feeds) expect(expected).toContain(f);
+    const copyState = { publish_status: "published" };
+    const rpc = vi.fn(async () => ({ error: null, data: { copies: [{ original_id: "o", original_reference: "HB-1", copy_id: "c", copy_reference: "HB-2" }], skipped: [], files: [] } }));
+    const applySelection = vi.fn(async (_org: string, _id: string, ids: string[]) => ids.map((portalId) => copyState.publish_status === "published" ? { portalId, ok: true, message: null } : { portalId, ok: false, message: "Oferta nu este publicabilă" }));
+    const out = await cloneToDevelopmentCore({ rpc }, { developmentId: "d", propertyIds: ["o"] }, {
+      copyFile: vi.fn(async () => true), removeImage: vi.fn(), activatedPortals: async () => activated, organizationOf: async () => "org", applySelection,
+    });
+    expect(applySelection).toHaveBeenCalledWith("org", "c", expected);
+    expect(out.portalSkipped).toEqual([]);
+    expect(JSON.stringify(out)).not.toMatch(/nu este publicabil/);
+  });
+});
+
 describe("Storia pe copie", () => {
   it("bifarea nu creează job în contul de agenție, doar intenția și unitatea", async () => {
     const calls: string[] = [];
