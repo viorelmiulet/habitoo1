@@ -1,3 +1,4 @@
+import type React from "react";
 /**
  * Cardul de proprietate din grila listei, în stilul „Proprietăți recente" de pe
  * dashboard. Prezentare doar: nu conține logică de business, primește datele și
@@ -66,9 +67,11 @@ export function PropertyCard({
   onSelectedChange,
   portalCells,
   developmentName,
+  cloneMarks,
 }: {
   property: PropertyCardRow;
   developmentName?: string | null | undefined;
+  cloneMarks?: React.ReactNode;
   cover: PropertyCover;
   favorite: boolean;
   onToggleFavorite: () => void;
@@ -146,6 +149,7 @@ export function PropertyCard({
               "Locație nespecificată"}
           </p>
           {property.development_id ? <div className="mt-1"><DevelopmentBadge id={property.development_id} name={developmentName} /></div> : null}
+          {cloneMarks}
         </div>
 
         <div className="flex items-center justify-between gap-2">

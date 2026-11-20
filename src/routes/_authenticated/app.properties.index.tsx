@@ -45,6 +45,8 @@ import {
 import { portalListingLink } from "@/lib/portals/listing-links";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { DevelopmentBadge } from "@/components/app/developments/DevelopmentBadge";
+import { CloneMarks, useCloneLinks } from "@/components/app/developments/CloneMarks";
+import { AllocateAction, AllocateToDevelopmentDialog } from "@/components/app/developments/AllocateToDevelopmentDialog";
 import { developmentsOptions } from "@/lib/developments";
 import { PropertyFilterPanel } from "@/components/app/PropertyFilterPanel";
 import { applyPropertyFilterClauses } from "@/lib/property-filter-query";
@@ -402,6 +404,8 @@ function PropertiesPage() {
 
   const { data: developmentList = [] } = useQuery({ ...developmentsOptions(orgId as string | undefined), enabled: Boolean(orgId) });
   const developmentName = (id: string | null | undefined) => developmentList.find((d) => d.id === id)?.name;
+  const editableDevelopments = developmentList.filter((d) => user?.isAdmin || user?.isSuperadmin || d.assigned_to === user?.userId);
+  const [allocateOpen, setAllocateOpen] = useState(false);
 
   const { data: result, isLoading: listLoading } = useQuery({
     // (isLoading de mai jos combină și încărcarea filtrelor de portaluri/promovare)
@@ -586,6 +590,7 @@ function PropertiesPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  const cloneLinks = useCloneLinks(rows as { id: string; cloned_from_property_id?: string | null }[], developmentName);
   const allSelected = rows.length > 0 && selected.length === rows.length;
 
   const exportCsv = () => {
@@ -854,6 +859,7 @@ function PropertiesPage() {
             <Button variant="outline" size="sm" onClick={exportCsv}>
               Export CSV
             </Button>
+            <AllocateAction count={selected.length} onClick={() => setAllocateOpen(true)} />
             <Button variant="destructive" size="sm" onClick={() => setArchiveTarget(selected)}>
               <Trash2 className="mr-1.5 h-4 w-4" /> Șterge
             </Button>
@@ -979,7 +985,7 @@ function PropertiesPage() {
                         {p.title}
                       </Link>
                       <p className="mt-1 truncate text-[13px] text-muted-foreground">{p.reference ? <span className="mr-1.5 font-mono text-xs text-foreground/80">{p.reference}</span> : null}{details}</p>
-                      {p.development_id ? <div className="mt-1.5"><DevelopmentBadge id={p.development_id} name={developmentName(p.development_id)} /></div> : null}
+                      {p.development_id ? <div className="mt-1.5"><DevelopmentBadge id={p.development_id} name={developmentName(p.development_id)} /></div> : null}<CloneMarks {...cloneLinks(p)} />
                     </div>
                     <div className="col-span-2 text-left lg:col-span-1 lg:text-right">
                       <p className="font-display text-[18px] leading-tight font-extrabold">{price.main}{price.suffix ? <span className="ml-1 font-sans text-xs font-normal text-muted-foreground">{price.suffix}</span> : null}</p>
@@ -1030,6 +1036,7 @@ function PropertiesPage() {
                 key={p.id}
                 property={p as unknown as PropertyCardRow}
                 developmentName={developmentName(p.development_id)}
+                cloneMarks={<CloneMarks {...cloneLinks(p)} />}
                 cover={coverOf(p.id)}
                 favorite={favoriteIds.includes(p.id)}
                 onToggleFavorite={() => toggleFavorite.mutate(p.id)}
@@ -1056,7 +1063,14 @@ function PropertiesPage() {
         onCancel={() => setBulkStatus(null)}
         onConfirm={() => bulkStatus && updateStatus.mutate({ ids: selected, status: bulkStatus })}
       />
-<BulkDeletePropertiesDialog
+<AllocateToDevelopmentDialog
+        open={allocateOpen}
+        onOpenChange={setAllocateOpen}
+        propertyIds={selected}
+        developments={editableDevelopments}
+        onDone={() => { setSelected([]); void queryClient.invalidateQueries({ queryKey: ["properties"] }); void queryClient.invalidateQueries({ queryKey: ["clone-links"] }); }}
+      />
+      <BulkDeletePropertiesDialog
         propertyIds={archiveTarget}
         references={Object.fromEntries(rows.map((r) => [r.id, r.reference ?? r.id]))}
         onClose={() => setArchiveTarget(null)}

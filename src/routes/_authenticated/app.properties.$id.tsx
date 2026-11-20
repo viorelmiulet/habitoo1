@@ -154,6 +154,7 @@ import { appHead } from "@/components/app/app-head";
 import { announceGuideContext } from "@/lib/onboarding-tour";
 import { DevelopmentSelect } from "@/components/app/developments/DevelopmentSelect";
 import { DevelopmentBadge } from "@/components/app/developments/DevelopmentBadge";
+import { CloneMarks, useCloneLinks } from "@/components/app/developments/CloneMarks";
 import { developmentsOptions } from "@/lib/developments";
 
 function cleanLocation(district: string | null, city: string | null): string {
@@ -890,7 +891,7 @@ function PropertyDetailContent() {
         <PropertySheetHeader
           reference={property.reference ?? "Fără referință"}
           title={property.title}
-          status={<><StatusBadge tone={propertyStatusTone[property.status]} dot>{propertyStatusLabels[property.status]}</StatusBadge>{property.development_id ? <DevelopmentBadge id={property.development_id} name={developmentList.find((d) => d.id === property.development_id)?.name} /> : null}</>}
+          status={<><StatusBadge tone={propertyStatusTone[property.status]} dot>{propertyStatusLabels[property.status]}</StatusBadge>{property.development_id ? <DevelopmentBadge id={property.development_id} name={developmentList.find((d) => d.id === property.development_id)?.name} /> : null}<PropertyCloneMarks property={property as { id: string; cloned_from_property_id?: string | null }} names={developmentList} /></>}
           percent={completeness?.percent ?? 0}
           actions={<>
             {editing ? <Button type="submit" form="property-details-form" variant="outline" disabled={save.isPending}>Salvează</Button> : null}
@@ -1672,4 +1673,9 @@ function PropertyDetailContent() {
       </Dialog>
     </>
   );
+}
+
+function PropertyCloneMarks({ property, names }: { property: { id: string; cloned_from_property_id?: string | null }; names: { id: string; name: string }[] }) {
+  const links = useCloneLinks([property], (id) => names.find((d) => d.id === id)?.name);
+  return <CloneMarks {...links(property)} />;
 }
