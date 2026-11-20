@@ -93,6 +93,33 @@ function AuthenticationDocs() {
     <p className="border-l-2 border-gold pl-4 text-sm">{auth.responseNote}</p>
   </>;
 }
+const developmentExample = "{\n  \"data\": {\n    \"id\": \"33333333-3333-4333-8333-333333333333\",\n    \"nume\": \"Ansamblu fictiv\",\n    \"dezvoltator\": \"Dezvoltator fictiv\",\n    \"descriere\": {\n      \"ro\": \"Exemplu fictiv de integrare.\",\n      \"en\": null\n    },\n    \"localitate\": \"Localitate fictivă\",\n    \"judet\": \"Județ fictiv\",\n    \"zona\": null,\n    \"strada\": null,\n    \"numarstradal\": null,\n    \"latitudine\": null,\n    \"longitudine\": null,\n    \"stadiuconstructie\": \"În construcție\",\n    \"data_livrare\": \"2027-Q4\",\n    \"nr_cladiri\": 2,\n    \"nr_etaje\": 5,\n    \"nr_unitati\": 40,\n    \"facilitati\": [\n      \"Lift\"\n    ],\n    \"pret_de_la\": 100000,\n    \"pret_pana_la\": 150000,\n    \"moneda\": \"EUR\",\n    \"images\": [\n      {\n        \"src\": \"https://crm.habitoo.ro/api/public/sites/v1/media/44444444-4444-4444-8444-444444444444\",\n        \"tip\": \"principala\",\n        \"pozitie\": 0,\n        \"modificata\": \"2026-11-20T07:00:00Z\",\n        \"alt\": null,\n        \"width\": 1200,\n        \"height\": 800\n      }\n    ],\n    \"unitati\": [\n      \"HB-900001\",\n      \"HB-900002\"\n    ],\n    \"agent_id\": \"55555555-5555-4555-8555-555555555555\",\n    \"dataadaugare\": \"2026-11-01T07:00:00Z\",\n    \"datamodificare\": \"2026-11-20T07:00:00Z\"\n  },\n  \"api_version\": \"habitoo-site-feed/1.1\"\n}";
+function DevelopmentsDocs() {
+  return <>
+    <p>Extensie strict aditivă în <code>habitoo-site-feed/1.1</code>: niciun câmp existent nu se modifică. Indexurile și Partner API rămân neschimbate.</p>
+    <h3 className="pt-2 text-xl font-bold text-navy">GET /developments și GET /developments/{"{id}"}</h3>
+    <p>Aceeași autentificare și scop <code>feed:read</code> ca <code>/properties</code>, sub aceeași bază <code>feed.base_url</code>. Lista acceptă <code>page</code> și <code>per_page</code> (implicit 50, maximum 200), are aceeași anvelopă de paginare și <code>api_version: habitoo-site-feed/1.1</code>. Ordinea este descrescătoare după <code>datamodificare</code>. Detaliul acceptă UUID și întoarce <code>{"{ data, api_version }"}</code>.</p>
+    <h3 className="pt-2 text-xl font-bold text-navy">Eligibilitate și retragere</h3>
+    <ul className="list-disc space-y-2 pl-5">
+      <li>Un ansamblu apare doar dacă este <strong>activ</strong>, <strong>neșters</strong> și are <strong>cel puțin o ofertă eligibilă în acest feed</strong> (aceleași reguli de status, publicare, selecție și contact ca la <code>/properties</code>).</li>
+      <li>Altă agenție, ID invalid sau ansamblu neeligibil → 404. În perioada de grație lista este goală.</li>
+      <li>Retragerea înseamnă dispariția din lista completă: reconciliază numai după ce toate paginile au fost citite cu succes.</li>
+      <li>O citire incompletă întoarce <code>503</code> cu <code>Retry-After: 300</code>, niciodată un inventar parțial.</li>
+    </ul>
+    <h3 className="pt-2 text-xl font-bold text-navy">Câmpuri noi la oferte</h3>
+    <table className="w-full table-fixed text-left text-xs leading-5 sm:text-sm"><thead className="border-y bg-muted text-muted-foreground"><tr><th className="w-[35%] px-2 py-3">Câmp / tip</th><th className="px-2 py-3">Semnificație</th></tr></thead><tbody>
+      <tr className="border-b align-top"><td className="px-2 py-3"><code className="font-semibold text-navy">ansamblu_id</code><div className="text-muted-foreground">string sau null</div></td><td className="px-2 py-3 text-muted-foreground">UUID-ul ansamblului, null fără ansamblu.</td></tr>
+      <tr className="border-b align-top"><td className="px-2 py-3"><code className="font-semibold text-navy">piata</code><div className="text-muted-foreground">string sau null</div></td><td className="px-2 py-3 text-muted-foreground"><code>primara</code>, <code>secundara</code> sau null, după piața completată a proprietății.</td></tr>
+    </tbody></table>
+    <Endpoints match={p => p.includes("/developments")} />
+    <h3 className="pt-4 text-xl font-bold text-navy">Schema ansamblului</h3>
+    <div data-testid="development-schema"><FieldTable schema={apiSpec.components.schemas.FeedDevelopment ?? {}} /></div>
+    <p className="text-sm text-muted-foreground">Intervalul de preț se calculează la citire doar din unitățile active eligibile în feed; monedele diferite nu se amestecă, iar suprascrierile manuale au prioritate. <code>data_livrare</code> păstrează valoarea completată (an, trimestru sau dată ISO).</p>
+    <h3 className="pt-2 text-xl font-bold text-navy">Fotografii prin /media/{"{id}"}</h3>
+    <p><code>images[]</code> are exact schema ofertelor (<code>src</code>, <code>tip</code>, <code>pozitie</code>, <code>modificata</code>, <code>alt</code>, <code>width</code>, <code>height</code>), cu coperta prima. Fiecare <code>src</code> indică <code>/media/{"{id}"}</code>: redirect 302, același watermark al agenției, cache 60 de secunde și 404 când ansamblul nu mai este eligibil.</p>
+    <CodeBlock text={developmentExample} label="Exemplu fictiv · GET /developments/{id}" />
+  </>;
+}
 export function DeveloperDocs() {
   const [active, setActive] = useState("introducere");
   useEffect(() => {
@@ -153,7 +180,7 @@ export function DeveloperDocs() {
         <Section id="autentificare" title="Autentificare"><AuthenticationDocs /></Section>
         <Section id="index" title="Indexul agențiilor"><Endpoints match={p => p.includes("/index/")} /></Section>
         <Section id="anunturi" title="Feedul de anunțuri"><p>{guide.recommendations[0]}</p><p>{guide.recommendations[3]}</p><Endpoints match={p => p.includes("/properties")} /><h3 className="pt-4 text-xl font-bold">Toate câmpurile anunțului</h3><p className="text-sm text-muted-foreground">{apiSpec.components.schemas.FeedProperty?.description}</p><FieldTable schema={apiSpec.components.schemas.FeedProperty ?? {}} /></Section>
-        <Section id="ansambluri" title="Ansambluri — feed 1.1"><p>Extensie strict aditivă: ofertele au <code>ansamblu_id</code> (UUID sau null) și <code>piata</code> (primara, secundara sau null). Niciun câmp anterior nu se schimbă. Indexurile și Partner API rămân neschimbate.</p><p>Un ansamblu apare doar dacă este activ, neșters și are cel puțin o ofertă eligibilă pentru feedul tokenului. <code>unitati</code> conține doar referințele <code>idstr</code> ale acestor oferte. Retrage ansamblurile absente numai după citirea reușită a tuturor paginilor.</p><Endpoints match={p => p.includes('/developments')} /><h3 className="pt-4 text-xl font-bold">Schema ansamblului</h3><FieldTable schema={apiSpec.components.schemas.FeedDevelopment ?? {}} /></Section>
+        <Section id="ansambluri" title="Ansambluri rezidențiale"><DevelopmentsDocs /></Section>
         <Section id="agenti" title="Agenți și agenție"><Endpoints match={p => p.endsWith("/agents") || p.endsWith("/agency")} /></Section>
         <Section id="poze" title="Poze"><p>{guide.recommendations[2]}</p><Endpoints match={p => p.includes("/media/")} /></Section>
         <Section id="xml" title="Feed XML (Kyero v3)"><Endpoints match={p => p.endsWith("feed.xml")} /></Section>

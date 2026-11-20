@@ -4,7 +4,7 @@ Fundație compatibilă cu modelul ImmoFlux. Habitoo este sursa de adevăr: feedu
 expune **doar** ofertele marcate ca publicate și primește înapoi cereri de
 contact și vizualizări.
 
-- Versiune: `habitoo-site-feed/1.0`
+- Versiune: `habitoo-site-feed/1.1`
 - Bază: `https://crm.habitoo.ro/api/public/sites/v1`
 - Autentificare: `Authorization: Bearer <token>` (acceptat și `Basic` sau
   `X-Habitoo-Feed-Token`, pentru compatibilitate)
@@ -27,6 +27,8 @@ niciodată.
 | ------ | -------------------------------- | --------------------------------------------- |
 | GET    | `/properties?page=1&per_page=50` | Listă paginată (max. 200/pagină)              |
 | GET    | `/properties/{id}`               | O ofertă, după UUID sau referință (`RF-1001`) |
+| GET    | `/developments?page=1&per_page=50` | Ansambluri eligibile, paginate (max. 200/pagină) |
+| GET    | `/developments/{id}`             | Un ansamblu, după UUID                        |
 | GET    | `/agents`                        | Agenții activi, doar câmpuri publice          |
 | POST   | `/contacts`                      | Lead din site → contact + lead în pipeline    |
 | POST   | `/visits`                        | Raportare vizualizări externe                 |
@@ -309,3 +311,8 @@ e o eroare; `429` → se respectă `Retry-After`, altfel un backoff de 2 secunde
 `exclusive`, `zero_commission`, `video_url` și `promotion` nu au echivalent real
 în Habitoo, deci lipsesc complet din payload. Nu trimitem id-uri de taxonomie:
 Imospot rezolvă oraș/cartier/categorie din text plus coordonate.
+
+
+## Ansambluri (1.1)
+
+`GET /developments` și `GET /developments/{id}` folosesc aceeași autentificare, paginare și versiune ca `/properties`. Ofertele primesc câmpurile aditive `ansamblu_id` și `piata`. Schema completă, regulile de eligibilitate și retragere, fotografiile și exemplul sunt în secțiunea 10 din [`feed-portaluri-habitoo.md`](./feed-portaluri-habitoo.md#10-ansambluri--extensie-strict-aditivă-11-ans3).
