@@ -25,7 +25,17 @@ import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLog
 import { AgencyStatsTable } from "@/components/superadmin/AgencyStatsTable";
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies/")({
-  head: () => appHead("Habitoo CRM — agenții"),
+  head: () => {
+    const head = appHead("Habitoo CRM — agenții");
+    const description = "Administrarea agențiilor Habitoo: înscrieri, utilizarea agențiilor active și lista agențiilor expirate sau suspendate.";
+    return { ...head, meta: [...head.meta,
+      { name: "description", content: description },
+      { property: "og:title", content: "Habitoo CRM — agenții" },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ] };
+  },
   component: AgenciesPage,
 });
 

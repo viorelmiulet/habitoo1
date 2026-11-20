@@ -13263,6 +13263,14 @@ export type Database = {
         Args: { _new_org: string; _user_id: string }
         Returns: undefined
       }
+      agency_stats_inactive_reason: {
+        Args: {
+          _now?: string
+          _status: string
+          _subscription_expires_at: string
+        }
+        Returns: string
+      }
       ai_credit_limit: { Args: { p_org: string }; Returns: number }
       ai_credit_month: { Args: { p_at?: string }; Returns: string }
       ai_credit_refund_stale: { Args: never; Returns: number }
@@ -14785,6 +14793,10 @@ export type Database = {
       }
       superadmin_delete_user: {
         Args: { _actor?: string; _reassign_to?: string; _user: string }
+        Returns: Json
+      }
+      superadmin_inactive_agencies: {
+        Args: { _include_demo?: boolean }
         Returns: Json
       }
       superadmin_platform_totals: {

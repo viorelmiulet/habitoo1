@@ -8,12 +8,14 @@ import { SummaryCard } from "@/components/superadmin/SuperadminUi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { agencyInactiveLabel, type AgencyStatsScope } from "@/lib/agency-stats-scope";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { planLabel, seatLimitLabel } from "@/lib/plans";
 import { getPortalDefinition } from "@/lib/portals/registry";
 import { toCsv } from "@/lib/superadmin-stats";
 import {
-  getAgencyAgentStats, getAgencyStats, type AgencyStatsRow,
+  getAgencyAgentStats, getAgencyStats, type AgencyStatsRow, type InactiveAgencyRow,
 } from "@/lib/superadmin-stats.functions";
 
 const STATUS: Record<string, string> = {
@@ -53,15 +55,41 @@ const COLS: Col[] = [
   { key: "ai", label: "AI · credite lună", num: (r) => r.ai_credits_month, cell: (r) => `${r.ai_enabled === false ? "oprit" : "pornit"} · ${r.ai_credits_month}`, csv: (r) => `${r.ai_enabled === false ? "oprit" : "pornit"} ${r.ai_credits_month}` },
 ];
 
+const INACTIVE_COLS: { label: string; cell: (r: InactiveAgencyRow) => React.ReactNode; csv: (r: InactiveAgencyRow) => string | number }[] = [
+  { label: "Stare", cell: (r) => agencyInactiveLabel(r.inactive_reason), csv: (r) => agencyInactiveLabel(r.inactive_reason) },
+  { label: "Data expirării", cell: (r) => r.subscription_expires_at ? formatDate(r.subscription_expires_at) : "—", csv: (r) => r.subscription_expires_at ?? "" },
+  { label: "Plan", cell: (r) => planLabel(r.plan), csv: (r) => planLabel(r.plan) },
+  { label: "Utilizatori", cell: (r) => r.users_total, csv: (r) => r.users_total },
+  { label: "Anunțuri totale", cell: (r) => r.listings_total, csv: (r) => r.listings_total },
+  { label: "Ultima activitate", cell: (r) => r.last_activity_at ? formatDateTime(r.last_activity_at) : "—", csv: (r) => r.last_activity_at ?? "" },
+];
+
+export function InactiveAgenciesTable({ rows }: { rows: InactiveAgencyRow[] }) {
+  return <div className="overflow-x-auto rounded-lg border border-border">
+    <table className="w-full min-w-[900px] text-sm" aria-label="Agenții expirate sau suspendate">
+      <thead className="bg-muted/40 font-mono text-[11px] uppercase text-muted-foreground"><tr>
+        <th className="sticky left-0 z-10 bg-card px-3 py-2 text-left">Agenție</th>
+        {INACTIVE_COLS.map((c) => <th key={c.label} className="whitespace-nowrap px-3 py-2 text-left">{c.label}</th>)}
+      </tr></thead>
+      <tbody>{rows.map((r) => <tr key={r.id} className="border-t border-border hover:bg-muted/30">
+        <td className="sticky left-0 z-10 bg-card px-3 py-2 font-medium"><Link to="/superadmin/agencies/$id" params={{ id: r.id }} className="hover:underline">{r.name}</Link>{r.is_demo ? <span className="ml-2 font-mono text-[10px] text-muted-foreground">DEMO</span> : null}</td>
+        {INACTIVE_COLS.map((c) => <td key={c.label} className="whitespace-nowrap px-3 py-2 font-mono text-[13px]">{c.cell(r)}</td>)}
+      </tr>)}</tbody>
+    </table>
+    {!rows.length && <p className="p-4 text-sm text-muted-foreground">Nicio agenție găsită.</p>}
+  </div>;
+}
+
 /** Tabelul complet de utilizare per agenție (date agregate pe server, doar superadmin). */
 export function AgencyStatsTable() {
   const fetchStats = useServerFn(getAgencyStats);
   const [includeDemo, setIncludeDemo] = useState(false);
+  const [scope, setScope] = useState<AgencyStatsScope>("active");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "listings", dir: -1 });
   const [openOrg, setOpenOrg] = useState<AgencyStatsRow | null>(null);
   const { data, isLoading, error } = useQuery({
-    queryKey: ["superadmin-stats", includeDemo],
+    queryKey: ["superadmin-stats", "sa2", includeDemo],
     queryFn: () => fetchStats({ data: { includeDemo } }),
   });
 
@@ -69,25 +97,37 @@ export function AgencyStatsTable() {
     const list = (data?.agencies ?? []).filter((r) => r.name.toLowerCase().includes(q.trim().toLowerCase()));
     const col = COLS.find((c) => c.key === sort.key);
     if (sort.key === "name") return [...list].sort((a, b) => a.name.localeCompare(b.name, "ro") * sort.dir);
-    if (!col?.num) return list;
-    return [...list].sort((a, b) => (col.num!(a) - col.num!(b)) * sort.dir);
+    const num = col?.num;
+    if (!num) return list;
+    return [...list].sort((a, b) => (num(a) - num(b)) * sort.dir);
   }, [data, q, sort]);
+
+  const inactiveRows = useMemo(() => (data?.inactiveAgencies ?? []).filter((r) =>
+    r.name.toLowerCase().includes(q.trim().toLowerCase())), [data, q]);
 
   const toggleSort = (key: string) => setSort((s) => ({ key, dir: s.key === key ? (s.dir === 1 ? -1 : 1) : -1 }));
   const exportCsv = () => {
-    const csv = toCsv(["Agenție", ...COLS.map((c) => c.label)], rows.map((r) => [r.name, ...COLS.map((c) => c.csv(r))]));
+    const csv = scope === "active"
+      ? toCsv(["Agenție", ...COLS.map((c) => c.label)], rows.map((r) => [r.name, ...COLS.map((c) => c.csv(r))]))
+      : toCsv(["Agenție", ...INACTIVE_COLS.map((c) => c.label)], inactiveRows.map((r) => [r.name, ...INACTIVE_COLS.map((c) => c.csv(r))]));
     const url = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
-    a.href = url; a.download = `agentii-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    a.href = url; a.download = `agentii-${scope}-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
   const t = data?.totals;
 
   return (
     <div className="space-y-5">
-      {t && (
+      <Tabs value={scope} onValueChange={(value) => { setScope(value === "inactive" ? "inactive" : "active"); setOpenOrg(null); }}>
+        <TabsList className="flex h-auto flex-wrap justify-start">
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="inactive">Expirate / suspendate ({data?.inactiveAgencies.length ?? "…"})</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {scope === "active" && t && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-          <SummaryCard label="Agenții act. / trial / susp." value={`${t.agencies_active} / ${t.agencies_trial} / ${t.agencies_suspended}`} />
+          <SummaryCard label="Agenții active / trial" value={`${t.agencies_active} / ${t.agencies_trial}`} />
           <SummaryCard label="Utilizatori activi" value={t.users_active} />
           <SummaryCard label="Anunțuri active" value={t.listings_active} />
           <SummaryCard label="Anunțuri publicate" value={t.listings_published} tone="success" />
@@ -104,11 +144,11 @@ export function AgencyStatsTable() {
           <Switch checked={includeDemo} onCheckedChange={setIncludeDemo} aria-label="Arată și agențiile demo" />
           Arată și agențiile demo
         </label>
-        <Button variant="outline" onClick={exportCsv} disabled={!rows.length}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
+        <Button variant="outline" onClick={exportCsv} disabled={isLoading || !!error || !(scope === "active" ? rows.length : inactiveRows.length)}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
       </div>
       {isLoading ? <ListSkeleton /> : error ? (
         <p className="text-sm text-destructive">{(error as Error).message}</p>
-      ) : (
+      ) : scope === "inactive" ? <InactiveAgenciesTable rows={inactiveRows} /> : (
         <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[1400px] text-sm">
             <thead className="bg-muted/40 font-mono text-[11px] uppercase text-muted-foreground">
@@ -132,7 +172,7 @@ export function AgencyStatsTable() {
           </table>
         </div>
       )}
-      {openOrg && <AgentPanel org={openOrg} onClose={() => setOpenOrg(null)} />}
+      {scope === "active" && openOrg && <AgentPanel org={openOrg} onClose={() => setOpenOrg(null)} />}
     </div>
   );
 }

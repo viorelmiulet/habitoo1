@@ -4,6 +4,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { averageCompletenessByAgent } from "@/lib/superadmin-stats";
+import type { AgencyInactiveReason } from "@/lib/agency-stats-scope";
+
+export type InactiveAgencyRow = {
+  id: string; name: string; status: string; plan: string | null; is_demo: boolean | null;
+  subscription_expires_at: string | null; inactive_reason: AgencyInactiveReason;
+  users_total: number; listings_total: number; last_activity_at: string | null;
+};
 
 export type AgencyStatsRow = {
   id: string; name: string; plan: string | null; status: string; is_trial: boolean | null; is_demo: boolean | null;
@@ -36,13 +43,16 @@ export const getAgencyStats = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Rpc;
     await assertSuperadminCaller(sb);
-    const [a, t] = await Promise.all([
+    const [a, t, inactive] = await Promise.all([
       sb.rpc("superadmin_agency_stats", { _include_demo: data.includeDemo }),
       sb.rpc("superadmin_platform_totals", { _include_demo: data.includeDemo }),
+      sb.rpc("superadmin_inactive_agencies", { _include_demo: data.includeDemo }),
     ]);
     if (a.error) throw new Error(a.error.message);
     if (t.error) throw new Error(t.error.message);
-    return { agencies: (a.data ?? []) as AgencyStatsRow[], totals: t.data as PlatformTotals };
+    if (inactive.error) throw new Error(inactive.error.message);
+    return { agencies: (a.data ?? []) as AgencyStatsRow[], totals: t.data as PlatformTotals,
+      inactiveAgencies: (inactive.data ?? []) as InactiveAgencyRow[] };
   });
 
 export const getAgencyAgentStats = createServerFn({ method: "GET" })
@@ -53,6 +63,7 @@ export const getAgencyAgentStats = createServerFn({ method: "GET" })
     await assertSuperadminCaller(sb);
     const { data: rows, error } = await sb.rpc("superadmin_agency_agent_stats", { _org: data.organizationId });
     if (error) throw new Error(error.message);
+    if (!Array.isArray(rows) || rows.length === 0) return [] as AgentStatsRow[];
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const props: Record<string, unknown>[] = [];
     for (let from = 0; ; from += 1000) {

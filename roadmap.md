@@ -1,3 +1,9 @@
+## SA2 — Statistici doar pentru agenții active
+- [x] Regulă comună SQL/TS, agregate active și listă separată de agenții inactive; acces exclusiv SuperAdmin
+- [x] Taburi Active / Expirate și suspendate, număr și căutare, CSV, fără panou de agenți pentru inactive
+- [x] 8 teste exclusiv SA2 pe migrarea aplicată și tabel randat; build OK; fără publicare sau modificarea datelor agențiilor
+- [ ] Verificare vizuală autentificată: solicitantul nu are cont asociat pentru sesiune; necesită autentificarea lui în previzualizare. Nu există dată separată de suspendare sau expirare trial; se afișează expirarea abonamentului când există.
+
 ## SEO1 — SEO tehnic și AEO public
 - [x] Redirect 308 pentru slash final; cache public 600s și /app no-store, verificate HTTP
 - [x] Rezumate 40–60 cuvinte, date editoriale comune, entități și FAQ dezvoltatori
