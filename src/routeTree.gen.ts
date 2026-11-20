@@ -129,6 +129,7 @@ import { Route as ApiPublicCronAcpEnrichRouteImport } from './routes/api/public/
 import { Route as ApiPublicCronActiveMatchRouteImport } from './routes/api/public/cron/active-match'
 import { Route as ApiPublicCronChatEmailRouteImport } from './routes/api/public/cron/chat-email'
 import { Route as ApiPublicCronCommissionRatesRouteImport } from './routes/api/public/cron/commission-rates'
+import { Route as ApiPublicCronDevelopmentCloneRouteImport } from './routes/api/public/cron/development-clone'
 import { Route as ApiPublicCronHouseraAvailabilityRouteImport } from './routes/api/public/cron/housera-availability'
 import { Route as ApiPublicCronHouseraEventsRouteImport } from './routes/api/public/cron/housera-events'
 import { Route as ApiPublicCronHouseraSchemaRouteImport } from './routes/api/public/cron/housera-schema'
@@ -914,6 +915,12 @@ const ApiPublicCronCommissionRatesRoute =
   ApiPublicCronCommissionRatesRouteImport.update({
     id: '/api/public/cron/commission-rates',
     path: '/api/public/cron/commission-rates',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronDevelopmentCloneRoute =
+  ApiPublicCronDevelopmentCloneRouteImport.update({
+    id: '/api/public/cron/development-clone',
+    path: '/api/public/cron/development-clone',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicCronHouseraAvailabilityRoute =
@@ -1763,6 +1770,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/active-match': typeof ApiPublicCronActiveMatchRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
+  '/api/public/cron/development-clone': typeof ApiPublicCronDevelopmentCloneRoute
   '/api/public/cron/housera-availability': typeof ApiPublicCronHouseraAvailabilityRoute
   '/api/public/cron/housera-events': typeof ApiPublicCronHouseraEventsRoute
   '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
@@ -2007,6 +2015,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/active-match': typeof ApiPublicCronActiveMatchRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
+  '/api/public/cron/development-clone': typeof ApiPublicCronDevelopmentCloneRoute
   '/api/public/cron/housera-availability': typeof ApiPublicCronHouseraAvailabilityRoute
   '/api/public/cron/housera-events': typeof ApiPublicCronHouseraEventsRoute
   '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
@@ -2257,6 +2266,7 @@ export interface FileRoutesById {
   '/api/public/cron/active-match': typeof ApiPublicCronActiveMatchRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
+  '/api/public/cron/development-clone': typeof ApiPublicCronDevelopmentCloneRoute
   '/api/public/cron/housera-availability': typeof ApiPublicCronHouseraAvailabilityRoute
   '/api/public/cron/housera-events': typeof ApiPublicCronHouseraEventsRoute
   '/api/public/cron/housera-schema': typeof ApiPublicCronHouseraSchemaRoute
@@ -2507,6 +2517,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/active-match'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
+    | '/api/public/cron/development-clone'
     | '/api/public/cron/housera-availability'
     | '/api/public/cron/housera-events'
     | '/api/public/cron/housera-schema'
@@ -2751,6 +2762,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/active-match'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
+    | '/api/public/cron/development-clone'
     | '/api/public/cron/housera-availability'
     | '/api/public/cron/housera-events'
     | '/api/public/cron/housera-schema'
@@ -3000,6 +3012,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/active-match'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/commission-rates'
+    | '/api/public/cron/development-clone'
     | '/api/public/cron/housera-availability'
     | '/api/public/cron/housera-events'
     | '/api/public/cron/housera-schema'
@@ -3188,6 +3201,7 @@ export interface RootRouteChildren {
   ApiPublicCronActiveMatchRoute: typeof ApiPublicCronActiveMatchRoute
   ApiPublicCronChatEmailRoute: typeof ApiPublicCronChatEmailRoute
   ApiPublicCronCommissionRatesRoute: typeof ApiPublicCronCommissionRatesRoute
+  ApiPublicCronDevelopmentCloneRoute: typeof ApiPublicCronDevelopmentCloneRoute
   ApiPublicCronHouseraAvailabilityRoute: typeof ApiPublicCronHouseraAvailabilityRoute
   ApiPublicCronHouseraEventsRoute: typeof ApiPublicCronHouseraEventsRoute
   ApiPublicCronHouseraSchemaRoute: typeof ApiPublicCronHouseraSchemaRoute
@@ -4138,6 +4152,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/commission-rates'
       fullPath: '/api/public/cron/commission-rates'
       preLoaderRoute: typeof ApiPublicCronCommissionRatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/development-clone': {
+      id: '/api/public/cron/development-clone'
+      path: '/api/public/cron/development-clone'
+      fullPath: '/api/public/cron/development-clone'
+      preLoaderRoute: typeof ApiPublicCronDevelopmentCloneRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/housera-availability': {
@@ -5510,6 +5531,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronActiveMatchRoute: ApiPublicCronActiveMatchRoute,
   ApiPublicCronChatEmailRoute: ApiPublicCronChatEmailRoute,
   ApiPublicCronCommissionRatesRoute: ApiPublicCronCommissionRatesRoute,
+  ApiPublicCronDevelopmentCloneRoute: ApiPublicCronDevelopmentCloneRoute,
   ApiPublicCronHouseraAvailabilityRoute: ApiPublicCronHouseraAvailabilityRoute,
   ApiPublicCronHouseraEventsRoute: ApiPublicCronHouseraEventsRoute,
   ApiPublicCronHouseraSchemaRoute: ApiPublicCronHouseraSchemaRoute,

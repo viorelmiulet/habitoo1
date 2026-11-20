@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
-import { cloneToDevelopment } from "@/lib/developments/clone.functions";
+import { startDevelopmentClone } from "@/lib/developments/clone.functions";
+import { CLONE_STARTED_TEXT } from "@/lib/developments/clone-jobs";
 import { errorMessage } from "@/lib/developments/error-message";
 import type { CloneResult } from "@/lib/developments/clone";
 
@@ -24,31 +25,30 @@ export function AllocateResult({ result }: { result: CloneResult }) {
 export function AllocateToDevelopmentDialog({ open, onOpenChange, propertyIds, developments, onDone, run }: {
   open: boolean; onOpenChange: (o: boolean) => void; propertyIds: string[];
   developments: { id: string; name: string }[]; onDone: () => void;
-  run?: (input: { data: { developmentId: string; propertyIds: string[] } }) => Promise<CloneResult>;
+  run?: (input: { data: { developmentId: string; propertyIds: string[] } }) => Promise<{ jobId: string }>;
 }) {
-  const serverRun = useServerFn(cloneToDevelopment);
+  const serverRun = useServerFn(startDevelopmentClone);
   const call = run ?? serverRun;
   const [developmentId, setDevelopmentId] = useState(developments.length === 1 ? developments[0]!.id : "");
-  const [result, setResult] = useState<CloneResult | null>(null);
   const m = useMutation({
     mutationFn: () => call({ data: { developmentId, propertyIds } }),
-    onSuccess: (r) => { setResult(r); onDone(); },
+    onSuccess: () => { toast.success(CLONE_STARTED_TEXT); onDone(); close(false); },
     onError: (e) => { console.error(e); toast.error(errorMessage(e, "Copiile nu au putut fi create.")); },
   });
-  const close = (o: boolean) => { if (!o) { setResult(null); setDevelopmentId(developments.length === 1 ? developments[0]!.id : ""); } onOpenChange(o); };
+  const close = (o: boolean) => { if (!o) { setDevelopmentId(developments.length === 1 ? developments[0]!.id : ""); } onOpenChange(o); };
   return (
     <Dialog open={open} onOpenChange={close}>
       <DialogContent>
         <DialogHeader><DialogTitle>Alocă la ansamblu</DialogTitle>
-          {result ? null : <DialogDescription>{allocateText(propertyIds.length)}</DialogDescription>}</DialogHeader>
-        {result ? <><AllocateResult result={result} /><Button onClick={() => close(false)}>Închide</Button></> : <>
+          <DialogDescription>{allocateText(propertyIds.length)}</DialogDescription></DialogHeader>
+        <>
           <Select value={developmentId} onValueChange={setDevelopmentId}>
             <SelectTrigger aria-label="Ansamblu"><SelectValue placeholder="Alege ansamblul" /></SelectTrigger>
             <SelectContent>{developments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
           </Select>
           {developments.length === 0 ? <p className="text-sm text-muted-foreground">Nu ai ansambluri pe care le poți edita.</p> : null}
           <Button disabled={!developmentId || !propertyIds.length || m.isPending} onClick={() => m.mutate()}>Creează {propertyIds.length} copii</Button>
-        </>}
+        </>
       </DialogContent>
     </Dialog>
   );

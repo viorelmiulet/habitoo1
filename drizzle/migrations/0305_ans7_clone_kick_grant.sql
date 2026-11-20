@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.development_clone_kick() TO authenticated;

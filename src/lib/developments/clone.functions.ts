@@ -43,24 +43,13 @@ export async function cloneToDevelopmentCore(user: Rpc, input: { developmentId: 
   return { copies: out.copies as CloneCopy[], skipped: out.skipped as CloneSkip[], portalSkipped, photoErrors };
 }
 
-export const cloneToDevelopment = createServerFn({ method: "POST" })
+/** Starts a background allocation: rights/visibility are checked as the caller; only the job is created. */
+export const startDevelopmentClone = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((d: unknown) => z.object({ developmentId: z.string().uuid(), propertyIds: z.array(z.string().uuid()).min(1).max(CLONE_MAX) }).parse(d))
   .handler(async ({ data, context }) => {
-    const ctx = context as unknown as { userId: string; supabase: Rpc };
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { activatedPortalIds, applyPortalSelectionForOrg } = await import("@/lib/portals.functions");
-    return cloneToDevelopmentCore(ctx.supabase, data, {
-      copyFile: async (from, to) => !(await supabaseAdmin.storage.from("property-media").copy(from, to)).error,
-      removeImage: async (copyId, path) => { await supabaseAdmin.from("property_images").delete().eq("property_id", copyId).eq("storage_path", path); },
-      activatedPortals: activatedPortalIds,
-      organizationOf: async (id) => {
-        const { data: d } = await supabaseAdmin.from("developments").select("organization_id").eq("id", id).single();
-        return d!.organization_id as string;
-      },
-      applySelection: async (orgId, propertyId, portals) => (await applyPortalSelectionForOrg({
-        organizationId: orgId, superadmin: false, actorId: ctx.userId,
-        data: { propertyId, syncExisting: false, selections: portals.map((portalId) => ({ portalId, enabled: true })) },
-      })).results,
-    });
+    const ctx = context as unknown as { supabase: Rpc };
+    const { data: jobId, error } = await ctx.supabase.rpc("start_development_clone_job", { _development_id: data.developmentId, _property_ids: data.propertyIds });
+    if (error) throw error;
+    return { jobId: jobId as string };
   });

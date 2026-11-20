@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 vi.mock("@tanstack/react-router", () => ({ Link: ({ to, params, children, ...rest }: { to: string; params: { id: string }; children: React.ReactNode }) => <a href={to.replace("$id", params.id)} {...rest}>{children}</a> }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (f: unknown) => f, createServerFn: () => ({ middleware: () => ({ inputValidator: () => ({ handler: () => vi.fn() }) }) }) }));
-vi.mock("@/lib/developments/clone.functions", () => ({ cloneToDevelopment: vi.fn() }));
+vi.mock("@/lib/developments/clone.functions", () => ({ startDevelopmentClone: vi.fn() }));
 import { AllocateAction, AllocateResult, AllocateToDevelopmentDialog, allocateText } from "./AllocateToDevelopmentDialog";
 import { CloneMarks } from "./CloneMarks";
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -18,12 +18,13 @@ it("butonul „Alocă la ansamblu” apare doar cu selecție", () => {
   expect(renderToStaticMarkup(<AllocateAction count={2} onClick={() => {}} />)).toContain("Alocă la ansamblu");
 });
 
-it("dialogul trimite ID-urile selectate și ansamblul ales, apoi afișează perechile", async () => {
-  const run = vi.fn(async () => result);
+it("dialogul trimite ID-urile selectate și ansamblul ales, pornește jobul și se închide", async () => {
+  const run = vi.fn(async () => ({ jobId: "job-1" }));
+  const onOpenChange = vi.fn();
   const onDone = vi.fn();
   const el = document.createElement("div"); document.body.appendChild(el);
   const root = createRoot(el);
-  await act(async () => root.render(<QueryClientProvider client={new QueryClient()}><AllocateToDevelopmentDialog open onOpenChange={() => {}} propertyIds={["o1", "o2"]} developments={[{ id: "dev-1", name: "Parcul Verde" }]} onDone={onDone} run={run} /></QueryClientProvider>));
+  await act(async () => root.render(<QueryClientProvider client={new QueryClient()}><AllocateToDevelopmentDialog open onOpenChange={onOpenChange} propertyIds={["o1", "o2"]} developments={[{ id: "dev-1", name: "Parcul Verde" }]} onDone={onDone} run={run} /></QueryClientProvider>));
   expect(document.body.textContent).toContain(allocateText(2));
   expect(allocateText(2)).toBe("Se vor crea 2 copii noi cu referințe noi. Anunțurile originale rămân neschimbate.");
   const btn = [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("Creează"))!;
@@ -31,7 +32,7 @@ it("dialogul trimite ID-urile selectate și ansamblul ales, apoi afișează pere
   await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
   expect(run).toHaveBeenCalledWith({ data: { developmentId: "dev-1", propertyIds: ["o1", "o2"] } });
   expect(onDone).toHaveBeenCalled();
-  expect(document.body.textContent).toContain("HB-1126 → HB-1234");
+  expect(onOpenChange).toHaveBeenCalledWith(false);
   root.unmount();
 });
 

@@ -2129,6 +2129,20 @@
       "when": 1795199839252,
       "tag": "0303_ans6_clone_keeps_publish_status",
       "breakpoints": true
+    },
+    {
+      "idx": 304,
+      "version": "7",
+      "when": 1795205929014,
+      "tag": "0304_ans7_development_clone_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 305,
+      "version": "7",
+      "when": 1795205969526,
+      "tag": "0305_ans7_clone_kick_grant",
+      "breakpoints": true
     }
   ]
 }

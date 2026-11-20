@@ -3281,6 +3281,78 @@ export type Database = {
         }
         Relationships: []
       }
+      development_clone_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          current_item: Json | null
+          development_id: string
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          organization_id: string
+          processed: number
+          property_ids: string[]
+          requested_by: string
+          result: Json
+          started_at: string | null
+          status: string
+          total: number
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          current_item?: Json | null
+          development_id: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          organization_id: string
+          processed?: number
+          property_ids: string[]
+          requested_by: string
+          result?: Json
+          started_at?: string | null
+          status?: string
+          total?: number
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          current_item?: Json | null
+          development_id?: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          organization_id?: string
+          processed?: number
+          property_ids?: string[]
+          requested_by?: string
+          result?: Json
+          started_at?: string | null
+          status?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "development_clone_jobs_development_id_fkey"
+            columns: ["development_id"]
+            isOneToOne: false
+            referencedRelation: "developments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_clone_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       development_images: {
         Row: {
           created_at: string
@@ -13897,6 +13969,33 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_development_clone_job: {
+        Args: { _lease_seconds?: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          current_item: Json | null
+          development_id: string
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          organization_id: string
+          processed: number
+          property_ids: string[]
+          requested_by: string
+          result: Json
+          started_at: string | null
+          status: string
+          total: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "development_clone_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       claim_due_portal_publish_schedules: {
         Args: { _lease_seconds: number; _limit: number }
         Returns: {
@@ -14222,6 +14321,25 @@ export type Database = {
       delete_development: { Args: { _id: string }; Returns: undefined }
       delete_lead: { Args: { _id: string }; Returns: string }
       delete_property: { Args: { _id: string }; Returns: string }
+      development_clone_job_advance: {
+        Args: {
+          _index: number
+          _job_id: string
+          _photo_errors: number
+          _portal_skipped: Json
+        }
+        Returns: undefined
+      }
+      development_clone_job_finish: {
+        Args: { _error: string; _job_id: string }
+        Returns: undefined
+      }
+      development_clone_job_release: {
+        Args: { _job_id: string }
+        Returns: undefined
+      }
+      development_clone_job_step: { Args: { _job_id: string }; Returns: Json }
+      development_clone_kick: { Args: never; Returns: undefined }
       development_summaries: { Args: { _ids: string[] }; Returns: Json }
       development_unit_summary: { Args: { _id: string }; Returns: Json }
       email_job_finish: {
@@ -15201,6 +15319,10 @@ export type Database = {
           _views: number
         }
         Returns: boolean
+      }
+      start_development_clone_job: {
+        Args: { _development_id: string; _property_ids: string[] }
+        Returns: string
       }
       start_portal_bulk_job: {
         Args: {
