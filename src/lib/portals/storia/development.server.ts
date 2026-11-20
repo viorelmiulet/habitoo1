@@ -95,3 +95,19 @@ export async function queueDevelopmentClone(organizationId:string,propertyId:str
  if(!live)return;
  try{const {supabaseAdmin}=await import('@/integrations/supabase/client.server');await syncDevelopmentClone(supabaseAdmin,organizationId,propertyId,withdraw);}catch(e){console.error('[storia] development clone sync failed',e instanceof Error?e.message:e);}
 }
+
+/** Storia selection for a development copy: saves the intent and drives only the developer-account unit. */
+export async function applyDevelopmentCopyStoria(db:Db,input:{organizationId:string;propertyId:string;enabled:boolean;actorId:string|null;withdrawReason?:string|null}):Promise<{portalId:string;portalName:string;action:'selected'|'withdrawn';ok:boolean;message:string|null}>{
+ const now=new Date().toISOString();
+ const {error}=await db.from('portal_publications').upsert({organization_id:input.organizationId,property_id:input.propertyId,portal_key:'storia',enabled:input.enabled,status:input.enabled?'pending':'disabled',withdrawn_at:input.enabled?null:now,withdraw_reason:input.enabled?null:(input.withdrawReason??null),updated_by:input.actorId},{onConflict:'organization_id,property_id,portal_key'});
+ if(error)return {portalId:'storia',portalName:'Storia',action:input.enabled?'selected':'withdrawn',ok:false,message:'Selecția Storia nu a putut fi salvată.'};
+ try{const out=await syncDevelopmentClone(db,input.organizationId,input.propertyId,!input.enabled);
+  return {portalId:'storia',portalName:'Storia',action:input.enabled?'selected':'withdrawn',ok:true,message:input.enabled?(out==='queued_publish'?'Unitatea se publică în contul de dezvoltator.':'Unitatea se publică în contul de dezvoltator după publicarea investiției.'):'Unitatea se retrage din contul de dezvoltator.'};
+ }catch(e){return {portalId:'storia',portalName:'Storia',action:input.enabled?'selected':'withdrawn',ok:false,message:e instanceof Error?e.message:'Unitatea nu a putut fi actualizată.'};}
+}
+/** True when the property is a development copy: no agency-account Storia advert may be created or updated. */
+export async function isDevelopmentCopy(organizationId:string,propertyId:string):Promise<boolean>{
+ const {supabaseAdmin}=await import('@/integrations/supabase/client.server');
+ const {data}=await supabaseAdmin.from('properties').select('development_id').eq('id',propertyId).eq('organization_id',organizationId).maybeSingle();
+ return Boolean(data?.development_id);
+}

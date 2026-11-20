@@ -14,11 +14,19 @@ export function StoriaCloneRows({ propertyId, agencyStatus, agencyUrl }: { prope
       return data ?? [];
     },
   });
-  if (!clones.length) return null;
+  const { data: isCopy = false } = useQuery({
+    queryKey: ["property-development-copy", propertyId],
+    queryFn: async () => {
+      const { data } = await supabase.from("properties").select("development_id").eq("id", propertyId).maybeSingle();
+      return Boolean(data?.development_id);
+    },
+  });
+  if (!clones.length && !isCopy) return null;
   const link = (url: string | null) => url?.startsWith("https://") ? <a href={url} target="_blank" rel="noreferrer" className="ml-1 text-primary underline">Vezi anunțul</a> : null;
   return (
     <ul className="mt-2 space-y-1 text-xs" data-testid="storia-clone-rows">
-      <li><span className="font-medium">Cont agenție:</span> {agencyStatus}{link(agencyUrl)}</li>
+      {isCopy ? null : <li><span className="font-medium">Cont agenție:</span> {agencyStatus}{link(agencyUrl)}</li>}
+      {isCopy && !clones.length ? <li><span className="font-medium">Ansamblu (cont dezvoltator):</span> Nepublicat</li> : null}
       {clones.map((c) => (
         <li key={c.id}>
           <span className="font-medium">Ansamblu (cont dezvoltator):</span> {cloneStatusLabel(c.status)}{clones.length > 1 ? ` · ${c.transaction_kind === "sale" ? "Vânzare" : "Închiriere"}` : ""}{link(c.public_url)}

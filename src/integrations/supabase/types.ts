@@ -10719,6 +10719,7 @@ export type Database = {
           built_surface: number | null
           category: string | null
           city: string | null
+          cloned_from_property_id: string | null
           collab_commission_percent: number | null
           collab_terms: string | null
           collaboration: boolean
@@ -10858,6 +10859,7 @@ export type Database = {
           built_surface?: number | null
           category?: string | null
           city?: string | null
+          cloned_from_property_id?: string | null
           collab_commission_percent?: number | null
           collab_terms?: string | null
           collaboration?: boolean
@@ -10997,6 +10999,7 @@ export type Database = {
           built_surface?: number | null
           category?: string | null
           city?: string | null
+          cloned_from_property_id?: string | null
           collab_commission_percent?: number | null
           collab_terms?: string | null
           collaboration?: boolean
@@ -11112,6 +11115,13 @@ export type Database = {
           windows?: string[]
         }
         Relationships: [
+          {
+            foreignKeyName: "properties_cloned_from_property_id_fkey"
+            columns: ["cloned_from_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "properties_county_siruta_code_fkey"
             columns: ["county_siruta_code"]
@@ -14153,6 +14163,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      clone_properties_to_development: {
+        Args: { _development_id: string; _property_ids: string[] }
+        Returns: Json
+      }
       close_stale_portal_bulk_jobs: { Args: { _org?: string }; Returns: number }
       close_stale_portal_publish_jobs: {
         Args: { _org?: string }
@@ -15006,6 +15020,7 @@ export type Database = {
           built_surface: number | null
           category: string | null
           city: string | null
+          cloned_from_property_id: string | null
           collab_commission_percent: number | null
           collab_terms: string | null
           collaboration: boolean

@@ -2115,6 +2115,13 @@
       "when": 1795188539562,
       "tag": "0301_ans4_storia_clone_public_url",
       "breakpoints": true
+    },
+    {
+      "idx": 302,
+      "version": "7",
+      "when": 1795196959632,
+      "tag": "0302_ans5_clone_properties_to_development",
+      "breakpoints": true
     }
   ]
 }

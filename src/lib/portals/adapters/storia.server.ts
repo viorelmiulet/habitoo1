@@ -155,7 +155,21 @@ async function pushListing(
   mode: "publish" | "update",
 ): Promise<PortalResult<ListingOutcome>> {
   // Development clone is a separate developer-account advert; the agency advert continues normally.
-  await (await import("../storia/development.server")).queueDevelopmentClone(ctx.organizationId, ref.propertyId, false, ctx.allowLiveRequests);
+  const dev = await import("../storia/development.server");
+  await dev.queueDevelopmentClone(ctx.organizationId, ref.propertyId, false, ctx.allowLiveRequests);
+  // Development copies live only in the developer account: never create/update an agency advert.
+  if (await dev.isDevelopmentCopy(ctx.organizationId, ref.propertyId)) {
+    return {
+      ok: true,
+      data: {
+        externalId: ref.externalId ?? null,
+        live: false,
+        detail: "storia: unitate de ansamblu, publicată doar în contul de dezvoltator",
+        portalStatus: "pending",
+        message: "Unitatea de ansamblu se publică doar în contul de dezvoltator Storia.",
+      },
+    } as never;
+  }
   const ready = await requireConnection(ctx);
   if (!ready.ok) return ready;
 

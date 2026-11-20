@@ -3083,7 +3083,7 @@ export async function applyPortalSelectionForOrg(input: {
 
     const { data: property } = await admin
       .from("properties")
-      .select("id, assigned_to")
+      .select("id, assigned_to, development_id")
       .eq("id", data.propertyId)
       .eq("organization_id", organizationId)
       .maybeSingle();
@@ -3282,6 +3282,13 @@ export async function applyPortalSelectionForOrg(input: {
             });
             continue;
           }
+        }
+
+        // Development copies: Storia only as a developer-account unit, never an agency advert/job.
+        if (definition.id === "storia" && property.development_id) {
+          const { applyDevelopmentCopyStoria } = await import("@/lib/portals/storia/development.server");
+          results.push(await applyDevelopmentCopyStoria(admin as never, { organizationId, propertyId: data.propertyId, enabled: wanted.enabled, actorId, withdrawReason: input.withdrawReason ?? null }));
+          continue;
         }
 
         // Intenția se salvează întotdeauna când se schimbă.
