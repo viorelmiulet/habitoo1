@@ -154,6 +154,8 @@ async function pushListing(
   ref: ListingRef,
   mode: "publish" | "update",
 ): Promise<PortalResult<ListingOutcome>> {
+  const developerRoute = await (await import("../storia/development.server")).routeDevelopmentUnit(ctx.organizationId, ref.propertyId, false, ctx.allowLiveRequests);
+  if (developerRoute) return developerRoute;
   const ready = await requireConnection(ctx);
   if (!ready.ok) return ready;
 
@@ -373,6 +375,8 @@ export const storiaAdapter: PortalAdapter = {
   },
 
   async withdrawListing(ctx, ref) {
+    const developerRoute = await (await import("../storia/development.server")).routeDevelopmentUnit(ctx.organizationId, ref.propertyId, true, ctx.allowLiveRequests);
+    if (developerRoute) return developerRoute;
     const ready = await requireConnection(ctx);
     if (!ready.ok) return ready;
 

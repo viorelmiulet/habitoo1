@@ -82,6 +82,7 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/oauth/callbac
             tokens,
             actorId: null,
             initial: true,
+            account: validated.account,
           });
           await log(true, null);
           return done({ org: validated.organizationId, storia: "connected" });

@@ -1,3 +1,4 @@
+import { StoriaAccountControls } from "@/components/app/StoriaAccountControls";
 import { isKeyRequestPortal, keyRequestLabel } from "@/lib/portals/imospot-key-request";
 import { useEffect } from "react";
 import { Link } from "@tanstack/react-router";
@@ -150,7 +151,7 @@ export function AgencyPortalCatalogCard() {
                   </div>
                 ) : null}
                 <div data-portal-statuses className="flex flex-wrap min-w-0 items-center gap-2 sm:ml-auto sm:justify-end">
-                    {item.id === "housera" && organizationId ? (
+                    {item.id === "storia" && organizationId ? <StoriaAccountControls organizationId={organizationId}/> : item.id === "housera" && organizationId ? (
                       <HouseraConnectionControls
                         organizationId={organizationId}
                         configured={item.houseraConfigured === true}

@@ -113,12 +113,13 @@ function hashState(raw: string): string {
 export async function createStoriaOAuthState(input: {
   organizationId: string;
   createdBy: string | null;
+  account?: "agency" | "developer";
 }): Promise<string> {
   const raw = randomBytes(32).toString("base64url");
   const db = await admin();
   const { error } = await db.from("portal_oauth_states").insert({
     organization_id: input.organizationId,
-    portal: "storia",
+    portal: input.account === "developer" ? "storia_developer" : "storia",
     state_hash: hashState(raw),
     created_by: input.createdBy,
     expires_at: new Date(Date.now() + STORIA_STATE_TTL_MS).toISOString(),
@@ -130,13 +131,13 @@ export async function createStoriaOAuthState(input: {
 /** Validează și consumă `state`-ul primit la retur. Returnează agenția vizată. */
 export async function consumeStoriaOAuthState(
   raw: string | null,
-): Promise<{ organizationId: string; createdBy: string | null } | null> {
+): Promise<{ organizationId: string; createdBy: string | null; account: "agency" | "developer" } | null> {
   if (!raw || raw.length < 20 || raw.length > 200) return null;
   const db = await admin();
   const { data } = await db
     .from("portal_oauth_states")
-    .select("id, organization_id, state_hash, expires_at, consumed_at, created_by")
-    .eq("portal", "storia")
+    .select("id, organization_id, portal, state_hash, expires_at, consumed_at, created_by")
+    .in("portal", ["storia", "storia_developer"])
     .eq("state_hash", hashState(raw))
     .maybeSingle();
   if (!data || data.consumed_at) return null;
@@ -157,7 +158,7 @@ export async function consumeStoriaOAuthState(
   // Dacă altcineva l-a consumat între timp, refuzăm (single-use real).
   if (!consumed) return null;
 
-  return { organizationId: data.organization_id, createdBy: data.created_by ?? null };
+  return { organizationId: data.organization_id, createdBy: data.created_by ?? null, account: data.portal === "storia_developer" ? "developer" : "agency" };
 }
 
 /** URL-ul de autorizare către care trimitem browserul agenției. */
@@ -251,13 +252,13 @@ export async function refreshStoriaTokens(refreshToken: string): Promise<StoriaT
 
 // ------------------------------------------------------------- token persistăm
 
-export async function loadStoriaTokens(organizationId: string): Promise<StoriaTokens | null> {
+export async function loadStoriaTokens(organizationId: string, account: "agency" | "developer" = "agency"): Promise<StoriaTokens | null> {
   const db = await admin();
   const { data } = await db
     .from("portal_connections")
     .select("portal_credentials_encrypted")
     .eq("organization_id", organizationId)
-    .eq("portal", "storia")
+    .eq("portal", account === "developer" ? "storia_developer" : "storia")
     .maybeSingle();
   if (!data?.portal_credentials_encrypted) return null;
   try {
@@ -277,6 +278,7 @@ export async function saveStoriaTokens(input: {
   actorId: string | null;
   /** Prima conectare (nu doar o reîmprospătare). */
   initial: boolean;
+  account?: "agency" | "developer";
 }): Promise<void> {
   const db = await admin();
   const { encryptPortalCredential } = await import("../crypto.server");
@@ -286,7 +288,7 @@ export async function saveStoriaTokens(input: {
     .from("portal_connections")
     .select("id, settings")
     .eq("organization_id", input.organizationId)
-    .eq("portal", "storia")
+    .eq("portal", input.account === "developer" ? "storia_developer" : "storia")
     .maybeSingle();
 
   const settings = { ...((row?.settings ?? {}) as Record<string, unknown>) };
@@ -305,7 +307,7 @@ export async function saveStoriaTokens(input: {
 
   const patch = {
     organization_id: input.organizationId,
-    portal: "storia",
+    portal: input.account === "developer" ? "storia_developer" : "storia",
     direction: "habitoo_to_portal",
     authentication_mode: "oauth",
     portal_credentials_encrypted: encryptPortalCredential(JSON.stringify(input.tokens)),
@@ -329,13 +331,14 @@ export async function saveStoriaTokens(input: {
 export async function clearStoriaTokens(
   organizationId: string,
   actorId: string | null,
+  account: "agency" | "developer" = "agency",
 ): Promise<void> {
   const db = await admin();
   const { data: row } = await db
     .from("portal_connections")
     .select("id, settings")
     .eq("organization_id", organizationId)
-    .eq("portal", "storia")
+    .eq("portal", account === "developer" ? "storia_developer" : "storia")
     .maybeSingle();
   if (!row) return;
   const settings = { ...((row.settings ?? {}) as Record<string, unknown>) };
@@ -355,9 +358,10 @@ export async function clearStoriaTokens(
 /** Tokenul valabil al agenției, reîmprospătat automat dacă e pe expirare. */
 export async function getStoriaAccessToken(
   organizationId: string,
-  options: { force?: boolean } = {},
+  options: { force?: boolean; account?: "agency" | "developer" } = {},
 ): Promise<string> {
-  const tokens = await loadStoriaTokens(organizationId);
+  const account = options.account ?? "agency";
+  const tokens = await loadStoriaTokens(organizationId, account);
   if (!tokens) {
     throw new PortalError(
       "AUTH_ERROR",
@@ -370,7 +374,7 @@ export async function getStoriaAccessToken(
   if (!options.force && !expiringSoon) return tokens.access_token;
 
   if (!tokens.refresh_token) {
-    await markStoriaReconnectRequired(organizationId, "refresh_token_missing");
+    await markStoriaReconnectRequired(organizationId, "refresh_token_missing", account);
     throw new PortalError(
       "AUTH_ERROR",
       "storia_refresh_token_missing",
@@ -382,7 +386,7 @@ export async function getStoriaAccessToken(
     refreshed = await refreshStoriaTokens(tokens.refresh_token);
   } catch (error) {
     if (isPermanentRefreshFailure(error)) {
-      await markStoriaReconnectRequired(organizationId, (error as PortalError).detail ?? "refresh_failed");
+      await markStoriaReconnectRequired(organizationId, (error as PortalError).detail ?? "refresh_failed", account);
     }
     throw error;
   }
@@ -391,7 +395,7 @@ export async function getStoriaAccessToken(
     ...refreshed,
     refresh_token: refreshed.refresh_token ?? tokens.refresh_token,
   };
-  await saveStoriaTokens({ organizationId, tokens: next, actorId: null, initial: false });
+  await saveStoriaTokens({ organizationId, tokens: next, actorId: null, initial: false, account });
   return next.access_token;
 }
 
@@ -414,6 +418,7 @@ export function isPermanentRefreshFailure(error: unknown): boolean {
 export async function markStoriaReconnectRequired(
   organizationId: string,
   reason: string,
+  account: "agency" | "developer" = "agency",
 ): Promise<void> {
   try {
     const db = await admin();
@@ -421,7 +426,7 @@ export async function markStoriaReconnectRequired(
       .from("portal_connections")
       .select("id, settings")
       .eq("organization_id", organizationId)
-      .eq("portal", "storia")
+      .eq("portal", account === "developer" ? "storia_developer" : "storia")
       .maybeSingle();
     if (!row) return;
     const settings = { ...((row.settings ?? {}) as Record<string, unknown>) };
@@ -473,9 +478,10 @@ export async function olxAuthorizedRequest(
   path: string,
   payload?: unknown,
   retriedAfterRefresh = false,
+  account: "agency" | "developer" = "agency",
 ): Promise<OlxResponse> {
   const { apiKey } = appCredentials();
-  const accessToken = await getStoriaAccessToken(organizationId, { force: retriedAfterRefresh });
+  const accessToken = await getStoriaAccessToken(organizationId, { force: retriedAfterRefresh, account });
   const url = new URL(`${OLX_API_BASE}${path.startsWith("/") ? path : `/${path}`}`);
   if (url.protocol !== "https:" || url.hostname !== "api.olxgroup.com") {
     throw new PortalError("CONFIG_ERROR", "blocked_host");
@@ -504,11 +510,11 @@ export async function olxAuthorizedRequest(
   }
 
   if ((response.status === 401 || response.status === 403) && !retriedAfterRefresh) {
-    return olxAuthorizedRequest(organizationId, method, path, payload, true);
+    return olxAuthorizedRequest(organizationId, method, path, payload, true, account);
   }
   // 401 persistent chiar cu token proaspăt reînnoit: accesul a fost revocat.
   if (response.status === 401 && retriedAfterRefresh) {
-    await markStoriaReconnectRequired(organizationId, "access_revoked");
+    await markStoriaReconnectRequired(organizationId, "access_revoked", account);
   }
 
   const fullText = await response.text().catch(() => "");

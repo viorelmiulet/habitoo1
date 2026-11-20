@@ -72,6 +72,8 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
           });
           return out.results.find((r) => r.portalId === job.portal_key) ?? null;
         });
+        const { runDevelopmentWorker } = await import("@/lib/portals/storia/development.server");
+        await runDevelopmentWorker(supabaseAdmin);
         await relayRecovery;
         await refreshRepublishBatches(supabaseAdmin).catch((e: unknown) =>
           console.error("[portal-republish] progresul nu a putut fi actualizat", String(e).slice(0, 200)),

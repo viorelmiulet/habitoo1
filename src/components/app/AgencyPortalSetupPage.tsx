@@ -1,3 +1,4 @@
+import { StoriaAccountControls } from "@/components/app/StoriaAccountControls";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -258,7 +259,7 @@ function AgencyPortalSetupBody({ portalId, organizationId }: { portalId: string;
 
         {isOAuth ? (
           <div className="flex flex-wrap gap-2">
-            {s.id === "zup" ? (
+            {s.id === "storia" && organizationId ? <StoriaAccountControls organizationId={organizationId}/> : s.id === "zup" ? (
               <>
                 <Button className="h-auto min-h-11 whitespace-normal" disabled={connect.isPending || catalogItem?.zupConfigured !== true} onClick={() => connect.mutate()}>
                   {catalogItem?.zupConfigured !== true ? ZUP_MISSING_MESSAGE : catalogItem.zupConnected ? "Reconectează contul ZUP" : "Conectează contul ZUP"}

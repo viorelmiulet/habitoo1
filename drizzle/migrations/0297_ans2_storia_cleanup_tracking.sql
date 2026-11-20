@@ -1,0 +1,2 @@
+ALTER TABLE public.storia_development_units ADD COLUMN old_withdrawn_at timestamptz;
+CREATE UNIQUE INDEX storia_development_one_running ON public.storia_development_jobs(development_id) WHERE status='running';

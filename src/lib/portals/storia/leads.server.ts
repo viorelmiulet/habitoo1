@@ -550,6 +550,8 @@ export async function processLifecycle(
   admin: Admin,
   shape: StoriaEventShape,
 ): Promise<StoriaProcessResult> {
+  const developmentResult = await (await import("./development.server")).processDevelopmentLifecycle(admin, shape);
+  if (developmentResult) return developmentResult;
   const match = await matchListing(admin, shape);
   if (!match) {
     return {

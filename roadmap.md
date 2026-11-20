@@ -1,3 +1,9 @@
+## ANS2 — Storia Primary Market
+- [x] Documentație actuală și GET real taxonomie salvat în repo; adăugate area_from, area_to, price_per_sqm_from, estate_type și opțional construction_start_date. Stadiul și total_units existau; buildings_count și price_to nu au URN în taxonomie și nu sunt inventate.
+- [x] Cont dezvoltator separat, publicare durabilă părinte/unități și notificări; mutare confirmată, retragere veche după succes, isolated primary și retragerea unităților scoase
+- [x] Interfață; 23 teste ANS2 și testul formularului trec; build OK; commit la încheiere, fără publicare sau apeluri de modificare Storia
+- [ ] Verificare vizuală autentificată: mintarea contului propriu nu găsește un utilizator asociat; necesită autentificarea solicitantului în previzualizare. Fluxurile verificate cu date simulate și bază izolată, fără publicări reale.
+
 ## ANS1 — Ansambluri
 - [x] Schemă, acces pe agenție/agent, atașare atomică, ștergere logică și interval automat la citire, fără amestecarea monedelor
 - [x] Listă/fișă, fotografii, unități, selector și filtru în Proprietăți

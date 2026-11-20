@@ -1,0 +1,3 @@
+- Primary Market OAuth uses a separate encrypted storia_developer connection and account-bound OAuth state with the existing OLX application; never register it as another listing portal. Why: agency and developer tokens must not mix.
+- Investment jobs share the armed portal worker, with one running job per development; verified lifecycle success queues selected units using the same developer account, and old agency UUIDs retire only after replacement-unit activation. Why: asynchronous parent validation and safe account migration.
+- Investment mandatory attributes come from reference/investments-taxonomy.json; never infer missing required values or emit unsupported URNs. Why: the current Storia taxonomy differs from documentation examples.

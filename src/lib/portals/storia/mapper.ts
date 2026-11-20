@@ -54,6 +54,7 @@ export type StoriaAdvert = {
   custom_fields: { id: string; reference_id?: string };
   market: "primary" | "secondary";
   auto_extend: boolean;
+  parent_uuid?: string;
 };
 
 export type StoriaListing = { transaction: StoriaTransaction; advert: StoriaAdvert };
@@ -119,6 +120,7 @@ function priceFor(p: PropertyRow, transaction: StoriaTransaction) {
 
 /** Piața: „primary” doar când stadiul construcției indică explicit ansamblu nou. */
 export function storiaMarket(p: PropertyRow): "primary" | "secondary" {
+  if (p.market === "primary" || p.market === "secondary") return p.market;
   const stage = (p.construction_stage ?? "").toString().toLowerCase();
   return /nou|construc|dezvolt|ansamblu|primary/.test(stage) ? "primary" : "secondary";
 }

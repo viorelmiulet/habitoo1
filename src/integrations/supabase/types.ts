@@ -3341,14 +3341,90 @@ export type Database = {
           },
         ]
       }
+      development_portal_publications: {
+        Row: {
+          confirmed_property_ids: string[]
+          connection_id: string | null
+          desired_active: boolean
+          development_id: string
+          external_uuid: string | null
+          id: string
+          last_error: string | null
+          last_event_at: string | null
+          organization_id: string
+          payload_hash: string | null
+          portal: string
+          published_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed_property_ids?: string[]
+          connection_id?: string | null
+          desired_active?: boolean
+          development_id: string
+          external_uuid?: string | null
+          id?: string
+          last_error?: string | null
+          last_event_at?: string | null
+          organization_id: string
+          payload_hash?: string | null
+          portal?: string
+          published_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed_property_ids?: string[]
+          connection_id?: string | null
+          desired_active?: boolean
+          development_id?: string
+          external_uuid?: string | null
+          id?: string
+          last_error?: string | null
+          last_event_at?: string | null
+          organization_id?: string
+          payload_hash?: string | null
+          portal?: string
+          published_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "development_portal_publications_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "portal_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_portal_publications_development_id_fkey"
+            columns: ["development_id"]
+            isOneToOne: false
+            referencedRelation: "developments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_portal_publications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       developments: {
         Row: {
           address: string | null
           amenities: string[]
+          area_from: number | null
+          area_to: number | null
           assigned_to: string | null
           buildings_count: number | null
           city: string | null
           construction_stage: string | null
+          construction_start_date: string | null
           county: string | null
           county_siruta_code: number | null
           created_at: string
@@ -3359,6 +3435,7 @@ export type Database = {
           description: string | null
           developer_name: string | null
           district: string | null
+          estate_type: string | null
           floors_count: number | null
           id: string
           lat: number | null
@@ -3368,6 +3445,7 @@ export type Database = {
           name: string
           organization_id: string
           price_from: number | null
+          price_per_sqm_from: number | null
           price_to: number | null
           status: string
           street: string | null
@@ -3379,10 +3457,13 @@ export type Database = {
         Insert: {
           address?: string | null
           amenities?: string[]
+          area_from?: number | null
+          area_to?: number | null
           assigned_to?: string | null
           buildings_count?: number | null
           city?: string | null
           construction_stage?: string | null
+          construction_start_date?: string | null
           county?: string | null
           county_siruta_code?: number | null
           created_at?: string
@@ -3393,6 +3474,7 @@ export type Database = {
           description?: string | null
           developer_name?: string | null
           district?: string | null
+          estate_type?: string | null
           floors_count?: number | null
           id?: string
           lat?: number | null
@@ -3402,6 +3484,7 @@ export type Database = {
           name: string
           organization_id: string
           price_from?: number | null
+          price_per_sqm_from?: number | null
           price_to?: number | null
           status?: string
           street?: string | null
@@ -3413,10 +3496,13 @@ export type Database = {
         Update: {
           address?: string | null
           amenities?: string[]
+          area_from?: number | null
+          area_to?: number | null
           assigned_to?: string | null
           buildings_count?: number | null
           city?: string | null
           construction_stage?: string | null
+          construction_start_date?: string | null
           county?: string | null
           county_siruta_code?: number | null
           created_at?: string
@@ -3427,6 +3513,7 @@ export type Database = {
           description?: string | null
           developer_name?: string | null
           district?: string | null
+          estate_type?: string | null
           floors_count?: number | null
           id?: string
           lat?: number | null
@@ -3436,6 +3523,7 @@ export type Database = {
           name?: string
           organization_id?: string
           price_from?: number | null
+          price_per_sqm_from?: number | null
           price_to?: number | null
           status?: string
           street?: string | null
@@ -12473,6 +12561,144 @@ export type Database = {
           },
         ]
       }
+      storia_development_jobs: {
+        Row: {
+          created_at: string
+          development_id: string
+          id: string
+          last_error: string | null
+          operation: string
+          organization_id: string
+          requested_by: string | null
+          status: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          development_id: string
+          id?: string
+          last_error?: string | null
+          operation: string
+          organization_id: string
+          requested_by?: string | null
+          status?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          development_id?: string
+          id?: string
+          last_error?: string | null
+          operation?: string
+          organization_id?: string
+          requested_by?: string | null
+          status?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storia_development_jobs_development_id_fkey"
+            columns: ["development_id"]
+            isOneToOne: false
+            referencedRelation: "developments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storia_development_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storia_development_jobs_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "storia_development_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      storia_development_units: {
+        Row: {
+          connection_id: string | null
+          development_id: string
+          external_uuid: string | null
+          id: string
+          last_error: string | null
+          last_event_at: string | null
+          old_agency_uuid: string | null
+          old_withdrawn_at: string | null
+          organization_id: string
+          property_id: string
+          status: string
+          transaction_kind: string
+          updated_at: string
+        }
+        Insert: {
+          connection_id?: string | null
+          development_id: string
+          external_uuid?: string | null
+          id?: string
+          last_error?: string | null
+          last_event_at?: string | null
+          old_agency_uuid?: string | null
+          old_withdrawn_at?: string | null
+          organization_id: string
+          property_id: string
+          status?: string
+          transaction_kind: string
+          updated_at?: string
+        }
+        Update: {
+          connection_id?: string | null
+          development_id?: string
+          external_uuid?: string | null
+          id?: string
+          last_error?: string | null
+          last_event_at?: string | null
+          old_agency_uuid?: string | null
+          old_withdrawn_at?: string | null
+          organization_id?: string
+          property_id?: string
+          status?: string
+          transaction_kind?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storia_development_units_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "portal_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storia_development_units_development_id_fkey"
+            columns: ["development_id"]
+            isOneToOne: false
+            referencedRelation: "developments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storia_development_units_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storia_development_units_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_cron_runs: {
         Row: {
           error: string | null
@@ -13859,6 +14085,27 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_storia_development_job: {
+        Args: never
+        Returns: {
+          created_at: string
+          development_id: string
+          id: string
+          last_error: string | null
+          operation: string
+          organization_id: string
+          requested_by: string | null
+          status: string
+          unit_id: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "storia_development_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       close_stale_portal_bulk_jobs: { Args: { _org?: string }; Returns: number }
       close_stale_portal_publish_jobs: {
         Args: { _org?: string }
@@ -14524,6 +14771,15 @@ export type Database = {
       purge_old_social_requests: { Args: never; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
+      queue_storia_development: {
+        Args: {
+          _actor?: string
+          _id: string
+          _operation: string
+          _unit?: string
+        }
+        Returns: undefined
+      }
       rate_limit_hit: {
         Args: { _bucket: string; _limit: number; _window_seconds: number }
         Returns: boolean
@@ -14561,6 +14817,10 @@ export type Database = {
       }
       reorder_development_images: {
         Args: { _id: string; _images: string[] }
+        Returns: undefined
+      }
+      request_storia_development: {
+        Args: { _confirmed?: string[]; _id: string; _withdraw?: boolean }
         Returns: undefined
       }
       reserve_video_narration: {

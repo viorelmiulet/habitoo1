@@ -1,3 +1,4 @@
+import { StoriaAccountControls } from "@/components/app/StoriaAccountControls";
 /**
  * Hub-ul de portaluri imobiliare (Superadmin → Portaluri), per agenție.
  * UI generic: totul vine din registry, nimic nu este hardcodat pentru un portal.
@@ -717,7 +718,8 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                       })}
                     </div>
 
-                    {item.oauth ? (
+                    {item.portal.id === "storia" ? <StoriaAccountControls organizationId={organizationId}/> : null}
+                    {item.oauth && item.portal.id !== "storia" ? (
                       <div className="space-y-3 rounded-lg border border-border p-3">
                         <div>
                           <p className="text-sm font-medium">

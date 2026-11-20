@@ -56,7 +56,7 @@ async function requireStoriaConnector(context: AuthContext, organizationId: stri
  */
 export const startStoriaAuthorization = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), account: z.enum(["agency","developer"]).default("agency") }).parse(input))
   .handler(async ({ data, context }) => {
     const organizationId = await requireStoriaConnector(
       context as unknown as AuthContext,
@@ -69,16 +69,16 @@ export const startStoriaAuthorization = createServerFn({ method: "POST" })
         "Integrarea Storia nu este configurată la nivel de platformă: lipsesc credențialele de aplicație OLX.",
       );
     }
-    const state = await createStoriaOAuthState({ organizationId, createdBy: context.userId });
+    const state = await createStoriaOAuthState({ organizationId, createdBy: context.userId, account: data.account });
     return { url: storiaAuthorizationUrl(state) };
   });
 
 /** Starea conexiunii OAuth, fără niciun secret. */
 export const getStoriaAuthorizationStatus = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), account: z.enum(["agency","developer"]).default("agency") }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(
+    const organizationId = await requireStoriaConnector(
       context as unknown as AuthContext,
       data.organizationId,
     );
@@ -89,11 +89,11 @@ export const getStoriaAuthorizationStatus = createServerFn({ method: "POST" })
       .from("portal_connections")
       .select("settings")
       .eq("organization_id", organizationId)
-      .eq("portal", "storia")
+      .eq("portal", data.account === "developer" ? "storia_developer" : "storia")
       .maybeSingle();
 
     const meta = readStoriaOAuthMeta((row?.settings ?? {}) as Record<string, unknown>);
-    const tokens = await loadStoriaTokens(organizationId);
+    const tokens = await loadStoriaTokens(organizationId, data.account);
     const expiresAt = meta?.expires_at ?? tokens?.expires_at ?? null;
     return {
       appConfigured: storiaAppConfigured(),
@@ -110,14 +110,14 @@ export const getStoriaAuthorizationStatus = createServerFn({ method: "POST" })
 /** Desface autorizarea: șterge tokenurile agenției. */
 export const revokeStoriaAuthorization = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), account: z.enum(["agency","developer"]).default("agency") }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(
+    const organizationId = await requireStoriaConnector(
       context as unknown as AuthContext,
       data.organizationId,
     );
     const { clearStoriaTokens } = await import("@/lib/portals/storia/oauth.server");
-    await clearStoriaTokens(organizationId, context.userId);
+    await clearStoriaTokens(organizationId, context.userId, data.account);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("portal_operation_logs").insert({
       organization_id: organizationId,

@@ -1,0 +1,6 @@
+// @vitest-environment jsdom
+import {act} from 'react';import {createRoot} from 'react-dom/client';import {it,expect,vi} from 'vitest';import {QueryClient,QueryClientProvider} from '@tanstack/react-query';import {DevelopmentPublishing} from './DevelopmentPublishing';
+Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});
+vi.mock('@tanstack/react-start',()=>({useServerFn:(f:unknown)=>f}));
+vi.mock('@/lib/portals/storia/development.functions',()=>({getDevelopmentPublishing:async()=>({connected:false,publication:null,units:[],moves:[]}),requestDevelopmentPublishing:vi.fn()}));
+it('cu contul agenției singur butonul investiției este dezactivat',async()=>{const c=document.createElement('div');document.body.append(c);const root=createRoot(c);const qc=new QueryClient({defaultOptions:{queries:{retry:false}}});await act(async()=>{root.render(<QueryClientProvider client={qc}><DevelopmentPublishing id="d" editable/></QueryClientProvider>);await new Promise(r=>setTimeout(r,25));});const button=[...c.querySelectorAll('button')].find(b=>b.textContent==='Publică pe Storia');expect(button?.disabled).toBe(true);expect(c.textContent).toContain('contul agenției nu poate publica ansambluri');await act(async()=>root.unmount());c.remove();qc.clear();});
