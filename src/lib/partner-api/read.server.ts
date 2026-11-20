@@ -6,8 +6,12 @@ import { z } from "zod";
 import { apiError, type Environment, type PartnerContext } from "./core.server";
 import { TAXONOMIES, decodeCursor, encodeCursor, mapPartnerAgency, type OrgRow, type PartnerAgent, type PartnerListing } from "./schema";
 import { SANDBOX_AGENCY_ID } from "./sandbox";
+import { includes } from "./developments";
+import type { PartnerDevelopment } from "./schema";
 
-export type StoredListing = { property_id: string; organization_id: string; visible: boolean; payload: PartnerListing; updated_at: string; withdrawn_at: string | null };
+export type StoredListing = { property_id: string; organization_id: string; visible: boolean; payload: PartnerListing; updated_at: string; withdrawn_at: string | null; development_id?: string | null };
+export type StoredDevelopment = { development_id: string; organization_id: string; visible: boolean; payload: PartnerDevelopment; updated_at: string };
+export type DevelopmentQuery = { orgIds: string[]; updatedSince: string | null; after: { u: string; i: string } | null; limit: number };
 export type StoredEvent = { seq: number; type: string; entity_type: string; entity_id: string; organization_id: string; occurred_at: string };
 export type EnvScope = { known: string[]; active: Map<string, string | null> };
 export type ListingQuery = { orgIds: string[]; status: "active" | "withdrawn" | "all"; updatedSince: string | null; after: { u: string; i: string } | null; limit: number };
@@ -17,7 +21,10 @@ export type PartnerReadStore = {
   listings: (portal: string, q: ListingQuery) => Promise<StoredListing[]>;
   listing: (portal: string, id: string) => Promise<StoredListing | null>;
   agents: (portal: string, orgIds: string[]) => Promise<PartnerAgent[]>;
-  events: (portal: string, orgIds: string[], afterSeq: number, limit: number) => Promise<StoredEvent[]>;
+  /** Development events are excluded unless includeDevelopments is true. */
+  events: (portal: string, orgIds: string[], afterSeq: number, limit: number, includeDevelopments?: boolean) => Promise<StoredEvent[]>;
+  developments: (portal: string, q: DevelopmentQuery) => Promise<StoredDevelopment[]>;
+  development: (portal: string, id: string) => Promise<StoredDevelopment | null>;
   maxSeq: (portal: string) => Promise<number>;
 };
 
@@ -63,13 +70,48 @@ export async function handleListings(ctx: PartnerContext, store: PartnerReadStor
   if (!orgIds.length) return json({ data: [], next_cursor: null });
   const rows = await store.listings(ctx.portal.slug, { orgIds, status: q.status, updatedSince: q.updated_since ?? null, after, limit: q.limit + 1 });
   const page = rows.slice(0, q.limit); const last = page[page.length - 1];
-  return json({ data: page.filter(r => present(r)).map(listingResponse), next_cursor: rows.length > q.limit && last ? encodeCursor({ u: last.updated_at, i: last.property_id, f: filterKey }) : null });
+  const withDev = includes(url, "development");
+  return json({ data: page.filter(r => present(r)).map(r => withDev ? withDevelopment(r) : listingResponse(r)), next_cursor: rows.length > q.limit && last ? encodeCursor({ u: last.updated_at, i: last.property_id, f: filterKey }) : null });
 }
-export async function handleListing(ctx: PartnerContext, store: PartnerReadStore, id: string) {
+/** Opt-in (?include=development): adds only development_id; tombstones never link. */
+function withDevelopment(l: StoredListing): PartnerListing & { development_id: string | null } {
+  return { ...listingResponse(l), development_id: l.visible ? l.development_id ?? null : null };
+}
+export async function handleListing(ctx: PartnerContext, store: PartnerReadStore, id: string, url?: URL) {
   if (!uuid.safeParse(id).success) return notFound(ctx, "Anunțul");
   const [scope, row] = await Promise.all([store.scope(ctx.portal.slug, ctx.identity.environment), store.listing(ctx.portal.slug, id)]);
   if (!row || !scope.known.includes(row.organization_id) || !present(row)) return notFound(ctx, "Anunțul");
-  return json(listingResponse(row));
+  return json(url && includes(url, "development") ? withDevelopment(row) : listingResponse(row));
+}
+
+const developmentQuery = z.object({
+  agency_id: uuid.optional(), updated_since: z.string().datetime({ offset: true }).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50), cursor: z.string().max(400).optional(),
+});
+const developmentResponse = (d: StoredDevelopment): PartnerDevelopment => ({ ...d.payload, updated_at: d.updated_at });
+export async function handleDevelopments(ctx: PartnerContext, store: PartnerReadStore, url: URL) {
+  const parsed = developmentQuery.safeParse(Object.fromEntries(url.searchParams));
+  if (!parsed.success) return invalid(ctx, String(parsed.error.issues[0]?.path[0] ?? "query"), "Parametri invalizi: agency_id (UUID), updated_since (ISO 8601), limit (1–100).");
+  const q = parsed.data;
+  const filterKey = ["developments", q.agency_id ?? "", q.updated_since ?? ""].join("|");
+  let after: { u: string; i: string } | null = null;
+  if (q.cursor) {
+    const c = decodeCursor(q.cursor);
+    if (!c || typeof c.u !== "string" || typeof c.i !== "string" || c.f !== filterKey) return invalid(ctx, "cursor", "Cursor invalid sau folosit cu alte filtre.");
+    after = { u: c.u, i: c.i };
+  }
+  const scope = await store.scope(ctx.portal.slug, ctx.identity.environment);
+  const orgIds = q.agency_id ? scope.known.filter(o => o === q.agency_id) : scope.known;
+  if (!orgIds.length) return json({ data: [], next_cursor: null });
+  const rows = await store.developments(ctx.portal.slug, { orgIds, updatedSince: q.updated_since ?? null, after, limit: q.limit + 1 });
+  const page = rows.slice(0, q.limit); const last = page[page.length - 1];
+  return json({ data: page.filter(r => r.visible && orgIds.includes(r.organization_id)).map(developmentResponse), next_cursor: rows.length > q.limit && last ? encodeCursor({ u: last.updated_at, i: last.development_id, f: filterKey }) : null });
+}
+export async function handleDevelopment(ctx: PartnerContext, store: PartnerReadStore, id: string) {
+  if (!uuid.safeParse(id).success) return notFound(ctx, "Ansamblul");
+  const [scope, row] = await Promise.all([store.scope(ctx.portal.slug, ctx.identity.environment), store.development(ctx.portal.slug, id)]);
+  if (!row || !row.visible || !scope.known.includes(row.organization_id)) return notFound(ctx, "Ansamblul");
+  return json(developmentResponse(row));
 }
 
 export async function handleAgents(ctx: PartnerContext, store: PartnerReadStore, url: URL, id?: string) {
@@ -98,7 +140,8 @@ export async function handleChanges(ctx: PartnerContext, store: PartnerReadStore
   if (!c || typeof c.s !== "number" || !Number.isSafeInteger(c.s) || c.s < 0) return invalid(ctx, "cursor", "Cursor invalid.");
   const scope = await store.scope(ctx.portal.slug, ctx.identity.environment);
   if (!scope.known.length) return json({ data: [], next_cursor: parsed.data.cursor, has_more: false });
-  const rows = await store.events(ctx.portal.slug, scope.known, c.s, parsed.data.limit + 1);
+  const withDev = includes(url, "developments");
+  const rows = (await store.events(ctx.portal.slug, scope.known, c.s, parsed.data.limit + 1, withDev)).filter(e => withDev || e.entity_type !== "development");
   const page = rows.slice(0, parsed.data.limit); const last = page[page.length - 1];
   return json({
     data: page.map(e => ({ seq: e.seq, type: e.type, entity_type: e.entity_type, entity_id: e.entity_id, agency_id: e.organization_id, occurred_at: e.occurred_at })),
@@ -133,7 +176,7 @@ export async function supabaseReadStore(): Promise<PartnerReadStore> {
       if (r.error) throw r.error; return r.data ?? [];
     },
     async listings(portal, q) {
-      let query = db.from("partner_api_listing_state").select("property_id,organization_id,visible,payload,updated_at,withdrawn_at").eq("portal", portal).in("organization_id", q.orgIds);
+      let query = db.from("partner_api_listing_state").select("property_id,organization_id,visible,payload,updated_at,withdrawn_at,development_id").eq("portal", portal).in("organization_id", q.orgIds);
       if (q.status === "active") query = query.eq("visible", true);
       if (q.status === "withdrawn") query = query.eq("visible", false);
       query = query.or(`visible.eq.true,withdrawn_at.gt.${new Date(Date.now() - WITHDRAWN_RETENTION_MS).toISOString()}`);
@@ -143,16 +186,29 @@ export async function supabaseReadStore(): Promise<PartnerReadStore> {
       if (r.error) throw r.error; return (r.data ?? []) as unknown as StoredListing[];
     },
     async listing(portal, id) {
-      const r = await db.from("partner_api_listing_state").select("property_id,organization_id,visible,payload,updated_at,withdrawn_at").eq("portal", portal).eq("property_id", id).maybeSingle();
+      const r = await db.from("partner_api_listing_state").select("property_id,organization_id,visible,payload,updated_at,withdrawn_at,development_id").eq("portal", portal).eq("property_id", id).maybeSingle();
       if (r.error) throw r.error; return r.data as unknown as StoredListing | null;
     },
     async agents(portal, orgIds) {
       const r = await db.from("partner_api_agent_state").select("payload").eq("portal", portal).in("organization_id", orgIds).order("agent_id");
       if (r.error) throw r.error; return (r.data ?? []).map(x => x.payload as unknown as PartnerAgent);
     },
-    async events(portal, orgIds, afterSeq, limit) {
-      const r = await db.from("partner_api_events").select("seq,type,entity_type,entity_id,organization_id,occurred_at").eq("portal", portal).in("organization_id", orgIds).gt("seq", afterSeq).order("seq").limit(limit);
+    async events(portal, orgIds, afterSeq, limit, includeDevelopments = false) {
+      let q = db.from("partner_api_events").select("seq,type,entity_type,entity_id,organization_id,occurred_at").eq("portal", portal).in("organization_id", orgIds).gt("seq", afterSeq);
+      if (!includeDevelopments) q = q.neq("entity_type", "development");
+      const r = await q.order("seq").limit(limit);
       if (r.error) throw r.error; return (r.data ?? []) as StoredEvent[];
+    },
+    async developments(portal, q) {
+      let query = db.from("partner_api_development_state").select("development_id,organization_id,visible,payload,updated_at").eq("portal", portal).in("organization_id", q.orgIds).eq("visible", true);
+      if (q.updatedSince) query = query.gt("updated_at", q.updatedSince);
+      if (q.after) query = query.or(`updated_at.gt.${q.after.u},and(updated_at.eq.${q.after.u},development_id.gt.${q.after.i})`);
+      const r = await query.order("updated_at").order("development_id").limit(q.limit);
+      if (r.error) throw r.error; return (r.data ?? []) as unknown as StoredDevelopment[];
+    },
+    async development(portal, id) {
+      const r = await db.from("partner_api_development_state").select("development_id,organization_id,visible,payload,updated_at").eq("portal", portal).eq("development_id", id).maybeSingle();
+      if (r.error) throw r.error; return r.data as unknown as StoredDevelopment | null;
     },
     async maxSeq(portal) {
       const r = await db.from("partner_api_events").select("seq").eq("portal", portal).order("seq", { ascending: false }).limit(1);

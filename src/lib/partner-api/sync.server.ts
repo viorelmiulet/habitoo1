@@ -8,11 +8,12 @@ import { digest } from "./core.server";
 import { SANDBOX_AGENCY_ID } from "./sandbox";
 import {
   diffAgents, diffListings, mapPartnerAgent, mapPartnerListing,
-  type AgentChange, type AgentStateRow, type ListingChange, type ListingStateRow, type PartnerAgent, type PartnerListing,
+  type AgentChange, type AgentStateRow, type ListingChange, type ListingStateRow, type PartnerAgent, type PartnerDevelopment, type PartnerListing,
 } from "./schema";
+import { diffDevelopments, eligiblePartnerDevelopments, type DevelopmentChange, type DevelopmentStateRow } from "./developments";
 
 export type AgencyChange = { organization_id: string; active: boolean };
-export type SyncBatch = { agencies: AgencyChange[]; listings: ListingChange[]; agents: AgentChange[] };
+export type SyncBatch = { agencies: AgencyChange[]; listings: ListingChange[]; agents: AgentChange[]; developments: DevelopmentChange[] };
 export type SyncDeps = {
   agencyActive: (portal: string, org: string) => Promise<boolean>;
   eligibleListings: (portal: string, org: string) => Promise<PartnerListing[]>;
@@ -20,6 +21,9 @@ export type SyncDeps = {
   agencyState: (portal: string, org: string) => Promise<{ active: boolean } | null>;
   listingState: (portal: string, org: string) => Promise<ListingStateRow[]>;
   agentState: (portal: string, org: string) => Promise<AgentStateRow[]>;
+  /** Called after eligibleListings for the same pair; links only eligible developments. */
+  eligibleDevelopments?: (portal: string, org: string) => Promise<{ developments: PartnerDevelopment[]; links: Record<string, string> }>;
+  developmentState?: (portal: string, org: string) => Promise<DevelopmentStateRow[]>;
   /** Atomic: activations first, then listings, agents, then deactivations. */
   apply: (portal: string, batch: SyncBatch) => Promise<void>;
 };
@@ -31,17 +35,21 @@ export async function syncPortalOrganization(portal: string, org: string, deps: 
   const [listings, agents] = active
     ? await Promise.all([deps.eligibleListings(portal, org), deps.activeAgents(org)])
     : [[], []];
+  const previousDevelopments = deps.developmentState ? await deps.developmentState(portal, org) : [];
+  const dev = active && deps.eligibleDevelopments ? await deps.eligibleDevelopments(portal, org) : { developments: [], links: {} };
   const batch: SyncBatch = {
     agencies: (previousAgency?.active ?? false) !== active && (active || previousAgency) ? [{ organization_id: org, active }] : [],
-    listings: diffListings(previousListings, listings, hash),
+    listings: diffListings(previousListings, listings, hash, dev.links),
     agents: diffAgents(previousAgents, agents, hash),
+    developments: deps.developmentState ? diffDevelopments(previousDevelopments, dev.developments, hash) : [],
   };
-  if (batch.agencies.length || batch.listings.length || batch.agents.length) await deps.apply(portal, batch);
+  if (batch.agencies.length || batch.listings.length || batch.agents.length || batch.developments.length) await deps.apply(portal, batch);
   return { listings: batch.listings.length, agents: batch.agents.length, agencies: batch.agencies.length };
 }
 
 type Admin = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
 export function supabaseSyncDeps(db: Admin): SyncDeps {
+  const unitCache = new Map<string, import("@/lib/site-feed/mapper").PropertyRow[]>();
   return {
     async agencyActive(portal, org) {
       const r = await db.from("portal_connections").select("organization_id,organizations!inner(archived_at)").eq("portal", portal)
@@ -62,7 +70,28 @@ export function supabaseSyncDeps(db: Admin): SyncDeps {
         images.push(...await readCompleteRows((from, to) => db.from("property_images").select("*").eq("organization_id", org).in("property_id", chunk)
           .eq("include_in_publish", true).eq("is_confidential", false).order("id").range(from, to)));
       }
-      return rows.filter(isPropertyFeedEligible).map(row => mapPartnerListing(row, images.filter(img => img.property_id === row.id)));
+      const eligible = rows.filter(isPropertyFeedEligible);
+      unitCache.set(`${portal}:${org}`, eligible);
+      return eligible.map(row => mapPartnerListing(row, images.filter(img => img.property_id === row.id)));
+    },
+    async eligibleDevelopments(portal, org) {
+      const units = unitCache.get(`${portal}:${org}`) ?? []; unitCache.delete(`${portal}:${org}`);
+      const ids = [...new Set(units.flatMap(u => u.development_id ? [u.development_id] : []))];
+      if (!ids.length) return { developments: [], links: {} };
+      const { readCompleteRows } = await import("@/lib/site-feed/complete-read.server");
+      const devs: import("@/lib/site-feed/developments").DevelopmentRow[] = []; const images: import("@/lib/site-feed/developments").DevelopmentImageRow[] = [];
+      for (let i = 0; i < ids.length; i += 300) {
+        const chunk = ids.slice(i, i + 300);
+        devs.push(...await readCompleteRows((from, to) => db.from("developments").select("*").eq("organization_id", org).in("id", chunk)
+          .eq("status", "active").is("deleted_at", null).order("id").range(from, to)));
+        images.push(...await readCompleteRows((from, to) => db.from("development_images").select("*").eq("organization_id", org).in("development_id", chunk).order("id").range(from, to)));
+      }
+      return eligiblePartnerDevelopments(org, devs, units, images);
+    },
+    async developmentState(portal, org) {
+      const { readCompleteRows } = await import("@/lib/site-feed/complete-read.server");
+      return readCompleteRows((from, to) => db.from("partner_api_development_state").select("development_id,organization_id,content_hash,visible")
+        .eq("portal", portal).eq("organization_id", org).order("development_id").range(from, to));
     },
     async activeAgents(org) {
       const r = await db.from("profiles").select("id,organization_id,full_name,email,phone,avatar_url,job_title").eq("organization_id", org).eq("is_active", true).order("id");
@@ -74,7 +103,7 @@ export function supabaseSyncDeps(db: Admin): SyncDeps {
     },
     async listingState(portal, org) {
       const { readCompleteRows } = await import("@/lib/site-feed/complete-read.server");
-      return readCompleteRows((from, to) => db.from("partner_api_listing_state").select("property_id,organization_id,agent_id,content_hash,visible,payload")
+      return readCompleteRows((from, to) => db.from("partner_api_listing_state").select("property_id,organization_id,agent_id,content_hash,visible,payload,development_id")
         .eq("portal", portal).eq("organization_id", org).order("property_id").range(from, to)) as unknown as Promise<ListingStateRow[]>;
     },
     async agentState(portal, org) {
@@ -82,7 +111,7 @@ export function supabaseSyncDeps(db: Admin): SyncDeps {
       if (r.error) throw r.error; return r.data ?? [];
     },
     async apply(portal, batch) {
-      const r = await db.rpc("partner_api_apply_sync", { _portal: portal, _agencies: batch.agencies as never, _listings: batch.listings as never, _agents: batch.agents as never });
+      const r = await db.rpc("partner_api_apply_sync", { _portal: portal, _agencies: batch.agencies as never, _listings: batch.listings as never, _agents: batch.agents as never, _developments: batch.developments as never });
       if (r.error) throw r.error;
     },
   };

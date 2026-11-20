@@ -7754,6 +7754,47 @@ export type Database = {
           },
         ]
       }
+      partner_api_development_state: {
+        Row: {
+          content_hash: string
+          development_id: string
+          organization_id: string
+          payload: Json
+          portal: string
+          updated_at: string
+          visible: boolean
+          withdrawn_at: string | null
+        }
+        Insert: {
+          content_hash: string
+          development_id: string
+          organization_id: string
+          payload: Json
+          portal: string
+          updated_at?: string
+          visible: boolean
+          withdrawn_at?: string | null
+        }
+        Update: {
+          content_hash?: string
+          development_id?: string
+          organization_id?: string
+          payload?: Json
+          portal?: string
+          updated_at?: string
+          visible?: boolean
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_development_state_portal_fkey"
+            columns: ["portal"]
+            isOneToOne: false
+            referencedRelation: "dynamic_feed_portals"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       partner_api_events: {
         Row: {
           entity_id: string
@@ -7889,6 +7930,7 @@ export type Database = {
         Row: {
           agent_id: string | null
           content_hash: string
+          development_id: string | null
           first_visible_at: string
           organization_id: string
           payload: Json
@@ -7901,6 +7943,7 @@ export type Database = {
         Insert: {
           agent_id?: string | null
           content_hash: string
+          development_id?: string | null
           first_visible_at?: string
           organization_id: string
           payload: Json
@@ -7913,6 +7956,7 @@ export type Database = {
         Update: {
           agent_id?: string | null
           content_hash?: string
+          development_id?: string | null
           first_visible_at?: string
           organization_id?: string
           payload?: Json
@@ -14555,6 +14599,7 @@ export type Database = {
         Args: {
           _agencies: Json
           _agents: Json
+          _developments?: Json
           _listings: Json
           _portal: string
         }

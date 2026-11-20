@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Habitoo Partner API v1",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Contractul implementat P1–P5, inclusiv webhooks semnate și mediu demo izolat. Cheile se emit manual după solicitare; nu există emitere automată imediată."
   },
   "servers": [
@@ -1757,6 +1757,17 @@
               "maxLength": 400
             },
             "description": "Cursor opac; păstrează aceleași filtre."
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "development"
+              ]
+            },
+            "description": "Opțional: adaugă development_id. Fără parametru răspunsul rămâne neschimbat."
           }
         ],
         "responses": {
@@ -1797,7 +1808,14 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Listing"
+                        "anyOf": [
+                          {
+                            "$ref": "#/components/schemas/Listing"
+                          },
+                          {
+                            "$ref": "#/components/schemas/ListingWithDevelopment"
+                          }
+                        ]
                       }
                     },
                     "next_cursor": {
@@ -2168,6 +2186,17 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "development"
+              ]
+            },
+            "description": "Opțional: adaugă development_id. Fără parametru răspunsul rămâne neschimbat."
           }
         ],
         "responses": {
@@ -2203,7 +2232,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Listing"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Listing"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ListingWithDevelopment"
+                    }
+                  ]
                 },
                 "example": {
                   "id": "a7b50000-0000-4000-8000-000000000100",
@@ -2264,6 +2300,810 @@
                   "created_at": "2026-11-07T12:00:00Z",
                   "updated_at": "2026-11-07T12:00:00Z",
                   "withdrawn_at": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametru sau Idempotency-Key invalid/lipsă.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Cheie API lipsă sau invalidă.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cheie revocată, portal dezactivat sau acțiune rezervată testului.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entitatea nu este accesibilă acestui portal/mediu.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Metodă neacceptată (la /me se întoarce 400).",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limita de cereri este depășită.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Secunde până la reîncercare.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Serviciu indisponibil temporar.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/developments": {
+      "get": {
+        "summary": "Ansambluri (opțional)",
+        "description": "Ansamblurile active, neșterse, ale agențiilor accesibile, cu cel puțin un anunț eligibil pentru acest portal (aceleași reguli ca /listings). Ordine stabilă după actualizare și identificator. Un ansamblu neeligibil dispare din listă.",
+        "security": [
+          {
+            "PartnerBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "agency_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Restrânge la agenție."
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Modificări după momentul indicat."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "description": "Dimensiunea paginii."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 400
+            },
+            "description": "Cursor opac; păstrează aceleași filtre."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cerere reușită.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Development"
+                      }
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "next_cursor"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "a7b50000-0000-4000-8000-000000000200",
+                      "agency_id": "a7b50000-0000-4000-8000-000000000001",
+                      "agent_id": "a7b50000-0000-4000-8000-000000000002",
+                      "name": "[Test] Ansamblul Demo Habitoo",
+                      "developer_name": "Dezvoltator Demo — FICTIV",
+                      "description": "Ansamblu fictiv pentru testarea integrării Partner API. Nu reprezintă o ofertă reală.",
+                      "location": {
+                        "county": "București",
+                        "city": "București",
+                        "district": "Centru",
+                        "street": null,
+                        "street_number": null,
+                        "lat": 44.434687,
+                        "lng": 26.10752,
+                        "precise": false
+                      },
+                      "construction_stage": "in_constructie",
+                      "delivery_date": "2027-12-31",
+                      "buildings_count": 2,
+                      "floors_count": 8,
+                      "total_units": 120,
+                      "amenities": [
+                        "parcare_subterana",
+                        "loc_de_joaca"
+                      ],
+                      "price_range": {
+                        "from": 80000,
+                        "to": 140000,
+                        "currency": "EUR"
+                      },
+                      "area_from": 40,
+                      "area_to": 140,
+                      "estate_type": "flats",
+                      "images": [
+                        {
+                          "url": "https://example.invalid/apartment.jpg",
+                          "position": 0,
+                          "is_cover": true
+                        }
+                      ],
+                      "listing_ids": [
+                        "a7b50000-0000-4000-8000-000000000100",
+                        "a7b50000-0000-4000-8000-000000000104",
+                        "a7b50000-0000-4000-8000-000000000106"
+                      ],
+                      "created_at": "2026-11-07T12:00:00Z",
+                      "updated_at": "2026-11-07T12:00:00Z"
+                    }
+                  ],
+                  "next_cursor": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametru sau Idempotency-Key invalid/lipsă.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Cheie API lipsă sau invalidă.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cheie revocată, portal dezactivat sau acțiune rezervată testului.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entitatea nu este accesibilă acestui portal/mediu.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Metodă neacceptată (la /me se întoarce 400).",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limita de cereri este depășită.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Secunde până la reîncercare.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Serviciu indisponibil temporar.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/developments/{id}": {
+      "get": {
+        "summary": "Detaliile ansamblului",
+        "description": "404 pentru alt portal, altă agenție, ID invalid sau ansamblu neeligibil.",
+        "security": [
+          {
+            "PartnerBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID al entității accesibile acestui portal.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cerere reușită.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificatorul cererii.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Limita per minut configurată pentru portal.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Cereri rămase în fereastra curentă.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Sfârșitul ferestrei în secunde Unix.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Development"
+                },
+                "example": {
+                  "id": "a7b50000-0000-4000-8000-000000000200",
+                  "agency_id": "a7b50000-0000-4000-8000-000000000001",
+                  "agent_id": "a7b50000-0000-4000-8000-000000000002",
+                  "name": "[Test] Ansamblul Demo Habitoo",
+                  "developer_name": "Dezvoltator Demo — FICTIV",
+                  "description": "Ansamblu fictiv pentru testarea integrării Partner API. Nu reprezintă o ofertă reală.",
+                  "location": {
+                    "county": "București",
+                    "city": "București",
+                    "district": "Centru",
+                    "street": null,
+                    "street_number": null,
+                    "lat": 44.434687,
+                    "lng": 26.10752,
+                    "precise": false
+                  },
+                  "construction_stage": "in_constructie",
+                  "delivery_date": "2027-12-31",
+                  "buildings_count": 2,
+                  "floors_count": 8,
+                  "total_units": 120,
+                  "amenities": [
+                    "parcare_subterana",
+                    "loc_de_joaca"
+                  ],
+                  "price_range": {
+                    "from": 80000,
+                    "to": 140000,
+                    "currency": "EUR"
+                  },
+                  "area_from": 40,
+                  "area_to": 140,
+                  "estate_type": "flats",
+                  "images": [
+                    {
+                      "url": "https://example.invalid/apartment.jpg",
+                      "position": 0,
+                      "is_cover": true
+                    }
+                  ],
+                  "listing_ids": [
+                    "a7b50000-0000-4000-8000-000000000100",
+                    "a7b50000-0000-4000-8000-000000000104",
+                    "a7b50000-0000-4000-8000-000000000106"
+                  ],
+                  "created_at": "2026-11-07T12:00:00Z",
+                  "updated_at": "2026-11-07T12:00:00Z"
                 }
               }
             }
@@ -3417,6 +4257,17 @@
               "default": 100
             },
             "description": "Numărul de evenimente."
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "developments"
+              ]
+            },
+            "description": "Opțional: adaugă development.upserted și development.withdrawn. Aceeași secvență seq; cursorul rămâne compatibil."
           }
         ],
         "responses": {
@@ -3457,7 +4308,14 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Change"
+                        "anyOf": [
+                          {
+                            "$ref": "#/components/schemas/Change"
+                          },
+                          {
+                            "$ref": "#/components/schemas/DevelopmentChange"
+                          }
+                        ]
                       }
                     },
                     "next_cursor": {
@@ -5950,7 +6808,9 @@
                       "enum": [
                         "listing.upserted",
                         "listing.withdrawn",
-                        "agent.updated"
+                        "agent.updated",
+                        "development.upserted",
+                        "development.withdrawn"
                       ]
                     },
                     "seq": {
@@ -6416,7 +7276,7 @@
     "/sandbox/reset": {
       "post": {
         "summary": "Resetează datele demo",
-        "description": "Restaurează 12 anunțuri și 2 agenți pentru portalul curent. Șterge feedbackul demo, nu datele reale. Corpul este limitat la 1000 caractere.",
+        "description": "Restaurează 12 anunțuri, 2 agenți și ansamblul demo (3 anunțuri atașate) pentru portalul curent. Șterge feedbackul demo, nu datele reale. Corpul este limitat la 1000 caractere.",
         "security": [
           {
             "PartnerBearer": []
@@ -7261,7 +8121,7 @@
       },
       "put": {
         "summary": "Configurează sau reactivează webhook",
-        "description": "Prima setare sau rotate_secret:true întoarce secretul o singură dată. Pentru webhook activ păstrează livrările în așteptare. Pentru webhook suspendat, PUT reactivează o subscriere nouă; recuperează evenimentele omise din /changes. Lipsa events sau [] înseamnă toate evenimentele.",
+        "description": "Prima setare sau rotate_secret:true întoarce secretul o singură dată. Pentru webhook activ păstrează livrările în așteptare. Pentru webhook suspendat, PUT reactivează o subscriere nouă; recuperează evenimentele omise din /changes. Lipsa events sau [] înseamnă cele 5 evenimente de bază; development.upserted și development.withdrawn se livrează numai dacă sunt trecute explicit în events.",
         "security": [
           {
             "PartnerBearer": []
@@ -10440,6 +11300,999 @@
         ],
         "additionalProperties": false
       },
+      "Development": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificator UUID."
+          },
+          "agency_id": {
+            "type": "string",
+            "description": "Identificatorul agenției accesibile acestui portal."
+          },
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Identificatorul agentului responsabil; poate lipsi."
+          },
+          "name": {
+            "type": "string",
+            "description": "Numele ansamblului."
+          },
+          "developer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea developer_name a entității."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea description a entității."
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "county": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea county a entității."
+              },
+              "city": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea city a entității."
+              },
+              "district": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea district a entității."
+              },
+              "street": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Strada fictivă sau publică numai dacă is_precise este true; altfel null."
+              },
+              "street_number": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Numărul stradal numai pentru locație precisă; altfel null."
+              },
+              "lat": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea lat a entității."
+              },
+              "lng": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea lng a entității."
+              },
+              "precise": {
+                "type": "boolean",
+                "description": "Valoarea precise a entității."
+              }
+            },
+            "required": [
+              "county",
+              "city",
+              "district",
+              "street",
+              "street_number",
+              "lat",
+              "lng",
+              "precise"
+            ],
+            "additionalProperties": false,
+            "description": "Valoarea location a entității."
+          },
+          "construction_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea construction_stage a entității."
+          },
+          "delivery_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea delivery_date a entității."
+          },
+          "buildings_count": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea buildings_count a entității."
+          },
+          "floors_count": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea floors_count a entității."
+          },
+          "total_units": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea total_units a entității."
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Valoarea amenities a entității."
+          },
+          "price_range": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea from a entității."
+              },
+              "to": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea to a entității."
+              },
+              "currency": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea currency a entității."
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "currency"
+            ],
+            "additionalProperties": false,
+            "description": "Calculat ca în feed numai din unitățile eligibile pentru acest portal; prețul manual are prioritate; monede diferite nu se amestecă (currency null)."
+          },
+          "area_from": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea area_from a entității."
+          },
+          "area_to": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea area_to a entității."
+          },
+          "estate_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea estate_type a entității."
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "description": "Valoarea url a entității."
+                },
+                "position": {
+                  "type": "number",
+                  "description": "Valoarea position a entității."
+                },
+                "is_cover": {
+                  "type": "boolean",
+                  "description": "Valoarea is_cover a entității."
+                }
+              },
+              "required": [
+                "url",
+                "position",
+                "is_cover"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Aceeași schemă și același /media ca la anunțuri."
+          },
+          "listing_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Numai anunțurile eligibile pentru acest portal."
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea created_at a entității."
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea updated_at a entității."
+          }
+        },
+        "required": [
+          "id",
+          "agency_id",
+          "agent_id",
+          "name",
+          "developer_name",
+          "description",
+          "location",
+          "construction_stage",
+          "delivery_date",
+          "buildings_count",
+          "floors_count",
+          "total_units",
+          "amenities",
+          "price_range",
+          "area_from",
+          "area_to",
+          "estate_type",
+          "images",
+          "listing_ids",
+          "created_at",
+          "updated_at"
+        ],
+        "additionalProperties": false
+      },
+      "ListingWithDevelopment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificator UUID."
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Referința anunțului."
+          },
+          "agency_id": {
+            "type": "string",
+            "description": "Identificatorul agenției accesibile acestui portal."
+          },
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Identificatorul agentului responsabil; poate lipsi."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "reserved",
+              "withdrawn"
+            ],
+            "description": "Starea entității."
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "sale",
+                    "rent"
+                  ],
+                  "description": "Valoarea type a entității."
+                },
+                "price": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Valoarea price a entității."
+                },
+                "currency": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Valoarea currency a entității."
+                },
+                "vat_included": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Valoarea vat_included a entității."
+                },
+                "negotiable": {
+                  "type": "boolean",
+                  "description": "Valoarea negotiable a entității."
+                }
+              },
+              "required": [
+                "type",
+                "price",
+                "currency",
+                "vat_included",
+                "negotiable"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Oferte de vânzare și/sau închiriere."
+          },
+          "property_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea property_type a entității."
+          },
+          "property_subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea property_subtype a entității."
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea title a entității."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea description a entității."
+          },
+          "rooms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea rooms a entității."
+          },
+          "bedrooms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea bedrooms a entității."
+          },
+          "bathrooms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea bathrooms a entității."
+          },
+          "kitchens": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea kitchens a entității."
+          },
+          "balconies": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea balconies a entității."
+          },
+          "usable_area": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea usable_area a entității."
+          },
+          "built_area": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea built_area a entității."
+          },
+          "land_area": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea land_area a entității."
+          },
+          "floor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea floor a entității."
+          },
+          "floors_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea floors_total a entității."
+          },
+          "build_year": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea build_year a entității."
+          },
+          "layout": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea layout a entității."
+          },
+          "heating": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea heating a entității."
+          },
+          "furnishing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea furnishing a entității."
+          },
+          "parking": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea parking a entității."
+          },
+          "energy_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea energy_class a entității."
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Valoarea features a entității."
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "county": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea county a entității."
+              },
+              "city": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea city a entității."
+              },
+              "district": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Valoarea district a entității."
+              },
+              "street": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Strada fictivă sau publică numai dacă is_precise este true; altfel null."
+              },
+              "street_number": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Numărul stradal numai pentru locație precisă; altfel null."
+              },
+              "latitude": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Coordonată exactă pentru locație precisă; altfel aproximată determinist."
+              },
+              "longitude": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Coordonată exactă pentru locație precisă; altfel aproximată determinist."
+              },
+              "is_precise": {
+                "type": "boolean",
+                "description": "Indică dacă locația poate fi prezentată exact."
+              }
+            },
+            "required": [
+              "county",
+              "city",
+              "district",
+              "street",
+              "street_number",
+              "latitude",
+              "longitude",
+              "is_precise"
+            ],
+            "additionalProperties": false,
+            "description": "Valoarea location a entității."
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "description": "Valoarea url a entității."
+                },
+                "position": {
+                  "type": "number",
+                  "description": "Valoarea position a entității."
+                },
+                "is_cover": {
+                  "type": "boolean",
+                  "description": "Valoarea is_cover a entității."
+                }
+              },
+              "required": [
+                "url",
+                "position",
+                "is_cover"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Valoarea images a entității."
+          },
+          "floor_plans": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "description": "Valoarea url a entității."
+                },
+                "position": {
+                  "type": "number",
+                  "description": "Valoarea position a entității."
+                }
+              },
+              "required": [
+                "url",
+                "position"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Listă rezervată; momentan goală."
+          },
+          "video_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rezervat; momentan null."
+          },
+          "virtual_tour_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rezervat; momentan null."
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea created_at a entității."
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valoarea updated_at a entității."
+          },
+          "withdrawn_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Momentul retragerii; null pentru anunț activ."
+          },
+          "development_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Ansamblul eligibil al anunțului; null dacă nu există."
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "agency_id",
+          "agent_id",
+          "status",
+          "offers",
+          "property_type",
+          "property_subtype",
+          "title",
+          "description",
+          "rooms",
+          "bedrooms",
+          "bathrooms",
+          "kitchens",
+          "balconies",
+          "usable_area",
+          "built_area",
+          "land_area",
+          "floor",
+          "floors_total",
+          "build_year",
+          "layout",
+          "heating",
+          "furnishing",
+          "parking",
+          "energy_class",
+          "features",
+          "location",
+          "images",
+          "floor_plans",
+          "video_url",
+          "virtual_tour_url",
+          "created_at",
+          "updated_at",
+          "withdrawn_at",
+          "development_id"
+        ],
+        "additionalProperties": false,
+        "description": "Doar cu ?include=development."
+      },
+      "DevelopmentChange": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "development.upserted",
+              "development.withdrawn"
+            ]
+          },
+          "entity_type": {
+            "type": "string",
+            "const": "development"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agency_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "seq",
+          "type",
+          "entity_type",
+          "entity_id",
+          "agency_id",
+          "occurred_at"
+        ],
+        "additionalProperties": false,
+        "description": "Doar cu ?include=developments."
+      },
       "Me": {
         "type": "object",
         "properties": {
@@ -10535,7 +12388,9 @@
               "listing_update",
               "listing_withdraw",
               "listing_create",
-              "agent_update"
+              "agent_update",
+              "development_update",
+              "development_withdraw"
             ]
           }
         },
@@ -10566,10 +12421,12 @@
                 "listing.withdrawn",
                 "agency.activated",
                 "agency.deactivated",
-                "agent.updated"
+                "agent.updated",
+                "development.upserted",
+                "development.withdrawn"
               ]
             },
-            "maxItems": 5,
+            "maxItems": 7,
             "description": "Valoare events."
           },
           "rotate_secret": {
@@ -10597,7 +12454,9 @@
                 "listing.withdrawn",
                 "agency.activated",
                 "agency.deactivated",
-                "agent.updated"
+                "agent.updated",
+                "development.upserted",
+                "development.withdrawn"
               ]
             }
           },
@@ -10648,7 +12507,9 @@
                 "listing.withdrawn",
                 "agency.activated",
                 "agency.deactivated",
-                "agent.updated"
+                "agent.updated",
+                "development.upserted",
+                "development.withdrawn"
               ]
             }
           },
@@ -10704,6 +12565,8 @@
               "agency.activated",
               "agency.deactivated",
               "agent.updated",
+              "development.upserted",
+              "development.withdrawn",
               "webhook.test"
             ]
           },
@@ -10759,6 +12622,8 @@
               "agency.activated",
               "agency.deactivated",
               "agent.updated",
+              "development.upserted",
+              "development.withdrawn",
               "webhook.test"
             ]
           },
@@ -10783,6 +12648,11 @@
               "agent_id": {
                 "type": "string",
                 "format": "uuid"
+              },
+              "development_id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Numai pentru evenimentele development.* abonate explicit."
               }
             },
             "additionalProperties": false

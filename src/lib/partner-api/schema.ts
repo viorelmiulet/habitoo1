@@ -114,6 +114,17 @@ export function withdrawnTombstone(previous: Pick<PartnerListing, "id" | "refere
   };
 }
 
+/** Opt-in development (P6). Served only by /developments; never merged into Listing. */
+export type PartnerDevelopment = {
+  id: string; agency_id: string; agent_id: string | null; name: string; developer_name: string | null; description: string | null;
+  location: { county: string | null; city: string | null; district: string | null; street: string | null; street_number: string | null; lat: number | null; lng: number | null; precise: boolean };
+  construction_stage: string | null; delivery_date: string | null; buildings_count: number | null; floors_count: number | null; total_units: number | null;
+  amenities: string[]; price_range: { from: number | null; to: number | null; currency: string | null };
+  area_from: number | null; area_to: number | null; estate_type: string | null;
+  images: { url: string; position: number; is_cover: boolean }[]; listing_ids: string[];
+  created_at: string | null; updated_at: string | null;
+};
+
 export type PartnerAgent = { id: string; agency_id: string; name: string; first_name: string | null; last_name: string | null; email: string | null; phone: string | null; photo_url: string | null; position: string | null };
 export function mapPartnerAgent(p: Pick<ProfileRow, "id" | "organization_id" | "full_name" | "email" | "phone" | "avatar_url" | "job_title">, baseUrl = CRM_URL): PartnerAgent {
   const name = (p.full_name ?? "").trim(); const space = name.indexOf(" ");
@@ -139,21 +150,23 @@ export function stableJson(value: unknown): string {
   return JSON.stringify(value ?? null);
 }
 
-export type ListingStateRow = { property_id: string; organization_id: string; agent_id: string | null; content_hash: string; visible: boolean; payload: PartnerListing };
-export type ListingChange = { property_id: string; organization_id: string; agent_id: string | null; content_hash: string; visible: boolean; payload: PartnerListing };
+export type ListingStateRow = { property_id: string; organization_id: string; agent_id: string | null; content_hash: string; visible: boolean; payload: PartnerListing; development_id?: string | null };
+export type ListingChange = { property_id: string; organization_id: string; agent_id: string | null; content_hash: string; visible: boolean; payload: PartnerListing; development_id: string | null };
 /** Upserts for new/changed visible listings, withdrawals for previously visible ones that left the eligible set. */
-export function diffListings(previous: ListingStateRow[], current: PartnerListing[], hash: (v: string) => string): ListingChange[] {
+export function diffListings(previous: ListingStateRow[], current: PartnerListing[], hash: (v: string) => string, links: Record<string, string> = {}): ListingChange[] {
   const prev = new Map(previous.map(r => [r.property_id, r])); const seen = new Set<string>(); const out: ListingChange[] = [];
   for (const listing of current) {
     seen.add(listing.id);
-    const content_hash = hash(stableJson(listing)); const old = prev.get(listing.id);
+    // Unlinked listings keep the historical hash, so the opt-in linkage never re-emits unchanged listings.
+    const development_id = links[listing.id] ?? null;
+    const content_hash = hash(stableJson(development_id ? { ...listing, development_id } : listing)); const old = prev.get(listing.id);
     if (old && old.visible && old.content_hash === content_hash) continue;
-    out.push({ property_id: listing.id, organization_id: listing.agency_id, agent_id: listing.agent_id, content_hash, visible: true, payload: listing });
+    out.push({ property_id: listing.id, organization_id: listing.agency_id, agent_id: listing.agent_id, content_hash, visible: true, payload: listing, development_id });
   }
   for (const old of previous) {
     if (!old.visible || seen.has(old.property_id)) continue;
     const payload = withdrawnTombstone(old.payload);
-    out.push({ property_id: old.property_id, organization_id: old.organization_id, agent_id: old.agent_id, content_hash: hash(stableJson(payload)), visible: false, payload });
+    out.push({ property_id: old.property_id, organization_id: old.organization_id, agent_id: old.agent_id, content_hash: hash(stableJson(payload)), visible: false, payload, development_id: null });
   }
   return out;
 }

@@ -193,6 +193,7 @@ import { Route as ApiPublicPartnerV1SplatRouteImport } from './routes/api/public
 import { Route as ApiPublicPartnerV1AgenciesRouteImport } from './routes/api/public/partner/v1/agencies'
 import { Route as ApiPublicPartnerV1AgentsRouteImport } from './routes/api/public/partner/v1/agents'
 import { Route as ApiPublicPartnerV1ChangesRouteImport } from './routes/api/public/partner/v1/changes'
+import { Route as ApiPublicPartnerV1DevelopmentsRouteImport } from './routes/api/public/partner/v1/developments'
 import { Route as ApiPublicPartnerV1LeadsRouteImport } from './routes/api/public/partner/v1/leads'
 import { Route as ApiPublicPartnerV1ListingsRouteImport } from './routes/api/public/partner/v1/listings'
 import { Route as ApiPublicPartnerV1MeRouteImport } from './routes/api/public/partner/v1/me'
@@ -224,6 +225,7 @@ import { Route as ApiPublicHomepitchV1AgentsMeRouteImport } from './routes/api/p
 import { Route as ApiPublicHomepitchV1PropertiesIdRouteImport } from './routes/api/public/homepitch/v1/properties.$id'
 import { Route as ApiPublicPartnerV1AgenciesIdRouteImport } from './routes/api/public/partner/v1/agencies.$id'
 import { Route as ApiPublicPartnerV1AgentsIdRouteImport } from './routes/api/public/partner/v1/agents.$id'
+import { Route as ApiPublicPartnerV1DevelopmentsIdRouteImport } from './routes/api/public/partner/v1/developments.$id'
 import { Route as ApiPublicPartnerV1ListingsIdRouteImport } from './routes/api/public/partner/v1/listings.$id'
 import { Route as ApiPublicPartnerV1SandboxResetRouteImport } from './routes/api/public/partner/v1/sandbox.reset'
 import { Route as ApiPublicPartnerV1SandboxSimulateRouteImport } from './routes/api/public/partner/v1/sandbox.simulate'
@@ -1281,6 +1283,12 @@ const ApiPublicPartnerV1ChangesRoute =
     path: '/api/public/partner/v1/changes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPartnerV1DevelopmentsRoute =
+  ApiPublicPartnerV1DevelopmentsRouteImport.update({
+    id: '/api/public/partner/v1/developments',
+    path: '/api/public/partner/v1/developments',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPartnerV1LeadsRoute = ApiPublicPartnerV1LeadsRouteImport.update({
   id: '/api/public/partner/v1/leads',
   path: '/api/public/partner/v1/leads',
@@ -1458,6 +1466,12 @@ const ApiPublicPartnerV1AgentsIdRoute =
     id: '/$id',
     path: '/$id',
     getParentRoute: () => ApiPublicPartnerV1AgentsRoute,
+  } as any)
+const ApiPublicPartnerV1DevelopmentsIdRoute =
+  ApiPublicPartnerV1DevelopmentsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => ApiPublicPartnerV1DevelopmentsRoute,
   } as any)
 const ApiPublicPartnerV1ListingsIdRoute =
   ApiPublicPartnerV1ListingsIdRouteImport.update({
@@ -1822,6 +1836,7 @@ export interface FileRoutesByFullPath {
   '/api/public/partner/v1/agencies': typeof ApiPublicPartnerV1AgenciesRouteWithChildren
   '/api/public/partner/v1/agents': typeof ApiPublicPartnerV1AgentsRouteWithChildren
   '/api/public/partner/v1/changes': typeof ApiPublicPartnerV1ChangesRoute
+  '/api/public/partner/v1/developments': typeof ApiPublicPartnerV1DevelopmentsRouteWithChildren
   '/api/public/partner/v1/leads': typeof ApiPublicPartnerV1LeadsRouteWithChildren
   '/api/public/partner/v1/listings': typeof ApiPublicPartnerV1ListingsRouteWithChildren
   '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
@@ -1854,6 +1869,7 @@ export interface FileRoutesByFullPath {
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/partner/v1/agencies/$id': typeof ApiPublicPartnerV1AgenciesIdRoute
   '/api/public/partner/v1/agents/$id': typeof ApiPublicPartnerV1AgentsIdRoute
+  '/api/public/partner/v1/developments/$id': typeof ApiPublicPartnerV1DevelopmentsIdRoute
   '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
   '/api/public/partner/v1/sandbox/reset': typeof ApiPublicPartnerV1SandboxResetRoute
   '/api/public/partner/v1/sandbox/simulate': typeof ApiPublicPartnerV1SandboxSimulateRoute
@@ -2064,6 +2080,7 @@ export interface FileRoutesByTo {
   '/api/public/partner/v1/agencies': typeof ApiPublicPartnerV1AgenciesRouteWithChildren
   '/api/public/partner/v1/agents': typeof ApiPublicPartnerV1AgentsRouteWithChildren
   '/api/public/partner/v1/changes': typeof ApiPublicPartnerV1ChangesRoute
+  '/api/public/partner/v1/developments': typeof ApiPublicPartnerV1DevelopmentsRouteWithChildren
   '/api/public/partner/v1/leads': typeof ApiPublicPartnerV1LeadsRouteWithChildren
   '/api/public/partner/v1/listings': typeof ApiPublicPartnerV1ListingsRouteWithChildren
   '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
@@ -2096,6 +2113,7 @@ export interface FileRoutesByTo {
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/partner/v1/agencies/$id': typeof ApiPublicPartnerV1AgenciesIdRoute
   '/api/public/partner/v1/agents/$id': typeof ApiPublicPartnerV1AgentsIdRoute
+  '/api/public/partner/v1/developments/$id': typeof ApiPublicPartnerV1DevelopmentsIdRoute
   '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
   '/api/public/partner/v1/sandbox/reset': typeof ApiPublicPartnerV1SandboxResetRoute
   '/api/public/partner/v1/sandbox/simulate': typeof ApiPublicPartnerV1SandboxSimulateRoute
@@ -2312,6 +2330,7 @@ export interface FileRoutesById {
   '/api/public/partner/v1/agencies': typeof ApiPublicPartnerV1AgenciesRouteWithChildren
   '/api/public/partner/v1/agents': typeof ApiPublicPartnerV1AgentsRouteWithChildren
   '/api/public/partner/v1/changes': typeof ApiPublicPartnerV1ChangesRoute
+  '/api/public/partner/v1/developments': typeof ApiPublicPartnerV1DevelopmentsRouteWithChildren
   '/api/public/partner/v1/leads': typeof ApiPublicPartnerV1LeadsRouteWithChildren
   '/api/public/partner/v1/listings': typeof ApiPublicPartnerV1ListingsRouteWithChildren
   '/api/public/partner/v1/me': typeof ApiPublicPartnerV1MeRoute
@@ -2344,6 +2363,7 @@ export interface FileRoutesById {
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/partner/v1/agencies/$id': typeof ApiPublicPartnerV1AgenciesIdRoute
   '/api/public/partner/v1/agents/$id': typeof ApiPublicPartnerV1AgentsIdRoute
+  '/api/public/partner/v1/developments/$id': typeof ApiPublicPartnerV1DevelopmentsIdRoute
   '/api/public/partner/v1/listings/$id': typeof ApiPublicPartnerV1ListingsIdRouteWithChildren
   '/api/public/partner/v1/sandbox/reset': typeof ApiPublicPartnerV1SandboxResetRoute
   '/api/public/partner/v1/sandbox/simulate': typeof ApiPublicPartnerV1SandboxSimulateRoute
@@ -2560,6 +2580,7 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/agencies'
     | '/api/public/partner/v1/agents'
     | '/api/public/partner/v1/changes'
+    | '/api/public/partner/v1/developments'
     | '/api/public/partner/v1/leads'
     | '/api/public/partner/v1/listings'
     | '/api/public/partner/v1/me'
@@ -2592,6 +2613,7 @@ export interface FileRouteTypes {
     | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/partner/v1/agencies/$id'
     | '/api/public/partner/v1/agents/$id'
+    | '/api/public/partner/v1/developments/$id'
     | '/api/public/partner/v1/listings/$id'
     | '/api/public/partner/v1/sandbox/reset'
     | '/api/public/partner/v1/sandbox/simulate'
@@ -2802,6 +2824,7 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/agencies'
     | '/api/public/partner/v1/agents'
     | '/api/public/partner/v1/changes'
+    | '/api/public/partner/v1/developments'
     | '/api/public/partner/v1/leads'
     | '/api/public/partner/v1/listings'
     | '/api/public/partner/v1/me'
@@ -2834,6 +2857,7 @@ export interface FileRouteTypes {
     | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/partner/v1/agencies/$id'
     | '/api/public/partner/v1/agents/$id'
+    | '/api/public/partner/v1/developments/$id'
     | '/api/public/partner/v1/listings/$id'
     | '/api/public/partner/v1/sandbox/reset'
     | '/api/public/partner/v1/sandbox/simulate'
@@ -3049,6 +3073,7 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/agencies'
     | '/api/public/partner/v1/agents'
     | '/api/public/partner/v1/changes'
+    | '/api/public/partner/v1/developments'
     | '/api/public/partner/v1/leads'
     | '/api/public/partner/v1/listings'
     | '/api/public/partner/v1/me'
@@ -3081,6 +3106,7 @@ export interface FileRouteTypes {
     | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/partner/v1/agencies/$id'
     | '/api/public/partner/v1/agents/$id'
+    | '/api/public/partner/v1/developments/$id'
     | '/api/public/partner/v1/listings/$id'
     | '/api/public/partner/v1/sandbox/reset'
     | '/api/public/partner/v1/sandbox/simulate'
@@ -3223,6 +3249,7 @@ export interface RootRouteChildren {
   ApiPublicPartnerV1AgenciesRoute: typeof ApiPublicPartnerV1AgenciesRouteWithChildren
   ApiPublicPartnerV1AgentsRoute: typeof ApiPublicPartnerV1AgentsRouteWithChildren
   ApiPublicPartnerV1ChangesRoute: typeof ApiPublicPartnerV1ChangesRoute
+  ApiPublicPartnerV1DevelopmentsRoute: typeof ApiPublicPartnerV1DevelopmentsRouteWithChildren
   ApiPublicPartnerV1LeadsRoute: typeof ApiPublicPartnerV1LeadsRouteWithChildren
   ApiPublicPartnerV1ListingsRoute: typeof ApiPublicPartnerV1ListingsRouteWithChildren
   ApiPublicPartnerV1MeRoute: typeof ApiPublicPartnerV1MeRoute
@@ -4561,6 +4588,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPartnerV1ChangesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/partner/v1/developments': {
+      id: '/api/public/partner/v1/developments'
+      path: '/api/public/partner/v1/developments'
+      fullPath: '/api/public/partner/v1/developments'
+      preLoaderRoute: typeof ApiPublicPartnerV1DevelopmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/partner/v1/leads': {
       id: '/api/public/partner/v1/leads'
       path: '/api/public/partner/v1/leads'
@@ -4777,6 +4811,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/partner/v1/agents/$id'
       preLoaderRoute: typeof ApiPublicPartnerV1AgentsIdRouteImport
       parentRoute: typeof ApiPublicPartnerV1AgentsRoute
+    }
+    '/api/public/partner/v1/developments/$id': {
+      id: '/api/public/partner/v1/developments/$id'
+      path: '/$id'
+      fullPath: '/api/public/partner/v1/developments/$id'
+      preLoaderRoute: typeof ApiPublicPartnerV1DevelopmentsIdRouteImport
+      parentRoute: typeof ApiPublicPartnerV1DevelopmentsRoute
     }
     '/api/public/partner/v1/listings/$id': {
       id: '/api/public/partner/v1/listings/$id'
@@ -5287,6 +5328,21 @@ const ApiPublicPartnerV1AgentsRouteWithChildren =
     ApiPublicPartnerV1AgentsRouteChildren,
   )
 
+interface ApiPublicPartnerV1DevelopmentsRouteChildren {
+  ApiPublicPartnerV1DevelopmentsIdRoute: typeof ApiPublicPartnerV1DevelopmentsIdRoute
+}
+
+const ApiPublicPartnerV1DevelopmentsRouteChildren: ApiPublicPartnerV1DevelopmentsRouteChildren =
+  {
+    ApiPublicPartnerV1DevelopmentsIdRoute:
+      ApiPublicPartnerV1DevelopmentsIdRoute,
+  }
+
+const ApiPublicPartnerV1DevelopmentsRouteWithChildren =
+  ApiPublicPartnerV1DevelopmentsRoute._addFileChildren(
+    ApiPublicPartnerV1DevelopmentsRouteChildren,
+  )
+
 interface ApiPublicPartnerV1LeadsRouteChildren {
   ApiPublicPartnerV1LeadsIdMessagesRoute: typeof ApiPublicPartnerV1LeadsIdMessagesRoute
 }
@@ -5520,6 +5576,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPartnerV1AgenciesRoute: ApiPublicPartnerV1AgenciesRouteWithChildren,
   ApiPublicPartnerV1AgentsRoute: ApiPublicPartnerV1AgentsRouteWithChildren,
   ApiPublicPartnerV1ChangesRoute: ApiPublicPartnerV1ChangesRoute,
+  ApiPublicPartnerV1DevelopmentsRoute:
+    ApiPublicPartnerV1DevelopmentsRouteWithChildren,
   ApiPublicPartnerV1LeadsRoute: ApiPublicPartnerV1LeadsRouteWithChildren,
   ApiPublicPartnerV1ListingsRoute: ApiPublicPartnerV1ListingsRouteWithChildren,
   ApiPublicPartnerV1MeRoute: ApiPublicPartnerV1MeRoute,

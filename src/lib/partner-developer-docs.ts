@@ -10,7 +10,7 @@ export const partnerSpec = JSON.parse(raw) as {
 };
 export const partnerOperations = Object.entries(partnerSpec.paths).flatMap(([path, methods]) => Object.entries(methods).map(([method, operation]) => ({path, method, operation})));
 export const partnerSections = [
-  ['introduction','Introducere'],['quickstart','Pornire rapidă'],['keys','Chei și medii'],['authentication','Autentificare'],['limits','Limite de cereri'],['idempotency','Idempotență'],['errors','Erori'],['agencies','Agenții'],['listings','Anunțuri'],['agents','Agenți'],['taxonomies','Liste de valori'],['changes','Flux de modificări'],['webhooks','Webhooks'],['publication','Starea publicării'],['leads','Lead-uri și mesaje'],['stats','Statistici'],['sandbox','Mediul de test'],['checklist','Bune practici și verificare live'],['history','Istoric versiuni'],['contact','Contact'],
+  ['introduction','Introducere'],['quickstart','Pornire rapidă'],['keys','Chei și medii'],['authentication','Autentificare'],['limits','Limite de cereri'],['idempotency','Idempotență'],['errors','Erori'],['agencies','Agenții'],['listings','Anunțuri'],['developments','Ansambluri (opțional)'],['agents','Agenți'],['taxonomies','Liste de valori'],['changes','Flux de modificări'],['webhooks','Webhooks'],['publication','Starea publicării'],['leads','Lead-uri și mesaje'],['stats','Statistici'],['sandbox','Mediul de test'],['checklist','Bune practici și verificare live'],['history','Istoric versiuni'],['contact','Contact'],
 ] as const;
 export function partnerResolve(s: Schema): Schema {return s.$ref ? partnerSpec.components.schemas[s.$ref.split('/').at(-1) ?? ''] ?? s : s;}
 export function partnerRows(input: Schema, prefix = '', depth = 0): {name: string; schema: Schema; required: boolean}[] {

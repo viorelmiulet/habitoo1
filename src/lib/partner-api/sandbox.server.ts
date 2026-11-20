@@ -3,7 +3,7 @@ import { apiError, type PartnerContext } from "./core.server";
 import { SANDBOX_AGENCY_ID } from "./sandbox";
 import type { PartnerWriteStore, WriteResult } from "./write.server";
 import type { PartnerReadStore } from "./read.server";
-export const simulateSchema=z.object({action:z.enum(["listing_update","listing_withdraw","listing_create","agent_update"])}).strict();
+export const simulateSchema=z.object({action:z.enum(["listing_update","listing_withdraw","listing_create","agent_update","development_update","development_withdraw"])}).strict();
 export async function handleSandbox(ctx:PartnerContext,kind:"simulate"|"reset",body:unknown,run:(kind:"simulate"|"reset",action?:string)=>Promise<unknown>){
   if(ctx.identity.environment!=="test")return apiError(403,"FORBIDDEN","Acțiunea este disponibilă numai cu o cheie de test.",ctx.requestId);
   const p=(kind==="simulate"?simulateSchema:z.object({}).strict()).safeParse(body);
