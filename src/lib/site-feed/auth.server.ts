@@ -5,7 +5,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { incompleteFeedResponse } from "./complete-read.server";
 import { AGENCY_SITE_PORTAL_KEY, agencySiteAccepts } from "./agency-site";
 
-export const FEED_API_VERSION = "habitoo-site-feed/1.0";
+export const FEED_API_VERSION = "habitoo-site-feed/1.1";
 export const FEED_BASE_PATH = "/api/public/sites/v1";
 
 export type FeedAuthOk = {

@@ -10,6 +10,7 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
+- Development feeds share portal selection and watermarking. Why: exclude unselected units; keep Partner API separate.
 - Text correction shares pure guards and form approval. Why: never auto-save changed facts.
 - Media/expiry rules: src/lib/portals/AGENTS.md. Why: scoped portal policies.
 - Property status sold/rented/archived enqueues `portal_status_withdraw_items` (armed cron) withdrawing via `applyPortalSelectionForOrg` enabled:false; no auto-republish. Why: same path as manual deselect, with retries.

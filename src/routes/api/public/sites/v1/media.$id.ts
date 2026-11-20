@@ -20,7 +20,8 @@ export const Route = createFileRoute("/api/public/sites/v1/media/$id")({
 
         try {
           const { propertyMediaTarget } = await import("@/lib/site-feed/property-media.server");
-          const target = await propertyMediaTarget(id, resize);
+          const { developmentMediaTarget } = await import('@/lib/site-feed/development-media.server');
+          const target = await propertyMediaTarget(id, resize) ?? await developmentMediaTarget(id, resize);
           if (!target) return new Response("Not found", { status: 404 });
 
           return new Response(null, {

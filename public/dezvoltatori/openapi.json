@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "Habitoo — API pentru integrarea portalurilor",
-    "version": "1.2.4",
+    "version": "1.3.0",
     "description": "API pentru indexul agențiilor, anunțuri JSON, fotografii, lead-uri, vizualizări și XML Kyero v3. Toate exemplele sunt fictive. Cheia de index descoperă agențiile; tokenul fiecărei agenții autorizează accesul numai la aceasta. Folosiți Bearer; /sites/v1 nu acceptă token în query. Scopuri: feed:read, agents:read, leads:write. Limită orientativă: 120 cereri/60 secunde pentru aceeași cheie și adresă IP, inclusiv XML; media nu are o limită specifică. Limita poate varia între cereri: tratați 429 prin reîncercare cu întârziere progresivă. Parcurgeți toate paginile înainte de reconciliere; ordinea poate varia între pagini și nu există cursor sau instantaneu comun. Agențiile în perioada de retragere au inventar gol. XML și index: generarea incompletă întoarce 503 cu Retry-After: 300. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
   },
   "x-developer-guide": {
@@ -26,6 +26,11 @@
       "Trimiteți un message_id stabil pentru fiecare lead și un event_id stabil pentru fiecare eveniment de vizualizare. event_id previne incrementul dublu la retrimitere, inclusiv după rotirea cheii portalului. Fără event_id, nu retrimiteți automat POST visits după un timeout. La 503 așteptați Retry-After: 300; la 429 folosiți întârziere progresivă."
     ],
     "history": [
+      {
+        "version": "1.3.0",
+        "date": "2026-11-20",
+        "description": "Feed 1.1 strict aditiv: ansamblu_id și piata pe oferte, ansambluri și fotografiile lor. Indexurile și Partner API rămân neschimbate."
+      },
       {
         "version": "1.2.4",
         "date": "2026-11-08",
@@ -319,7 +324,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -343,7 +348,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -367,7 +372,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -391,7 +396,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -415,7 +420,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -482,7 +487,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -506,7 +511,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -530,7 +535,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -554,7 +559,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -578,7 +583,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -602,7 +607,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -626,7 +631,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -702,7 +707,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -726,7 +731,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -750,7 +755,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -774,7 +779,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -798,7 +803,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -852,7 +857,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -876,7 +881,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -900,7 +905,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -924,7 +929,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -948,7 +953,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -972,7 +977,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -995,7 +1000,7 @@
           "Media"
         ],
         "security": [],
-        "description": "Imagine inclusă la publicare, neconfidențială, cu proprietate eligibilă publicată. Nu verifică selecția unui anumit portal. Poate aplica watermark-ul agenției fără modificarea originalului. Fără token și fără limită de cereri pentru aceste adrese. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate.",
+        "description": "Imagine inclusă la publicare, neconfidențială, cu proprietate eligibilă publicată. Nu verifică selecția unui anumit portal. Poate aplica watermark-ul agenției fără modificarea originalului. Fără token și fără limită de cereri pentru aceste adrese. Redirect 302, nu corp imagine. Urmați Location, fără a trata destinația drept URL permanent. Linkurile semnate durează 24 ore; cache redirect o oră. w/h transformă numai imaginile din stocare, calitate 75; la eșec se revine la original. URL-urile HTTPS externe sunt redirecționate neschimbate. Servește și galeriile ansamblurilor active, neșterse, cu cel puțin o ofertă publicată eligibilă într-un feed activ. Watermark-ul agenției și dimensiunile se aplică la fel; lipsa eligibilității produce 404.",
         "parameters": [
           {
             "name": "id",
@@ -1326,7 +1331,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1350,7 +1355,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1374,7 +1379,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1398,7 +1403,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1422,7 +1427,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1446,7 +1451,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1470,7 +1475,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1494,7 +1499,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1518,7 +1523,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1589,7 +1594,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1613,7 +1618,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1637,7 +1642,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1661,7 +1666,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1685,7 +1690,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1737,7 +1742,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1752,7 +1757,7 @@
                   "rejected": 0,
                   "deduplicated": true,
                   "duplicates": 1,
-                  "api_version": "habitoo-site-feed/1.0"
+                  "api_version": "habitoo-site-feed/1.1"
                 }
               }
             }
@@ -1768,7 +1773,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1792,7 +1797,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1816,7 +1821,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1840,7 +1845,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1864,7 +1869,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1888,7 +1893,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -1912,7 +1917,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -2022,7 +2027,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -2056,7 +2061,7 @@
               },
               "x-habitoo-api-version": {
                 "schema": {
-                  "const": "habitoo-site-feed/1.0",
+                  "const": "habitoo-site-feed/1.1",
                   "type": "string"
                 }
               }
@@ -2097,6 +2102,351 @@
         },
         "x-authentication": {
           "description": "Recomandat: ?token={feed.token} emis pentru BazarulDeCase. Compatibilitate: Bearer, Basic, x-habitoo-feed-token, x-api-key, x-apikey, apoi query key, api_key, apikey, apiKey. Tokenurile obișnuite de site nu sunt acceptate."
+        }
+      }
+    },
+    "/api/public/sites/v1/developments": {
+      "get": {
+        "summary": "Lista ansamblurilor",
+        "description": "Necesită feed:read și aceeași autentificare ca /properties. Numai ansamblurile active, neșterse, ale agenției tokenului, cu cel puțin o ofertă eligibilă în acest feed; aceeași selecție și aceleași condiții de contact ca la oferte. unitati conține numai idstr eligibile. În grace lista este goală și detaliul întoarce 404. Retragerea este dispariția din lista completă. Aceeași anvelopă și paginare ca /properties: page, per_page implicit 50, maxim 200. Ordine descrescătoare după datamodificare.",
+        "tags": [
+          "Feed pe agenție"
+        ],
+        "security": [
+          {
+            "AgencyBearer": []
+          },
+          {
+            "AgencyBasic": []
+          },
+          {
+            "FeedTokenHeader": []
+          },
+          {
+            "ApiKeyHeader": []
+          },
+          {
+            "ApiKeyLegacyHeader": []
+          }
+        ],
+        "x-required-scopes": "feed:read",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Implicit 1; valori invalide sau <1 devin 1; fracțiile sunt rotunjite în jos."
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 200
+            },
+            "description": "Implicit 50; valori invalide sau <1 devin 50; peste 200 se limitează la 200; fracțiile se rotunjesc în jos."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "private, max-age=60"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.1",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevelopmentPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API token. sau Invalid or revoked API token.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.1",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing scope: <scope>",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.1",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Limita locală a fost depășită; fără Retry-After.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.1",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Inventarul nu a putut fi generat complet. Nu retrageți anunțuri după un răspuns care nu e 200 complet. Reîncercați după 300 secunde.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "const": "300"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Service unavailable. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/sites/v1/developments/{id}": {
+      "get": {
+        "summary": "Un ansamblu",
+        "description": "Necesită feed:read și aceeași autentificare ca /properties. Numai ansamblurile active, neșterse, ale agenției tokenului, cu cel puțin o ofertă eligibilă în acest feed; aceeași selecție și aceleași condiții de contact ca la oferte. unitati conține numai idstr eligibile. În grace lista este goală și detaliul întoarce 404. Retragerea este dispariția din lista completă. UUID al ansamblului; altă agenție, ansamblu inactiv/șters sau fără unități eligibile sau ID invalid: 404.",
+        "tags": [
+          "Feed pe agenție"
+        ],
+        "security": [
+          {
+            "AgencyBearer": []
+          },
+          {
+            "AgencyBasic": []
+          },
+          {
+            "FeedTokenHeader": []
+          },
+          {
+            "ApiKeyHeader": []
+          },
+          {
+            "ApiKeyLegacyHeader": []
+          }
+        ],
+        "x-required-scopes": "feed:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID-ul ansamblului.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "private, max-age=60"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.1",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevelopmentDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API token. sau Invalid or revoked API token.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.1",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing scope: <scope>",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.1",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ansamblu absent sau neeligibil pentru acest feed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Limita locală a fost depășită; fără Retry-After.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "x-habitoo-api-version": {
+                "schema": {
+                  "const": "habitoo-site-feed/1.1",
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Inventarul nu a putut fi generat complet. Nu retrageți anunțuri după un răspuns care nu e 200 complet. Reîncercați după 300 secunde.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "const": "300"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "Service unavailable. Nu retrageți anunțuri după un răspuns care nu e 200 complet."
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -2870,6 +3220,26 @@
               "emisii"
             ],
             "description": "Obiect rezervat pentru compatibilitate; valorile clasa, consum și emisii sunt întotdeauna null."
+          },
+          "ansamblu_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID-ul ansamblului ofertei; null fără ansamblu."
+          },
+          "piata": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "primara",
+              "secundara",
+              null
+            ],
+            "description": "Piața ofertei; null când nu este completată."
           }
         },
         "required": [
@@ -2959,7 +3329,9 @@
           "indice_emisii",
           "consum_energie_regenerabila",
           "url",
-          "energy"
+          "energy",
+          "ansamblu_id",
+          "piata"
         ],
         "description": "Toate câmpurile sunt prezente; null înseamnă valoare indisponibilă, nu câmp absent. Listele de valori includ null unde este permis. Câmpuri rezervate pentru compatibilitate, întotdeauna null: titlu.en, descriere.en, nrfronturistradale, frontstradal, latimedrumacces, caroiaj, pretfaratva, comisioncumparator, custom1, custom2, eficienta_energetica, consum_specific, indice_emisii, consum_energie_regenerabila, energy.clasa, energy.consum, energy.emisii."
       },
@@ -3106,7 +3478,7 @@
             "description": "Mesajul exact al erorii; mesajele API sunt în engleză."
           },
           "api_version": {
-            "const": "habitoo-site-feed/1.0",
+            "const": "habitoo-site-feed/1.1",
             "type": "string"
           }
         },
@@ -3169,7 +3541,7 @@
             }
           },
           "api_version": {
-            "const": "habitoo-site-feed/1.0",
+            "const": "habitoo-site-feed/1.1",
             "type": "string"
           }
         },
@@ -3240,7 +3612,7 @@
             }
           },
           "api_version": {
-            "const": "habitoo-site-feed/1.0",
+            "const": "habitoo-site-feed/1.1",
             "type": "string"
           }
         },
@@ -3264,7 +3636,7 @@
             "$ref": "#/components/schemas/FeedProperty"
           },
           "api_version": {
-            "const": "habitoo-site-feed/1.0",
+            "const": "habitoo-site-feed/1.1",
             "type": "string"
           }
         },
@@ -3280,7 +3652,7 @@
             "$ref": "#/components/schemas/Agency"
           },
           "api_version": {
-            "const": "habitoo-site-feed/1.0",
+            "const": "habitoo-site-feed/1.1",
             "type": "string"
           }
         },
@@ -3558,7 +3930,7 @@
             ]
           },
           "api_version": {
-            "const": "habitoo-site-feed/1.0",
+            "const": "habitoo-site-feed/1.1",
             "type": "string"
           }
         },
@@ -3633,7 +4005,7 @@
             "description": "Numărul intrărilor neacceptate (proprietăți inexistente sau din altă agenție)."
           },
           "api_version": {
-            "const": "habitoo-site-feed/1.0",
+            "const": "habitoo-site-feed/1.1",
             "type": "string"
           },
           "deduplicated": {
@@ -3676,7 +4048,7 @@
             }
           },
           "api_version": {
-            "const": "habitoo-site-feed/1.0",
+            "const": "habitoo-site-feed/1.1",
             "type": "string"
           }
         },
@@ -3991,6 +4363,343 @@
           "name": "root"
         },
         "description": "Document Kyero v3 complet, fără paginare. Un root fără elemente property este inventar gol."
+      },
+      "FeedDevelopment": {
+        "type": "object",
+        "properties": {
+          "dezvoltator": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Numele dezvoltatorului."
+          },
+          "localitate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Localitatea."
+          },
+          "judet": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Județul."
+          },
+          "zona": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Zona."
+          },
+          "strada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Strada; null când locația nu este precisă."
+          },
+          "numarstradal": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Numărul; null când locația nu este precisă."
+          },
+          "stadiuconstructie": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Același stadiu textual ca la oferte, transmis fără remapare."
+          },
+          "data_livrare": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Valoarea completată: an, an-trimestru (2027-Q4) sau dată ISO; păstrată fără conversie."
+          },
+          "moneda": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Moneda intervalului, fără conversie; null dacă nu există prețuri sau monedele diferă."
+          },
+          "agent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Identificatorul agentului, corespunzător idstr din /agents."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nume": {
+            "type": "string"
+          },
+          "descriere": {
+            "type": "object",
+            "properties": {
+              "ro": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Descrierea românească."
+              },
+              "en": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "ro",
+              "en"
+            ]
+          },
+          "latitudine": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Coordonată exactă la locație precisă, altfel deplasare deterministă de maximum 300 m."
+          },
+          "longitudine": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Aceeași regulă de precizie ca la oferte."
+          },
+          "nr_cladiri": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Număr de clădiri."
+          },
+          "nr_etaje": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Număr de etaje."
+          },
+          "nr_unitati": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Numărul total completat al unităților."
+          },
+          "pret_de_la": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Minimul unităților active eligibile în acest feed; suprascrierea manuală are prioritate."
+          },
+          "pret_pana_la": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Maximul unităților active eligibile în acest feed; suprascrierea manuală are prioritate."
+          },
+          "facilitati": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedImage"
+            },
+            "description": "Aceeași schemă și ordine ca la oferte; alt este null. Galeria ansamblului este publicabilă; watermark-ul agenției se aplică la servire."
+          },
+          "unitati": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Numai idstr ale ofertelor eligibile în acest feed."
+          },
+          "dataadaugare": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "datamodificare": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "dezvoltator",
+          "localitate",
+          "judet",
+          "zona",
+          "strada",
+          "numarstradal",
+          "stadiuconstructie",
+          "data_livrare",
+          "moneda",
+          "agent_id",
+          "id",
+          "nume",
+          "descriere",
+          "latitudine",
+          "longitudine",
+          "nr_cladiri",
+          "nr_etaje",
+          "nr_unitati",
+          "pret_de_la",
+          "pret_pana_la",
+          "facilitati",
+          "images",
+          "unitati",
+          "dataadaugare",
+          "datamodificare"
+        ],
+        "example": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "nume": "Ansamblu fictiv",
+          "dezvoltator": "Dezvoltator fictiv",
+          "descriere": {
+            "ro": "Exemplu fictiv de integrare.",
+            "en": null
+          },
+          "localitate": "Localitate fictivă",
+          "judet": "Județ fictiv",
+          "zona": null,
+          "strada": null,
+          "numarstradal": null,
+          "latitudine": null,
+          "longitudine": null,
+          "stadiuconstructie": "În construcție",
+          "data_livrare": "2027-Q4",
+          "nr_cladiri": 2,
+          "nr_etaje": 5,
+          "nr_unitati": 40,
+          "facilitati": [
+            "Lift"
+          ],
+          "pret_de_la": 100000,
+          "pret_pana_la": 150000,
+          "moneda": "EUR",
+          "images": [
+            {
+              "src": "https://crm.habitoo.ro/api/public/sites/v1/media/44444444-4444-4444-8444-444444444444",
+              "tip": "principala",
+              "pozitie": 0,
+              "modificata": "2026-11-20T07:00:00Z",
+              "alt": null,
+              "width": 1200,
+              "height": 800
+            }
+          ],
+          "unitati": [
+            "HB-900001",
+            "HB-900002"
+          ],
+          "agent_id": "55555555-5555-4555-8555-555555555555",
+          "dataadaugare": "2026-11-01T07:00:00Z",
+          "datamodificare": "2026-11-20T07:00:00Z"
+        }
+      },
+      "DevelopmentPage": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Număr total de rezultate."
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "Dimensiunea efectivă a paginii."
+          },
+          "current_page": {
+            "type": "integer",
+            "description": "Pagina cerută normalizată."
+          },
+          "last_page": {
+            "type": "integer",
+            "description": "Maximum dintre 1 și ceil(total/per_page)."
+          },
+          "next_page_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL pagina următoare sau null."
+          },
+          "prev_page_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL pagina precedentă sau null."
+          },
+          "from": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Indicele primului rezultat, de la 1; null dacă total=0."
+          },
+          "to": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Indicele final calculat; null dacă total=0. La pagini peste last_page, metadata nu garantează un interval valid de rezultate."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedDevelopment"
+            }
+          },
+          "api_version": {
+            "const": "habitoo-site-feed/1.1",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total",
+          "per_page",
+          "current_page",
+          "last_page",
+          "next_page_url",
+          "prev_page_url",
+          "from",
+          "to",
+          "data",
+          "api_version"
+        ]
+      },
+      "DevelopmentDetail": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FeedDevelopment"
+          },
+          "api_version": {
+            "const": "habitoo-site-feed/1.1",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "api_version"
+        ]
       }
     }
   },

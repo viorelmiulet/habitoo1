@@ -1,3 +1,8 @@
+## ANS3 — Ansambluri în feedul JSON 1.1
+- [x] Endpointuri, eligibilitate comună per token, fotografii și câmpuri aditive; indexuri și Partner API neschimbate
+- [x] Documentație, OpenAPI și pagina Dezvoltatori; 12 teste izolate trec; HTTP 401, documentație desktop/telefon și build OK, fără modificări de date sau publicare. Inventarul autentificat real nu a fost verificat: fără token de feed disponibil.
+- [x] Contract păstrat strict aditiv; commit la încheiere
+
 ## ANS2 — Storia Primary Market
 - [x] Documentație actuală și GET real taxonomie salvat în repo; adăugate area_from, area_to, price_per_sqm_from, estate_type și opțional construction_start_date. Stadiul și total_units existau; buildings_count și price_to nu au URN în taxonomie și nu sunt inventate.
 - [x] Cont dezvoltator separat, publicare durabilă părinte/unități și notificări; mutare confirmată, retragere veche după succes, isolated primary și retragerea unităților scoase

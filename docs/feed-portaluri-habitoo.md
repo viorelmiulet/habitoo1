@@ -1,6 +1,6 @@
 # Feedul Habitoo pentru portaluri partenere — Imobli.ro
 
-Documentație tehnică a implementării existente, verificată la 29 octombrie 2026. Versiunea indexului: `habitoo-imobli-index/1.0`. Versiunea feedului: `habitoo-site-feed/1.0`.
+Documentație tehnică a implementării existente, verificată la 29 octombrie 2026. Versiunea indexului: `habitoo-imobli-index/1.0`. Versiunea feedului: `habitoo-site-feed/1.1`.
 
 ## 1. Modelul de integrare
 
@@ -109,7 +109,7 @@ Authorization: Bearer {TOKEN_AGENTIE}
 | `from` | number sau null | Poziția de început, indexată de la 1; null când total este 0. |
 | `to` | number sau null | Poziția finală; null când total este 0. |
 | `data` | object[] | Ofertele paginii, fiecare cu schema din secțiunea 5. |
-| `api_version` | string | habitoo-site-feed/1.0. |
+| `api_version` | string | habitoo-site-feed/1.1. |
 
 O pagină dincolo de `last_page` întoarce **200 cu data: []**, nu 404. La total nenul, `from` și `to` pot rămâne poziția de început calculată, chiar dincolo de total; nu le interpretați drept dovada prezenței unor oferte. La listă complet goală: total 0, last_page 1, from/to null.
 
@@ -117,7 +117,7 @@ O pagină dincolo de `last_page` întoarce **200 cu data: []**, nu 404. La total
 
 `{id}` acceptă UUID-ul ofertei sau referința exactă (`idstr`). Se elimină spațiile de la capete; identificatorul trebuie să aibă 1–64 caractere. Pentru identificatori non-UUID, căutarea se face după referință, nu după alias. Codificați URL-ul cu encodeURIComponent când construiți cererea.
 
-Răspunsul este `{ "data": { ...oferta }, "api_version": "habitoo-site-feed/1.0" }`, fără metadate de paginare. Ofertele altei agenții, neselectate pentru Imobli ori neeligibile nu sunt returnate: **404**.
+Răspunsul este `{ "data": { ...oferta }, "api_version": "habitoo-site-feed/1.1" }`, fără metadate de paginare. Ofertele altei agenții, neselectate pentru Imobli ori neeligibile nu sunt returnate: **404**.
 
 ### GET /agents
 
@@ -147,7 +147,7 @@ Endpointul este public, **nu verifică tokenul sau selecția pentru Imobli**. Se
 
 ## 5. Schema completă a ofertei — inclusiv formatul IMMOFLUX
 
-Lista și detaliul folosesc aceeași schemă: **87 de câmpuri la primul nivel**. `null` înseamnă informație necompletată sau neexpusă; listele fără valori sunt []. Numele sunt case-sensitive și nu sunt traduse. Nu transformați null în 0 și nu considerați implicit false o valoare booleană nullable.
+Lista și detaliul folosesc aceeași schemă: **câmpurile existente plus cele două câmpuri aditive din versiunea 1.1**. `null` înseamnă informație necompletată sau neexpusă; listele fără valori sunt []. Numele sunt case-sensitive și nu sunt traduse. Nu transformați null în 0 și nu considerați implicit false o valoare booleană nullable.
 
 | Câmp | Tip JSON | Descriere / valori |
 | --- | --- | --- |
@@ -540,7 +540,7 @@ Nu sunt prezentate ca răspunsuri live Imobli: accesul autentificat la indexul I
       "url": "https://habitoo.ro/oferta/[ID_MASCAT]"
     }
   ],
-  "api_version": "habitoo-site-feed/1.0"
+  "api_version": "habitoo-site-feed/1.1"
 }
 ```
 
@@ -734,7 +734,7 @@ Nu sunt prezentate ca răspunsuri live Imobli: accesul autentificat la indexul I
     },
     "url": "https://habitoo.ro/oferta/[ID_MASCAT]"
   },
-  "api_version": "habitoo-site-feed/1.0"
+  "api_version": "habitoo-site-feed/1.1"
 }
 ```
 
@@ -767,7 +767,7 @@ Forma JSON a unei erori returnate de wrapper:
 ```json
 {
   "error": "Invalid or revoked API token.",
-  "api_version": "habitoo-site-feed/1.0"
+  "api_version": "habitoo-site-feed/1.1"
 }
 ```
 
@@ -780,7 +780,7 @@ Erorile /media au forma text descrisă în secțiunea 4. O excepție apărută �
 - Limiterul este best-effort, local instanței de servire, nu distribuit. Nu este o garanție de debit și nu trebuie folosit ca țintă de trafic.
 - /media/{id} nu trece prin acest limiter de autentificare; implementarea rutei nu declară o limită numerică proprie.
 - La 429 nu există în acești handleri header Retry-After sau headere de cotă. Integrarea trebuie să trateze codul și să evite reluările în rafală; nu considerați eroarea drept retragere.
-- Răspunsurile JSON reușite au Cache-Control: private, max-age=60 și X-Habitoo-API-Version: habitoo-site-feed/1.0. Erorile JSON folosesc no-store. Nu există implementare ETag/Last-Modified ori răspuns condițional 304 în aceste handleri.
+- Răspunsurile JSON reușite au Cache-Control: private, max-age=60 și X-Habitoo-API-Version: habitoo-site-feed/1.1. Erorile JSON folosesc no-store. Nu există implementare ETag/Last-Modified ori răspuns condițional 304 în aceste handleri.
 
 ## 9. Frecvența citirii
 
@@ -791,3 +791,110 @@ Ceea ce rezultă din contract: citire periodică pull a indexului și a tuturor 
 ## Repere de verificare în sursă
 
 Contractul ofertelor, imaginilor, agenților și paginării: `src/lib/site-feed/mapper.ts`. Filtrare, ordine, anvelope și drepturi de citire: `src/lib/site-feed/handlers.server.ts`. Headere de autentificare, limite și răspunsuri de eroare: `src/lib/site-feed/auth.server.ts`. URL-uri canonice: `src/lib/site-feed/config.ts`. Rutele publice: `src/routes/api/public/sites/v1/` și `src/routes/api/public/feed/imobli/[index]/$indexKey.ts`. Valorile textuale ale formularului: `src/lib/property-taxonomy.ts`; tipurile cunoscute: `src/lib/crm.ts`; coordonatele publice: `src/lib/geo.ts`.
+
+
+## 10. Ansambluri — extensie strict aditivă 1.1 (ANS3)
+
+Niciun câmp existent nu se modifică. Indexul `habitoo-imobli-index/1.0` și celelalte indexuri rămân neschimbate. Partner API nu este modificat. Extensia se aplică feedului JSON comun pentru ClickImob, Imobiliare Militari, Imobli și celelalte portaluri pe feed.
+
+### Câmpuri noi la primul nivel al fiecărei oferte (listă și detaliu)
+
+| Câmp | Tip | Semnificație |
+| --- | --- | --- |
+| `ansamblu_id` | string sau null | UUID-ul ansamblului, null fără ansamblu. |
+| `piata` | string sau null | `primara`, `secundara` sau null, după piața completată a proprietății. |
+
+### GET /developments și GET /developments/{id}
+
+Aceeași autentificare și scop `feed:read` ca `/properties`, sub aceeași bază `feed.base_url` (și aliasul `/api/public/portal/v1`). Lista acceptă `page` și `per_page` (implicit 50, maximum 200), are exact aceeași anvelopă de paginare și `api_version: habitoo-site-feed/1.1`. Ordinea este descrescătoare după `datamodificare`. Returnează numai ansamblurile agenției tokenului active, neșterse, cu cel puțin o ofertă eligibilă pentru ACEST feed: aceleași reguli de status, publicare, selecție de portal/site și contact ca `/properties`. În grație lista este goală și detaliul este 404. Detaliul acceptă UUID; altă agenție, ID invalid sau ansamblu neeligibil → 404.
+
+Detaliul: `{ "data": {...}, "api_version": "habitoo-site-feed/1.1" }`. Retragerea este dispariția din lista completă; reconciliați numai după toate paginile citite cu succes. Citirile incomplete produc 503 și Retry-After: 300, niciodată un inventar parțial.
+
+### Schema completă a ansamblului
+
+| Câmp | Tip | Semnificație |
+| --- | --- | --- |
+| `dezvoltator` | string sau null | Numele dezvoltatorului. |
+| `localitate` | string sau null | Localitatea. |
+| `judet` | string sau null | Județul. |
+| `zona` | string sau null | Zona. |
+| `strada` | string sau null | Strada; null când locația nu este precisă. |
+| `numarstradal` | string sau null | Numărul; null când locația nu este precisă. |
+| `stadiuconstructie` | string sau null | Același stadiu textual ca la oferte, transmis fără remapare. |
+| `data_livrare` | string sau null | Valoarea completată: an, an-trimestru (2027-Q4) sau dată ISO; păstrată fără conversie. |
+| `moneda` | string sau null | Moneda intervalului, fără conversie; null dacă nu există prețuri sau monedele diferă. |
+| `agent_id` | string sau null | Identificatorul agentului, corespunzător idstr din /agents. |
+| `id` | string |  |
+| `nume` | string |  |
+| `descriere` | object | Descriere: { ro: string sau null, en: null }. |
+| `latitudine` | number sau null | Coordonată exactă la locație precisă, altfel deplasare deterministă de maximum 300 m. |
+| `longitudine` | number sau null | Aceeași regulă de precizie ca la oferte. |
+| `nr_cladiri` | number sau null | Număr de clădiri. |
+| `nr_etaje` | number sau null | Număr de etaje. |
+| `nr_unitati` | number sau null | Numărul total completat al unităților. |
+| `pret_de_la` | number sau null | Minimul unităților active eligibile în acest feed; suprascrierea manuală are prioritate. |
+| `pret_pana_la` | number sau null | Maximul unităților active eligibile în acest feed; suprascrierea manuală are prioritate. |
+| `facilitati` | string[] |  |
+| `images` | object[] | Aceeași schemă și ordine ca la oferte; alt este null. Galeria ansamblului este publicabilă; watermark-ul agenției se aplică la servire. |
+| `unitati` | string[] | Numai idstr ale ofertelor eligibile în acest feed. |
+| `dataadaugare` | string |  |
+| `datamodificare` | string |  |
+
+Intervalul automat se calculează la citire doar din unitățile active eligibile în feed; vânzarea are prioritate, apoi închirierea. Monedele diferite nu se amestecă; suprascrierile manuale au prioritate și nu se combină cu un interval automat în altă monedă. `data_livrare` păstrează textul completat (an, trimestru sau dată ISO); dacă fișa permite numai data ISO, se transmite acea dată, fără inventarea unui trimestru.
+
+### Fotografii prin /media/{id}
+
+`images[]` are exact schema ofertelor: `src`, `tip`, `pozitie`, `modificata`, `alt`, `width`, `height`; coperta înaintea galeriei, apoi ordinea crescătoare. Galeria ANS1 nu are marcaje de confidențialitate/publicare individuale: toate fotografiile galeriei sunt publicabile numai când ansamblul este activ, neșters și are o ofertă publicată eligibilă într-un feed activ. Ruta publică nu primește token, deci verifică existența eligibilității într-un feed activ, nu identitatea portalului care descarcă. Aplică același watermark al agenției și aceleași transformări; redirect 302, cache 60 secunde; 404 fără eligibilitate.
+
+### Exemplu de detaliu complet, exclusiv fictiv
+
+```json
+{
+  "data": {
+    "id": "33333333-3333-4333-8333-333333333333",
+    "nume": "Ansamblu fictiv",
+    "dezvoltator": "Dezvoltator fictiv",
+    "descriere": {
+      "ro": "Exemplu fictiv de integrare.",
+      "en": null
+    },
+    "localitate": "Localitate fictivă",
+    "judet": "Județ fictiv",
+    "zona": null,
+    "strada": null,
+    "numarstradal": null,
+    "latitudine": null,
+    "longitudine": null,
+    "stadiuconstructie": "În construcție",
+    "data_livrare": "2027-Q4",
+    "nr_cladiri": 2,
+    "nr_etaje": 5,
+    "nr_unitati": 40,
+    "facilitati": [
+      "Lift"
+    ],
+    "pret_de_la": 100000,
+    "pret_pana_la": 150000,
+    "moneda": "EUR",
+    "images": [
+      {
+        "src": "https://crm.habitoo.ro/api/public/sites/v1/media/44444444-4444-4444-8444-444444444444",
+        "tip": "principala",
+        "pozitie": 0,
+        "modificata": "2026-11-20T07:00:00Z",
+        "alt": null,
+        "width": 1200,
+        "height": 800
+      }
+    ],
+    "unitati": [
+      "HB-900001",
+      "HB-900002"
+    ],
+    "agent_id": "55555555-5555-4555-8555-555555555555",
+    "dataadaugare": "2026-11-01T07:00:00Z",
+    "datamodificare": "2026-11-20T07:00:00Z"
+  },
+  "api_version": "habitoo-site-feed/1.1"
+}
+```

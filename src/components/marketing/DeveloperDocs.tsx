@@ -7,7 +7,7 @@ import { apiSpec, operations, requestExample, responseExample, schemaRows, schem
 const sections = [
   ["introducere", "Introducere"], ["site-agentie", "Site-ul propriu al agenției"], ["pornire", "Pornire rapidă"], ["onboarding", "Onboarding și chei"],
   ["autentificare", "Autentificare"], ["index", "Indexul agențiilor"], ["anunturi", "Feedul de anunțuri"],
-  ["agenti", "Agenți și agenție"], ["poze", "Poze"], ["xml", "Feed XML (Kyero v3)"],
+  ["ansambluri", "Ansambluri"], ["agenti", "Agenți și agenție"], ["poze", "Poze"], ["xml", "Feed XML (Kyero v3)"],
   ["leaduri", "Trimiterea lead-urilor"], ["vizionari", "Vizualizări"], ["erori", "Erori și coduri de răspuns"],
   ["limite", "Limite de cereri"], ["practici", "Bune practici"], ["istoric", "Istoric versiuni"], ["contact-tehnic", "Contact tehnic"],
 ] as const;
@@ -126,7 +126,7 @@ export function DeveloperDocs() {
         <header className="border-b border-border py-10 sm:py-14">
           <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-gold-dark"><Code2 className="size-5" /> Habitoo / Dezvoltatori</p>
           <h1 className="max-w-3xl text-3xl font-bold leading-tight text-navy sm:text-4xl">API Habitoo pentru portaluri imobiliare</h1>
-          <p className="mt-5 max-w-2xl leading-7 text-muted-foreground">Anunțuri, agenți, fotografii și lead-uri. Un contract comun pentru agențiile care aleg portalul tău.</p>
+          <p className="mt-5 max-w-2xl leading-7 text-muted-foreground">Anunțuri, ansambluri, agenți, fotografii și lead-uri. Un contract comun pentru agențiile care aleg portalul tău.</p>
           <div className="mt-7 flex flex-wrap items-center gap-4"><Button asChild><a href="/dezvoltatori/openapi.json" target="_blank" rel="noopener noreferrer"><Download /> Descarcă OpenAPI</a></Button><span className="text-xs text-muted-foreground">Versiunea {apiSpec.info.version}</span></div>
         </header>
         <Section id="introducere" title="Introducere"><p>{guide.introduction}</p><p className="text-sm text-muted-foreground">Exemplele sunt ilustrative, generate din scheme; toate identitățile și cheile sunt fictive. API-ul nu este apelat din această pagină.</p></Section>
@@ -153,6 +153,7 @@ export function DeveloperDocs() {
         <Section id="autentificare" title="Autentificare"><AuthenticationDocs /></Section>
         <Section id="index" title="Indexul agențiilor"><Endpoints match={p => p.includes("/index/")} /></Section>
         <Section id="anunturi" title="Feedul de anunțuri"><p>{guide.recommendations[0]}</p><p>{guide.recommendations[3]}</p><Endpoints match={p => p.includes("/properties")} /><h3 className="pt-4 text-xl font-bold">Toate câmpurile anunțului</h3><p className="text-sm text-muted-foreground">{apiSpec.components.schemas.FeedProperty?.description}</p><FieldTable schema={apiSpec.components.schemas.FeedProperty ?? {}} /></Section>
+        <Section id="ansambluri" title="Ansambluri — feed 1.1"><p>Extensie strict aditivă: ofertele au <code>ansamblu_id</code> (UUID sau null) și <code>piata</code> (primara, secundara sau null). Niciun câmp anterior nu se schimbă. Indexurile și Partner API rămân neschimbate.</p><p>Un ansamblu apare doar dacă este activ, neșters și are cel puțin o ofertă eligibilă pentru feedul tokenului. <code>unitati</code> conține doar referințele <code>idstr</code> ale acestor oferte. Retrage ansamblurile absente numai după citirea reușită a tuturor paginilor.</p><Endpoints match={p => p.includes('/developments')} /><h3 className="pt-4 text-xl font-bold">Schema ansamblului</h3><FieldTable schema={apiSpec.components.schemas.FeedDevelopment ?? {}} /></Section>
         <Section id="agenti" title="Agenți și agenție"><Endpoints match={p => p.endsWith("/agents") || p.endsWith("/agency")} /></Section>
         <Section id="poze" title="Poze"><p>{guide.recommendations[2]}</p><Endpoints match={p => p.includes("/media/")} /></Section>
         <Section id="xml" title="Feed XML (Kyero v3)"><Endpoints match={p => p.endsWith("feed.xml")} /></Section>

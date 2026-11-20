@@ -31,6 +31,8 @@ export type FeedAgent = {
 };
 
 export type FeedProperty = {
+  ansamblu_id: string | null;
+  piata: 'primara' | 'secundara' | null;
   idnum: number | null;
   idstr: string;
   alias: string;
@@ -289,6 +291,8 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
 
   return {
     idnum: numericId(p.reference),
+    ansamblu_id: p.development_id ?? null,
+    piata: p.market === 'primary' ? 'primara' : p.market === 'secondary' ? 'secundara' : null,
     idstr: p.reference ?? p.id,
     alias: `oferta-${p.id}`,
     agent: options.agent?.full_name ?? null,

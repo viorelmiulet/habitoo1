@@ -201,10 +201,12 @@ import { Route as ApiPublicPartnerV1TaxonomiesRouteImport } from './routes/api/p
 import { Route as ApiPublicPartnerV1WebhookRouteImport } from './routes/api/public/partner/v1/webhook'
 import { Route as ApiPublicPortalV1AgencyRouteImport } from './routes/api/public/portal/v1/agency'
 import { Route as ApiPublicPortalV1AgentsRouteImport } from './routes/api/public/portal/v1/agents'
+import { Route as ApiPublicPortalV1DevelopmentsRouteImport } from './routes/api/public/portal/v1/developments'
 import { Route as ApiPublicPortalV1PropertiesRouteImport } from './routes/api/public/portal/v1/properties'
 import { Route as ApiPublicSitesV1AgencyRouteImport } from './routes/api/public/sites/v1/agency'
 import { Route as ApiPublicSitesV1AgentsRouteImport } from './routes/api/public/sites/v1/agents'
 import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/public/sites/v1/contacts'
+import { Route as ApiPublicSitesV1DevelopmentsRouteImport } from './routes/api/public/sites/v1/developments'
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
 import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
 import { Route as ApiPublicExtensionV1PropertiesCheckSourceRouteImport } from './routes/api/public/extension/v1/properties.check-source'
@@ -229,6 +231,7 @@ import { Route as ApiPublicPartnerV1WebhookDeliveriesRouteImport } from './route
 import { Route as ApiPublicPartnerV1WebhookTestRouteImport } from './routes/api/public/partner/v1/webhook.test'
 import { Route as ApiPublicPortalV1PortalFeedDotxmlRouteImport } from './routes/api/public/portal/v1/$portal.feed[.]xml'
 import { Route as ApiPublicPortalV1BazaruldecaseFeedDotxmlRouteImport } from './routes/api/public/portal/v1/bazaruldecase.feed[.]xml'
+import { Route as ApiPublicPortalV1DevelopmentsIdRouteImport } from './routes/api/public/portal/v1/developments.$id'
 import { Route as ApiPublicPortalV1HouseraWebhookRouteImport } from './routes/api/public/portal/v1/housera.webhook'
 import { Route as ApiPublicPortalV1ImoveFeedRouteImport } from './routes/api/public/portal/v1/imove.feed'
 import { Route as ApiPublicPortalV1ImoveFeedDotcsvRouteImport } from './routes/api/public/portal/v1/imove.feed[.]csv'
@@ -237,6 +240,7 @@ import { Route as ApiPublicPortalV1ProperstarLeadsRouteImport } from './routes/a
 import { Route as ApiPublicPortalV1PropertiesIdRouteImport } from './routes/api/public/portal/v1/properties.$id'
 import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './routes/api/public/portal/v1/storia.notifications'
 import { Route as ApiPublicPortalV1VdiLeadsRouteImport } from './routes/api/public/portal/v1/vdi/leads'
+import { Route as ApiPublicSitesV1DevelopmentsIdRouteImport } from './routes/api/public/sites/v1/developments.$id'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
 import { Route as ApiPublicExtensionV1ListingsIdFacebookPostsRouteImport } from './routes/api/public/extension/v1/listings/$id/facebook-posts'
@@ -1320,6 +1324,12 @@ const ApiPublicPortalV1AgentsRoute = ApiPublicPortalV1AgentsRouteImport.update({
   path: '/api/public/portal/v1/agents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPortalV1DevelopmentsRoute =
+  ApiPublicPortalV1DevelopmentsRouteImport.update({
+    id: '/api/public/portal/v1/developments',
+    path: '/api/public/portal/v1/developments',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1PropertiesRoute =
   ApiPublicPortalV1PropertiesRouteImport.update({
     id: '/api/public/portal/v1/properties',
@@ -1340,6 +1350,12 @@ const ApiPublicSitesV1ContactsRoute =
   ApiPublicSitesV1ContactsRouteImport.update({
     id: '/api/public/sites/v1/contacts',
     path: '/api/public/sites/v1/contacts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSitesV1DevelopmentsRoute =
+  ApiPublicSitesV1DevelopmentsRouteImport.update({
+    id: '/api/public/sites/v1/developments',
+    path: '/api/public/sites/v1/developments',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicSitesV1PropertiesRoute =
@@ -1485,6 +1501,12 @@ const ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute =
     path: '/api/public/portal/v1/bazaruldecase/feed.xml',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPortalV1DevelopmentsIdRoute =
+  ApiPublicPortalV1DevelopmentsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => ApiPublicPortalV1DevelopmentsRoute,
+  } as any)
 const ApiPublicPortalV1HouseraWebhookRoute =
   ApiPublicPortalV1HouseraWebhookRouteImport.update({
     id: '/api/public/portal/v1/housera/webhook',
@@ -1532,6 +1554,12 @@ const ApiPublicPortalV1VdiLeadsRoute =
     id: '/api/public/portal/v1/vdi/leads',
     path: '/api/public/portal/v1/vdi/leads',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSitesV1DevelopmentsIdRoute =
+  ApiPublicSitesV1DevelopmentsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => ApiPublicSitesV1DevelopmentsRoute,
   } as any)
 const ApiPublicSitesV1MediaIdRoute = ApiPublicSitesV1MediaIdRouteImport.update({
   id: '/api/public/sites/v1/media/$id',
@@ -1802,10 +1830,12 @@ export interface FileRoutesByFullPath {
   '/api/public/partner/v1/webhook': typeof ApiPublicPartnerV1WebhookRouteWithChildren
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
+  '/api/public/portal/v1/developments': typeof ApiPublicPortalV1DevelopmentsRouteWithChildren
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
   '/api/public/sites/v1/agency': typeof ApiPublicSitesV1AgencyRoute
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
+  '/api/public/sites/v1/developments': typeof ApiPublicSitesV1DevelopmentsRouteWithChildren
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/app/acp/date-piata/': typeof AuthenticatedAppAcpDatePiataIndexRoute
@@ -1831,6 +1861,7 @@ export interface FileRoutesByFullPath {
   '/api/public/partner/v1/webhook/test': typeof ApiPublicPartnerV1WebhookTestRoute
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
+  '/api/public/portal/v1/developments/$id': typeof ApiPublicPortalV1DevelopmentsIdRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
@@ -1839,6 +1870,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
+  '/api/public/sites/v1/developments/$id': typeof ApiPublicSitesV1DevelopmentsIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/extension/v1/listings/$id/facebook-posts': typeof ApiPublicExtensionV1ListingsIdFacebookPostsRoute
@@ -2040,10 +2072,12 @@ export interface FileRoutesByTo {
   '/api/public/partner/v1/webhook': typeof ApiPublicPartnerV1WebhookRouteWithChildren
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
+  '/api/public/portal/v1/developments': typeof ApiPublicPortalV1DevelopmentsRouteWithChildren
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
   '/api/public/sites/v1/agency': typeof ApiPublicSitesV1AgencyRoute
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
+  '/api/public/sites/v1/developments': typeof ApiPublicSitesV1DevelopmentsRouteWithChildren
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/app/acp/date-piata': typeof AuthenticatedAppAcpDatePiataIndexRoute
@@ -2069,6 +2103,7 @@ export interface FileRoutesByTo {
   '/api/public/partner/v1/webhook/test': typeof ApiPublicPartnerV1WebhookTestRoute
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
+  '/api/public/portal/v1/developments/$id': typeof ApiPublicPortalV1DevelopmentsIdRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
@@ -2077,6 +2112,7 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
+  '/api/public/sites/v1/developments/$id': typeof ApiPublicSitesV1DevelopmentsIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/extension/v1/listings/$id/facebook-posts': typeof ApiPublicExtensionV1ListingsIdFacebookPostsRoute
@@ -2284,10 +2320,12 @@ export interface FileRoutesById {
   '/api/public/partner/v1/webhook': typeof ApiPublicPartnerV1WebhookRouteWithChildren
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
+  '/api/public/portal/v1/developments': typeof ApiPublicPortalV1DevelopmentsRouteWithChildren
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
   '/api/public/sites/v1/agency': typeof ApiPublicSitesV1AgencyRoute
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
+  '/api/public/sites/v1/developments': typeof ApiPublicSitesV1DevelopmentsRouteWithChildren
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/_authenticated/app/acp/date-piata/': typeof AuthenticatedAppAcpDatePiataIndexRoute
@@ -2313,6 +2351,7 @@ export interface FileRoutesById {
   '/api/public/partner/v1/webhook/test': typeof ApiPublicPartnerV1WebhookTestRoute
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
+  '/api/public/portal/v1/developments/$id': typeof ApiPublicPortalV1DevelopmentsIdRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
@@ -2321,6 +2360,7 @@ export interface FileRoutesById {
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
+  '/api/public/sites/v1/developments/$id': typeof ApiPublicSitesV1DevelopmentsIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/extension/v1/listings/$id/facebook-posts': typeof ApiPublicExtensionV1ListingsIdFacebookPostsRoute
@@ -2528,10 +2568,12 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/webhook'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
+    | '/api/public/portal/v1/developments'
     | '/api/public/portal/v1/properties'
     | '/api/public/sites/v1/agency'
     | '/api/public/sites/v1/agents'
     | '/api/public/sites/v1/contacts'
+    | '/api/public/sites/v1/developments'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/app/acp/date-piata/'
@@ -2557,6 +2599,7 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/webhook/test'
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
+    | '/api/public/portal/v1/developments/$id'
     | '/api/public/portal/v1/housera/webhook'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
@@ -2565,6 +2608,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
     | '/api/public/portal/v1/vdi/leads'
+    | '/api/public/sites/v1/developments/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/extension/v1/listings/$id/facebook-posts'
@@ -2766,10 +2810,12 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/webhook'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
+    | '/api/public/portal/v1/developments'
     | '/api/public/portal/v1/properties'
     | '/api/public/sites/v1/agency'
     | '/api/public/sites/v1/agents'
     | '/api/public/sites/v1/contacts'
+    | '/api/public/sites/v1/developments'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/app/acp/date-piata'
@@ -2795,6 +2841,7 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/webhook/test'
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
+    | '/api/public/portal/v1/developments/$id'
     | '/api/public/portal/v1/housera/webhook'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
@@ -2803,6 +2850,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
     | '/api/public/portal/v1/vdi/leads'
+    | '/api/public/sites/v1/developments/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/extension/v1/listings/$id/facebook-posts'
@@ -3009,10 +3057,12 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/webhook'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
+    | '/api/public/portal/v1/developments'
     | '/api/public/portal/v1/properties'
     | '/api/public/sites/v1/agency'
     | '/api/public/sites/v1/agents'
     | '/api/public/sites/v1/contacts'
+    | '/api/public/sites/v1/developments'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/_authenticated/app/acp/date-piata/'
@@ -3038,6 +3088,7 @@ export interface FileRouteTypes {
     | '/api/public/partner/v1/webhook/test'
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
+    | '/api/public/portal/v1/developments/$id'
     | '/api/public/portal/v1/housera/webhook'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
@@ -3046,6 +3097,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
     | '/api/public/portal/v1/vdi/leads'
+    | '/api/public/sites/v1/developments/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/extension/v1/listings/$id/facebook-posts'
@@ -3179,10 +3231,12 @@ export interface RootRouteChildren {
   ApiPublicPartnerV1WebhookRoute: typeof ApiPublicPartnerV1WebhookRouteWithChildren
   ApiPublicPortalV1AgencyRoute: typeof ApiPublicPortalV1AgencyRoute
   ApiPublicPortalV1AgentsRoute: typeof ApiPublicPortalV1AgentsRoute
+  ApiPublicPortalV1DevelopmentsRoute: typeof ApiPublicPortalV1DevelopmentsRouteWithChildren
   ApiPublicPortalV1PropertiesRoute: typeof ApiPublicPortalV1PropertiesRouteWithChildren
   ApiPublicSitesV1AgencyRoute: typeof ApiPublicSitesV1AgencyRoute
   ApiPublicSitesV1AgentsRoute: typeof ApiPublicSitesV1AgentsRoute
   ApiPublicSitesV1ContactsRoute: typeof ApiPublicSitesV1ContactsRoute
+  ApiPublicSitesV1DevelopmentsRoute: typeof ApiPublicSitesV1DevelopmentsRouteWithChildren
   ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRouteWithChildren
   ApiPublicSitesV1VisitsRoute: typeof ApiPublicSitesV1VisitsRoute
   ApiPublicFeedPortalChar91indexChar93IndexKeyRoute: typeof ApiPublicFeedPortalChar91indexChar93IndexKeyRoute
@@ -4563,6 +4617,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalV1AgentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal/v1/developments': {
+      id: '/api/public/portal/v1/developments'
+      path: '/api/public/portal/v1/developments'
+      fullPath: '/api/public/portal/v1/developments'
+      preLoaderRoute: typeof ApiPublicPortalV1DevelopmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/properties': {
       id: '/api/public/portal/v1/properties'
       path: '/api/public/portal/v1/properties'
@@ -4589,6 +4650,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/sites/v1/contacts'
       fullPath: '/api/public/sites/v1/contacts'
       preLoaderRoute: typeof ApiPublicSitesV1ContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sites/v1/developments': {
+      id: '/api/public/sites/v1/developments'
+      path: '/api/public/sites/v1/developments'
+      fullPath: '/api/public/sites/v1/developments'
+      preLoaderRoute: typeof ApiPublicSitesV1DevelopmentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/sites/v1/properties': {
@@ -4759,6 +4827,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal/v1/developments/$id': {
+      id: '/api/public/portal/v1/developments/$id'
+      path: '/$id'
+      fullPath: '/api/public/portal/v1/developments/$id'
+      preLoaderRoute: typeof ApiPublicPortalV1DevelopmentsIdRouteImport
+      parentRoute: typeof ApiPublicPortalV1DevelopmentsRoute
+    }
     '/api/public/portal/v1/housera/webhook': {
       id: '/api/public/portal/v1/housera/webhook'
       path: '/api/public/portal/v1/housera/webhook'
@@ -4814,6 +4889,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/portal/v1/vdi/leads'
       preLoaderRoute: typeof ApiPublicPortalV1VdiLeadsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sites/v1/developments/$id': {
+      id: '/api/public/sites/v1/developments/$id'
+      path: '/$id'
+      fullPath: '/api/public/sites/v1/developments/$id'
+      preLoaderRoute: typeof ApiPublicSitesV1DevelopmentsIdRouteImport
+      parentRoute: typeof ApiPublicSitesV1DevelopmentsRoute
     }
     '/api/public/sites/v1/media/$id': {
       id: '/api/public/sites/v1/media/$id'
@@ -5267,6 +5349,20 @@ const ApiPublicPartnerV1WebhookRouteWithChildren =
     ApiPublicPartnerV1WebhookRouteChildren,
   )
 
+interface ApiPublicPortalV1DevelopmentsRouteChildren {
+  ApiPublicPortalV1DevelopmentsIdRoute: typeof ApiPublicPortalV1DevelopmentsIdRoute
+}
+
+const ApiPublicPortalV1DevelopmentsRouteChildren: ApiPublicPortalV1DevelopmentsRouteChildren =
+  {
+    ApiPublicPortalV1DevelopmentsIdRoute: ApiPublicPortalV1DevelopmentsIdRoute,
+  }
+
+const ApiPublicPortalV1DevelopmentsRouteWithChildren =
+  ApiPublicPortalV1DevelopmentsRoute._addFileChildren(
+    ApiPublicPortalV1DevelopmentsRouteChildren,
+  )
+
 interface ApiPublicPortalV1PropertiesRouteChildren {
   ApiPublicPortalV1PropertiesIdRoute: typeof ApiPublicPortalV1PropertiesIdRoute
 }
@@ -5279,6 +5375,20 @@ const ApiPublicPortalV1PropertiesRouteChildren: ApiPublicPortalV1PropertiesRoute
 const ApiPublicPortalV1PropertiesRouteWithChildren =
   ApiPublicPortalV1PropertiesRoute._addFileChildren(
     ApiPublicPortalV1PropertiesRouteChildren,
+  )
+
+interface ApiPublicSitesV1DevelopmentsRouteChildren {
+  ApiPublicSitesV1DevelopmentsIdRoute: typeof ApiPublicSitesV1DevelopmentsIdRoute
+}
+
+const ApiPublicSitesV1DevelopmentsRouteChildren: ApiPublicSitesV1DevelopmentsRouteChildren =
+  {
+    ApiPublicSitesV1DevelopmentsIdRoute: ApiPublicSitesV1DevelopmentsIdRoute,
+  }
+
+const ApiPublicSitesV1DevelopmentsRouteWithChildren =
+  ApiPublicSitesV1DevelopmentsRoute._addFileChildren(
+    ApiPublicSitesV1DevelopmentsRouteChildren,
   )
 
 interface ApiPublicSitesV1PropertiesRouteChildren {
@@ -5418,11 +5528,15 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPartnerV1WebhookRoute: ApiPublicPartnerV1WebhookRouteWithChildren,
   ApiPublicPortalV1AgencyRoute: ApiPublicPortalV1AgencyRoute,
   ApiPublicPortalV1AgentsRoute: ApiPublicPortalV1AgentsRoute,
+  ApiPublicPortalV1DevelopmentsRoute:
+    ApiPublicPortalV1DevelopmentsRouteWithChildren,
   ApiPublicPortalV1PropertiesRoute:
     ApiPublicPortalV1PropertiesRouteWithChildren,
   ApiPublicSitesV1AgencyRoute: ApiPublicSitesV1AgencyRoute,
   ApiPublicSitesV1AgentsRoute: ApiPublicSitesV1AgentsRoute,
   ApiPublicSitesV1ContactsRoute: ApiPublicSitesV1ContactsRoute,
+  ApiPublicSitesV1DevelopmentsRoute:
+    ApiPublicSitesV1DevelopmentsRouteWithChildren,
   ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRouteWithChildren,
   ApiPublicSitesV1VisitsRoute: ApiPublicSitesV1VisitsRoute,
   ApiPublicFeedPortalChar91indexChar93IndexKeyRoute:
