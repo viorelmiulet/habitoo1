@@ -19,24 +19,29 @@ it('proprietate primary fără ansamblu este isolated și nu are parent_uuid',()
  expect(storiaMarket(p)).toBe('primary');const result=mapPropertyToStoria(p,{baseUrl:'https://example.test',images:[{id:'img',include_in_publish:true,is_confidential:false,is_primary:true,position:0} as Tables<'property_images'>],agent:{full_name:'Agent',email:'agent@example.test',phone:'0722333444'}});expect(result.ok).toBe(true);if(result.ok){expect(result.listings[0]?.advert.market).toBe('primary');expect(result.listings[0]?.advert).not.toHaveProperty('parent_uuid');}
 });
 it('pregătirea unităților pending nu citește și nu înscrie lucrări',async()=>{const from=vi.fn();await prepareInvestmentUnits({from} as never,{status:'pending',external_uuid:'parent',desired_active:true} as Tables<'development_portal_publications'>);expect(from).not.toHaveBeenCalled();});
-it('notificarea removed_by_parent_ad schimbă starea unității local',async()=>{
+it('notificarea clonei (removed_by_parent_ad) schimbă doar unitatea, nu anunțul de agenție',async()=>{
  const writes:any[]=[];const unit={id:'u',property_id:'p',development_id:'d',organization_id:'o',transaction_kind:'sale',external_uuid:'child',last_event_at:null};
- const db={from:(table:string)=>{let old=false;const q:any={select:()=>q,eq:(key:string)=>{if(key==='old_agency_uuid')old=true;return q;},single:async()=>({data:{development_id:'d'}}),maybeSingle:async()=>({data:old?null:table==='storia_development_units'?unit:table==='portal_listings'?{external_id:'SALE:child'}:null}),update:(payload:unknown)=>{writes.push([table,payload]);return q;},upsert:(payload:unknown)=>{writes.push([table,payload]);return q;},then:(resolve:any)=>resolve({error:null})};return q;},rpc:vi.fn()};
- await processDevelopmentLifecycle(db as never,{advertUuid:'child',data:{code:'removed_by_parent_ad'},eventType:'advert_lifecycle',eventTimestampMs:1000000000000,publicUrl:null} as never);
- expect(writes).toContainEqual(['storia_development_units',expect.objectContaining({status:'withdrawn'})]);expect(writes).toContainEqual(['portal_listings',expect.objectContaining({status:'withdrawn'})]);expect(db.rpc).not.toHaveBeenCalled();
+ const db={from:(table:string)=>{const q:any={select:()=>q,eq:()=>q,single:async()=>({data:{development_id:'d'}}),maybeSingle:async()=>({data:table==='storia_development_units'?unit:null}),update:(payload:unknown)=>{writes.push([table,payload]);return q;},upsert:(payload:unknown)=>{writes.push([table,payload]);return q;},then:(resolve:any)=>resolve({error:null})};return q;},rpc:vi.fn()};
+ await processDevelopmentLifecycle(db as never,{advertUuid:'child',data:{code:'removed_by_parent_ad'},eventType:'advert_lifecycle',eventTimestampMs:1000000000000,publicUrl:'https://www.storia.ro/ro/oferta/clona'} as never);
+ expect(writes).toContainEqual(['storia_development_units',expect.objectContaining({status:'withdrawn',public_url:'https://www.storia.ro/ro/oferta/clona'})]);
+ expect(writes.filter(([t])=>t==='portal_listings'||t==='portal_publications')).toEqual([]);expect(db.rpc).not.toHaveBeenCalled();
 });
 it('succesul părintelui înscrie unitățile bifate fără a publica înainte',async()=>{
  const queued:any[]=[];let unit:any=null;
  const db={rpc:vi.fn(async(name:string,args:unknown)=>{queued.push([name,args]);return {error:null};}),from:(table:string)=>{const q:any={select:()=>q,eq:()=>q,is:()=>q,in:()=>q,maybeSingle:async()=>({data:table==='portal_publications'?{enabled:true}:table==='portal_listings'?{external_id:null}:unit}),upsert:(payload:unknown)=>{unit={...(payload as any),id:'unit-id'};return q;},single:async()=>({data:unit,error:null}),then:(resolve:any)=>resolve({data:table==='properties'?[{id:'property-id',for_sale:true,for_rent:false}]:null,error:null})};return q;}};
- const parent={development_id:'d',organization_id:'o',connection_id:'c',external_uuid:'parent-id',desired_active:true,confirmed_property_ids:[]} as unknown as Tables<'development_portal_publications'>;
+ const parent={development_id:'d',organization_id:'o',connection_id:'c',external_uuid:'parent-id',desired_active:true} as unknown as Tables<'development_portal_publications'>;
  await prepareInvestmentUnits(db as never,{...parent,status:'pending'});expect(queued).toHaveLength(0);
  await prepareInvestmentUnits(db as never,{...parent,status:'published'});expect(unit).toMatchObject({property_id:'property-id',connection_id:'c',transaction_kind:'sale'});expect(queued).toEqual([['queue_storia_development',{_id:'d',_operation:'unit',_unit:'unit-id'}]]);
 });
-it('notificarea unității noi active înscrie retragerea veche abia după succes',async()=>{
- const queue=vi.fn();const unit={id:'u',property_id:'p',development_id:'d',organization_id:'o',transaction_kind:'sale',external_uuid:'child',old_agency_uuid:'old',last_event_at:null};
- const db={rpc:queue,from:(table:string)=>{let old=false;const q:any={select:()=>q,eq:(key:string)=>{if(key==='old_agency_uuid')old=true;return q;},maybeSingle:async()=>({data:old?null:table==='storia_development_units'?unit:table==='portal_listings'?{external_id:'SALE:old'}:null}),update:()=>q,upsert:()=>q,then:(resolve:any)=>resolve({error:null})};return q;}};
- await processDevelopmentLifecycle(db as never,{advertUuid:'child',data:{code:'new'},eventType:'advert_posted_success',eventTimestampMs:1000000000000,publicUrl:null} as never);expect(queue).not.toHaveBeenCalled();
- await processDevelopmentLifecycle(db as never,{advertUuid:'child',data:{code:'active'},eventType:'advert_posted_success',eventTimestampMs:1000000000001,publicUrl:null} as never);expect(queue).toHaveBeenCalledWith('queue_storia_development',{_id:'d',_operation:'old_withdraw',_unit:'u'});
+it('clona activă nu înscrie nicio retragere a anunțului de agenție',async()=>{
+ const queue=vi.fn();const writes:string[]=[];const unit={id:'u',property_id:'p',development_id:'d',organization_id:'o',transaction_kind:'sale',external_uuid:'child',old_agency_uuid:'old',last_event_at:null};
+ const db={rpc:queue,from:(table:string)=>{const q:any={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:table==='storia_development_units'?unit:null}),update:()=>{writes.push(table);return q;},upsert:()=>{writes.push(table);return q;},then:(resolve:any)=>resolve({error:null})};return q;}};
+ await processDevelopmentLifecycle(db as never,{advertUuid:'child',data:{code:'active'},eventType:'advert_posted_success',eventTimestampMs:1000000000001,publicUrl:null} as never);
+ expect(queue).not.toHaveBeenCalled();expect(writes).toEqual(['storia_development_units']);
+});
+it('notificarea anunțului de agenție nu mai este ignorată când există clonă',async()=>{
+ const db={rpc:vi.fn(),from:()=>{const q:any={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:null})};return q;}};
+ expect(await processDevelopmentLifecycle(db as never,{advertUuid:'old',data:{code:'active'},eventType:'advert_posted_success',eventTimestampMs:1,publicUrl:null} as never)).toBeNull();
 });
 it('workerul publică unitatea doar cu părinte activ și din contul dezvoltator',async()=>{
  const remote=vi.mocked(olxAuthorizedRequest);remote.mockClear();remote.mockResolvedValue({status:202,body:{data:{uuid:'child'}},raw:''});

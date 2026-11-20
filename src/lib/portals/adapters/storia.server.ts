@@ -154,8 +154,8 @@ async function pushListing(
   ref: ListingRef,
   mode: "publish" | "update",
 ): Promise<PortalResult<ListingOutcome>> {
-  const developerRoute = await (await import("../storia/development.server")).routeDevelopmentUnit(ctx.organizationId, ref.propertyId, false, ctx.allowLiveRequests);
-  if (developerRoute) return developerRoute;
+  // Development clone is a separate developer-account advert; the agency advert continues normally.
+  await (await import("../storia/development.server")).queueDevelopmentClone(ctx.organizationId, ref.propertyId, false, ctx.allowLiveRequests);
   const ready = await requireConnection(ctx);
   if (!ready.ok) return ready;
 
@@ -375,8 +375,8 @@ export const storiaAdapter: PortalAdapter = {
   },
 
   async withdrawListing(ctx, ref) {
-    const developerRoute = await (await import("../storia/development.server")).routeDevelopmentUnit(ctx.organizationId, ref.propertyId, true, ctx.allowLiveRequests);
-    if (developerRoute) return developerRoute;
+    // Deselect/sold/archived withdraws both the agency advert and its development clone.
+    await (await import("../storia/development.server")).queueDevelopmentClone(ctx.organizationId, ref.propertyId, true, ctx.allowLiveRequests);
     const ready = await requireConnection(ctx);
     if (!ready.ok) return ready;
 

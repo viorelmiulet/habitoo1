@@ -1,0 +1,1 @@
+ALTER TABLE public.storia_development_units ADD COLUMN IF NOT EXISTS public_url text;

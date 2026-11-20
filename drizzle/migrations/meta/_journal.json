@@ -2101,6 +2101,20 @@
       "when": 1795186132296,
       "tag": "0299_partner_api_developments",
       "breakpoints": true
+    },
+    {
+      "idx": 300,
+      "version": "7",
+      "when": 1795188422287,
+      "tag": "0300_ans4_storia_clone_not_move",
+      "breakpoints": true
+    },
+    {
+      "idx": 301,
+      "version": "7",
+      "when": 1795188539562,
+      "tag": "0301_ans4_storia_clone_public_url",
+      "breakpoints": true
     }
   ]
 }

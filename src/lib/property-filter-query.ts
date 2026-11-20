@@ -39,7 +39,8 @@ export function applyPropertyFilterClauses<Q extends FilterableQuery<Q>>(
   ctx: { agentClause: { kind: "none" } | { kind: "unassigned" } | { kind: "agent"; id: string }; userId?: string | null },
 ): Q {
   let q = query;
-  if (filters.development && filters.development !== "all") q = q.eq("development_id", filters.development);
+  if (filters.development === "any") q = q.or("development_id.not.is.null");
+  else if (filters.development && filters.development !== "all") q = q.eq("development_id", filters.development);
   const statuses = selectedStatuses(filters);
   if (statuses.length < PROPERTY_STATUSES.length) q = q.in("status", statuses);
   if (filters.transaction !== "all") q = q.eq("transaction_kind", filters.transaction);

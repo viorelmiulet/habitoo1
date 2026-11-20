@@ -160,7 +160,7 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
           </div>
           <div data-filter-column="2" className="mt-2 space-y-2 md:mt-0">
             <Row label="Ansamblu" htmlFor="pf-development">
-              <SimpleSelect id="pf-development" value={draft.development || "all"} active={Boolean(draft.development && draft.development !== "all")} onChange={(v) => set("development", v)} options={[["all", "Toate"], ...developments.map(d => [d.id, d.name] as [string, string])]} />
+              <SimpleSelect id="pf-development" value={draft.development || "all"} active={Boolean(draft.development && draft.development !== "all")} onChange={(v) => set("development", v)} options={[["all", "Toate"], ["any", "Doar din ansambluri"], ...developments.map(d => [d.id, d.name] as [string, string])]} />
             </Row>
             <Row label="Tip proprietate" htmlFor="pf-type">
               <SimpleSelect id="pf-type" value={draft.type} active={draft.type !== "all"} onChange={(v) => set("type", v)} options={[["all", "Toate"], ...typeChoices.map((t) => [t, propertyTypeLabels[t] ?? t] as [string, string])]} />

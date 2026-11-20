@@ -44,6 +44,8 @@ import {
 } from "@/lib/portals/promotion-filter.functions";
 import { portalListingLink } from "@/lib/portals/listing-links";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
+import { DevelopmentBadge } from "@/components/app/developments/DevelopmentBadge";
+import { developmentsOptions } from "@/lib/developments";
 import { PropertyFilterPanel } from "@/components/app/PropertyFilterPanel";
 import { applyPropertyFilterClauses } from "@/lib/property-filter-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -397,6 +399,9 @@ function PropertiesPage() {
       return (data ?? []).filter((x) => missingEssentials({ id: x.id, title: "", floor: x.floor, surface: x.usable_surface ?? x.surface, rooms: x.rooms, features: x.features ?? [], propertyType: x.property_type }).length > 0).map((x) => x.id);
     },
   });
+
+  const { data: developmentList = [] } = useQuery({ ...developmentsOptions(orgId as string | undefined), enabled: Boolean(orgId) });
+  const developmentName = (id: string | null | undefined) => developmentList.find((d) => d.id === id)?.name;
 
   const { data: result, isLoading: listLoading } = useQuery({
     // (isLoading de mai jos combină și încărcarea filtrelor de portaluri/promovare)
@@ -974,6 +979,7 @@ function PropertiesPage() {
                         {p.title}
                       </Link>
                       <p className="mt-1 truncate text-[13px] text-muted-foreground">{p.reference ? <span className="mr-1.5 font-mono text-xs text-foreground/80">{p.reference}</span> : null}{details}</p>
+                      {p.development_id ? <div className="mt-1.5"><DevelopmentBadge id={p.development_id} name={developmentName(p.development_id)} /></div> : null}
                     </div>
                     <div className="col-span-2 text-left lg:col-span-1 lg:text-right">
                       <p className="font-display text-[18px] leading-tight font-extrabold">{price.main}{price.suffix ? <span className="ml-1 font-sans text-xs font-normal text-muted-foreground">{price.suffix}</span> : null}</p>
@@ -1023,6 +1029,7 @@ function PropertiesPage() {
               <PropertyCard
                 key={p.id}
                 property={p as unknown as PropertyCardRow}
+                developmentName={developmentName(p.development_id)}
                 cover={coverOf(p.id)}
                 favorite={favoriteIds.includes(p.id)}
                 onToggleFavorite={() => toggleFavorite.mutate(p.id)}

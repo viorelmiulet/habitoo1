@@ -2,7 +2,6 @@ import type {Tables} from '@/integrations/supabase/types';
 import type {StoriaAdvert} from './mapper';
 import taxonomy from './reference/investments-taxonomy.json';
 import {publicCoords} from '@/lib/geo';
-export const STORIA_MOVE_WARNING='Anunțul va fi mutat în ansamblu, pe contul de dezvoltator; anunțul vechi de pe contul de agenție va fi dezactivat după ce noul anunț este activ';
 export function investmentPublishGate(connected:boolean){return connected?null:'Conectează contul dezvoltator Storia; contul agenției nu poate publica ansambluri.';}
 export function withInvestmentParent(advert:StoriaAdvert,parent:{status:string;external_uuid:string|null}):StoriaAdvert{
  if(parent.status!=='published'||!parent.external_uuid)throw new Error('Investiția nu este încă publicată cu succes.');

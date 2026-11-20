@@ -153,6 +153,8 @@ import { buildLeadMatchRows } from "@/lib/lead-matching";
 import { appHead } from "@/components/app/app-head";
 import { announceGuideContext } from "@/lib/onboarding-tour";
 import { DevelopmentSelect } from "@/components/app/developments/DevelopmentSelect";
+import { DevelopmentBadge } from "@/components/app/developments/DevelopmentBadge";
+import { developmentsOptions } from "@/lib/developments";
 
 function cleanLocation(district: string | null, city: string | null): string {
   const normalizedCity = (city ?? "")
@@ -318,6 +320,7 @@ function PropertyDetailContent() {
 
   const property = data?.property;
   const canReassign = Boolean(user?.isAdmin || user?.isSuperadmin);
+  const { data: developmentList = [] } = useQuery({ ...developmentsOptions(), enabled: Boolean(data?.property?.development_id) });
   const { data: orgMembers = [] } = useQuery({
     queryKey: ["profiles", "org", property?.organization_id, "active"],
     enabled: Boolean(property?.organization_id && canReassign),
@@ -887,7 +890,7 @@ function PropertyDetailContent() {
         <PropertySheetHeader
           reference={property.reference ?? "Fără referință"}
           title={property.title}
-          status={<StatusBadge tone={propertyStatusTone[property.status]} dot>{propertyStatusLabels[property.status]}</StatusBadge>}
+          status={<><StatusBadge tone={propertyStatusTone[property.status]} dot>{propertyStatusLabels[property.status]}</StatusBadge>{property.development_id ? <DevelopmentBadge id={property.development_id} name={developmentList.find((d) => d.id === property.development_id)?.name} /> : null}</>}
           percent={completeness?.percent ?? 0}
           actions={<>
             {editing ? <Button type="submit" form="property-details-form" variant="outline" disabled={save.isPending}>Salvează</Button> : null}

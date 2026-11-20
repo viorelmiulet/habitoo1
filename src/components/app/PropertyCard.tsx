@@ -21,6 +21,7 @@ import {
 import type { PropertyPortalCell } from "@/lib/portals.functions";
 import { portalListingLink } from "@/lib/portals/listing-links";
 import { cn } from "@/lib/utils";
+import { DevelopmentBadge } from "@/components/app/developments/DevelopmentBadge";
 
 export type PropertyCardRow = {
   id: string;
@@ -38,6 +39,7 @@ export type PropertyCardRow = {
   city: string | null;
   district: string | null;
   features?: string[] | null;
+  development_id?: string | null;
   created_at: string;
   tags: string[] | null;
 };
@@ -63,8 +65,10 @@ export function PropertyCard({
   selected,
   onSelectedChange,
   portalCells,
+  developmentName,
 }: {
   property: PropertyCardRow;
+  developmentName?: string | null | undefined;
   cover: PropertyCover;
   favorite: boolean;
   onToggleFavorite: () => void;
@@ -141,6 +145,7 @@ export function PropertyCard({
             {[property.district, property.city].filter(Boolean).join(", ") ||
               "Locație nespecificată"}
           </p>
+          {property.development_id ? <div className="mt-1"><DevelopmentBadge id={property.development_id} name={developmentName} /></div> : null}
         </div>
 
         <div className="flex items-center justify-between gap-2">

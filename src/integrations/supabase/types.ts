@@ -12678,6 +12678,7 @@ export type Database = {
           old_withdrawn_at: string | null
           organization_id: string
           property_id: string
+          public_url: string | null
           status: string
           transaction_kind: string
           updated_at: string
@@ -12693,6 +12694,7 @@ export type Database = {
           old_withdrawn_at?: string | null
           organization_id: string
           property_id: string
+          public_url?: string | null
           status?: string
           transaction_kind: string
           updated_at?: string
@@ -12708,6 +12710,7 @@ export type Database = {
           old_withdrawn_at?: string | null
           organization_id?: string
           property_id?: string
+          public_url?: string | null
           status?: string
           transaction_kind?: string
           updated_at?: string
