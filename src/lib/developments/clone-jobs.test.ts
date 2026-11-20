@@ -42,7 +42,7 @@ describe("worker-ul alocării în fundal", () => {
     let calls = 0;
     const crash = deps({ applySelection: vi.fn(async () => { calls += 1; if (calls === 2) throw Object.assign(new Error("worker oprit"), { fatal: true }); return [{ portalId: "storia", ok: true, message: null }]; }) });
     // Simulate a hard stop: advance never happens for item 1 and the run dies before finishing.
-    const dying = { ...db, advance: async (j: string, i: number, p: never[], e: number) => { if (i === 1) throw new Error("oprire"); return db.advance(j, i, p, e); }, finish: async () => {} };
+    const dying = { ...db, advance: async (j: string, i: number, p: Parameters<CloneJobDb["advance"]>[2], e: number) => { if (i === 1) throw new Error("oprire"); return db.advance(j, i, p, e); }, finish: async () => {} };
     await runCloneJobOnce(dying, crash);
     expect(state.processed).toBe(1); expect(state.pending?.index).toBe(1); expect(state.clones).toBe(2);
     await runCloneJobOnce(db, deps());
