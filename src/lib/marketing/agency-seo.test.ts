@@ -31,7 +31,7 @@ describe("indexare", () => {
 describe("JSON-LD plat", () => {
   it("RealEstateAgent, Person cu worksFor, ItemList, BreadcrumbList", () => {
     const a = { name: "MG", slug: "mg", description: null, logoUrl: null, city: "București", phone: null, email: null, website: null };
-    const g = publicGraphJsonLd([agencyJsonLd(a, [{ slug: "o1", title: "Ap" }]), agentJsonLd(a, { fullName: "Ion", slug: "ion", jobTitle: null, phone: null, imageUrl: null }, [])])["@graph"] as Record<string, unknown>[];
+    const g = publicGraphJsonLd([...agencyJsonLd(a, [{ slug: "o1", title: "Ap" }]), ...agentJsonLd(a, { fullName: "Ion", slug: "ion", jobTitle: null, phone: null, imageUrl: null }, [])])["@graph"] as Record<string, unknown>[];
     for (const n of g) { expect(Array.isArray(n)).toBe(false); expect(n["@type"]).toBeTruthy(); }
     const types = g.map(n => n["@type"]);
     expect(types).toEqual(expect.arrayContaining(["RealEstateAgent", "Person", "ItemList", "BreadcrumbList"]));
