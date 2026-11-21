@@ -114,43 +114,19 @@ export function AgencyPortalCatalogCard() {
                 key={item.id}
                 data-portal-card={item.id}
                 data-portal-state={state.key}
-                className="flex min-h-14 min-w-0 flex-col gap-3 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:px-5"
+                className="min-h-14 min-w-0 px-4 py-3 sm:px-5"
               >
-                <div className="flex min-w-0 items-center gap-3 sm:flex-1">
-                  <PortalLogoStack
-                    portalId={item.id}
-                    name={item.displayName}
-                    size={32}
-                    className="shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[15px] leading-6 font-semibold break-words">{item.displayName}</p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <PortalLogoStack
+                      portalId={item.id}
+                      name={item.displayName}
+                      size={32}
+                      className="shrink-0"
+                    />
+                    <p className="shrink-0 whitespace-nowrap text-[15px] leading-6 font-semibold">{item.displayName}</p>
                   </div>
-                </div>
-                {isKeyRequestPortal(item.id) ? (
-                  <div className="space-y-2 text-xs text-muted-foreground">
-                    {item.request?.status === "approved" && state.key !== "connected" ? (
-                      <p data-imospot-sent className="font-medium text-foreground">
-                        Cererea a fost trimisă către {keyRequestLabel(item.id)}. Vei primi cheia pe email.
-                      </p>
-                    ) : (
-                      <p>
-                        Cheia API este emisă de {keyRequestLabel(item.id)}, de obicei în aceeași zi lucrătoare, și
-                        ajunge pe emailul administratorului.
-                      </p>
-                    )}
-                    {item.companyDataMissing.length > 0 ? (
-                      <p data-imospot-incomplete className="text-destructive">
-                        Completează datele firmei în{" "}
-                        <Link to="/app/settings" search={{ tab: "agency" }} className="underline">
-                          Setări → Agenție
-                        </Link>{" "}
-                        ca să poți solicita cheia {keyRequestLabel(item.id)}.
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-                <div data-portal-statuses className="flex flex-wrap min-w-0 items-center gap-2 sm:ml-auto sm:justify-end">
+                  <div data-portal-statuses className="flex min-w-0 flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
                     {item.id === "storia" && organizationId ? <StoriaAccountControls organizationId={organizationId}/> : item.id === "housera" && organizationId ? (
                       <HouseraConnectionControls
                         organizationId={organizationId}
@@ -206,7 +182,31 @@ export function AgencyPortalCatalogCard() {
                         </Link>
                       </Button>
                     )}
+                  </div>
                 </div>
+                {isKeyRequestPortal(item.id) ? (
+                  <div className="mt-2 max-w-prose space-y-2 text-xs text-muted-foreground sm:pl-11">
+                    {item.request?.status === "approved" && state.key !== "connected" ? (
+                      <p data-imospot-sent className="font-medium text-foreground">
+                        Cererea a fost trimisă către {keyRequestLabel(item.id)}. Vei primi cheia pe email.
+                      </p>
+                    ) : (
+                      <p>
+                        Cheia API este emisă de {keyRequestLabel(item.id)}, de obicei în aceeași zi lucrătoare, și
+                        ajunge pe emailul administratorului.
+                      </p>
+                    )}
+                    {item.companyDataMissing.length > 0 ? (
+                      <p data-imospot-incomplete className="text-destructive">
+                        Completează datele firmei în{" "}
+                        <Link to="/app/settings" search={{ tab: "agency" }} className="underline">
+                          Setări → Agenție
+                        </Link>{" "}
+                        ca să poți solicita cheia {keyRequestLabel(item.id)}.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
               </li>
             );
           })}
