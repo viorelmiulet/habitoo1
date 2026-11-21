@@ -7,7 +7,7 @@ import type React from "react";
 import { Link } from "@tanstack/react-router";
 import { Bath, BedDouble, Building, Ruler, Star } from "lucide-react";
 
-import { PortalLogo } from "@/components/app/PortalLogo";
+import { PortalLogoLinks } from "@/components/app/properties/PortalLogoLinks";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PropertyThumb, type PropertyCover } from "@/components/app/PropertyThumb";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ import {
   transactionLabels,
 } from "@/lib/labels";
 import type { PropertyPortalCell } from "@/lib/portals.functions";
-import { portalListingLink } from "@/lib/portals/listing-links";
 import { cn } from "@/lib/utils";
 import { DevelopmentBadge } from "@/components/app/developments/DevelopmentBadge";
 
@@ -92,8 +91,8 @@ export function PropertyCard({
   ].filter(Boolean) as { icon: typeof Ruler; text: string }[];
 
   return (
-    <article className="group flex min-w-0 flex-col overflow-hidden rounded-[14px] bg-card ring-1 ring-border transition-shadow hover:shadow-soft">
-      <div className="relative">
+    <article data-property-row className="group flex min-w-0 flex-col overflow-hidden rounded-[14px] bg-card ring-1 ring-border transition-shadow hover:shadow-soft">
+      <div data-property-photo className="relative">
         <PropertyThumb
           propertyId={property.id}
           title={property.title}
@@ -192,46 +191,8 @@ export function PropertyCard({
         ) : null}
 
         {activePortals.length > 0 ? (
-          <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
-            {activePortals.map((c) => {
-              const link = portalListingLink(c);
-              const chipBody = (
-                <>
-                  <PortalLogo
-                    portalId={c.portalId}
-                    name={c.portalName}
-                    size={14}
-                    className="rounded-sm"
-                  />
-                  {c.portalName}
-                  {c.state === "error" ? (
-                    <span
-                      aria-label="Problemă pe acest portal"
-                      className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-destructive"
-                    />
-                  ) : null}
-                </>
-              );
-              const chipClass =
-                "relative inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground";
-              return link.href ? (
-                <a
-                  key={c.portalId}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={link.tooltip ?? undefined}
-                  title={link.tooltip ?? undefined}
-                  className={cn(chipClass, "hover:text-foreground hover:underline")}
-                >
-                  {chipBody}
-                </a>
-              ) : (
-                <span key={c.portalId} title={link.tooltip ?? c.portalName} className={chipClass}>
-                  {chipBody}
-                </span>
-              );
-            })}
+          <div className="mt-auto min-w-0 pt-1">
+            <PortalLogoLinks cells={activePortals} />
           </div>
         ) : null}
       </div>

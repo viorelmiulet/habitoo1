@@ -63,6 +63,9 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { CHROME_EXTENSION_URL } from "@/components/marketing/chrome-extension-content";
 import { missingEssentials } from "@/components/app/dashboard/home-recommendations";
 import { PortalLogoLinks } from "@/components/app/properties/PortalLogoLinks";
+import { portalLogoLayout } from "@/components/app/properties/portal-logo-layout";
+import { portalLogoIds } from "@/lib/portals/registry";
+import type { CSSProperties } from "react";
 import { ListCompletenessCell, useCompletenessExtras } from "@/components/app/property-list/ListCompleteness";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -466,6 +469,10 @@ function PropertiesPage() {
   // Selecția de portaluri per proprietate (portal_publications) + starea reală (portal_listings).
   // Apare doar dacă Superadmin a activat cel puțin un portal pentru agenție.
   const portals = usePropertyPortals(rows.map((r) => r.id));
+  const portalColumnWidth = Math.max(130, ...rows.map(row => {
+    const cells = portals.cellsFor(row.id).filter(cell => cell.selected);
+    return portalLogoLayout(cells.length, 96, Infinity, cells.map(cell => portalLogoIds(cell.portalId).length)).width;
+  }));
   const total = result?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -870,7 +877,7 @@ function PropertiesPage() {
         ) : null}
       </div>
 
-      <div data-tour="properties-results" className="panel overflow-hidden rounded-[14px]">
+      <div data-tour="properties-results" style={{ "--portal-column-width": `${portalColumnWidth}px` } as CSSProperties} className="panel overflow-hidden rounded-[14px]">
         <div className="flex flex-col justify-between gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center">
           <div className="flex items-baseline gap-2">
             <span className="whitespace-nowrap font-semibold">{total} {total === 1 ? "proprietate" : "proprietăți"}</span>
@@ -901,7 +908,7 @@ function PropertiesPage() {
             <div className={cn(
               "hidden items-center gap-[18px] border-b border-border px-[18px] py-3 font-mono text-[11px] font-medium tracking-[0.08em] text-navy-muted uppercase lg:grid",
               portals.hasPortals
-                ? "lg:grid-cols-[20px_132px_minmax(0,1fr)_130px_130px_100px_150px_36px]"
+                ? "lg:grid-cols-[20px_132px_minmax(0,1fr)_130px_var(--portal-column-width)_100px_150px_36px]"
                 : "lg:grid-cols-[20px_132px_minmax(0,1fr)_130px_100px_150px_36px]",
             )}>
               <Checkbox
@@ -927,18 +934,17 @@ function PropertiesPage() {
                 {rows.map((p) => {
                   const portalCells = portals.cellsFor(p.id);
                   const selectedPortals = portalCells.filter((cell) => cell.selected);
-                  const publishedPortals = selectedPortals.filter((cell) => cell.state === "published" || cell.state === "in_feed");
-                  const portalError = selectedPortals.find((cell) => cell.state === "error");
                   const propertyPromotionBadges = promotionBadges[p.id] ?? [];
                   const details = formatPropertyListDetails(p);
                   const price = formatPropertyListPrice(p.price, p.currency, p.transaction_kind, p.surface);
                   const permittedDelete = canShowDeleteAction(canDeleteProperty(user, p));
                   return (
                   <li
+                    data-property-row
                     key={p.id}
                     className={cn(
                       "relative grid grid-cols-2 items-center gap-[18px] border-b border-border px-[18px] py-[14px] text-sm transition-colors last:border-b-0 hover:bg-muted lg:grid-cols-[20px_132px_minmax(0,1fr)_130px_100px_150px_36px]",
-                      portals.hasPortals && "lg:grid-cols-[20px_132px_minmax(0,1fr)_130px_130px_100px_150px_36px]",
+                      portals.hasPortals && "lg:grid-cols-[20px_132px_minmax(0,1fr)_130px_var(--portal-column-width)_100px_150px_36px]",
                       selected.includes(p.id) && "bg-accent hover:bg-accent",
                     )}
                   >
@@ -950,7 +956,7 @@ function PropertiesPage() {
                       aria-label={`Selectează ${p.reference ?? p.title}`}
                       className="absolute top-5 right-16 z-10 bg-surface lg:static"
                     />
-                    <div className="relative col-span-2 aspect-[16/10] w-full lg:col-span-1 lg:h-24 lg:w-[132px] lg:aspect-auto">
+                    <div data-property-photo className="relative col-span-2 aspect-[16/10] w-full lg:col-span-1 lg:h-24 lg:w-[132px] lg:aspect-auto">
                       <PropertyThumb
                         propertyId={p.id}
                         title={p.title}
@@ -993,8 +999,7 @@ function PropertiesPage() {
                     </div>
                     {portals.hasPortals ? (
                       <div className="min-w-0 self-end lg:self-center">
-                        <PortalLogoLinks cells={selectedPortals} />
-                        {portalError ? <p className="mt-1.5 truncate text-xs font-semibold text-destructive">Eroare pe {portalError.portalName}</p> : publishedPortals.length > 0 ? <p className="mt-1.5 text-xs font-semibold text-success">Publicat pe {publishedPortals.length} {publishedPortals.length === 1 ? "portal" : "portaluri"}</p> : <p className="mt-1.5 text-xs text-muted-foreground">Nepublicată · <a href={`/app/properties/${p.id}?tab=publishing`} className="font-semibold text-primary hover:underline">Publică pe portaluri</a></p>}
+                        <PortalLogoLinks cells={selectedPortals} publishingHref={`/app/properties/${p.id}?tab=publishing`} />
                       </div>
                     ) : null}
                     <ListCompletenessCell row={p as Record<string, unknown>} extra={extrasOf(p.id)} />

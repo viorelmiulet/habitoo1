@@ -1,3 +1,8 @@
+## Logo-uri portaluri proporționale cu fotografia
+- [x] Geometrie comună listă/carduri, maximum trei rânduri, surplus +N și stare compactă
+- [x] 8 teste strict noi/modificate; browser cu date simulate: 94px față de poza 96px, maximum 3 rânduri, fără logo-uri tăiate, +7 la 30; card/telefon încadrate, fără erori; fără publicare
+- Verificarea listei cu date reale în cont nu este disponibilă: solicitantul nu are utilizator asociat pentru sesiunea de previzualizare.
+
 ## ANS3 — Ansambluri în feedul JSON 1.1
 - [x] Endpointuri, eligibilitate comună per token, fotografii și câmpuri aditive; indexuri și Partner API neschimbate
 - [x] Documentație, OpenAPI și pagina Dezvoltatori; 12 teste izolate trec; HTTP 401, documentație desktop/telefon și build OK, fără modificări de date sau publicare. Inventarul autentificat real nu a fost verificat: fără token de feed disponibil.

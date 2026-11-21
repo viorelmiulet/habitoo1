@@ -1,0 +1,1 @@
+- Property lists and cards share portalLogoLayout and PortalLogoLinks, measuring the photo and available cell width; preserve paired logos and listing links. Why: portal density must never exceed the photo height or clip destinations.
