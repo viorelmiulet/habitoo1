@@ -20,7 +20,10 @@ export const Route = createFileRoute("/api/public/cron/development-clone")({
         if (unauthorized) return unauthorized;
         const { runDevelopmentCloneJobs } = await import("@/lib/developments/clone-jobs.server");
         const result = await runDevelopmentCloneJobs();
-        return Response.json({ ok: true, ...result });
+        // Exporturile CSV mari folosesc aceeași pornire (nonce) și programare pe minut.
+        const { runPropertyExportJobs } = await import("@/lib/property-export.server");
+        const exports = await runPropertyExportJobs().catch(() => ({ exports: 0 }));
+        return Response.json({ ok: true, ...result, ...exports });
       },
     },
   },

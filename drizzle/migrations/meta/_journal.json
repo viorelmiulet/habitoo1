@@ -2206,6 +2206,13 @@
       "when": 1795293650927,
       "tag": "0314_public_slug_immutable_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 315,
+      "version": "7",
+      "when": 1795293848510,
+      "tag": "0315_property_export_jobs",
+      "breakpoints": true
     }
   ]
 }

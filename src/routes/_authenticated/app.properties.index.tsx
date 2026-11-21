@@ -104,7 +104,8 @@ import { BulkDeletePropertiesDialog } from "@/components/app/BulkDeletePropertie
 import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/DeletePropertyDialog";
 import { useSavedViews } from "@/hooks/use-saved-views";
 import { relativeDays } from "@/lib/format";
-import { downloadCsv } from "@/lib/crm";
+import { exportPropertiesCsv, getPropertyExportDownload } from "@/lib/property-export.functions";
+import { downloadTextFile } from "@/lib/property-export-download";
 import {
   propertyStatusLabels,
   propertyStatusTone,
@@ -605,21 +606,46 @@ function PropertiesPage() {
   const cloneLinks = useCloneLinks(rows as { id: string; cloned_from_property_id?: string | null }[], developmentName);
   const allSelected = rows.length > 0 && selected.length === rows.length;
 
-  const exportCsv = () => {
-    downloadCsv(
-      "proprietati.csv",
-      rows.map((p) => ({
-        Referință: p.reference ?? "",
-        Titlu: p.title,
-        Tip: propertyTypeLabels[p.property_type] ?? p.property_type,
-        Tranzacție: transactionLabels[p.transaction_kind],
-        Status: propertyStatusLabels[p.status],
-        Oraș: p.city ?? "",
-        Preț: p.price ?? "",
-        Suprafață: p.surface ?? "",
-      })),
-    );
+  const exportFn = useServerFn(exportPropertiesCsv);
+  const [exporting, setExporting] = useState(false);
+  const exportCsv = async () => {
+    if (!orgId || exporting) return;
+    const sets: string[][] = [];
+    if (filters.favoritesOnly) sets.push(favoriteIds);
+    if (onlyIncomplete) sets.push(incompleteIds);
+    if (promotionValues.length > 0) sets.push(promotionIds ?? []);
+    const restrictIds = sets.length ? sets.reduce((a, b) => a.filter((x) => b.includes(x))) : null;
+    setExporting(true);
+    try {
+      const res = await exportFn({ data: {
+        organizationId: orgId, filters, placeChoices: parsePlaceChoices(placeValue),
+        agentClause: mainAgentFilter ? agentFilterClause(filters.agent) : { kind: "none" },
+        restrictIds, sortColumn: sortColumn[sort].col, sortAsc: sortColumn[sort].asc,
+      } });
+      if (res.mode === "background") {
+        toast.success(`Exportul a ${res.count} proprietăți a pornit în fundal. Te anunțăm în clopoțel când e gata.`);
+      } else if (res.count === 0) {
+        toast.info("Nu există proprietăți pentru filtrele active.");
+      } else {
+        downloadTextFile(res.filename, res.csv, "text/csv;charset=utf-8");
+        toast.success(`Au fost exportate ${res.count} proprietăți.`);
+      }
+    } catch (e) {
+      toastError(e as Error);
+    } finally {
+      setExporting(false);
+    }
   };
+  const downloadExportFn = useServerFn(getPropertyExportDownload);
+  useEffect(() => {
+    const jobId = new URLSearchParams(window.location.search).get("exportJob");
+    if (!jobId) return;
+    void downloadExportFn({ data: { jobId } }).then((r) => {
+      if (!r.url) { toast.info("Exportul este încă în lucru."); return; }
+      const url = r.url;
+      toast.success(`Exportul ${r.filename} este gata.`, { duration: 60_000, action: { label: "Descarcă", onClick: () => { window.location.href = url; } } });
+    }).catch((e: Error) => toastError(e));
+  }, [downloadExportFn]);
 
   const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "Nealocat";
 
@@ -729,8 +755,8 @@ function PropertiesPage() {
         actions={
           <>
             <PortalRepublishButton organizationId={orgId} reportBatchId={search.republicare} />
-            <Button variant="outline" size="sm" onClick={exportCsv} data-tour="properties-export">
-              <Download className="size-4" /> Export CSV
+            <Button variant="outline" size="sm" onClick={() => void exportCsv()} disabled={exporting} data-tour="properties-export">
+              <Download className="size-4" /> {exporting ? "Se exportă…" : "Exportă CSV"}
             </Button>
             <Button variant="outline" size="sm" asChild className="border-gold/60 text-gold-dark hover:bg-gold/10">
               <a href={CHROME_EXTENSION_URL} target="_blank" rel="noopener noreferrer">Preia cu Habitoo Catch</a>
@@ -870,8 +896,8 @@ function PropertiesPage() {
             <Button variant="outline" size="sm" onClick={() => setPortalBulkMode("withdraw")}>
               Retrage de pe portaluri…
             </Button>
-            <Button variant="outline" size="sm" onClick={exportCsv}>
-              Export CSV
+            <Button variant="outline" size="sm" onClick={() => void exportCsv()} disabled={exporting}>
+              Exportă CSV
             </Button>
             <AllocateAction count={selected.length} onClick={() => setAllocateOpen(true)} />
             <Button variant="destructive" size="sm" onClick={() => setArchiveTarget(selected)}>

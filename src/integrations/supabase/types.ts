@@ -11398,6 +11398,59 @@ export type Database = {
           },
         ]
       }
+      property_export_jobs: {
+        Row: {
+          created_at: string
+          file_path: string | null
+          filename: string
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          organization_id: string
+          property_ids: string[]
+          requested_by: string
+          started_at: string | null
+          status: string
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          file_path?: string | null
+          filename: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          organization_id: string
+          property_ids: string[]
+          requested_by: string
+          started_at?: string | null
+          status?: string
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          file_path?: string | null
+          filename?: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          organization_id?: string
+          property_ids?: string[]
+          requested_by?: string
+          started_at?: string | null
+          status?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_export_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_favorites: {
         Row: {
           created_at: string
