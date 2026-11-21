@@ -413,7 +413,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Date completate din fișe", text: "Datele agenției, ale agentului responsabil, ale clientului și ale proprietății intră automat în contract. Scrii mai puțin și eviți greșelile de copiere." },
       { title: "Actul de identitate, scanat", text: "Fotografiezi buletinul, cartea electronică de identitate, pașaportul sau permisul de ședere ori încarci o poză. Datele se completează singure. Tu doar le verifici." },
       { title: "Semnare pe ecran", text: "Creezi linkuri de semnare pentru părțile contractului. Fiecare semnează pe ecranul telefonului sau al calculatorului. Vezi în aplicație cine a semnat și când." },
-      { title: "Numerotare și evidență", text: "Contractele primesc numere pe fiecare an și tip. Toate stau într-o listă comună, cu stare și dată. Găsești oricând documentul de care ai nevoie." }
+      { title: "Numerotare și evidență", text: "Pentru contractele de comision, vizionare și reprezentare exclusivă, fiecare agenție își alege seria și numărul de start pe tip de contract. Contractele de închiriere și comodat nu au număr pe document. Toate stau într-o listă comună, cu stare și dată. Găsești oricând documentul de care ai nevoie." }
     ],
     steps: [
       { title: "Alegi tipul de contract", text: "Pornești din lista de contracte sau din butonul de adăugare rapidă și alegi documentul potrivit. Ai în față un text complet, gata de completat." },

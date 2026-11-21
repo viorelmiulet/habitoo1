@@ -2192,6 +2192,13 @@
       "when": 1795292196135,
       "tag": "0312_blog_six_articles_2026_11",
       "breakpoints": true
+    },
+    {
+      "idx": 313,
+      "version": "7",
+      "when": 1795292861041,
+      "tag": "0313_fix_contract_numbering_blog_text",
+      "breakpoints": true
     }
   ]
 }

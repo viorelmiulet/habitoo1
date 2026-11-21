@@ -1,6 +1,6 @@
 # Întrebări frecvente
 
-Răspunsuri scurte despre publicarea pe portaluri, chatul dintre agenți și activarea contului.
+Răspunsuri scurte despre publicarea pe portaluri și activarea contului.
 
 Publicarea pe portaluri
 
@@ -17,20 +17,6 @@ Publicarea pe portaluri
 ### Cum aflu dacă un anunț a fost respins de un portal?
 
 ### Primesc mesajele clienților de pe portaluri în CRM?
-
-Chatul dintre agenți
-
-## Chatul dintre agenți
-
-### Cu cine pot vorbi în chatul din Habitoo?
-
-### Cum știu dacă cineva este disponibil?
-
-### Primesc mesajele și pe email?
-
-### Pot bloca pe cineva?
-
-### Cine vede conversațiile mele?
 
 Activarea contului
 

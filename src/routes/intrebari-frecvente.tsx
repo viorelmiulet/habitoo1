@@ -12,12 +12,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 const TITLE = "Întrebări frecvente despre CRM imobiliar | Habitoo CRM";
 const DESCRIPTION =
-  "Răspunsuri despre Habitoo CRM: publicarea pe portaluri, prețuri și perioada de probă, importul din alt CRM, ansambluri rezidențiale, chat și activarea contului.";
+  "Răspunsuri despre Habitoo CRM: publicarea pe portaluri, prețuri și perioada de probă, importul din alt CRM, ansambluri rezidențiale și activarea contului.";
 
 type Faq = { q: string; a: string };
 type FaqGroup = { id: string; icon: typeof Rocket; title: string; faqs: Faq[] };
 
-const GROUP_ICONS: Record<string, typeof Rocket> = { portaluri: Rocket, preturi: CreditCard, import: Upload, ansambluri: Building2, chat: MessageCircle, cont: UserPlus };
+const GROUP_ICONS: Record<string, typeof Rocket> = { portaluri: Rocket, preturi: CreditCard, import: Upload, ansambluri: Building2, cont: UserPlus };
 
 export const FAQ_GROUPS: FaqGroup[] = PUBLIC_FAQ_GROUPS.map(group => ({ ...group, icon: GROUP_ICONS[group.id] ?? UserPlus }));
 const allFaqs = FAQ_GROUPS.flatMap((g) => g.faqs);
@@ -58,7 +58,7 @@ function FaqPage() {
           <SectionHeading
             as="h1"
             title="Întrebări frecvente"
-            text="Răspunsuri despre publicarea pe portaluri, prețuri și perioada de probă, importul din alt CRM, ansambluri rezidențiale, chat și activarea contului."
+            text="Răspunsuri despre publicarea pe portaluri, prețuri și perioada de probă, importul din alt CRM, ansambluri rezidențiale și activarea contului."
           />
         </Container>
       </section>

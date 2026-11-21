@@ -85,32 +85,6 @@ export const PUBLIC_FAQ_GROUPS: { id: string; title: string; faqs: { q: string; 
     ],
   },
   {
-    id: "chat",
-    title: "Chatul dintre agenți",
-    faqs: [
-      {
-        q: "Cu cine pot vorbi în chatul din Habitoo?",
-        a: "Poți vorbi cu orice utilizator activ al Habitoo: colegii din agenția ta, agenți din alte agenții și echipa platformei. Deschizi Mesaje din meniu, cauți persoana și începi conversația.",
-      },
-      {
-        q: "Cum știu dacă cineva este disponibil?",
-        a: "Starea persoanei apare în lista de contacte și în fiecare conversație. Vezi Online dacă a fost activă în ultimele minute, altfel momentul ultimei activități, de exemplu „Activ acum 5 min”.",
-      },
-      {
-        q: "Primesc mesajele și pe email?",
-        a: "Da, dacă nu ai citit un mesaj în 15 minute, primești un email de notificare. Pentru aceeași conversație primești cel mult un email pe oră, ca să nu îți umplem căsuța.",
-      },
-      {
-        q: "Pot bloca pe cineva?",
-        a: "Da, poți bloca orice persoană direct din conversație. După blocare, persoana nu îți mai poate trimite mesaje. Deblocarea se face tot din conversație, oricând.",
-      },
-      {
-        q: "Cine vede conversațiile mele?",
-        a: "Doar tu și persoana cu care vorbești. Conversațiile sunt private între cei doi participanți, iar nimeni altcineva din agenție sau din platformă nu le poate citi.",
-      },
-    ],
-  },
-  {
     id: "cont",
     title: "Activarea contului",
     faqs: [

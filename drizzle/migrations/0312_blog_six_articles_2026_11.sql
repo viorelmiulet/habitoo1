@@ -197,7 +197,7 @@ Contractul se semnează de ambele părți, cu data semnării. Dacă semnați pe 
 
 Un contract bun pierde din valoare dacă e greu de găsit sau dacă fiecare agent folosește alt model. În Habitoo, [modulul Contracte](/functionalitati/contracte) oferă cinci tipuri de documente: închiriere, reprezentare exclusivă, comision, comodat și vizionare. Datele agenției, ale agentului, ale clientului și ale proprietății intră automat în text, iar datele clientului se pot completa fotografiind actul de identitate.
 
-Fiecare parte primește un link de semnare pe ecran, iar în aplicație vezi cine a semnat și când. Contractele primesc numere pe fiecare an și tip și stau într-o listă comună. Totuși, textul contractului rămâne responsabilitatea agenției: verifică-l cu un avocat înainte să-l folosești ca model.
+Fiecare parte primește un link de semnare pe ecran, iar în aplicație vezi cine a semnat și când. Pentru contractele de comision, vizionare și reprezentare exclusivă, fiecare agenție își alege seria și numărul de start pe tip de contract, iar contractele de închiriere și comodat nu au număr pe document. Toate contractele stau într-o listă comună. Totuși, textul contractului rămâne responsabilitatea agenției: verifică-l cu un avocat înainte să-l folosești ca model.
 
 ## Listă de verificare înainte de semnare
 
