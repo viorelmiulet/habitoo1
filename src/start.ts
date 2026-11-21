@@ -35,7 +35,7 @@ const csrfMiddleware = createCsrfMiddleware({
 const feedRegistryMiddleware = createMiddleware().server(async ({ next, request }) => {
   const path = new URL(request.url).pathname;
   // API auth resolves dynamic portals itself; pure media/static endpoints do not need a catalog read.
-  const portalWorker = /^\/api\/public\/cron\/(portal-(publish|bulk|slot-withdraw|status-withdraw|schedules)|account-deletion)$/.test(path);
+  const portalWorker = /^\/api\/public\/cron\/(portal-(publish|bulk|slot-withdraw|status-withdraw|schedules)|account-deletion|development-clone)$/.test(path);
   if ((path.startsWith("/api/public/") && !portalWorker) || path.startsWith("/lovable/")) return next();
   const { dynamicRegistryDefinitions } = await import("./lib/dynamic-feed-portals.server");
   const { withFeedDefinitions } = await import("./lib/feed-registry-scope.server");

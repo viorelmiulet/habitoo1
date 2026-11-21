@@ -1,3 +1,9 @@
+## Unități — selecție și operații în fundal
+- [x] Selecție pe pagină, retragere/republicare/ștergere copii și Publicare
+- [x] Joburi reluabile, marcaj anti-republicare, notificări și Ultima operație
+- [x] 19 teste exclusiv noi; schema și build OK, selecție/retragere/confirmare simulate în browser; fără publicare; commit la încheiere
+- Verificarea autentificată reală este indisponibilă: solicitantul nu are cont asociat pentru sesiune; nu s-au executat operații pe copii reale sau apeluri la portaluri.
+
 ## Lista Proprietăți — anunțuri din ansambluri
 - [x] Filtru implicit de excludere, bifă/Ansamblu în URL și filtre salvate, excepție pentru referință exactă
 - [x] Număr portofoliu, paginare, selecție și CSV folosesc rezultatele filtrate; 45 teste în cele trei fișiere modificate; fără publicare

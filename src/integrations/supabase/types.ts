@@ -3291,6 +3291,7 @@ export type Database = {
           id: string
           last_error: string | null
           locked_until: string | null
+          operation: string
           organization_id: string
           processed: number
           property_ids: string[]
@@ -3309,6 +3310,7 @@ export type Database = {
           id?: string
           last_error?: string | null
           locked_until?: string | null
+          operation?: string
           organization_id: string
           processed?: number
           property_ids: string[]
@@ -3327,6 +3329,7 @@ export type Database = {
           id?: string
           last_error?: string | null
           locked_until?: string | null
+          operation?: string
           organization_id?: string
           processed?: number
           property_ids?: string[]
@@ -10810,6 +10813,7 @@ export type Database = {
           description: string | null
           destination: string | null
           development_id: string | null
+          development_withdrawn_at: string | null
           district: string | null
           energy_class: string | null
           entry_door: string[]
@@ -10950,6 +10954,7 @@ export type Database = {
           description?: string | null
           destination?: string | null
           development_id?: string | null
+          development_withdrawn_at?: string | null
           district?: string | null
           energy_class?: string | null
           entry_door?: string[]
@@ -11090,6 +11095,7 @@ export type Database = {
           description?: string | null
           destination?: string | null
           development_id?: string | null
+          development_withdrawn_at?: string | null
           district?: string | null
           energy_class?: string | null
           entry_door?: string[]
@@ -13980,6 +13986,7 @@ export type Database = {
           id: string
           last_error: string | null
           locked_until: string | null
+          operation: string
           organization_id: string
           processed: number
           property_ids: string[]
@@ -14341,6 +14348,18 @@ export type Database = {
       development_clone_job_step: { Args: { _job_id: string }; Returns: Json }
       development_clone_kick: { Args: never; Returns: undefined }
       development_summaries: { Args: { _ids: string[] }; Returns: Json }
+      development_unit_operation_advance: {
+        Args: { _index: number; _job_id: string; _reason: string }
+        Returns: undefined
+      }
+      development_unit_operation_finish: {
+        Args: { _error: string; _job_id: string }
+        Returns: undefined
+      }
+      development_unit_operation_step: {
+        Args: { _job_id: string }
+        Returns: Json
+      }
       development_unit_summary: { Args: { _id: string }; Returns: Json }
       email_job_finish: {
         Args: { _error?: string; _job_id: string; _ok: boolean }
@@ -15157,6 +15176,7 @@ export type Database = {
           description: string | null
           destination: string | null
           development_id: string | null
+          development_withdrawn_at: string | null
           district: string | null
           energy_class: string | null
           entry_door: string[]
@@ -15322,6 +15342,14 @@ export type Database = {
       }
       start_development_clone_job: {
         Args: { _development_id: string; _property_ids: string[] }
+        Returns: string
+      }
+      start_development_unit_operation: {
+        Args: {
+          _development_id: string
+          _operation: string
+          _property_ids: string[]
+        }
         Returns: string
       }
       start_portal_bulk_job: {

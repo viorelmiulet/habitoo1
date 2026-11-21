@@ -26,7 +26,7 @@ export function LastCloneJob({ developmentId, onFinished }: { developmentId: str
   const { data: job } = useQuery({
     queryKey: ["development-clone-job", developmentId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("development_clone_jobs").select("id,status,total,processed,result,last_error,finished_at").eq("development_id", developmentId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      const { data, error } = await supabase.from("development_clone_jobs").select("id,status,total,processed,result,last_error,finished_at").eq("development_id", developmentId).eq('operation','clone').order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (error) throw error;
       return (data as unknown as Job | null) ?? null;
     },

@@ -1,4 +1,5 @@
 import { runCloneJobOnce, type CloneJobItem, type CloneJobRow } from "./clone-jobs";
+import {runUnitOperationOnce, type UnitOperationItem, type UnitOperationJob} from './unit-operations';
 
 /** Production worker: admin client for the job RPCs (which recheck the requester's rights) and storage copies. */
 export async function runDevelopmentCloneJobs(): Promise<{ runs: number; processed: number }> {
@@ -31,10 +32,30 @@ export async function runDevelopmentCloneJobs(): Promise<{ runs: number; process
       data: { propertyId, syncExisting: false, selections: portals.map((portalId) => ({ portalId, enabled: true })) },
     })).results,
   };
+  const unitDb = {
+    step: async (id: string) => await call('development_unit_operation_step', {_job_id:id}) as UnitOperationItem | null,
+    advance: async (id: string, index: number, reason: string | null) => { await call('development_unit_operation_advance', {_job_id:id,_index:index,_reason:reason}); },
+    release: async (id: string) => { await db.release(id); await call('development_clone_kick'); },
+    finish: async (id: string, reason: string | null) => { await call('development_unit_operation_finish', {_job_id:id,_error:reason}); },
+  };
   const started = Date.now();
   let runs = 0, processed = 0;
   while (Date.now() - started < 20_000 && runs < 5) {
-    const r = await runCloneJobOnce(db, deps);
+    const job = await db.claim() as (CloneJobRow & {requested_by:string; operation:string; total:number}) | null;
+    if (!job) break;
+    const r = job.operation && job.operation !== 'clone'
+      ? await runUnitOperationOnce(job as UnitOperationJob, unitDb, {
+          activatedPortals: activatedPortalIds, definitions: allPortals,
+          applySelection: async (j, item, selections) => (await applyPortalSelectionForOrg({organizationId:j.organization_id, actorId:j.requested_by,
+            // Withdrawal must also handle integrations that were subsequently deactivated for the agency.
+            superadmin:j.operation !== 'republish', data:{propertyId:item.propertyId,syncExisting:false,selections}})).results,
+          enqueueDeletion: async (j, propertyId) => {
+            const {enqueueStatusWithdrawals}=await import('@/lib/portals/status-withdraw.server');
+            const {logOperation}=await import('@/lib/portals.functions');
+            await enqueueStatusWithdrawals({from:supabaseAdmin.from.bind(supabaseAdmin),rpc},{organizationId:j.organization_id,propertyIds:[propertyId],reason:'deleted',actorId:j.requested_by},{logOperation:async i=>void(await logOperation(i))});
+          },
+        })
+      : await runCloneJobOnce({...db,claim:async()=>job}, deps);
     if (!r.jobId) break;
     runs += 1; processed += r.processed;
     if (!r.finished) break; // lease released; next tick continues this job

@@ -19,7 +19,7 @@ async function investmentPayload(db:Db,d:Tables<'developments'>){
 }
 export async function prepareInvestmentUnits(db:Db,parent:Tables<'development_portal_publications'>){
  if(parent.status!=='published'||!parent.external_uuid||!parent.desired_active)return;
- const {data:properties}=await db.from('properties').select('id,for_sale,for_rent').eq('development_id',parent.development_id).is('deleted_at',null).in('status',['active','reserved','negotiation']);
+ const {data:properties}=await db.from('properties').select('id,for_sale,for_rent').eq('development_id',parent.development_id).is('deleted_at',null).is('development_withdrawn_at',null).in('status',['active','reserved','negotiation']);
  for(const p of properties??[]){const {data:selected}=await db.from('portal_publications').select('enabled').eq('property_id',p.id).eq('portal_key','storia').maybeSingle();if(!selected?.enabled)continue;
  for(const tx of ['sale','rent'] as const){if(!(tx==='sale'?p.for_sale:p.for_rent))continue;
  const {data:existing}=await db.from('storia_development_units').select('*').eq('property_id',p.id).eq('transaction_kind',tx).maybeSingle();
@@ -53,7 +53,7 @@ export async function runDevelopmentWorker(db:Db){
  }else if(job.operation==='unit_withdraw'){
  if(u.external_uuid)await request(job.organization_id,'POST',`/advert/v1/${u.external_uuid}/deactivate`);await db.from('storia_development_units').update({status:'pending'}).eq('id',u.id);
  }else{
- const {data:p}=await db.from('properties').select('development_id,deleted_at,status').eq('id',u.property_id).single();if(!p||p.development_id!==u.development_id||p.deleted_at)throw new Error('Unitatea a fost scoasă din ansamblu.');
+ const {data:p}=await db.from('properties').select('development_id,development_withdrawn_at,deleted_at,status').eq('id',u.property_id).single();if(!p||p.development_id!==u.development_id||p.deleted_at||p.development_withdrawn_at)throw new Error('Unitatea a fost scoasă sau retrasă din ansamblu.');
  const {data:selection}=await db.from('portal_publications').select('enabled').eq('property_id',u.property_id).eq('portal_key','storia').maybeSingle();if(!selection?.enabled)throw new Error('Storia nu este bifat pentru unitate.');
  if(!parent.desired_active)throw new Error('Ansamblul este retras.');
  const build=await buildStoriaPayload({organizationId:job.organization_id,propertyId:u.property_id});if(!build.ok)throw new Error(build.reasons.join(' '));const listing=build.listings.find(l=>l.transaction===u.transaction_kind);if(!listing)throw new Error('Tranzacție nepublicabilă.');const payload=withInvestmentParent(listing.advert,parent);payload.custom_fields.id=`HBT-UNIT-${u.id}`;
