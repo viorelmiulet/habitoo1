@@ -8,8 +8,9 @@ import { applyDevelopmentCopyStoria } from "@/lib/portals/storia/development.ser
 describe("portalurile copiei", () => {
   it("Storia (dezvoltator) și feed-urile activate, determinate din registry", () => {
     const defs = allPortals();
-    const feed = defs.find((d) => d.status === "available" && isFeedPullPortal(d))!;
-    const push = defs.find((d) => d.status === "available" && d.id !== "storia" && d.capabilities.includes("publish_listing") && !d.capabilities.includes("feed_pull") && !d.dynamic_feed && !d.public_feed_path_template)!;
+    const feed = defs.find((d) => d.status === "available" && isFeedPullPortal(d));
+    const push = defs.find((d) => d.status === "available" && d.id !== "storia" && d.capabilities.includes("publish_listing") && !d.capabilities.includes("feed_pull") && !d.dynamic_feed && !d.public_feed_path_template);
+    if(!feed||!push)throw new Error('Missing portal fixtures');
     expect(feed && push && getPortalDefinition("storia")).toBeTruthy();
     const out = clonePortalIds(new Set(["storia", feed.id, push.id]), defs);
     expect(out).toContain("storia");
@@ -29,12 +30,13 @@ describe("cloneToDevelopmentCore", () => {
     const applySelection = vi.fn(async () => [{ portalId: "storia", ok: true, message: null }, { portalId: "clickimob", ok: false, message: "Agentul nu are locuri libere" }]);
     const out = await cloneToDevelopmentCore({ rpc }, { developmentId: "d", propertyIds: ["o"] }, {
       copyFile, removeImage: vi.fn(), activatedPortals: async () => new Set(["storia"]), organizationOf: async () => "org", applySelection,
+      developmentPortals:async()=>['storia'],
     });
     expect(rpc).toHaveBeenCalledWith("clone_properties_to_development", { _development_id: "d", _property_ids: ["o"] });
     expect(copyFile).toHaveBeenCalledWith("org/o/a.jpg", "org/c/a.jpg");
     expect(applySelection).toHaveBeenCalledWith("org", "c", ["storia"]);
     expect(out.portalSkipped).toEqual([{ copy_id: "c", portal: "clickimob", reason: "Agentul nu are locuri libere" }]);
-    expect(out.copies[0]!.copy_reference).toBe("HB-2");
+    expect(out.copies[0]?.copy_reference).toBe("HB-2");
   });
 });
 
@@ -50,6 +52,7 @@ describe("preselecția pentru copia unui anunț publicat", () => {
     const applySelection = vi.fn(async (_org: string, _id: string, ids: string[]) => ids.map((portalId) => copyState.publish_status === "published" ? { portalId, ok: true, message: null } : { portalId, ok: false, message: "Oferta nu este publicabilă" }));
     const out = await cloneToDevelopmentCore({ rpc }, { developmentId: "d", propertyIds: ["o"] }, {
       copyFile: vi.fn(async () => true), removeImage: vi.fn(), activatedPortals: async () => activated, organizationOf: async () => "org", applySelection,
+      developmentPortals:async()=>expected,
     });
     expect(applySelection).toHaveBeenCalledWith("org", "c", expected);
     expect(out.portalSkipped).toEqual([]);

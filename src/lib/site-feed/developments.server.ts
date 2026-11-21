@@ -6,6 +6,7 @@ import { buildPaginatedFeed, parsePagination, isPropertyFeedEligible, FEED_PUBLI
 import { mapDevelopmentToFeed, type DevelopmentRow, type DevelopmentImageRow } from './developments';
 import { feedUrlsForRequest } from './config';
 import type { FeedHandlerResult } from './handlers.server';
+import {selectedDevelopmentIds} from '@/lib/developments/portal-selections.server';
 
 type Db = Awaited<typeof import('@/integrations/supabase/client.server')>['supabaseAdmin'];
 
@@ -28,7 +29,8 @@ export async function readDevelopmentFeedUnits(auth: FeedAuthOk, developmentId?:
       return q.range(from,to);
     }));
   }
-  return units.filter(isPropertyFeedEligible);
+  const allowed=portal&&portal!=='agency_site'?new Set(await selectedDevelopmentIds(db,portal,[...new Set(units.flatMap(u=>u.development_id?[u.development_id]:[]))])):null;
+  return units.filter(u=>isPropertyFeedEligible(u)&&(!allowed||Boolean(u.development_id&&allowed.has(u.development_id))));
 }
 
 async function imagesFor(db: Db, organizationId: string, ids: string[]) {

@@ -23,10 +23,12 @@ function fakeDb(total: number) {
 const deps = (over: Partial<Parameters<typeof runCloneJobOnce>[1]> = {}) => ({
   copyFile: vi.fn(async () => true), removeImage: vi.fn(async () => {}),
   activatedPortals: async () => new Set(["storia"]), definitions: allPortals,
+  developmentPortals:async()=>['storia'],
   applySelection: vi.fn(async (_o: string, _p: string, ids: string[]) => ids.map((portalId) => ({ portalId, ok: true, message: null }))), ...over,
 });
 
 describe("worker-ul alocării în fundal", () => {
+  it('copiile noi primesc numai portalurile bifate la ansamblu',async()=>{const {db}=fakeDb(1);const d=deps({developmentPortals:async()=>['clickimob']});await runCloneJobOnce(db,d);expect(d.applySelection).toHaveBeenCalledWith('org','c0',['clickimob']);});
   it("procesează în loturi de 10 și termină la ultimul lot", async () => {
     const { db, state } = fakeDb(25); const d = deps();
     expect(await runCloneJobOnce(db, d)).toMatchObject({ processed: 10, finished: false });

@@ -1,4 +1,3 @@
-import { clonePortalIds } from './clone';
 import type { PortalDefinition } from '@/lib/portals/registry';
 
 export type UnitOperation = 'withdraw' | 'republish' | 'remove';
@@ -18,6 +17,7 @@ export type UnitOperationDb = {
 export type UnitOperationDeps = {
   activatedPortals: (org: string) => Promise<Set<string>>;
   definitions: () => PortalDefinition[];
+  developmentPortals: (job:UnitOperationJob) => Promise<string[]>;
   applySelection: (job: UnitOperationJob, item: UnitOperationItem, selections: {portalId: string; enabled: boolean}[]) => Promise<{portalId: string; ok: boolean; message: string | null}[]>;
   enqueueDeletion: (job: UnitOperationJob, propertyId: string) => Promise<void>;
 };
@@ -30,7 +30,7 @@ export async function runUnitOperationOnce(job: UnitOperationJob, db: UnitOperat
     let reason: string | null = null;
     try {
       const enabled = job.operation === 'republish';
-      const portals = enabled ? [...new Set(['agency_site', ...clonePortalIds(await deps.activatedPortals(job.organization_id), deps.definitions())])] : item.portals;
+      const portals = enabled ? [...new Set(await deps.developmentPortals(job))] : item.portals;
       if (job.operation === 'remove') await deps.enqueueDeletion(job, item.propertyId);
       const results = await deps.applySelection(job, item, portals.map(portalId => ({portalId, enabled})));
       const missing = portals.filter(p => !results.some(r => r.portalId === p));

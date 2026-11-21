@@ -14,6 +14,7 @@ vi.mock('@/components/app/PropertyLocationMap',()=>({PropertyLocationMap:()=>nul
 vi.mock('@/components/app/ai/TextCorrectionControl',()=>({TextCorrectionControl:()=>null}));
 vi.mock('./DevelopmentGallery',()=>({DevelopmentGallery:()=>null}));
 vi.mock('./DevelopmentUnits',()=>({DevelopmentUnits:()=>null}));
+vi.mock('./DevelopmentPublishing',()=>({DevelopmentPublishing:()=>null}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{from:(table:string)=>{const q:any={select:()=>q,eq:()=>q,then:(resolve:any)=>resolve({data:[],error:null}),insert:(payload:any)=>{mocks.saved(payload);return {select:()=>({single:async()=>({data:{id:'development-A'},error:null})})};}};return q;}}}));
 let root:ReturnType<typeof createRoot>|undefined;let container:HTMLDivElement|undefined;
 afterEach(async()=>{await act(async()=>root?.unmount());container?.remove();});
@@ -26,4 +27,11 @@ it('formularul salvează datele agenției și deschide ansamblul creat fără ni
  await act(async()=>{container?.querySelector('form')?.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));await new Promise(r=>setTimeout(r,20));});
  expect(mocks.saved).toHaveBeenCalledWith(expect.objectContaining({name:'Ansamblu Test',organization_id:'agency-A',assigned_to:'agent-A',status:'draft',amenities:[]}));
  expect(mocks.navigation).toHaveBeenCalledWith({to:'/app/developments/$id',params:{id:'development-A'}});
+});
+it('linkul notificării deschide direct fila Publicare',async()=>{
+ window.history.replaceState({},'', '?tab=publishing');container=document.createElement('div');document.body.append(container);root=createRoot(container);
+ const qc=new QueryClient({defaultOptions:{queries:{retry:false}}});
+ await act(async()=>root?.render(<QueryClientProvider client={qc}><DevelopmentForm development={{id:'dev',organization_id:'agency-A',name:'MRM',assigned_to:'agent-A'} as never}/></QueryClientProvider>));
+ const selected=container.querySelector('[role="tab"][data-state="active"]');expect(selected?.textContent).toBe('Publicare');
+ window.history.replaceState({},'', '/');qc.clear();
 });

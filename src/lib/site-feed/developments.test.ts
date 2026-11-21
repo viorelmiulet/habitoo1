@@ -53,7 +53,7 @@ beforeEach(()=>{
   state.selected=['p1','p2'];state.fail='';state.tables={developments:[parent(),parent({id:D2,organization_id:'org-b'})],
     properties:[unit('p1'),unit('p2'),unit('p3',{sale_price:1000}),unit('other',{organization_id:'org-b',development_id:D2})],
     development_images:[{id:I,organization_id:'org-a',development_id:D,is_primary:true,position:2,url:'org-a/developments/img',storage_path:'org-a/developments/img',updated_at:'2026-11-20T00:00:00Z',width:1200,height:800}],
-    portal_publications:[{id:'pub',organization_id:'org-a',portal_key:'clickimob',enabled:true}],organizations:[]};
+    portal_publications:[{id:'pub',organization_id:'org-a',portal_key:'clickimob',enabled:true}],development_portal_selections:[{development_id:D,portal_key:'clickimob',enabled:true},{development_id:D2,portal_key:'clickimob',enabled:true}],organizations:[]};
 });
 
 it('adds exact property linkage and primary market fields without altering any previous field',()=>{
@@ -67,6 +67,13 @@ it('adds exact property linkage and primary market fields without altering any p
 it('excludes a development whose properties are not selected for this portal',async()=>{
   state.selected=[];const r=await handleDevelopmentsList(req(),auth);
   expect(await r.response.json()).toMatchObject({total:0,data:[],api_version:'habitoo-site-feed/1.1'});
+});
+it('debifarea ansamblului îl scoate din lista și detaliul portalului, chiar înaintea retragerilor unităților',async()=>{
+ state.tables.development_portal_selections=[{development_id:D,portal_key:'clickimob',enabled:false}];
+ expect((await handleDevelopmentsList(req(),auth)).items).toBe(0);
+ expect((await handleDevelopmentDetail(req(),auth,D)).response.status).toBe(404);
+ state.tables.development_portal_selections=[{development_id:D,portal_key:'clickimob',enabled:true}];
+ expect((await handleDevelopmentsList(req(),auth)).items).toBe(1);
 });
 it('returns 404 for a development in another agency',async()=>{
   expect((await handleDevelopmentDetail(req('/developments/'+D2),auth,D2)).response.status).toBe(404);

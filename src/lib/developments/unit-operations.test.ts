@@ -10,6 +10,7 @@ function fixture(){
   advance:vi.fn(async(_id,i)=>{if(state.pending?.index===i){state.index++;state.pending=null;}}),release:vi.fn(async()=>{}),finish:vi.fn(async()=>{}),
  };
  const deps={activatedPortals:vi.fn(async()=>new Set(['storia','imove'])),definitions:allPortals,
+  developmentPortals:async()=>['storia','imove'],
   applySelection:vi.fn(async(_j:UnitOperationJob,_item:UnitOperationItem,s:{portalId:string;enabled:boolean}[]):Promise<{portalId:string;ok:boolean;message:string|null}[]>=>s.map(p=>({portalId:p.portalId,ok:true,message:null}))),enqueueDeletion:vi.fn(async()=>{}),
  };
  return {db,deps,state};
@@ -45,4 +46,9 @@ it('ștergerea pune retragerile în coada existentă înainte de debifare',async
  const enqueueOrder=deps.enqueueDeletion.mock.invocationCallOrder[0];const selectionOrder=deps.applySelection.mock.invocationCallOrder[0];
  if(enqueueOrder===undefined||selectionOrder===undefined)throw new Error('Missing calls');
  expect(enqueueOrder).toBeLessThan(selectionOrder);
+});
+it('Republică folosește numai portalurile alese la ansamblu',async()=>{
+ const {db,deps}=fixture();deps.developmentPortals=async()=>['imove'];const republish={...job,operation:'republish' as const};
+ await runUnitOperationOnce(republish,db,deps);
+ expect(deps.applySelection).toHaveBeenCalledWith(republish,expect.anything(),[{portalId:'imove',enabled:true}]);
 });

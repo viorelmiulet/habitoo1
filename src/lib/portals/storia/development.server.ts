@@ -19,6 +19,7 @@ async function investmentPayload(db:Db,d:Tables<'developments'>){
 }
 export async function prepareInvestmentUnits(db:Db,parent:Tables<'development_portal_publications'>){
  if(parent.status!=='published'||!parent.external_uuid||!parent.desired_active)return;
+ const {data:choice,error:choiceError}=await db.from('development_portal_selections').select('enabled').eq('development_id',parent.development_id).eq('portal_key','storia').maybeSingle();if(choiceError)throw choiceError;if(!choice?.enabled)return;
  const {data:properties}=await db.from('properties').select('id,for_sale,for_rent').eq('development_id',parent.development_id).is('deleted_at',null).is('development_withdrawn_at',null).in('status',['active','reserved','negotiation']);
  for(const p of properties??[]){const {data:selected}=await db.from('portal_publications').select('enabled').eq('property_id',p.id).eq('portal_key','storia').maybeSingle();if(!selected?.enabled)continue;
  for(const tx of ['sale','rent'] as const){if(!(tx==='sale'?p.for_sale:p.for_rent))continue;
@@ -33,6 +34,7 @@ export async function runDevelopmentWorker(db:Db){
  try{
  const {data:parent}=await db.from('development_portal_publications').select('*').eq('development_id',job.development_id).single();if(!parent)throw new Error('Publicare negăsită.');
  const {data:connection}=await db.from('portal_connections').select('id').eq('organization_id',job.organization_id).eq('portal','storia_developer').eq('status','connected').maybeSingle();if(!connection||connection.id!==parent.connection_id)throw new Error('Conexiunea dezvoltatorului nu mai este disponibilă.');
+ if(job.operation==='publish'||job.operation==='unit'){const {data:choice,error:e}=await db.from('development_portal_selections').select('enabled').eq('development_id',job.development_id).eq('portal_key','storia').maybeSingle();if(e)throw e;if(!choice?.enabled)throw new Error('Storia nu este bifat la ansamblu.');}
  if(job.operation==='publish'){
  if(!parent.desired_active)throw new Error('Publicarea a fost anulată.');
  const {data:d}=await db.from('developments').select('*').eq('id',job.development_id).single();if(!d||d.deleted_at||d.status!=='active')throw new Error('Ansamblul nu este activ.');

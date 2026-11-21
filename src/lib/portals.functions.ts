@@ -3177,7 +3177,7 @@ export async function applyPortalSelectionForOrg(input: {
           continue;
         }
         // Portalurile neactivate pentru agenție sunt respinse, nu ignorate silențios.
-        if (allowedPortals !== null && !allowedPortals.has(definition.id)) {
+        if (allowedPortals !== null && !allowedPortals.has(definition.id) && !(definition.id==='storia'&&property.development_id)) {
           if (wanted.enabled) {
             const message = `${definition.display_name} nu este activat pentru agenția ta.`;
             await persistListingFailure(admin, {

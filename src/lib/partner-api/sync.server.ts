@@ -5,6 +5,7 @@
  * same property filters and isPropertyFeedEligible used by the JSON feed.
  */
 import { digest } from "./core.server";
+import {selectedDevelopmentIds} from '@/lib/developments/portal-selections.server';
 import { SANDBOX_AGENCY_ID } from "./sandbox";
 import {
   diffAgents, diffListings, mapPartnerAgent, mapPartnerListing,
@@ -76,7 +77,7 @@ export function supabaseSyncDeps(db: Admin): SyncDeps {
     },
     async eligibleDevelopments(portal, org) {
       const units = unitCache.get(`${portal}:${org}`) ?? []; unitCache.delete(`${portal}:${org}`);
-      const ids = [...new Set(units.flatMap(u => u.development_id ? [u.development_id] : []))];
+      const ids = await selectedDevelopmentIds(db,portal,[...new Set(units.flatMap(u => u.development_id ? [u.development_id] : []))]);
       if (!ids.length) return { developments: [], links: {} };
       const { readCompleteRows } = await import("@/lib/site-feed/complete-read.server");
       const devs: import("@/lib/site-feed/developments").DevelopmentRow[] = []; const images: import("@/lib/site-feed/developments").DevelopmentImageRow[] = [];

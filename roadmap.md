@@ -1,3 +1,9 @@
+## Portaluri alese per ansamblu
+- [x] Selecții cu acces pe ansamblu și preluare inițială: 18 selecții, 0 bife existente omise, 0 joburi pornite
+- [x] Publicare, operații în fundal, copii/republicare și eligibilitate feed/Partner API; unitățile retrase manual sunt păstrate
+- [x] 74 teste în 13 fișiere strict noi/modificate; build OK; browser desktop/390 cu selecții simulate și rezultat, fără erori sau depășire; commit la încheiere, fără publicare
+- Verificarea autentificată reală este indisponibilă: solicitantul nu are cont asociat pentru sesiune; niciun apel real către portaluri în teste.
+
 ## Unități — selecție și operații în fundal
 - [x] Selecție pe pagină, retragere/republicare/ștergere copii și Publicare
 - [x] Joburi reluabile, marcaj anti-republicare, notificări și Ultima operație

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
-import { CLONE_MAX, clonePortalIds, type CloneCopy, type CloneResult, type CloneSkip } from "./clone";
+import { CLONE_MAX, type CloneCopy, type CloneResult, type CloneSkip } from "./clone";
 
 type Rpc = { rpc: (n: string, p: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> };
 export type CloneDeps = {
@@ -9,6 +9,7 @@ export type CloneDeps = {
   removeImage: (copyId: string, path: string) => Promise<void>;
   activatedPortals: (orgId: string) => Promise<Set<string>>;
   organizationOf: (developmentId: string) => Promise<string>;
+  developmentPortals: (developmentId:string,orgId:string) => Promise<string[]>;
   applySelection: (orgId: string, propertyId: string, portals: string[]) => Promise<{ portalId: string; ok: boolean; message: string | null }[]>;
 };
 const rpcResult = z.object({
@@ -30,7 +31,7 @@ export async function cloneToDevelopmentCore(user: Rpc, input: { developmentId: 
   const portalSkipped: CloneResult["portalSkipped"] = [];
   if (out.copies.length) {
     const org = await deps.organizationOf(input.developmentId);
-    const portals = clonePortalIds(await deps.activatedPortals(org), (await import("@/lib/portals/registry")).allPortals());
+    const portals = await deps.developmentPortals(input.developmentId,org);
     for (const c of out.copies) {
       if (!portals.length) break;
       try {

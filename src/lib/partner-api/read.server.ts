@@ -5,9 +5,10 @@
 import { z } from "zod";
 import { apiError, type Environment, type PartnerContext } from "./core.server";
 import { TAXONOMIES, decodeCursor, encodeCursor, mapPartnerAgency, type OrgRow, type PartnerAgent, type PartnerListing } from "./schema";
-import { SANDBOX_AGENCY_ID } from "./sandbox";
+import { SANDBOX_AGENCY_ID, SANDBOX_DEVELOPMENT_ID } from "./sandbox";
 import { includes } from "./developments";
 import type { PartnerDevelopment } from "./schema";
+import {selectedDevelopmentIds} from '@/lib/developments/portal-selections.server';
 
 export type StoredListing = { property_id: string; organization_id: string; visible: boolean; payload: PartnerListing; updated_at: string; withdrawn_at: string | null; development_id?: string | null };
 export type StoredDevelopment = { development_id: string; organization_id: string; visible: boolean; payload: PartnerDevelopment; updated_at: string };
@@ -200,13 +201,16 @@ export async function supabaseReadStore(): Promise<PartnerReadStore> {
       if (r.error) throw r.error; return (r.data ?? []) as StoredEvent[];
     },
     async developments(portal, q) {
+      const allowed=await selectedDevelopmentIds(db,portal);if(q.orgIds.includes(SANDBOX_AGENCY_ID))allowed.push(SANDBOX_DEVELOPMENT_ID);if(!allowed.length)return [];
       let query = db.from("partner_api_development_state").select("development_id,organization_id,visible,payload,updated_at").eq("portal", portal).in("organization_id", q.orgIds).eq("visible", true);
+      query=query.in('development_id',allowed);
       if (q.updatedSince) query = query.gt("updated_at", q.updatedSince);
       if (q.after) query = query.or(`updated_at.gt.${q.after.u},and(updated_at.eq.${q.after.u},development_id.gt.${q.after.i})`);
       const r = await query.order("updated_at").order("development_id").limit(q.limit);
       if (r.error) throw r.error; return (r.data ?? []) as unknown as StoredDevelopment[];
     },
     async development(portal, id) {
+      if(id!==SANDBOX_DEVELOPMENT_ID&&!(await selectedDevelopmentIds(db,portal,[id])).length)return null;
       const r = await db.from("partner_api_development_state").select("development_id,organization_id,visible,payload,updated_at").eq("portal", portal).eq("development_id", id).maybeSingle();
       if (r.error) throw r.error; return r.data as unknown as StoredDevelopment | null;
     },

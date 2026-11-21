@@ -3416,6 +3416,84 @@ export type Database = {
           },
         ]
       }
+      development_portal_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          current_item: Json | null
+          development_id: string
+          enabled: boolean
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          organization_id: string
+          portal_key: string
+          processed: number
+          property_ids: string[]
+          requested_by: string
+          result: Json
+          started_at: string | null
+          status: string
+          total: number
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          current_item?: Json | null
+          development_id: string
+          enabled: boolean
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          organization_id: string
+          portal_key: string
+          processed?: number
+          property_ids?: string[]
+          requested_by: string
+          result?: Json
+          started_at?: string | null
+          status?: string
+          total?: number
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          current_item?: Json | null
+          development_id?: string
+          enabled?: boolean
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          organization_id?: string
+          portal_key?: string
+          processed?: number
+          property_ids?: string[]
+          requested_by?: string
+          result?: Json
+          started_at?: string | null
+          status?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "development_portal_jobs_development_id_fkey"
+            columns: ["development_id"]
+            isOneToOne: false
+            referencedRelation: "developments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "development_portal_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       development_portal_publications: {
         Row: {
           confirmed_property_ids: string[]
@@ -3485,6 +3563,38 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      development_portal_selections: {
+        Row: {
+          development_id: string
+          enabled: boolean
+          portal_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          development_id: string
+          enabled?: boolean
+          portal_key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          development_id?: string
+          enabled?: boolean
+          portal_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "development_portal_selections_development_id_fkey"
+            columns: ["development_id"]
+            isOneToOne: false
+            referencedRelation: "developments"
             referencedColumns: ["id"]
           },
         ]
@@ -14003,6 +14113,35 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_development_portal_job: {
+        Args: never
+        Returns: {
+          attempts: number
+          created_at: string
+          current_item: Json | null
+          development_id: string
+          enabled: boolean
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          organization_id: string
+          portal_key: string
+          processed: number
+          property_ids: string[]
+          requested_by: string
+          result: Json
+          started_at: string | null
+          status: string
+          total: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "development_portal_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       claim_due_portal_publish_schedules: {
         Args: { _lease_seconds: number; _limit: number }
         Returns: {
@@ -14347,6 +14486,19 @@ export type Database = {
       }
       development_clone_job_step: { Args: { _job_id: string }; Returns: Json }
       development_clone_kick: { Args: never; Returns: undefined }
+      development_portal_job_advance: {
+        Args: { _index: number; _job_id: string; _reason: string }
+        Returns: undefined
+      }
+      development_portal_job_finish: {
+        Args: { _error: string; _job_id: string }
+        Returns: undefined
+      }
+      development_portal_job_release: {
+        Args: { _job_id: string }
+        Returns: undefined
+      }
+      development_portal_job_step: { Args: { _job_id: string }; Returns: Json }
       development_summaries: { Args: { _ids: string[] }; Returns: Json }
       development_unit_operation_advance: {
         Args: { _index: number; _job_id: string; _reason: string }

@@ -1,5 +1,7 @@
 import { runCloneJobOnce, type CloneJobItem, type CloneJobRow } from "./clone-jobs";
 import {runUnitOperationOnce, type UnitOperationItem, type UnitOperationJob} from './unit-operations';
+import {runDevelopmentPortalJob,type DevelopmentPortalJob,type DevelopmentPortalItem} from './portal-jobs';
+import {readDevelopmentPortals} from './portal-selections.server';
 
 /** Production worker: admin client for the job RPCs (which recheck the requester's rights) and storage copies. */
 export async function runDevelopmentCloneJobs(): Promise<{ runs: number; processed: number }> {
@@ -20,6 +22,7 @@ export async function runDevelopmentCloneJobs(): Promise<{ runs: number; process
     finish: async (id: string, error: string | null) => { await call("development_clone_job_finish", { _job_id: id, _error: error }); },
   };
   const deps = {
+    developmentPortals:(id:string,org:string)=>readDevelopmentPortals(supabaseAdmin,id,org),
     copyFile: async (from: string, to: string) => {
       const { error } = await supabaseAdmin.storage.from("property-media").copy(from, to);
       return !error || /exist/i.test(error.message); // resumed run: file already copied
@@ -40,12 +43,24 @@ export async function runDevelopmentCloneJobs(): Promise<{ runs: number; process
   };
   const started = Date.now();
   let runs = 0, processed = 0;
+  const portalRows=await call('claim_development_portal_job') as DevelopmentPortalJob[];
+  const portalJob=portalRows?.[0];
+  if(portalJob){
+    const r=await runDevelopmentPortalJob(portalJob,{
+      step:async id=>await call('development_portal_job_step',{_job_id:id}) as DevelopmentPortalItem|null,
+      advance:async(id,index,reason)=>{await call('development_portal_job_advance',{_job_id:id,_index:index,_reason:reason});},
+      release:async id=>{await call('development_portal_job_release',{_job_id:id});},
+      finish:async(id,reason)=>{await call('development_portal_job_finish',{_job_id:id,_error:reason});},
+    },async(j,item)=>(await applyPortalSelectionForOrg({organizationId:j.organization_id,actorId:j.requested_by,superadmin:!j.enabled,data:{propertyId:item.propertyId,syncExisting:false,selections:[{portalId:j.portal_key,enabled:j.enabled}]}})).results);
+    return {runs:1,processed:r.processed};
+  }
   while (Date.now() - started < 20_000 && runs < 5) {
     const job = await db.claim() as (CloneJobRow & {requested_by:string; operation:string; total:number}) | null;
     if (!job) break;
     const r = job.operation && job.operation !== 'clone'
       ? await runUnitOperationOnce(job as UnitOperationJob, unitDb, {
           activatedPortals: activatedPortalIds, definitions: allPortals,
+          developmentPortals:()=>readDevelopmentPortals(supabaseAdmin,job.development_id,job.organization_id),
           applySelection: async (j, item, selections) => (await applyPortalSelectionForOrg({organizationId:j.organization_id, actorId:j.requested_by,
             // Withdrawal must also handle integrations that were subsequently deactivated for the agency.
             superadmin:j.operation !== 'republish', data:{propertyId:item.propertyId,syncExisting:false,selections}})).results,

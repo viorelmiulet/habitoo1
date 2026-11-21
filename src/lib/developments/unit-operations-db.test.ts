@@ -17,6 +17,7 @@ const workerDb:UnitOperationDb={
  finish:async(j,e)=>{await as(null);await call('development_unit_operation_finish',[j,e]);},
 };
 const deps={activatedPortals:async()=>new Set(['storia','imove']),definitions:allPortals,
+ developmentPortals:async()=>['agency_site','storia','imove'],
  applySelection:async(_j:UnitOperationJob,item:UnitOperationItem,selections:{portalId:string;enabled:boolean}[])=>{
   await as(null);
   for(const s of selections)await db.query("insert into portal_publications(property_id,portal_key,enabled,status) values($1,$2,$3,$4) on conflict(property_id,portal_key) do update set enabled=excluded.enabled,status=excluded.status",[item.propertyId,s.portalId,s.enabled,s.enabled?'published':'disabled']);

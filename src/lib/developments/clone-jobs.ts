@@ -1,4 +1,4 @@
-import { clonePortalIds, type CloneCopy, type ClonePortalSkip, type CloneSkip } from "./clone";
+import { type CloneCopy, type ClonePortalSkip, type CloneSkip } from "./clone";
 import type { PortalDefinition } from "@/lib/portals/registry";
 
 export const CLONE_JOB_BATCH = 10;
@@ -19,6 +19,7 @@ export type CloneJobDeps = {
   removeImage: (copyId: string, path: string) => Promise<void>;
   activatedPortals: (orgId: string) => Promise<Set<string>>;
   definitions: () => PortalDefinition[];
+  developmentPortals: (developmentId:string,orgId:string) => Promise<string[]>;
   applySelection: (orgId: string, propertyId: string, portals: string[]) => Promise<{ portalId: string; ok: boolean; message: string | null }[]>;
 };
 
@@ -47,7 +48,7 @@ export async function runCloneJobOnce(db: CloneJobDb, deps: CloneJobDeps, batch 
       }
       const portalSkipped: ClonePortalSkip[] = [];
       if (item.copies.length) {
-        portals ??= clonePortalIds(await deps.activatedPortals(job.organization_id), deps.definitions());
+        portals ??= await deps.developmentPortals(job.development_id,job.organization_id);
         for (const c of item.copies) {
           if (!portals.length) break;
           try {
