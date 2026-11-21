@@ -71,6 +71,7 @@ export function homeIdentityJsonLd(description: string): Ld[] {
       operatingSystem: "Web",
       inLanguage: "ro",
       description,
+      featureList: ["Proprietăți", "Clienți și cereri", "Lead-uri", "Potriviri automate", "Publicare pe portaluri", "Ansambluri rezidențiale", "Colaborare între agenții", "Contracte", "Comisioane", "Analiză comparativă de piață", "Rapoarte"],
       publisher: { "@id": ORG_ID },
       offers: planOffersJsonLd().offers,
     },

@@ -123,6 +123,7 @@ export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartne
 - [Conținut public complet în Markdown](${BLOG_SITE_URL}/llms-full.txt): Pagini principale, prețuri, funcționalități, integrări și întrebări frecvente.
 - [Habitoo CRM — prima pagină](${BLOG_SITE_URL}/): CRM imobiliar pentru agențiile din România.
 - [Funcționalități Habitoo CRM](${BLOG_SITE_URL}/functionalitati): Proprietăți, clienți, cereri, lead-uri și activitatea echipei.
+- [CRM pentru ansambluri rezidențiale și dezvoltatori](${BLOG_SITE_URL}/functionalitati/ansambluri-rezidentiale): Fișa ansamblului, unități alocate ca copii noi, investiții pe Storia și portaluri alese pe ansamblu.
 - [Anunțuri de la proprietari pentru agenții imobiliare](${BLOG_SITE_URL}/anunturi-proprietari): Surse, cifre live, filtre pe zone și import în portofoliu cu acordul proprietarului.
 - [Analiză comparativă de piață pentru agenții](${BLOG_SITE_URL}/analiza-comparativa-de-piata): Oferte reale, scor de similaritate, ajustări explicate, interval de preț și raport PDF pentru client.
 - [Colaborare între agenții imobiliare](${BLOG_SITE_URL}/colaborare-intre-agentii): Proprietăți oferite partenerilor cu comision stabilit de agenție, propuneri de clienți și discuții private, fără expunerea proprietarului.

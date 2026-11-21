@@ -144,6 +144,7 @@ function IntegrationPage() {
                 </Link>
               </li>
             ))}
+            {page.slug === "storia" && <li><Link to="/functionalitati/$slug" params={{ slug: "ansambluri-rezidentiale" }} className="ds-card ds-feature-card inline-block px-4 py-2.5 text-sm font-semibold text-navy">Ansambluri rezidențiale</Link></li>}
             <li><Link to="/functionalitati/$slug" params={{ slug: "proprietati" }} className="ds-card ds-feature-card inline-block px-4 py-2.5 text-sm font-semibold text-navy">Gestiunea proprietăților</Link></li>
           </ul>
           <p className="text-sm">

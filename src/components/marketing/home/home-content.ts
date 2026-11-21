@@ -56,7 +56,7 @@ export const HOME_FAQ: FaqItem[] = [
   },
 ];
 
-export type HomeCard = { icon: LucideIcon; title: string; text: string; wide?: boolean };
+export type HomeCard = { icon: LucideIcon; title: string; text: string; wide?: boolean; to?: string };
 
 /** Doar funcții AI care există în aplicație. */
 export const AI_CARDS: HomeCard[] = [
@@ -77,6 +77,7 @@ export const HOME_FEATURES: HomeCard[] = [
   { icon: Sparkles, title: "Potrivire automată", text: "Scor și motive pentru fiecare cerere și proprietate." },
   { icon: Kanban, title: "Lead-uri și pipeline", text: "Fiecare oportunitate urmărită până la tranzacția închisă." },
   { icon: Link2, title: "Publicare pe portaluri", text: "Alegi unde apare fiecare anunț, direct din fișa lui.", wide: true },
+  { icon: Building2, title: "Ansambluri rezidențiale", text: "Unități, investiții pe Storia și portaluri alese pe ansamblu.", to: "/functionalitati/ansambluri-rezidentiale" },
   { icon: Handshake, title: "Colaborare între agenții (MLS)", text: "Proprietăți oferite partenerilor, cu comision stabilit." },
   { icon: Home, title: "Anunțuri de la proprietari", text: "Adunate din mai multe portaluri, cu filtre pe zone." },
   { icon: FileSignature, title: "Contracte", text: "Contracte generate din datele proprietății și ale clientului." },

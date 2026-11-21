@@ -15,6 +15,7 @@ const EXPECTED_PAGES = [
   ["contracte", "Contractele agenției, generate și semnate din CRM", "contracte agenție imobiliară"],
   ["echipa-si-roluri", "Toată echipa agenției, cu drepturi clare pentru fiecare rol", "CRM pentru echipa agenției imobiliare"],
   ["aplicatie-mobil", "Habitoo pe telefon, la vizionare și pe teren", "CRM imobiliar pe telefon"],
+  ["ansambluri-rezidentiale", "CRM pentru ansambluri rezidențiale și dezvoltatori", "CRM ansambluri rezidențiale"],
 ] as const;
 
 function decode(text: string) {

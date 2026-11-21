@@ -183,7 +183,7 @@ export function HomeContent({ dynamic }: { dynamic: PortalDefinition[] }) {
               {HOME_FEATURES.map((feature, index) => (
                 <li key={feature.title} className="border-b border-border p-6 sm:border-r [&:nth-child(2n)]:sm:border-r-0 lg:[&:nth-child(2n)]:border-r lg:[&:nth-child(4n)]:border-r-0">
                   <p className="font-mono text-[11px] ds-text-3">{String(index + 1).padStart(2, "0")}</p>
-                  <h3 className="mt-4 text-lg">{feature.title}</h3>
+                  <h3 className="mt-4 text-lg">{feature.to ? <a href={feature.to} className="hover:underline">{feature.title}</a> : feature.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed ds-text-2">{feature.text}</p>
                 </li>
               ))}
