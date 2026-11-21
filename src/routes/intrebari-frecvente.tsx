@@ -5,7 +5,8 @@ import { CtaBand } from "@/components/marketing/CtaBand";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Eyebrow, Section, SectionHeading } from "@/components/marketing/Section";
-import { pageJsonLd, SITE_URL } from "@/components/marketing/structured-data";
+import { pageJsonLd } from "@/components/marketing/structured-data";
+import { SITE_URL } from "@/components/marketing/public-identity";
 import { publicHead } from "@/components/marketing/public-head";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
