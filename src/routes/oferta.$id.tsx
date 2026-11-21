@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
@@ -9,6 +9,7 @@ import { getCurrentHostname } from "@/lib/current-host";
 import { formatMoney } from "@/lib/format";
 import { contactLines, safeAccent } from "@/lib/materials";
 import { offerOgMeta } from "@/lib/share";
+import { isUuid, offerJsonLd } from "@/lib/marketing/offer-seo";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PhotoViewer } from "@/components/app/PhotoViewer";
@@ -17,6 +18,8 @@ export const Route = createFileRoute("/oferta/$id")({
   loader: async ({ params }) => {
     const offer = await getPublicOffer({ data: { id: params.id } });
     if (!offer) throw notFound();
+    // Old UUID links move permanently to the stable SEO address.
+    if (offer.slug && (isUuid(params.id) || params.id !== offer.slug)) throw redirect({ to: "/oferta/$id", params: { id: offer.slug }, statusCode: 301 });
     return { offer };
   },
   head: ({ loaderData }) => {
@@ -30,9 +33,12 @@ export const Route = createFileRoute("/oferta/$id")({
     const description =
       offer.description?.slice(0, 155) ??
       `${offer.title} în ${offer.city ?? "România"}. Detalii, fotografii și contact prin agenția care administrează oferta.`;
-    // Link privat trimis clienților: nu se indexează (dar rămâne accesibil).
+    // Only eligible offers are indexed; others stay reachable but noindex.
     const og = offerOgMeta(offer);
-    const head = publicHead({ path: `/oferta/${offer.id}`, title, description, ogDescription: og.description, noindex: true });
+    const path = `/oferta/${offer.slug ?? offer.id}`;
+    const jsonLd = offer.slug ? offerJsonLd({ ...offer, slug: offer.slug, image: offer.images[0] ? og.image : null }) : undefined;
+    const head = publicHead({ path, title, description, ogDescription: og.description, noindex: !offer.indexable, jsonLd });
+    if (offer.canonicalUrl) head.links = head.links.map((l) => (l.rel === "canonical" ? { ...l, href: offer.canonicalUrl! } : l));
     const replaced: Record<string, string | null> = {
       "og:image": og.image, "twitter:image": og.image, "og:site_name": og.siteName,
       "og:image:width": og.width ? String(og.width) : null, "og:image:height": og.height ? String(og.height) : null,

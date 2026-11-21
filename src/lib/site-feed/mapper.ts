@@ -155,8 +155,8 @@ export function feedImageUrl(baseUrl: string, imageId: string): string {
 }
 
 /** URL public stabil al ofertei pe site: /oferta/{propertyId}. */
-export function offerUrl(publicSiteUrl: string, propertyId: string): string {
-  return `${publicSiteUrl.replace(/\/$/, "")}/oferta/${propertyId}`;
+export function offerUrl(publicSiteUrl: string, propertyId: string, slug?: string | null): string {
+  return `${publicSiteUrl.replace(/\/$/, "")}/oferta/${slug || propertyId}`;
 }
 
 export function mapImage(image: PropertyImageRow, baseUrl: string): FeedImage {
@@ -393,7 +393,7 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     indice_emisii: null,
     consum_energie_regenerabila: null,
     energy: { clasa: null, consum: null, emisii: null },
-    url: options.publicSiteUrl ? offerUrl(options.publicSiteUrl, p.id) : null,
+    url: options.publicSiteUrl ? offerUrl(options.publicSiteUrl, p.id, (p as { public_slug?: string | null }).public_slug) : null,
   };
 }
 

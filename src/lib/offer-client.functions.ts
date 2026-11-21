@@ -12,7 +12,7 @@ const inputSchema=z.object({propertyId:z.string().uuid(),contactId:z.string().uu
 type Input=z.infer<typeof inputSchema>;
 export type OfferRecipient={key:string;name:string;phone:string|null;email:string|null;contactId:string|null;leadId:string|null};
 async function loadActorProperty(context:Context,propertyId:string){
- const {data:p,error}=await context.supabase.from('properties').select('id,organization_id,status,publish_status,deleted_at,title,price,currency,transaction_kind,city,district').eq('id',propertyId).is('deleted_at',null).maybeSingle();
+ const {data:p,error}=await context.supabase.from('properties').select('id,organization_id,status,publish_status,deleted_at,title,price,currency,transaction_kind,city,district,public_slug').eq('id',propertyId).is('deleted_at',null).maybeSingle();
  if(error || !p) throw new Error('Proprietatea nu este disponibilă.');
  const {data:actor}=await context.supabase.from('profiles').select('id,organization_id,full_name,email').eq('id',context.userId).maybeSingle();
  if(!actor || actor.organization_id!==p.organization_id) throw new Error('Poți trimite numai ofertele agenției tale.');
@@ -36,7 +36,7 @@ async function prepare(context:Context,data:Input){
  const recipient=data.channel==='email'?data.recipient.toLowerCase():data.channel==='copy'?'':offerPhone(data.recipient);
  if(data.channel==='email'&&!isEmail(recipient)) throw new Error('Introdu un email valid.');
  if((data.channel==='whatsapp'||data.channel==='sms')&&!recipient) throw new Error('Introdu un telefon valid, cu prefix de țară.');
- const link=offerShareUrl(loaded.p.id);
+ const link=offerShareUrl(loaded.p.id, loaded.p.public_slug);
  if(!data.message.includes(link)) throw new Error('Mesajul trebuie să conțină linkul ofertei.');
  const signature=[loaded.actor.full_name??'Agent',loaded.agencyName].join('\n');
  const message=data.message.includes(signature)?data.message:`${data.message}\n\n${signature}`;
@@ -47,7 +47,7 @@ export const getOfferClientDraft=createServerFn({method:'GET'}).middleware([requ
  const recipients:OfferRecipient[]=[];
  for(let offset=0;;offset+=1000){const {data:rows,error}=await context.supabase.from('contacts').select('id,first_name,last_name,phone,whatsapp,email').eq('organization_id',loaded.p.organization_id).order('id').range(offset,offset+999);if(error) throw new Error('Contactele nu pot fi încărcate.');for(const c of rows??[])recipients.push({key:`contact:${c.id}`,name:[c.first_name,c.last_name].filter(Boolean).join(' '),phone:c.whatsapp||c.phone,email:c.email,contactId:c.id,leadId:null});if((rows?.length??0)<1000)break;}
  for(let offset=0;;offset+=1000){const {data:rows,error}=await context.supabase.from('leads').select('id,name,phone,email,contact_id').eq('organization_id',loaded.p.organization_id).is('deleted_at',null).order('id').range(offset,offset+999);if(error)throw new Error('Lead-urile nu pot fi încărcate.');for(const l of rows??[])recipients.push({key:`lead:${l.id}`,name:l.name,phone:l.phone,email:l.email,contactId:l.contact_id,leadId:l.id});if((rows?.length??0)<1000)break;}
- return {property:loaded.p,agentName:loaded.actor.full_name??'Agent',agencyName:loaded.agencyName,recipients,reason:offerSendReason(loaded.p),message:offerMessage(loaded.p,loaded.actor.full_name??'Agent',loaded.agencyName),link:offerShareUrl(loaded.p.id)};
+ return {property:loaded.p,agentName:loaded.actor.full_name??'Agent',agencyName:loaded.agencyName,recipients,reason:offerSendReason(loaded.p),message:offerMessage(loaded.p,loaded.actor.full_name??'Agent',loaded.agencyName),link:offerShareUrl(loaded.p.id, loaded.p.public_slug)};
 });
 export const previewOfferClientSend=createServerFn({method:'POST'}).middleware([requireActiveOrgAuth]).inputValidator((v:unknown)=>inputSchema.parse(v)).handler(async({data,context})=>{const p=await prepare(context,data);return {message:p.message,link:p.link,url:p.url,recipient:p.recipient,channel:data.channel};});
 export const sendOfferClient=createServerFn({method:'POST'}).middleware([requireActiveOrgAuth]).inputValidator((v:unknown)=>inputSchema.parse(v)).handler(async({data,context})=>{

@@ -94,9 +94,10 @@ describe("cache public pentru marketing", () => {
 });
 
 describe("oferte private", () => {
-  it("X-Robots-Tag noindex pe /oferta/* pe www, fără blocare în robots.txt", () => {
+  it("X-Robots-Tag noindex doar pe /oferta/{uuid}; adresele cu slug decid prin meta robots", () => {
     const h = () => new Response("x", { headers: { "content-type": "text/html" } });
-    expect(shouldTagNoindex(new Request("https://www.habitoo.ro/oferta/abc"), h())).toBe(true);
+    expect(shouldTagNoindex(new Request("https://www.habitoo.ro/oferta/3faff5fa-37c1-4663-9a55-70523ec68598"), h())).toBe(true);
+    expect(shouldTagNoindex(new Request("https://www.habitoo.ro/oferta/apartament-2-camere-militari-bucuresti-hb-1126"), h())).toBe(false);
     expect(shouldTagNoindex(new Request("https://www.habitoo.ro/preturi"), h())).toBe(false);
     expect(PUBLIC_ROBOTS_TXT).not.toContain("/oferta");
   });

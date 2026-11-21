@@ -440,7 +440,7 @@ export function mapPropertyToProperstar(
     advert: {
       advertId,
       reference: p.reference?.trim() || null,
-      originalUrl: offerUrl(options.publicSiteUrl, p.id),
+      originalUrl: offerUrl(options.publicSiteUrl, p.id, (p as { public_slug?: string | null }).public_slug),
       advertType: advertType as ProperstarAdvertType,
       subType: subType as string,
       publicationDate: properstarIsoDate(p.published_at ?? p.created_at) ?? "",

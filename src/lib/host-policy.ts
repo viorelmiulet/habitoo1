@@ -221,8 +221,8 @@ export function decideEdge(request: Request): EdgeDecision {
 /** Adaugă X-Robots-Tag pe răspunsurile HTML de pe crm.* (exclus /api/public și non-HTML). */
 export function shouldTagNoindex(request: Request, response: Response): boolean {
   const url = new URL(request.url);
-  // Ofertele trimise clienților prin link: private pe orice domeniu Habitoo (nu în robots.txt).
-  if (/^\/oferta\/[^/]+\/?$/.test(url.pathname)) return true;
+  // Legacy UUID offer links (they redirect to the slug); slug pages decide indexing via meta robots.
+  if (/^\/oferta\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(url.pathname)) return true;
   if (!isCrmHostname(hostOf(url, request))) return false;
   if (url.pathname.startsWith("/api/public/")) return false;
   return (response.headers.get("content-type") ?? "").toLowerCase().includes("text/html");

@@ -19,12 +19,12 @@ export const getMatchAlertDraft = createServerFn({ method: "POST" })
     const { data: alert } = await sb.from("active_match_alerts").select("id,organization_id,property_id,contact_id,draft,draft_is_ai").eq("id", data.alertId).maybeSingle();
     if (!alert) return { ok: false, message: "Alerta nu este disponibilă." };
     const [{ data: p }, { data: c }] = await Promise.all([
-      sb.from("properties").select("id,title,transaction_kind,property_type,price,currency,rooms,surface,usable_surface,floor,city,balcony,parking,description,publish_status").eq("id", alert.property_id).maybeSingle(),
+      sb.from("properties").select("id,title,transaction_kind,property_type,price,currency,rooms,surface,usable_surface,floor,city,balcony,parking,description,publish_status,public_slug").eq("id", alert.property_id).maybeSingle(),
       alert.contact_id ? sb.from("contacts").select("first_name,phone,email").eq("id", alert.contact_id).maybeSingle() : Promise.resolve({ data: null }),
     ]);
     if (!p) return { ok: false, message: "Proprietatea nu mai este disponibilă." };
     const { offerShareUrl } = await import("@/lib/share");
-    const link = p.publish_status === "published" ? offerShareUrl(p.id) : null;
+    const link = p.publish_status === "published" ? offerShareUrl(p.id, p.public_slug) : null;
     const contact = c as { first_name?: string | null; phone?: string | null; email?: string | null } | null;
     const base = { phone: contact?.phone ?? null, email: contact?.email ?? null, subject: `Proprietate potrivită: ${p.title}`, link };
     if (alert.draft && !data.regenerate) return { ok: true, text: alert.draft, isAi: alert.draft_is_ai, notice: null, ...base };

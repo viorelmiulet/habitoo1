@@ -6,3 +6,4 @@
 - llms-full uses registries, shared FAQ, public aggregate statistics and reviewed Markdown extracted from public pages, excluding mock account previews. Why: complete public content only.
 - IndexNow uses service-only revision receipts and a lock; the key file is served from the server entry (the key is public by protocol), static revisions are checked once per isolate and blog saves notify. Why: deduplicated batches without preview submissions.
 - Blog article AEO (author organization, summary, TOC, JSON-LD, related, FAQ) lives in the pure blog-aeo module. Why: testable without rendering.
+- Public offer addresses use the DB-generated immutable `properties.public_slug` (trigger, set at first publication, never copied by clones); UUID URLs 301 to it, eligibility/canonical/JSON-LD/sitemap live in `offer-seo.ts`, and offer IndexNow pings go through `seo_indexnow_offer_queue` drained by a cron route. Why: stable indexable URLs without blocking saves or publishing.

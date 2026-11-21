@@ -37,6 +37,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SemnareRouteImport } from './routes/semnare'
 import { Route as SitemapBlogDotxmlRouteImport } from './routes/sitemap-blog[.]xml'
+import { Route as SitemapOferteDotxmlRouteImport } from './routes/sitemap-oferte[.]xml'
 import { Route as SitemapPagesDotxmlRouteImport } from './routes/sitemap-pages[.]xml'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StergereDateRouteImport } from './routes/stergere-date'
@@ -161,6 +162,7 @@ import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/pub
 import { Route as ApiPublicCronVdiLeadsRouteImport } from './routes/api/public/cron/vdi-leads'
 import { Route as ApiPublicCronVumsiStatusRouteImport } from './routes/api/public/cron/vumsi-status'
 import { Route as ApiPublicCronZonataStatusRouteImport } from './routes/api/public/cron/zonata-status'
+import { Route as ApiPublicJobsIndexnowOffersRouteImport } from './routes/api/public/jobs/indexnow-offers'
 import { Route as ApiPublicJobsPartnerApiSyncRouteImport } from './routes/api/public/jobs/partner-api-sync'
 import { Route as ApiPublicJobsPartnerWebhooksRouteImport } from './routes/api/public/jobs/partner-webhooks'
 import { Route as ApiPublicListingsUpsertRouteImport } from './routes/api/public/listings/upsert'
@@ -401,6 +403,11 @@ const SemnareRoute = SemnareRouteImport.update({
 const SitemapBlogDotxmlRoute = SitemapBlogDotxmlRouteImport.update({
   id: '/sitemap-blog.xml',
   path: '/sitemap-blog.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapOferteDotxmlRoute = SitemapOferteDotxmlRouteImport.update({
+  id: '/sitemap-oferte.xml',
+  path: '/sitemap-oferte.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapPagesDotxmlRoute = SitemapPagesDotxmlRouteImport.update({
@@ -1104,6 +1111,12 @@ const ApiPublicCronZonataStatusRoute =
     path: '/api/public/cron/zonata-status',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicJobsIndexnowOffersRoute =
+  ApiPublicJobsIndexnowOffersRouteImport.update({
+    id: '/api/public/jobs/indexnow-offers',
+    path: '/api/public/jobs/indexnow-offers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicJobsPartnerApiSyncRoute =
   ApiPublicJobsPartnerApiSyncRouteImport.update({
     id: '/api/public/jobs/partner-api-sync',
@@ -1707,6 +1720,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
   '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
+  '/sitemap-oferte.xml': typeof SitemapOferteDotxmlRoute
   '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stergere-date': typeof StergereDateRoute
@@ -1821,6 +1835,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
   '/api/public/cron/vumsi-status': typeof ApiPublicCronVumsiStatusRoute
   '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
+  '/api/public/jobs/indexnow-offers': typeof ApiPublicJobsIndexnowOffersRoute
   '/api/public/jobs/partner-api-sync': typeof ApiPublicJobsPartnerApiSyncRoute
   '/api/public/jobs/partner-webhooks': typeof ApiPublicJobsPartnerWebhooksRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
@@ -1958,6 +1973,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
   '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
+  '/sitemap-oferte.xml': typeof SitemapOferteDotxmlRoute
   '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stergere-date': typeof StergereDateRoute
@@ -2069,6 +2085,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
   '/api/public/cron/vumsi-status': typeof ApiPublicCronVumsiStatusRoute
   '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
+  '/api/public/jobs/indexnow-offers': typeof ApiPublicJobsIndexnowOffersRoute
   '/api/public/jobs/partner-api-sync': typeof ApiPublicJobsPartnerApiSyncRoute
   '/api/public/jobs/partner-webhooks': typeof ApiPublicJobsPartnerWebhooksRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
@@ -2209,6 +2226,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
   '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
+  '/sitemap-oferte.xml': typeof SitemapOferteDotxmlRoute
   '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stergere-date': typeof StergereDateRoute
@@ -2323,6 +2341,7 @@ export interface FileRoutesById {
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
   '/api/public/cron/vumsi-status': typeof ApiPublicCronVumsiStatusRoute
   '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
+  '/api/public/jobs/indexnow-offers': typeof ApiPublicJobsIndexnowOffersRoute
   '/api/public/jobs/partner-api-sync': typeof ApiPublicJobsPartnerApiSyncRoute
   '/api/public/jobs/partner-webhooks': typeof ApiPublicJobsPartnerWebhooksRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
@@ -2463,6 +2482,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/semnare'
     | '/sitemap-blog.xml'
+    | '/sitemap-oferte.xml'
     | '/sitemap-pages.xml'
     | '/sitemap.xml'
     | '/stergere-date'
@@ -2577,6 +2597,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/vdi-leads'
     | '/api/public/cron/vumsi-status'
     | '/api/public/cron/zonata-status'
+    | '/api/public/jobs/indexnow-offers'
     | '/api/public/jobs/partner-api-sync'
     | '/api/public/jobs/partner-webhooks'
     | '/api/public/listings/upsert'
@@ -2714,6 +2735,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/semnare'
     | '/sitemap-blog.xml'
+    | '/sitemap-oferte.xml'
     | '/sitemap-pages.xml'
     | '/sitemap.xml'
     | '/stergere-date'
@@ -2825,6 +2847,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/vdi-leads'
     | '/api/public/cron/vumsi-status'
     | '/api/public/cron/zonata-status'
+    | '/api/public/jobs/indexnow-offers'
     | '/api/public/jobs/partner-api-sync'
     | '/api/public/jobs/partner-webhooks'
     | '/api/public/listings/upsert'
@@ -2964,6 +2987,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/semnare'
     | '/sitemap-blog.xml'
+    | '/sitemap-oferte.xml'
     | '/sitemap-pages.xml'
     | '/sitemap.xml'
     | '/stergere-date'
@@ -3078,6 +3102,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/vdi-leads'
     | '/api/public/cron/vumsi-status'
     | '/api/public/cron/zonata-status'
+    | '/api/public/jobs/indexnow-offers'
     | '/api/public/jobs/partner-api-sync'
     | '/api/public/jobs/partner-webhooks'
     | '/api/public/listings/upsert'
@@ -3218,6 +3243,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SemnareRoute: typeof SemnareRoute
   SitemapBlogDotxmlRoute: typeof SitemapBlogDotxmlRoute
+  SitemapOferteDotxmlRoute: typeof SitemapOferteDotxmlRoute
   SitemapPagesDotxmlRoute: typeof SitemapPagesDotxmlRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StergereDateRoute: typeof StergereDateRoute
@@ -3270,6 +3296,7 @@ export interface RootRouteChildren {
   ApiPublicCronVdiLeadsRoute: typeof ApiPublicCronVdiLeadsRoute
   ApiPublicCronVumsiStatusRoute: typeof ApiPublicCronVumsiStatusRoute
   ApiPublicCronZonataStatusRoute: typeof ApiPublicCronZonataStatusRoute
+  ApiPublicJobsIndexnowOffersRoute: typeof ApiPublicJobsIndexnowOffersRoute
   ApiPublicJobsPartnerApiSyncRoute: typeof ApiPublicJobsPartnerApiSyncRoute
   ApiPublicJobsPartnerWebhooksRoute: typeof ApiPublicJobsPartnerWebhooksRoute
   ApiPublicListingsUpsertRoute: typeof ApiPublicListingsUpsertRoute
@@ -3548,6 +3575,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap-blog.xml'
       fullPath: '/sitemap-blog.xml'
       preLoaderRoute: typeof SitemapBlogDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-oferte.xml': {
+      id: '/sitemap-oferte.xml'
+      path: '/sitemap-oferte.xml'
+      fullPath: '/sitemap-oferte.xml'
+      preLoaderRoute: typeof SitemapOferteDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap-pages.xml': {
@@ -4416,6 +4450,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/zonata-status'
       fullPath: '/api/public/cron/zonata-status'
       preLoaderRoute: typeof ApiPublicCronZonataStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/jobs/indexnow-offers': {
+      id: '/api/public/jobs/indexnow-offers'
+      path: '/api/public/jobs/indexnow-offers'
+      fullPath: '/api/public/jobs/indexnow-offers'
+      preLoaderRoute: typeof ApiPublicJobsIndexnowOffersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/jobs/partner-api-sync': {
@@ -5572,6 +5613,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SemnareRoute: SemnareRoute,
   SitemapBlogDotxmlRoute: SitemapBlogDotxmlRoute,
+  SitemapOferteDotxmlRoute: SitemapOferteDotxmlRoute,
   SitemapPagesDotxmlRoute: SitemapPagesDotxmlRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StergereDateRoute: StergereDateRoute,
@@ -5627,6 +5669,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronVdiLeadsRoute: ApiPublicCronVdiLeadsRoute,
   ApiPublicCronVumsiStatusRoute: ApiPublicCronVumsiStatusRoute,
   ApiPublicCronZonataStatusRoute: ApiPublicCronZonataStatusRoute,
+  ApiPublicJobsIndexnowOffersRoute: ApiPublicJobsIndexnowOffersRoute,
   ApiPublicJobsPartnerApiSyncRoute: ApiPublicJobsPartnerApiSyncRoute,
   ApiPublicJobsPartnerWebhooksRoute: ApiPublicJobsPartnerWebhooksRoute,
   ApiPublicListingsUpsertRoute: ApiPublicListingsUpsertRoute,

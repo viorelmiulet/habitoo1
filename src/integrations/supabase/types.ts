@@ -10985,6 +10985,7 @@ export type Database = {
             | null
           price: number | null
           property_type: string
+          public_slug: string | null
           publish_status: string
           published_at: string | null
           recessed_floors: number | null
@@ -11126,6 +11127,7 @@ export type Database = {
             | null
           price?: number | null
           property_type?: string
+          public_slug?: string | null
           publish_status?: string
           published_at?: string | null
           recessed_floors?: number | null
@@ -11267,6 +11269,7 @@ export type Database = {
             | null
           price?: number | null
           property_type?: string
+          public_slug?: string | null
           publish_status?: string
           published_at?: string | null
           recessed_floors?: number | null
@@ -12501,6 +12504,21 @@ export type Database = {
         Update: {
           held_until?: string
           id?: boolean
+        }
+        Relationships: []
+      }
+      seo_indexnow_offer_queue: {
+        Row: {
+          enqueued_at: string
+          url: string
+        }
+        Insert: {
+          enqueued_at?: string
+          url: string
+        }
+        Update: {
+          enqueued_at?: string
+          url?: string
         }
         Relationships: []
       }
@@ -14816,6 +14834,18 @@ export type Database = {
         Args: { p_owner: string; p_rejected_revision?: string }
         Returns: boolean
       }
+      offer_slug: {
+        Args: {
+          _city: string
+          _disambiguator?: string
+          _district: string
+          _reference: string
+          _rooms: number
+          _type: string
+        }
+        Returns: string
+      }
+      offer_slug_part: { Args: { _t: string }; Returns: string }
       olx_direct_refresh_arm: { Args: never; Returns: undefined }
       olx_direct_refresh_tick: { Args: never; Returns: undefined }
       olx_direct_status_arm: { Args: never; Returns: undefined }
@@ -15099,6 +15129,14 @@ export type Database = {
       }
       public_llms_statistics: { Args: never; Returns: Json }
       public_neutral_offer: { Args: { _code: string }; Returns: Json }
+      public_offer_sitemap: {
+        Args: { _limit?: number; _offset?: number }
+        Returns: {
+          lastmod: string
+          slug: string
+        }[]
+      }
+      public_offer_sitemap_count: { Args: never; Returns: number }
       public_partner_agencies: {
         Args: never
         Returns: {
@@ -15390,6 +15428,7 @@ export type Database = {
             | null
           price: number | null
           property_type: string
+          public_slug: string | null
           publish_status: string
           published_at: string | null
           recessed_floors: number | null

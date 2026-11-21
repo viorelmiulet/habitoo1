@@ -204,7 +204,7 @@ export function mapPropertyToImove(p: PropertyRow, options: ImoveMapOptions): Im
       imageUrls,
       agentPhone: contact.ok ? contact.contact.phone : null,
       agentEmail: contact.ok ? contact.contact.email : null,
-      url: options.publicSiteUrl ? offerUrl(options.publicSiteUrl, p.id) : null,
+      url: options.publicSiteUrl ? offerUrl(options.publicSiteUrl, p.id, (p as { public_slug?: string | null }).public_slug) : null,
       updatedAt: p.updated_at ?? null,
     },
   };

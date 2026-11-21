@@ -14,7 +14,7 @@ export function offerPhone(value:string): string {
  return /^\d{8,15}$/.test(digits) ? digits : "";
 }
 export function offerMessage(p:{id:string;title:string;price:number|null;currency:string;transaction_kind:string;city:string|null;district:string|null},agent:string,agency:string,client="") {
- return `Bună${client ? `, ${client}` : ""}!\n\nÎți trimit această ofertă:\n${p.title}\n${p.price===null ? "Preț la cerere" : formatMoney(p.price,p.currency)}${p.transaction_kind==='rent' ? ' / lună' : ''}\n${[p.district,p.city].filter(Boolean).join(', ')}\n\n${offerShareUrl(p.id)}\n\n${agent}\n${agency}`;
+ return `Bună${client ? `, ${client}` : ""}!\n\nÎți trimit această ofertă:\n${p.title}\n${p.price===null ? "Preț la cerere" : formatMoney(p.price,p.currency)}${p.transaction_kind==='rent' ? ' / lună' : ''}\n${[p.district,p.city].filter(Boolean).join(', ')}\n\n${offerShareUrl(p.id, (p as { public_slug?: string | null }).public_slug)}\n\n${agent}\n${agency}`;
 }
 export function offerChannelUrl(channel:OfferChannel,phone:string,message:string,ios=false) {
  const number=offerPhone(phone);

@@ -8,8 +8,9 @@ import { OG_IMAGE_URL, SITE_URL } from "@/components/marketing/public-head";
 export const OFFER_SITE_URL = SITE_URL;
 export const SHARE_MAX_PHOTOS = 10;
 
-export function offerShareUrl(propertyId: string) {
-  return `${OFFER_SITE_URL}/oferta/${propertyId}`;
+/** Prefer the stable SEO slug; UUID links still redirect permanently to it. */
+export function offerShareUrl(propertyId: string, slug?: string | null) {
+  return `${OFFER_SITE_URL}/oferta/${slug || propertyId}`;
 }
 
 export type ShareNetwork = "facebook" | "whatsapp" | "linkedin";
