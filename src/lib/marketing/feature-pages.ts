@@ -76,7 +76,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     description: "CRM pentru ansambluri rezidențiale: fișa ansamblului, unități alocate în bulk, publicare pe Storia ca investiție și portaluri alese pentru fiecare ansamblu.",
     h1: "CRM pentru ansambluri rezidențiale și dezvoltatori",
     intro: [
-      "Habitoo îți permite să gestionezi un ansamblu rezidențial ca un proiect întreg, nu ca o listă de anunțuri separate. Creezi fișa ansamblului, aloci unitățile din portofoliu și alegi portalurile pe care apare. Publici ansamblul pe Storia ca investiție și în feed-ul portalurilor partenere, direct din CRM.",
+      "Habitoo îți permite să gestionezi un ansamblu rezidențial ca un proiect întreg, nu ca o listă de anunțuri separate. Creezi fișa ansamblului, aloci unitățile din portofoliu și alegi portalurile pe care apare. Publici ansamblul pe Storia ca investiție și pe portalurile partenere, direct din CRM.",
       "Fișa ansamblului adună datele generale, stadiul construcției, data livrării, clădirile, etajele, unitățile, facilitățile, galeria și localizarea pe hartă. Intervalul de preț se calculează automat din prețurile unităților, așa că nu îl mai actualizezi de mână când se schimbă o ofertă.",
       "Pagina este gândită pentru agențiile care vând în ansambluri noi și pentru dezvoltatorii care își prezintă proiectele. Toată echipa vede aceleași unități, aceleași prețuri și aceeași stare de publicare."
     ],
@@ -85,7 +85,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
       { title: "Unități alocate în bulk, fără să atingi originalele", text: "Bifezi anunțurile din lista de proprietăți și le aloci ansamblului. Pentru fiecare se creează o copie nouă, cu referință nouă și fotografii proprii. Anunțurile originale rămân exact cum erau." },
       { title: "Operații în fundal, cu notificare", text: "Alocarea, retragerea de pe portaluri, republicarea și scoaterea din ansamblu rulează în fundal, chiar și pentru zeci de unități. La final primești o notificare cu câte unități au fost procesate și câte au fost sărite." },
       { title: "Storia, ca investiție pe piața primară", text: "Publici ansamblul pe Storia din contul de dezvoltator, ca investiție. Unitățile apar ca anunțuri ale investiției, pe piața primară. Le poți retrage oricând din CRM." },
-      { title: "Portalurile alese pentru fiecare ansamblu", text: "Bifezi pentru fiecare ansamblu portalurile pe care apare. Ansamblul ajunge și în feed-ul portalurilor partenere, de exemplu ClickImob, Imobiliare Militari și Imobli, cu pagina proprie a ansamblului pe portal." },
+      { title: "Portalurile alese pentru fiecare ansamblu", text: "Bifezi pentru fiecare ansamblu portalurile pe care apare. Ansamblul ajunge automat și pe portalurile partenere, de exemplu ClickImob, Imobiliare Militari și Imobli, cu pagina proprie a ansamblului pe portal." },
       { title: "Pentru agenții și dezvoltatori", text: "Agențiile care vând în ansambluri noi își țin unitățile separat de restul portofoliului. Dezvoltatorii își prezintă proiectele cu toate datele într-un singur loc." }
     ],
     steps: [
@@ -97,7 +97,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     faq: [
       { q: "Pot publica un ansamblu pe Storia din CRM?", a: "Da. Ansamblul se publică pe Storia din contul de dezvoltator, ca investiție. Unitățile apar ca anunțuri ale investiției, pe piața primară. Retragerea se face tot din CRM." },
       { q: "Ce se întâmplă cu anunțul original când îl aloc unui ansamblu?", a: "Nimic. Habitoo creează o copie nouă, cu referință nouă și fotografii proprii, iar copia intră în ansamblu. Anunțul original își păstrează datele, portalurile și publicările." },
-      { q: "Pe ce portaluri apare ansamblul?", a: "Doar pe portalurile pe care le bifezi la ansamblu. Poți alege Storia, din contul de dezvoltator, și portalurile partenere care primesc ansamblurile prin feed, de exemplu ClickImob, Imobiliare Militari și Imobli." },
+      { q: "Pe ce portaluri apare ansamblul?", a: "Doar pe portalurile pe care le bifezi la ansamblu. Poți alege Storia, din contul de dezvoltator, și portalurile partenere care preiau automat ansamblurile, de exemplu ClickImob, Imobiliare Militari și Imobli." },
       { q: "Pot aloca zeci de anunțuri deodată?", a: "Da. Alocarea în bulk rulează în fundal, iar tu poți lucra mai departe. La final primești o notificare cu numărul de copii create și de anunțuri sărite." },
       { q: "Cum scot o unitate de pe portaluri fără să o șterg?", a: "În fila Unități o selectezi și alegi „Retrage de pe portaluri”. Unitatea rămâne în ansamblu și nu este republicată automat. O poți republica oricând." },
       { q: "Cum se calculează prețul afișat al ansamblului?", a: "Intervalul de preț se calculează automat din prețurile unităților alocate. Când modifici prețul unei unități, intervalul se actualizează singur." }
