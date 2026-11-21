@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AccesContRouteImport } from './routes/acces-cont'
 import { Route as AgentiiRouteImport } from './routes/agentii'
+import { Route as AlternativeRouteImport } from './routes/alternative'
 import { Route as AnalizaComparativaDePiataRouteImport } from './routes/analiza-comparativa-de-piata'
 import { Route as AnunturiProprietariRouteImport } from './routes/anunturi-proprietari'
 import { Route as ColaborareIntreAgentiiRouteImport } from './routes/colaborare-intre-agentii'
@@ -51,6 +52,8 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as BlogRssDotxmlRouteImport } from './routes/blog/rss[.]xml'
+import { Route as ComparatieIndexRouteImport } from './routes/comparatie.index'
+import { Route as ComparatieCostCrmPeAgentieVsPeAgentRouteImport } from './routes/comparatie.cost-crm-pe-agentie-vs-pe-agent'
 import { Route as DezabonareTokenRouteImport } from './routes/dezabonare.$token'
 import { Route as FunctionalitatiSlugRouteImport } from './routes/functionalitati_.$slug'
 import { Route as IntegrariSlugRouteImport } from './routes/integrari_.$slug'
@@ -277,6 +280,11 @@ const AgentiiRoute = AgentiiRouteImport.update({
   path: '/agentii',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AlternativeRoute = AlternativeRouteImport.update({
+  id: '/alternative',
+  path: '/alternative',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalizaComparativaDePiataRoute =
   AnalizaComparativaDePiataRouteImport.update({
     id: '/analiza-comparativa-de-piata',
@@ -470,6 +478,17 @@ const BlogRssDotxmlRoute = BlogRssDotxmlRouteImport.update({
   path: '/blog/rss.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComparatieIndexRoute = ComparatieIndexRouteImport.update({
+  id: '/comparatie/',
+  path: '/comparatie/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComparatieCostCrmPeAgentieVsPeAgentRoute =
+  ComparatieCostCrmPeAgentieVsPeAgentRouteImport.update({
+    id: '/comparatie/cost-crm-pe-agentie-vs-pe-agent',
+    path: '/comparatie/cost-crm-pe-agentie-vs-pe-agent',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DezabonareTokenRoute = DezabonareTokenRouteImport.update({
   id: '/dezabonare/$token',
   path: '/dezabonare/$token',
@@ -1664,6 +1683,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
   '/agentii': typeof AgentiiRouteWithChildren
+  '/alternative': typeof AlternativeRoute
   '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/colaborare-intre-agentii': typeof ColaborareIntreAgentiiRoute
@@ -1700,6 +1720,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/comparatie/cost-crm-pe-agentie-vs-pe-agent': typeof ComparatieCostCrmPeAgentieVsPeAgentRoute
   '/dezabonare/$token': typeof DezabonareTokenRoute
   '/functionalitati/$slug': typeof FunctionalitatiSlugRoute
   '/integrari/$slug': typeof IntegrariSlugRoute
@@ -1707,6 +1728,7 @@ export interface FileRoutesByFullPath {
   '/oferta/$id': typeof OfertaIdRoute
   '/agentii/': typeof AgentiiIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/comparatie/': typeof ComparatieIndexRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/ai-crm': typeof AuthenticatedAppAiCrmRoute
@@ -1912,6 +1934,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/alternative': typeof AlternativeRoute
   '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/colaborare-intre-agentii': typeof ColaborareIntreAgentiiRoute
@@ -1946,6 +1969,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/comparatie/cost-crm-pe-agentie-vs-pe-agent': typeof ComparatieCostCrmPeAgentieVsPeAgentRoute
   '/dezabonare/$token': typeof DezabonareTokenRoute
   '/functionalitati/$slug': typeof FunctionalitatiSlugRoute
   '/integrari/$slug': typeof IntegrariSlugRoute
@@ -1953,6 +1977,7 @@ export interface FileRoutesByTo {
   '/oferta/$id': typeof OfertaIdRoute
   '/agentii': typeof AgentiiIndexRoute
   '/blog': typeof BlogIndexRoute
+  '/comparatie': typeof ComparatieIndexRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/ai-crm': typeof AuthenticatedAppAiCrmRoute
@@ -2160,6 +2185,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acces-cont': typeof AccesContRoute
   '/agentii': typeof AgentiiRouteWithChildren
+  '/alternative': typeof AlternativeRoute
   '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/colaborare-intre-agentii': typeof ColaborareIntreAgentiiRoute
@@ -2196,6 +2222,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/comparatie/cost-crm-pe-agentie-vs-pe-agent': typeof ComparatieCostCrmPeAgentieVsPeAgentRoute
   '/dezabonare/$token': typeof DezabonareTokenRoute
   '/functionalitati_/$slug': typeof FunctionalitatiSlugRoute
   '/integrari_/$slug': typeof IntegrariSlugRoute
@@ -2203,6 +2230,7 @@ export interface FileRoutesById {
   '/oferta/$id': typeof OfertaIdRoute
   '/agentii/': typeof AgentiiIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/comparatie/': typeof ComparatieIndexRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
   '/_authenticated/app/ai-crm': typeof AuthenticatedAppAiCrmRoute
@@ -2411,6 +2439,7 @@ export interface FileRouteTypes {
     | '/'
     | '/acces-cont'
     | '/agentii'
+    | '/alternative'
     | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
     | '/colaborare-intre-agentii'
@@ -2447,6 +2476,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/comparatie/cost-crm-pe-agentie-vs-pe-agent'
     | '/dezabonare/$token'
     | '/functionalitati/$slug'
     | '/integrari/$slug'
@@ -2454,6 +2484,7 @@ export interface FileRouteTypes {
     | '/oferta/$id'
     | '/agentii/'
     | '/blog/'
+    | '/comparatie/'
     | '/app/activities'
     | '/app/ai'
     | '/app/ai-crm'
@@ -2659,6 +2690,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/acces-cont'
+    | '/alternative'
     | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
     | '/colaborare-intre-agentii'
@@ -2693,6 +2725,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/comparatie/cost-crm-pe-agentie-vs-pe-agent'
     | '/dezabonare/$token'
     | '/functionalitati/$slug'
     | '/integrari/$slug'
@@ -2700,6 +2733,7 @@ export interface FileRouteTypes {
     | '/oferta/$id'
     | '/agentii'
     | '/blog'
+    | '/comparatie'
     | '/app/activities'
     | '/app/ai'
     | '/app/ai-crm'
@@ -2906,6 +2940,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/acces-cont'
     | '/agentii'
+    | '/alternative'
     | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
     | '/colaborare-intre-agentii'
@@ -2942,6 +2977,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/comparatie/cost-crm-pe-agentie-vs-pe-agent'
     | '/dezabonare/$token'
     | '/functionalitati_/$slug'
     | '/integrari_/$slug'
@@ -2949,6 +2985,7 @@ export interface FileRouteTypes {
     | '/oferta/$id'
     | '/agentii/'
     | '/blog/'
+    | '/comparatie/'
     | '/_authenticated/app/activities'
     | '/_authenticated/app/ai'
     | '/_authenticated/app/ai-crm'
@@ -3157,6 +3194,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccesContRoute: typeof AccesContRoute
   AgentiiRoute: typeof AgentiiRouteWithChildren
+  AlternativeRoute: typeof AlternativeRoute
   AnalizaComparativaDePiataRoute: typeof AnalizaComparativaDePiataRoute
   AnunturiProprietariRoute: typeof AnunturiProprietariRoute
   ColaborareIntreAgentiiRoute: typeof ColaborareIntreAgentiiRoute
@@ -3188,12 +3226,14 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogRssDotxmlRoute: typeof BlogRssDotxmlRoute
+  ComparatieCostCrmPeAgentieVsPeAgentRoute: typeof ComparatieCostCrmPeAgentieVsPeAgentRoute
   DezabonareTokenRoute: typeof DezabonareTokenRoute
   FunctionalitatiSlugRoute: typeof FunctionalitatiSlugRoute
   IntegrariSlugRoute: typeof IntegrariSlugRoute
   OCodeRoute: typeof OCodeRoute
   OfertaIdRoute: typeof OfertaIdRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  ComparatieIndexRoute: typeof ComparatieIndexRoute
   ApiPublicBlogMediaSplatRoute: typeof ApiPublicBlogMediaSplatRoute
   ApiPublicBlogOgSplatRoute: typeof ApiPublicBlogOgSplatRoute
   ApiPublicCronAccountDeletionRoute: typeof ApiPublicCronAccountDeletionRoute
@@ -3340,6 +3380,13 @@ declare module '@tanstack/react-router' {
       path: '/agentii'
       fullPath: '/agentii'
       preLoaderRoute: typeof AgentiiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alternative': {
+      id: '/alternative'
+      path: '/alternative'
+      fullPath: '/alternative'
+      preLoaderRoute: typeof AlternativeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analiza-comparativa-de-piata': {
@@ -3606,6 +3653,20 @@ declare module '@tanstack/react-router' {
       path: '/blog/rss.xml'
       fullPath: '/blog/rss.xml'
       preLoaderRoute: typeof BlogRssDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comparatie/': {
+      id: '/comparatie/'
+      path: '/comparatie'
+      fullPath: '/comparatie/'
+      preLoaderRoute: typeof ComparatieIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comparatie/cost-crm-pe-agentie-vs-pe-agent': {
+      id: '/comparatie/cost-crm-pe-agentie-vs-pe-agent'
+      path: '/comparatie/cost-crm-pe-agentie-vs-pe-agent'
+      fullPath: '/comparatie/cost-crm-pe-agentie-vs-pe-agent'
+      preLoaderRoute: typeof ComparatieCostCrmPeAgentieVsPeAgentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dezabonare/$token': {
@@ -5487,6 +5548,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccesContRoute: AccesContRoute,
   AgentiiRoute: AgentiiRouteWithChildren,
+  AlternativeRoute: AlternativeRoute,
   AnalizaComparativaDePiataRoute: AnalizaComparativaDePiataRoute,
   AnunturiProprietariRoute: AnunturiProprietariRoute,
   ColaborareIntreAgentiiRoute: ColaborareIntreAgentiiRoute,
@@ -5518,12 +5580,15 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogRssDotxmlRoute: BlogRssDotxmlRoute,
+  ComparatieCostCrmPeAgentieVsPeAgentRoute:
+    ComparatieCostCrmPeAgentieVsPeAgentRoute,
   DezabonareTokenRoute: DezabonareTokenRoute,
   FunctionalitatiSlugRoute: FunctionalitatiSlugRoute,
   IntegrariSlugRoute: IntegrariSlugRoute,
   OCodeRoute: OCodeRoute,
   OfertaIdRoute: OfertaIdRoute,
   BlogIndexRoute: BlogIndexRoute,
+  ComparatieIndexRoute: ComparatieIndexRoute,
   ApiPublicBlogMediaSplatRoute: ApiPublicBlogMediaSplatRoute,
   ApiPublicBlogOgSplatRoute: ApiPublicBlogOgSplatRoute,
   ApiPublicCronAccountDeletionRoute: ApiPublicCronAccountDeletionRoute,

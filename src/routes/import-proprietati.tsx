@@ -76,6 +76,7 @@ function PublicPropertyImportPage() {
               { to: "/functionalitati", label: "Funcționalități" },
               { to: "/anunturi-proprietari", label: "Anunțuri de la proprietari" },
               { to: "/preturi", label: "Prețuri" },
+              { to: "/alternative", label: "Cum treci la Habitoo" },
             ] as const).map((link) => (
               <Button key={link.to} asChild variant="link" className="h-auto whitespace-normal px-0 text-left">
                 <Link to={link.to}>{link.label}<ArrowRight className="shrink-0" /></Link>

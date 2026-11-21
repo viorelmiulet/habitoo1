@@ -240,6 +240,15 @@ function PricingPage() {
         </Container>
       </Section>
 
+      <Section className="pt-0 sm:pt-0 lg:pt-0">
+        <Container className="max-w-3xl text-center">
+          <p className="text-base text-muted-foreground">
+            Plătești acum pe agent?{" "}
+            <Link to="/comparatie/cost-crm-pe-agentie-vs-pe-agent" className="font-medium text-primary underline-offset-4 hover:underline">Calculează diferența față de prețul pe agenție</Link>.
+          </p>
+        </Container>
+      </Section>
+
       <FaqSection items={faq} title="Întrebări despre prețuri" />
 
       <CtaBand

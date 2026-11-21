@@ -7,6 +7,7 @@ import type { LlmsStatistics } from "@/lib/blog-discovery";
 import { ownerStatisticsText } from "@/components/marketing/owner-listings-content";
 import { publicMarketText } from "@/components/marketing/acp-content";
 import { PUBLIC_FAQ_GROUPS } from "./public-faq";
+import { comparisonLlmsMarkdown } from "./comparison-content";
 
 const documents = import.meta.glob<string>("./content/*.md", { query: "?raw", import: "default", eager: true });
 const SITE = "https://www.habitoo.ro";
@@ -27,7 +28,7 @@ export function buildLlmsFullTxt(statistics: LlmsStatistics | null = null, obser
   const prices = PLAN_KEYS.map(key => `${PLAN_LABELS[key]}: ${PLAN_PRICES[key].monthly} €/lună; ${PLAN_PRICES[key].annualMonthly * 12} €/an; ${planAgentLimitLabel(key)}.`).join("\n\n");
   const features = FEATURE_PAGES.map(p => section(`/functionalitati/${p.slug}`, p.name, [p.h1, ...p.intro, "### Ce câștigi", ...p.benefits.map(b => `**${b.title}**\n\n${b.text}`), "### Cum funcționează", ...p.steps.map(s => `**${s.title}**\n\n${s.text}`), faqMarkdown(p.faq)].join("\n\n")));
   const integrations = [...INTEGRATION_PAGES, ...DYNAMIC_INTEGRATION_PAGES].map(p => section(`/integrari/${p.slug}`, p.name, [...p.intro, p.whyHabitoo, "### Ce poți face", ...p.canDo, "### Cum lucrezi", ...p.dailyWork, "### Activare", p.activationText, ...p.notes, faqMarkdown(p.faq)].join("\n\n")));
-  return ["# Habitoo CRM — conținut public complet", "> CRM imobiliar în limba română, pentru agenții și agenți imobiliari din România.", ...main, `## Prețuri și planuri\n\n${prices}`, "## Funcționalități", ...features, "## Integrări", ...integrations].join("\n\n---\n\n") + "\n";
+  return ["# Habitoo CRM — conținut public complet", "> CRM imobiliar în limba română, pentru agenții și agenți imobiliari din România.", ...main, `## Prețuri și planuri\n\n${prices}`, comparisonLlmsMarkdown(), "## Funcționalități", ...features, "## Integrări", ...integrations].join("\n\n---\n\n") + "\n";
 }
 export function llmsFullResponse(statistics: LlmsStatistics | null = null, observedAt?: string, dynamic?: PortalDefinition[]) {
   return new Response(buildLlmsFullTxt(statistics, observedAt, dynamic), { headers: { "Content-Type": "text/markdown; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=600, stale-while-revalidate=86400" } });

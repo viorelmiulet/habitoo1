@@ -47,7 +47,7 @@ export function escapeXml(value: string) {
  */
 export const PAGE_LASTMOD = CONTENT_MODIFIED;
 
-const publicPages = ["/", "/functionalitati", "/anunturi-proprietari", "/analiza-comparativa-de-piata", "/colaborare-intre-agentii", "/comisioane-agenti-imobiliari", "/import-proprietati", "/preturi", "/despre", "/contact", "/integrari", "/extensie-chrome", "/dezvoltatori", "/intrebari-frecvente", "/blog", "/termeni", "/politica-de-confidentialitate"];
+const publicPages = ["/", "/functionalitati", "/anunturi-proprietari", "/analiza-comparativa-de-piata", "/colaborare-intre-agentii", "/comisioane-agenti-imobiliari", "/import-proprietati", "/preturi", "/despre", "/contact", "/integrari", "/extensie-chrome", "/dezvoltatori", "/intrebari-frecvente", "/comparatie", "/comparatie/cost-crm-pe-agentie-vs-pe-agent", "/alternative", "/blog", "/termeni", "/politica-de-confidentialitate"];
 
 const featurePagePaths = featurePaths();
 const integrationPaths = [...INTEGRATION_PAGES, ...DYNAMIC_INTEGRATION_PAGES].map((p) => `/integrari/${p.slug}`);
@@ -130,6 +130,9 @@ export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartne
 - [Evidența comisioanelor pentru agenții imobiliare](${BLOG_SITE_URL}/comisioane-agenti-imobiliari): Comisionul agenției și suma agentului pe fiecare tranzacție, stare, rapoarte, curs BNR din ziua tranzacției și export Excel, CSV sau PDF.
 - [Import proprietăți din alt CRM](${BLOG_SITE_URL}/import-proprietati): Import din IMMOFLUX cu fotografii și caracteristici și import din Anunțuri particulari cu acordul proprietarului, fără dubluri și fără publicare automată.
 - [Prețuri și planuri de acces](${BLOG_SITE_URL}/preturi): Basic, Pro și Unlimited, abonamente lunare și anuale.
+- [Cum alegi un CRM imobiliar: ghid și listă de verificare](${BLOG_SITE_URL}/comparatie): 12 criterii de verificare, fiecare cu răspunsul Habitoo.
+- [Cost CRM: preț pe agenție vs preț pe agent](${BLOG_SITE_URL}/comparatie/cost-crm-pe-agentie-vs-pe-agent): Calculator care compară costul actual pe agent cu planul Habitoo potrivit, lunar și anual.
+- [Schimbi CRM-ul imobiliar? Cum treci la Habitoo](${BLOG_SITE_URL}/alternative): Import cu poze, invitarea echipei, activarea portalurilor și perioada de probă.
 - [Integrări și publicare pe portaluri](${BLOG_SITE_URL}/integrari): Portalurile și serviciile conectate la Habitoo.
 ${portalLinks}
 - [Întrebări frecvente despre Habitoo CRM](${BLOG_SITE_URL}/intrebari-frecvente): Răspunsuri despre acces, funcționalități și abonamente.
