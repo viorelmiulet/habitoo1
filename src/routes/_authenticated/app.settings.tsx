@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { slugifyBlogTitle } from "@/lib/blog";
+import { PublicProfileLink } from "@/components/app/PublicProfileLink";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { ImobiliarePromotionsAdminCard } from "@/components/app/ImobiliarePromotionsAdminCard";
@@ -194,8 +194,6 @@ function SettingsPage() {
         ? String(user.organization.collab_default_commission_percent)
         : "",
     storia_auto_republish: user?.organization?.storia_auto_republish === true,
-    public_profile_enabled: user?.organization?.public_profile_enabled === true,
-    public_slug: user?.organization?.public_slug ?? "",
     public_description: user?.organization?.public_description ?? "",
   });
   const [orgForm, setOrgForm] = useState(buildOrgForm);
@@ -305,17 +303,10 @@ function SettingsPage() {
             orgForm.collab_default_commission_percent,
           ),
           storia_auto_republish: orgForm.storia_auto_republish,
-          public_profile_enabled: orgForm.public_profile_enabled,
-          public_slug: orgForm.public_profile_enabled
-            ? slugifyBlogTitle(orgForm.public_slug) || slugifyBlogTitle(orgForm.name)
-            : null,
-          public_description: orgForm.public_profile_enabled
-            ? orgForm.public_description.trim() || null
-            : null,
+          public_description: orgForm.public_description.trim() || null,
         })
         .eq("id", user.organization.id);
       if (error) {
-        if (error.code === "23505") throw new Error("Adresa paginii publice este deja folosită de altă agenție.");
         throw error;
       }
     },
@@ -587,49 +578,18 @@ function SettingsPage() {
                         onCheckedChange={(v) => setOrgForm((f) => ({ ...f, storia_auto_republish: v }))}
                       />
                     </div>
-                    <div className="flex min-h-[52px] items-start justify-between gap-4 rounded-[12px] border border-border p-4">
-                      <div className="min-w-0 space-y-1">
-                        <Label htmlFor="public_profile_enabled" className="text-sm font-semibold">
-                          Profil public pe site
-                        </Label>
-                        <p className="text-[13px] text-muted-foreground">
-                          Când este activ, agenția apare în lista publică „Agenții partenere” (nume, logo și
-                          link spre pagina ei). Nu publicăm datele de contact ale agenției.
-                        </p>
-                      </div>
-                      <Switch
-                        id="public_profile_enabled"
-                        disabled={!user?.isAdmin}
-                        checked={orgForm.public_profile_enabled}
-                        onCheckedChange={(v) => setOrgForm((f) => ({ ...f, public_profile_enabled: v }))}
-                      />
+                    <div className="grid gap-5 rounded-2xl border border-border bg-muted/40 p-4">
+                      <PublicProfileLink slug={user?.organization?.public_slug ?? null} />
+                      <SettingsField id="public_description" label="Descriere publică (opțional)">
+                        <Textarea
+                          id="public_description"
+                          rows={3}
+                          value={orgForm.public_description}
+                          disabled={!user?.isAdmin}
+                          onChange={(e) => setOrgForm((f) => ({ ...f, public_description: e.target.value }))}
+                        />
+                      </SettingsField>
                     </div>
-                    {orgForm.public_profile_enabled ? (
-                      <div className="grid gap-5 rounded-2xl border border-border bg-muted/40 p-4">
-                        <SettingsField
-                          id="public_slug"
-                          label="Adresa paginii publice"
-                          hint="Se completează automat din numele agenției dacă o lași goală."
-                        >
-                          <Input
-                            id="public_slug"
-                            className="h-11"
-                            value={orgForm.public_slug}
-                            disabled={!user?.isAdmin}
-                            onChange={(e) => setOrgForm((f) => ({ ...f, public_slug: e.target.value }))}
-                          />
-                        </SettingsField>
-                        <SettingsField id="public_description" label="Descriere publică (opțional)">
-                          <Textarea
-                            id="public_description"
-                            rows={3}
-                            value={orgForm.public_description}
-                            disabled={!user?.isAdmin}
-                            onChange={(e) => setOrgForm((f) => ({ ...f, public_description: e.target.value }))}
-                          />
-                        </SettingsField>
-                      </div>
-                    ) : null}
                     {/* Planul este doar informativ: se schimbă exclusiv din Superadmin. */}
                     <div className="space-y-2 rounded-2xl border border-border bg-muted/40 p-4 text-sm">
                       <div className="flex flex-wrap items-center justify-between gap-3">

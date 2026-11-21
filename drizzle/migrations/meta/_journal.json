@@ -2199,6 +2199,13 @@
       "when": 1795292861041,
       "tag": "0313_fix_contract_numbering_blog_text",
       "breakpoints": true
+    },
+    {
+      "idx": 314,
+      "version": "7",
+      "when": 1795293650927,
+      "tag": "0314_public_slug_immutable_guard",
+      "breakpoints": true
     }
   ]
 }
