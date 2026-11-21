@@ -1,6 +1,6 @@
 import type { LinkHTMLAttributes } from "react";
 import { SITE_URL, SITE_NAME } from "./public-identity";
-import { publicGraphJsonLd } from "./structured-data";
+import { flattenGraphNodes, publicGraphJsonLd } from "./structured-data";
 import { contentModified } from "@/lib/marketing/content-revisions";
 import { FEATURE_PAGES } from "@/lib/marketing/feature-pages";
 import { INTEGRATION_PAGES, DYNAMIC_INTEGRATION_PAGES } from "@/lib/portals/integration-pages";
@@ -43,7 +43,7 @@ export function publicHead({
   const url = `${SITE_URL}${path === "/" ? "/" : path}`;
   const image = coverPaths.has(path) ? `${SITE_URL}/assets/page-og/${path === "/" ? "home" : path.slice(1).replaceAll("/", "--")}.jpg?v=rd2` : _ogImage;
   const modified = contentModified(path);
-  const nodes = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+  const nodes = flattenGraphNodes(jsonLd);
   const pageId = `${url}#webpage`;
   const pageNode = { "@type": "WebPage", "@id": pageId, url, name: title, description, inLanguage: "ro", isPartOf: { "@id": `${SITE_URL}/#website` }, ...(modified ? { dateModified: modified } : {}), ...(image ? { primaryImageOfPage: { "@type": "ImageObject", url: image } } : {}) };
   const existingPage = nodes.find(node => node["@id"] === pageId);

@@ -78,9 +78,18 @@ export function homeIdentityJsonLd(description: string): Ld[] {
 }
 
 /** Merge repeated identities while preserving each page's own schema nodes. */
+/** Flattens nested arrays and embedded `@graph` wrappers into plain graph nodes. */
+export function flattenGraphNodes(input: unknown): Ld[] {
+  if (Array.isArray(input)) return input.flatMap(flattenGraphNodes);
+  if (!input || typeof input !== "object") return [];
+  const node = input as Ld;
+  if (Array.isArray(node["@graph"]) && !node["@type"]) return flattenGraphNodes(node["@graph"]);
+  return [node];
+}
+
 export function publicGraphJsonLd(pageNodes?: Ld | Ld[]): Ld {
   const nodes = homeIdentityJsonLd("CRM imobiliar pentru agențiile și agenții imobiliari din România.");
-  for (const node of pageNodes ? (Array.isArray(pageNodes) ? pageNodes : [pageNodes]) : []) {
+  for (const node of flattenGraphNodes(pageNodes)) {
     const existing = node["@id"] ? nodes.findIndex((item) => item["@id"] === node["@id"]) : -1;
     if (existing >= 0) nodes[existing] = { ...nodes[existing], ...node };
     else nodes.push(node);
