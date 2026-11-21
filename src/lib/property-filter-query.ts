@@ -1,5 +1,7 @@
 import {
   PROPERTY_STATUSES,
+  exactPropertyReference,
+  normalizeDevelopmentFilters,
   isAtLeastFilter,
   numericFilterValue,
   propertyTypeClause,
@@ -29,6 +31,14 @@ export interface FilterableQuery<Q> {
 
 const clean = (value: string) => value.replace(/[%,()"\\]/g, " ").trim();
 
+/** Scope exclusiv listei Proprietăți, comun interogării și totalului portofoliului. */
+export function applyPropertyDevelopmentFilter<Q extends FilterableQuery<Q>>(query: Q, filters: PropertyListFilters): Q {
+  if (filters.development === "any") return query.or("development_id.not.is.null");
+  if (filters.development && filters.development !== "all") return query.eq("development_id", filters.development);
+  if (!normalizeDevelopmentFilters(filters).showDevelopments && !exactPropertyReference(filters.q)) return query.is("development_id", null);
+  return query;
+}
+
 /**
  * Aplică filtrele panoului (fără geografie, favorite, portaluri și promovare,
  * care se rezolvă separat). Returnează interogarea extinsă.
@@ -38,9 +48,7 @@ export function applyPropertyFilterClauses<Q extends FilterableQuery<Q>>(
   filters: PropertyListFilters,
   ctx: { agentClause: { kind: "none" } | { kind: "unassigned" } | { kind: "agent"; id: string }; userId?: string | null },
 ): Q {
-  let q = query;
-  if (filters.development === "any") q = q.or("development_id.not.is.null");
-  else if (filters.development && filters.development !== "all") q = q.eq("development_id", filters.development);
+  let q = applyPropertyDevelopmentFilter(query, filters);
   const statuses = selectedStatuses(filters);
   if (statuses.length < PROPERTY_STATUSES.length) q = q.in("status", statuses);
   if (filters.transaction !== "all") q = q.eq("transaction_kind", filters.transaction);
@@ -66,7 +74,9 @@ export function applyPropertyFilterClauses<Q extends FilterableQuery<Q>>(
   if (filters.addedBefore) q = q.lte("created_at", romaniaDateBoundary(filters.addedBefore, "end"));
   if (filters.updatedAfter) q = q.gte("updated_at", romaniaDateBoundary(filters.updatedAfter, "start"));
   if (filters.updatedBefore) q = q.lte("updated_at", romaniaDateBoundary(filters.updatedBefore, "end"));
-  const text = clean(filters.q);
+  const reference = exactPropertyReference(filters.q);
+  if (reference) q = q.eq("reference", reference);
+  const text = reference ? "" : clean(filters.q);
   const street = clean(filters.street);
   const textExpr = text ? `title.ilike.%${text}%,reference.ilike.%${text}%,address.ilike.%${text}%,city.ilike.%${text}%,district.ilike.%${text}%` : "";
   const streetExpr = street ? `street.ilike.%${street}%,address.ilike.%${street}%` : "";

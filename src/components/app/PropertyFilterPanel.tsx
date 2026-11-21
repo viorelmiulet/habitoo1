@@ -17,6 +17,7 @@ import {
   digitsOnly,
   formatPropertySourceLabel,
   formatThousands,
+  normalizeDevelopmentFilters,
   propertyTabTypes,
   selectedStatuses,
   serializeStatuses,
@@ -76,9 +77,9 @@ function Range({ idPrefix, label, min, max, onMin, onMax, type = "text", format 
   );
 }
 
-function SimpleSelect({ id, value, onChange, options, active }: { id: string; value: string; onChange: (v: string) => void; options: [string, string][]; active: boolean }) {
+function SimpleSelect({ id, value, onChange, options, active, disabled = false }: { id: string; value: string; onChange: (v: string) => void; options: [string, string][]; active: boolean; disabled?: boolean }) {
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger id={id} className={cn(triggerBase, active && valued)}><SelectValue /></SelectTrigger>
       <SelectContent>{options.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
     </Select>
@@ -114,9 +115,9 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
   const { data: developments = [] } = useQuery(developmentsOptions());
   const { applied, placeValue, onApply, onTab, onReset, placeOptions, showAgent } = props;
   const appliedKey = JSON.stringify([applied, placeValue]);
-  const [draft, setDraft] = useState<PropertyListFilters>({ ...applied, locuri: placeValue });
+  const [draft, setDraft] = useState<PropertyListFilters>(normalizeDevelopmentFilters({ ...applied, locuri: placeValue }));
   const [expanded, setExpanded] = useState(false);
-  useEffect(() => { setDraft({ ...applied, locuri: placeValue }); }, [appliedKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setDraft(normalizeDevelopmentFilters({ ...applied, locuri: placeValue })); }, [appliedKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = <K extends keyof PropertyListFilters>(key: K, value: PropertyListFilters[K]) => setDraft((d) => ({ ...d, [key]: value }));
   const geo = useMemo(() => geographyFromPlaces(draft.locuri), [draft.locuri]);
@@ -159,8 +160,12 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
             </Row>
           </div>
           <div data-filter-column="2" className="mt-2 space-y-2 md:mt-0">
+            <label className="flex min-h-10 items-center gap-2 text-[13px] font-semibold text-muted-foreground">
+              <Checkbox checked={draft.showDevelopments} onCheckedChange={(c) => setDraft((d) => ({ ...d, showDevelopments: c === true, development: c === true ? d.development : "all" }))} />
+              Afișează anunțuri din ansambluri
+            </label>
             <Row label="Ansamblu" htmlFor="pf-development">
-              <SimpleSelect id="pf-development" value={draft.development || "all"} active={Boolean(draft.development && draft.development !== "all")} onChange={(v) => set("development", v)} options={[["all", "Toate"], ["any", "Doar din ansambluri"], ...developments.map(d => [d.id, d.name] as [string, string])]} />
+              <SimpleSelect id="pf-development" disabled={!draft.showDevelopments} value={draft.development || "all"} active={Boolean(draft.development && draft.development !== "all")} onChange={(v) => setDraft((d) => normalizeDevelopmentFilters({ ...d, development: v }))} options={[["all", "Toate"], ["any", "Doar din ansambluri"], ...developments.map(d => [d.id, d.name] as [string, string])]} />
             </Row>
             <Row label="Tip proprietate" htmlFor="pf-type">
               <SimpleSelect id="pf-type" value={draft.type} active={draft.type !== "all"} onChange={(v) => set("type", v)} options={[["all", "Toate"], ...typeChoices.map((t) => [t, propertyTypeLabels[t] ?? t] as [string, string])]} />

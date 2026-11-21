@@ -6,6 +6,8 @@ import { PropertyFilterPanel } from "./PropertyFilterPanel";
 import { emptyPropertyListFilters, type PropertyListFilters } from "@/lib/property-list-filters";
 
 vi.mock("@/components/app/PortalLogo", () => ({ PortalLogoStack: () => null }));
+vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: [{ id: "mrm", name: "MRM" }] }) }));
+vi.mock("@/lib/developments", () => ({ developmentsOptions: () => ({}) }));
 
 let container: HTMLDivElement;
 let root: Root;
@@ -33,21 +35,45 @@ async function render(applied: PropertyListFilters = emptyPropertyListFilters, o
   return { onApply, onTab };
 }
 function type(input: HTMLInputElement, value: string) {
-  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+  if (!setter) throw new Error("Missing input setter");
   setter.call(input, value);
   input.dispatchEvent(new Event("input", { bubbles: true }));
 }
-const click = async (el: Element) => { await act(async () => { (el as HTMLElement).click(); }); };
-const search = () => [...container.querySelectorAll("button")].find((b) => b.textContent === "Caută")!;
+const click = async (el: Element | null | undefined) => {
+  if (!el) throw new Error("Control not found");
+  await act(async () => { (el as HTMLElement).click(); });
+};
+const search = () => [...container.querySelectorAll("button")].find((b) => b.textContent === "Caută");
 
 describe("PropertyFilterPanel", () => {
+  it("bifa deblochează Ansamblu, se aplică la Caută și debifarea elimină selecția ansamblului", async () => {
+    const { onApply } = await render();
+    const toggle = [...container.querySelectorAll("label")].find((l) => l.textContent?.includes("Afișează anunțuri din ansambluri"))?.querySelector('[role="checkbox"]');
+    const select = container.querySelector<HTMLButtonElement>("#pf-development");
+    expect(select?.disabled).toBe(true);
+    await click(toggle);
+    expect(select?.disabled).toBe(false);
+    expect(onApply).not.toHaveBeenCalled();
+    await click(search());
+    expect(onApply.mock.calls.at(-1)?.[0]).toMatchObject({ showDevelopments: true, development: "all" });
+    await render({ ...emptyPropertyListFilters, development: "mrm" }, onApply);
+    await click(toggle);
+    await click(search());
+    expect(onApply.mock.calls.at(-1)?.[0]).toMatchObject({ showDevelopments: false, development: "all" });
+  });
+  it.each(["any", "mrm"])("leagă automat bifa de ansamblul %s din link", async (development) => {
+    const { onApply } = await render({ ...emptyPropertyListFilters, development });
+    await click(search());
+    expect(onApply.mock.calls.at(-1)?.[0]).toMatchObject({ showDevelopments: true, development });
+  });
   it("afișează câmpurile pe coloane în ordinea din captură", async () => {
     await render();
     const columns = [...container.querySelectorAll("[data-filter-column]")].map((col) =>
       [...col.querySelectorAll("[data-filter-row]")].map((row) => row.getAttribute("data-filter-row")));
     expect(columns).toEqual([
       ["Județ", "Localități", "Zonă", "Stradă"],
-      ["Tip proprietate", "Tip tranzacție", "Camere", "Suprafață utilă", "Preț"],
+      ["Ansamblu", "Tip proprietate", "Tip tranzacție", "Camere", "Suprafață utilă", "Preț"],
       ["Valabilitate", "Adăugat între", "Modificat între", "Portaluri"],
       ["Cuvinte cheie", "Destinație", "Alte filtre"],
     ]);
@@ -65,14 +91,14 @@ describe("PropertyFilterPanel", () => {
 
   it("„Nepublicate · Storia” aplică filtrul portal la Caută", async () => {
     const { onApply } = await render();
-    await click(container.querySelector("#pf-portal")!);
+    await click(container.querySelector("#pf-portal"));
     const option = document.body.querySelector('[cmdk-item][data-value="storia:unpublished"]');
     expect(option).not.toBeNull();
-    await click(option!);
+    await click(option);
     expect(container.querySelector("#pf-portal")?.textContent).toContain("Nepublicate · Storia");
     await click(search());
     expect(onApply).toHaveBeenCalledTimes(1);
-    expect(onApply.mock.calls[0][0]).toMatchObject({ portal: "storia:unpublished" });
+    expect(onApply.mock.calls[0]?.[0]).toMatchObject({ portal: "storia:unpublished" });
   });
 
   it("contorul „Alte filtre” nu mai numără filtrul de portal", async () => {
@@ -82,13 +108,15 @@ describe("PropertyFilterPanel", () => {
 
   it("modificarea unui câmp nu aplică filtrele; Caută și Enter le aplică", async () => {
     const { onApply } = await render();
-    const street = container.querySelector<HTMLInputElement>("#pf-street")!;
+    const street = container.querySelector<HTMLInputElement>("#pf-street");
+    if (!street) throw new Error("Street input missing");
     await act(async () => type(street, "Unirii"));
     expect(onApply).not.toHaveBeenCalled();
     await click(search());
     expect(onApply).toHaveBeenCalledTimes(1);
-    expect(onApply.mock.calls[0][0]).toMatchObject({ street: "Unirii" });
-    const form = container.querySelector("form")!;
+    expect(onApply.mock.calls[0]?.[0]).toMatchObject({ street: "Unirii" });
+    const form = container.querySelector("form");
+    if (!form) throw new Error("Form missing");
     await act(async () => { form.requestSubmit(); });
     expect(onApply).toHaveBeenCalledTimes(2);
   });

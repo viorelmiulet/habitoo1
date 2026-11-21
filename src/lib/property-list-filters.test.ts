@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   PROPERTY_TYPE_TABS,
+  emptyPropertyListFilters,
   buildCityFilterOptions,
   buildDistrictFilterOptions,
   cityRawValues,
@@ -16,6 +17,24 @@ import {
 } from "./property-list-filters";
 
 describe("filtrele listei de proprietăți", () => {
+  it("bifa este implicit falsă și resetarea elimină filtrul din URL", () => {
+    const state = propertyListStateFromSearch(propertyListSearchSchema.parse({}));
+    expect(state.filters.showDevelopments).toBe(false);
+    expect(propertyListSearchFromState(emptyPropertyListFilters, state.sort, 1, state.view)).toEqual({});
+  });
+  it("păstrează bifa în URL și filtrele salvate", () => {
+    const state = propertyListStateFromSearch(propertyListSearchSchema.parse({ showDevelopments: "true" }));
+    expect(state.filters.showDevelopments).toBe(true);
+    expect(propertyListSearchFromState(state.filters, state.sort, 1, state.view)).toEqual({ showDevelopments: true });
+    expect(normalizeSavedPropertyFilters({ showDevelopments: true }).showDevelopments).toBe(true);
+    expect(normalizeSavedPropertyFilters({}).showDevelopments).toBe(false);
+  });
+  it.each(["any", "8ae5bcfa-7599-4842-a916-b63b0c6fc440"])("ansamblul %s din link sau filtru salvat activează bifa", (development) => {
+    const state = propertyListStateFromSearch(propertyListSearchSchema.parse({ development, showDevelopments: false }));
+    expect(state.filters.showDevelopments).toBe(true);
+    expect(normalizeSavedPropertyFilters({ development }).showDevelopments).toBe(true);
+    expect(propertyListSearchFromState(state.filters, state.sort, 1, state.view)).toEqual({ development, showDevelopments: true });
+  });
   it.each(["imospot:error,vdi:error", "storia:auto_renew_on,storia:error", "imobiliare_ro:tl,romimo:promoted"])("păstrează promovarea %s în URL și filtre salvate", (promotion) => {
     const state = propertyListStateFromSearch(propertyListSearchSchema.parse({ promotion, page: 2 }));
     expect(state.filters.portal).toBe(promotion);

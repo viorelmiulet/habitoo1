@@ -49,7 +49,7 @@ import { CloneMarks, useCloneLinks } from "@/components/app/developments/CloneMa
 import { AllocateAction, AllocateToDevelopmentDialog } from "@/components/app/developments/AllocateToDevelopmentDialog";
 import { developmentsOptions } from "@/lib/developments";
 import { PropertyFilterPanel } from "@/components/app/PropertyFilterPanel";
-import { applyPropertyFilterClauses } from "@/lib/property-filter-query";
+import { applyPropertyDevelopmentFilter, applyPropertyFilterClauses } from "@/lib/property-filter-query";
 import { useServerFn } from "@tanstack/react-start";
 import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";
 import { ReassignPropertiesDialog } from "@/components/app/ReassignPropertiesDialog";
@@ -118,6 +118,7 @@ import { canShowDeleteAction, formatPropertyListDetails, formatPropertyListPrice
 import { agentFilterClause, buildAgentFilterOptions, showMainAgentFilter, UNASSIGNED_AGENT_FILTER } from "@/lib/property-list-filters";
 import {
   emptyPropertyListFilters,
+  exactPropertyReference,
   buildCityFilterOptions,
   buildDistrictFilterOptions,
   cityRawValues,
@@ -174,6 +175,8 @@ function PropertiesPage() {
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string[]>([]);
+  const selectionScope = JSON.stringify([filters, page, PAGE_SIZE]);
+  useEffect(() => { setSelected([]); }, [selectionScope]);
   // Ghidul „Unelte din listă” pornește o singură dată: la prima vedere schimbată sau prima selecție.
   const toolsAnnounced = useRef(false);
   const announceTools = () => { if (!toolsAnnounced.current) { toolsAnnounced.current = true; announceGuideContext("properties:tools"); } };
@@ -212,6 +215,7 @@ function PropertiesPage() {
 
   const setFilters = (updater: Filters | ((current: Filters) => Filters)) => {
     const next = typeof updater === "function" ? updater(filters) : updater;
+    setSelected([]);
     void writeUrlState(next);
   };
 
@@ -335,15 +339,16 @@ function PropertiesPage() {
   const placeValue = filters.locuri || serializePlaces(legacyPlaceChoices(undefined, filters.city, filters.district));
 
   const { data: portfolioTotal = 0 } = useQuery({
-    queryKey: ["properties", "portfolio-count", orgId],
+    queryKey: ["properties", "portfolio-count", orgId, filters.showDevelopments, filters.development, Boolean(exactPropertyReference(filters.q))],
     enabled: Boolean(orgId),
     queryFn: async () => {
-      const { count, error } = await supabase
+      const query = supabase
         .from("properties")
         .select("id", { count: "exact", head: true })
         .eq("organization_id", orgId as string)
         .is("deleted_at", null)
         .neq("status", "archived" as never);
+      const { count, error } = await applyPropertyDevelopmentFilter(query, filters);
       if (error) throw error;
       return count ?? 0;
     },
@@ -623,6 +628,8 @@ function PropertiesPage() {
    * fiecare pastilă readuce câmpul la valoarea implicită din `emptyFilters`.
    */
   const activePills: { key: keyof Filters; label: string }[] = [
+    filters.showDevelopments ? { key: "showDevelopments" as const, label: "Cu anunțuri din ansambluri" } : null,
+    filters.development !== "all" ? { key: "development" as const, label: filters.development === "any" ? "Doar din ansambluri" : developmentName(filters.development) ?? "Ansamblu" } : null,
     filters.q ? { key: "q" as const, label: `„${filters.q}”` } : null,
     filters.statuses ? { key: "statuses" as const, label: `Valabilitate: ${selectedStatuses(filters).length} selectate` } : null,
     filters.tab !== "all" ? { key: "tab" as const, label: PROPERTY_TYPE_TABS.find((t) => t.value === filters.tab)?.label ?? filters.tab } : null,
@@ -669,7 +676,7 @@ function PropertiesPage() {
   ].filter(Boolean) as { key: keyof Filters; label: string }[];
 
   const clearPill = (key: keyof Filters) =>
-    setFilters((f) => ({ ...f, [key]: emptyFilters[key] }) as Filters);
+    setFilters((f) => ({ ...f, [key]: emptyFilters[key], ...(key === "showDevelopments" ? { development: "all" } : {}) }) as Filters);
 
   const filtersActive = activePills.length > 0 || Boolean(filters.locuri);
 

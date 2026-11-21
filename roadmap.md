@@ -1,3 +1,8 @@
+## Lista Proprietăți — anunțuri din ansambluri
+- [x] Filtru implicit de excludere, bifă/Ansamblu în URL și filtre salvate, excepție pentru referință exactă
+- [x] Număr portofoliu, paginare, selecție și CSV folosesc rezultatele filtrate; 45 teste în cele trei fișiere modificate; fără publicare
+- Verificarea autentificată este indisponibilă: solicitantul nu are cont asociat pentru sesiunea de previzualizare. Nu au fost modificate datele.
+
 ## Logo-uri portaluri proporționale cu fotografia
 - [x] Geometrie comună listă/carduri, maximum trei rânduri, surplus +N și stare compactă
 - [x] 8 teste strict noi/modificate; browser cu date simulate: 94px față de poza 96px, maximum 3 rânduri, fără logo-uri tăiate, +7 la 30; card/telefon încadrate, fără erori; fără publicare

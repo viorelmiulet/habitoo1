@@ -4,6 +4,7 @@ import { z } from "zod";
 
 export type PropertyListFilters = {
   development: string;
+  showDevelopments: boolean;
   q: string;
   status: string;
   transaction: string;
@@ -41,6 +42,7 @@ export type PropertyListFilters = {
 
 export const emptyPropertyListFilters: PropertyListFilters = {
   development: "all",
+  showDevelopments: false,
   q: "",
   status: "all",
   transaction: "all",
@@ -94,6 +96,7 @@ const optionalSearchPage = z.preprocess(
 
 export const propertyListSearchSchema = z.object({
   development: optionalSearchString,
+  showDevelopments: optionalSearchBoolean,
   republicare: z.string().uuid().optional().catch(undefined),
   q: optionalSearchString,
   status: optionalSearchString,
@@ -155,7 +158,7 @@ export function propertyListStateFromSearch(search: PropertyListSearch): {
     if (typeof value === typeof filters[key]) (filters as Record<string, unknown>)[key] = value;
   }
   return {
-    filters: migrateLegacyPortalFilters(migrateLegacyStatusFilters(filters)),
+    filters: normalizeDevelopmentFilters(migrateLegacyPortalFilters(migrateLegacyStatusFilters(filters))),
     sort: propertyListSorts.has(search.sort as PropertyListSort)
       ? search.sort as PropertyListSort
       : PROPERTY_LIST_DEFAULT_SORT,
@@ -170,7 +173,7 @@ export function propertyListSearchFromState(
   page: number,
   view: PropertyListView,
 ): PropertyListSearch {
-  filters = migrateLegacyPortalFilters(filters);
+  filters = normalizeDevelopmentFilters(migrateLegacyPortalFilters(filters));
   const search: PropertyListSearch = {};
   for (const key of Object.keys(emptyPropertyListFilters) as (keyof PropertyListFilters)[]) {
     if (filters[key] !== emptyPropertyListFilters[key]) {
@@ -225,14 +228,24 @@ export function normalizeSavedPropertyFilters(
   config: Record<string, unknown>,
 ): PropertyListFilters {
   const legacyFloor = typeof config.floor === "string" ? config.floor : "";
-  return migrateLegacyPortalFilters(migrateLegacyStatusFilters({
+  return normalizeDevelopmentFilters(migrateLegacyPortalFilters(migrateLegacyStatusFilters({
     ...emptyPropertyListFilters,
     ...(config as Partial<PropertyListFilters>),
     floorMin:
       typeof config.floorMin === "string" ? config.floorMin : legacyFloor,
     floorMax:
       typeof config.floorMax === "string" ? config.floorMax : legacyFloor,
-  }));
+  })));
+}
+
+/** Un link către un ansamblu activează și afișarea unităților. */
+export function normalizeDevelopmentFilters(filters: PropertyListFilters): PropertyListFilters {
+  return { ...filters, showDevelopments: Boolean(filters.showDevelopments || (filters.development && filters.development !== "all")) };
+}
+
+export function exactPropertyReference(q: string): string | null {
+  const text = q.trim().toUpperCase();
+  return /^HB-\d+$/.test(text) ? text : null;
 }
 
 export function migrateLegacyPortalFilters(filters: PropertyListFilters): PropertyListFilters {
