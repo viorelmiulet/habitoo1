@@ -36,6 +36,7 @@ import { Route as PreturiRouteImport } from './routes/preturi'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SemnareRouteImport } from './routes/semnare'
+import { Route as SitemapAgentiiDotxmlRouteImport } from './routes/sitemap-agentii[.]xml'
 import { Route as SitemapBlogDotxmlRouteImport } from './routes/sitemap-blog[.]xml'
 import { Route as SitemapOferteDotxmlRouteImport } from './routes/sitemap-oferte[.]xml'
 import { Route as SitemapPagesDotxmlRouteImport } from './routes/sitemap-pages[.]xml'
@@ -100,6 +101,7 @@ import { Route as AuthenticatedSuperadminSetariPortaluriRouteImport } from './ro
 import { Route as AuthenticatedSuperadminStareAgentiiRouteImport } from './routes/_authenticated/superadmin.stare-agentii'
 import { Route as AuthenticatedSuperadminStatisticiRouteImport } from './routes/_authenticated/superadmin.statistici'
 import { Route as AuthenticatedSuperadminSupportRouteImport } from './routes/_authenticated/superadmin.support'
+import { Route as AgentiiSlugAgentRouteImport } from './routes/agentii.$slug_.$agent'
 import { Route as AuthenticatedAppAcpIndexRouteImport } from './routes/_authenticated/app.acp.index'
 import { Route as AuthenticatedAppAcpIdRouteImport } from './routes/_authenticated/app.acp.$id'
 import { Route as AuthenticatedAppAcpNewRouteImport } from './routes/_authenticated/app.acp.new'
@@ -182,6 +184,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/_authenticated/app.acp.date-piata.index'
 import { Route as AuthenticatedAppAcpDatePiataIdRouteImport } from './routes/_authenticated/app.acp.date-piata.$id'
 import { Route as AuthenticatedSuperadminBlogPreviewIdRouteImport } from './routes/_authenticated/superadmin.blog.preview.$id'
+import { Route as ApiPublicAgentAvatarAgencyAgentRouteImport } from './routes/api/public/agent-avatar/$agency.$agent'
 import { Route as ApiPublicCatalogV1FacebookDotcsvRouteImport } from './routes/api/public/catalog/v1/facebook[.]csv'
 import { Route as ApiPublicExtensionV1LocalitiesRouteImport } from './routes/api/public/extension/v1/localities'
 import { Route as ApiPublicExtensionV1MeRouteImport } from './routes/api/public/extension/v1/me'
@@ -398,6 +401,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SemnareRoute = SemnareRouteImport.update({
   id: '/semnare',
   path: '/semnare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapAgentiiDotxmlRoute = SitemapAgentiiDotxmlRouteImport.update({
+  id: '/sitemap-agentii.xml',
+  path: '/sitemap-agentii.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapBlogDotxmlRoute = SitemapBlogDotxmlRouteImport.update({
@@ -752,6 +760,11 @@ const AuthenticatedSuperadminSupportRoute =
     path: '/support',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
+const AgentiiSlugAgentRoute = AgentiiSlugAgentRouteImport.update({
+  id: '/$slug_/$agent',
+  path: '/$slug/$agent',
+  getParentRoute: () => AgentiiRoute,
+} as any)
 const AuthenticatedAppAcpIndexRoute =
   AuthenticatedAppAcpIndexRouteImport.update({
     id: '/acp/',
@@ -1222,6 +1235,12 @@ const AuthenticatedSuperadminBlogPreviewIdRoute =
     id: '/blog/preview/$id',
     path: '/blog/preview/$id',
     getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const ApiPublicAgentAvatarAgencyAgentRoute =
+  ApiPublicAgentAvatarAgencyAgentRouteImport.update({
+    id: '/api/public/agent-avatar/$agency/$agent',
+    path: '/api/public/agent-avatar/$agency/$agent',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicCatalogV1FacebookDotcsvRoute =
   ApiPublicCatalogV1FacebookDotcsvRouteImport.update({
@@ -1719,6 +1738,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap-agentii.xml': typeof SitemapAgentiiDotxmlRoute
   '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
   '/sitemap-oferte.xml': typeof SitemapOferteDotxmlRoute
   '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
@@ -1781,6 +1801,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/stare-agentii': typeof AuthenticatedSuperadminStareAgentiiRoute
   '/superadmin/statistici': typeof AuthenticatedSuperadminStatisticiRoute
   '/superadmin/support': typeof AuthenticatedSuperadminSupportRoute
+  '/agentii/$slug/$agent': typeof AgentiiSlugAgentRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/superadmin/': typeof AuthenticatedSuperadminIndexRoute
   '/app/acp/$id': typeof AuthenticatedAppAcpIdRoute
@@ -1864,6 +1885,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/users/': typeof AuthenticatedSuperadminUsersIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
+  '/api/public/agent-avatar/$agency/$agent': typeof ApiPublicAgentAvatarAgencyAgentRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/extension/v1/localities': typeof ApiPublicExtensionV1LocalitiesRoute
   '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
@@ -1972,6 +1994,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap-agentii.xml': typeof SitemapAgentiiDotxmlRoute
   '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
   '/sitemap-oferte.xml': typeof SitemapOferteDotxmlRoute
   '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
@@ -2031,6 +2054,7 @@ export interface FileRoutesByTo {
   '/superadmin/stare-agentii': typeof AuthenticatedSuperadminStareAgentiiRoute
   '/superadmin/statistici': typeof AuthenticatedSuperadminStatisticiRoute
   '/superadmin/support': typeof AuthenticatedSuperadminSupportRoute
+  '/agentii/$slug/$agent': typeof AgentiiSlugAgentRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/superadmin': typeof AuthenticatedSuperadminIndexRoute
   '/app/acp/$id': typeof AuthenticatedAppAcpIdRoute
@@ -2114,6 +2138,7 @@ export interface FileRoutesByTo {
   '/superadmin/users': typeof AuthenticatedSuperadminUsersIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
+  '/api/public/agent-avatar/$agency/$agent': typeof ApiPublicAgentAvatarAgencyAgentRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/extension/v1/localities': typeof ApiPublicExtensionV1LocalitiesRoute
   '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
@@ -2225,6 +2250,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap-agentii.xml': typeof SitemapAgentiiDotxmlRoute
   '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
   '/sitemap-oferte.xml': typeof SitemapOferteDotxmlRoute
   '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
@@ -2287,6 +2313,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/stare-agentii': typeof AuthenticatedSuperadminStareAgentiiRoute
   '/_authenticated/superadmin/statistici': typeof AuthenticatedSuperadminStatisticiRoute
   '/_authenticated/superadmin/support': typeof AuthenticatedSuperadminSupportRoute
+  '/agentii/$slug_/$agent': typeof AgentiiSlugAgentRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/superadmin/': typeof AuthenticatedSuperadminIndexRoute
   '/_authenticated/app/acp/$id': typeof AuthenticatedAppAcpIdRoute
@@ -2370,6 +2397,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/users/': typeof AuthenticatedSuperadminUsersIndexRoute
   '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/_authenticated/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
+  '/api/public/agent-avatar/$agency/$agent': typeof ApiPublicAgentAvatarAgencyAgentRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/extension/v1/localities': typeof ApiPublicExtensionV1LocalitiesRoute
   '/api/public/extension/v1/me': typeof ApiPublicExtensionV1MeRoute
@@ -2481,6 +2509,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap-agentii.xml'
     | '/sitemap-blog.xml'
     | '/sitemap-oferte.xml'
     | '/sitemap-pages.xml'
@@ -2543,6 +2572,7 @@ export interface FileRouteTypes {
     | '/superadmin/stare-agentii'
     | '/superadmin/statistici'
     | '/superadmin/support'
+    | '/agentii/$slug/$agent'
     | '/app/'
     | '/superadmin/'
     | '/app/acp/$id'
@@ -2626,6 +2656,7 @@ export interface FileRouteTypes {
     | '/superadmin/users/'
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
+    | '/api/public/agent-avatar/$agency/$agent'
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/extension/v1/localities'
     | '/api/public/extension/v1/me'
@@ -2734,6 +2765,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap-agentii.xml'
     | '/sitemap-blog.xml'
     | '/sitemap-oferte.xml'
     | '/sitemap-pages.xml'
@@ -2793,6 +2825,7 @@ export interface FileRouteTypes {
     | '/superadmin/stare-agentii'
     | '/superadmin/statistici'
     | '/superadmin/support'
+    | '/agentii/$slug/$agent'
     | '/app'
     | '/superadmin'
     | '/app/acp/$id'
@@ -2876,6 +2909,7 @@ export interface FileRouteTypes {
     | '/superadmin/users'
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
+    | '/api/public/agent-avatar/$agency/$agent'
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/extension/v1/localities'
     | '/api/public/extension/v1/me'
@@ -2986,6 +3020,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap-agentii.xml'
     | '/sitemap-blog.xml'
     | '/sitemap-oferte.xml'
     | '/sitemap-pages.xml'
@@ -3048,6 +3083,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/stare-agentii'
     | '/_authenticated/superadmin/statistici'
     | '/_authenticated/superadmin/support'
+    | '/agentii/$slug_/$agent'
     | '/_authenticated/app/'
     | '/_authenticated/superadmin/'
     | '/_authenticated/app/acp/$id'
@@ -3131,6 +3167,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/users/'
     | '/_authenticated/app/acp/date-piata/$id'
     | '/_authenticated/superadmin/blog/preview/$id'
+    | '/api/public/agent-avatar/$agency/$agent'
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/extension/v1/localities'
     | '/api/public/extension/v1/me'
@@ -3242,6 +3279,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SemnareRoute: typeof SemnareRoute
+  SitemapAgentiiDotxmlRoute: typeof SitemapAgentiiDotxmlRoute
   SitemapBlogDotxmlRoute: typeof SitemapBlogDotxmlRoute
   SitemapOferteDotxmlRoute: typeof SitemapOferteDotxmlRoute
   SitemapPagesDotxmlRoute: typeof SitemapPagesDotxmlRoute
@@ -3313,6 +3351,7 @@ export interface RootRouteChildren {
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  ApiPublicAgentAvatarAgencyAgentRoute: typeof ApiPublicAgentAvatarAgencyAgentRoute
   ApiPublicCatalogV1FacebookDotcsvRoute: typeof ApiPublicCatalogV1FacebookDotcsvRoute
   ApiPublicExtensionV1LocalitiesRoute: typeof ApiPublicExtensionV1LocalitiesRoute
   ApiPublicExtensionV1MeRoute: typeof ApiPublicExtensionV1MeRoute
@@ -3568,6 +3607,13 @@ declare module '@tanstack/react-router' {
       path: '/semnare'
       fullPath: '/semnare'
       preLoaderRoute: typeof SemnareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-agentii.xml': {
+      id: '/sitemap-agentii.xml'
+      path: '/sitemap-agentii.xml'
+      fullPath: '/sitemap-agentii.xml'
+      preLoaderRoute: typeof SitemapAgentiiDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap-blog.xml': {
@@ -4017,6 +4063,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/superadmin/support'
       preLoaderRoute: typeof AuthenticatedSuperadminSupportRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/agentii/$slug_/$agent': {
+      id: '/agentii/$slug_/$agent'
+      path: '/$slug/$agent'
+      fullPath: '/agentii/$slug/$agent'
+      preLoaderRoute: typeof AgentiiSlugAgentRouteImport
+      parentRoute: typeof AgentiiRoute
     }
     '/_authenticated/app/acp/': {
       id: '/_authenticated/app/acp/'
@@ -4591,6 +4644,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/superadmin/blog/preview/$id'
       preLoaderRoute: typeof AuthenticatedSuperadminBlogPreviewIdRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/api/public/agent-avatar/$agency/$agent': {
+      id: '/api/public/agent-avatar/$agency/$agent'
+      path: '/api/public/agent-avatar/$agency/$agent'
+      fullPath: '/api/public/agent-avatar/$agency/$agent'
+      preLoaderRoute: typeof ApiPublicAgentAvatarAgencyAgentRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/catalog/v1/facebook.csv': {
       id: '/api/public/catalog/v1/facebook.csv'
@@ -5377,11 +5437,13 @@ const AuthenticatedRouteRouteWithChildren =
 interface AgentiiRouteChildren {
   AgentiiSlugRoute: typeof AgentiiSlugRoute
   AgentiiIndexRoute: typeof AgentiiIndexRoute
+  AgentiiSlugAgentRoute: typeof AgentiiSlugAgentRoute
 }
 
 const AgentiiRouteChildren: AgentiiRouteChildren = {
   AgentiiSlugRoute: AgentiiSlugRoute,
   AgentiiIndexRoute: AgentiiIndexRoute,
+  AgentiiSlugAgentRoute: AgentiiSlugAgentRoute,
 }
 
 const AgentiiRouteWithChildren =
@@ -5612,6 +5674,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SemnareRoute: SemnareRoute,
+  SitemapAgentiiDotxmlRoute: SitemapAgentiiDotxmlRoute,
   SitemapBlogDotxmlRoute: SitemapBlogDotxmlRoute,
   SitemapOferteDotxmlRoute: SitemapOferteDotxmlRoute,
   SitemapPagesDotxmlRoute: SitemapPagesDotxmlRoute,
@@ -5686,6 +5749,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  ApiPublicAgentAvatarAgencyAgentRoute: ApiPublicAgentAvatarAgencyAgentRoute,
   ApiPublicCatalogV1FacebookDotcsvRoute: ApiPublicCatalogV1FacebookDotcsvRoute,
   ApiPublicExtensionV1LocalitiesRoute: ApiPublicExtensionV1LocalitiesRoute,
   ApiPublicExtensionV1MeRoute: ApiPublicExtensionV1MeRoute,

@@ -69,6 +69,6 @@ export function buildOfferSitemapXml(rows: { slug: string; lastmod: string | nul
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }
 export function buildRootSitemapIndexXml(offerTotal: number) {
-  const locs = [`${OFFER_SITE}/sitemap-pages.xml`, `${OFFER_SITE}/sitemap-blog.xml`, ...Array.from({ length: offerSitemapPages(offerTotal) }, (_, i) => offerSitemapPageUrl(i + 1))];
+  const locs = [`${OFFER_SITE}/sitemap-pages.xml`, `${OFFER_SITE}/sitemap-blog.xml`, `${OFFER_SITE}/sitemap-agentii.xml`, ...Array.from({ length: offerSitemapPages(offerTotal) }, (_, i) => offerSitemapPageUrl(i + 1))];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${locs.map(l => `  <sitemap><loc>${esc(l)}</loc></sitemap>`).join("\n")}\n</sitemapindex>\n`;
 }

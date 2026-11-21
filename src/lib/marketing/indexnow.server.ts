@@ -40,7 +40,7 @@ export async function flushOfferIndexNow(deps: Deps = {}): Promise<{ sent: numbe
       const { data, error } = await db.from("seo_indexnow_offer_queue").select("url,enqueued_at").order("enqueued_at").limit(OFFER_INDEXNOW_BATCH);
       if (error) { console.warn("[indexnow] offer queue read failed"); break; }
       const rows = (data ?? []) as { url: string; enqueued_at: string }[];
-      const urls = rows.map(r => r.url).filter(u => u.startsWith("https://www.habitoo.ro/oferta/"));
+      const urls = rows.map(r => r.url).filter(u => u.startsWith("https://www.habitoo.ro/oferta/") || u.startsWith("https://www.habitoo.ro/agentii/"));
       if (!urls.length) break;
       const response = await (deps.send ?? fetch)("https://api.indexnow.org/indexnow", {
         method: "POST", headers: { "Content-Type": "application/json" }, signal: AbortSignal.timeout(8000),

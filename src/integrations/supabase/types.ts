@@ -14851,6 +14851,10 @@ export type Database = {
       olx_direct_status_arm: { Args: never; Returns: undefined }
       olx_direct_status_tick: { Args: never; Returns: undefined }
       org_access_blocked: { Args: never; Returns: string }
+      org_public_slug_for: {
+        Args: { _city: string; _id: string; _name: string }
+        Returns: string
+      }
       org_seat_usage: {
         Args: { _org: string }
         Returns: {
@@ -15088,6 +15092,10 @@ export type Database = {
       portal_slot_withdraw_tick: { Args: never; Returns: undefined }
       portal_status_withdraw_arm: { Args: never; Returns: undefined }
       portal_status_withdraw_tick: { Args: never; Returns: undefined }
+      profile_public_slug_for: {
+        Args: { _id: string; _name: string; _org: string }
+        Returns: string
+      }
       promotion_withdraw_arm: { Args: never; Returns: undefined }
       promotion_withdraw_tick: { Args: never; Returns: undefined }
       property_images_sync_primary: {
@@ -15107,6 +15115,16 @@ export type Database = {
         }
         Returns: Json
       }
+      public_agency_agent_list: {
+        Args: { _slug: string }
+        Returns: {
+          full_name: string
+          has_avatar: boolean
+          job_title: string
+          offer_count: number
+          slug: string
+        }[]
+      }
       public_agency_agents: {
         Args: { _org: string }
         Returns: {
@@ -15117,6 +15135,45 @@ export type Database = {
         }[]
       }
       public_agency_city: { Args: { _slug: string }; Returns: string }
+      public_agency_offers: {
+        Args: {
+          _agency_slug: string
+          _agent_slug?: string
+          _limit?: number
+          _offset?: number
+        }
+        Returns: {
+          city: string
+          currency: string
+          district: string
+          image_id: string
+          price: number
+          property_type: string
+          rooms: number
+          slug: string
+          surface: number
+          title: string
+          total: number
+          transaction_kind: string
+          updated_at: string
+        }[]
+      }
+      public_agency_page: {
+        Args: { _slug: string }
+        Returns: {
+          city: string
+          current_access: boolean
+          description: string
+          email: string
+          has_logo: boolean
+          id: string
+          name: string
+          offer_count: number
+          phone: string
+          slug: string
+          website: string
+        }[]
+      }
       public_agency_profile: {
         Args: { _slug: string }
         Returns: {
@@ -15127,8 +15184,33 @@ export type Database = {
           slug: string
         }[]
       }
+      public_agency_sitemap: {
+        Args: never
+        Returns: {
+          lastmod: string
+          path: string
+        }[]
+      }
+      public_agent_avatar_path: {
+        Args: { _agency_slug: string; _agent_slug: string }
+        Returns: string
+      }
+      public_agent_page: {
+        Args: { _agency_slug: string; _agent_slug: string }
+        Returns: {
+          bio: string
+          full_name: string
+          has_avatar: boolean
+          is_active: boolean
+          job_title: string
+          offer_count: number
+          phone: string
+          slug: string
+        }[]
+      }
       public_llms_statistics: { Args: never; Returns: Json }
       public_neutral_offer: { Args: { _code: string }; Returns: Json }
+      public_offer_listable: { Args: { _id: string }; Returns: boolean }
       public_offer_sitemap: {
         Args: { _limit?: number; _offset?: number }
         Returns: {
