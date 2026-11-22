@@ -1,0 +1,1 @@
+- Listing checks: pure rules.ts + read-only check.server.ts; portal items only from validatePortalRequirements; agents check only assigned listings. Why: deterministic, no AI, no writes.
