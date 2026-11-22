@@ -30,7 +30,7 @@ function ImmofluxImportsPage() {
             <TableCell className="whitespace-nowrap">{formatDateTime(j.createdAt)}</TableCell>
             <TableCell>{j.organizationName ?? "—"}</TableCell>
             <TableCell>{j.requestedByName ?? "—"}</TableCell>
-            <TableCell>{STATUS[j.status] ?? j.status}{j.status === "running" && j.lastPage ? ` (pagina ${j.nextPage}/${j.lastPage})` : ""}</TableCell>
+            <TableCell>{j.mode === "repair" ? "Completare · " : ""}{STATUS[j.status] ?? j.status}{j.status === "running" && j.lastPage ? ` (pagina ${j.nextPage}/${j.lastPage})` : ""}</TableCell>
             <TableCell className="text-right">{j.imported}</TableCell>
             <TableCell className="text-right">{j.existing}</TableCell>
             <TableCell className="text-right">{j.errors}</TableCell>

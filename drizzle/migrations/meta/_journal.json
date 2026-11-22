@@ -2248,6 +2248,20 @@
       "when": 1795360171214,
       "tag": "0320_immoflux_v2_page_signature",
       "breakpoints": true
+    },
+    {
+      "idx": 321,
+      "version": "7",
+      "when": 1795363411959,
+      "tag": "0321_immoflux_status_steps",
+      "breakpoints": true
+    },
+    {
+      "idx": 322,
+      "version": "7",
+      "when": 1795363415224,
+      "tag": "0322_immoflux_repair_mode",
+      "breakpoints": true
     }
   ]
 }

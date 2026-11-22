@@ -68,7 +68,7 @@ export function normalizeApiItem(raw: Record<string, unknown>, base?: string | n
 
 /** Lista nu are detaliile complete → se cere `GET /property/{id}`. */
 export function needsDetail(raw: Record<string, unknown>): boolean {
-  return !("images" in raw) || !("description" in raw) || !("category_id" in raw);
+  return !("images" in raw) || !("description" in raw) || !("category_id" in raw) || !("landlord" in raw) || !("private_notes" in raw);
 }
 
 export type ImmofluxPage = { items: Record<string, unknown>[]; lastPage: number | null; total: number | null; hasNext: boolean; signature: string };
@@ -130,7 +130,10 @@ export function buildInternalNotes(raw: Record<string, unknown>): string | null 
   if (code !== null && IMMOFLUX_STATUS_LABELS[code]) parts.push(`IMMOFLUX – status: ${IMMOFLUX_STATUS_LABELS[code]}${mapped ? ` (în Habitoo: ${HABITOO_STATUS_LABELS[mapped]})` : ""}`);
   for (const [key, label] of NOTE_SOURCES) {
     const v = raw[key];
-    const t = typeof v === "string" ? v.replace(/\r\n/g, "\n").trim() : "";
+    // Text simplu sau text pe limbi ({ ro, en, ... }): se ia româna, altfel prima variantă completată.
+    const loc = v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+    const text = typeof v === "string" ? v : loc ? [loc["ro"], ...Object.values(loc)].find((x) => typeof x === "string" && x.trim()) : null;
+    const t = typeof text === "string" ? text.replace(/\r\n/g, "\n").trim() : "";
     if (t) parts.push(`${label}:\n${t}`);
   }
   return parts.length ? parts.join("\n\n") : null;
@@ -203,6 +206,9 @@ export type ImportJob = {
   status_step?: number;
   /** Câte statusuri au dat eroare la citire. */
   status_failures?: number;
+  created_at?: string;
+  /** Setat când IMMOFLUX a răspuns 429: se reia la următoarea rulare, fără eroare. */
+  rate_limited?: boolean;
 };
 
 export type ReportEntry = { immofluxId: string | null; ref?: string | null; kind: "imported" | "error" | "agent" | "image" | "unmapped" | "status" | "owner" | "pagination"; message: string; propertyId?: string };
@@ -222,6 +228,8 @@ export type ImportDeps = {
   imageBase?: (organizationId: string) => Promise<string | null>;
   /** ID-urile IMMOFLUX existente deja în această agenție (inclusiv șterse). */
   existingIds: (organizationId: string, ids: string[]) => Promise<Set<string>>;
+  /** Dintre ID-uri, cele create chiar de acest job (reluare după întrerupere): ID IMMOFLUX → proprietate. */
+  createdByJob?: (job: ImportJob, ids: string[]) => Promise<Map<string, string>>;
   members: (organizationId: string) => Promise<{ id: string; email: string | null }[]>;
   fallbackAdmin: (organizationId: string) => Promise<string | null>;
   /** Contact existent în agenție după telefon normalizat. */
@@ -237,6 +245,9 @@ export type ImportDeps = {
 };
 
 export type StepOutcome = "page" | "done" | "stopped";
+
+/** IMMOFLUX limitează la 60 de cereri/minut (HTTP 429): anunțul se reia mai târziu, nu se trece ca eroare. */
+export const isRateLimited = (e: unknown) => e instanceof Error && /HTTP 429\b/.test(e.message);
 
 const MAX_REPORT = 2000;
 function push(job: ImportJob, e: ReportEntry) { if (job.report.length < MAX_REPORT) job.report.push(e); }
@@ -282,6 +293,7 @@ export async function runImportPage(job: ImportJob, deps: ImportDeps): Promise<S
   let body: unknown;
   try { body = await deps.fetchPage(org, job.next_page, status); }
   catch (e) {
+    if (isRateLimited(e)) { job.rate_limited = true; await deps.save(job); return "page"; }
     if (status === null) throw e; // rezerva a eșuat: jobul se oprește cu eroarea (mascată)
     job.status_failures = (job.status_failures ?? 0) + 1;
     push(job, { immofluxId: null, kind: "pagination", message: mask(`${label}: ${e instanceof Error ? e.message.replace(/^IMMOFLUX a răspuns cu /, "") : "eroare"}`).slice(0, 400) });
@@ -301,15 +313,27 @@ export async function runImportPage(job: ImportJob, deps: ImportDeps): Promise<S
   const agents = new Map(parseAgents(await deps.fetchAgents(org)).map((a) => [a.id, a]));
   const base = deps.imageBase ? await deps.imageBase(org) : null;
   const unmapped = new Set(job.unmapped_codes);
+  const createdHere = deps.createdByJob ? await deps.createdByJob(job, ids.filter((x) => existing.has(x))) : new Map<string, string>();
+  const counted = new Set(job.report.filter((e) => e.kind === "imported" && e.immofluxId).map((e) => e.immofluxId!));
 
-  for (let i = job.next_index; i < page.items.length; i += 1) {
+  let limited = false;
+  for (let i = job.next_index; i < page.items.length && !limited; i += 1) {
     if (deps.deadline?.()) { job.next_index = i; await deps.save(job); return "page"; }
     let raw = page.items[i]!;
     const id = raw["id"] === undefined || raw["id"] === null ? null : String(raw["id"]);
     const ref = typeof raw["ref"] === "string" || typeof raw["ref"] === "number" ? String(raw["ref"]) : null;
     try {
       if (!id) throw new Error("Anunț fără `id`.");
-      if (existing.has(id)) { job.existing_count += 1; continue; }
+      if (existing.has(id)) {
+        const own = createdHere.get(id);
+        if (!own) { job.existing_count += 1; continue; }
+        // Creată de acest job înainte de o întrerupere: se numără o singură dată ca importată, nu ca existentă.
+        if (!counted.has(id)) {
+          counted.add(id); job.imported_count += 1;
+          push(job, { immofluxId: id, ref, kind: "imported", propertyId: own, message: `Importat ca ciornă${statusLabel(raw)}.` });
+        }
+        continue;
+      }
       if (needsDetail(raw)) {
         const detail = unwrapDetail(await deps.fetchDetail(org, id));
         if (detail) raw = { ...raw, ...detail };
@@ -342,21 +366,27 @@ export async function runImportPage(job: ImportJob, deps: ImportDeps): Promise<S
         external_reference: ref,
         owner_contact_id: owner?.id ?? null,
       } as ImportRow);
-      existing.add(id);
+      existing.add(id); counted.add(id);
       job.imported_count += 1;
-      const habitoo = mapImmofluxStatus(raw["status"], raw["transaction_id"]);
-      if (habitoo) push(job, { immofluxId: id, ref, kind: "status", propertyId, message: `Status IMMOFLUX ${IMMOFLUX_STATUS_LABELS[num(raw["status"])!]} → ${habitoo}; importat ca ciornă.` });
-      if (!member) push(job, { immofluxId: id, ref, kind: "agent", propertyId, message: `Agent IMMOFLUX ${agent?.name ?? agentNameOf(raw) ?? email ?? "necunoscut"} negăsit în agenție: asignat administratorului.` });
+      push(job, { immofluxId: id, ref, kind: "imported", propertyId, message: `Importat ca ciornă${statusLabel(raw)}.` });
+      push(job, { immofluxId: id, ref, kind: "agent", propertyId, message: agentReport({ agentKey, agentFound: Boolean(agent), agentName: agent?.name ?? agentNameOf(raw), email, matched: Boolean(member) }) });
+      if (!owner) push(job, { immofluxId: id, ref, kind: "owner", propertyId, message: "Anunțul nu are proprietar în IMMOFLUX (nici `landlord`, nici `landlord_id`)." });
       try { if (mapped.images.length) await deps.enqueueImages(job, propertyId, mapped.images); }
       catch (e) { push(job, { immofluxId: id, ref, kind: "image", propertyId, message: mask(`Pozele nu au putut fi puse în coadă: ${e instanceof Error ? e.message : "eroare"}`) }); }
+      job.unmapped_codes = [...unmapped]; job.next_index = i + 1;
+      await deps.save(job); // după fiecare proprietate creată: o reluare nu o mai numără ca existentă
     } catch (e) {
-      job.error_count += 1;
-      push(job, { immofluxId: id, ref, kind: "error", message: mask(e instanceof Error ? e.message : "Eroare necunoscută.").slice(0, 300) });
+      if (isRateLimited(e)) limited = true;
+      else {
+        job.error_count += 1;
+        push(job, { immofluxId: id, ref, kind: "error", message: mask(e instanceof Error ? e.message : "Eroare necunoscută.").slice(0, 300) });
+      }
     } finally {
       job.unmapped_codes = [...unmapped];
-      job.next_index = i + 1;
+      job.next_index = limited ? i : i + 1;
     }
   }
+  if (limited) { job.rate_limited = true; await deps.save(job); return "page"; }
   if (!page.hasNext) return nextStatus(job, deps);
   job.page_signature = page.signature;
   job.next_page += 1;
@@ -367,4 +397,80 @@ export async function runImportPage(job: ImportJob, deps: ImportDeps): Promise<S
 
 export function finishMessage(job: Pick<ImportJob, "imported_count" | "existing_count" | "error_count">): string {
   return `${job.imported_count} importate, ${job.existing_count} deja existente, ${job.error_count} cu erori`;
+}
+
+function statusLabel(raw: Record<string, unknown>): string {
+  const code = num(raw["status"]);
+  const habitoo = mapImmofluxStatus(raw["status"], raw["transaction_id"]);
+  return code !== null && IMMOFLUX_STATUS_LABELS[code] ? ` (status IMMOFLUX ${IMMOFLUX_STATUS_LABELS[code]}${habitoo ? ` → ${habitoo}` : ""})` : "";
+}
+
+/** Rândul de raport pentru agent: emailul IMMOFLUX și motivul asignării. */
+export function agentReport(a: { agentKey: string | null; agentFound: boolean; agentName: string | null; email: string | null; matched: boolean }): string {
+  const who = `Agent IMMOFLUX ${a.agentName ?? (a.agentKey ? `#${a.agentKey}` : "necunoscut")}, email ${a.email ?? "—"}`;
+  if (a.matched) return `${who}: potrivit cu utilizatorul agenției.`;
+  if (a.agentKey && !a.agentFound && !a.email) return `${who}: agent negăsit în /agents; asignat administratorului.`;
+  if (!a.email) return `${who}: anunțul nu are agent cu email; asignat administratorului.`;
+  return `${who}: email negăsit printre utilizatorii activi ai agenției; asignat administratorului.`;
+}
+
+export type RepairTarget = { id: string; externalId: string; ref: string | null; ownerContactId: string | null; assignedTo: string | null; hasImages: boolean };
+export type RepairDeps = Pick<ImportDeps, "isEnabled" | "fetchDetail" | "fetchContact" | "imageBase" | "findContactByPhone" | "findContactByEmail" | "createContact" | "enqueueImages" | "save" | "mask" | "deadline"> & {
+  /** Proprietățile IMMOFLUX ale agenției jobului, în ordine stabilă. */
+  repairTargets: (organizationId: string, offset: number, limit: number) => Promise<RepairTarget[]>;
+  /** Leagă proprietarul doar dacă proprietatea nu are încă unul; nu atinge alte câmpuri. */
+  linkOwner: (organizationId: string, propertyId: string, contactId: string) => Promise<void>;
+};
+const REPAIR_BATCH = 20;
+
+/**
+ * „Completează pozele și proprietarii lipsă”: pune în coadă pozele pentru proprietățile fără nicio imagine
+ * și leagă proprietarul lipsă. `imported_count` = proprietăți completate, `existing_count` = deja complete.
+ */
+export async function runRepairPage(job: ImportJob, deps: RepairDeps): Promise<StepOutcome> {
+  const org = job.organization_id;
+  const mask = deps.mask ?? ((t: string) => t);
+  if (!(await deps.isEnabled(org))) return "stopped";
+  const targets = await deps.repairTargets(org, job.next_index, REPAIR_BATCH);
+  if (!targets.length) return "done";
+  const base = deps.imageBase ? await deps.imageBase(org) : null;
+  for (const t of targets) {
+    if (deps.deadline?.()) { await deps.save(job); return "page"; }
+    let limited = false;
+    try {
+      if (t.hasImages && t.ownerContactId) { job.existing_count += 1; continue; }
+      let raw = unwrapDetail(await deps.fetchDetail(org, t.externalId)) ?? {};
+      const done: string[] = [];
+      if (!t.hasImages) {
+        const images = (normalizeImages(raw["images"], base) ?? []).filter((i): i is { src: string; ordering: number } => Boolean(i.src) && /^https?:\/\//i.test(i.src!))
+          .sort((a, b) => a.ordering - b.ordering).map((i, n) => ({ source_url: i.src, ordering: n }));
+        if (images.length) { await deps.enqueueImages(job, t.id, images); done.push(`${images.length} poze în coadă`); }
+        else done.push("fără poze în IMMOFLUX");
+      }
+      if (!t.ownerContactId) {
+        let landlord = landlordFrom(raw["landlord"], raw["landlord_id"]);
+        const landlordId = raw["landlord_id"] === undefined || raw["landlord_id"] === null || raw["landlord_id"] === 0 ? null : String(raw["landlord_id"]);
+        if (!landlord && landlordId && deps.fetchContact) landlord = landlordFrom(unwrapDetail(await deps.fetchContact(org, landlordId)), landlordId);
+        if (landlord) {
+          const owner = await resolveOwner(job, deps as unknown as ImportDeps, landlord, t.assignedTo);
+          await deps.linkOwner(org, t.id, owner.id);
+          done.push(owner.created ? "proprietar creat și legat" : "proprietar existent legat");
+        } else done.push("fără proprietar în IMMOFLUX");
+      }
+      raw = {};
+      job.imported_count += 1;
+      push(job, { immofluxId: t.externalId, ref: t.ref, kind: "imported", propertyId: t.id, message: `Completat: ${done.join(", ")}.` });
+    } catch (e) {
+      if (isRateLimited(e)) limited = true;
+      else {
+        job.error_count += 1;
+        push(job, { immofluxId: t.externalId, ref: t.ref, kind: "error", propertyId: t.id, message: mask(e instanceof Error ? e.message : "Eroare necunoscută.").slice(0, 300) });
+      }
+    } finally {
+      if (!limited) job.next_index += 1;
+      await deps.save(job);
+    }
+    if (limited) { job.rate_limited = true; return "page"; }
+  }
+  return targets.length < REPAIR_BATCH ? "done" : "page";
 }

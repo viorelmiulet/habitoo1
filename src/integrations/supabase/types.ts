@@ -4636,6 +4636,7 @@ export type Database = {
           last_error: string | null
           last_page: number | null
           locked_until: string | null
+          mode: string
           next_index: number
           next_page: number
           organization_id: string
@@ -4660,6 +4661,7 @@ export type Database = {
           last_error?: string | null
           last_page?: number | null
           locked_until?: string | null
+          mode?: string
           next_index?: number
           next_page?: number
           organization_id: string
@@ -4684,6 +4686,7 @@ export type Database = {
           last_error?: string | null
           last_page?: number | null
           locked_until?: string | null
+          mode?: string
           next_index?: number
           next_page?: number
           organization_id?: string
