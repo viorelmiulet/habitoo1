@@ -1,0 +1,1 @@
+- IMMOFLUX API import (stage 2) runs as per-agency `immoflux_import_jobs` in the development-clone worker; first import only (dedupe by org+source+external_id, existing rows never touched, nothing sent back), drafts with no portal selections, images via `property_import_images`. Why: agency isolation and resumable background runs.

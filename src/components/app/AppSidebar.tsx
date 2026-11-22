@@ -166,6 +166,7 @@ export const superadminNav: NavGroup[] = [
       { label: "Portaluri API", to: "/superadmin/portaluri-api", icon: PlugZap },
       { label: "Setări portaluri", to: "/superadmin/setari-portaluri", icon: PlugZap },
       { label: "Jurnal portaluri", to: "/superadmin/portal-logs", icon: ScrollText },
+      { label: "Importuri IMMOFLUX", to: "/superadmin/importuri-immoflux", icon: ScrollText },
       { label: "Funcții AI", to: "/superadmin/ai-features", icon: Bot },
       { label: "Email", to: "/superadmin/mail", icon: Mail },
       { label: "Campanii email", to: "/superadmin/campanii-email", icon: Users },

@@ -88,6 +88,7 @@ import { Route as AuthenticatedSuperadminAiFeaturesRouteImport } from './routes/
 import { Route as AuthenticatedSuperadminAuditRouteImport } from './routes/_authenticated/superadmin.audit'
 import { Route as AuthenticatedSuperadminCereriAbonamentRouteImport } from './routes/_authenticated/superadmin.cereri-abonament'
 import { Route as AuthenticatedSuperadminDeletedRouteImport } from './routes/_authenticated/superadmin.deleted'
+import { Route as AuthenticatedSuperadminImporturiImmofluxRouteImport } from './routes/_authenticated/superadmin.importuri-immoflux'
 import { Route as AuthenticatedSuperadminMailRouteImport } from './routes/_authenticated/superadmin.mail'
 import { Route as AuthenticatedSuperadminMuzicaRouteImport } from './routes/_authenticated/superadmin.muzica'
 import { Route as AuthenticatedSuperadminNomenclatorRouteImport } from './routes/_authenticated/superadmin.nomenclator'
@@ -680,6 +681,12 @@ const AuthenticatedSuperadminDeletedRoute =
   AuthenticatedSuperadminDeletedRouteImport.update({
     id: '/deleted',
     path: '/deleted',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminImporturiImmofluxRoute =
+  AuthenticatedSuperadminImporturiImmofluxRouteImport.update({
+    id: '/importuri-immoflux',
+    path: '/importuri-immoflux',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
 const AuthenticatedSuperadminMailRoute =
@@ -1788,6 +1795,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/superadmin/cereri-abonament': typeof AuthenticatedSuperadminCereriAbonamentRoute
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
+  '/superadmin/importuri-immoflux': typeof AuthenticatedSuperadminImporturiImmofluxRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/muzica': typeof AuthenticatedSuperadminMuzicaRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -2041,6 +2049,7 @@ export interface FileRoutesByTo {
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/superadmin/cereri-abonament': typeof AuthenticatedSuperadminCereriAbonamentRoute
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
+  '/superadmin/importuri-immoflux': typeof AuthenticatedSuperadminImporturiImmofluxRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/muzica': typeof AuthenticatedSuperadminMuzicaRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -2300,6 +2309,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/_authenticated/superadmin/cereri-abonament': typeof AuthenticatedSuperadminCereriAbonamentRoute
   '/_authenticated/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
+  '/_authenticated/superadmin/importuri-immoflux': typeof AuthenticatedSuperadminImporturiImmofluxRoute
   '/_authenticated/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/_authenticated/superadmin/muzica': typeof AuthenticatedSuperadminMuzicaRoute
   '/_authenticated/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -2559,6 +2569,7 @@ export interface FileRouteTypes {
     | '/superadmin/audit'
     | '/superadmin/cereri-abonament'
     | '/superadmin/deleted'
+    | '/superadmin/importuri-immoflux'
     | '/superadmin/mail'
     | '/superadmin/muzica'
     | '/superadmin/nomenclator'
@@ -2812,6 +2823,7 @@ export interface FileRouteTypes {
     | '/superadmin/audit'
     | '/superadmin/cereri-abonament'
     | '/superadmin/deleted'
+    | '/superadmin/importuri-immoflux'
     | '/superadmin/mail'
     | '/superadmin/muzica'
     | '/superadmin/nomenclator'
@@ -3070,6 +3082,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/audit'
     | '/_authenticated/superadmin/cereri-abonament'
     | '/_authenticated/superadmin/deleted'
+    | '/_authenticated/superadmin/importuri-immoflux'
     | '/_authenticated/superadmin/mail'
     | '/_authenticated/superadmin/muzica'
     | '/_authenticated/superadmin/nomenclator'
@@ -3971,6 +3984,13 @@ declare module '@tanstack/react-router' {
       path: '/deleted'
       fullPath: '/superadmin/deleted'
       preLoaderRoute: typeof AuthenticatedSuperadminDeletedRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/importuri-immoflux': {
+      id: '/_authenticated/superadmin/importuri-immoflux'
+      path: '/importuri-immoflux'
+      fullPath: '/superadmin/importuri-immoflux'
+      preLoaderRoute: typeof AuthenticatedSuperadminImporturiImmofluxRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
     '/_authenticated/superadmin/mail': {
@@ -5342,6 +5362,7 @@ interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminAuditRoute: typeof AuthenticatedSuperadminAuditRoute
   AuthenticatedSuperadminCereriAbonamentRoute: typeof AuthenticatedSuperadminCereriAbonamentRoute
   AuthenticatedSuperadminDeletedRoute: typeof AuthenticatedSuperadminDeletedRoute
+  AuthenticatedSuperadminImporturiImmofluxRoute: typeof AuthenticatedSuperadminImporturiImmofluxRoute
   AuthenticatedSuperadminMailRoute: typeof AuthenticatedSuperadminMailRoute
   AuthenticatedSuperadminMuzicaRoute: typeof AuthenticatedSuperadminMuzicaRoute
   AuthenticatedSuperadminNomenclatorRoute: typeof AuthenticatedSuperadminNomenclatorRoute
@@ -5374,6 +5395,8 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
     AuthenticatedSuperadminCereriAbonamentRoute:
       AuthenticatedSuperadminCereriAbonamentRoute,
     AuthenticatedSuperadminDeletedRoute: AuthenticatedSuperadminDeletedRoute,
+    AuthenticatedSuperadminImporturiImmofluxRoute:
+      AuthenticatedSuperadminImporturiImmofluxRoute,
     AuthenticatedSuperadminMailRoute: AuthenticatedSuperadminMailRoute,
     AuthenticatedSuperadminMuzicaRoute: AuthenticatedSuperadminMuzicaRoute,
     AuthenticatedSuperadminNomenclatorRoute:

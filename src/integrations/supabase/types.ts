@@ -4624,6 +4624,87 @@ export type Database = {
           },
         ]
       }
+      immoflux_import_jobs: {
+        Row: {
+          created_at: string
+          error_count: number
+          existing_count: number
+          finished_at: string | null
+          id: string
+          image_job_id: string | null
+          imported_count: number
+          last_error: string | null
+          last_page: number | null
+          locked_until: string | null
+          next_index: number
+          next_page: number
+          organization_id: string
+          report: Json
+          requested_by: string
+          started_at: string | null
+          status: string
+          total: number | null
+          unmapped_codes: string[]
+        }
+        Insert: {
+          created_at?: string
+          error_count?: number
+          existing_count?: number
+          finished_at?: string | null
+          id?: string
+          image_job_id?: string | null
+          imported_count?: number
+          last_error?: string | null
+          last_page?: number | null
+          locked_until?: string | null
+          next_index?: number
+          next_page?: number
+          organization_id: string
+          report?: Json
+          requested_by: string
+          started_at?: string | null
+          status?: string
+          total?: number | null
+          unmapped_codes?: string[]
+        }
+        Update: {
+          created_at?: string
+          error_count?: number
+          existing_count?: number
+          finished_at?: string | null
+          id?: string
+          image_job_id?: string | null
+          imported_count?: number
+          last_error?: string | null
+          last_page?: number | null
+          locked_until?: string | null
+          next_index?: number
+          next_page?: number
+          organization_id?: string
+          report?: Json
+          requested_by?: string
+          started_at?: string | null
+          status?: string
+          total?: number | null
+          unmapped_codes?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "immoflux_import_jobs_image_job_id_fkey"
+            columns: ["image_job_id"]
+            isOneToOne: false
+            referencedRelation: "property_import_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "immoflux_import_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imo24_image_retries: {
         Row: {
           attempts: number
@@ -10972,6 +11053,7 @@ export type Database = {
           energy_class: string | null
           entry_door: string[]
           external_id: string | null
+          external_reference: string | null
           features: string[]
           finish_state: string | null
           flood_risk: boolean | null
@@ -11114,6 +11196,7 @@ export type Database = {
           energy_class?: string | null
           entry_door?: string[]
           external_id?: string | null
+          external_reference?: string | null
           features?: string[]
           finish_state?: string | null
           flood_risk?: boolean | null
@@ -11256,6 +11339,7 @@ export type Database = {
           energy_class?: string | null
           entry_door?: string[]
           external_id?: string | null
+          external_reference?: string | null
           features?: string[]
           finish_state?: string | null
           flood_risk?: boolean | null
@@ -15572,6 +15656,7 @@ export type Database = {
           energy_class: string | null
           entry_door: string[]
           external_id: string | null
+          external_reference: string | null
           features: string[]
           finish_state: string | null
           flood_risk: boolean | null

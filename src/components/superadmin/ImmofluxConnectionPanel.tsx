@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { DetailCard } from "./SuperadminUi";
 import { getImmofluxConnection, saveImmofluxConnection, testImmofluxConnection } from "@/lib/property-import/immoflux/connection.functions";
+import { startImmofluxImport } from "@/lib/property-import/immoflux/api-import.functions";
+import { Link } from "@tanstack/react-router";
 import { normalizeImmofluxHost, normalizeImmofluxSlug, type ImmofluxConnectionView } from "@/lib/property-import/immoflux/connection";
 
 export function ImmofluxConnectionPanel({ organizationId }: { organizationId: string }) {
@@ -29,9 +31,10 @@ function ConnectionForm({ config }: { config: ImmofluxConnectionView }) {
   const [message, setMessage] = useState("");
   const save = useServerFn(saveImmofluxConnection);
   const test = useServerFn(testImmofluxConnection);
+  const start = useServerFn(startImmofluxImport);
   const client = useQueryClient();
   const dirty = host !== config.host || slug !== config.slug || enabled !== config.enabled || apiKey !== "";
-  async function perform(action: "save" | "test") {
+  async function perform(action: "save" | "test" | "import") {
     if (busy) return;
     setBusy(true); setMessage("");
     try {
@@ -43,6 +46,9 @@ function ConnectionForm({ config }: { config: ImmofluxConnectionView }) {
         await client.invalidateQueries({ queryKey: ["superadmin", "immoflux", config.organizationId] });
         await client.invalidateQueries({ queryKey: ["superadmin", "agency", config.organizationId, "audit"] });
         setMessage("Configurarea a fost salvată.");
+      } else if (action === "import") {
+        await start({ data: { organizationId: config.organizationId } });
+        setMessage("Importul a pornit în fundal. Primești o notificare în clopoțel la final.");
       } else {
         const result = await test({ data: { organizationId: config.organizationId } });
         setMessage(result.message);
@@ -56,7 +62,8 @@ function ConnectionForm({ config }: { config: ImmofluxConnectionView }) {
     <div className="space-y-2"><Label htmlFor="immoflux-host">Host IMMOFLUX</Label><Input id="immoflux-host" value={host} onChange={(e) => setHost(e.target.value)} disabled={busy} autoComplete="off" /></div>
     <div className="space-y-2"><Label htmlFor="immoflux-slug">Slug</Label><Input id="immoflux-slug" value={slug} onChange={(e) => setSlug(e.target.value)} disabled={busy} autoComplete="off" /></div>
     <div className="space-y-2"><Label htmlFor="immoflux-key">Cheia API</Label><Input id="immoflux-key" type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} disabled={busy} autoComplete="new-password" />{config.configured ? <p className="text-xs text-muted-foreground">Cheie salvată</p> : null}</div>
-    <div className="flex flex-wrap gap-2"><Button type="submit" disabled={busy}>Salvează</Button><Button type="button" variant="outline" disabled={busy || dirty || !config.configured} onClick={() => void perform("test")}>Testează conexiunea</Button></div>
+    <div className="flex flex-wrap gap-2"><Button type="submit" disabled={busy}>Salvează</Button><Button type="button" variant="outline" disabled={busy || dirty || !config.configured} onClick={() => void perform("test")}>Testează conexiunea</Button><Button type="button" variant="secondary" disabled={busy || dirty || !config.configured || !config.enabled} onClick={() => void perform("import")}>Importă acum</Button></div>
+    <p className="text-xs text-muted-foreground">Anunțurile noi intră ca ciornă, fără portaluri; cele deja importate nu se modifică. <Link to="/superadmin/importuri-immoflux" className="underline">Istoricul importurilor</Link></p>
     {message ? <p role="status" className="text-sm text-foreground">{message}</p> : null}
   </form>;
 }

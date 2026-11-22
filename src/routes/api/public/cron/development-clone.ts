@@ -23,7 +23,10 @@ export const Route = createFileRoute("/api/public/cron/development-clone")({
         // Exporturile CSV mari folosesc aceeași pornire (nonce) și programare pe minut.
         const { runPropertyExportJobs } = await import("@/lib/property-export.server");
         const exports = await runPropertyExportJobs().catch(() => ({ exports: 0 }));
-        return Response.json({ ok: true, ...result, ...exports });
+        // Importurile IMMOFLUX (SuperAdmin) folosesc aceeași pornire și programare.
+        const { runImmofluxImportJobs } = await import("@/lib/property-import/immoflux/api-import.server");
+        const immoflux = await runImmofluxImportJobs().catch(() => ({ immofluxJobs: 0 }));
+        return Response.json({ ok: true, ...result, ...exports, ...immoflux });
       },
     },
   },
