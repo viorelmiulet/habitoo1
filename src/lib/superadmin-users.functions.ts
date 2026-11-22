@@ -37,6 +37,8 @@ export type PlatformUser = {
   job_title: string | null;
   avatar_url: string | null;
   is_active: boolean;
+  /** Profil public ascuns de SuperAdmin (fără pagină, listă, sitemap sau IndexNow). */
+  public_profile_hidden: boolean;
   created_at: string;
   organization_id: string | null;
   organization_name: string | null;
@@ -59,7 +61,7 @@ export const listPlatformUsers = createServerFn({ method: "POST" })
       supabaseAdmin
         .from("profiles")
         .select(
-          "id,full_name,email,phone,job_title,avatar_url,is_active,created_at,organization_id",
+          "id,full_name,email,phone,job_title,avatar_url,is_active,public_profile_hidden,created_at,organization_id",
         )
         .order("created_at", { ascending: false }),
       supabaseAdmin.from("user_roles").select("user_id,role"),
@@ -89,6 +91,7 @@ export const listPlatformUsers = createServerFn({ method: "POST" })
         job_title: p.job_title,
         avatar_url: p.avatar_url,
         is_active: p.is_active,
+        public_profile_hidden: Boolean(p.public_profile_hidden),
         created_at: p.created_at,
         organization_id: p.organization_id,
         organization_name: p.organization_id ? (orgById.get(p.organization_id) ?? null) : null,
@@ -262,6 +265,40 @@ export const setPlatformUserActive = createServerFn({ method: "POST" })
       created_by: actorId,
     });
 
+    return { ok: true };
+  });
+
+/** Ascunde / reafișează profilul public al unui agent. Doar superadmin, cu audit. */
+export const setPlatformUserPublicProfileHidden = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: unknown) =>
+    z.object({ userId: z.string().uuid(), hidden: z.boolean() }).parse(data),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const actorId = await assertSuperadmin(context as AuthContext);
+    await assertNoActiveImpersonation(actorId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: before } = await supabaseAdmin
+      .from("profiles")
+      .select("public_profile_hidden,organization_id")
+      .eq("id", data.userId)
+      .maybeSingle();
+    if (!before) throw new Error("Utilizatorul nu a fost găsit.");
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ public_profile_hidden: data.hidden })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_logs").insert({
+      organization_id: before.organization_id ?? null,
+      actor_id: actorId,
+      action: data.hidden ? "user.public_profile_hidden" : "user.public_profile_shown",
+      entity: "profiles",
+      entity_id: data.userId,
+      old_values: { public_profile_hidden: before.public_profile_hidden },
+      new_values: { public_profile_hidden: data.hidden },
+      created_by: actorId,
+    });
     return { ok: true };
   });
 

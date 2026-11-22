@@ -6,6 +6,7 @@ import { appHead } from "@/components/app/app-head";
 import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { PublicProfileHiddenToggle } from "@/components/superadmin/PublicProfileHiddenToggle";
 import { UserAdminActions } from "@/components/superadmin/UserAdminActions";
 import { BackLink, DetailCard, DetailNotFound, DetailRow } from "@/components/superadmin/SuperadminUi";
 import { listPlatformUsers, type PlatformUser } from "@/lib/superadmin-users.functions";
@@ -71,6 +72,7 @@ function UserDetail({ user, users, organizations }: { user: PlatformUser; users:
             <DetailRow label="Telefon">{user.phone}</DetailRow>
             <DetailRow label="Funcție">{user.job_title}</DetailRow>
           </dl>
+          <div className="border-t border-border pt-3"><PublicProfileHiddenToggle userId={user.id} hidden={user.public_profile_hidden} /></div>
         </DetailCard>
         <DetailCard title="Agenție și rol">
           <dl className="divide-y divide-border">

@@ -10570,6 +10570,7 @@ export type Database = {
           phone: string | null
           public_bio: string | null
           public_profile_enabled: boolean
+          public_profile_hidden: boolean
           public_show_phone: boolean
           public_slug: string | null
           updated_at: string
@@ -10589,6 +10590,7 @@ export type Database = {
           phone?: string | null
           public_bio?: string | null
           public_profile_enabled?: boolean
+          public_profile_hidden?: boolean
           public_show_phone?: boolean
           public_slug?: string | null
           updated_at?: string
@@ -10608,6 +10610,7 @@ export type Database = {
           phone?: string | null
           public_bio?: string | null
           public_profile_enabled?: boolean
+          public_profile_hidden?: boolean
           public_show_phone?: boolean
           public_slug?: string | null
           updated_at?: string
