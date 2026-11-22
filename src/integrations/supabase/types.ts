@@ -4583,6 +4583,47 @@ export type Database = {
         }
         Relationships: []
       }
+      immoflux_connections: {
+        Row: {
+          api_key_encrypted: string
+          credential_digest: string
+          enabled: boolean
+          host: string
+          organization_id: string
+          slug: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          api_key_encrypted: string
+          credential_digest: string
+          enabled?: boolean
+          host: string
+          organization_id: string
+          slug: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          api_key_encrypted?: string
+          credential_digest?: string
+          enabled?: boolean
+          host?: string
+          organization_id?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "immoflux_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imo24_image_retries: {
         Row: {
           attempts: number
@@ -15389,6 +15430,18 @@ export type Database = {
       ro_phone_key: { Args: { _raw: string }; Returns: string }
       save_contract_number_series: {
         Args: { _kind: string; _next_number: number; _series: string }
+        Returns: undefined
+      }
+      save_immoflux_connection: {
+        Args: {
+          _actor: string
+          _digest: string
+          _enabled: boolean
+          _encrypted: string
+          _host: string
+          _organization_id: string
+          _slug: string
+        }
         Returns: undefined
       }
       schedule_imo24_image_retry: {

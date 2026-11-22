@@ -1,4 +1,5 @@
 import { AiBonusCreditsEditor } from "@/components/app/ai/AiBonusCreditsEditor";
+import { ImmofluxConnectionPanel } from "@/components/superadmin/ImmofluxConnectionPanel";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -148,6 +149,8 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
             </ul>
           )}
         </DetailCard>
+
+        <ImmofluxConnectionPanel organizationId={org.id} />
 
         {(activity.data ?? []).length ? (
           <DetailCard title="Activitate recentă" className="xl:col-span-2">

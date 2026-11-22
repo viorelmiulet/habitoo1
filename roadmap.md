@@ -1,3 +1,8 @@
+## Import IMMOFLUX — configurare, etapa 1
+- [x] Import existent verificat: 216 proprietăți (162 external_id), 2.045 poze apcdn; configurare izolată și criptată exclusiv SuperAdmin, audit atomic și test conexiune
+- [x] 20 teste exclusiv noi; schema confirmată și build OK; acces real agency_admin redirecționat la /app. Fără importuri reale sau publicare; commit la încheiere
+- Verificarea formularului autentificat SuperAdmin și a conexiunii reale este indisponibilă: sesiunea disponibilă este administrator de agenție și nu s-a furnizat configurare IMMOFLUX. Cheia este indicată doar ca salvată, fără fragmente.
+
 ## Portaluri alese per ansamblu
 - [x] Selecții cu acces pe ansamblu și preluare inițială: 18 selecții, 0 bife existente omise, 0 joburi pornite
 - [x] Publicare, operații în fundal, copii/republicare și eligibilitate feed/Partner API; unitățile retrase manual sunt păstrate
