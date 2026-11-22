@@ -49,6 +49,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { deletePropertyImages } from "@/lib/property-images/bulk-delete.functions";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   MEDIA_BUCKET,
   compressImage,
@@ -87,6 +90,10 @@ export function PropertyMediaManager({
   const [signed, setSigned] = useState<Record<string, string>>({});
   const [cacheBust, setCacheBust] = useState<Record<string, number>>({});
   const [preview, setPreview] = useState<number | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const deleteImagesFn = useServerFn(deletePropertyImages);
 
   const queryKey = ["property-images", propertyId] as const;
 
@@ -185,6 +192,27 @@ export function PropertyMediaManager({
     onSuccess: () => {
       toast.success("Imagine ștearsă.");
       invalidate();
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  const toggleSelected = (imgId: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(imgId)) next.delete(imgId);
+      else next.add(imgId);
+      return next;
+    });
+
+  const removeSelected = useMutation({
+    mutationFn: (ids: string[]) => deleteImagesFn({ data: { propertyId, imageIds: ids } }),
+    onSuccess: (res) => {
+      toast.success(res.deleted === 1 ? "O fotografie ștearsă." : `${res.deleted} fotografii șterse.`);
+      if (res.fileWarning) toast.error(res.fileWarning);
+      setSelected(new Set());
+      setSelectMode(false);
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: ["property-publish-jobs"] });
     },
     onError: (e: Error) => toastError(e),
   });
@@ -311,6 +339,38 @@ export function PropertyMediaManager({
         </p>
       ) : null}
 
+      {images.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" className="h-10 rounded-[10px]" onClick={() => { setSelectMode((m) => !m); setSelected(new Set()); }}>
+            {selectMode ? "Renunță la selecție" : "Selectează"}
+          </Button>
+          {selectMode ? (
+            <>
+              <Button size="sm" variant="ghost" className="h-10" onClick={() => setSelected(selected.size === images.length ? new Set() : new Set(images.map((i) => i.id)))}>
+                {selected.size === images.length ? "Deselectează tot" : "Selectează tot"}
+              </Button>
+              <span className="text-sm text-muted-foreground">{selected.size} selectate</span>
+              <Button size="sm" variant="destructive" className="h-10 rounded-[10px]" disabled={selected.size === 0 || removeSelected.isPending} onClick={() => setConfirmBulk(true)}>
+                <Trash2 className="size-4" /> Șterge selectate ({selected.size})
+              </Button>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+
+      <AlertDialog open={confirmBulk} onOpenChange={setConfirmBulk}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ștergi {selected.size} fotografii?</AlertDialogTitle>
+            <AlertDialogDescription>Acțiunea nu poate fi anulată.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anulează</AlertDialogCancel>
+            <AlertDialogAction onClick={() => removeSelected.mutate([...selected])}>Șterge</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {isLoading ? (
         <p className="text-center text-sm text-muted-foreground">Se încarcă imaginile…</p>
       ) : images.length === 0 ? (
@@ -334,7 +394,7 @@ export function PropertyMediaManager({
                     key={img.id}
                     id={img.id}
                     className={`group relative overflow-hidden rounded-[10px] border bg-card p-0 transition-shadow hover:shadow-soft ${
-                      isFirst ? "border-gold ring-1 ring-gold" : "border-border"
+                      selected.has(img.id) ? "border-destructive ring-2 ring-destructive" : isFirst ? "border-gold ring-1 ring-gold" : "border-border"
                     }`}
                   >
                     {(handle) => (
@@ -342,7 +402,7 @@ export function PropertyMediaManager({
                         <button
                           type="button"
                           className="block aspect-square w-full bg-muted"
-                          onClick={() => setPreview(idx)}
+                          onClick={() => (selectMode ? toggleSelected(img.id) : setPreview(idx))}
                         >
                           {url ? (
                             <img src={url} alt="" className="size-full object-cover" />
@@ -352,6 +412,13 @@ export function PropertyMediaManager({
                             </div>
                           )}
                         </button>
+                        <label className="absolute top-10 left-2 flex size-8 cursor-pointer items-center justify-center rounded-md bg-card/90 shadow-soft">
+                          <Checkbox
+                            checked={selected.has(img.id)}
+                            onCheckedChange={() => { setSelectMode(true); toggleSelected(img.id); }}
+                            aria-label={`Selectează fotografia ${idx + 1}`}
+                          />
+                        </label>
                         <span className="absolute top-2 left-2 rounded-full bg-navy px-2.5 py-0.5 font-mono text-[11px] font-bold text-gold">
                           {String(idx + 1).padStart(2, "0")}{isFirst ? " · COPERTĂ" : ""}
                         </span>

@@ -2262,6 +2262,13 @@
       "when": 1795363415224,
       "tag": "0322_immoflux_repair_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 323,
+      "version": "7",
+      "when": 1795381663442,
+      "tag": "0323_bulk_delete_property_images",
+      "breakpoints": true
     }
   ]
 }

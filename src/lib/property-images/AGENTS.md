@@ -1,0 +1,1 @@
+- Bulk photo deletion goes only through RPC delete_property_images (caller rights, all-or-nothing ownership, renumber, primary sync, audit); the server fn then removes files and enqueues published-pair updates via enqueueContactUpdates. Why: one atomic, audited path.

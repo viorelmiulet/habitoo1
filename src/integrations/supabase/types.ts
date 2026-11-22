@@ -14678,6 +14678,10 @@ export type Database = {
       delete_development: { Args: { _id: string }; Returns: undefined }
       delete_lead: { Args: { _id: string }; Returns: string }
       delete_property: { Args: { _id: string }; Returns: string }
+      delete_property_images: {
+        Args: { _image_ids: string[]; _property: string }
+        Returns: string[]
+      }
       development_clone_job_advance: {
         Args: {
           _index: number
