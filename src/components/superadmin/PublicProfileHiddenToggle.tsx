@@ -21,7 +21,7 @@ export function PublicProfileHiddenToggle({ userId, hidden }: { userId: string; 
     <label className="flex items-center justify-between gap-3">
       <span className="text-sm">
         <span className="font-medium text-foreground">Ascunde profilul public</span>
-        <span className="block text-xs text-muted-foreground">Fără pagină, listă sau sitemap; pe oferte apare agenția.</span>
+        <span className="block text-xs text-muted-foreground">Numele și poza agentului nu apar pe site; pe oferte apare agenția.</span>
       </span>
       <Switch checked={hidden} disabled={run.isPending} onCheckedChange={(v) => run.mutate(v)} aria-label="Ascunde profilul public" />
     </label>

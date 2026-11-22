@@ -23,7 +23,7 @@ export const Route = createFileRoute("/agentii/$slug")({
     return publicHead({
       path: agencyPath(agency.slug),
       title: `${agency.name}${where} — oferte imobiliare | Habitoo`,
-      description: agency.description?.slice(0, 160) ?? `Ofertele imobiliare și agenții agenției ${agency.name}${where}.`,
+      description: agency.description?.slice(0, 160) ?? `Ofertele imobiliare ale agenției ${agency.name}${where}.`,
       noindex: !agencyIndexable(agency) || offers.page > 1,
       jsonLd: agencyJsonLd(agency, offers.items, (offers.page - 1) * PROFILE_OFFERS_PAGE_SIZE),
     });
@@ -49,7 +49,7 @@ export const Route = createFileRoute("/agentii/$slug")({
 });
 
 function AgencyProfilePage() {
-  const { agency, agents, offers } = Route.useLoaderData();
+  const { agency, offers } = Route.useLoaderData();
   return (
     <PublicLayout homeHeader footerDescription={FOOTER}>
       <section className="mk-page-hero border-b">
@@ -74,26 +74,6 @@ function AgencyProfilePage() {
       </section>
       <section className="mx-auto w-full max-w-7xl space-y-12 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         {agency.description ? <p className="max-w-3xl whitespace-pre-line text-lg leading-relaxed text-muted-foreground">{agency.description}</p> : null}
-        {agents.length ? (
-          <div className="space-y-5">
-            <h2 className="font-display text-2xl font-semibold text-navy">Agenți</h2>
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {agents.map((a) => (
-                <li key={a.slug}>
-                  <Link to="/agentii/$slug/$agent" params={{ slug: agency.slug, agent: a.slug }} className="flex items-center gap-3 rounded-[22px] border border-border bg-card p-4 shadow-soft">
-                    {a.avatarUrl ? <img src={a.avatarUrl} alt={a.fullName} className="size-11 rounded-full object-cover" loading="lazy" /> : (
-                      <span className="flex size-11 shrink-0 items-center justify-center rounded-full ds-plate-initials text-sm font-semibold" aria-hidden>{partnerInitials(a.fullName)}</span>
-                    )}
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-navy">{a.fullName}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{a.jobTitle ?? `${a.offerCount} ${a.offerCount === 1 ? "ofertă" : "oferte"}`}</span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
         <div className="space-y-5">
           <h2 className="font-display text-2xl font-semibold text-navy">Oferte ({offers.total})</h2>
           <ProfileOfferList offers={offers} pageHref={(p) => `${agencyPath(agency.slug)}${p > 1 ? `?pagina=${p}` : ""}`} />

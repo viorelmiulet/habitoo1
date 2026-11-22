@@ -41,6 +41,17 @@ export type PublicOffer = {
   indexable: boolean;
   /** Absolute canonical URL (an eligible original for development copies). */
   canonicalUrl: string | null;
+  /** Responsible agent card: agent fields are null when hidden, inactive or unassigned. Never carries the agent's email. */
+  agent: PublicOfferAgent;
+};
+
+export type PublicOfferAgent = {
+  agencySlug: string | null;
+  fullName: string | null;
+  avatarUrl: string | null;
+  /** Agent's phone only when made public, otherwise the agency's public phone. */
+  phone: string | null;
+  phoneIsAgent: boolean;
 };
 
 export const getPublicOffer = createServerFn({ method: "GET" })
@@ -60,7 +71,7 @@ export const getPublicOffer = createServerFn({ method: "GET" })
     const property = rows?.[0];
     if (!property) return null;
 
-    const [images, org] = await Promise.all([
+    const [images, org, agentRes] = await Promise.all([
       supabaseAdmin
         .from("property_images")
         .select("id, alt, is_primary, position, width, height")
@@ -75,6 +86,7 @@ export const getPublicOffer = createServerFn({ method: "GET" })
         )
         .eq("id", property.organization_id)
         .maybeSingle(),
+      supabaseAdmin.rpc("public_offer_agent", { _property_id: property.id }),
     ]);
 
     const eligibility = (row: { publish_status: string; status: string; deleted_at: string | null; archived_at: string | null; public_slug: string | null }, hidden: boolean): OfferEligibility =>
@@ -95,6 +107,16 @@ export const getPublicOffer = createServerFn({ method: "GET" })
         .createSignedUrl(org.data.logo_path, 7 * 24 * 3600);
       logoUrl = signed.data?.signedUrl ?? null;
     }
+
+    const branding = brandingFromOrg(org.data, logoUrl);
+    const a = (agentRes.data ?? [])[0];
+    const agent: PublicOfferAgent = {
+      agencySlug: a?.agency_slug ?? null,
+      fullName: a?.full_name ?? null,
+      avatarUrl: a?.full_name && a.has_avatar && a.agency_slug && a.agent_slug ? `/api/public/agent-avatar/${a.agency_slug}/${a.agent_slug}` : null,
+      phone: (a?.full_name ? a.phone : null) ?? branding.phone,
+      phoneIsAgent: Boolean(a?.full_name && a.phone),
+    };
 
     return {
       id: property.id,
@@ -122,10 +144,11 @@ export const getPublicOffer = createServerFn({ method: "GET" })
         .sort((a, b) => (a.is_primary === b.is_primary ? 0 : a.is_primary ? -1 : 1))
         .map((img) => ({ id: img.id, alt: img.alt, isPrimary: Boolean(img.is_primary), width: img.width ?? null, height: img.height ?? null })),
       agencyName: org.data?.name ?? null,
-      branding: brandingFromOrg(org.data, logoUrl),
+      branding,
       updatedAt: property.updated_at,
       slug: property.public_slug,
       indexable,
       canonicalUrl,
+      agent,
     };
   });

@@ -15266,6 +15266,16 @@ export type Database = {
       }
       public_llms_statistics: { Args: never; Returns: Json }
       public_neutral_offer: { Args: { _code: string }; Returns: Json }
+      public_offer_agent: {
+        Args: { _property_id: string }
+        Returns: {
+          agency_slug: string
+          agent_slug: string
+          full_name: string
+          has_avatar: boolean
+          phone: string
+        }[]
+      }
       public_offer_listable: { Args: { _id: string }; Returns: boolean }
       public_offer_sitemap: {
         Args: { _limit?: number; _offset?: number }

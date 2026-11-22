@@ -1,4 +1,4 @@
-/** Browser-safe SEO helpers for public agency (/agentii/{slug}) and agent (/agentii/{slug}/{agent}) pages. Slugs mirror the database generators. */
+/** Browser-safe SEO helpers for public agency (/agentii/{slug}) pages; former agent pages redirect to the agency. Slugs mirror the database generators. */
 import { OFFER_SITE, offerAbsoluteUrl, slugPart } from "./offer-seo";
 
 export const PROFILE_OFFERS_PAGE_SIZE = 24;
@@ -23,7 +23,6 @@ export function agentSlug(name: string, takenInAgency: Set<string>): string {
 }
 
 export function agencyIndexable(a: { currentAccess: boolean; offerCount: number }) { return a.currentAccess && a.offerCount > 0; }
-export function agentIndexable(a: { isActive: boolean; agencyCurrentAccess: boolean; offerCount: number }) { return a.isActive && a.agencyCurrentAccess && a.offerCount > 0; }
 
 /** Lists each offer once: copies are dropped when their original is also present. */
 export function dedupeOffers<T extends { slug: string; originalSlug?: string | null }>(rows: T[]): T[] {
@@ -52,17 +51,6 @@ export function agencyJsonLd(a: { name: string; slug: string; description: strin
     crumbs(agencyCrumbs(a.name, a.slug)),
   ];
 }
-export function agentJsonLd(agency: { name: string; slug: string }, agent: { fullName: string; slug: string; jobTitle: string | null; phone: string | null; imageUrl: string | null }, offers: { slug: string; title: string }[], offset = 0): Ld[] {
-  const url = profileUrl(agentPath(agency.slug, agent.slug));
-  return [
-    { "@type": "Person", "@id": `${url}#person`, name: agent.fullName, url, ...(agent.jobTitle ? { jobTitle: agent.jobTitle } : {}), ...(agent.phone ? { telephone: agent.phone } : {}),
-      ...(agent.imageUrl ? { image: `${OFFER_SITE}${agent.imageUrl}` } : {}),
-      worksFor: { "@type": "RealEstateAgent", "@id": `${profileUrl(agencyPath(agency.slug))}#agency`, name: agency.name, url: profileUrl(agencyPath(agency.slug)) } },
-    itemList(url, offers, offset),
-    crumbs([...agencyCrumbs(agency.name, agency.slug), { name: agent.fullName, url }]),
-  ];
-}
-
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 export const AGENCY_SITEMAP_URL = `${OFFER_SITE}/sitemap-agentii.xml`;
 export function buildAgencySitemapXml(rows: { path: string; lastmod: string | null }[]) {

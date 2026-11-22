@@ -32,6 +32,7 @@ beforeAll(async () => {
     insert into profiles(id,organization_id,full_name,public_slug,avatar_url) values('${HID}','${ORG}','Viorel M','viorel-m','a.jpg'),('${VIS}','${ORG}','Ana Pop','ana-pop','b.jpg');
     insert into user_roles values('${SA}','superadmin');`);
   await db.exec(readFileSync("drizzle/migrations/0316_agent_public_profile_hidden.sql", "utf8").replace(/--> statement-breakpoint/g, ""));
+  await db.exec(readFileSync("drizzle/migrations/0317_agency_profiles_without_agents.sql", "utf8").replace(/--> statement-breakpoint/g, "").replace(/GRANT EXECUTE[^;]*;/g, ""));
   await db.exec(`create trigger t_profiles after insert or update on properties for each row execute function properties_indexnow_profiles();
     insert into properties(id,organization_id,assigned_to,public_slug,publish_status,status) values
       ('${P1}','${ORG}','${HID}','apartament-1','published','active'),('${P2}','${ORG}','${VIS}','apartament-2','published','active');
@@ -50,11 +51,10 @@ describe("profil public ascuns", () => {
     const list = await rows<{ slug: string }>(`select slug from public_agency_agent_list('expert')`);
     expect(list.map(r => r.slug)).toEqual(["ana-pop"]);
   });
-  it("lipsește din sitemap, dar agenția rămâne", async () => {
+  it("sitemap-ul are doar agenția, fără pagini de agent", async () => {
     const paths = (await rows<{ path: string }>(`select path from public_agency_sitemap()`)).map(r => r.path);
     expect(paths).toContain("/agentii/expert");
-    expect(paths).toContain("/agentii/expert/ana-pop");
-    expect(paths).not.toContain("/agentii/expert/viorel-m");
+    expect(paths).toEqual(["/agentii/expert"]);
   });
   it("poza nu mai e servită public", async () => {
     expect((await rows<{ p: string | null }>(`select public_agent_avatar_path('expert','viorel-m') p`))[0]?.p).toBeNull();
@@ -82,12 +82,27 @@ describe("profil public ascuns", () => {
   });
 });
 
-describe("pagina publică a ofertei", () => {
-  it("afișează agenția, nu numele sau poza agentului", () => {
-    const fn = readFileSync("src/lib/public-offer.functions.ts", "utf8");
-    const page = readFileSync("src/routes/oferta.$id.tsx", "utf8");
-    expect(fn).not.toMatch(/assigned_to|from\("profiles"\)/);
-    expect(page).not.toMatch(/assigned_to|fullName|full_name|agentAvatar/);
-    expect(page).toContain("branding.agencyName");
+describe("agentul pe pagina ofertei", () => {
+  it("agent vizibil: nume, poză și telefon doar dacă e public", async () => {
+    let r = (await rows<{ full_name: string | null; phone: string | null; has_avatar: boolean; agency_slug: string }>(`select * from public_offer_agent('${P2}')`))[0]!;
+    expect(r).toMatchObject({ full_name: "Ana Pop", phone: null, has_avatar: true, agency_slug: "expert" });
+    await db.exec(`update profiles set phone='0722 000 000', public_show_phone=true where id='${VIS}'`);
+    r = (await rows<typeof r>(`select * from public_offer_agent('${P2}')`))[0]!;
+    expect(r.phone).toBe("0722 000 000");
+    expect(Object.keys(r)).not.toContain("email");
+  });
+  it("agent ascuns sau inactiv: doar agenția", async () => {
+    const r = (await rows<{ full_name: string | null; agent_slug: string | null; has_avatar: boolean; agency_slug: string }>(`select * from public_offer_agent('${P1}')`))[0]!;
+    expect(r).toMatchObject({ full_name: null, agent_slug: null, has_avatar: false, agency_slug: "expert" });
+    await db.exec(`update profiles set is_active=false where id='${VIS}'`);
+    expect((await rows<{ full_name: string | null }>(`select full_name from public_offer_agent('${P2}')`))[0]!.full_name).toBeNull();
+    expect((await rows<{ p: string | null }>(`select public_agent_avatar_path('expert','ana-pop') p`))[0]?.p).toBeNull();
+    await db.exec(`update profiles set is_active=true where id='${VIS}'`);
+  });
+  it("coada IndexNow nu mai primește adrese de agent", async () => {
+    await db.exec(`update properties set status='negotiation' where id='${P2}'`);
+    const urls = (await rows<{ url: string }>(`select url from seo_indexnow_offer_queue`)).map(r => r.url);
+    expect(urls).toContain("https://www.habitoo.ro/agentii/expert");
+    expect(urls.some(u => /\/agentii\/[^/]+\/[^/]+$/.test(u))).toBe(false);
   });
 });

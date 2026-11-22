@@ -13,6 +13,7 @@ import { isUuid, offerJsonLd } from "@/lib/marketing/offer-seo";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PhotoViewer } from "@/components/app/PhotoViewer";
+import { OfferAgentCard } from "@/components/marketing/OfferAgentCard";
 
 export const Route = createFileRoute("/oferta/$id")({
   loader: async ({ params }) => {
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/oferta/$id")({
     // Only eligible offers are indexed; others stay reachable but noindex.
     const og = offerOgMeta(offer);
     const path = `/oferta/${offer.slug ?? offer.id}`;
-    const jsonLd = offer.slug ? offerJsonLd({ ...offer, slug: offer.slug, image: offer.images[0] ? og.image : null }) : undefined;
+    const jsonLd = offer.slug ? offerJsonLd({ ...offer, slug: offer.slug, agent: offer.agent, image: offer.images[0] ? og.image : null }) : undefined;
     const head = publicHead({ path, title, description, ogDescription: og.description, noindex: !offer.indexable, jsonLd });
     if (offer.canonicalUrl) head.links = head.links.map((l) => (l.rel === "canonical" ? { ...l, href: offer.canonicalUrl! } : l));
     const replaced: Record<string, string | null> = {
@@ -191,6 +192,8 @@ function OfferPage() {
               ) : null}
             </div>
           ) : null}
+
+          <OfferAgentCard agent={offer.agent} agencyName={branding.agencyName} agencyLogoUrl={branding.logoUrl} agencyContacts={contacts} />
 
           <footer className="space-y-1 border-t border-border pt-4 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">{branding.agencyName}</p>

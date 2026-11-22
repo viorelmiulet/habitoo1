@@ -40,9 +40,19 @@ export function offerCanonicalUrl(ownSlug: string, original: OfferEligibility | 
   return original && isOfferIndexable(original) ? offerAbsoluteUrl(original.slug!) : offerAbsoluteUrl(ownSlug);
 }
 
-type LdOffer = { slug: string; title: string; description: string | null; price: number | null; currency: string; transactionKind: string; city: string | null; county: string | null; district: string | null; agencyName: string | null; image: string | null; updatedAt: string };
+type LdOffer = { slug: string; title: string; description: string | null; price: number | null; currency: string; transactionKind: string; city: string | null; county: string | null; district: string | null; agencyName: string | null; image: string | null; updatedAt: string;
+  agent?: { agencySlug: string | null; fullName: string | null; avatarUrl: string | null; phone: string | null; phoneIsAgent?: boolean } };
 export function offerJsonLd(o: LdOffer) {
   const url = offerAbsoluteUrl(o.slug);
+  const agencyUrl = o.agent?.agencySlug ? `${OFFER_SITE}/agentii/${o.agent.agencySlug}` : null;
+  const agencyId = agencyUrl ? `${agencyUrl}#agency` : `${url}#agency`;
+  const agency = o.agencyName ? { "@type": "RealEstateAgent", "@id": agencyId, name: o.agencyName, ...(agencyUrl ? { url: agencyUrl } : {}) } : null;
+  const person = agency && o.agent?.fullName ? {
+    "@type": "Person", "@id": `${url}#agent`, name: o.agent.fullName,
+    ...(o.agent.avatarUrl ? { image: `${OFFER_SITE}${o.agent.avatarUrl}` } : {}), ...(o.agent.phone && o.agent.phoneIsAgent ? { telephone: o.agent.phone } : {}),
+    worksFor: { "@id": agencyId },
+  } : null;
+  const offeredBy = person ? person["@id"] : agency ? agencyId : null;
   const listing: Record<string, unknown> = {
     "@type": "RealEstateListing", "@id": `${url}#listing`, url, name: o.title, inLanguage: "ro", dateModified: o.updatedAt,
     ...(o.description ? { description: o.description.slice(0, 500) } : {}), ...(o.image ? { image: o.image } : {}),
@@ -50,7 +60,7 @@ export function offerJsonLd(o: LdOffer) {
     offers: {
       "@type": "Offer", "@id": `${url}#offer`, url, businessFunction: o.transactionKind === "rent" ? "http://purl.org/goodrelations/v1#LeaseOut" : "http://purl.org/goodrelations/v1#Sell",
       availability: "https://schema.org/InStock", ...(o.price ? { price: o.price, priceCurrency: o.currency } : {}),
-      ...(o.agencyName ? { offeredBy: { "@type": "RealEstateAgent", name: o.agencyName } } : {}),
+      ...(offeredBy ? { offeredBy: { "@id": offeredBy } } : {}),
     },
   };
   const breadcrumb = { "@type": "BreadcrumbList", "@id": `${url}#breadcrumb`, itemListElement: [
@@ -58,7 +68,7 @@ export function offerJsonLd(o: LdOffer) {
     ...(o.city ? [{ "@type": "ListItem", position: 2, name: o.city }] : []),
     { "@type": "ListItem", position: o.city ? 3 : 2, name: o.title, item: url },
   ] };
-  return [listing, breadcrumb];
+  return [listing, ...(agency ? [agency] : []), ...(person ? [person] : []), breadcrumb];
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

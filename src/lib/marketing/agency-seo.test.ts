@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
-import { agencySlug, agentSlug, agencyIndexable, agentIndexable, agencyJsonLd, agentJsonLd, buildAgencySitemapXml, dedupeOffers } from "./agency-seo";
+import { agencySlug, agentSlug, agencyIndexable, agencyJsonLd, buildAgencySitemapXml, dedupeOffers } from "./agency-seo";
 import { publicGraphJsonLd } from "@/components/marketing/structured-data";
 
 describe("slug-uri profil", () => {
@@ -20,8 +20,6 @@ describe("indexare", () => {
     expect(agencyIndexable({ currentAccess: true, offerCount: 3 })).toBe(true);
     expect(agencyIndexable({ currentAccess: false, offerCount: 3 })).toBe(false);
     expect(agencyIndexable({ currentAccess: true, offerCount: 0 })).toBe(false);
-    expect(agentIndexable({ isActive: false, agencyCurrentAccess: true, offerCount: 2 })).toBe(false);
-    expect(agentIndexable({ isActive: true, agencyCurrentAccess: true, offerCount: 0 })).toBe(false);
   });
   it("copia nu apare lângă original", () => {
     expect(dedupeOffers([{ slug: "orig" }, { slug: "copie", originalSlug: "orig" }]).map(o => o.slug)).toEqual(["orig"]);
@@ -29,19 +27,20 @@ describe("indexare", () => {
 });
 
 describe("JSON-LD plat", () => {
-  it("RealEstateAgent, Person cu worksFor, ItemList, BreadcrumbList", () => {
+  it("RealEstateAgent, ItemList, BreadcrumbList, fără agenți", () => {
     const a = { name: "MG", slug: "mg", description: null, logoUrl: null, city: "București", phone: null, email: null, website: null };
-    const g = publicGraphJsonLd([...agencyJsonLd(a, [{ slug: "o1", title: "Ap" }]), ...agentJsonLd(a, { fullName: "Ion", slug: "ion", jobTitle: null, phone: null, imageUrl: null }, [])])["@graph"] as Record<string, unknown>[];
+    const g = publicGraphJsonLd([...agencyJsonLd(a, [{ slug: "o1", title: "Ap" }])])["@graph"] as Record<string, unknown>[];
     for (const n of g) { expect(Array.isArray(n)).toBe(false); expect(n["@type"]).toBeTruthy(); }
     const types = g.map(n => n["@type"]);
-    expect(types).toEqual(expect.arrayContaining(["RealEstateAgent", "Person", "ItemList", "BreadcrumbList"]));
-    expect((g.find(n => n["@type"] === "Person")!["worksFor"] as Record<string, unknown>)["url"]).toBe("https://www.habitoo.ro/agentii/mg");
+    expect(types).toEqual(expect.arrayContaining(["RealEstateAgent", "ItemList", "BreadcrumbList"]));
+    expect(types).not.toContain("Person");
+    expect(JSON.stringify(g)).not.toMatch(/employee|"Person"/);
   });
 });
 
 describe("sitemap-agentii.xml", () => {
   it("URL absolut și lastmod", () => {
-    expect(buildAgencySitemapXml([{ path: "/agentii/mg/ion", lastmod: "2026-11-01T10:00:00Z" }])).toContain("<loc>https://www.habitoo.ro/agentii/mg/ion</loc><lastmod>2026-11-01T10:00:00.000Z</lastmod>");
+    expect(buildAgencySitemapXml([{ path: "/agentii/mg", lastmod: "2026-11-01T10:00:00Z" }])).toContain("<loc>https://www.habitoo.ro/agentii/mg</loc><lastmod>2026-11-01T10:00:00.000Z</lastmod>");
   });
 });
 
