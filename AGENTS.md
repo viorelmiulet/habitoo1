@@ -23,7 +23,6 @@
 - `HomeHeader` only on homepage/blog; else `PublicHeader`. Why: isolate overlay.
 - Public photos share PublicPhotoHeading and a leaf asset registry; publicHead defaults elsewhere. Why: consistent previews.
 - Public agency list/logo/profile share eligibility; RPC ordering is preserved without exposing status. All visible agencies have profiles; agent phones need opt-in and access. Why: inactive visibility must not expose contact or alter private access.
-- Public agency pages list only offers (no agents); former agent URLs 301 to the agency and are absent from sitemap/IndexNow; the responsible agent appears only on offer pages via `public_offer_agent` (hidden/inactive → agency only, never email). Why: one public place per agent identity.
 - Social posters share a dialog-scoped decoded-image pool for thumbnails/PNG; styles/templates persist locally and latest blob stays in memory. Why: avoid duplicate downloads and use the same poster at every destination.
 
 - Superadmin mail replies use a single nonmodal MailReplyWindow and the unchanged replyMail contract, with a stable draft send key and synchronous in-flight lock. Why: preserve draft state and prevent duplicate submissions without changing server behavior.
