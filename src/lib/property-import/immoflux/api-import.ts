@@ -199,6 +199,10 @@ export type ImportJob = {
   unmapped_codes: string[];
   report: ReportEntry[];
   page_signature?: string | null;
+  /** 0–4 = statusurile 1–5 (`filter_status__eq`), 5 = rezerva fără filtru. */
+  status_step?: number;
+  /** Câte statusuri au dat eroare la citire. */
+  status_failures?: number;
 };
 
 export type ReportEntry = { immofluxId: string | null; ref?: string | null; kind: "imported" | "error" | "agent" | "image" | "unmapped" | "status" | "owner" | "pagination"; message: string; propertyId?: string };
@@ -207,7 +211,8 @@ export type ImportRow = ImmofluxPropertyRow & { status: "draft"; publish_status:
 
 export type ImportDeps = {
   isEnabled: (organizationId: string) => Promise<boolean>;
-  fetchPage: (organizationId: string, page: number) => Promise<unknown>;
+  /** `status` 1–5 → `filter_status__eq`; `null` → fără filtru de status. */
+  fetchPage: (organizationId: string, page: number, status: number | null) => Promise<unknown>;
   fetchDetail: (organizationId: string, id: string) => Promise<unknown>;
   /** `GET /agents` al agenției jobului. */
   fetchAgents: (organizationId: string) => Promise<unknown>;
@@ -245,6 +250,23 @@ export async function resolveOwner(job: ImportJob, deps: ImportDeps, landlord: L
   return { id: await deps.createContact(job, landlord, assignedTo), created: true };
 }
 
+/** Statusurile IMMOFLUX citite pe rând; după ele urmează rezerva fără filtru doar dacă toate au eșuat. */
+export const IMMOFLUX_STATUS_STEPS = [1, 2, 3, 4, 5] as const;
+
+/** Trece la statusul următor (pagina 1) sau încheie importul. */
+async function nextStatus(job: ImportJob, deps: ImportDeps): Promise<StepOutcome> {
+  const step = job.status_step ?? 0;
+  job.next_page = 1; job.next_index = 0; job.page_signature = null;
+  if (step < IMMOFLUX_STATUS_STEPS.length - 1) { job.status_step = step + 1; await deps.save(job); return "page"; }
+  if (step === IMMOFLUX_STATUS_STEPS.length - 1 && (job.status_failures ?? 0) >= IMMOFLUX_STATUS_STEPS.length) {
+    job.status_step = IMMOFLUX_STATUS_STEPS.length;
+    push(job, { immofluxId: null, kind: "pagination", message: "Toate cererile pe status au eșuat: import fără filtru de status; s-a preluat doar ce întoarce IMMOFLUX implicit." });
+    await deps.save(job); return "page";
+  }
+  job.status_step = step + 1;
+  await deps.save(job); return "done";
+}
+
 /** Procesează pagina curentă (de la `next_index`), salvând după fiecare anunț. */
 export async function runImportPage(job: ImportJob, deps: ImportDeps): Promise<StepOutcome> {
   const org = job.organization_id; // mereu din job (configurare), niciodată din cerere
@@ -252,12 +274,23 @@ export async function runImportPage(job: ImportJob, deps: ImportDeps): Promise<S
   if (!(await deps.isEnabled(org))) return "stopped";
   if (job.next_page > IMMOFLUX_MAX_PAGES) {
     push(job, { immofluxId: null, kind: "pagination", message: `Oprit la limita de siguranță de ${IMMOFLUX_MAX_PAGES} de pagini.` });
-    await deps.save(job); return "done";
+    return nextStatus(job, deps);
   }
-  const page = parsePage(await deps.fetchPage(org, job.next_page), job.next_page);
+  const step = job.status_step ?? 0;
+  const status = step < IMMOFLUX_STATUS_STEPS.length ? IMMOFLUX_STATUS_STEPS[step]! : null;
+  const label = status === null ? "fără filtru" : `status ${status}`;
+  let body: unknown;
+  try { body = await deps.fetchPage(org, job.next_page, status); }
+  catch (e) {
+    if (status === null) throw e; // rezerva a eșuat: jobul se oprește cu eroarea (mascată)
+    job.status_failures = (job.status_failures ?? 0) + 1;
+    push(job, { immofluxId: null, kind: "pagination", message: mask(`${label}: ${e instanceof Error ? e.message.replace(/^IMMOFLUX a răspuns cu /, "") : "eroare"}`).slice(0, 400) });
+    return nextStatus(job, deps);
+  }
+  const page = parsePage(body, job.next_page);
   if (job.next_index === 0 && page.items.length > 0 && job.page_signature && page.signature === job.page_signature) {
-    push(job, { immofluxId: null, kind: "pagination", message: `Pagina ${job.next_page} repetă anunțurile paginii anterioare: import încheiat.` });
-    await deps.save(job); return "done";
+    push(job, { immofluxId: null, kind: "pagination", message: `${label}: pagina ${job.next_page} repetă anunțurile paginii anterioare.` });
+    return nextStatus(job, deps);
   }
   job.last_page = page.lastPage ?? job.last_page;
   job.total = page.total ?? job.total;
@@ -324,7 +357,7 @@ export async function runImportPage(job: ImportJob, deps: ImportDeps): Promise<S
       job.next_index = i + 1;
     }
   }
-  if (!page.hasNext) { await deps.save(job); return "done"; }
+  if (!page.hasNext) return nextStatus(job, deps);
   job.page_signature = page.signature;
   job.next_page += 1;
   job.next_index = 0;

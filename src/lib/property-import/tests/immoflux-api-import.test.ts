@@ -22,7 +22,7 @@ function world(pages: Record<string, Record<string, unknown>[][]>) {
   const imagesFailFor = new Set<string>();
   const deps: ImportDeps = {
     isEnabled: async (org) => enabled[org] === true,
-    fetchPage: async (org, page) => { fetched.push(`${org}:${page}`); const p = pages[org] ?? []; return { data: p[page - 1] ?? [], last_page: p.length, total: p.flat().length }; },
+    fetchPage: async (org, page, st) => { if (st !== 1) return { data: [] }; fetched.push(`${org}:${page}`); const p = pages[org] ?? []; return { data: p[page - 1] ?? [], last_page: p.length, total: p.flat().length }; },
     fetchDetail: async () => { throw new Error("nu trebuie apelat"); },
     fetchAgents: async () => ({ data: [] }),
     findContactByPhone: async () => null,

@@ -1,11 +1,10 @@
 /** Worker pentru preluarea IMMOFLUX: rulează în aceeași pornire (nonce) și programare pe minut ca alocarea la ansambluri. */
 import { finishMessage, normalizePhone, runImportPage, type ImportDeps, type ImportJob } from "./api-import";
-import { IMMOFLUX_V2_MARKER, immofluxGet, immofluxHostOf, immofluxV2Url, maskImmofluxToken, subdomainFromHost } from "./connection";
+import { IMMOFLUX_V2_MARKER, ImmofluxHttpError, immofluxGet, immofluxHostOf, immofluxV2Url, maskImmofluxToken, subdomainFromHost } from "./connection";
 
 const LEASE_MS = 90_000;
 const BUDGET_MS = 20_000;
 /** Toate statusurile (1–5); fără filtru, feedul v2 poate întoarce doar anunțurile active. */
-const ALL_STATUSES = "[1,2,3,4,5]";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
@@ -32,7 +31,10 @@ export function productionDeps(admin: Admin, fetchImpl: typeof fetch, deadline: 
   const get = async (org: string, path: string, params: Record<string, string | number> = {}) => {
     const c = await config(org);
     try { return await immofluxGet(immofluxV2Url(c.sub, path, c.token, params), c.token, fetchImpl); }
-    catch (e) { throw new Error(maskImmofluxToken(e instanceof Error ? e.message : "Eroare IMMOFLUX.", c.token)); }
+    catch (e) {
+      const detail = e instanceof ImmofluxHttpError && e.detail ? ` Răspuns IMMOFLUX: ${e.detail}` : "";
+      throw new Error(maskImmofluxToken((e instanceof Error ? e.message : "Eroare IMMOFLUX.") + detail, c.token));
+    }
   };
   const mask = (text: string) => { let out = text; for (const t of tokens) out = maskImmofluxToken(out, t); return maskImmofluxToken(out); };
   return {
@@ -42,7 +44,8 @@ export function productionDeps(admin: Admin, fetchImpl: typeof fetch, deadline: 
       const { data } = await admin.from("immoflux_connections").select("enabled").eq("organization_id", org).maybeSingle();
       return data?.enabled === true;
     },
-    fetchPage: (org, page) => get(org, "properties", { page, filter_status__in: ALL_STATUSES }),
+    // Câte un status pe rând (`filter_status__eq`, forma documentată); `null` = rezerva fără filtru.
+    fetchPage: (org, page, status) => get(org, "properties", status === null ? { page } : { page, filter_status__eq: status }),
     fetchDetail: (org, id) => get(org, `property/${encodeURIComponent(id)}`),
     fetchAgents: (org) => get(org, "agents"),
     fetchContact: (org, id) => get(org, `contact/${encodeURIComponent(id)}`),
@@ -119,7 +122,7 @@ export function productionDeps(admin: Admin, fetchImpl: typeof fetch, deadline: 
       await admin.from("immoflux_import_jobs").update({
         next_page: job.next_page, next_index: job.next_index, last_page: job.last_page, total: job.total,
         imported_count: job.imported_count, existing_count: job.existing_count, error_count: job.error_count,
-        unmapped_codes: job.unmapped_codes, report: job.report, page_signature: job.page_signature ?? null, locked_until: new Date(Date.now() + LEASE_MS).toISOString(),
+        unmapped_codes: job.unmapped_codes, report: job.report, page_signature: job.page_signature ?? null, status_step: job.status_step ?? 0, status_failures: job.status_failures ?? 0, locked_until: new Date(Date.now() + LEASE_MS).toISOString(),
       }).eq("id", job.id);
     },
   };

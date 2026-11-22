@@ -51,7 +51,8 @@ export function immofluxHttpMessage(status: number): string {
   return `IMMOFLUX a răspuns cu HTTP ${status}.`;
 }
 
-export class ImmofluxHttpError extends Error { constructor(public status: number) { super(immofluxHttpMessage(status)); } }
+/** `detail` = primele 300 de caractere din răspunsul IMMOFLUX, cu tokenul mascat. */
+export class ImmofluxHttpError extends Error { constructor(public status: number, public detail: string = "") { super(immofluxHttpMessage(status)); } }
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
@@ -63,7 +64,11 @@ export async function immofluxGet(url: string, token: string, fetchImpl: typeof 
   } catch {
     throw new Error("IMMOFLUX nu a răspuns în timp util.");
   }
-  if (!response.ok) { await response.body?.cancel().catch(() => undefined); throw new ImmofluxHttpError(response.status); }
+  if (!response.ok) {
+    let body = "";
+    try { body = (await response.text()).slice(0, 2000); } catch { /* ignorat */ }
+    throw new ImmofluxHttpError(response.status, maskImmofluxToken(body, token).replace(/\s+/g, " ").trim().slice(0, 300));
+  }
   let text: string;
   try { text = await response.text(); } catch { throw new Error("Răspunsul IMMOFLUX nu a putut fi citit."); }
   if (text.length > MAX_BYTES) throw new Error("Răspuns IMMOFLUX prea mare.");

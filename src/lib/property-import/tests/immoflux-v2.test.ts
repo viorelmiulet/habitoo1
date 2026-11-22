@@ -21,7 +21,7 @@ function world(pages: Record<string, unknown[]>, opts: { agents?: Record<string,
   const fetched: string[] = [];
   const deps: ImportDeps = {
     isEnabled: async () => true,
-    fetchPage: async (org, page) => { fetched.push(`${org}:${page}`); return (pages[org] ?? [])[page - 1] ?? { data: [] }; },
+    fetchPage: async (org, page, st) => { if (st !== 1) return { data: [] }; fetched.push(`${org}:${page}`); return (pages[org] ?? [])[page - 1] ?? { data: [] }; },
     fetchDetail: async () => ({}),
     fetchAgents: async (org) => opts.agents?.[org] ?? { data: [] },
     existingIds: async (org, ids) => new Set(ids.filter((i) => created.some((c) => c.org === org && c.row["external_id"] === i))),
@@ -97,7 +97,7 @@ describe("IMMOFLUX v2: paginare", () => {
   });
   it("limita de siguranță de 500 de pagini", async () => {
     const w = world({});
-    w.deps.fetchPage = async (_org, page) => { w.fetched.push(String(page)); return [item(page)]; };
+    w.deps.fetchPage = async (_org, page, st) => { if (st !== 1) return { data: [] }; w.fetched.push(String(page)); return [item(page)]; };
     const j = job(A);
     expect(await runAll(j, w.deps)).toBe("done");
     expect(w.fetched).toHaveLength(500);
