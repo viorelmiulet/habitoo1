@@ -1,1 +1,2 @@
 - Listing checks: pure rules.ts + read-only check.server.ts; portal items only from validatePortalRequirements; agents check only assigned listings. Why: deterministic, no AI, no writes.
+- AI listing suggestions (ai-suggestions*.ts) only propose: server strips owner/notes, validates fixed JSON, drops descriptions with features/numbers absent from fields, requires description evidence for deduced fields and real comparables for price notes; Apply only edits form state. Why: AI never writes or invents facts.

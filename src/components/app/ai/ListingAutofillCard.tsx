@@ -214,7 +214,7 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
         <div className="flex flex-wrap gap-2">
           <Button type="button" disabled={!hasInput || busy} onClick={() => void submit()}>
             {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
-            {mode === "new" ? "Completează cu AI" : "Completează câmpurile goale cu AI"}
+            {mode === "new" ? "Completează cu AI" : "Corectează cu AI"}
           </Button>
         </div>
         {applied ? <div className="flex-1 space-y-2 rounded-card border border-border bg-muted/40 p-3 text-sm" data-testid="autofill-summary">

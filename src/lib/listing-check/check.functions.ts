@@ -6,8 +6,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { ListingCheckResult } from "./rules";
+import type { AiSuggestionsResponse, PriceContext } from "./ai-suggestions";
 
-export type ListingCheckRow = ListingCheckResult & { propertyId: string; reference: string | null; title: string | null };
+export type ListingCheckRow = ListingCheckResult & { propertyId: string; reference: string | null; title: string | null; priceContext?: PriceContext | null };
 
 export const MAX_BULK_CHECK = 100;
 
@@ -22,4 +23,17 @@ export const checkListings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { runListingChecks } = await import("./check.server");
     return runListingChecks(context.supabase as never, context.userId, data.propertyIds);
+  });
+
+
+/** Sugestii AI (etapa 2): doar propuneri validate; nu scrie nimic în anunț. */
+export const suggestListingWithAi = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { propertyId: string }) => {
+    if (typeof input?.propertyId !== "string" || !/^[0-9a-f-]{36}$/i.test(input.propertyId)) throw new Error("Anunț invalid.");
+    return { propertyId: input.propertyId };
+  })
+  .handler(async ({ data, context }): Promise<AiSuggestionsResponse> => {
+    const { runAiListingSuggestions } = await import("./ai-suggestions.server");
+    return runAiListingSuggestions(context.supabase as never, context.userId, data.propertyId);
   });

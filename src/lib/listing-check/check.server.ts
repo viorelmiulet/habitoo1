@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkListing, median, type CheckPortalReport } from "./rules";
 import type { ListingCheckRow } from "./check.functions";
+import type { PriceContext } from "./ai-suggestions";
 
 type Db = SupabaseClient<any, any, any>;
 
@@ -69,6 +70,7 @@ export async function runListingChecks(supabase: Db, userId: string, propertyIds
         duplicateDescription = (dups ?? []).length > 0;
       }
       let zoneMedianPerSqm: number | null = null;
+      let priceContext: PriceContext | null = null;
       const forSale = p.for_sale === true || p.transaction_kind === "sale";
       if (forSale && p.city && p.property_type) {
         let q = db.from("properties").select("sale_price, usable_surface, land_surface").eq("organization_id", orgId).eq("city", p.city).eq("property_type", p.property_type).eq("for_sale", true).neq("id", p.id).is("deleted_at", null).not("sale_price", "is", null).limit(500);
@@ -76,7 +78,10 @@ export async function runListingChecks(supabase: Db, userId: string, propertyIds
         const { data: comps } = await q;
         const area = (c: any) => (p.property_type === "land" ? c.land_surface : c.usable_surface);
         const values = ((comps ?? []) as any[]).filter((c) => c.sale_price > 0 && area(c) > 0).map((c) => c.sale_price / area(c));
-        if (values.length >= 5) zoneMedianPerSqm = median(values);
+        if (values.length >= 5) {
+          zoneMedianPerSqm = median(values);
+          if (zoneMedianPerSqm !== null) priceContext = { medianPerSqm: zoneMedianPerSqm, comparables: values.length, scope: [p.city, p.district].filter(Boolean).join(", ") + ", același tip, de vânzare" };
+        }
       }
       const r = checkListing({
         property: p,
@@ -86,7 +91,7 @@ export async function runListingChecks(supabase: Db, userId: string, propertyIds
         zoneMedianPerSqm,
         duplicateDescription,
       });
-      results.push({ ...r, propertyId: p.id, reference: p.reference ?? null, title: p.title ?? null });
+      results.push({ ...r, propertyId: p.id, reference: p.reference ?? null, title: p.title ?? null, priceContext });
     }
   }
   const order = new Map(propertyIds.map((id, i) => [id, i]));

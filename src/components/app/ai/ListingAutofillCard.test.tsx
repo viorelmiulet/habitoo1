@@ -127,7 +127,7 @@ describe("AI18 aplicare automată și anulare", () => {
     photoMocks();
     runResult.value = proposalWith({ photoOrder: [2, 0, 1] });
     const tree = await render({ mode: "edit", propertyId: "ai18-edit" });
-    await clickButton(tree.el, "Completează câmpurile goale cu AI");
+    await clickButton(tree.el, "Corectează cu AI");
     expect(reorderPropertyPhotos).toHaveBeenLastCalledWith(["c", "a", "b"]);
     const undo = tree.el.querySelector("button[aria-label='Anulează ordinea propusă a pozelor']");
     if (!undo) throw new Error("Lipsește anularea galeriei");
@@ -139,7 +139,7 @@ describe("AI18 aplicare automată și anulare", () => {
     rememberManualCover("ai18-manual", "a");
     runResult.value = proposalWith({ photoOrder: [2, 1, 0] });
     const tree = await render({ mode: "edit", propertyId: "ai18-manual" });
-    await clickButton(tree.el, "Completează câmpurile goale cu AI");
+    await clickButton(tree.el, "Corectează cu AI");
     expect(reorderPropertyPhotos).toHaveBeenLastCalledWith(["a", "c", "b"]);
   });
 });

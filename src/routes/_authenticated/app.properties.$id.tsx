@@ -85,7 +85,8 @@ import { PropertyMainPhoto } from "@/components/app/PropertyMainPhoto";
 import { propertyTabFromSearch } from "@/lib/property-tabs";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ListingCheckDialog } from "@/components/app/ListingCheckDialog";
+import { ListingCheckDialog, LISTING_CHECK_EVENT, type ListingSuggestionApply } from "@/components/app/ListingCheckDialog";
+import { applyListingSuggestion } from "@/components/app/listing-suggestion-apply";
 import { OwnerReportSettingsCard, OwnerReportsHistory } from "@/components/app/owner-reports/OwnerReportsPanel";
 import {
   Dialog,
@@ -389,7 +390,7 @@ function PropertyDetailContent() {
   // Poziția pe hartă (Leaflet/OpenStreetMap) și precizia locației, în modul editare.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationPrecise, setLocationPrecise] = useState(false);
-  // „Completează câmpurile goale cu AI”: doar propuneri în formular, marcate „AI”.
+  // „Corectează cu AI”: doar propuneri în formular, marcate „AI”.
   const [aiMarked, setAiMarked] = useState<string[]>([]);
   const aiMarks = useMemo(() => new Set(aiMarked), [aiMarked]);
   const autofillSetters: AutofillSetters = {
@@ -559,6 +560,21 @@ function PropertyDetailContent() {
     setTab(issue.tab);
     window.setTimeout(() => focusCompletenessTarget(issue.target), 200);
   };
+  // Sugestie AI aplicată: doar în formular (deschis în editare), fără salvare.
+  const onApplySuggestion = (sug: ListingSuggestionApply) => {
+    if (!editing) startEdit();
+    applyListingSuggestion(sug, {
+      setText: (patch) => setDraft((d) => ({ ...d, ...patch })),
+      setDetails: (patch) => setDetails((d) => ({ ...d, ...patch })),
+    });
+    setAiMarked((m) => [...new Set([...m, ...(sug.kind === "field" ? [sug.field] : [sug.kind])])]);
+  };
+  // Bula Agentului AI: „Verifică anunțul ăsta”.
+  useEffect(() => {
+    const open = () => setCheckOpen(true);
+    window.addEventListener(LISTING_CHECK_EVENT, open);
+    return () => window.removeEventListener(LISTING_CHECK_EVENT, open);
+  }, []);
   const changeStatusFn = useServerFn(changePropertyStatus);
   const publishCheckedFn = useServerFn(publishPropertyChecked);
   const [pendingStatus, setPendingStatus] = useState<"sold" | "rented" | "archived" | null>(null);
@@ -1007,7 +1023,7 @@ function PropertyDetailContent() {
         onDeleted={() => navigate({ to: "/app/properties" })}
       />
 
-      <ListingCheckDialog open={checkOpen} onOpenChange={setCheckOpen} propertyIds={[id]} onGo={onCheckIssue} />
+      <ListingCheckDialog open={checkOpen} onOpenChange={setCheckOpen} propertyIds={[id]} onGo={onCheckIssue} onApply={onApplySuggestion} />
       <Tabs value={tab} onValueChange={setTab}>
         <div className="sticky top-14 z-20 -mx-1 overflow-x-auto bg-background px-1 sm:top-16" data-property-tabs-bar>
         <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății" data-tour="property-tabs">
