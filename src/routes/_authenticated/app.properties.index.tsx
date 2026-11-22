@@ -138,6 +138,8 @@ import {
   type PropertyListView,
 } from "@/lib/property-list-filters";
 import type { BulkDraft } from "@/lib/portals/bulk";
+import { ListingCheckDialog } from "@/components/app/ListingCheckDialog";
+import { MAX_BULK_CHECK } from "@/lib/listing-check/check.functions";
 
 export const Route = createFileRoute("/_authenticated/app/properties/")({
   validateSearch: (search) => propertyListSearchSchema.parse(search),
@@ -485,6 +487,7 @@ function PropertiesPage() {
   const invalidateList = () => queryClient.invalidateQueries({ queryKey: ["properties"] });
 
   const changeStatusFn = useServerFn(changePropertyStatus);
+  const [checkIds, setCheckIds] = useState<string[] | null>(null);
   const [bulkStatus, setBulkStatus] = useState<"sold" | "rented" | "archived" | null>(null);
   const updateStatus = useMutation({
     mutationFn: async ({ ids, status }: { ids: string[]; status: string }) =>
@@ -899,6 +902,9 @@ function PropertiesPage() {
             <Button variant="outline" size="sm" onClick={() => void exportCsv()} disabled={exporting}>
               Exportă CSV
             </Button>
+            <Button variant="outline" size="sm" disabled={selected.length > MAX_BULK_CHECK} title={selected.length > MAX_BULK_CHECK ? `Maximum ${MAX_BULK_CHECK} odată` : undefined} onClick={() => setCheckIds([...selected])}>
+              Verifică anunțurile selectate
+            </Button>
             <AllocateAction count={selected.length} onClick={() => setAllocateOpen(true)} />
             <Button variant="destructive" size="sm" onClick={() => setArchiveTarget(selected)}>
               <Trash2 className="mr-1.5 h-4 w-4" /> Șterge
@@ -1093,6 +1099,7 @@ function PropertiesPage() {
         </div>
       </div>
 
+      <ListingCheckDialog open={checkIds !== null} onOpenChange={(o) => { if (!o) setCheckIds(null); }} propertyIds={checkIds ?? []} />
       <StatusChangeDialog
         propertyIds={selected}
         status={bulkStatus}

@@ -25,6 +25,7 @@ import {
   Share2,
   Sparkles,
   UserPlus,
+  ListChecks,
 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -84,6 +85,7 @@ import { PropertyMainPhoto } from "@/components/app/PropertyMainPhoto";
 import { propertyTabFromSearch } from "@/lib/property-tabs";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ListingCheckDialog } from "@/components/app/ListingCheckDialog";
 import { OwnerReportSettingsCard, OwnerReportsHistory } from "@/components/app/owner-reports/OwnerReportsPanel";
 import {
   Dialog,
@@ -222,6 +224,7 @@ function PropertyDetailContent() {
   const [editing, setEditing] = useState(false);
   /** Fila activă; butonul din antet duce direct la fluxul ACP. */
   const [tab, setTab] = useState(() => propertyTabFromSearch(search.tab));
+  const [checkOpen, setCheckOpen] = useState(false);
   // Motorul de ghiduri află ce filă s-a deschis și când pornește editarea.
   useEffect(() => { announceGuideContext(`property-tab:${tab}`); }, [tab]);
   useEffect(() => { if (editing) announceGuideContext("property:editing"); }, [editing]);
@@ -551,6 +554,11 @@ function PropertyDetailContent() {
     window.setTimeout(() => focusCompletenessTarget(target), 150);
   };
 
+  const onCheckIssue = (issue: { tab: string; target: string | null }) => {
+    if (!editing && (INLINE_EDIT_TABS.has(issue.tab) || issue.tab === "overview")) startEdit();
+    setTab(issue.tab);
+    window.setTimeout(() => focusCompletenessTarget(issue.target), 200);
+  };
   const changeStatusFn = useServerFn(changePropertyStatus);
   const publishCheckedFn = useServerFn(publishPropertyChecked);
   const [pendingStatus, setPendingStatus] = useState<"sold" | "rented" | "archived" | null>(null);
@@ -943,6 +951,7 @@ function PropertyDetailContent() {
           <span className="max-md:hidden" title={offerSendReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(offerSendReason(property))} onClick={() => setSendOfferOpen(true)}><Share2 /> Trimite oferta</Button></span>
           <span className="max-md:hidden" title={neutralOfferReason(property) ?? undefined}><Button variant="outline" disabled={Boolean(neutralOfferReason(property))} onClick={() => setCollaboratorOfferOpen(true)}><Share2 /> Trimite unui colaborator</Button></span>
           {offerSendReason(property) ? <span className="text-xs text-muted-foreground max-md:hidden">{offerSendReason(property)}</span> : null}
+          <Button variant="outline" onClick={() => setCheckOpen(true)}><ListChecks /> Verifică anunțul</Button>
           <Button variant="outline" data-tour="property-viewing" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
           <Button variant="outline" className="max-md:hidden" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
           <Button variant="outline" className="max-md:hidden" onClick={() => setTab("acp")}><BarChart3 /> Analiză comparativă de piață (ACP)</Button>
@@ -998,6 +1007,7 @@ function PropertyDetailContent() {
         onDeleted={() => navigate({ to: "/app/properties" })}
       />
 
+      <ListingCheckDialog open={checkOpen} onOpenChange={setCheckOpen} propertyIds={[id]} onGo={onCheckIssue} />
       <Tabs value={tab} onValueChange={setTab}>
         <div className="sticky top-14 z-20 -mx-1 overflow-x-auto bg-background px-1 sm:top-16" data-property-tabs-bar>
         <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății" data-tour="property-tabs">
