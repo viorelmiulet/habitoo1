@@ -32,7 +32,7 @@ export async function facebookEligibility(
   propertyIds?: string[],
 ): Promise<Map<string, FacebookListingReason | null>> {
   const input = await loadFacebookCatalogInput(admin, organizationId, true, propertyIds, false);
-  const result = buildFacebookCatalogCsv({ ...input, baseUrl: "https://crm.habitoo.ro", publicSiteUrl: "https://habitoo.ro" });
+  const result = buildFacebookCatalogCsv({ ...input, baseUrl: "https://crm.habitoo.ro", publicSiteUrl: "https://www.habitoo.ro" });
   const reasons = new Map<string, FacebookListingReason | null>();
   for (const p of input.properties) reasons.set(p.id, null);
   for (const it of result.excludedItems ?? []) reasons.set(it.id, it.reason);

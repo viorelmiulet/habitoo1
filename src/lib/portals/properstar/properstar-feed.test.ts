@@ -51,6 +51,10 @@ function builder(table: string) {
     in: (col: string, value: unknown) => (filters.push({ op: "in", col, value }), api),
     order: () => api,
     limit: () => api,
+    range: (from: number, to: number) => {
+      const { data } = result();
+      return Promise.resolve({ data: data.slice(from, to + 1), error: null });
+    },
     maybeSingle: async () => ({ data: result().data[0] ?? null, error: null }),
     then: (resolve: (v: unknown) => unknown) => Promise.resolve(result()).then(resolve),
   };

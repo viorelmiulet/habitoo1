@@ -64,7 +64,7 @@ export const getPropertyPromotion = createServerFn({ method: "GET" })
     const result = fb.buildFacebookCatalogCsv({
       ...input,
       baseUrl: "https://crm.habitoo.ro",
-      publicSiteUrl: "https://habitoo.ro",
+      publicSiteUrl: "https://www.habitoo.ro",
     });
     const reason =
       input.properties.length === 0

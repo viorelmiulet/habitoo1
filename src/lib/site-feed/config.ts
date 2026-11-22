@@ -4,7 +4,7 @@
  * În producție linkurile TREBUIE să fie stabile și independente de hostul pe
  * care a venit cererea:
  *  - imagine: https://crm.habitoo.ro/api/public/sites/v1/media/{imageId}
- *  - ofertă:  https://habitoo.ro/oferta/{propertyId}
+ *  - ofertă:  https://www.habitoo.ro/oferta/{slug}
  *
  * Pe preview/local rămânem same-origin ca să putem testa fără DNS de producție.
  * Nu folosim niciodată `url.origin` ca `publicSiteUrl` pe hosturile de
@@ -12,8 +12,8 @@
  */
 import { CRM_URL, isCrmHostname, isPublicHostname } from "@/lib/host";
 
-/** Originul canonic al site-ului public (fără www, așa cum e cerut de brand). */
-export const PUBLIC_OFFER_ORIGIN = "https://habitoo.ro";
+/** Originul canonic al site-ului public (cu www, ca adresa canonică a site-ului). */
+export const PUBLIC_OFFER_ORIGIN = "https://www.habitoo.ro";
 
 export type FeedUrls = {
   /** Origin pe care se servesc URL-urile de media din feed. */

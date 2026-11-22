@@ -1,3 +1,4 @@
+import { readFeedImages } from "@/lib/site-feed/complete-read.server";
 /**
  * Construcția feedului iMove.ro (server-only).
  *
@@ -98,13 +99,7 @@ export async function buildImoveFeed(input: {
 
   const [images, agents] = await Promise.all([
     ids.length
-      ? supabaseAdmin
-          .from("property_images")
-          .select("*")
-          .eq("organization_id", input.organizationId)
-          .in("property_id", ids)
-          .eq("include_in_publish", true)
-          .eq("is_confidential", false)
+      ? readFeedImages<PropertyImageRow>(supabaseAdmin, input.organizationId, ids)
       : Promise.resolve({ data: [] as PropertyImageRow[] }),
     agentIds.length
       ? supabaseAdmin.from("profiles").select("id, full_name, email, phone").in("id", agentIds)

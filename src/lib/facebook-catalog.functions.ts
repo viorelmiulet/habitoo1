@@ -110,7 +110,7 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
     const result = buildFacebookCatalogCsv({
       ...input,
       baseUrl: "https://crm.habitoo.ro",
-      publicSiteUrl: "https://habitoo.ro",
+      publicSiteUrl: "https://www.habitoo.ro",
     });
 
     return {

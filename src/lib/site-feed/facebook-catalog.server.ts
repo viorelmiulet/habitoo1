@@ -1,3 +1,4 @@
+import { readFeedImages } from "@/lib/site-feed/complete-read.server";
 import { errorResponse, type FeedAuthOk } from "@/lib/site-feed/auth.server";
 import { feedUrlsForRequest } from "@/lib/site-feed/config";
 import { buildFacebookCatalogCsv, buildFacebookProductsCsv, exclusionDetail } from "@/lib/site-feed/facebook-catalog";
@@ -100,16 +101,9 @@ export async function loadFacebookCatalogInput(
 
   const imagesByProperty = new Map<string, PropertyImageRow[]>();
   const ids = properties.map((p) => p.id);
-  for (let i = 0; i < ids.length; i += 200) {
-    const { data, error } = await supabaseAdmin
-      .from("property_images")
-      .select("*")
-      .eq("organization_id", organizationId)
-      .in("property_id", ids.slice(i, i + 200))
-      .eq("include_in_publish", true)
-      .eq("is_confidential", false);
-    if (error) throw error;
-    for (const img of (data ?? []) as PropertyImageRow[]) {
+  {
+    const { data } = await readFeedImages<PropertyImageRow>(supabaseAdmin, organizationId, ids);
+    for (const img of data) {
       const list = imagesByProperty.get(img.property_id) ?? [];
       list.push(img);
       imagesByProperty.set(img.property_id, list);

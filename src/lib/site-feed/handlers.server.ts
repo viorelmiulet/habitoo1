@@ -1,3 +1,4 @@
+import { readFeedImages } from "@/lib/site-feed/complete-read.server";
 /**
  * Logica feedului de proprietăți, într-un singur loc.
  * Este folosită de ambele prefixe de rute:
@@ -147,13 +148,7 @@ export async function handlePropertiesList(
 
   const [images, agents, portalsByProperty] = await Promise.all([
     ids.length
-      ? supabaseAdmin
-          .from("property_images")
-          .select("*")
-          .eq("organization_id", auth.organizationId)
-          .in("property_id", ids)
-          .eq("include_in_publish", true)
-          .eq("is_confidential", false)
+      ? readFeedImages<PropertyImageRow>(supabaseAdmin, auth.organizationId, ids)
       : Promise.resolve({ data: [] as PropertyImageRow[], error: null }),
     agentIds.length
       ? supabaseAdmin.from("profiles").select("id, full_name").in("id", agentIds)

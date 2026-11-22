@@ -1,3 +1,4 @@
+import { readFeedImages } from "@/lib/site-feed/complete-read.server";
 /**
  * Construcția datelor expuse către HomePitch (server-only).
  *
@@ -80,11 +81,7 @@ export async function buildHomePitchFeed(query: HomePitchFeedQuery): Promise<Hom
   ];
   const [imagesResult, agentsResult] = await Promise.all([
     ids.length
-      ? db
-          .from("property_images")
-          .select("*")
-          .eq("organization_id", query.organizationId)
-          .in("property_id", ids)
+      ? readFeedImages<PropertyImageRow>(db, query.organizationId, ids, { publishableOnly: false })
       : Promise.resolve({ data: [] as PropertyImageRow[] }),
     agentIds.length
       ? db.from("profiles").select("id, full_name, email, phone").in("id", agentIds)
