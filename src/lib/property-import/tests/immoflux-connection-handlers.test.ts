@@ -28,29 +28,29 @@ const ORG = "00000000-0000-4000-8000-000000000001";
 const context = (isSuper: boolean) => ({ userId: "superadmin", supabase: { rpc: vi.fn().mockResolvedValue({ data: isSuper, error: null }) } });
 beforeEach(() => {
   vi.clearAllMocks(); vi.unstubAllGlobals();
-  mock.read.mockResolvedValue({ data: { host: "agency.immoflux.ro", slug: "habitoo", enabled: true, api_key_encrypted: "v1.mock-encrypted" }, error: null });
+  mock.read.mockResolvedValue({ data: { host: "agency.immoflux.ro", slug: "api-v2", enabled: true, api_key_encrypted: "v1.mock-encrypted" }, error: null });
   mock.rpc.mockResolvedValue({ error: null }); mock.audit.mockResolvedValue({ error: null });
 });
 describe("authenticated IMMOFLUX handlers", () => {
   it.each([getImmofluxConnection, saveImmofluxConnection, testImmofluxConnection])("non-superadmin cannot read, save or test", async fn => {
-    await expect((fn as unknown as Handler)({ data: { organizationId: ORG, host: "agency.immoflux.ro", slug: "habitoo", enabled: true }, context: context(false) })).rejects.toThrow(/exclusiv SuperAdmin/);
+    await expect((fn as unknown as Handler)({ data: { organizationId: ORG, subdomain: "agency", enabled: true }, context: context(false) })).rejects.toThrow(/exclusiv SuperAdmin/);
     expect(mock.read).not.toHaveBeenCalled(); expect(mock.rpc).not.toHaveBeenCalled(); expect(mock.audit).not.toHaveBeenCalled();
   });
   it("metadata never exposes a credential or internal digest", async () => {
     const result = await (getImmofluxConnection as unknown as Handler)({ data: { organizationId: ORG }, context: context(true) });
-    expect(result).toEqual({ organizationId: ORG, host: "agency.immoflux.ro", slug: "habitoo", enabled: true, configured: true });
-    expect(mock.select).toHaveBeenCalledWith("organization_id,host,slug,enabled");
+    expect(result).toEqual({ organizationId: ORG, subdomain: "agency", enabled: true, configured: true, tokenLast4: "ntial" .slice(-4) });
+    expect(JSON.stringify(result)).not.toContain("mock-credential");
     expect(mock.eq).toHaveBeenCalledWith("organization_id", ORG);
   });
   it("save sends encrypted data only to the transactional RPC for the selected agency", async () => {
-    const result = await (saveImmofluxConnection as unknown as Handler)({ data: { organizationId: ORG, host: "agency.immoflux.ro", slug: "habitoo", enabled: true, apiKey: "mock-credential" }, context: context(true) });
+    const result = await (saveImmofluxConnection as unknown as Handler)({ data: { organizationId: ORG, subdomain: "https://agency.immoflux.ro/", enabled: true, apiKey: "mock-credential" }, context: context(true) });
     expect(result).toEqual({ saved: true });
-    expect(mock.rpc).toHaveBeenCalledWith("save_immoflux_connection", expect.objectContaining({ _organization_id: ORG, _encrypted: "v1.mock-encrypted", _actor: "superadmin" }));
+    expect(mock.rpc).toHaveBeenCalledWith("save_immoflux_connection", expect.objectContaining({ _organization_id: ORG, _encrypted: "v1.mock-encrypted", _actor: "superadmin", _host: "agency.immoflux.ro", _slug: "api-v2" }));
     expect(mock.read).not.toHaveBeenCalled();
   });
   it("duplicate identity returns the clear agency-conflict message, never raw database detail", async () => {
     mock.rpc.mockResolvedValue({ error: { code: "23505", message: "provider internal detail" } });
-    await expect((saveImmofluxConnection as unknown as Handler)({ data: { organizationId: ORG, host: "agency.immoflux.ro", slug: "habitoo", enabled: true }, context: context(true) })).rejects.toThrow("Această configurare IMMOFLUX este deja folosită de altă agenție.");
+    await expect((saveImmofluxConnection as unknown as Handler)({ data: { organizationId: ORG, subdomain: "agency", enabled: true }, context: context(true) })).rejects.toThrow("Această configurare IMMOFLUX este deja folosită de altă agenție.");
   });
   it.each([200,401,404])("test HTTP %s reads exactly the selected agency and audits sanitized results", async status => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ total: 139 }), { status }));

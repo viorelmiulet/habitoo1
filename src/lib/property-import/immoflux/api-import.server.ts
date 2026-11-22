@@ -1,45 +1,52 @@
 /** Worker pentru preluarea IMMOFLUX: rulează în aceeași pornire (nonce) și programare pe minut ca alocarea la ansambluri. */
-import { finishMessage, runImportPage, type ImportDeps, type ImportJob } from "./api-import";
-import { normalizeImmofluxHost, normalizeImmofluxSlug } from "./connection";
+import { finishMessage, normalizePhone, runImportPage, type ImportDeps, type ImportJob } from "./api-import";
+import { IMMOFLUX_V2_MARKER, immofluxGet, immofluxHostOf, immofluxV2Url, maskImmofluxToken, subdomainFromHost } from "./connection";
 
 const LEASE_MS = 90_000;
 const BUDGET_MS = 20_000;
-const MAX_BYTES = 8 * 1024 * 1024;
-
-async function readJson(url: string, apiKey: string, fetchImpl: typeof fetch): Promise<unknown> {
-  const response = await fetchImpl(url, { method: "GET", redirect: "manual", signal: AbortSignal.timeout(20_000), headers: { "X-API-Key": apiKey, Accept: "application/json" } });
-  if (!response.ok) {
-    await response.body?.cancel();
-    throw new Error(response.status === 401 ? "Cheie API IMMOFLUX invalidă (HTTP 401)." : response.status === 404 ? "Anunț sau portal IMMOFLUX negăsit (HTTP 404)." : `IMMOFLUX a răspuns HTTP ${response.status}.`);
-  }
-  const text = await response.text();
-  if (text.length > MAX_BYTES) throw new Error("Răspuns IMMOFLUX prea mare.");
-  return JSON.parse(text);
-}
+/** Toate statusurile (1–5); fără filtru, feedul v2 poate întoarce doar anunțurile active. */
+const ALL_STATUSES = "[1,2,3,4,5]";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
 
+const escapeLike = (v: string) => v.replace(/[\\%_]/g, (c) => `\\${c}`);
+
 export function productionDeps(admin: Admin, fetchImpl: typeof fetch, deadline: () => boolean): ImportDeps {
-  const configs = new Map<string, { base: string; key: string }>();
+  const configs = new Map<string, { sub: string; token: string }>();
+  const tokens = new Set<string>();
+  const phoneIndex = new Map<string, Map<string, string>>();
   const config = async (org: string) => {
     const hit = configs.get(org);
     if (hit) return hit;
     const { unlockImmofluxKey } = await import("./connection.server");
     const { data, error } = await admin.from("immoflux_connections").select("host,slug,api_key_encrypted,enabled").eq("organization_id", org).maybeSingle();
     if (error || !data) throw new Error("Configurarea IMMOFLUX a agenției lipsește.");
-    const c = { base: `https://${normalizeImmofluxHost(data.host)}/api/bridges/portal/${normalizeImmofluxSlug(data.slug)}`, key: unlockImmofluxKey(data.api_key_encrypted) };
+    const sub = subdomainFromHost(data.host);
+    if (data.slug !== IMMOFLUX_V2_MARKER || !sub) throw new Error("Configurarea IMMOFLUX trebuie salvată din nou cu subdomeniul și tokenul API v2.");
+    const c = { sub, token: unlockImmofluxKey(data.api_key_encrypted) };
+    tokens.add(c.token);
     configs.set(org, c);
     return c;
   };
+  const get = async (org: string, path: string, params: Record<string, string | number> = {}) => {
+    const c = await config(org);
+    try { return await immofluxGet(immofluxV2Url(c.sub, path, c.token, params), c.token, fetchImpl); }
+    catch (e) { throw new Error(maskImmofluxToken(e instanceof Error ? e.message : "Eroare IMMOFLUX.", c.token)); }
+  };
+  const mask = (text: string) => { let out = text; for (const t of tokens) out = maskImmofluxToken(out, t); return maskImmofluxToken(out); };
   return {
     deadline,
+    mask,
     isEnabled: async (org) => {
       const { data } = await admin.from("immoflux_connections").select("enabled").eq("organization_id", org).maybeSingle();
       return data?.enabled === true;
     },
-    fetchPage: async (org, page) => { const c = await config(org); return readJson(`${c.base}/properties?page=${page}`, c.key, fetchImpl); },
-    fetchDetail: async (org, id) => { const c = await config(org); return readJson(`${c.base}/properties/${encodeURIComponent(id)}`, c.key, fetchImpl); },
+    fetchPage: (org, page) => get(org, "properties", { page, filter_status__in: ALL_STATUSES }),
+    fetchDetail: (org, id) => get(org, `property/${encodeURIComponent(id)}`),
+    fetchAgents: (org) => get(org, "agents"),
+    fetchContact: (org, id) => get(org, `contact/${encodeURIComponent(id)}`),
+    imageBase: async (org) => `https://${immofluxHostOf((await config(org)).sub)}/`,
     existingIds: async (org, ids) => {
       const out = new Set<string>();
       for (let i = 0; i < ids.length; i += 200) {
@@ -60,6 +67,35 @@ export function productionDeps(admin: Admin, fetchImpl: typeof fetch, deadline: 
       if (!ids.length) return null;
       const { data } = await admin.from("profiles").select("id").in("id", ids).eq("organization_id", org).eq("is_active", true).order("created_at").limit(1);
       return data?.[0]?.id ?? null;
+    },
+    findContactByPhone: async (org, phone) => {
+      let index = phoneIndex.get(org);
+      if (!index) {
+        index = new Map();
+        for (let from = 0; ; from += 1000) {
+          const { data, error } = await admin.from("contacts").select("id,phone").eq("organization_id", org).not("phone", "is", null).order("id").range(from, from + 999);
+          if (error) throw new Error("Contactele agenției nu au putut fi citite.");
+          for (const c of (data ?? []) as { id: string; phone: string | null }[]) { const n = normalizePhone(c.phone); if (n && !index.has(n)) index.set(n, c.id); }
+          if ((data ?? []).length < 1000) break;
+        }
+        phoneIndex.set(org, index);
+      }
+      return index.get(phone) ?? null;
+    },
+    findContactByEmail: async (org, email) => {
+      const { data, error } = await admin.from("contacts").select("id").eq("organization_id", org).ilike("email", escapeLike(email)).order("created_at").limit(1);
+      if (error) throw new Error("Contactele agenției nu au putut fi citite.");
+      return data?.[0]?.id ?? null;
+    },
+    createContact: async (job, c, assignedTo) => {
+      const { data, error } = await admin.from("contacts").insert({
+        organization_id: job.organization_id, type: "owner", first_name: c.firstName, last_name: c.lastName,
+        phone: c.phone, email: c.email, source: "IMMOFLUX", assigned_to: assignedTo, created_by: job.requested_by, updated_by: job.requested_by,
+      }).select("id").single();
+      if (error || !data) throw new Error("Contactul proprietarului nu a putut fi creat.");
+      const n = normalizePhone(c.phone);
+      if (n) phoneIndex.get(job.organization_id)?.set(n, data.id);
+      return data.id as string;
     },
     createProperty: async (job, row) => {
       const { data: reference, error: refError } = await admin.rpc("next_property_reference");
@@ -83,7 +119,7 @@ export function productionDeps(admin: Admin, fetchImpl: typeof fetch, deadline: 
       await admin.from("immoflux_import_jobs").update({
         next_page: job.next_page, next_index: job.next_index, last_page: job.last_page, total: job.total,
         imported_count: job.imported_count, existing_count: job.existing_count, error_count: job.error_count,
-        unmapped_codes: job.unmapped_codes, report: job.report, locked_until: new Date(Date.now() + LEASE_MS).toISOString(),
+        unmapped_codes: job.unmapped_codes, report: job.report, page_signature: job.page_signature ?? null, locked_until: new Date(Date.now() + LEASE_MS).toISOString(),
       }).eq("id", job.id);
     },
   };
@@ -115,7 +151,7 @@ async function runOne(admin: Admin, job: ImportJob & { image_job_id: string | nu
     await admin.from("immoflux_import_jobs").update({ locked_until: null }).eq("id", job.id);
     await admin.rpc("development_clone_kick"); // continuă imediat, fără să aștepte programarea pe minut
   } catch (e) {
-    await close(admin, job, "error", e instanceof Error ? e.message.slice(0, 300) : "Eroare necunoscută.");
+    await close(admin, job, "error", deps.mask!(e instanceof Error ? e.message : "Eroare necunoscută.").slice(0, 300));
   }
 }
 

@@ -2241,6 +2241,13 @@
       "when": 1795357107563,
       "tag": "0319_immoflux_api_import_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 320,
+      "version": "7",
+      "when": 1795360171214,
+      "tag": "0320_immoflux_v2_page_signature",
+      "breakpoints": true
     }
   ]
 }

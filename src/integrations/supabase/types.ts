@@ -4639,6 +4639,7 @@ export type Database = {
           next_index: number
           next_page: number
           organization_id: string
+          page_signature: string | null
           report: Json
           requested_by: string
           started_at: string | null
@@ -4660,6 +4661,7 @@ export type Database = {
           next_index?: number
           next_page?: number
           organization_id: string
+          page_signature?: string | null
           report?: Json
           requested_by: string
           started_at?: string | null
@@ -4681,6 +4683,7 @@ export type Database = {
           next_index?: number
           next_page?: number
           organization_id?: string
+          page_signature?: string | null
           report?: Json
           requested_by?: string
           started_at?: string | null

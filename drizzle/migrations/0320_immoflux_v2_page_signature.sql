@@ -1,0 +1,2 @@
+ALTER TABLE public.immoflux_import_jobs ADD COLUMN IF NOT EXISTS page_signature text;
+COMMENT ON COLUMN public.immoflux_import_jobs.page_signature IS 'IDs of the last fully processed IMMOFLUX v2 page; a repeated page stops pagination.';

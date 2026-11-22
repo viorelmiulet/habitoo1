@@ -10,7 +10,7 @@ import { DetailCard } from "./SuperadminUi";
 import { getImmofluxConnection, saveImmofluxConnection, testImmofluxConnection } from "@/lib/property-import/immoflux/connection.functions";
 import { startImmofluxImport } from "@/lib/property-import/immoflux/api-import.functions";
 import { Link } from "@tanstack/react-router";
-import { normalizeImmofluxHost, normalizeImmofluxSlug, type ImmofluxConnectionView } from "@/lib/property-import/immoflux/connection";
+import { normalizeImmofluxSubdomain, type ImmofluxConnectionView } from "@/lib/property-import/immoflux/connection";
 
 export function ImmofluxConnectionPanel({ organizationId }: { organizationId: string }) {
   const { data: me } = useCurrentUser();
@@ -23,8 +23,7 @@ export function ImmofluxConnectionPanel({ organizationId }: { organizationId: st
 }
 
 function ConnectionForm({ config }: { config: ImmofluxConnectionView }) {
-  const [host, setHost] = useState(config.host);
-  const [slug, setSlug] = useState(config.slug);
+  const [subdomain, setSubdomain] = useState(config.subdomain);
   const [enabled, setEnabled] = useState(config.enabled);
   const [apiKey, setApiKey] = useState("");
   const [busy, setBusy] = useState(false);
@@ -33,15 +32,14 @@ function ConnectionForm({ config }: { config: ImmofluxConnectionView }) {
   const test = useServerFn(testImmofluxConnection);
   const start = useServerFn(startImmofluxImport);
   const client = useQueryClient();
-  const dirty = host !== config.host || slug !== config.slug || enabled !== config.enabled || apiKey !== "";
+  const dirty = subdomain !== config.subdomain || enabled !== config.enabled || apiKey !== "";
   async function perform(action: "save" | "test" | "import") {
     if (busy) return;
     setBusy(true); setMessage("");
     try {
       if (action === "save") {
-        await save({ data: { organizationId: config.organizationId, host, slug, enabled, ...(apiKey ? { apiKey } : {}) } });
-        setHost(normalizeImmofluxHost(host));
-        setSlug(normalizeImmofluxSlug(slug));
+        await save({ data: { organizationId: config.organizationId, subdomain, enabled, ...(apiKey ? { apiKey } : {}) } });
+        setSubdomain(normalizeImmofluxSubdomain(subdomain));
         setApiKey("");
         await client.invalidateQueries({ queryKey: ["superadmin", "immoflux", config.organizationId] });
         await client.invalidateQueries({ queryKey: ["superadmin", "agency", config.organizationId, "audit"] });
@@ -59,10 +57,9 @@ function ConnectionForm({ config }: { config: ImmofluxConnectionView }) {
   }
   return <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void perform("save"); }}>
     <div className="flex items-center gap-3"><Switch id="immoflux-enabled" checked={enabled} onCheckedChange={setEnabled} disabled={busy} /><Label htmlFor="immoflux-enabled">Activat</Label></div>
-    <div className="space-y-2"><Label htmlFor="immoflux-host">Host IMMOFLUX</Label><Input id="immoflux-host" value={host} onChange={(e) => setHost(e.target.value)} disabled={busy} autoComplete="off" /></div>
-    <div className="space-y-2"><Label htmlFor="immoflux-slug">Slug</Label><Input id="immoflux-slug" value={slug} onChange={(e) => setSlug(e.target.value)} disabled={busy} autoComplete="off" /></div>
-    <div className="space-y-2"><Label htmlFor="immoflux-key">Cheia API</Label><Input id="immoflux-key" type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} disabled={busy} autoComplete="new-password" />{config.configured ? <p className="text-xs text-muted-foreground">Cheie salvată</p> : null}</div>
-    <div className="flex flex-wrap gap-2"><Button type="submit" disabled={busy}>Salvează</Button><Button type="button" variant="outline" disabled={busy || dirty || !config.configured} onClick={() => void perform("test")}>Testează conexiunea</Button><Button type="button" variant="secondary" disabled={busy || dirty || !config.configured || !config.enabled} onClick={() => void perform("import")}>Importă acum</Button></div>
+    <div className="space-y-2"><Label htmlFor="immoflux-subdomain">Subdomeniu IMMOFLUX</Label><Input id="immoflux-subdomain" value={subdomain} placeholder="numeagentie" onChange={(e) => setSubdomain(e.target.value)} onBlur={() => { try { setSubdomain(normalizeImmofluxSubdomain(subdomain)); } catch { /* validat la salvare */ } }} disabled={busy} autoComplete="off" /><p className="text-xs text-muted-foreground">Partea „numeagentie” din numeagentie.immoflux.ro. Poți lipi și adresa întreagă.</p></div>
+    <div className="space-y-2"><Label htmlFor="immoflux-key">Token API</Label><Input id="immoflux-key" type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} disabled={busy} autoComplete="new-password" />{config.configured && config.tokenLast4 ? <p className="text-xs text-muted-foreground">Token salvat: ••••{config.tokenLast4}</p> : config.configured ? <p className="text-xs text-muted-foreground">Token salvat</p> : null}</div>
+    <div className="flex flex-wrap gap-2"><Button type="submit" disabled={busy}>Salvează</Button><Button type="button" variant="outline" disabled={busy || dirty || !config.configured || !config.subdomain} onClick={() => void perform("test")}>Testează conexiunea</Button><Button type="button" variant="secondary" disabled={busy || dirty || !config.configured || !config.subdomain || !config.enabled} onClick={() => void perform("import")}>Importă acum</Button></div>
     <p className="text-xs text-muted-foreground">Anunțurile noi intră ca ciornă, fără portaluri; cele deja importate nu se modifică. <Link to="/superadmin/importuri-immoflux" className="underline">Istoricul importurilor</Link></p>
     {message ? <p role="status" className="text-sm text-foreground">{message}</p> : null}
   </form>;
