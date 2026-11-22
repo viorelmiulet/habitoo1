@@ -4644,6 +4644,8 @@ export type Database = {
           requested_by: string
           started_at: string | null
           status: string
+          status_failures: number
+          status_step: number
           total: number | null
           unmapped_codes: string[]
         }
@@ -4666,6 +4668,8 @@ export type Database = {
           requested_by: string
           started_at?: string | null
           status?: string
+          status_failures?: number
+          status_step?: number
           total?: number | null
           unmapped_codes?: string[]
         }
@@ -4688,6 +4692,8 @@ export type Database = {
           requested_by?: string
           started_at?: string | null
           status?: string
+          status_failures?: number
+          status_step?: number
           total?: number | null
           unmapped_codes?: string[]
         }
