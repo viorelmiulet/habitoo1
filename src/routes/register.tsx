@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "@/components/ui/sonner";
+import { reportSignupConversion } from "@/lib/google-ads";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthRouteError } from "@/components/auth/AuthRouteError";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,7 @@ function RegisterPage() {
       toast.error("Există deja un cont cu acest email.");
       return;
     }
+    if (data.user) reportSignupConversion(data.user.id);
     if (!data.session) {
       setNotice(
         `Cont creat. Verifică emailul ${form.email} pentru linkul de confirmare (verifică și folderul Spam). Poți retrimite mesajul din pagina de autentificare.`,

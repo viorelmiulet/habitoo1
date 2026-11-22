@@ -1,6 +1,7 @@
 /**
  * Consimțământ cookie-uri pentru site-ul public (habitoo.ro).
- * Preferința se salvează în localStorage, nu în cookie.
+ * Preferința se salvează în localStorage; pe *.habitoo.ro se copiază și într-un
+ * cookie pe domeniul comun, ca acordul dat pe www să fie valabil pe crm (înscriere).
  */
 
 export const CONSENT_STORAGE_KEY = "habitoo.cookieConsent";
@@ -59,13 +60,42 @@ function isValid(value: unknown): value is ConsentState {
   );
 }
 
+export const CONSENT_COOKIE = "habitoo_consent";
+const SHARED_DOMAIN = "habitoo.ro";
+
+function sharedCookieDomain(): string | null {
+  const h = window.location.hostname.toLowerCase();
+  return h === SHARED_DOMAIN || h.endsWith(`.${SHARED_DOMAIN}`) ? SHARED_DOMAIN : null;
+}
+
+function readConsentCookie(): unknown {
+  const m = window.document.cookie.match(new RegExp(`(?:^|;\\s*)${CONSENT_COOKIE}=([^;]*)`));
+  return m ? JSON.parse(decodeURIComponent(m[1]!)) : null;
+}
+
+function writeConsentCookie(state: ConsentState) {
+  const domain = sharedCookieDomain();
+  if (!domain) return;
+  window.document.cookie = `${CONSENT_COOKIE}=${encodeURIComponent(JSON.stringify(state))}; Domain=${domain}; Path=/; Max-Age=${180 * 24 * 3600}; SameSite=Lax; Secure`;
+}
+
+/** Copiază în cookie-ul comun o preferință salvată înainte doar în localStorage. */
+export function shareConsentAcrossSubdomains() {
+  if (typeof window === "undefined") return;
+  try {
+    const state = readConsent();
+    if (state && !readConsentCookie()) writeConsentCookie(state);
+  } catch {
+    /* cookie indisponibil */
+  }
+}
+
 /** Preferința salvată sau null dacă nu există / versiunea e depășită. */
 export function readConsent(): ConsentState | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(CONSENT_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
+    const parsed: unknown = raw ? JSON.parse(raw) : readConsentCookie();
     return isValid(parsed) ? parsed : null;
   } catch {
     return null;
@@ -86,6 +116,7 @@ export function saveConsent(choice: { analytics: boolean; marketing: boolean }):
   } catch {
     /* localStorage indisponibil */
   }
+  writeConsentCookie(state);
   window.dispatchEvent(new CustomEvent<ConsentState>(CONSENT_CHANGED_EVENT, { detail: state }));
   return state;
 }
