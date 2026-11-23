@@ -15,14 +15,24 @@ const agent = { full_name: "Ana Popescu", email: "ana@test.ro", phone: "07223334
 const base = "https://crm.habitoo.ro";
 
 describe("Storia floor_plan", () => {
-  it("trimite releveul în floor_plan și nu în images", () => {
+  it("trimite releveul în floor_plan și ca ultimă poză în images", () => {
     const r = mapPropertyToStoria(p, { baseUrl: base, agent, images: [img("a", { is_primary: true, position: 0 }), img("plan", { is_floor_plan: true })] });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const ad = r.listings[0]!.advert;
     expect(ad.floor_plan).toContain("plan");
-    expect(ad.images.map((i) => i.url).some((u) => u.includes("plan"))).toBe(false);
-    expect(ad.images).toHaveLength(1);
+    expect(ad.images).toHaveLength(2);
+    expect(ad.images.at(-1)?.url).toBe(ad.floor_plan);
+  });
+  it("40+ poze plus releveu: releveul e ultimul și totalul ≤ 40", () => {
+    const many = Array.from({ length: 45 }, (_, i) => img(`p${i}`, { is_primary: i === 0, position: i }));
+    const r = mapPropertyToStoria(p, { baseUrl: base, agent, images: [...many, img("plan", { is_floor_plan: true, position: 99 })] });
+    if (!r.ok) throw new Error(r.reasons.join(" "));
+    const ad = r.listings[0]!.advert;
+    expect(ad.images).toHaveLength(40);
+    expect(ad.images.at(-1)?.url).toContain("/plan");
+    expect(ad.images[0]?.url).toContain("/p0");
+    expect(ad.images.some((i) => i.url.endsWith("/p39"))).toBe(false);
   });
   it("fără releveu nu există floor_plan", () => {
     const r = mapPropertyToStoria(p, { baseUrl: base, agent, images: [img("a", { is_primary: true }), img("b")] });

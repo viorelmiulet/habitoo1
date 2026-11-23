@@ -217,7 +217,7 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
   }
 
   const publishable = (options.images ?? []).filter(isImageFeedEligible);
-  // Releveul (OLX RE API `floor_plan`) se trimite separat și nu și în `images`.
+  // Releveul: `floor_plan` (Storia RO nu îl afișează încă) și ultima poză din `images`.
   const floorPlanImage = publishable.find((img) => img.is_floor_plan === true && !img.is_primary) ?? null;
   const eligibleImages = publishable
     .filter((img) => img !== floorPlanImage)
@@ -277,9 +277,10 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
 
   if (reasons.length) return { ok: false, reasons: [...new Set(reasons)] };
 
-  const images = eligibleImages
-    .slice(0, STORIA_MAX_IMAGES)
-    .map((img) => ({ url: feedImageUrl(options.baseUrl, img.id) }));
+  const images = [
+    ...eligibleImages.slice(0, floorPlanImage ? STORIA_MAX_IMAGES - 1 : STORIA_MAX_IMAGES),
+    ...(floorPlanImage ? [floorPlanImage] : []),
+  ].map((img) => ({ url: feedImageUrl(options.baseUrl, img.id) }));
 
   if (transactions.length === 2) {
     warnings.push(
