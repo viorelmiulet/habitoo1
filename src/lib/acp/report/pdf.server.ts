@@ -59,11 +59,35 @@ export type AcpReportPdfAssets = {
   /** Încărcătorul pozelor; implicit descărcare https cu limită de 5 s. */
   loadImage?: ReportImageLoader;
   imageTimeoutMs?: number;
+  /** Limita comună pentru toate pozele (implicit 20 s). */
+  photosTotalMs?: number;
   /** Încărcătorul tile-urilor de hartă; implicit OpenStreetMap. */
   loadTile?: MapTileLoader;
   /** Limita comună pentru toate hărțile raportului (implicit 8 s). */
   mapTimeoutMs?: number;
 };
+
+/** Fișe complete (poze + mini-hartă) doar pentru primele N comparabile, după similaritate. */
+export const REPORT_FULL_SHEETS_MAX = 12;
+/** Număr maxim de poze descărcate pe raport. */
+export const REPORT_PHOTOS_MAX = 45;
+/** Limita comună de timp pentru descărcarea tuturor pozelor. */
+export const REPORT_PHOTOS_TOTAL_MS = 20_000;
+
+/** URL-urile de poze care se descarcă (ordine de prioritate, maxim REPORT_PHOTOS_MAX). */
+export function reportPhotoUrls(model: AcpReportModel): string[] {
+  const urls: string[] = [];
+  const add = (u: string | null | undefined) => {
+    if (u && !urls.includes(u)) urls.push(u);
+  };
+  add(model.cover.photo);
+  model.subjectSheet.photos.forEach(add);
+  for (const c of model.used.slice(0, REPORT_FULL_SHEETS_MAX)) {
+    add(c.photo);
+    c.sheet.photos.forEach(add);
+  }
+  return urls.slice(0, REPORT_PHOTOS_MAX);
+}
 
 const GREEN = rgb(0.12, 0.55, 0.33);
 export const MAIN_MAP_HEIGHT = 470;
@@ -90,7 +114,7 @@ export function reportMapLayouts(model: AcpReportModel): {
   const miniW = CW - CW * FEAT_RATIO - 10;
   const all: [AcpReportSheet, "subject" | "comparable"][] = [
     [model.subjectSheet, "subject"],
-    ...model.used.map((u): [AcpReportSheet, "comparable"] => [u.sheet, "comparable"]),
+    ...model.used.slice(0, REPORT_FULL_SHEETS_MAX).map((u): [AcpReportSheet, "comparable"] => [u.sheet, "comparable"]),
   ];
   for (const [sheet, kind] of all) {
     if (!sheet.geo) continue;
@@ -160,21 +184,14 @@ export async function buildAcpReportPdf(
   /* ---------------- Poze: încărcare paralelă, cache pe URL ---------------- */
   const loader = assets.loadImage ?? fetchReportImage;
   const timeout = assets.imageTimeoutMs ?? REPORT_IMAGE_TIMEOUT_MS;
-  const urls = new Set<string>();
-  const addUrl = (u: string | null | undefined) => {
-    if (u) urls.add(u);
-  };
-  addUrl(model.cover.photo);
-  model.subjectSheet.photos.forEach(addUrl);
-  for (const c of model.used) {
-    addUrl(c.photo);
-    c.sheet.photos.forEach(addUrl);
-  }
   const images = new Map<string, PDFImage | null>();
-  const queue = [...urls];
+  const queue = reportPhotoUrls(model);
+  const deadline = Date.now() + (assets.photosTotalMs ?? REPORT_PHOTOS_TOTAL_MS);
   const worker = async () => {
     for (let url = queue.shift(); url !== undefined; url = queue.shift()) {
-      const bytes = await loadWithTimeout(loader, url, timeout);
+      const left = deadline - Date.now();
+      if (left <= 0) break;
+      const bytes = await loadWithTimeout(loader, url, Math.min(timeout, left));
       const normalized = bytes ? normalizeReportImage(bytes) : null;
       let image: PDFImage | null = null;
       if (normalized) {
@@ -815,7 +832,7 @@ export async function buildAcpReportPdf(
     }
   };
   sheet(model.subjectSheet, true, "Ajustări");
-  for (const c of model.used) sheet(c.sheet, false, `Ajustări pentru comparabila #${c.index}`);
+  for (const c of model.used.slice(0, REPORT_FULL_SHEETS_MAX)) sheet(c.sheet, false, `Ajustări pentru comparabila #${c.index}`);
 
   /* ================= 7. Anexă tehnică (opțională) ================= */
   if (model.includeAppendix) {

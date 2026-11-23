@@ -1,0 +1,1 @@
+- ACP report PDFs render full sheets (photos + mini-map) only for the top similarity comparables and cap photo downloads by count and a shared time budget; `generating` rows older than the stale threshold are failed at list/generate (`report/stale.ts`). Why: large analyses must finish within Worker limits and never stay stuck.

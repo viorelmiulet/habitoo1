@@ -462,6 +462,8 @@ export const listAcpReports = createServerFn({ method: "POST" })
     if (!current) throw new Error("Analiza nu a fost găsită în agenția ta.");
     assertReportOrganization(current.organization_id, actor.organizationId);
     const rootId = current.root_analysis_id ?? current.id;
+    const { failStaleReports } = await import("./report/stale");
+    await failStaleReports(admin, actor.organizationId);
 
     const { data: rows, error: listError } = await admin
       .from("acp_reports")
@@ -540,6 +542,8 @@ export async function generateAcpReportForVersion(
       if (!eligibility.ok) {
         return { report: null, ok: false, errorMessage: eligibility.reason };
       }
+      const { failStaleReports } = await import("./report/stale");
+      await failStaleReports(admin, actor.organizationId);
       await enforceReportRateLimit(admin, actor);
 
       const { data: org } = await admin
