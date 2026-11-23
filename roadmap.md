@@ -1,3 +1,9 @@
+## Descriere automată publică a agenției
+- [x] Text determinist din agregatul complet al ofertelor publice eligibile, prioritate descriere proprie și SEO comun; migrarea 0328 aplicată fără schimbări de date.
+- [x] Previzualizare în Setări fără salvarea textului automat; actualizare la fiecare citire și fără cache pe pagina agenției.
+- [x] 13 teste noi; pagina MVA reală verificată pe desktop/telefon (63 oferte, 60 vânzare/3 închiriere), meta 140 caractere și JSON-LD identic; fără publicare.
+- [ ] Verificarea autentificată a previzualizării Setări: solicitantul nu are cont asociat pentru sesiune; necesită autentificarea în previzualizare.
+
 ## Verificarea anunțului — continuare sugestii AI
 - [x] Previzualizare fără eroarea anterioară; cele 34 de teste existente țintite trec.
 - [x] Validare strictă a formei răspunsului, titlu sub 70 de caractere și validare numai față de câmpurile neconfidențiale.

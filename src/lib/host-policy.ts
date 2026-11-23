@@ -6,7 +6,7 @@
  * - X-Robots-Tag: noindex, nofollow pe HTML-ul de pe crm.* (nu pe /api/public, media).
  */
 import { PUBLIC_SITE_URL, isCrmHostname } from "./host";
-import { isMarketingPath, PUBLIC_PAGE_CACHE } from "./marketing/public-http";
+import { isMarketingPath, PUBLIC_PAGE_CACHE, publicPageCache } from "./marketing/public-http";
 
 export const APEX_HOST = "habitoo.ro";
 
@@ -241,5 +241,5 @@ export function publicCacheControl(request: Request, response: Response): string
   if (request.headers.get("authorization")) return null;
   const cookie = request.headers.get("cookie") ?? "";
   if (cookie) return null;
-  return PUBLIC_CACHE_CONTROL;
+  return publicPageCache(path);
 }

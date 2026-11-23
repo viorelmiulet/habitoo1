@@ -15388,6 +15388,10 @@ export type Database = {
         }[]
       }
       public_agency_city: { Args: { _slug: string }; Returns: string }
+      public_agency_description_stats: {
+        Args: { _slug: string }
+        Returns: Json
+      }
       public_agency_offers: {
         Args: {
           _agency_slug: string

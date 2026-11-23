@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { PublicProfileLink } from "@/components/app/PublicProfileLink";
+import { AgencyDescriptionPreview } from "@/components/app/AgencyDescriptionPreview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { ImobiliarePromotionsAdminCard } from "@/components/app/ImobiliarePromotionsAdminCard";
@@ -589,6 +590,7 @@ function SettingsPage() {
                           onChange={(e) => setOrgForm((f) => ({ ...f, public_description: e.target.value }))}
                         />
                       </SettingsField>
+                      <AgencyDescriptionPreview slug={user?.organization?.public_slug ?? null} />
                     </div>
                     {/* Planul este doar informativ: se schimbă exclusiv din Superadmin. */}
                     <div className="space-y-2 rounded-2xl border border-border bg-muted/40 p-4 text-sm">

@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { partnerLogoUrl } from "@/lib/public-partners";
 import { PROFILE_OFFERS_PAGE_SIZE } from "@/lib/marketing/agency-seo";
+import { agencyDescriptionStatsSchema, buildAgencyDescription } from "@/lib/marketing/agency-description";
 
 function db() {
   const url = process.env["SUPABASE_URL"]; const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
@@ -34,9 +35,16 @@ async function agency(slug: string): Promise<(PublicAgencyPage & { id: string })
 
 export async function loadAgencyPage(slug: string, page: number) {
   const a = await agency(slug); if (!a) return null;
-  const list = await offers(a.slug, null, page);
+  const [list, aggregate] = await Promise.all([
+    offers(a.slug, null, page),
+    db().rpc("public_agency_description_stats", { _slug: a.slug }),
+  ]);
+  const parsed = aggregate.error ? null : agencyDescriptionStatsSchema.safeParse(aggregate.data);
+  // A failed aggregate never fabricates facts or hides the existing agency page.
+  const description = parsed?.success ? buildAgencyDescription(a, parsed.data)
+    : { description: a.offerCount > 0 ? a.description : null, automaticDescription: null, metaDescription: null };
   const { id: _id, ...pub } = a;
-  return { agency: pub, offers: list };
+  return { agency: { ...pub, ...description }, offers: list };
 }
 export async function loadAgencySitemap(): Promise<{ path: string; lastmod: string | null }[]> {
   const { publicRead } = await import("@/lib/public-read");

@@ -23,7 +23,7 @@ export const Route = createFileRoute("/agentii/$slug")({
     return publicHead({
       path: agencyPath(agency.slug),
       title: `${agency.name}${where} — oferte imobiliare | Habitoo`,
-      description: agency.description?.slice(0, 160) ?? `Ofertele imobiliare ale agenției ${agency.name}${where}.`,
+      description: agency.metaDescription ?? agency.description?.slice(0, 160) ?? `Ofertele imobiliare ale agenției ${agency.name}${where}.`,
       noindex: !agencyIndexable(agency) || offers.page > 1,
       jsonLd: agencyJsonLd(agency, offers.items, (offers.page - 1) * PROFILE_OFFERS_PAGE_SIZE),
     });
@@ -73,7 +73,7 @@ function AgencyProfilePage() {
         </div>
       </section>
       <section className="mx-auto w-full max-w-7xl space-y-12 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-        {agency.description ? <p className="max-w-3xl whitespace-pre-line text-lg leading-relaxed text-muted-foreground">{agency.description}</p> : null}
+        {agency.description ? <div className="max-w-3xl space-y-4 break-words text-lg leading-relaxed text-muted-foreground">{agency.description.split(/\n\s*\n/).map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}</div> : null}
         <div className="space-y-5">
           <h2 className="font-display text-2xl font-semibold text-navy">Oferte ({offers.total})</h2>
           <ProfileOfferList offers={offers} pageHref={(p) => `${agencyPath(agency.slug)}${p > 1 ? `?pagina=${p}` : ""}`} />
