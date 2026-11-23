@@ -10,6 +10,6 @@ export const Route = createFileRoute("/api/public/portal-logo/$slug")({ server: 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin.storage.from("feed-portal-logos").download(row.logo_path);
     if (error || !data) return new Response(null, { status: 404 });
-    return new Response(data, { headers: { "content-type": data.type, "cache-control": "public, max-age=300", "x-content-type-options": "nosniff" } });
+    return new Response(data, { headers: { "content-type": data.type, "cache-control": "public, max-age=300", "x-content-type-options": "nosniff", "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src data:" } });
   },
 } } });

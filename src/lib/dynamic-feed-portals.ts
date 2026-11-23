@@ -11,7 +11,7 @@ export const dynamicFeedPortalSchema = z.object({
   display_name: z.string().trim().min(2).max(100),
   website: z.string().url().max(500).refine(v => new URL(v).protocol === "https:", "Folosește o adresă HTTPS."),
   xml_enabled: z.boolean().default(false), show_public: z.boolean().default(false),
-  logo_path: z.string().regex(/^[a-z][a-z0-9-]{1,39}\/[a-f0-9-]{36}\.(png|jpg|webp)$/).nullable().default(null),
+  logo_path: z.string().regex(/^[a-z][a-z0-9-]{1,39}\/[a-f0-9-]{36}\.(png|jpg|webp|svg)$/).nullable().default(null),
 });
 export function dynamicPortalDefinition(row: DynamicFeedPortal): PortalDefinition {
   return { id: row.slug, display_name: row.display_name,
