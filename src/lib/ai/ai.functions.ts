@@ -183,6 +183,17 @@ export const sendAiMessage = createServerFn({ method: "POST" })
     const blocked = await aiFeatureBlocked(actor.organizationId);
     if (blocked) return emptyAiResponse("failed", blocked);
 
+    if (/ce\s+am\s+de\s+f[aă]cut\s+(?:azi|ast[aă]zi)/i.test(data.message)) {
+      const { dailyActions } = await import("@/lib/daily-brief/service.server");
+      const result = await dailyActions(context.supabase, userId);
+      return {
+        ...emptyAiResponse("ok"),
+        answer: [result.sentence, ...result.data.actions.map((a, i) => `${i + 1}. ${a.title} — ${a.reason}`)].filter(Boolean).join("\n") || "Nimic de rezolvat acum.",
+        contextUsed: ["lead", "activity", "property"],
+        confidence: "high",
+      };
+    }
+
     const { isAiConfigured } = await import("./providers/registry.server");
     if (!isAiConfigured()) {
       return {

@@ -1,3 +1,9 @@
+## Acasă — acțiuni reale și clopoțel
+- [ ] Motor server, acces agent/agenție, preferințe personale și listă completă.
+- [ ] Ordine AI validată și aceeași listă în Agentul AI.
+- [ ] Erori portal numai în notificările existente: deduplicare, temporare 24h, rezolvare.
+- [ ] Teste strict noi/modificate, verificare și commit; fără publicare.
+
 ## Import IMMOFLUX — configurare, etapa 1
 - [x] Import existent verificat: 216 proprietăți (162 external_id), 2.045 poze apcdn; configurare izolată și criptată exclusiv SuperAdmin, audit atomic și test conexiune
 - [x] 20 teste exclusiv noi; schema confirmată și build OK; acces real agency_admin redirecționat la /app. Fără importuri reale sau publicare; commit la încheiere

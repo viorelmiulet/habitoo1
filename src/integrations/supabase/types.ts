@@ -4520,6 +4520,30 @@ export type Database = {
           },
         ]
       }
+      home_action_preferences: {
+        Row: {
+          action_key: string
+          ignored: boolean
+          organization_id: string
+          snoozed_until: string | null
+          user_id: string
+        }
+        Insert: {
+          action_key: string
+          ignored?: boolean
+          organization_id: string
+          snoozed_until?: string | null
+          user_id: string
+        }
+        Update: {
+          action_key?: string
+          ignored?: boolean
+          organization_id?: string
+          snoozed_until?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       homedirect_listings: {
         Row: {
           external_id: string
@@ -6937,7 +6961,11 @@ export type Database = {
           id: string
           link: string | null
           organization_id: string | null
+          portal_error_key: string | null
+          portal_key: string | null
+          portal_property_id: string | null
           read_at: string | null
+          resolved_at: string | null
           title: string
           type: string
           updated_at: string
@@ -6951,7 +6979,11 @@ export type Database = {
           id?: string
           link?: string | null
           organization_id?: string | null
+          portal_error_key?: string | null
+          portal_key?: string | null
+          portal_property_id?: string | null
           read_at?: string | null
+          resolved_at?: string | null
           title: string
           type?: string
           updated_at?: string
@@ -6965,7 +6997,11 @@ export type Database = {
           id?: string
           link?: string | null
           organization_id?: string | null
+          portal_error_key?: string | null
+          portal_key?: string | null
+          portal_property_id?: string | null
           read_at?: string | null
+          resolved_at?: string | null
           title?: string
           type?: string
           updated_at?: string
@@ -9752,6 +9788,10 @@ export type Database = {
       }
       portal_publications: {
         Row: {
+          alert_error_key: string | null
+          alert_operation: string | null
+          alert_since: string | null
+          alert_temporary: boolean
           created_at: string
           created_by: string | null
           enabled: boolean
@@ -9773,6 +9813,10 @@ export type Database = {
           withdrawn_at: string | null
         }
         Insert: {
+          alert_error_key?: string | null
+          alert_operation?: string | null
+          alert_since?: string | null
+          alert_temporary?: boolean
           created_at?: string
           created_by?: string | null
           enabled?: boolean
@@ -9794,6 +9838,10 @@ export type Database = {
           withdrawn_at?: string | null
         }
         Update: {
+          alert_error_key?: string | null
+          alert_operation?: string | null
+          alert_since?: string | null
+          alert_temporary?: boolean
           created_at?: string
           created_by?: string | null
           enabled?: boolean
@@ -15283,6 +15331,10 @@ export type Database = {
       }
       partner_webhook_wake: { Args: never; Returns: undefined }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
+      portal_alert_class: {
+        Args: { _code?: string; _http?: number; _message: string }
+        Returns: string
+      }
       portal_bulk_arm: { Args: never; Returns: undefined }
       portal_bulk_tick: { Args: never; Returns: undefined }
       portal_index_key_touch: { Args: { _id: string }; Returns: undefined }
@@ -15465,6 +15517,21 @@ export type Database = {
       rate_limit_hit: {
         Args: { _bucket: string; _limit: number; _window_seconds: number }
         Returns: boolean
+      }
+      reconcile_portal_alerts: { Args: never; Returns: undefined }
+      record_portal_alert: {
+        Args: {
+          _code?: string
+          _http?: number
+          _message?: string
+          _name?: string
+          _operation: string
+          _org: string
+          _portal: string
+          _property: string
+          _success: boolean
+        }
+        Returns: undefined
       }
       record_portal_relay_response: {
         Args: { _ok: boolean }
