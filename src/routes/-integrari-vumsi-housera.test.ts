@@ -10,7 +10,7 @@ describe.each([
     const res = await fetch(`http://localhost:8080/integrari/${slug}`);
     expect(res.status).toBe(200);
     const html = (await res.text()).replace(/<!-- -->/g, "");
-    expect(html).toMatch(new RegExp(`<h1[^>]*>Integrare ${name.replace(".", "\\.")} cu Habitoo CRM</h1>`));
+    expect(html).toMatch(new RegExp(`<h1[^>]*>Integrare Habitoo CRM cu ${name.replace(".", "\\.")}</h1>`));
     expect(html).toContain(`<title>Integrare ${name} cu CRM imobiliar | Habitoo</title>`);
     expect(html).toMatch(new RegExp(`<img[^>]*src="[^"]*${logoPart}[^"]*"`));
   });

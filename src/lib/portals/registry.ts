@@ -69,6 +69,10 @@ export type PortalActivationMode = "self_service" | "oauth" | "approval";
 
 export type PortalDefinition = {
   dynamic_feed?: boolean;
+  /** Portaluri din SuperAdmin: feed, api (Partner API) sau both. */
+  integration_mode?: string;
+  /** Descriere publică proprie, scrisă de SuperAdmin. */
+  public_description?: string | null;
   show_public?: boolean;
   logo_url?: string;
   id: PortalId;

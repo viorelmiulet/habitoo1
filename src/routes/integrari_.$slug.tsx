@@ -4,21 +4,17 @@ import { CtaBand } from "@/components/marketing/CtaBand";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Eyebrow, Container, Section } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
-import { dynamicIntegrationPageBySlug, integrationPageAliasTarget, integrationPageBySlug as staticPageBySlug, RELATED_CTA_TEXT } from "@/lib/portals/integration-pages";
+import { buildDynamicIntegrationPage, integrationPageAliasTarget, integrationPageBySlug as staticPageBySlug, RELATED_CTA_TEXT, type IntegrationPage as IntegrationPageData } from "@/lib/portals/integration-pages";
 import { integrationJsonLd } from "@/lib/portals/integration-jsonld";
 import { getPublicDynamicFeedPortals } from "@/lib/dynamic-feed-portals.functions";
 import { PublicAnswer } from "@/components/marketing/PublicAnswer";
 
-/** Pagini statice din registru sau pagini ale portalurilor adăugate din SuperAdmin. */
-function integrationPageBySlug(slug: string) {
-  return staticPageBySlug(slug) ?? dynamicIntegrationPageBySlug(slug);
-}
 
 export const Route = createFileRoute("/integrari_/$slug")({
   // Adresele alternative (ex. /integrari/storia-olx) merg 301 spre pagina canonică,
   // cu query string-ul păstrat. Adresele necunoscute rămân 404, în loader.
   beforeLoad: ({ params, location }) => {
-    if (integrationPageBySlug(params.slug)) return;
+    if (staticPageBySlug(params.slug) || !integrationPageAliasTarget(params.slug)) return;
     const target = integrationPageAliasTarget(params.slug);
     if (target) {
       const query = location.searchStr.replace(/^\?+/, "");
@@ -30,16 +26,14 @@ export const Route = createFileRoute("/integrari_/$slug")({
   },
   loader: async ({ params }) => {
     const page = staticPageBySlug(params.slug);
-    if (page) return { slug: page.slug, logoUrl: null as string | null };
-    const dynamicPage = dynamicIntegrationPageBySlug(params.slug);
-    if (!dynamicPage) throw notFound();
-    // Pagina există doar cât timp portalul e activ și vizibil public din SuperAdmin.
-    const portal = (await getPublicDynamicFeedPortals()).find((p) => p.id === dynamicPage.slug);
+    if (page) return { slug: page.slug, logoUrl: null as string | null, dynamicPage: null as IntegrationPageData | null };
+    // Portalurile din SuperAdmin au pagină doar cât timp sunt active și vizibile public.
+    const portal = (await getPublicDynamicFeedPortals()).find((p) => p.id === params.slug);
     if (!portal) throw notFound();
-    return { slug: dynamicPage.slug, logoUrl: portal.logo_url ? `/api/public/portal-logo/${dynamicPage.slug}` : null };
+    return { slug: portal.id, logoUrl: portal.logo_url ? `/api/public/portal-logo/${portal.id}` : null, dynamicPage: buildDynamicIntegrationPage(portal) };
   },
   head: ({ loaderData }) => {
-    const page = loaderData ? integrationPageBySlug(loaderData.slug) : null;
+    const page = loaderData ? (loaderData.dynamicPage ?? staticPageBySlug(loaderData.slug)) : null;
     if (!page) return { meta: [{ title: "Integrare indisponibilă — Habitoo" }, { name: "robots", content: "noindex" }] };
     return publicHead({
       path: `/integrari/${page.slug}`,
@@ -56,8 +50,8 @@ function H2({ children }: { children: React.ReactNode }) {
 }
 
 function IntegrationPage() {
-  const { slug, logoUrl } = Route.useLoaderData();
-  const page = integrationPageBySlug(slug);
+  const { slug, logoUrl, dynamicPage } = Route.useLoaderData();
+  const page = dynamicPage ?? staticPageBySlug(slug);
   if (!page) throw notFound();
   return (
     <PublicLayout>
@@ -75,7 +69,7 @@ function IntegrationPage() {
               <PortalLogoStack portalId={page.portalId} name={page.name} size={64} className="shrink-0" />
             )}
             <h1 className="text-4xl font-semibold tracking-tight text-balance text-navy sm:text-5xl">
-              Integrare {page.name} cu Habitoo CRM
+              {`Integrare Habitoo CRM cu ${page.name}`}
             </h1>
           </div>
           <PublicAnswer path={`/integrari/${slug}`} />

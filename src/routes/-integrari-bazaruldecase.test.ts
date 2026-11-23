@@ -7,7 +7,7 @@ describe("/integrari/bazaruldecase", () => {
     const res = await fetch("http://localhost:8080/integrari/bazaruldecase");
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html.replace(/<!-- -->/g, "")).toMatch(/<h1[^>]*>Integrare BazarulDeCase.ro cu Habitoo CRM<\/h1>/);
+    expect(html.replace(/<!-- -->/g, "")).toMatch(/<h1[^>]*>Integrare Habitoo CRM cu BazarulDeCase.ro<\/h1>/);
     expect(html).toContain("<title>Integrare BazarulDeCase.ro cu CRM imobiliar | Habitoo</title>");
     expect(html).toContain(logo.url);
   });

@@ -6,7 +6,7 @@ import { CrmLink } from "@/components/marketing/CrmLink";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { integrationItemListJsonLd } from "@/lib/portals/integration-overview";
-import { dynamicIntegrationPageBySlug, INTEGRATION_PAGES, integrationFeatures, numeralLabel, portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
+import { buildDynamicIntegrationPage, INTEGRATION_PAGES, integrationFeatures, numeralLabel, portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
 import { FaqSection, faqPageJsonLd, type FaqItem } from "@/components/marketing/FaqSection";
 import { Check, Minus } from "lucide-react";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
@@ -71,7 +71,7 @@ export const Route = createFileRoute("/integrari")({
     const description = META_DESCRIPTION.replace(portalsLabel(N), portalsLabel(count));
     const faq = INTEGRARI_FAQ.map(item => ({ ...item, a: item.a.replace(portalsLabel(N), portalsLabel(count)) }));
     const list = integrationItemListJsonLd();
-    const extra = (loaderData ?? []).map((p, i) => ({ "@type": "ListItem", position: list.itemListElement.length + i + 1, name: p.display_name, url: p.website ?? "https://www.habitoo.ro/integrari" }));
+    const extra = (loaderData ?? []).map((p, i) => ({ "@type": "ListItem", position: list.itemListElement.length + i + 1, name: p.display_name, url: `https://www.habitoo.ro/integrari/${p.id}` }));
     return publicHead({
     path: "/integrari",
     title,
@@ -116,7 +116,7 @@ function IntegrationsPage() {
                 {g.pages.map((p) => (
                   <li key={p.slug}><Link to="/integrari/$slug" params={{ slug: p.slug }} className="block rounded-[20px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><PortalChip portalId={p.portalId} name={p.name} /></Link></li>
                 ))}
-                {g !== GROUPS[0] && dynamic.map(p => dynamicIntegrationPageBySlug(p.id) ? <li key={p.id}><Link to="/integrari/$slug" params={{ slug: p.id }} className="block rounded-[20px]"><PortalChip portalId={p.id} name={p.display_name} logoUrl={p.logo_url} /></Link></li> : <li key={p.id}><a href={p.website} target="_blank" rel="noopener noreferrer" className="block rounded-[20px]"><PortalChip portalId={p.id} name={p.display_name} logoUrl={p.logo_url} /></a></li>)}
+                {g !== GROUPS[0] && dynamic.map(p => <li key={p.id}><Link to="/integrari/$slug" params={{ slug: p.id }} className="block rounded-[20px]"><PortalChip portalId={p.id} name={p.display_name} logoUrl={p.logo_url} /></Link></li>)}
               </ul>
             </div>
           ))}
@@ -144,7 +144,7 @@ function IntegrationsPage() {
                     </tr>
                   );
                 })}
-                {dynamic.map(p => <tr key={p.id} className="border-b last:border-0"><td className="p-3 font-medium text-navy">{dynamicIntegrationPageBySlug(p.id) ? <Link to="/integrari/$slug" params={{ slug: p.id }} className="hover:underline">{p.display_name}</Link> : p.display_name}</td>{[true, true, true, true].map((_, i) => <td key={i} className="p-3 text-center"><Check className="inline size-4 ds-ai" aria-label="Da" /></td>)}</tr>)}
+                {dynamic.map(p => { const f = integrationFeatures(buildDynamicIntegrationPage(p)); return <tr key={p.id} className="border-b last:border-0"><td className="p-3"><Link to="/integrari/$slug" params={{ slug: p.id }} className="font-medium text-navy hover:underline">{p.display_name}</Link></td>{[f.publish, f.update, f.withdraw, f.leads].map((v, i) => <td key={i} className="p-3 text-center">{v ? <Check className="inline size-4 ds-ai" aria-label="Da" /> : <Minus className="inline size-4 ds-text-3" aria-label="Nu" />}</td>)}</tr>; })}
               </tbody>
             </table>
           </div>

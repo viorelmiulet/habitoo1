@@ -1,0 +1,2 @@
+ALTER TABLE public.dynamic_feed_portals ADD COLUMN IF NOT EXISTS public_description text CHECK (public_description IS NULL OR char_length(public_description) <= 3000);
+UPDATE public.dynamic_feed_portals SET show_public = true, updated_at = now() WHERE slug = 'propri-ro';

@@ -5,7 +5,7 @@ import { dynamicFeedPortalSchema, dynamicPortalDefinition } from "./dynamic-feed
 
 export const getDynamicFeedRegistry = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { data, error } = await context.supabase.from("dynamic_feed_portals")
-    .select("slug,display_name,key_prefix,website,logo_path,xml_enabled,active,show_public,integration_mode").eq("active", true).order("slug");
+    .select("slug,display_name,key_prefix,website,logo_path,xml_enabled,active,show_public,integration_mode,public_description").eq("active", true).order("slug");
   if (error) throw new Error("Catalogul portalurilor nu poate fi încărcat.");
   const rows = await Promise.all((data ?? []).map(async row => {
     const definition = dynamicPortalDefinition(row);
@@ -26,11 +26,12 @@ export const createDynamicFeedPortal = createServerFn({ method: "POST" }).middle
     return createDynamicFeedPortalCore(context.supabase as never, data);
   });
 export const updateDynamicFeedPortal = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
-  .inputValidator(z.object({ slug: dynamicFeedPortalSchema.shape.slug, active: z.boolean().optional(), show_public: z.boolean().optional() }))
+  .inputValidator(z.object({ slug: dynamicFeedPortalSchema.shape.slug, active: z.boolean().optional(), show_public: z.boolean().optional(), public_description: z.string().trim().max(3000).nullable().optional() }))
   .handler(async ({ data, context }) => {
     const { data: allowed, error } = await context.supabase.rpc("is_superadmin");
     if (error || allowed !== true) throw new Error("Acces refuzat.");
-    const { slug, ...patch } = data;
+    const { slug, ...rest } = data;
+    const patch = { ...rest, ...(rest.public_description !== undefined ? { public_description: rest.public_description || null } : {}) };
     const { data: row, error: failure } = await context.supabase.from("dynamic_feed_portals").update(patch).eq("slug", slug).select("slug").maybeSingle();
     if (failure || !row) throw new Error("Portalul nu a putut fi actualizat.");
     return { ok: true };

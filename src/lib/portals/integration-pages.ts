@@ -720,6 +720,51 @@ export const DYNAMIC_INTEGRATION_PAGES: IntegrationPage[] = Object.values(DYNAMI
   title: `Integrare ${c.name} cu CRM imobiliar | Habitoo`,
 }));
 
+/** Text generat din datele portalului din SuperAdmin; descrierea proprie (dacă există) înlocuiește introducerea. */
+export function buildDynamicIntegrationPage(def: PortalDefinition): IntegrationPage {
+  const curated = DYNAMIC_INTEGRATION_PAGES.find((p) => p.slug === def.id);
+  const custom = def.public_description?.trim();
+  if (curated && !custom) return curated;
+  const name = def.display_name;
+  const api = def.integration_mode === "api";
+  const website = def.website ? { href: def.website, label: new URL(def.website).hostname.replace(/^www\./, "") } : undefined;
+  const generatedIntro = api
+    ? [`${name} preia anunțurile agențiilor care îl activează din Habitoo, la Setări → Portaluri. Actualizările anunțurilor ajung automat pe portal, fără să le introduci din nou.`,
+       `${name} raportează înapoi în Habitoo starea publicării: publicat, cu linkul anunțului, sau respins, cu motivul. Când retragi anunțul din Habitoo, acesta este scos de pe ${name}.`]
+    : [`${name} preia automat anunțurile selectate de agenție în Habitoo, după ce agenția activează portalul la Setări → Portaluri. Modificările ajung pe portal la următoarea preluare.`,
+       `Când debifezi sau retragi anunțul în Habitoo, acesta este scos de pe ${name} la următoarea preluare.`];
+  const intro = custom ? custom.split(/\n\s*\n/).map((t) => t.trim()).filter(Boolean) : generatedIntro;
+  const canDo = api
+    ? [`Activezi ${name} din Setări → Portaluri, iar portalul preia anunțurile agenției.`, "Actualizările anunțurilor ajung automat pe portal.", "Vezi în Habitoo dacă anunțul a fost publicat, cu linkul lui, sau respins, cu motivul.", `La retragerea anunțului din Habitoo, anunțul este scos de pe ${name}.`]
+    : [`Alegi din Habitoo ce oferte apar pe ${name}; portalul le preia singur.`, "Modificările din Habitoo ajung pe portal automat, la următoarea preluare.", "Dacă debifezi oferta, aceasta iese de pe portal la următoarea preluare."];
+  const dailyWork = ["Introduci proprietatea o singură dată în Habitoo: datele, pozele, descrierea și agentul responsabil.",
+    api ? `După activare, ${name} preia anunțurile și actualizările lor, iar starea publicării apare în Habitoo.` : `În fila Publicare a proprietății bifezi ${name}, iar portalul preia oferta și modificările ei.`];
+  const activation = `Administratorul agenției activează ${name} din Setări → Portaluri.`;
+  const faq = [
+    { q: `Cum activez ${name}?`, a: `${activation} După activare, ${api ? "portalul preia anunțurile agenției" : "alegi ofertele prin bifarea portalului în fișa proprietății"}.` },
+    { q: `Cum ajung modificările pe ${name}?`, a: api ? "Actualizările anunțurilor ajung automat pe portal, fără să le trimiți separat." : "Modificările din Habitoo ajung pe portal automat, la următoarea preluare." },
+    api ? { q: "Cum aflu dacă anunțul a fost publicat?", a: `${name} raportează înapoi starea: publicat, cu linkul anunțului, sau respins, cu motivul. Le vezi în Habitoo.` }
+        : { q: `Cum scot un anunț de pe ${name}?`, a: "Debifezi portalul pentru oferta respectivă în Habitoo, iar oferta iese de pe portal la următoarea preluare." },
+    ...(api ? [{ q: `Cum scot un anunț de pe ${name}?`, a: `Retragi anunțul din Habitoo, iar acesta este scos de pe ${name}.` }] : []),
+  ];
+  const description = (custom ? intro[0] : api
+    ? `Integrare Habitoo CRM cu ${name}: portalul preia anunțurile agențiilor care îl activează, primește actualizările și raportează starea publicării.`
+    : `Integrare Habitoo CRM cu ${name}: portalul preia automat ofertele selectate de agenție, cu modificările lor.`).slice(0, 300);
+  return {
+    slug: def.id, name, description, intro, notes: [api ? "Agenția decide activarea; fără activare, portalul nu preia anunțuri." : "Portalul preia doar ofertele selectate pentru el, nu toate proprietățile agenției."],
+    faq, website, portalId: def.id,
+    definition: { ...def, logo_url: undefined, receives_leads: false, capabilities: ["feed_pull", "update_listing", "withdraw_listing"], withdraws_via_feed: true },
+    canDo, dailyWork, whyHabitoo: whyHabitoo(name), activationText: activation,
+    related: BASE.slice(0, 3).map((r) => ({ slug: r.c.slug, name: r.c.name })),
+    title: `Integrare ${name} cu CRM imobiliar | Habitoo`,
+  };
+}
+
+/** Paginile tuturor portalurilor din SuperAdmin active și publice. */
+export function dynamicIntegrationPages(defs: PortalDefinition[]): IntegrationPage[] {
+  return defs.filter((d) => d.dynamic_feed && d.status === "available" && d.show_public).map(buildDynamicIntegrationPage);
+}
+
 export function dynamicIntegrationPageBySlug(slug: string): IntegrationPage | null {
   return DYNAMIC_INTEGRATION_PAGES.find((p) => p.slug === slug) ?? null;
 }
@@ -779,7 +824,7 @@ export const RELATED_CTA_TEXT = "Creează agenția în câteva minute sau cere o
 /** Toate textele vizibile ale paginii (pentru numărarea cuvintelor). */
 export function integrationPageText(p: IntegrationPage): string {
   return [
-    `Integrare ${p.name} cu Habitoo CRM`,
+    `Integrare Habitoo CRM cu ${p.name}`,
     ...p.intro,
     p.whyHabitoo,
     "Ce poți face",

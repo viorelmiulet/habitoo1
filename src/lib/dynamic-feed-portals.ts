@@ -5,6 +5,7 @@ export type DynamicFeedPortal = {
   slug: string; display_name: string; key_prefix: string; website: string;
   logo_path: string | null; xml_enabled: boolean; active: boolean; show_public: boolean;
   integration_mode?: "feed" | "api" | "both" | string;
+  public_description?: string | null;
 };
 export const dynamicFeedPortalSchema = z.object({
   slug: z.string().regex(/^[a-z][a-z0-9-]{1,39}$/, "Identificatorul trebuie să aibă 2–40 de litere mici, cifre sau cratime."),
@@ -22,6 +23,7 @@ export function dynamicPortalDefinition(row: DynamicFeedPortal): PortalDefinitio
     receives_leads: true, withdraws_via_feed: true, configuration_schema: { fields: [] },
     website: row.website, dynamic_feed: true, show_public: row.show_public,
     logo_url: row.logo_path ? `/api/public/feed/${row.slug}/logo` : undefined,
+    integration_mode: row.integration_mode ?? "feed", public_description: row.public_description?.trim() || null,
   };
 }
 /** Deterministic slug-derived search; all 676 combinations are considered, uniqueness is also transactional. */

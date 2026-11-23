@@ -8,7 +8,7 @@ describe("/integrari/mvaimobiliare", () => {
     expect(res.status).toBe(200);
     const html = (await res.text()).replace(/<!-- -->/g, "");
     expect(html).toContain("<title>Integrare mvaimobiliare.ro cu CRM imobiliar | Habitoo</title>");
-    expect(html).toMatch(/<h1[^>]*>Integrare mvaimobiliare.ro cu Habitoo CRM<\/h1>/);
+    expect(html).toMatch(/<h1[^>]*>Integrare Habitoo CRM cu mvaimobiliare.ro<\/h1>/);
     expect(html).toContain("Publicarea pe mvaimobiliare.ro este gratuită pentru agențiile Habitoo.");
     expect(html).toContain('"@type":"FAQPage"');
     expect(html).toContain('"@type":"BreadcrumbList"');

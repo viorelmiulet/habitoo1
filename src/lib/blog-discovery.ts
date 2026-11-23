@@ -1,5 +1,5 @@
 import { featurePaths } from "@/lib/marketing/feature-pages";
-import { DYNAMIC_INTEGRATION_PAGES, INTEGRATION_PAGES } from "@/lib/portals/integration-pages";
+import { DYNAMIC_INTEGRATION_PAGES, INTEGRATION_PAGES, type IntegrationPage } from "@/lib/portals/integration-pages";
 import type { BlogStatus } from "@/lib/blog";
 import { PLAN_KEYS, PLAN_LABELS, PLAN_PRICES, planAgentLimitLabel } from "@/lib/plans";
 import { marketSourceName } from "@/lib/market/sources";
@@ -50,7 +50,8 @@ export const PAGE_LASTMOD = CONTENT_MODIFIED;
 const publicPages = ["/", "/functionalitati", "/anunturi-proprietari", "/analiza-comparativa-de-piata", "/colaborare-intre-agentii", "/comisioane-agenti-imobiliari", "/import-proprietati", "/preturi", "/despre", "/contact", "/integrari", "/extensie-chrome", "/dezvoltatori", "/intrebari-frecvente", "/comparatie", "/comparatie/cost-crm-pe-agentie-vs-pe-agent", "/alternative", "/blog", "/termeni", "/politica-de-confidentialitate"];
 
 const featurePagePaths = featurePaths();
-const integrationPaths = [...INTEGRATION_PAGES, ...DYNAMIC_INTEGRATION_PAGES].map((p) => `/integrari/${p.slug}`);
+/** Paginile portalurilor din SuperAdmin vin la rulare (doar active și publice); implicit cele scrise în cod. */
+const integrationPathsFor = (dynamic: IntegrationPage[] = DYNAMIC_INTEGRATION_PAGES) => [...INTEGRATION_PAGES, ...dynamic].map((p) => `/integrari/${p.slug}`);
 
 const PAGE_IMAGES: Record<string, string> = {
   "/functionalitati": publicPagePhotos.features.src, "/preturi": publicPagePhotos.pricing.src,
@@ -69,9 +70,9 @@ function latestPostDate(posts: DiscoverableBlogPost[], now: Date) {
   return times.length ? new Date(Math.max(...times)).toISOString() : null;
 }
 
-export function buildStaticSitemapXml(hasPartners = false, posts: DiscoverableBlogPost[] = [], now = new Date(), partners: PublicPartner[] = []) {
+export function buildStaticSitemapXml(hasPartners = false, posts: DiscoverableBlogPost[] = [], now = new Date(), partners: PublicPartner[] = [], dynamicPages?: IntegrationPage[]) {
   const profiles = partners.filter(p => p.slug).map(p => `/agentii/${p.slug}`);
-  const pages = [...publicPages, ...(hasPartners ? ["/agentii"] : []), ...featurePagePaths, ...integrationPaths, ...profiles];
+  const pages = [...publicPages, ...(hasPartners ? ["/agentii"] : []), ...featurePagePaths, ...integrationPathsFor(dynamicPages), ...profiles];
   const urls = pages.map((path) =>
     urlXml(path, path === "/blog" ? latestPostDate(posts, now) : (contentModified(path) ?? null), PAGE_IMAGES[path]),
   );
@@ -102,7 +103,7 @@ export type LlmsStatistics = {
   market_active: number;
 };
 
-export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartners: boolean, statistics: LlmsStatistics | null) {
+export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartners: boolean, statistics: LlmsStatistics | null, dynamicPages: IntegrationPage[] = DYNAMIC_INTEGRATION_PAGES) {
   const articles = selectDiscoverablePosts(posts, now);
   const blogLines = articles.length
     ? articles.map((post) => `- [${post.title}](${BLOG_SITE_URL}/blog/${post.slug}): ${post.excerpt.replace(/\s+/g, " ").trim()}`).join("\n")
@@ -110,7 +111,7 @@ export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartne
   const sources = (statistics?.owner_sources ?? []).filter((row) => row.count > 0 && row.source !== "facebook");
   const total = sources.reduce((sum, row) => sum + row.count, 0);
   const today = new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Bucharest" }).format(now);
-  const portalLinks = [...INTEGRATION_PAGES, ...DYNAMIC_INTEGRATION_PAGES].map((page) => `- [Integrare ${page.name}](${BLOG_SITE_URL}/integrari/${page.slug}): ${page.description}`).join("\n");
+  const portalLinks = [...INTEGRATION_PAGES, ...dynamicPages].map((page) => `- [Integrare ${page.name}](${BLOG_SITE_URL}/integrari/${page.slug}): ${page.description}`).join("\n");
   const prices = PLAN_KEYS.map((key) => {
     const price = PLAN_PRICES[key];
     const discount = Math.round((1 - price.annualMonthly / price.monthly) * 100);

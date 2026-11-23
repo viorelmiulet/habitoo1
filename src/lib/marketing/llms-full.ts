@@ -1,5 +1,5 @@
 import { FEATURE_PAGES } from "./feature-pages";
-import { INTEGRATION_PAGES, DYNAMIC_INTEGRATION_PAGES, portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
+import { INTEGRATION_PAGES, DYNAMIC_INTEGRATION_PAGES, dynamicIntegrationPages, portalsLabel, publicPortalCount } from "@/lib/portals/integration-pages";
 import type { PortalDefinition } from "@/lib/portals/registry";
 import { PLAN_KEYS, PLAN_LABELS, PLAN_PRICES, planAgentLimitLabel } from "@/lib/plans";
 import { contentModified } from "./content-revisions";
@@ -28,7 +28,7 @@ export function buildLlmsFullTxt(statistics: LlmsStatistics | null = null, obser
   });
   const prices = PLAN_KEYS.map(key => `${PLAN_LABELS[key]}: ${PLAN_PRICES[key].monthly} €/lună; ${PLAN_PRICES[key].annualMonthly * 12} €/an; ${planAgentLimitLabel(key)}.`).join("\n\n");
   const features = FEATURE_PAGES.map(p => section(`/functionalitati/${p.slug}`, p.name, [p.h1, ...p.intro, "### Ce câștigi", ...p.benefits.map(b => `**${b.title}**\n\n${b.text}`), "### Cum funcționează", ...p.steps.map(s => `**${s.title}**\n\n${s.text}`), faqMarkdown(p.faq)].join("\n\n")));
-  const integrations = [...INTEGRATION_PAGES, ...DYNAMIC_INTEGRATION_PAGES].map(p => section(`/integrari/${p.slug}`, p.name, [...p.intro, p.whyHabitoo, "### Ce poți face", ...p.canDo, "### Cum lucrezi", ...p.dailyWork, "### Activare", p.activationText, ...p.notes, faqMarkdown(p.faq)].join("\n\n")));
+  const integrations = [...INTEGRATION_PAGES, ...(dynamic ? dynamicIntegrationPages(dynamic) : DYNAMIC_INTEGRATION_PAGES)].map(p => section(`/integrari/${p.slug}`, p.name, [...p.intro, p.whyHabitoo, "### Ce poți face", ...p.canDo, "### Cum lucrezi", ...p.dailyWork, "### Activare", p.activationText, ...p.notes, faqMarkdown(p.faq)].join("\n\n")));
   const blog = BLOG_ARTICLES_2026_11.map(a => `## ${a.title}\n\nSource: ${SITE}/blog/${a.slug}\n\nActualizat: ${BLOG_ARTICLES_REVISION}\n\n${a.excerpt}\n\n${faqMarkdown(a.faq)}`);
   return ["# Habitoo CRM — conținut public complet", "> CRM imobiliar în limba română, pentru agenții și agenți imobiliari din România.", ...main, `## Prețuri și planuri\n\n${prices}`, comparisonLlmsMarkdown(), "## Funcționalități", ...features, "## Integrări", ...integrations, "## Blog", ...blog].join("\n\n---\n\n") + "\n";
 }

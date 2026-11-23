@@ -15,6 +15,7 @@ import { AddFeedPortalDialog } from "@/components/superadmin/AddFeedPortalDialog
 import { updateDynamicFeedPortal } from "@/lib/dynamic-feed-portals.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { PortalPublicDescriptionEditor } from "@/components/superadmin/PortalPublicDescriptionEditor";
 
 const keysOptions = queryOptions({ queryKey: ["superadmin", "portal-index-keys"], queryFn: () => listPortalIndexKeys() });
 export const Route = createFileRoute("/_authenticated/superadmin/portaluri-feed")({
@@ -61,6 +62,7 @@ function FeedKeysPage() {
         <Label className="flex items-center gap-2"><Checkbox checked={portal.showPublic} disabled={changePortal.isPending} onCheckedChange={value => changePortal.mutate({ slug: portal.portal, show_public: value === true })} />Afișează public</Label>
         <span className="text-muted-foreground">JSON{portal.xmlEnabled ? " + XML Kyero" : ""}</span>
       </div>}
+      {portal.dynamic && <PortalPublicDescriptionEditor slug={portal.portal} />}
       <p className="mt-3 break-all font-mono text-xs text-muted-foreground">{portal.indexUrl}</p>
       <div className="mt-4 space-y-3">
         {portal.keys.filter(key => key.status === "active").map(key => <div key={key.id} className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">

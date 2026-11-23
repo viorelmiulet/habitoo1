@@ -3789,6 +3789,7 @@ export type Database = {
           integration_mode: string
           key_prefix: string
           logo_path: string | null
+          public_description: string | null
           rate_limit_per_minute: number
           show_public: boolean
           slug: string
@@ -3804,6 +3805,7 @@ export type Database = {
           integration_mode?: string
           key_prefix: string
           logo_path?: string | null
+          public_description?: string | null
           rate_limit_per_minute?: number
           show_public?: boolean
           slug: string
@@ -3819,6 +3821,7 @@ export type Database = {
           integration_mode?: string
           key_prefix?: string
           logo_path?: string | null
+          public_description?: string | null
           rate_limit_per_minute?: number
           show_public?: boolean
           slug?: string
