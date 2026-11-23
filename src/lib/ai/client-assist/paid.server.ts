@@ -18,8 +18,11 @@ export async function paidClientAnalysis<T>(organizationId: string, userId: stri
   if (!provider || provider.id !== "gemini") throw new Error("Gemini nu este configurat.");
   const start = Date.now();
   return withAiCredits({ organizationId, userId }, "text_standard", async () => {
-    const result = await run(provider);
-    await writeAiUsage({ from: () => ({ insert: async row => await supabaseAdmin.from("ai_usage_events").insert({ ...row, extra_info: JSON.parse(JSON.stringify(row.extra_info ?? {})) as import("@/integrations/supabase/types").Json }) }) }, { organization_id: organizationId, user_id: userId, provider: provider.id, model: provider.model, capability, input_tokens: result.usage.inputTokens, output_tokens: result.usage.outputTokens, success: result.value !== null, latency_ms: Date.now() - start, tool_calls: 0 });
+    const { withAiProviderFallback } = await import("../providers/fallback.server");
+    const completed = await withAiProviderFallback(provider, run);
+    const result = completed.result;
+    const used = completed.provider;
+    await writeAiUsage({ from: () => ({ insert: async row => await supabaseAdmin.from("ai_usage_events").insert({ ...row, extra_info: JSON.parse(JSON.stringify(row.extra_info ?? {})) as import("@/integrations/supabase/types").Json }) }) }, { organization_id: organizationId, user_id: userId, provider: used.id, model: used.model, fallback_used: completed.fallbackUsed, capability, input_tokens: result.usage.inputTokens, output_tokens: result.usage.outputTokens, success: result.value !== null, latency_ms: Date.now() - start, tool_calls: 0 });
     return result.value;
   }, { isSuccess: result => result !== null, usage: { provider: provider.id, model: provider.model, capability } });
 }
