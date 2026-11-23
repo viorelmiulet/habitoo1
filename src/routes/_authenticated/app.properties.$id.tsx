@@ -79,7 +79,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PropertySheetHeader } from "@/components/app/property-sheet/PropertySheetHeader";
-import { PropertyPublishSummaryCard } from "@/components/app/property-sheet/PropertyPublishSummaryCard";
 import { PropertyFormLayout, PropertyTitleDescriptionPanel } from "@/components/app/PropertyFormLayout";
 import { PropertyMainPhoto } from "@/components/app/PropertyMainPhoto";
 import { propertyTabFromSearch } from "@/lib/property-tabs";
@@ -1237,7 +1236,6 @@ function PropertyDetailContent() {
           {editing ? (
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
             {completeness ? <aside className="min-w-0 lg:sticky lg:top-[7.5rem] lg:order-last">
-              <PropertyPublishSummaryCard propertyId={id} onOpenAll={() => setTab("publishing")} />
               <PropertyCompletenessCard result={completeness} onItem={onCompletenessItem} />
             </aside> : null}
             <AiFieldMarksContext.Provider value={aiMarks}>
