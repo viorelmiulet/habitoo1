@@ -84,6 +84,15 @@ export function buildVideoOverlay(l: VideoListing, o: VideoOverlayOptions): Vide
 
 export type VideoSegment = { kind: "intro" | "photo" | "outro"; photo: number; start: number; duration: number };
 
+export type VideoSubtitle = { start: number; end: number; text: string };
+/** Fixed factual captions, no AI inference or invented values. */
+export function buildVideoSubtitles(listing: VideoListing, photoCount: number, perPhoto: number, showPrice: boolean): VideoSubtitle[] {
+  const text = [showPrice ? listing.price : null, listing.rooms ? `${listing.rooms} ${listing.rooms === 1 ? "cameră" : "camere"}` : null, listing.usableSurface ? `${listing.usableSurface} mp utili` : null, [listing.district, listing.city].filter(Boolean).join(", ")].filter((v): v is string => Boolean(v));
+  const duration = planVideoTimeline(photoCount, perPhoto).total - VIDEO_INTRO_SECONDS - VIDEO_OUTRO_SECONDS;
+  if (!text.length || photoCount === 0) return [];
+  return text.map((t, i) => ({ text: t, start: VIDEO_INTRO_SECONDS + duration * i / text.length, end: VIDEO_INTRO_SECONDS + duration * (i + 1) / text.length }));
+}
+
 export function videoSegments(photoCount: number, perPhoto: number): VideoSegment[] {
   const segs: VideoSegment[] = [{ kind: "intro", photo: 0, start: 0, duration: VIDEO_INTRO_SECONDS }];
   let t = VIDEO_INTRO_SECONDS;

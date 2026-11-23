@@ -63,6 +63,8 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [originalPhotos, setOriginalPhotos] = useState<File[] | string[] | null>(null);
+  const [orderPending, setOrderPending] = useState(false);
+  const pendingOrder = useRef<(() => Promise<void>) | null>(null);
   const [coverPreserved, setCoverPreserved] = useState(false);
   const manualCover = useRef<File | undefined>(undefined);
   const currentPhotos = useRef(photos);
@@ -131,7 +133,8 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
       setShowAll(false);
       setOriginalPhotos(null);
       setCoverPreserved(false);
-      try {
+      setOrderPending(Boolean(result.proposal.photoOrder));
+      pendingOrder.current = result.proposal.photoOrder ? async () => {
         if (mode === "new" && currentPhotos.current.length === photosAtRun.length && currentPhotos.current.every((p, i) => p === photosAtRun[i])) {
           const cover = manualCover.current;
           const next = orderedPhotos(photosAtRun, photosAtRun.slice(0, AUTOFILL_MAX_PHOTOS), result.proposal.photoOrder, cover);
@@ -140,7 +143,7 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
         } else if (mode === "edit" && propertyId) {
           const ids = galleryAtRun.map((img) => img.id);
           const latest = queryClient.getQueryData<typeof galleryAtRun>(["property-images", propertyId]);
-          if (!latest || latest.length !== ids.length || latest.some((img, i) => img.id !== ids[i])) return;
+          if (!latest || latest.length !== ids.length || latest.some((img, i) => img.id !== ids[i])) throw new Error("Galeria s-a schimbat. Analizează din nou.");
           const cover = manualCoverFor(propertyId);
           const next = orderedPhotos(ids, existingImages.map((img) => img.id), result.proposal.photoOrder, cover);
           if (next) {
@@ -149,8 +152,8 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
             await queryClient.invalidateQueries({ queryKey: ["property-images", propertyId] });
           }
           if (cover && result.proposal.photoOrder) setCoverPreserved(true);
-        }
-      } catch { toast.error("Ordinea nu a putut fi aplicată. Încearcă din nou."); }
+        } else throw new Error("Pozele s-au schimbat. Analizează din nou.");
+      } : null;
       const count = Object.keys(shown.values).length + (shown.title ? 1 : 0) + (shown.description ? 1 : 0);
       toast.success(count ? `AI-ul a propus ${count} câmpuri. Verifică-le înainte de salvare.` : "AI-ul nu a găsit câmpuri noi de completat.");
     } catch {
@@ -179,6 +182,14 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
     } catch {
       toast.error("Ordinea inițială nu a putut fi restaurată. Încearcă din nou.");
     } finally { setBusy(false); }
+  };
+
+  const applyOrder = async () => {
+    if (busy || !pendingOrder.current) return;
+    setBusy(true);
+    try { await pendingOrder.current(); setOrderPending(false); pendingOrder.current = null; }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Ordinea nu a putut fi aplicată."); }
+    finally { setBusy(false); }
   };
 
   const summaryRows = applied ? autofillSummaryRows(applied, marked) : [];
@@ -220,6 +231,7 @@ export function ListingAutofillCard({ mode, photos = [], onPhotosChange, propert
         {applied ? <div className="flex-1 space-y-2 rounded-card border border-border bg-muted/40 p-3 text-sm" data-testid="autofill-summary">
           <p className="font-medium">Completat de AI: {autofillCountLabel(summaryRows.length)}</p>
           {coverPreserved ? <p className="text-xs text-muted-foreground">Coperta aleasă de tine a rămas neschimbată.</p> : null}
+          {orderPending ? <div className="flex flex-wrap gap-2"><Button type="button" size="sm" disabled={busy} onClick={() => void applyOrder()}>Aplică ordinea propusă</Button><Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => { setOrderPending(false); pendingOrder.current = null; }}>Ignoră ordinea</Button></div> : null}
           {summaryRows.length || originalPhotos ? <>
             <ul className="space-y-1">
               {visibleRows.map((row) => <li key={row.key} className="flex items-center gap-1.5 rounded-control bg-background px-2 py-1">

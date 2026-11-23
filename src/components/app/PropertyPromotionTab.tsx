@@ -25,6 +25,7 @@ import { generateMarketing } from "@/lib/ai/agents/marketing/marketing.functions
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { PropertyVideoCard } from "@/components/app/PropertyVideoCard";
+import { MarketingVariants } from "@/components/app/ai/MarketingVariants";
 import type { VideoListing } from "@/lib/property-video";
 import { facebookListingState } from "@/lib/facebook-catalog-status";
 import {
@@ -44,11 +45,13 @@ export function PropertyPromotionTab({
   onOpenPublishing,
   onOpenPoster,
   video,
+  onApplyDescription,
 }: {
   propertyId: string;
   onOpenPublishing?: () => void;
   onOpenPoster?: () => void;
   video?: VideoListing;
+  onApplyDescription?: (description: string) => void;
 }) {
   const load = useServerFn(getPropertyPromotion);
   const runAi = useServerFn(generateMarketing);
@@ -60,6 +63,8 @@ export function PropertyPromotionTab({
 
   const [network, setNetwork] = useState<SocialNetwork>("facebook");
   const [text, setText] = useState("");
+  const [socialDraft, setSocialDraft] = useState<{ network: SocialNetwork; text: string } | null>(null);
+  const [suggestedText, setSuggestedText] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [zipping, setZipping] = useState(false);
@@ -81,8 +86,9 @@ export function PropertyPromotionTab({
 
   const d = q.data;
   useEffect(() => {
-    if (d) setText(buildSocialPostText(network, d.post));
-  }, [d, network]);
+    if (d) setText(socialDraft?.network === network ? socialDraft.text : buildSocialPostText(network, d.post));
+    setSuggestedText(null);
+  }, [d, network, socialDraft]);
   useEffect(() => {
     if (!d) return;
     setSelected(defaultPhotoSelection(d.photos.map((p) => p.id)));
@@ -124,12 +130,12 @@ export function PropertyPromotionTab({
       }),
     onSuccess: (res) => {
       const content = res.run?.results?.[0]?.content;
-      if (res.status !== "ok" || !content?.body) {
+      if (res.status !== "ok" || !content?.body || res.run?.results[0]?.validationStatus === "invalid") {
         toast.error(res.message ?? "Textul nu a putut fi generat acum.");
         return;
       }
       const tags = network === "whatsapp" ? [] : (content.hashtags ?? []);
-      setText([content.body, tags.join(" ")].filter(Boolean).join("\n\n"));
+      setSuggestedText([content.body, tags.join(" ")].filter(Boolean).join("\n\n"));
     },
     onError: () => toast.error("Textul nu a putut fi generat acum."),
   });
@@ -407,6 +413,8 @@ export function PropertyPromotionTab({
                   <Sparkles className="size-4" /> Generează alt text
                 </Button>
               ) : null}
+              {suggestedText ? <div className="space-y-2"><Textarea aria-label="Text social propus" readOnly value={suggestedText} rows={5} /><div className="flex gap-2"><Button type="button" onClick={() => { setText(suggestedText); setSuggestedText(null); }}>Aplică textul și hashtag-urile</Button><Button type="button" variant="ghost" onClick={() => setSuggestedText(null)}>Ignoră</Button></div></div> : null}
+              <MarketingVariants propertyId={propertyId} {...(onApplyDescription ? { onDescription: onApplyDescription } : {})} onSocial={(n, value) => { setNetwork(n); setSocialDraft({ network: n, text: value }); }} />
             </div>
 
             <div className="space-y-2">

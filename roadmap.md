@@ -1,3 +1,11 @@
+## Funcții AI — anunțuri și marketing, calupul C
+- [x] Variante română/engleză și Facebook/Instagram prin generatorul existent; formular fără salvare, descrieri separate OLX direct/Storia/Properstar prin ciorne aprobate, fără trimitere automată. European.realestate rămâne variantă de text, nu integrare nouă.
+- [x] Analiză fotografii cu motive și categorii fixe, galerie completă în loturi de 20, acces caller/agenție, credite; ordine și excludere numai confirmate, fără ștergere. Completarea existentă nu mai aplică automat ordinea.
+- [x] Subtitrare deterministă preț/camere/suprafață/zonă, opțiune și previzualizare în generatorul existent; fără inferență sau apel AI suplimentar.
+- [x] Verificare vizuală izolată desktop/390: ordine/excludere/engleză/aprobare/subtitrare, fără erori sau depășire; video real de 12 s din fotografii simulate cu subtitrare vizibilă la secunda 7, fără apeluri AI sau date reale.
+- [ ] Verificare cap-coadă în cont real: solicitantul nu are cont asociat pentru sesiune; necesită autentificarea în previzualizare. Nu s-au făcut generări AI reale.
+- [x] 45 teste în 7 fișiere strict noi/modificate trec, compilare curată și commit final; fără publicare.
+
 ## Funcții AI — clienți și apeluri, calupul B
 - [x] Rezumat la cerere din istoricul contactului și al lead-urilor asociate, acces agent/agenție și Gemini existent cu credite; propoziții-sursă validate fără fapte inventate.
 - [x] Înregistrare WAV temporară contact/lead; transcriere și propuneri cu dovezi, activitate/follow-up prin ActivityDialog și cerere confirmată separat; fără audio în storage sau în istoric, fără salvări la generare.

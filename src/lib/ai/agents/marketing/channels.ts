@@ -15,6 +15,8 @@ export const MARKETING_CHANNELS = [
   "facebook",
   "instagram",
   "site",
+  "properstar",
+  "european_realestate",
 ] as const;
 
 export type MarketingChannel = (typeof MARKETING_CHANNELS)[number];
@@ -32,6 +34,8 @@ export type MarketingChannelSpec = {
 };
 
 export const MARKETING_CHANNEL_SPECS: Record<MarketingChannel, MarketingChannelSpec> = {
+  properstar: { id: "properstar", label: "Properstar · English", maxTitle: 90, maxBody: 4000, hashtags: false, guidance: "Write in English only. Preserve exact prices, currency, surfaces and amenities. Never infer missing facts." },
+  european_realestate: { id: "european_realestate", label: "European.realestate · English", maxTitle: 90, maxBody: 4000, hashtags: false, guidance: "Write in English only. Preserve exact facts; this is a text variant, not an enabled publishing integration." },
   olx: {
     id: "olx",
     label: "OLX",

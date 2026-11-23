@@ -29,7 +29,9 @@ export async function buildStoriaPayload(input: {
     .maybeSingle();
   if (!property) return { ok: false, reasons: ["Proprietatea nu a fost găsită."] };
 
-  const row = property as PropertyRow;
+  const { readPortalDescription } = await import("@/lib/ai/agents/marketing/portal-description.server");
+  const description = await readPortalDescription(supabaseAdmin, input.organizationId, property, "storia");
+  const row = { ...property, description: description ?? property.description } as PropertyRow;
   if (!isPropertyFeedEligible(row)) {
     // Mesaj explicit: agentul trebuie să știe exact ce blochează publicarea.
     const reasons: string[] = [];

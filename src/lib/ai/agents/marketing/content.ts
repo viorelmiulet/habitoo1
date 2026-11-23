@@ -54,7 +54,7 @@ export type MarketingParseResult =
   | { ok: true; content: MarketingContent }
   | { ok: false; message: string };
 
-export function parseMarketingContent(raw: string): MarketingParseResult {
+export function parseMarketingContent(raw: string, strict = false): MarketingParseResult {
   let parsed: unknown;
   try {
     parsed = JSON.parse(stripJsonFence(raw));
@@ -65,6 +65,9 @@ export function parseMarketingContent(raw: string): MarketingParseResult {
     return { ok: false, message: "Răspunsul AI nu a putut fi interpretat. Încearcă din nou." };
   }
   const data = parsed as Record<string, unknown>;
+  if (strict && (!((data["title"] === null) || typeof data["title"] === "string") || typeof data["body"] !== "string" || !((data["cta"] === null) || typeof data["cta"] === "string") || !["shortVariants", "hashtags", "ideas"].every((key) => Array.isArray(data[key]) && (data[key] as unknown[]).every((value) => typeof value === "string")))) {
+    return { ok: false, message: "Răspunsul AI nu respectă formatul așteptat. Încearcă din nou." };
+  }
   const body = str(data["body"]) ?? str(data["descriere"]);
   const ideas = list(data["ideas"] ?? data["idei"], MAX_IDEAS);
   if (body === null && ideas.length === 0) {

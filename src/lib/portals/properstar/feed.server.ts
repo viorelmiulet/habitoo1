@@ -266,6 +266,8 @@ export async function buildProperstarFeed(input: {
         }
       : null;
 
+    const { readPortalDescription } = await import("@/lib/ai/agents/marketing/portal-description.server");
+    const englishDescription = await readPortalDescription(supabaseAdmin, input.organizationId, row, "properstar");
     const result = mapPropertyToProperstar(row, {
       baseUrl,
       publicSiteUrl,
@@ -274,6 +276,7 @@ export async function buildProperstarFeed(input: {
       agent,
       status,
     });
+    if (result.ok && englishDescription) result.advert.englishDescription = englishDescription;
     if (!result.ok) {
       // Raportăm doar ofertele active: cele retrase oricum ies din feed.
       if (status === "Active") {

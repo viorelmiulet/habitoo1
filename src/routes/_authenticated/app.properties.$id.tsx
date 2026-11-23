@@ -1531,6 +1531,7 @@ function PropertyDetailContent() {
           <PropertyPortalStatistics propertyId={id} />
           <PropertyPromotionTab
             propertyId={id}
+            onApplyDescription={(value) => { onApplySuggestion({ kind: "description", value }); setTab("description"); }}
             onOpenPublishing={() => document.querySelector('[data-tour="property-publishing"]')?.scrollIntoView({ behavior: "smooth" })}
             onOpenPoster={() => setSocialPosterOpen(true)}
             video={{

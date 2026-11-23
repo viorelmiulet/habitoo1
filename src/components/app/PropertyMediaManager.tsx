@@ -30,6 +30,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { moveItem, withPrimaryFirst } from "@/lib/media-order";
 import { rememberManualCover } from "@/lib/ai/listing-autofill/photo-order";
+import { PhotoReviewPanel } from "@/components/app/ai/PhotoReviewPanel";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
@@ -292,6 +293,9 @@ export function PropertyMediaManager({
 
   return (
     <div className="space-y-4">
+      <PhotoReviewPanel key={propertyId} propertyId={propertyId} photos={images.filter((i) => !i.is_confidential).map((i) => ({ id: i.id, url: imgUrl(i) }))}
+        onOrder={async (ids) => { const order = [...ids, ...images.filter((i) => !ids.includes(i.id)).map((i) => i.id)]; await reorder.mutateAsync(order.flatMap((id) => { const image = images.find((i) => i.id === id); return image ? [image] : []; })); }}
+        onExclude={async (id) => { await patch.mutateAsync({ id, values: { include_in_publish: false } }); }} />
       <div
         data-tour="media-upload"
         className={`flex flex-col items-center justify-center gap-2 rounded-[14px] border-2 border-dashed bg-card p-6 text-center transition-colors sm:p-8 ${

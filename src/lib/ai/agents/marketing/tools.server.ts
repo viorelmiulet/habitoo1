@@ -26,6 +26,7 @@ type Admin = Awaited<ReturnType<typeof loadAdmin>>;
 /** Lista albă de câmpuri: doar ce este necesar pentru un anunț. */
 const MARKETING_PROPERTY_FIELDS = [
   "id",
+  "assigned_to",
   "reference",
   "title",
   "description",
@@ -35,6 +36,7 @@ const MARKETING_PROPERTY_FIELDS = [
   "status",
   "price",
   "currency",
+  "for_sale", "for_rent", "sale_price", "sale_currency", "rent_price", "rent_currency", "kitchens", "garages", "total_usable_surface", "garden_surface", "balcony", "has_loft", "layout", "destination", "building_type", "building_structure", "insulation", "wall_finishes", "floor_finishes", "windows", "blinds", "shutters", "entry_door", "interior_doors", "metering",
   "negotiable",
   "surface",
   "usable_surface",
@@ -112,6 +114,7 @@ export async function loadMarketingProperty(
     .maybeSingle();
   const row = data as PropertyRow | null;
   if (!row) return { ok: false, error: "Proprietatea nu există în agenția ta.", code: "not_found" };
+  if (actor.role === "agent" && row["assigned_to"] !== actor.userId) return { ok: false, error: "Proprietatea nu este asignată ție.", code: "denied" };
   if (row.deleted_at) {
     return { ok: false, error: "Proprietatea nu există în agenția ta.", code: "not_found" };
   }

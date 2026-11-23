@@ -88,7 +88,7 @@ export async function generateMarketingContent(
         details: { attempt, propertyId: input.facts.propertyId },
       });
 
-      const parsed = parseMarketingContent(result.text);
+      const parsed = parseMarketingContent(result.text, true);
       if (!parsed.ok) {
         if (attempt === 2) return { ok: false, message: parsed.message };
         continue;

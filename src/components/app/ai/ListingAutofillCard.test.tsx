@@ -75,7 +75,7 @@ const proposalWith = (over: Partial<AutofillProposal>): { ok: true; proposal: Au
   proposal: { values: {}, confidence: {}, sources: {}, title: null, description: null, photoOrder: null, ignored: [], ...over },
 });
 
-describe("AI18 aplicare automată și anulare", () => {
+describe("ordine propusă, confirmare și anulare", () => {
   function photoMocks() {
     enabled.value = true;
     let nextUrl = 0;
@@ -84,12 +84,14 @@ describe("AI18 aplicare automată și anulare", () => {
     vi.mocked(reorderPropertyPhotos).mockClear();
     return ["a", "b", "c"].map((name) => new File([name], `${name}.jpg`, { type: "image/jpeg" }));
   }
-  it("photo_order valid este aplicat automat și × restaurează ordinea originală la creare", async () => {
+  it("photo_order nu se aplică înainte de confirmare; anularea restaurează galeria", async () => {
     const photos = photoMocks();
     runResult.value = proposalWith({ photoOrder: [2, 0, 1] });
     const onPhotosChange = vi.fn();
     const tree = await render({ photos, onPhotosChange });
     await clickButton(tree.el, "Completează cu AI");
+    expect(onPhotosChange).not.toHaveBeenCalled();
+    await clickButton(tree.el, "Aplică ordinea propusă");
     const ordered = [photos[2], photos[0], photos[1]];
     expect(onPhotosChange).toHaveBeenLastCalledWith(ordered);
     expect([...tree.el.querySelectorAll("button")].some((b) => b.textContent?.includes("Aplică ordinea"))).toBe(false);
@@ -111,6 +113,7 @@ describe("AI18 aplicare automată și anulare", () => {
     const manual = [photos[1], photos[0], photos[2]];
     await tree.render({ photos: manual });
     await clickButton(tree.el, "Completează cu AI");
+    await clickButton(tree.el, "Aplică ordinea propusă");
     expect(onPhotosChange).toHaveBeenLastCalledWith([photos[1], photos[2], photos[0]]);
     expect(tree.el.textContent).toContain("Coperta aleasă de tine a rămas neschimbată.");
   });
@@ -123,11 +126,13 @@ describe("AI18 aplicare automată și anulare", () => {
     expect(onPhotosChange).not.toHaveBeenCalled();
     expect(tree.el.querySelector("button[aria-label='Anulează ordinea propusă a pozelor']")).toBeNull();
   });
-  it("editarea aplică imediat funcția existentă și anularea o restaurează", async () => {
+  it("editarea aplică funcția existentă numai după confirmare și anularea o restaurează", async () => {
     photoMocks();
     runResult.value = proposalWith({ photoOrder: [2, 0, 1] });
     const tree = await render({ mode: "edit", propertyId: "ai18-edit" });
     await clickButton(tree.el, "Corectează cu AI");
+    expect(reorderPropertyPhotos).not.toHaveBeenCalled();
+    await clickButton(tree.el, "Aplică ordinea propusă");
     expect(reorderPropertyPhotos).toHaveBeenLastCalledWith(["c", "a", "b"]);
     const undo = tree.el.querySelector("button[aria-label='Anulează ordinea propusă a pozelor']");
     if (!undo) throw new Error("Lipsește anularea galeriei");
@@ -140,6 +145,7 @@ describe("AI18 aplicare automată și anulare", () => {
     runResult.value = proposalWith({ photoOrder: [2, 1, 0] });
     const tree = await render({ mode: "edit", propertyId: "ai18-manual" });
     await clickButton(tree.el, "Corectează cu AI");
+    await clickButton(tree.el, "Aplică ordinea propusă");
     expect(reorderPropertyPhotos).toHaveBeenLastCalledWith(["a", "c", "b"]);
   });
 });

@@ -1,7 +1,7 @@
 /** Randarea video-ului în browser: WebCodecs + mediabunny (MP4), cu MediaRecorder ca rezervă. */
 import {
   VIDEO_FORMATS, VIDEO_FPS, VIDEO_TRANSITION_SECONDS, videoSegments,
-  type VideoFormat, type VideoOverlay, type VideoSegment,
+  type VideoFormat, type VideoOverlay, type VideoSegment, type VideoSubtitle,
 } from "@/lib/property-video";
 import { mixVideoAudio } from "@/lib/video-audio-mix";
 
@@ -16,6 +16,7 @@ export type RenderInput = {
   overlay: VideoOverlay;
   music: Blob | null;
   narration?: Blob | null;
+  subtitles?: VideoSubtitle[];
   signal: AbortSignal;
   onProgress: (pct: number) => void;
 };
@@ -128,6 +129,20 @@ export async function renderPropertyVideo(input: RenderInput): Promise<RenderRes
   const last = segs[segs.length - 1];
   if (!last) throw new Error("Nu există fotografii pentru video.");
   const total = last.start + last.duration;
+  const drawSubtitle = (t: number) => {
+    if (!ctx) return;
+    const subtitle = input.subtitles?.find((s) => t >= s.start && t < s.end);
+    if (!subtitle) return;
+    const k = Math.min(W, H) / 1080;
+    ctx.font = `700 ${40 * k}px ${SANS}`;
+    const lines = wrap(ctx, subtitle.text, W - 160 * k, 2);
+    const height = (lines.length * 52 + 32) * k;
+    const top = H * 0.72 - height;
+    ctx.fillStyle = C.navy; ctx.fillRect(56 * k, top, W - 112 * k, height);
+    ctx.fillStyle = C.white; ctx.textAlign = "center";
+    lines.forEach((line, i) => ctx.fillText(line, W / 2, top + (52 * (i + 1)) * k));
+    ctx.textAlign = "left";
+  };
   const canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("UNSUPPORTED");
@@ -148,6 +163,7 @@ export async function renderPropertyVideo(input: RenderInput): Promise<RenderRes
       for (let f = 0; f < frames; f++) {
         abort();
         frameAt(ctx, f / VIDEO_FPS, segs, imgs, logo, input.overlay, W, H);
+        drawSubtitle(f / VIDEO_FPS);
         await video.add(f / VIDEO_FPS, 1 / VIDEO_FPS);
         if (f % 15 === 0) input.onProgress(10 + Math.round((f / frames) * 85));
       }
@@ -183,6 +199,7 @@ export async function renderPropertyVideo(input: RenderInput): Promise<RenderRes
       const t = (performance.now() - t0) / 1000;
       if (t >= total) { resolve(); return; }
       frameAt(ctx, t, segs, imgs, logo, input.overlay, W, H);
+      drawSubtitle(t);
       input.onProgress(10 + Math.round((t / total) * 88));
       setTimeout(tick, 1000 / VIDEO_FPS);
     };

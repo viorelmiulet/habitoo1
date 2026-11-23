@@ -42,6 +42,7 @@ export type MarketingFactSheet = {
   /** Textul liber deja existent (descriere), folosit doar ca sursă de fapte. */
   existingText: string | null;
   imageCount: number;
+  additionalNumbers?: number[];
 };
 
 export type MarketingFactIssueType =
@@ -111,8 +112,9 @@ export function buildMarketingFactSheet(row: Record<string, unknown>): Marketing
     "misc_features",
     "street_arrangement",
     "tags",
+    "insulation", "wall_finishes", "floor_finishes", "windows", "blinds", "shutters", "entry_door", "interior_doors", "metering",
   ];
-  const features = featureKeys.flatMap((key) => textList(row[key]));
+  const features = [...featureKeys.flatMap((key) => textList(row[key])), ...["furnishing", "finish_state", "parking", "layout", "comfort", "heating", "building_type", "building_structure", "orientation", "destination"].flatMap((key) => typeof row[key] === "string" ? [String(row[key])] : []), ...[row["balcony"] === true ? "Balcon" : "", row["has_loft"] === true ? "Pod" : ""].filter(Boolean)];
   const transaction = row["transaction_kind"];
 
   return {
@@ -136,7 +138,7 @@ export function buildMarketingFactSheet(row: Record<string, unknown>): Marketing
       balconySurface: toNumber(row["balcony_surface"]),
       terraceSurface: toNumber(row["terrace_surface"]),
       parkingSpaces: toNumber(row["parking_spaces"]),
-      price: toNumber(row["price"]),
+      price: toNumber(row["price"]) ?? toNumber(row["sale_price"]) ?? toNumber(row["rent_price"]),
     },
     location: {
       city: typeof row["city"] === "string" ? row["city"] : null,
@@ -146,6 +148,7 @@ export function buildMarketingFactSheet(row: Record<string, unknown>): Marketing
     features,
     existingText: typeof row["description"] === "string" ? row["description"] : null,
     imageCount: toNumber(row["image_count"]) ?? 0,
+    additionalNumbers: ["sale_price", "rent_price", "kitchens", "balconies", "terraces", "garages", "total_usable_surface", "garden_surface"].flatMap((key) => { const n = toNumber(row[key]); return n !== null ? [n] : []; }),
   };
 }
 
@@ -199,10 +202,10 @@ const NEIGHBOURHOOD_KEYWORDS = [
 const DISTANCE_PATTERN =
   /(\d+\s*(?:minute|min\.?|km|kilometri)|la\s+\d+\s*(?:metri|m)\b|\d+\s*m\s+de\s+)/gi;
 
-const SURFACE_PATTERN = /(\d+(?:[.,]\d+)?)\s*(?:mp|m2|m²|metri p[ăa]tra[țt]i)/gi;
-const ROOMS_PATTERN = /(\d+)\s*camer[ăae]/gi;
-const BEDROOMS_PATTERN = /(\d+)\s*dormitoar?e?/gi;
-const BATHROOMS_PATTERN = /(\d+)\s*(?:b[ăa]i|b[ăa]ie|grupuri sanitare)/gi;
+const SURFACE_PATTERN = /(\d+(?:[.,]\d+)?)\s*(?:mp|m2|m²|sq\.?\s*m|sqm|square met(?:res|ers)|metri p[ăa]tra[țt]i)/gi;
+const ROOMS_PATTERN = /(\d+)\s*(?:camer[ăae]|rooms?)\b/gi;
+const BEDROOMS_PATTERN = /(\d+)\s*(?:dormitoar?e?|bedrooms?)\b/gi;
+const BATHROOMS_PATTERN = /(\d+)\s*(?:b[ăa]i|b[ăa]ie|grupuri sanitare|bathrooms?)\b/gi;
 const FLOOR_PATTERN = /etaj(?:ul)?\s*(\d+)/gi;
 const PARKING_PATTERN = /(\d+)\s*(?:locuri|loc)\s*de\s*parcare/gi;
 const YEAR_PATTERN = /\b(19\d{2}|20\d{2})\b/g;
@@ -256,7 +259,7 @@ function collect(pattern: RegExp, text: string): { value: number; claim: string 
   const regex = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
   let match: RegExpExecArray | null = regex.exec(text);
   while (match !== null) {
-    const raw = (match[1] ?? "").replace(/[.\s]/g, "").replace(",", ".");
+    const raw = (match[1] ?? "").replace(/\s/g, "").replace(/[.,](?=\d{3}(?:\D|$))/g, "").replace(",", ".");
     const value = Number(raw);
     if (Number.isFinite(value)) out.push({ value, claim: match[0].trim() });
     match = regex.exec(text);
@@ -275,6 +278,26 @@ export function validateMarketingFacts(
 ): MarketingValidation {
   const issues: MarketingFactIssue[] = [];
   const evidence = factEvidence(facts);
+  // Bilingual amenity guards also cover marketing captions and translated listings.
+  const amenityGroups = [
+    ["piscina", "piscin", "pool", "swimming pool"], ["sauna", "saună"], ["lift", "elevator"],
+    ["aer conditionat", "air conditioning", "air-conditioned"], ["centrala", "centrală", "own boiler", "private boiler"],
+    ["balcon", "balcony"], ["terasa", "terasă", "terrace"], ["garaj", "garage"],
+    ["parcare", "parking"], ["gradina", "grădină", "garden"], ["semineu", "șemineu", "fireplace"],
+    ["metrou", "subway", "metro"], ["mobilat", "furnished"], ["renovat", "renovated"],
+    ["interfon", "intercom"], ["termopan", "double glazing", "double-glazed"], ["supraveghere video", "cctv"],
+    ["spalator", "washing machine", "mașină de spălat"], ["frigider", "refrigerator", "fridge"], ["dishwasher", "mașină de spălat vase"],
+  ];
+  for (const aliases of amenityGroups) {
+    const mentioned = aliases.some((word) => new RegExp(`\\b${normalizeText(word)}\\w*`, "i").test(normalizeText(text)));
+    const present = aliases.some((word) => new RegExp(`\\b${normalizeText(word)}\\w*`, "i").test(evidence));
+    if (mentioned && !present) issues.push({ type: "unverifiable_claim", severity: "error", claim: aliases[0] ?? "dotare", message: "Dotare care nu apare în datele proprietății." });
+  }
+  const statedNumbers = [...Object.values(facts.numbers).filter((n): n is number => n !== null), ...(facts.additionalNumbers ?? [])];
+  for (const number of text.match(/\d+(?:[.,]\d+)*/g) ?? []) {
+    const value = Number(number.replace(/[.,](?=\d{3}(?:\D|$))/g, "").replace(",", "."));
+    if (!statedNumbers.includes(value) && !new RegExp(`(?:^|\\D)${number.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\D|$)`).test(facts.existingText ?? "")) issues.push({ type: "invented_number", severity: "error", claim: number, message: "Cifră inexistentă în datele proprietății." });
+  }
 
   for (const banned of BANNED_CLAIMS) {
     const match = banned.pattern.exec(text);
@@ -426,7 +449,10 @@ export function marketingContextHash(facts: MarketingFactSheet): string {
     id: facts.propertyId,
     t: facts.transaction,
     p: facts.propertyType,
+    currency: facts.currency,
+    description: facts.existingText,
     n: NUMBER_FIELDS.map((field) => facts.numbers[field]),
+    extra: facts.additionalNumbers ?? [],
     l: facts.location,
     f: [...facts.features].sort(),
   });

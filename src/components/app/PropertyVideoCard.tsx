@@ -19,7 +19,7 @@ import { useAiFeatures } from "@/hooks/use-ai-features";
 import { VideoNarrationField } from "./VideoNarrationField";
 import {
   VIDEO_DEFAULT_PER_PHOTO, VIDEO_FORMATS, VIDEO_MAX_MUSIC_BYTES, VIDEO_MAX_PER_PHOTO, VIDEO_MAX_PHOTOS, VIDEO_MIN_PER_PHOTO,
-  buildVideoOverlay, moveInList, planVideoTimeline, videoFileName, type VideoFormat, type VideoListing,
+  buildVideoOverlay, buildVideoSubtitles, moveInList, planVideoTimeline, videoFileName, type VideoFormat, type VideoListing,
 } from "@/lib/property-video";
 
 type Photo = { id: string; url: string; alt: string | null };
@@ -41,6 +41,8 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
   };
   const { isEnabled } = useAiFeatures();
   const voiceEnabled = isEnabled("ai_video_voice");
+  const subtitleEnabled = isEnabled("ai_marketing");
+  const [subtitles, setSubtitles] = useState(false);
   const [narration, setNarration] = useState<Blob | null>(null);
   const [phoneShare, setPhoneShare] = useState(false);
   useEffect(() => { setPhoneShare(canShareFiles(navigator)); }, []);
@@ -129,6 +131,7 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
         format, perPhoto: plan.perPhoto, music: audio, narration: voiceEnabled ? narration : null, signal: ctrl.signal, onProgress: setProgress,
         photoUrls: chosen.flatMap((id) => { const photo = byId.get(id); return photo ? [photo.url] : []; }),
         overlay: buildVideoOverlay({ ...listing, logoUrl: hasLogo ? listing.logoUrl : null }, { ...opts, showLogo: opts.showLogo && hasLogo }),
+        subtitles: subtitleEnabled && subtitles ? buildVideoSubtitles(listing, chosen.length, plan.perPhoto, opts.showPrice) : [],
       });
       setResult({ url: URL.createObjectURL(r.blob), name: videoFileName(listing.reference, format, r.ext), webm: r.ext === "webm", blob: r.blob });
       const videoInfo = await (await import("@/lib/meta/reel-video")).inspectReelVideo(r.blob).catch(() => null);
@@ -201,6 +204,7 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
         </div>
       </div>
 
+      {subtitleEnabled ? <div className="space-y-2"><Label className="flex items-center gap-2"><Checkbox checked={subtitles} onCheckedChange={(value) => setSubtitles(value === true)} disabled={busy} />Subtitrare automată</Label>{subtitles ? <ol className="space-y-1 text-sm text-muted-foreground">{buildVideoSubtitles(listing, chosen.length, plan.perPhoto, opts.showPrice).map((line) => <li key={line.text}>{line.text}</li>)}</ol> : null}</div> : null}
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Muzică</legend>
         <div className="grid gap-2" role="radiogroup" aria-label="Muzică">

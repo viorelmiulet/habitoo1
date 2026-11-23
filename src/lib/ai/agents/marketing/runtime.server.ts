@@ -283,6 +283,7 @@ export async function runMarketingTurn(
           draftId: null,
         });
       }
+      if (!results.some((result) => result.validationStatus !== "invalid")) throw new Error("Conținutul nu a trecut verificarea faptelor sau a formatului.");
       return { results, failures, inputTokens, outputTokens };
     });
     provider = completed.provider;

@@ -1,0 +1,2 @@
+import { defineConfig } from "vitest/config";
+export default defineConfig({ resolve: { alias: { "@": new URL("./src", import.meta.url).pathname } }, test: { environment: "node", testTimeout: 15000, include: ["src/lib/ai/agents/marketing/tests/calup-c.test.ts", "src/lib/ai/listing-autofill/photo-review.test.ts", "src/lib/ai/listing-autofill/photo-review-handler.test.ts", "src/components/app/ai/PhotoReviewPanel.test.tsx", "src/components/app/ai/MarketingVariants.test.tsx", "src/components/app/ai/ListingAutofillCard.test.tsx", "src/lib/property-video-subtitles.test.ts"] } });

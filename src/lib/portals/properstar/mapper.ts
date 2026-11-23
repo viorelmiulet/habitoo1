@@ -289,6 +289,7 @@ export type ProperstarAdvert = {
   landArea: number | null;
   title: string | null;
   description: string;
+  englishDescription?: string | null;
   photos: string[];
   price: number | null;
   priceCurrency: string;
@@ -536,7 +537,7 @@ export function advertToXml(advert: ProperstarAdvert): string {
     : "";
   const descriptions = `<Descriptions><Description Language="${PROPERSTAR_LANGUAGE}">${cdata(
     advert.description,
-  )}</Description></Descriptions>`;
+  )}</Description>${advert.englishDescription ? `<Description Language="en">${cdata(sanitizeProperstarHtml(properstarDescriptionHtml(advert.englishDescription)))}</Description>` : ""}</Descriptions>`;
   const geo =
     advert.latitude !== null && advert.longitude !== null
       ? `<Geolocation>${node("Latitude", advert.latitude)}${node("Longitude", advert.longitude)}</Geolocation>`

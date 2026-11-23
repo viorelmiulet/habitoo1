@@ -446,7 +446,9 @@ export async function loadOlxProperty(ctx: PortalContext, ref: ListingRef): Prom
     .eq("organization_id", ctx.organizationId)
     .maybeSingle();
   if (!row) return { ok: false, reasons: ["proprietatea nu a fost găsită"] };
-  const r = row as Record<string, unknown>;
+  const { readPortalDescription } = await import("@/lib/ai/agents/marketing/portal-description.server");
+  const description = await readPortalDescription(db, ctx.organizationId, row, "olx_direct");
+  const r = { ...row, description: description ?? row.description } as Record<string, unknown>;
   const num = (v: unknown) =>
     typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v)) ? Number(v) : null;
   const str = (v: unknown) => (typeof v === "string" && v.trim() ? v : null);
