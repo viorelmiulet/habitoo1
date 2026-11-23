@@ -1,6 +1,6 @@
 import { briefDate } from './brief';
 import type { CheckIssue } from '@/lib/listing-check/rules';
-export const ACTION_ORDER = ['new_lead','overdue','viewing','match','portal_message','required','old_listing','owner','contract','collaboration','map'] as const;
+export const ACTION_ORDER = ['qualified_lead','new_lead','overdue','viewing','match','portal_message','required','old_listing','owner','contract','collaboration','map'] as const;
 export type ActionKind = typeof ACTION_ORDER[number];
 export type HomeAction = { id: string; kind: ActionKind; entityKey: string; title: string; reason: string; to: string; search?: Record<string,string>; button: string; at: string; source: string | null; propertyTitle: string | null; ageHours: number; agentId: string | null };
 export type Preference = { action_key: string; ignored: boolean; snoozed_until: string | null };
@@ -26,12 +26,14 @@ export function applyAiOrder(actions: HomeAction[], raw: unknown): { actions: Ho
  const ids = r.ids as string[];
  const allowed = new Map(actions.map(a => [a.id,a]));
  if (ids.length!==actions.length || new Set(ids).size!==ids.length || ids.some(id => !allowed.has(id))) return { actions,recommendation:null };
- return { actions: ids.flatMap(id => {const a=allowed.get(id);return a?[a]:[];}), recommendation:r.recommendation.trim() || null };
+ const ordered=ids.flatMap(id => {const a=allowed.get(id);return a?[a]:[];});
+ return { actions: [...ordered.filter(a=>a.kind==='qualified_lead'),...ordered.filter(a=>a.kind!=='qualified_lead')], recommendation:r.recommendation.trim() || null };
 }
 /** No client name, phone, owner, internal note, or free-text reason is sent to AI. */
 export function aiActionFacts(actions: HomeAction[]) { return actions.map((a,i) => ({ id:String(i),type:a.kind,ageHours:a.ageHours,source:a.source,propertyTitle:a.propertyTitle })); }
 export function buildHomeActions(input: {
  now: Date; scope: string | null;
+ leadScores?: { lead_id: string; score: number | null; score_reason: string | null }[];
  leads: any[]; requests: any[]; activities: any[]; events: any[]; properties: any[]; matches: any[]; checks: {propertyId:string;issues:CheckIssue[]}[]; listings: any[]; contracts: any[]; proposals: any[]; map: any[];
 }): HomeAction[] {
  const out: HomeAction[]=[]; const now=input.now.getTime(); const day=briefDate(input.now); const tomorrow=briefDate(new Date(now+DAY));
@@ -43,6 +45,8 @@ export function buildHomeActions(input: {
   if (['won','lost','archived'].includes(l.stage)) continue;
   const elapsed=(now-Date.parse(l.created_at))/3600000;
   const entityKey=l.property_id?`property:${l.property_id}`:`lead:${l.id}`;
+  const qualification=input.leadScores?.find(s=>s.lead_id===l.id);
+  if(qualification?.score!==null && qualification?.score!==undefined && qualification.score>70 && qualification.score_reason) add('qualified_lead',l.id,'Contactează lead-ul prioritar',`Scor ${qualification.score}/100 · ${qualification.score_reason}`,'/app/leads',l.created_at,l.assigned_to,'Deschide lead',{search:{lead:l.id},source:l.source,entityKey});
   if(l.stage==='new' && elapsed>2 && !(l.last_interaction_at && l.last_interaction_at>l.created_at) && !touch(l.id,l.created_at,l.contact_id)) add('new_lead',l.id,'Contactează lead-ul',`Lead${l.source?` de pe ${l.source}`:''}, primit acum ${Math.floor(elapsed)} h, necontactat`,'/app/leads',l.created_at,l.assigned_to,'Deschide lead',{search:{lead:l.id},source:l.source,entityKey});
   if(l.next_followup_at && Date.parse(l.next_followup_at)<now) add('overdue',`lead-${l.id}`,'Follow-up restant','Termenul de revenire a fost depășit.','/app/leads',l.next_followup_at,l.assigned_to,'Deschide lead',{search:{lead:l.id},entityKey});
  }

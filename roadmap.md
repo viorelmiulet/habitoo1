@@ -1,8 +1,9 @@
 ## Funcții AI — lead-uri, calupul A
-- [ ] Extindere analiză existentă pentru orice lead/mesaj/notă: ciornă sigură și cerere cu dovezi, numai propuneri.
-- [ ] Scor explicat din semnale reale și prioritate peste 70 în Top acțiuni, cu acces și AI existente.
-- [ ] Confirmare agent pentru creare/actualizare cerere și trimitere pe canalele existente.
-- [ ] Teste strict noi/modificate fără AI real, compilare curată, commit fără publicare.
+- [x] Motorul existent extins pentru orice lead/mesaj/notă: Gemini existent, credite și consum; ciornă din propoziții cu fapte verificate și cerere cu fragmente-sursă.
+- [x] Scor 0–100 explicabil din mesaj/buget/potrivire/interacțiuni/viteza clientului; peste 70 intră înaintea celorlalte Top acțiuni, fără ocolirea accesului sau activării AI.
+- [x] Workerul nu mai creează cereri: confirmare explicită per câmp, operație atomică/idempotentă, potriviri existente pornite și la actualizare; ciorna este editabilă, fără trimiteri automate.
+- [x] 42 teste în 7 fișiere strict noi/modificate trec, fără AI/trimiteri reale; compilare curată; funcția de confirmare și accesul fără anon confirmate în baza reală; fără publicare.
+- [ ] Verificare cap-coadă în cont real: solicitantul nu are cont asociat pentru sesiune; necesită autentificarea în previzualizare. Nu s-au făcut apeluri reale la AI.
 
 ## Descriere automată publică a agenției
 - [x] Text determinist din agregatul complet al ofertelor publice eligibile, prioritate descriere proprie și SEO comun; migrarea 0328 aplicată fără schimbări de date.

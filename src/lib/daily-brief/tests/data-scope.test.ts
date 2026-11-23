@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+vi.mock('@/lib/ai/features/features.server',()=>({isAiFeatureEnabled:vi.fn(async()=>false)}));
 import { completeRows, loadDailyBrief } from '../data.server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';

@@ -44,7 +44,7 @@ export type ExtractedRequest = {
   kind: "buy" | "rent" | null;
   budget_min: number | null;
   budget_max: number | null;
-  currency: string | null;
+  currency: "EUR" | "RON" | "USD" | null;
   cities: string[];
   areas: string[];
   rooms_min: number | null;
@@ -106,25 +106,26 @@ export function sanitizeExtraction(raw: LeadAiResponse["request"], message: stri
   const rooms = roomsIn(message);
   const t = fold(message);
   const hasCurrency = /€|eur|euro|lei|ron|\$|usd|dolari/.test(t);
-  const budgetMin = mentioned(raw.budget_min, nums);
-  const budgetMax = mentioned(raw.budget_max, nums);
-  const kindOk = raw.kind === "rent" ? /inchiri|chirie|rent/.test(t) : raw.kind === "buy" ? /cumpar|achizit|vand|buy|caut|vreau/.test(t) : false;
+  const budgetContext = /buget|pret|pana (?:in|la)|maximum|maxim|minim|eur|euro|€|lei|ron|usd|dolari/.test(t);
+  const budgetMin = budgetContext ? mentioned(raw.budget_min, nums) : null;
+  const budgetMax = budgetContext ? mentioned(raw.budget_max, nums) : null;
+  const kindOk = raw.kind === "rent" ? /inchiri|chirie|rent/.test(t) : raw.kind === "buy" ? /cumpar|achizit|vanzare|buy/.test(t) : false;
   return {
-    kind: kindOk ? raw.kind! : null,
+    kind: kindOk ? raw.kind ?? null : null,
     budget_min: budgetMin,
     budget_max: budgetMax,
-    currency: (budgetMin != null || budgetMax != null) && hasCurrency ? (raw.currency ?? null) : null,
+    currency: hasCurrency && (raw.currency === "EUR" ? /€|eur|euro/.test(t) : raw.currency === "RON" ? /lei|ron/.test(t) : raw.currency === "USD" ? /\$|usd|dolari/.test(t) : false) ? raw.currency ?? null : null,
     cities: words(message, raw.cities),
     areas: words(message, raw.areas),
     rooms_min: mentioned(raw.rooms_min, rooms),
     rooms_max: mentioned(raw.rooms_max, rooms),
     surface_min: /mp|m2|metri|m²/.test(t) ? mentioned(raw.surface_min, nums) : null,
-    property_type: raw.property_type && (PROPERTY_TYPES as readonly string[]).includes(raw.property_type) ? raw.property_type : null,
-    wants_parking: raw.wants_parking && /parcar|garaj|loc de parcare/.test(t) ? true : null,
-    wants_balcony: raw.wants_balcony && /balcon|terasa/.test(t) ? true : null,
-    furnished: typeof raw.furnished === "boolean" && /mobil/.test(t) ? raw.furnished : null,
+    property_type: raw.property_type && ({ apartment: /apartament|\b\d+\s*camere/, studio: /garsonier/, house: /casa|case|vila/, land: /teren/, commercial: /comercial/, office: /birou/ } as Record<string, RegExp>)[raw.property_type]?.test(t) ? raw.property_type : null,
+    wants_parking: raw.wants_parking && /parcar|garaj|loc de parcare/.test(t) && !/fara\s+(?:loc de\s+)?parcar|nu.*parcar/.test(t) ? true : null,
+    wants_balcony: raw.wants_balcony && /balcon|terasa/.test(t) && !/fara\s+balcon|nu.*balcon/.test(t) ? true : null,
+    furnished: typeof raw.furnished === "boolean" && /mobil/.test(t) && raw.furnished === !/nemobil|fara mobilier|nu.*mobilat/.test(t) ? raw.furnished : null,
     pets_allowed: raw.pets_allowed && /animal|caine|pisica|catel/.test(t) ? true : null,
-    term: raw.term && raw.term.trim() ? raw.term.trim() : null,
+    term: raw.term && raw.term.trim() && t.includes(fold(raw.term.trim())) ? raw.term.trim() : null,
   };
 }
 
@@ -133,12 +134,13 @@ export function hasExtraction(e: ExtractedRequest): boolean {
 }
 
 export type RequestLike = Partial<Record<keyof ExtractedRequest, unknown>>;
-export type ProposedChange = { field: keyof ExtractedRequest; value: unknown; text: string };
+export type ProposedChange = { field: keyof ExtractedRequest; value: unknown; text: string; evidence?: string };
 
 const money = (n: number, c: string | null) => `${n.toLocaleString("ro-RO")} ${c === "EUR" || !c ? "€" : c}`;
 
 function describe(field: keyof ExtractedRequest, value: unknown, currency: string | null): string {
   switch (field) {
+    case "currency": return `moneda ${String(value)}`;
     case "budget_min": return `buget min ${money(value as number, currency)}`;
     case "budget_max": return `buget max ${money(value as number, currency)}`;
     case "rooms_min": return `minimum ${value} camere`;
@@ -161,7 +163,6 @@ function describe(field: keyof ExtractedRequest, value: unknown, currency: strin
 export function diffRequest(existing: RequestLike, e: ExtractedRequest): ProposedChange[] {
   const changes: ProposedChange[] = [];
   for (const field of Object.keys(e) as (keyof ExtractedRequest)[]) {
-    if (field === "currency") continue;
     const value = e[field];
     if (value === null || (Array.isArray(value) && value.length === 0)) continue;
     const current = existing[field];
@@ -189,6 +190,7 @@ export type DraftProperty = {
   title: string; transaction_kind: string; property_type: string; price: number | null; currency: string;
   rooms: number | null; surface: number | null; usable_surface: number | null; floor: number | null;
   city: string | null; balcony: boolean; parking: string | null; description: string | null;
+  status?: string | null;
 };
 
 /**
@@ -211,6 +213,38 @@ export function sanitizeDraft(draft: string | null | undefined, property: DraftP
   return text.slice(0, 1500);
 }
 
+/** Final reply facts are rendered from allowlisted fields, never from model prose or client budget. */
+export function groundedLeadDraft(property: DraftProperty | null): string {
+  if (!property) return "Bună ziua! Vă mulțumesc pentru mesaj. Voi verifica informațiile despre proprietatea care vă interesează. Doriți să stabilim o vizionare după confirmarea disponibilității?";
+  const facts = [property.price !== null ? `Prețul afișat este ${property.price.toLocaleString("ro-RO")} ${property.currency}.` : null,
+    property.rooms !== null ? `Proprietatea are ${property.rooms} camere.` : null,
+    property.usable_surface !== null ? `Suprafața utilă este ${property.usable_surface} m².` : property.surface !== null ? `Suprafața înregistrată este ${property.surface} m².` : null,
+    property.balcony === true ? "Are balcon." : null];
+  const availability = property.status === "active" ? "Anunțul este activ în Habitoo; confirm disponibilitatea înaintea vizionării."
+    : ["sold", "rented", "archived"].includes(property.status ?? "") ? "Anunțul nu mai este activ; pot verifica alte oferte potrivite."
+    : "Voi confirma disponibilitatea înaintea vizionării.";
+  return `Bună ziua! Vă mulțumesc pentru interes. ${facts.filter(Boolean).join(" ")} ${availability} Ce zi ar fi potrivită pentru o vizionare?`.replace(/\s+/g, " ").trim();
+}
+
+/** The model selects/reorders verified factual sentences; unknown assertions are never accepted. */
+export function leadReplySentences(property: DraftProperty | null): string[] {
+  return [...groundedLeadDraft(property).split(/(?<=[.!?])\s+/),
+    "Vă mulțumesc pentru mesaj.", "Doriți să stabilim o vizionare?", "Voi reveni cu detalii despre informațiile care lipsesc."];
+}
+export function validatedLeadDraft(raw: string | null | undefined, property: DraftProperty | null): string | null {
+  const text = raw?.trim().replace(/\s+/g, " ");
+  if (!text || text.length > 1500 || !/vizionare/i.test(text)) return null;
+  const allowed = leadReplySentences(property).sort((a, b) => b.length - a.length);
+  let remaining = text;
+  let sentences = 0;
+  while (remaining && sentences < 12) {
+    const phrase = allowed.find(s => remaining === s || remaining.startsWith(`${s} `));
+    if (!phrase) return null;
+    remaining = remaining.slice(phrase.length).trim(); sentences++;
+  }
+  return remaining ? null : text;
+}
+
 export const LEAD_AI_SYSTEM = `Ești asistentul Habitoo pentru agenți imobiliari din România. Primești un mesaj de la un client venit de pe un portal, eventual proprietatea din anunț și ultimele mesaje din conversație.
 Răspunde DOAR cu un obiect JSON, fără alt text:
 {"request":{"kind":"buy"|"rent"|null,"budget_min":number|null,"budget_max":number|null,"currency":"EUR"|"RON"|"USD"|null,"cities":string[],"areas":string[],"rooms_min":number|null,"rooms_max":number|null,"surface_min":number|null,"property_type":"apartment"|"studio"|"house"|"land"|"commercial"|"office"|null,"wants_parking":boolean|null,"wants_balcony":boolean|null,"furnished":boolean|null,"pets_allowed":boolean|null,"term":string|null},"intent":"viewing"|"question"|"negotiation"|"other","language":"ro"|"en"|...,"draft":string}
@@ -222,14 +256,14 @@ Reguli:
 export function buildLeadAiRequest(input: { message: string; property: DraftProperty | null; history: { direction: string; body: string }[] }) {
   const p = input.property;
   const propertyText = p
-    ? JSON.stringify({ titlu: p.title, tranzactie: p.transaction_kind, tip: p.property_type, pret: p.price, moneda: p.currency, camere: p.rooms, suprafata: p.surface, suprafata_utila: p.usable_surface, etaj: p.floor, localitate: p.city, balcon: p.balcony, parcare: p.parking, descriere: p.description?.slice(0, 1200) ?? null })
+    ? JSON.stringify({ titlu: p.title, tranzactie: p.transaction_kind, tip: p.property_type, pret: p.price, moneda: p.currency, camere: p.rooms, suprafata: p.surface, suprafata_utila: p.usable_surface, etaj: p.floor, localitate: p.city, balcon: p.balcony, parcare: p.parking, stare: p.status ?? null, descriere: p.description?.slice(0, 1200) ?? null })
     : "Nu există proprietate asociată.";
   const history = input.history.length
     ? input.history.map((m) => `${m.direction === "out" ? "Agent" : "Client"}: ${m.body.slice(0, 600)}`).join("\n")
     : "Nu există mesaje anterioare.";
   return {
     system: LEAD_AI_SYSTEM,
-    messages: [{ role: "user" as const, content: `Proprietatea din anunț: ${propertyText}\n\nUltimele mesaje:\n${history}\n\nMesajul nou al clientului: """${input.message.slice(0, 3000)}"""` }],
+    messages: [{ role: "user" as const, content: `Proprietatea din anunț: ${propertyText}\n\nUltimele mesaje:\n${history}\n\nMesajul nou al clientului: """${input.message.slice(0, 3000)}"""\n\nPentru câmpul draft, alege și ordonează numai propoziții din lista verificată de mai jos, exact cum sunt scrise. Alege faptele care răspund mesajului, include o propunere de vizionare și nu adăuga alte afirmații:\n${JSON.stringify(leadReplySentences(p))}` }],
     tools: [],
     maxOutputTokens: 1500,
   };

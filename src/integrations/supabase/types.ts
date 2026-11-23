@@ -5201,12 +5201,16 @@ export type Database = {
           intent: string | null
           lead_id: string
           locked_until: string | null
-          message_id: string
+          message_id: string | null
           organization_id: string
           proposed_changes: Json
           request_created: boolean
           request_id: string | null
+          score: number | null
+          score_reason: string | null
           skip_reason: string | null
+          source_kind: string
+          source_text: string | null
           status: string
           updated_at: string
         }
@@ -5221,12 +5225,16 @@ export type Database = {
           intent?: string | null
           lead_id: string
           locked_until?: string | null
-          message_id: string
+          message_id?: string | null
           organization_id: string
           proposed_changes?: Json
           request_created?: boolean
           request_id?: string | null
+          score?: number | null
+          score_reason?: string | null
           skip_reason?: string | null
+          source_kind?: string
+          source_text?: string | null
           status?: string
           updated_at?: string
         }
@@ -5241,12 +5249,16 @@ export type Database = {
           intent?: string | null
           lead_id?: string
           locked_until?: string | null
-          message_id?: string
+          message_id?: string | null
           organization_id?: string
           proposed_changes?: Json
           request_created?: boolean
           request_id?: string | null
+          score?: number | null
+          score_reason?: string | null
           skip_reason?: string | null
+          source_kind?: string
+          source_text?: string | null
           status?: string
           updated_at?: string
         }
@@ -14704,6 +14716,10 @@ export type Database = {
       }
       collector_arm: { Args: never; Returns: undefined }
       collector_tick: { Args: never; Returns: undefined }
+      confirm_lead_ai_request: {
+        Args: { _fields: string[]; _insight: string }
+        Returns: string
+      }
       contact_source_label: { Args: { _source: string }; Returns: string }
       create_dynamic_feed_portal: {
         Args: {
@@ -14942,12 +14958,16 @@ export type Database = {
           intent: string | null
           lead_id: string
           locked_until: string | null
-          message_id: string
+          message_id: string | null
           organization_id: string
           proposed_changes: Json
           request_created: boolean
           request_id: string | null
+          score: number | null
+          score_reason: string | null
           skip_reason: string | null
+          source_kind: string
+          source_text: string | null
           status: string
           updated_at: string
         }[]

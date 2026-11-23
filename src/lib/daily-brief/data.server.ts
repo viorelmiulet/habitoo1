@@ -8,6 +8,8 @@ export async function completeRows<T>(query:(a:number,b:number)=>PromiseLike<{da
 export async function loadDailyBrief(db:SupabaseClient<Database>,organizationId:string,userId:string,now=new Date(),agentId?:string):Promise<ActionData> {
  const admin=await db.rpc('is_org_admin');if(admin.error)throw new Error('Accesul nu a putut fi verificat.');
  const scope=actionAgentScope(userId,admin.data===true,agentId);
+ const { isAiFeatureEnabled } = await import('@/lib/ai/features/features.server');
+ const leadAiEnabled=await isAiFeatureEnabled(organizationId,'ai_lead_assist');
  const profiles=admin.data===true?await completeRows((a,b)=>db.from('profiles').select('id,full_name').eq('organization_id',organizationId).eq('is_active',true).order('id').range(a,b)):[];
  if(scope && admin.data===true && !profiles.some(p=>p.id===scope))throw new Error('Agentul nu aparține agenției.');
  const scoped=(q:any)=>scope?q.eq('assigned_to',scope):q;
@@ -30,6 +32,8 @@ export async function loadDailyBrief(db:SupabaseClient<Database>,organizationId:
  const ps=properties as Database['public']['Tables']['properties']['Row'][];
  // Shared listing rules; portal-specific failures/requirements deliberately never enter Home.
  for(const p of ps){const result=checkListing({property:p,images:images.filter(x=>x.property_id===p.id).map(x=>({isPrimary:x.is_primary===true,isConfidential:x.is_confidential===true,includeInPublish:x.include_in_publish===true,storagePath:x.storage_path,sourceUrl:x.source_url,url:x.url})),publications:[],portalReports:[],zoneMedianPerSqm:null,duplicateDescription:false});checks.push({propertyId:p.id,issues:result.issues});}
- const actions=buildHomeActions({now,scope,leads,requests,activities,events,properties,matches,listings,contracts,proposals,checks,map});
+ const scoreRows=leadAiEnabled?await completeRows((a,b)=>db.from('lead_ai_insights').select('lead_id,score,score_reason,updated_at').eq('organization_id',organizationId).eq('status','done').order('updated_at',{ascending:false}).order('id').range(a,b)):[];
+ const leadScores=scoreRows.filter((row,index)=>scoreRows.findIndex(r=>r.lead_id===row.lead_id)===index);
+ const actions=buildHomeActions({now,scope,leads,requests,activities,events,properties,matches,listings,contracts,proposals,checks,map,leadScores});
  return {version:2,actions:selectActions(actions,preferences,now),computedAt:now.toISOString(),agents:profiles.map(p=>({id:p.id,name:p.full_name})),isAdmin:admin.data===true};
 }

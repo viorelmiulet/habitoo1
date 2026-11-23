@@ -293,7 +293,8 @@ function LeadsPage() {
 
   const leadAiBadges = useLeadAiBadges(useMemo(() => leads.map((l) => l.id), [leads])).data;
   const [aiDraft, setAiDraft] = useState<{ text: string; nonce: number } | null>(null);
-  useEffect(() => setAiDraft(null), [detailLead?.id]);
+  const [detailTab, setDetailTab] = useState("history");
+  useEffect(() => { setAiDraft(null); setDetailTab("history"); }, [detailLead?.id]);
 
   const { data: detailData } = useQuery({
     queryKey: ["lead-detail", detailLead?.id],
@@ -1232,6 +1233,16 @@ function LeadsPage() {
               {detailLead.notes ? (
                 <p className="rounded-[14px] border border-border bg-card p-3 text-sm">{detailLead.notes}</p>
               ) : null}
+              <LeadAiAssist
+                key={detailLead.id}
+                leadId={detailLead.id}
+                phone={detailLead.phone}
+                email={detailLead.email}
+                hasNote={Boolean(detailLead.notes?.trim())}
+                messages={detailData?.messages ?? []}
+                portalReply={(detailData?.messages ?? []).some(m => m.portal === "housera")}
+                onUse={text => { setAiDraft({ text, nonce: Date.now() }); setDetailTab("messages"); }}
+              />
 
               <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => setActivityOpen(true)}>
@@ -1239,7 +1250,7 @@ function LeadsPage() {
                 </Button>
               </div>
 
-              <Tabs defaultValue="history">
+              <Tabs value={detailTab} onValueChange={setDetailTab}>
                 <TabsList>
                   <TabsTrigger value="history">
                     <History className="size-4" /> Istoric
@@ -1362,13 +1373,6 @@ function LeadsPage() {
                       </p>
                     ) : null}
                   </ul>
-                  <LeadAiAssist
-                    key={detailLead.id}
-                    leadId={detailLead.id}
-                    phone={detailLead.phone}
-                    portalReply={(detailData?.messages ?? []).some((m) => m.portal === "housera")}
-                    onUse={(text) => setAiDraft({ text, nonce: Date.now() })}
-                  />
                   <HouseraReplyBox leadId={detailLead.id} draft={aiDraft} />
                   <p className="mt-3 text-[11px] text-muted-foreground">
                     Mesajele primite din portaluri se păstrează 180 de zile, apoi se șterg automat.

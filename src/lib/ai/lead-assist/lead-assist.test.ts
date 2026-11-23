@@ -15,6 +15,8 @@ function fakeDb(tables: Tables) {
     let op: "select" | "update" | "insert" | "delete" = "select";
     let payload: Record<string, unknown> = {};
     let limitN: number | null = null;
+    let rangeFrom = 0;
+    let rangeTo: number | null = null;
     const rows = () => (tables[table] ??= []);
     const run = () => {
       if (op === "insert") {
@@ -25,7 +27,8 @@ function fakeDb(tables: Tables) {
       const hit = rows().filter((r) => filters.every((f) => f(r)));
       if (op === "update") hit.forEach((r) => Object.assign(r, payload));
       if (op === "delete") tables[table] = rows().filter((r) => !hit.includes(r));
-      return limitN ? hit.slice(0, limitN) : hit;
+      const ranged = rangeTo === null ? hit : hit.slice(rangeFrom, rangeTo + 1);
+      return limitN ? ranged.slice(0, limitN) : ranged;
     };
     const q: Record<string, unknown> = {
       select: () => q,
@@ -37,6 +40,7 @@ function fakeDb(tables: Tables) {
       is: (k: string, v: unknown) => { filters.push((r) => (r[k] ?? null) === v); return q; },
       order: () => q,
       limit: (n: number) => { limitN = n; return q; },
+      range: (a: number, b: number) => { rangeFrom = a; rangeTo = b; return q; },
       maybeSingle: async () => ({ data: run()[0] ?? null, error: null }),
       single: async () => ({ data: run()[0] ?? null, error: null }),
       then: (res: (v: unknown) => unknown) => Promise.resolve({ data: run(), error: null }).then(res),
@@ -50,7 +54,7 @@ function setup(opts: { requestId?: string | null; aiText?: string; enabled?: boo
   const tables: Tables = {
     leads: [{ id: "lead1", organization_id: "org1", name: "Ana", assigned_to: "agent1", contact_id: "c1", request_id: opts.requestId ?? null, property_id: "p1", deleted_at: null }],
     properties: [{ id: "p1", organization_id: "org1", title: "Apartament 2 camere Militari", transaction_kind: "sale", property_type: "apartment", price: 79000, currency: "EUR", rooms: 2, surface: 54, usable_surface: 50, floor: 3, city: "București", balcony: true, parking: null, description: null }],
-    portal_messages: [{ id: "m1", lead_id: "lead1", direction: "in", body: MSG, property_id: "p1", sent_at: "2026-11-13" }],
+    portal_messages: [{ id: "m1", organization_id: "org1", lead_id: "lead1", direction: "in", body: MSG, property_id: "p1", sent_at: "2026-11-13" }],
     requests: opts.requestId ? [{ id: opts.requestId, organization_id: "org1", kind: "buy", rooms_min: 2, budget_max: 70000, currency: "EUR", cities: [], areas: ["Militari"] }] : [],
     lead_ai_insights: [{ id: "i1", organization_id: "org1", lead_id: "lead1", message_id: "m1", status: "pending" }],
   };
@@ -86,16 +90,17 @@ function setup(opts: { requestId?: string | null; aiText?: string; enabled?: boo
 }
 
 describe("Asistent lead-uri", () => {
-  it("mesaj nou → cerere nouă cu camere, zonă și buget; intenție vizionare; ciornă fără prețuri inventate", async () => {
+  it("mesaj nou → numai propuneri cu dovezi și ciornă; nu creează cererea fără confirmare", async () => {
     const { tables, deps, row, settle } = setup();
     expect(await processLeadInsight(deps, row)).toBe("done");
-    const req = tables.requests![0]!;
-    expect(req).toMatchObject({ source: "ai_portal_message", rooms_min: 2, budget_max: 80000, areas: ["Militari"], contact_id: "c1", assigned_to: "agent1", kind: "buy" });
-    expect(req.surface_min).toBeNull(); // nespus de client
-    expect(req.wants_parking).toBeNull();
-    expect(tables.leads![0]!.request_id).toBe(req.id);
+    expect(tables.requests).toHaveLength(0);
+    expect(tables.leads![0]!.request_id).toBeNull();
     const ins = tables.lead_ai_insights![0]!;
-    expect(ins).toMatchObject({ status: "done", intent: "viewing", request_created: true });
+    expect(ins).toMatchObject({ status: "done", intent: "viewing", request_created: false });
+    const proposals = ins.proposed_changes as { field: string; value: unknown; evidence: string }[];
+    expect(proposals).toContainEqual(expect.objectContaining({ field: "budget_max", value: 80000, evidence: MSG }));
+    expect(proposals.map(p => p.field)).not.toContain("surface_min");
+    expect(proposals.map(p => p.field)).not.toContain("wants_parking");
     expect(ins.draft).toContain("vizionare");
     expect(settle).toHaveBeenCalledWith(true);
   });
@@ -113,7 +118,7 @@ describe("Asistent lead-uri", () => {
     expect(tables.requests).toHaveLength(1);
     expect(tables.requests![0]).toEqual(before);
     const changes = tables.lead_ai_insights![0]!.proposed_changes as { field: string; text: string }[];
-    expect(changes.map((c) => c.field)).toEqual(["budget_max", "rooms_max"]);
+    expect(changes.map((c) => c.field)).toEqual(["budget_max", "rooms_max", "currency"]);
     expect(changes[0]!.text).toBe("Clientul a menționat buget max 80.000 €");
   });
 
@@ -121,6 +126,49 @@ describe("Asistent lead-uri", () => {
     const { tables, deps, row } = setup();
     await processLeadInsight(deps, row);
     expect(tables.portal_messages!.filter((m) => m.direction === "out")).toHaveLength(0);
+  });
+
+  it.each(["storia", "olx", "vdi", "properstar", "site"])("aceeași analiză pentru %s, fără scrieri în lead/cerere/mesaje", async (portal) => {
+    const { tables, deps, row } = setup();
+    const incoming = tables.portal_messages?.[0];
+    if (!incoming) throw new Error("Missing fixture");
+    incoming["portal"] = portal;
+    const before = structuredClone({ lead: tables.leads, requests: tables.requests, messages: tables.portal_messages });
+    expect(await processLeadInsight(deps, row)).toBe("done");
+    expect({ lead: tables.leads, requests: tables.requests, messages: tables.portal_messages }).toEqual(before);
+  });
+
+  it("nota unui lead poate pregăti cererea fără mesaj din portal; fragmentele rămân în propuneri", async () => {
+    const { tables, deps, row } = setup();
+    const lead = tables.leads?.[0];
+    if (!lead) throw new Error("Missing fixture");
+    lead["notes"] = "Vreau să cumpăr 2 camere în Militari. Buget maximum 80.000 EUR.";
+    expect(await processLeadInsight(deps, { ...row, message_id: null, source_kind: "note" })).toBe("done");
+    const insight = tables.lead_ai_insights?.[0];
+    expect(insight?.["source_kind"]).toBe("note");
+    expect(insight?.["source_text"]).toBe(lead["notes"]);
+    expect(tables.requests).toHaveLength(0);
+    expect(lead["request_id"]).toBeNull();
+  });
+
+  it("mesajul din altă agenție este respins înainte de AI", async () => {
+    const { tables, deps, row, generate } = setup();
+    const incoming = tables.portal_messages?.[0];
+    if (!incoming) throw new Error("Missing fixture");
+    incoming["organization_id"] = "other-org";
+    expect(await processLeadInsight(deps, row)).toBe("skipped");
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("înregistrează consumul și citește complet interacțiunile peste primul lot", async () => {
+    const { tables, deps, row } = setup();
+    const original = tables.portal_messages?.[0];
+    if (!original) throw new Error("Missing fixture");
+    tables.portal_messages = Array.from({ length: 1001 }, (_, n) => ({ ...original, id: n === 0 ? "m1" : `m${n + 1}` }));
+    const recordUsage = vi.fn(async () => undefined);
+    expect(await processLeadInsight({ ...deps, recordUsage }, row)).toBe("done");
+    expect(recordUsage).toHaveBeenCalledExactlyOnceWith({ organizationId: "org1", userId: "agent1" }, { inputTokens: 1, outputTokens: 1, success: true });
+    expect(tables.lead_ai_insights?.[0]?.["score_reason"]).toContain("1001 mesaje");
   });
 
   it("credite epuizate → fără analiză, mesajul rămâne neatins", async () => {
