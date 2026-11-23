@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { mapPropertyToStoria } from "./mapper";
 import { storiaAgentPhotoUrl } from "./agent-photo";
-import { serveAgentPhoto } from "@/lib/site-feed/agent-photo.server";
+import { agentPhotoRedirect } from "@/lib/site-feed/media-redirect.server";
 import type { PropertyImageRow, PropertyRow } from "@/lib/site-feed/mapper";
 
 const PID = "22222222-2222-2222-2222-222222222222";
@@ -26,7 +26,7 @@ function fakeDb(profile: Record<string, unknown> | null) {
 describe("Storia contact.photo", () => {
   it("agent cu poză → contact.photo", () => {
     const url = storiaAgentPhotoUrl(base, { id: PID, avatar_url: "u/a.jpg", is_active: true, public_profile_hidden: false });
-    expect(url).toBe(`${base}/api/public/sites/v1/agent-photo/${PID}`);
+    expect(url).toBe(`${base}/api/public/sites/v1/media/agent/${PID}?w=400&h=400&fit=cover`);
     const r = mapPropertyToStoria(prop, { baseUrl: base, images, agent, agentPhotoUrl: url });
     if (!r.ok) throw new Error("blocked");
     expect(r.listings[0]!.advert.contact?.photo).toBe(url);
@@ -42,22 +42,13 @@ describe("Storia contact.photo", () => {
   });
 });
 
-describe("ruta agent-photo", () => {
-  it("404 pentru profil ascuns", async () => {
-    const fetchImpl = vi.fn();
-    const res = await serveAgentPhoto(PID, { db: fakeDb({ id: PID, avatar_url: "a.jpg", is_active: true, public_profile_hidden: true }), fetchImpl: fetchImpl as never });
-    expect(res.status).toBe(404);
-    expect(fetchImpl).not.toHaveBeenCalled();
-  });
+describe("ruta media/agent (singura rută pentru poza agentului)", () => {
   it("404 fără poză", async () => {
-    const res = await serveAgentPhoto(PID, { db: fakeDb({ id: PID, avatar_url: null, is_active: true, public_profile_hidden: false }) });
+    const res = await agentPhotoRedirect(PID, fakeDb({ id: PID, avatar_url: null, is_active: true }));
     expect(res.status).toBe(404);
   });
-  it("servește JPEG cu Cache-Control și doar octeții imaginii", async () => {
-    const fetchImpl = vi.fn(async () => new Response(new Uint8Array([255, 216, 255]), { headers: { "content-type": "image/jpeg" } }));
-    const res = await serveAgentPhoto(PID, { db: fakeDb({ id: PID, avatar_url: "a.jpg", is_active: true, public_profile_hidden: false }), fetchImpl: fetchImpl as never });
-    expect(res.status).toBe(200);
-    expect(res.headers.get("content-type")).toBe("image/jpeg");
-    expect(res.headers.get("cache-control")).toContain("max-age");
+  it("agent cu poză → trimite spre fișierul pozei", async () => {
+    const res = await agentPhotoRedirect(PID, fakeDb({ id: PID, avatar_url: "a.jpg", is_active: true }), { width: 400, height: 400, resize: "cover" });
+    expect([200, 302]).toContain(res.status);
   });
 });

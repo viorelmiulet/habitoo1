@@ -3240,6 +3240,34 @@
               null
             ],
             "description": "Piața ofertei; null când nu este completată."
+          },
+          "video_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "description": "Link video YouTube/Vimeo (https, fără linkuri scurte); null dacă lipsește sau nu e valid."
+          },
+          "tur_virtual_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "description": "Link tur virtual Matterport, Kuula, Cupix, YouTube sau Vimeo; null dacă lipsește sau nu e valid."
+          },
+          "releveu": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "description": "URL /media/{id} al pozei marcate releveu; poza rămâne și în images, cu tip neschimbat."
+          },
+          "pret_la_cerere": {
+            "type": "boolean",
+            "description": "true doar pentru unitățile unui ansamblu cu prețul ascuns; prețurile rămân în feed, site-ul decide afișarea."
           }
         },
         "required": [
@@ -4539,6 +4567,18 @@
           "datamodificare": {
             "type": "string",
             "format": "date-time"
+          },
+          "pret_la_cerere": {
+            "type": "boolean",
+            "description": "Ansamblul are prețul ascuns (afișat „la cerere”); prețurile rămân în feed."
+          },
+          "site_dezvoltator": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "description": "Site-ul dezvoltatorului (https) sau null."
           }
         },
         "required": [
@@ -4566,7 +4606,9 @@
           "images",
           "unitati",
           "dataadaugare",
-          "datamodificare"
+          "datamodificare",
+          "pret_la_cerere",
+          "site_dezvoltator"
         ],
         "example": {
           "id": "33333333-3333-4333-8333-333333333333",

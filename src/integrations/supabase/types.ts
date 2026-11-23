@@ -3622,6 +3622,7 @@ export type Database = {
           delivery_date: string | null
           description: string | null
           developer_name: string | null
+          developer_website: string | null
           district: string | null
           estate_type: string | null
           floors_count: number | null
@@ -3662,6 +3663,7 @@ export type Database = {
           delivery_date?: string | null
           description?: string | null
           developer_name?: string | null
+          developer_website?: string | null
           district?: string | null
           estate_type?: string | null
           floors_count?: number | null
@@ -3702,6 +3704,7 @@ export type Database = {
           delivery_date?: string | null
           description?: string | null
           developer_name?: string | null
+          developer_website?: string | null
           district?: string | null
           estate_type?: string | null
           floors_count?: number | null

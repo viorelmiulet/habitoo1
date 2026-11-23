@@ -14,6 +14,7 @@ export type FeedDevelopment = {
   nr_cladiri: number | null; nr_etaje: number | null; nr_unitati: number | null;
   facilitati: string[]; pret_de_la: number | null; pret_pana_la: number | null;
   moneda: string | null; images: FeedImage[]; unitati: string[];
+  pret_la_cerere: boolean; site_dezvoltator: string | null;
   agent_id: string | null; dataadaugare: string; datamodificare: string;
 };
 
@@ -51,7 +52,9 @@ export function mapDevelopmentToFeed(d: DevelopmentRow, units: PropertyRow[], im
       src: feedImageUrl(baseUrl,i.id), tip: i.is_primary ? 'principala' : 'galerie', pozitie: i.position,
       modificata: i.updated_at, alt: null, width: i.width, height: i.height,
     })),
-    unitati: units.map(p => p.reference ?? p.id), agent_id: d.assigned_to,
+    unitati: units.map(p => p.reference ?? p.id),
+    pret_la_cerere: d.storia_hide_price === true, site_dezvoltator: /^https:\/\//i.test(d.developer_website ?? '') ? d.developer_website : null,
+    agent_id: d.assigned_to,
     dataadaugare: d.created_at, datamodificare: d.updated_at,
   };
 }

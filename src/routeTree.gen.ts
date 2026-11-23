@@ -252,7 +252,6 @@ import { Route as ApiPublicPortalV1ProperstarLeadsRouteImport } from './routes/a
 import { Route as ApiPublicPortalV1PropertiesIdRouteImport } from './routes/api/public/portal/v1/properties.$id'
 import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './routes/api/public/portal/v1/storia.notifications'
 import { Route as ApiPublicPortalV1VdiLeadsRouteImport } from './routes/api/public/portal/v1/vdi/leads'
-import { Route as ApiPublicSitesV1AgentPhotoIdRouteImport } from './routes/api/public/sites/v1/agent-photo.$id'
 import { Route as ApiPublicSitesV1DevelopmentsIdRouteImport } from './routes/api/public/sites/v1/developments.$id'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
@@ -1635,12 +1634,6 @@ const ApiPublicPortalV1VdiLeadsRoute =
     path: '/api/public/portal/v1/vdi/leads',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicSitesV1AgentPhotoIdRoute =
-  ApiPublicSitesV1AgentPhotoIdRouteImport.update({
-    id: '/api/public/sites/v1/agent-photo/$id',
-    path: '/api/public/sites/v1/agent-photo/$id',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicSitesV1DevelopmentsIdRoute =
   ApiPublicSitesV1DevelopmentsIdRouteImport.update({
     id: '/$id',
@@ -1968,7 +1961,6 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
-  '/api/public/sites/v1/agent-photo/$id': typeof ApiPublicSitesV1AgentPhotoIdRoute
   '/api/public/sites/v1/developments/$id': typeof ApiPublicSitesV1DevelopmentsIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -2223,7 +2215,6 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
-  '/api/public/sites/v1/agent-photo/$id': typeof ApiPublicSitesV1AgentPhotoIdRoute
   '/api/public/sites/v1/developments/$id': typeof ApiPublicSitesV1DevelopmentsIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -2484,7 +2475,6 @@ export interface FileRoutesById {
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
-  '/api/public/sites/v1/agent-photo/$id': typeof ApiPublicSitesV1AgentPhotoIdRoute
   '/api/public/sites/v1/developments/$id': typeof ApiPublicSitesV1DevelopmentsIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -2745,7 +2735,6 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
     | '/api/public/portal/v1/vdi/leads'
-    | '/api/public/sites/v1/agent-photo/$id'
     | '/api/public/sites/v1/developments/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
@@ -3000,7 +2989,6 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
     | '/api/public/portal/v1/vdi/leads'
-    | '/api/public/sites/v1/agent-photo/$id'
     | '/api/public/sites/v1/developments/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
@@ -3260,7 +3248,6 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
     | '/api/public/portal/v1/vdi/leads'
-    | '/api/public/sites/v1/agent-photo/$id'
     | '/api/public/sites/v1/developments/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
@@ -3434,7 +3421,6 @@ export interface RootRouteChildren {
   ApiPublicPortalV1ProperstarLeadsRoute: typeof ApiPublicPortalV1ProperstarLeadsRoute
   ApiPublicPortalV1StoriaNotificationsRoute: typeof ApiPublicPortalV1StoriaNotificationsRoute
   ApiPublicPortalV1VdiLeadsRoute: typeof ApiPublicPortalV1VdiLeadsRoute
-  ApiPublicSitesV1AgentPhotoIdRoute: typeof ApiPublicSitesV1AgentPhotoIdRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
   ApiPublicExtensionV1ListingsIdFacebookPostsRoute: typeof ApiPublicExtensionV1ListingsIdFacebookPostsRoute
   ApiPublicPortalV1HouseraOauthCallbackRoute: typeof ApiPublicPortalV1HouseraOauthCallbackRoute
@@ -5148,13 +5134,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalV1VdiLeadsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/sites/v1/agent-photo/$id': {
-      id: '/api/public/sites/v1/agent-photo/$id'
-      path: '/api/public/sites/v1/agent-photo/$id'
-      fullPath: '/api/public/sites/v1/agent-photo/$id'
-      preLoaderRoute: typeof ApiPublicSitesV1AgentPhotoIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/sites/v1/developments/$id': {
       id: '/api/public/sites/v1/developments/$id'
       path: '/$id'
@@ -5872,7 +5851,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPortalV1StoriaNotificationsRoute:
     ApiPublicPortalV1StoriaNotificationsRoute,
   ApiPublicPortalV1VdiLeadsRoute: ApiPublicPortalV1VdiLeadsRoute,
-  ApiPublicSitesV1AgentPhotoIdRoute: ApiPublicSitesV1AgentPhotoIdRoute,
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
   ApiPublicExtensionV1ListingsIdFacebookPostsRoute:
     ApiPublicExtensionV1ListingsIdFacebookPostsRoute,

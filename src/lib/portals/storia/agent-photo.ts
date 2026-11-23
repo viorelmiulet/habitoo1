@@ -2,7 +2,7 @@
 export type AgentPhotoProfile = { id?: string | null; avatar_url?: string | null; public_profile_hidden?: boolean | null; is_active?: boolean | null };
 
 export function agentPhotoPath(profileId: string): string {
-  return `/api/public/sites/v1/agent-photo/${profileId}`;
+  return `/api/public/sites/v1/media/agent/${profileId}?w=400&h=400&fit=cover`;
 }
 
 /** null când agentul nu are poză, e inactiv sau are profilul public ascuns. */

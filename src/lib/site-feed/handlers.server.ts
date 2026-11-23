@@ -166,6 +166,7 @@ export async function handlePropertiesList(
   }
   const agentById = new Map((agents.data ?? []).map((a) => [a.id, a]));
 
+  const hiddenDevs = await hiddenPriceDevelopments(auth.organizationId, rows.map((r) => r.development_id));
   const { baseUrl, publicSiteUrl } = feedUrlsForRequest(url);
   const feed = buildPaginatedFeed({
     data: rows.map((row) =>
@@ -175,6 +176,7 @@ export async function handlePropertiesList(
         images: imagesByProperty.get(row.id) ?? [],
         agent: row.assigned_to ? (agentById.get(row.assigned_to) ?? null) : null,
         portalKeys: portalsByProperty.get(row.id) ?? [],
+        developmentHidePrice: row.development_id ? hiddenDevs.has(row.development_id) : false,
       }),
     ),
     total: count ?? 0,
@@ -187,6 +189,21 @@ export async function handlePropertiesList(
     response: jsonResponse({ ...feed, api_version: FEED_API_VERSION }, 200, 60),
     items: feed.data.length,
   };
+}
+
+/** Ansamblurile (din listă) care au prețul ascuns. */
+async function hiddenPriceDevelopments(organizationId: string, ids: (string | null | undefined)[]): Promise<Set<string>> {
+  const unique = [...new Set(ids.filter((v): v is string => Boolean(v)))];
+  if (!unique.length) return new Set();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("developments")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("storia_hide_price", true)
+    .in("id", unique);
+  if (error) throw error;
+  return new Set((data ?? []).map((d) => d.id));
 }
 
 export async function handlePropertyDetail(
@@ -253,6 +270,7 @@ export async function handlePropertyDetail(
     images: (images.data ?? []) as PropertyImageRow[],
     agent: agent.data ?? null,
     portalKeys: portalsByProperty.get(row.id) ?? [],
+    developmentHidePrice: (await hiddenPriceDevelopments(auth.organizationId, [row.development_id])).size > 0,
   });
 
   return {

@@ -1,0 +1,2 @@
+ALTER TABLE public.developments ADD COLUMN IF NOT EXISTS developer_website text;
+ALTER TABLE public.developments ADD CONSTRAINT developments_developer_website_https CHECK (developer_website IS NULL OR developer_website ~* '^https://[^\s/]+\.[^\s]+$');

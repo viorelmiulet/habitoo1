@@ -3,6 +3,7 @@
  * public pentru portaluri imobiliare. Compatibil, unde este util, cu structura
  * documentată public de ImmoFlux; câmpurile inexistente în Habitoo rămân null.
  */
+import { mediaLinkError, normalizeMediaLink, type MediaLinkKind } from "@/lib/property-media/links";
 import type { Tables } from "@/integrations/supabase/types";
 import { publicLocation } from "@/lib/geo";
 
@@ -229,6 +230,8 @@ export type MapPropertyOptions = {
    * `portal_publications`. Se combină cu tagurile legacy `portal:<nume>`.
    */
   portalKeys?: string[];
+  /** Ansamblul părinte are prețul ascuns (`developments.storia_hide_price`). */
+  developmentHidePrice?: boolean;
 };
 
 /** Finisajele publicabile, adunate din grupurile de checkbox ale formularului. */
@@ -263,6 +266,11 @@ function amenities(p: PropertyRow): string[] {
   ];
 }
 
+function validMediaLink(raw: string | null | undefined, kind: MediaLinkKind): string | null {
+  const v = normalizeMediaLink(raw);
+  return v && !mediaLinkError(v, kind) ? v : null;
+}
+
 export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): FeedProperty {
   const isRent = p.transaction_kind === "rent";
   // O proprietate poate fi simultan de vânzare și de închiriere; feedul trimite
@@ -282,6 +290,7 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     )
     .map((img) => mapImage(img, options.baseUrl));
 
+  const floorPlan = (options.images ?? []).find((img) => img.is_floor_plan === true && isImageFeedEligible(img));
   // Coordonatele publicate respectă setarea de precizie a locației.
   const location = publicLocation(p);
   const feedCoords = location.coords;
@@ -379,6 +388,10 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     incalzire_value: p.heating ?? p.heating_systems?.[0] ?? null,
     mobilare_value: p.furnishing ?? null,
     mobilat_value: p.furnishing ?? null,
+    video_url: validMediaLink(p.video_url, "video"),
+    tur_virtual_url: validMediaLink(p.virtual_tour_url, "virtual_tour"),
+    releveu: floorPlan ? feedImageUrl(options.baseUrl, floorPlan.id) : null,
+    pret_la_cerere: Boolean(p.development_id) && options.developmentHidePrice === true,
     parcare_value: p.parking ?? null,
     balcon_value: typeof p.balcony === "boolean" ? p.balcony : null,
     utilitati_values: p.utilities ?? [],
