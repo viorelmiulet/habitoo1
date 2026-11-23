@@ -1,3 +1,9 @@
+## Verificarea anunțului — continuare sugestii AI
+- [x] Previzualizare fără eroarea anterioară; cele 34 de teste existente țintite trec.
+- [x] Validare strictă a formei răspunsului, titlu sub 70 de caractere și validare numai față de câmpurile neconfidențiale.
+- [x] Teste țintite și incompatibilități vechi reparate în testele Azi și tiparea notificărilor; fără publicare sau AI real.
+- [ ] Verificare în fișa reală: solicitantul nu are cont asociat pentru sesiune; necesită autentificarea în previzualizare.
+
 ## Acasă — acțiuni reale și clopoțel
 - [ ] Motor server, acces agent/agenție, preferințe personale și listă completă.
 - [ ] Ordine AI validată și aceeași listă în Agentul AI.

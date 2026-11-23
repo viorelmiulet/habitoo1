@@ -1,46 +1,27 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { notifyPortalFailure } from "./failure-notification.server";
 
-function fakeAdmin() {
-  const notifications = new Map<string, Record<string, unknown>>();
-  const admin = { from(table: string) {
-    const filters: Array<(row: Record<string, unknown>) => boolean> = [];
-    const rows: Record<string, unknown>[] = table === "properties"
-      ? [{ id: "p1", organization_id: "org1", title: "Apartament luminos", assigned_to: "agent1" }]
-      : table === "user_roles"
-        ? [{ organization_id: "org1", user_id: "admin1", role: "agency_admin" }, { organization_id: "org1", user_id: "admin2", role: "agency_admin" }, { organization_id: "other", user_id: "stranger", role: "agency_admin" }]
-        : table === "profiles"
-          ? [{ id: "agent1", organization_id: "org1" }]
-          : [];
-    const query = {
-      select: (_: string) => query,
-      eq: (key: string, value: unknown) => { filters.push(row => row[key] === value); return query; },
-      maybeSingle: async () => ({ data: rows.find(row => filters.every(f => f(row))) ?? null }),
-      then: (resolve: (value: unknown) => void) => resolve({ data: rows.filter(row => filters.every(f => f(row))) }),
-      upsert: async (row: Record<string, unknown>) => { notifications.set(String(row.id), row); return { error: null }; },
-    };
-    return query;
-  } };
-  return { admin, notifications };
-}
-
-describe("portal failure notifications", () => {
-  it("notifies only the assigned agent and agency admins once per failure, with a friendly title", async () => {
-    const { admin, notifications } = fakeAdmin();
-    const input = { organizationId: "org1", propertyId: "p1", portalKey: "storia", portalName: "Storia", error: "401 API token=private" };
-    await notifyPortalFailure(admin, input);
-    await notifyPortalFailure(admin, input);
-    expect(notifications.size).toBe(3);
-    expect([...notifications.values()].map(row => row.user_id).sort()).toEqual(["admin1", "admin2", "agent1"]);
-    expect([...notifications.values()].every(row => row.title === "Publicarea pe Storia a eșuat pentru Apartament luminos" && row.link === "/app/properties/p1?tab=publishing" && !JSON.stringify(row).includes("private"))).toBe(true);
-    await notifyPortalFailure(admin, { ...input, error: "other error" });
-    expect(notifications.size).toBe(6);
+describe("portal failure notification boundary", () => {
+  it("delegates the agency, property and failure to the existing transactional alert", async () => {
+    const rpc = vi.fn(async () => ({ error: null }));
+    const admin = { rpc } as unknown as Parameters<typeof notifyPortalFailure>[0];
+    await notifyPortalFailure(admin, { organizationId: "org1", propertyId: "p1", portalKey: "storia", portalName: "Storia", error: "HTTP 401", code: "AUTH_ERROR", httpStatus: 401 });
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("record_portal_alert", {
+      _org: "org1", _property: "p1", _portal: "storia", _operation: "publish", _success: false,
+      _message: "HTTP 401", _code: "AUTH_ERROR", _http: 401, _name: "Storia",
+    });
   });
 
-  it("does not scan historical errors or notify another agency", async () => {
-    const { admin, notifications } = fakeAdmin();
-    expect(notifications.size).toBe(0);
-    await notifyPortalFailure(admin, { organizationId: "other", propertyId: "p1", portalKey: "storia", portalName: "Storia", error: "failure" });
-    expect(notifications.size).toBe(0);
+  it("preserves explicit operation and nullable diagnostics", async () => {
+    const rpc = vi.fn(async () => ({ error: null }));
+    const admin = { rpc } as unknown as Parameters<typeof notifyPortalFailure>[0];
+    await notifyPortalFailure(admin, { organizationId: "org2", propertyId: "p2", portalKey: "storia", portalName: "Storia", error: "failure", operation: "update" });
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("record_portal_alert", { _org: "org2", _property: "p2", _portal: "storia", _name: "Storia", _operation: "update", _success: false, _message: "failure" });
+  });
+
+  it("does not silently discard a failed alert", async () => {
+    const error = new Error("alert failed");
+    const admin = { rpc: vi.fn(async () => ({ error })) } as unknown as Parameters<typeof notifyPortalFailure>[0];
+    await expect(notifyPortalFailure(admin, { organizationId: "org1", propertyId: "p1", portalKey: "storia", portalName: "Storia", error: "failure" })).rejects.toBe(error);
   });
 });

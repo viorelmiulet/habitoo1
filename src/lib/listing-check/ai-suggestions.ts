@@ -70,11 +70,15 @@ function isEmpty(v: unknown) {
 export function validateAiSuggestions(raw: unknown, property: Record<string, any>, price: PriceContext | null): AiListingSuggestions | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const r = raw as Record<string, unknown>;
+  const nullableText = (v: unknown) => v === null || typeof v === "string";
+  if (!nullableText(r.title) || !nullableText(r.description) || !nullableText(r.price_note)
+    || !Array.isArray(r.fields) || !Array.isArray(r.questions)
+    || !r.questions.every((q) => typeof q === "string")) return null;
   const dropped: string[] = [];
   const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
   let title = str(r.title);
-  if (title !== null && (title.length > TITLE_MAX || excessiveCaps(title) || repeatedMarks(title) || inventedNumbers(title, property).length > 0 || inventedFeatures(title, property).length > 0)) {
+  if (title !== null && (title.length >= TITLE_MAX || excessiveCaps(title) || repeatedMarks(title) || inventedNumbers(title, property).length > 0 || inventedFeatures(title, property).length > 0)) {
     dropped.push("Titlul propus nu respecta regulile și a fost eliminat.");
     title = null;
   }
