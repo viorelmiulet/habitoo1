@@ -25,14 +25,13 @@ export type CompletenessInput = {
   description: string | null;
   rooms: number | null;
   energyClass: string | null;
-  hasContract: boolean;
   lat: number | null;
   lng: number | null;
 };
 
 export type CompletenessKey =
   | "title" | "sale_price" | "rent_price" | "city" | "agent" | "cover" | "surface"
-  | "description" | "photos" | "rooms" | "energy_class" | "contract" | "coords";
+  | "description" | "photos" | "rooms" | "energy_class" | "coords";
 
 export type CompletenessItem = { key: CompletenessKey; label: string; done: boolean; required: boolean };
 
@@ -72,7 +71,6 @@ export function computeCompleteness(input: CompletenessInput): CompletenessResul
   if (ROOM_TYPES.has(type)) recommended.push({ key: "rooms", label: "Camere", done: positive(input.rooms), required: false });
   recommended.push(
     { key: "energy_class", label: "Clasă energetică", done: filled(input.energyClass), required: false },
-    { key: "contract", label: "Contract proprietar atașat", done: input.hasContract, required: false },
     { key: "coords", label: "Coordonate pe hartă", done: input.lat != null && input.lng != null, required: false },
   );
   const items = [...required, ...recommended];
@@ -101,7 +99,7 @@ export function missingRequiredMessage(result: CompletenessResult): string | nul
 /** Rândul din `properties` + agregate → intrarea funcției. */
 export function completenessInputFromRow(
   p: Record<string, unknown>,
-  extra: { hasCover: boolean; imageCount: number; hasContract: boolean },
+  extra: { hasCover: boolean; imageCount: number },
 ): CompletenessInput {
   const num = (v: unknown) => (v == null || v === "" ? null : Number(v));
   const str = (v: unknown) => (typeof v === "string" ? v : null);

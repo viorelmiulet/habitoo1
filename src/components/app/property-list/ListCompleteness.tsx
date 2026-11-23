@@ -7,31 +7,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { computeCompleteness, completenessInputFromRow, sheetTone } from "@/lib/property-completeness";
 import { cn } from "@/lib/utils";
 
-export type CompletenessExtra = { hasCover: boolean; imageCount: number; hasContract: boolean };
-const EMPTY: CompletenessExtra = { hasCover: false, imageCount: 0, hasContract: false };
+export type CompletenessExtra = { hasCover: boolean; imageCount: number };
+const EMPTY: CompletenessExtra = { hasCover: false, imageCount: 0 };
 
-/** O interogare pe poze și una pe contracte pentru toate rândurile paginii. */
+/** O interogare pe poze pentru toate rândurile paginii. */
 export function useCompletenessExtras(ids: string[]) {
   const { data = {} } = useQuery({
     queryKey: ["properties-completeness-extras", ids],
     enabled: ids.length > 0,
     staleTime: 30_000,
     queryFn: async () => {
-      const [imgs, contracts] = await Promise.all([
-        supabase.from("property_images").select("property_id").in("property_id", ids),
-        supabase.from("contracts").select("property_id").in("property_id", ids),
-      ]);
+      const imgs = await supabase.from("property_images").select("property_id").in("property_id", ids);
       if (imgs.error) throw imgs.error;
-      if (contracts.error) throw contracts.error;
       const out: Record<string, CompletenessExtra> = {};
       for (const id of ids) out[id] = { ...EMPTY };
       for (const r of imgs.data ?? []) {
         const e = out[r.property_id as string];
         if (e) { e.imageCount += 1; e.hasCover = true; }
-      }
-      for (const r of contracts.data ?? []) {
-        const e = out[r.property_id as string];
-        if (e) e.hasContract = true;
       }
       return out;
     },

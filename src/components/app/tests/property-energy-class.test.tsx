@@ -24,7 +24,7 @@ const complete = {
   sale_price: 120000, city: "București", assigned_to: "agent-1", usable_surface: 72,
   description: "x".repeat(400), rooms: 3, lat: 44.4, lng: 26.1,
 };
-const media = { imageCount: 8, hasCover: true, hasContract: true };
+const media = { imageCount: 8, hasCover: true };
 
 describe("energy class in the shared create/edit form", () => {
   it("writes the existing optional field, reaches 100%, and permits clearing it", async () => {

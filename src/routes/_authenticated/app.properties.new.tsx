@@ -167,11 +167,11 @@ function NewPropertyPage() {
     landSurface: (details.land_surface as number | null) ?? null,
     description: form.description,
     rooms: (details.rooms as number | null) ?? null,
-    energyClass: typeof details.energy_class === "string" ? details.energy_class : null, hasContract: false,
+    energyClass: typeof details.energy_class === "string" ? details.energy_class : null,
     lat: coords?.lat ?? null, lng: coords?.lng ?? null,
   });
   const onCompletenessItem = (key: Parameters<typeof completenessTargetId>[0]) => {
-    if (key === "cover" || key === "photos" || key === "contract") {
+    if (key === "cover" || key === "photos") {
       toast.info("Se completează din pagina proprietății, după salvare.");
       return;
     }

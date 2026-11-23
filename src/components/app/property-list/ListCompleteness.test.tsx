@@ -12,13 +12,13 @@ let root: ReturnType<typeof createRoot> | null = null;
 afterEach(() => { if (root) act(() => root?.unmount()); root = null; });
 
 describe("coloana Fișă = Grad de completare din fișă (CR17)", () => {
-  it("fără copertă, 3 poze, fără contract și clasă energetică", () => {
+  it("fără copertă, 3 poze și fără clasă energetică", () => {
     const row = {
       property_type: "apartment", title: "Apartament 2 camere", for_sale: true, for_rent: false,
       sale_price: 100000, city: "București", assigned_to: "u1", usable_surface: 55,
       description: "x".repeat(400), rooms: 2, energy_class: null, lat: 44.4, lng: 26.1,
     };
-    const extra = { hasCover: false, imageCount: 3, hasContract: false };
+    const extra = { hasCover: false, imageCount: 3 };
     const expected = computeCompleteness(completenessInputFromRow(row, extra)).percent;
     const host = document.createElement("div");
     document.body.appendChild(host);

@@ -524,14 +524,6 @@ function PropertyDetailContent() {
     };
   };
 
-  const { data: contractCount = 0 } = useQuery({
-    queryKey: ["property-contract-count", id],
-    queryFn: async () => {
-      const { count, error } = await supabase.from("contracts").select("id", { count: "exact", head: true }).eq("property_id", id);
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
   // Același calcul pur ca verificarea de publicare de pe server.
   const completeness = property ? computeCompleteness(completenessInputFromRow(
     editing ? {
@@ -541,11 +533,11 @@ function PropertyDetailContent() {
       assigned_to: draftAgent || property.assigned_to,
       lat: coords?.lat ?? null, lng: coords?.lng ?? null,
     } : (property as Record<string, unknown>),
-    { imageCount: data?.imageCount ?? 0, hasCover: (data?.imageCount ?? 0) > 0, hasContract: contractCount > 0 },
+    { imageCount: data?.imageCount ?? 0, hasCover: (data?.imageCount ?? 0) > 0 },
   )) : null;
   const COMPLETENESS_TABS: Partial<Record<CompletenessKey, string>> = {
     title: "description", description: "description", sale_price: "price", rent_price: "price",
-    city: "location", coords: "location", cover: "media", photos: "media", contract: "documents",
+    city: "location", coords: "location", cover: "media", photos: "media",
   };
   const onCompletenessItem = (key: CompletenessKey) => {
     const targetTab = COMPLETENESS_TABS[key] ?? "overview";

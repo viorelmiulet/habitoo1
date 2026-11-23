@@ -75,16 +75,11 @@ export const getAgencyAgentStats = createServerFn({ method: "GET" })
     }
     const ids = props.map((p) => String(p.id));
     const images: { property_id: string }[] = [];
-    const contracts: { property_id: string | null }[] = [];
     for (let i = 0; i < ids.length; i += 200) {
       const chunk = ids.slice(i, i + 200);
-      const [im, co] = await Promise.all([
-        supabaseAdmin.from("property_images").select("property_id").in("property_id", chunk),
-        supabaseAdmin.from("contracts").select("property_id").in("property_id", chunk),
-      ]);
+      const im = await supabaseAdmin.from("property_images").select("property_id").in("property_id", chunk);
       images.push(...((im.data ?? []) as { property_id: string }[]));
-      contracts.push(...((co.data ?? []) as { property_id: string | null }[]));
     }
-    const avg = averageCompletenessByAgent(props, images, contracts);
+    const avg = averageCompletenessByAgent(props, images);
     return ((rows ?? []) as AgentStatsRow[]).map((r) => ({ ...r, avg_completeness: avg.get(r.id) ?? null }));
   });

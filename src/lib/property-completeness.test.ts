@@ -6,7 +6,7 @@ const apartment: CompletenessInput = {
   propertyType: "apartment", title: "Apartament 3 camere", forSale: true, forRent: false,
   salePrice: 120000, rentPrice: null, city: "București", assignedTo: "agent-1",
   hasCover: true, imageCount: 8, usableSurface: 72, landSurface: null,
-  description: "x".repeat(400), rooms: 3, energyClass: "B", hasContract: true, lat: 44.4, lng: 26.1,
+  description: "x".repeat(400), rooms: 3, energyClass: "B", lat: 44.4, lng: 26.1,
 };
 
 describe("computeCompleteness", () => {
@@ -36,6 +36,19 @@ describe("computeCompleteness", () => {
   it("agent → „Agent alocat” bifat automat", () => {
     const r = computeCompleteness({ ...apartment, assignedTo: "agent-1" });
     expect(r.required.find((i) => i.key === "agent")?.done).toBe(true);
+  });
+
+  it("fără contract de proprietar → proprietatea rămâne completă (100%)", () => {
+    // Toate celelalte criterii îndeplinite, fără nicio intrare de contract.
+    const r = computeCompleteness(apartment);
+    expect(r.percent).toBe(100);
+    expect(r.missingRequired).toEqual([]);
+  });
+
+  it("criteriul „Contract proprietar atașat” nu mai apare în lista de verificare", () => {
+    const r = computeCompleteness(apartment);
+    expect(r.items.some((i) => (i.key as string) === "contract")).toBe(false);
+    expect(r.items.some((i) => i.label.toLowerCase().includes("contract"))).toBe(false);
   });
 });
 

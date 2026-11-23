@@ -24,16 +24,14 @@ export function activeByAgent(rows: StatsListing[]): Map<string | null, number> 
 export function averageCompletenessByAgent(
   props: Record<string, unknown>[],
   images: { property_id: string }[],
-  contracts: { property_id: string | null }[],
 ): Map<string | null, number> {
   const imgs = new Map<string, number>();
   for (const i of images) imgs.set(i.property_id, (imgs.get(i.property_id) ?? 0) + 1);
-  const withContract = new Set(contracts.map((c) => c.property_id));
   const sums = new Map<string | null, { s: number; n: number }>();
   for (const p of props) {
     const id = String(p.id);
     const n = imgs.get(id) ?? 0;
-    const pct = computeCompleteness(completenessInputFromRow(p, { imageCount: n, hasCover: n > 0, hasContract: withContract.has(id) })).percent;
+    const pct = computeCompleteness(completenessInputFromRow(p, { imageCount: n, hasCover: n > 0 })).percent;
     const key = (p.assigned_to as string | null) ?? null;
     const cur = sums.get(key) ?? { s: 0, n: 0 };
     sums.set(key, { s: cur.s + pct, n: cur.n + 1 });

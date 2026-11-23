@@ -21,7 +21,7 @@ describe("CR10 fișa proprietății", () => {
       usable_surface: 54, land_surface: null, description: null, rooms: 2, energy_class: null,
       lat: null, lng: null,
     };
-    const pct = computeCompleteness(completenessInputFromRow(row, { hasCover: false, imageCount: 3, hasContract: false })).percent;
+    const pct = computeCompleteness(completenessInputFromRow(row, { hasCover: false, imageCount: 3 })).percent;
     const d = render(<PropertySheetHeader reference="RF-1" title="Apartament 2 camere" percent={pct} />);
     expect(d.querySelector("[data-testid=sheet-completeness]")?.getAttribute("aria-label")).toBe(`Fișă completă ${pct}%`);
     expect(pct).toBeLessThan(100);
