@@ -31,6 +31,10 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
         const { runRepublishJob, refreshRepublishBatches } = await import("@/lib/portals/republish.server");
         const { recoverPortalRelay } = await import("@/lib/portals/relay-health.server");
         const relayRecovery = recoverPortalRelay(supabaseAdmin);
+        const { recoverLaCheieImageLimitJobs } = await import("@/lib/portals/lacheie/recovery.server");
+        await recoverLaCheieImageLimitJobs(supabaseAdmin).catch(() =>
+          console.error("[lacheie] reluarea limitei de poze a eșuat"),
+        );
         const result = await runPortalPublishWorker(supabaseAdmin, async (job) => {
           if (job.operation === "update") {
             const { runContactUpdateJob } = await import("@/lib/portals/contact-update.server");

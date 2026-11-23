@@ -9859,6 +9859,7 @@ export type Database = {
           id: string
           imobiliare_mode: string | null
           imobiliare_promotions: Json | null
+          lacheie_image_limit_retry_of: string | null
           locked_at: string | null
           next_attempt_at: string
           ofera_intent: string | null
@@ -9888,6 +9889,7 @@ export type Database = {
           id?: string
           imobiliare_mode?: string | null
           imobiliare_promotions?: Json | null
+          lacheie_image_limit_retry_of?: string | null
           locked_at?: string | null
           next_attempt_at?: string
           ofera_intent?: string | null
@@ -9917,6 +9919,7 @@ export type Database = {
           id?: string
           imobiliare_mode?: string | null
           imobiliare_promotions?: Json | null
+          lacheie_image_limit_retry_of?: string | null
           locked_at?: string | null
           next_attempt_at?: string
           ofera_intent?: string | null
@@ -14471,6 +14474,7 @@ export type Database = {
           id: string
           imobiliare_mode: string | null
           imobiliare_promotions: Json | null
+          lacheie_image_limit_retry_of: string | null
           locked_at: string | null
           next_attempt_at: string
           ofera_intent: string | null
@@ -15500,6 +15504,10 @@ export type Database = {
       request_storia_development: {
         Args: { _confirmed?: string[]; _id: string; _withdraw?: boolean }
         Returns: undefined
+      }
+      requeue_lacheie_image_limit_jobs: {
+        Args: { _defer?: boolean }
+        Returns: number
       }
       reserve_video_narration: {
         Args: {

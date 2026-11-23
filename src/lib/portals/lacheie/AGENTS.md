@@ -1,0 +1,2 @@
+- La Cheie shares its image limit/warning/order in images.ts; the payload filters private media before primary-first sorting and the mapper caps the outgoing gallery. Why: publish, update, republish and listing checks must agree without changing other portals.
+- Image-limit recovery uses a service-only atomic RPC and retry-source uniqueness, accepts only latest VALIDATION_ERROR failures on eligible properties, and releases deferred jobs only from the updated cron handler. Why: avoid duplicates, revive neither withdrawn listings nor old code, and retain history.

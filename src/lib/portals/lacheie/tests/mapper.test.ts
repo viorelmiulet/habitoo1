@@ -198,12 +198,13 @@ describe("La Cheie — imagini", () => {
     expect(result.rejected).toHaveLength(6);
   });
 
-  it("blochează publicarea peste 30 de imagini", () => {
+  it("limitează publicarea la 30 de imagini fără blocare", () => {
     const many = Array.from({ length: 31 }, (_, index) => `https://a.ro/${index}.jpg`);
     expect(sanitizeLaCheieImages(many).tooMany).toBe(true);
     const result = buildLaCheieOffer(base({ images: many }), AGENT);
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reasons.join(" ")).toContain(String(LACHEIE_MAX_IMAGES));
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("payload invalid");
+    expect(result.offer.images).toEqual(many.slice(0, LACHEIE_MAX_IMAGES));
   });
 
   it("lista goală este trimisă explicit, pentru eliminarea imaginilor existente", () => {

@@ -2,6 +2,7 @@
  * Verificarea completă a unui anunț — reguli deterministe, fără AI.
  * Pur: primește datele deja citite și întoarce nota + sugestiile. Nu scrie nimic.
  */
+import { remainingLaCheiePublicationError, laCheieImageWarning } from "@/lib/portals/lacheie/images";
 export type CheckSeverity = "required" | "recommended" | "optional";
 export type CheckIssue = {
   code: string;
@@ -97,7 +98,12 @@ export function checkListing(input: ListingCheckInput): ListingCheckResult {
     add("required", "unpublished_with_portals", "Anunțul nu e publicat; portalurile bifate nu îl vor prelua", "Publicare", "publishing", null);
   }
   for (const pub of input.publications) {
-    if (pub.lastError && t(pub.lastError)) add("required", `portal_error:${pub.portal}`, `${pub.portalName}: ${t(pub.lastError)}`, `Publicare – ${pub.portalName}`, "publishing", null);
+    const lastError = remainingLaCheiePublicationError(pub.portal, pub.lastError);
+    if (lastError && t(lastError)) add("required", `portal_error:${pub.portal}`, `${pub.portalName}: ${t(lastError)}`, `Publicare – ${pub.portalName}`, "publishing", null);
+  }
+  if (checkedPortals.some((pub) => pub.portal === "lacheie")) {
+    const warning = laCheieImageWarning(input.images.filter((i) => !i.isConfidential && i.includeInPublish).length);
+    if (warning) add("optional", "lacheie_images_limit", warning, "Fotografii – La Cheie", "media", null);
   }
   for (const report of input.portalReports) {
     for (const m of report.missing) {

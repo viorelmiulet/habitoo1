@@ -7,6 +7,7 @@
  */
 import { CRM_URL } from "@/lib/host";
 import { publicCoords } from "@/lib/geo";
+import { orderLaCheieImages } from "./images";
 import {
   feedImageUrl,
   isImageFeedEligible,
@@ -125,8 +126,8 @@ export async function buildLaCheiePayload(input: {
     return { ok: false, reasons: ["Oferta nu are tranzacție activă (vânzare sau închiriere)."] };
   }
 
-  const imageUrls = ((images ?? []) as PropertyImageRow[])
-    .filter(isImageFeedEligible)
+  const imageUrls = orderLaCheieImages(((images ?? []) as PropertyImageRow[])
+    .filter(isImageFeedEligible))
     .map((image) => feedImageUrl(CRM_URL, image.id));
 
   const coords = publicCoords(row);

@@ -17,8 +17,9 @@
  *  - corpul cererii nu depășește 1 MiB.
  */
 import type { LaCheieCategory } from "./catalog";
+import { LACHEIE_MAX_IMAGES, laCheieImageWarning } from "./images";
+export { LACHEIE_MAX_IMAGES } from "./images";
 
-export const LACHEIE_MAX_IMAGES = 30;
 /** Fiecare URL de imagine: maximum 500 de caractere (documentație, secțiunea 3). */
 export const LACHEIE_MAX_IMAGE_URL_LENGTH = 500;
 export const LACHEIE_MAX_BODY_BYTES = 1024 * 1024;
@@ -196,7 +197,7 @@ export type ImageSanitizeResult = {
   /** URL-uri respinse, cu motivul, pentru mesajul din UI. */
   rejected: { url: string; reason: string }[];
   duplicates: number;
-  /** `true` când sunt mai multe de 30 și publicarea trebuie blocată. */
+  /** `true` când lista publicabilă depășește limita; doar avertisment. */
   tooMany: boolean;
 };
 
@@ -427,11 +428,8 @@ export function buildLaCheieOffer(
   }
 
   const imageResult = sanitizeLaCheieImages(input.images ?? []);
-  if (imageResult.tooMany) {
-    reasons.push(
-      `Oferta are ${imageResult.images.length} imagini publicabile, iar La Cheie acceptă maximum ${LACHEIE_MAX_IMAGES}. Reduce numărul înainte de publicare.`,
-    );
-  }
+  const imageWarning = laCheieImageWarning(imageResult.images.length);
+  if (imageWarning) warnings.push(imageWarning);
   if (imageResult.rejected.length) {
     warnings.push(
       `${imageResult.rejected.length} imagine(i) nu au fost trimise (${imageResult.rejected[0]?.reason}).`,
@@ -507,7 +505,7 @@ export function buildLaCheieOffer(
   put("nearby", cleanIdList(input.nearby));
   put("pet_friendly", input.petFriendly?.trim());
   // Imaginile: `[]` cere explicit eliminarea celor existente la portal.
-  draft["images"] = imageResult.images;
+  draft["images"] = imageResult.images.slice(0, LACHEIE_MAX_IMAGES);
 
   const { payload, removed } = stripUnknownFields(draft);
   const offer = payload as LaCheieOffer;

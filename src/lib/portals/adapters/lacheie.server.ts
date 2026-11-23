@@ -457,6 +457,7 @@ async function push(
         externalId: build.offers.map((entry) => entry.offer.external_id).join(","),
         live: false,
         processed: build.offers.length,
+        mediaWarning: build.warnings.length ? build.warnings.join(" ") : null,
         detail: `dry_run ${mode} offers=${build.offers.length}`,
         message:
           `Verificat local: ${build.offers.length} anunț(uri) valide, ${build.offers[0]?.offer.images?.length ?? 0} imagini.` +
@@ -510,6 +511,7 @@ async function push(
       externalId: build.offers.map((entry) => entry.offer.external_id).join(","),
       live: true,
       processed,
+      mediaWarning: build.warnings.length ? build.warnings.join(" ") : null,
       detail: `${mode} ok offers=${processed} env=${ready.settings.environment}`,
       message:
         `La Cheie a acceptat ${processed} anunț(uri).` +

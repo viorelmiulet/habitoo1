@@ -724,3 +724,8 @@
 
 ## S1 — Site-ul agenției ca portal privat
 - [x] Card în Setări → Portaluri, scurtătură în Integrări, bifă în anunț, feed filtrat, migrare cu bifare automată, documentație 1.2.4, teste
+
+## La Cheie — limita fotografiilor
+- [x] Galerie de maximum 30, principală prima, avertisment în publicare și verificare.
+- [x] Recuperare automată numai cu versiunea corectată; verificare reală: două anunțuri cu încercări ulterioare, zero duplicate create.
+- [x] Teste exclusiv noi/modificate și verificare a aplicației; fără publicare.
