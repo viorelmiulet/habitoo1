@@ -46,7 +46,7 @@ export type StoriaAdvert = {
   title: string;
   description: string;
   category_urn: string;
-  contact?: { name: string; email: string; phone?: string };
+  contact?: { name: string; email: string; phone?: string; photo?: string };
   price: { value: number; currency: string };
   location: { lat: number; lon: number; exact: boolean };
   images: { url: string }[];
@@ -133,6 +133,8 @@ export type StoriaMapOptions = {
   /** Origin pentru URL-urile publice de imagine (HTTPS în producție). */
   baseUrl: string;
   images?: PropertyImageRow[];
+  /** URL public al pozei agentului (contact.photo); lipsește când nu are poză. */
+  agentPhotoUrl?: string | null;
   agent?: Pick<ProfileRow, "full_name" | "email" | "phone"> | null;
   /** Agency default; the property's explicit choice takes precedence. */
   autoExtend?: boolean;
@@ -327,6 +329,7 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
       name: agentName,
       email: contactEmail,
       ...(phone ? { phone } : {}),
+      ...(options.agentPhotoUrl ? { photo: options.agentPhotoUrl } : {}),
     };
     return { transaction: entry.transaction, advert };
   });

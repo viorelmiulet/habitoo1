@@ -10,6 +10,7 @@ import {
   type PropertyImageRow,
   type PropertyRow,
 } from "@/lib/site-feed/mapper";
+import { storiaAgentPhotoUrl, type AgentPhotoProfile } from "./agent-photo";
 import { mapPropertyToStoria, type StoriaListing } from "./mapper";
 
 export type StoriaPayloadBuild =
@@ -66,7 +67,7 @@ export async function buildStoriaPayload(input: {
     row.assigned_to
       ? supabaseAdmin
           .from("profiles")
-          .select("full_name, email, phone")
+          .select("id, full_name, email, phone, avatar_url, is_active, public_profile_hidden")
           .eq("id", row.assigned_to)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -77,6 +78,7 @@ export async function buildStoriaPayload(input: {
     images: (images ?? []) as PropertyImageRow[],
     agent: (agentResult.data ?? null) as Pick<ProfileRow, "full_name" | "email" | "phone"> | null,
     autoExtend: org?.storia_auto_republish === true,
+    agentPhotoUrl: storiaAgentPhotoUrl(CRM_URL, agentResult.data as AgentPhotoProfile | null),
   });
 
   if (!result.ok) return { ok: false, reasons: result.reasons };
