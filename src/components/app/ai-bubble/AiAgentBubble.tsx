@@ -3,6 +3,7 @@ import { useLocation,useNavigate } from '@tanstack/react-router';
 import { ListChecks,Sparkles,CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LISTING_CHECK_EVENT } from '@/components/app/listing-check-event';
+import { AgencyInsightsPanel } from './AgencyInsightsPanel';
 const PROPERTY_PAGE=/^\/app\/properties\/[0-9a-f-]{36}\/?$/i;
 export function AiAgentBubble(){
  const {pathname}=useLocation();const navigate=useNavigate();const [menu,setMenu]=useState(false);
@@ -10,6 +11,7 @@ export function AiAgentBubble(){
  const onProperty=PROPERTY_PAGE.test(pathname);
  return <>
  {menu?<div role="menu" className="fixed right-3 bottom-[calc(env(safe-area-inset-bottom)+8.5rem)] z-40 w-64 rounded-lg border border-border bg-popover p-1 text-sm shadow-lg md:right-4 md:bottom-32 lg:bottom-[4.25rem]">
+ <AgencyInsightsPanel />
  <Button role="menuitem" variant="ghost" className="w-full justify-start" onClick={()=>{setMenu(false);navigate({to:'/app',hash:'home-actions'});}}><CalendarCheck className="size-4 text-ai"/>Ce am de făcut azi?</Button>
  {onProperty?<Button role="menuitem" variant="ghost" className="w-full justify-start" onClick={()=>{setMenu(false);window.dispatchEvent(new CustomEvent(LISTING_CHECK_EVENT));}}><ListChecks className="size-4 text-ai"/>Verifică anunțul ăsta</Button>:null}
  <Button role="menuitem" variant="ghost" className="w-full justify-start" onClick={()=>{setMenu(false);navigate({to:'/app/ai'});}}><Sparkles className="size-4 text-ai"/>Deschide Agentul AI</Button></div>:null}

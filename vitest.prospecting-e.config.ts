@@ -1,0 +1,2 @@
+import { defineConfig } from 'vitest/config';
+export default defineConfig({resolve:{alias:{'@':new URL('./src',import.meta.url).pathname}},test:{environment:'node',testTimeout:15000,include:['src/lib/prospecting/tests/calup-e.test.ts','src/lib/prospecting/tests/calup-e-handlers.test.ts','src/lib/ai/agents/manager/tests/agency-insights.test.ts','src/lib/contracts/check.test.ts','src/components/app/ai/calup-e.test.tsx']}});

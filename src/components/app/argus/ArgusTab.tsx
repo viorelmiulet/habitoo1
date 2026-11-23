@@ -59,6 +59,7 @@ import {
   type ArgusSearchInput,
 } from "@/lib/argus/search.shared";
 import { cn } from "@/lib/utils";
+import { OwnerApproachDraft } from '@/components/app/ai/OwnerApproachDraft';
 
 const ALL = "__all";
 const ROOM_OPTIONS = [1, 2, 3, 4, 5];
@@ -746,6 +747,7 @@ function ArgusDetailDialog({
               ) : null}
             </div>
             <p className="text-xl font-bold text-primary">{money(item.price)}</p>
+            <OwnerApproachDraft key={item.id} id={item.id} kind="argus" />
             {item.images.length ? (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {item.images.map((img, i) => (

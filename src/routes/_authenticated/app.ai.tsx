@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { AiWorkflowCard } from "@/components/app/ai/AiWorkflowCard";
+import { AgencyAnswerContent } from '@/components/app/ai/AgencyAnswerContent';
 import {
   getAiConversation,
   getAiStatus,
@@ -193,7 +194,7 @@ function AiPage() {
                       <p className="mb-1 text-xs uppercase text-muted-foreground">
                         {entry.role === "user" ? "Tu" : "Habitoo AI"}
                       </p>
-                      <p className="whitespace-pre-wrap">{entry.content}</p>
+                      {entry.role==='assistant'?<AgencyAnswerContent content={entry.content}/>:<p className="whitespace-pre-wrap">{entry.content}</p>}
                       {(entry.contextUsed ?? []).length > 0 ? (
                         <p className="mt-2 text-xs text-muted-foreground">
                           Date folosite:{" "}

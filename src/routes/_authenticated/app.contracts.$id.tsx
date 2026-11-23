@@ -22,6 +22,7 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { InventoryEditor } from "@/components/app/contracts/InventoryEditor";
 import { ContractBodyPreview } from "@/components/app/contracts/ContractBodyPreview";
+import { ContractCheckPanel } from '@/components/app/contracts/ContractCheckPanel';
 import { gdprNoticeAttached } from "@/lib/contracts/gdpr-notice";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -168,6 +169,7 @@ function ContractDetailPage() {
 
   return (
     <div className="space-y-5">
+      <ContractCheckPanel key={id} id={id} />
       <PageHeader
         backTo="/app/contracts"
         backLabel="Toate documentele"

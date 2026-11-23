@@ -1,3 +1,12 @@
+## Funcții AI — prospectare și management, calupul E
+- [x] Ciorne MAP/Facebook/Argus prin Gemini/rezerva existente, credite și usage; propoziții factuale validate, text numai editabil/copiabil, fără trimiteri sau stocare Argus.
+- [x] Posibile duplicate în detaliul MAP/Facebook și fila ACP a proprietății: ofertele caller/agenție, MAP și ultimele snapshoturi ACP; dHash/adresă/coordonate/suprafață/etaj, motive și încredere, fără scrieri/unire.
+- [x] Întrebări în bula AI și conversația existentă numai agency_admin + ai_manager; două interogări fixe complet paginate, dovezi reale de contact, perioadă și linkuri interne validate. Citirile deterministe nu consumă AI/credite.
+- [x] Verificare read-only înainte de semnare: proprietate, contact, identitate confirmată din act și textul documentului; CNP/CUI comparat numai cu acces explicit și niciodată returnat, fără AI, schimbări sau semnare.
+- [x] 36 teste strict noi în 5 fișiere trec fără AI/rețea reală, inclusiv JPEG simulat și citiri izolate; desktop/390, ciornă/duplicate/contract/asistent fără erori/overflow; compilare curată, commit la final, fără publicare.
+- [ ] Verificare cap-coadă în cont real: solicitantul nu are cont asociat pentru sesiune; necesită autentificarea în previzualizare. Niciun apel AI sau trimitere reală.
+- Limitări explicite: poze numai JPEG/PNG de pe gazde sursă permise, maximum 3/anunț și 30 candidați în 15s, eșecuri raportate; restul rămâne comparație factuală. Identitatea neconfirmată/neasociată și câmpurile fără surse sunt indisponibile, nu deduse; nu există CUI separat pe contact în schema actuală.
+
 ## Funcții AI — preț și proprietari, calupul D
 - [x] Estimare deterministă din ofertele accesibile Habitoo, MAP și comparabilele selectate în ultima ACP; minimum 5, quartile/mediană, criterii și surse; fără date deduse sau Facebook, fără taxă AI pentru calcul.
 - [x] Alertă în Top acțiuni: strict peste 10% față de mediană, publicare de minimum 30 zile și niciun lead în ultimele 30 zile; numărătoarea include ceilalți agenți fără a expune clienți.

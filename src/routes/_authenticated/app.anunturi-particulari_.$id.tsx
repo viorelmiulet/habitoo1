@@ -15,6 +15,8 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ImportListingButton } from "@/components/app/ImportListingButton";
+import { OwnerApproachDraft } from '@/components/app/ai/OwnerApproachDraft';
+import { PossibleDuplicatesPanel } from '@/components/app/ai/PossibleDuplicatesPanel';
 import { appHead } from "@/components/app/app-head";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -177,6 +179,8 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
             ) : null}
             <div className="flex flex-col gap-2 pt-1">
               <ImportListingButton listingId={listing.id} />
+              <OwnerApproachDraft key={listing.id} id={listing.id} kind="map" />
+              <PossibleDuplicatesPanel key={`duplicates:${listing.id}`} id={listing.id} kind="map" />
               {listing.phone ? (
                 <Button asChild variant="outline" className="h-11 w-full rounded-[10px] sm:h-10">
                   <a data-tour="listing-phone" href={`tel:${listing.phone}`}>

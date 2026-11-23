@@ -183,6 +183,20 @@ export const sendAiMessage = createServerFn({ method: "POST" })
     const blocked = await aiFeatureBlocked(actor.organizationId);
     if (blocked) return emptyAiResponse("failed", blocked);
 
+    const {agencyQueryFor}=await import('./agents/manager/agency-insights');
+    const agencyQuery=agencyQueryFor(data.message);
+    if(agencyQuery){
+      const {data:allowed,error}=await context.supabase.rpc('has_role',{_user_id:userId,_role:'agency_admin'});
+      if(error || allowed!==true)return emptyAiResponse('failed','Aceste întrebări sunt disponibile doar administratorului agenției.');
+      const {isAiFeatureEnabled}=await import('./features/features.server');
+      if(!await isAiFeatureEnabled(actor.organizationId,'ai_manager'))return emptyAiResponse('failed','Funcția AI este dezactivată.');
+      const {readAgencyInsight}=await import('./agents/manager/agency-insights.server');
+      try{
+        const result=await readAgencyInsight(context.supabase,actor.organizationId,agencyQuery);
+        return {...emptyAiResponse('ok'),answer:[result.title,`Perioada: ${result.period}`,...result.items.map(i=>`- [${i.label}](${i.href})`),result.items.length?'':'Niciun rezultat.'].filter(Boolean).join('\n'),contextUsed:['lead','property'],confidence:'high'};
+      }catch{return emptyAiResponse('failed','Datele agenției nu au putut fi încărcate.');}
+    }
+
     if (/ce\s+am\s+de\s+f[aă]cut\s+(?:azi|ast[aă]zi)/i.test(data.message)) {
       const { dailyActions } = await import("@/lib/daily-brief/service.server");
       const result = await dailyActions(context.supabase, userId);

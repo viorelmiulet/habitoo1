@@ -7,6 +7,7 @@
  */
 import { useState } from "react";
 import { PriceEstimatePanel } from '@/components/app/owner-reports/PriceEstimatePanel';
+import { PossibleDuplicatesPanel } from '@/components/app/ai/PossibleDuplicatesPanel';
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -158,6 +159,7 @@ export function PropertyAcpCard({ propertyId }: { propertyId: string }) {
   return (
     <div className="space-y-4 [&>section]:rounded-[14px] [&>section]:border [&>section]:border-border [&>section>header]:px-4 sm:[&>section>header]:px-5 [&>section>header_h2]:whitespace-normal [&>section>header_p]:text-[13px]">
       <PriceEstimatePanel propertyId={propertyId} />
+      <PossibleDuplicatesPanel key={propertyId} id={propertyId} kind="property" />
       <SectionCard
         title="Analiză comparativă de piață (ACP)"
         description="Evaluare deterministă, versionată, pornită din această proprietate."

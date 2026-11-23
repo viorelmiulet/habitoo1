@@ -1,0 +1,1 @@
+- Agency insights allow only the exact agency_admin role and enabled ai_manager, use a fixed query enum, complete caller-RLS reads and real evidence of lead contact; the bubble and assistant share the same query implementation and links. Why: no free-form SQL, model-invented facts or widened management access.
