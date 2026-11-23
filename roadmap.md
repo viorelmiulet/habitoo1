@@ -1,3 +1,9 @@
+## Funcții AI — lead-uri, calupul A
+- [ ] Extindere analiză existentă pentru orice lead/mesaj/notă: ciornă sigură și cerere cu dovezi, numai propuneri.
+- [ ] Scor explicat din semnale reale și prioritate peste 70 în Top acțiuni, cu acces și AI existente.
+- [ ] Confirmare agent pentru creare/actualizare cerere și trimitere pe canalele existente.
+- [ ] Teste strict noi/modificate fără AI real, compilare curată, commit fără publicare.
+
 ## Descriere automată publică a agenției
 - [x] Text determinist din agregatul complet al ofertelor publice eligibile, prioritate descriere proprie și SEO comun; migrarea 0328 aplicată fără schimbări de date.
 - [x] Previzualizare în Setări fără salvarea textului automat; actualizare la fiecare citire și fără cache pe pagina agenției.
