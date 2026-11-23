@@ -1,0 +1,14 @@
+import {it,expect} from 'vitest';
+import {mapInvestment,withInvestmentParent} from './investment';
+import {mapPropertyToStoria} from './mapper';
+import {storiaAttributeSpec} from './taxonomy-snapshot';
+import type {Tables} from '@/integrations/supabase/types';
+const d={id:'development',name:'Ansamblu Test',description:'Descriere reală',construction_stage:'În construcție',area_from:45,area_to:100,price_per_sqm_from:1800,estate_type:'flats',total_units:50,lat:44.4,lng:26.1,amenities:[],location_precise:true,storia_hide_price:true} as unknown as Tables<'developments'>;
+const input={images:['https://example.test/photo.jpg'],contact:{name:'Agent',email:'agent@example.test'},price:100000,currency:'EUR'};
+const HP='urn:concept:hide-price';
+const p={id:'p',title:'Apartament cu două camere',description:'Descriere '.repeat(25),property_type:'apartment',status:'active',publish_status:'published',market:'secondary',for_sale:true,sale_price:120000,sale_currency:'EUR',currency:'EUR',rooms:2,usable_surface:50,lat:44.4,lng:26.1,development_id:null,construction_stage:'Finalizată'} as unknown as Tables<'properties'>;
+const opts={baseUrl:'https://example.test',images:[{id:'img',include_in_publish:true,is_confidential:false,is_primary:true,position:0} as Tables<'property_images'>],agent:{full_name:'Agent',email:'agent@example.test',phone:'0722333444'}};
+it('investiție cu bifă → hide-price yes și preț pozitiv',()=>{const a=mapInvestment(d,input);expect(a.attributes).toContainEqual({urn:HP,value:'urn:concept:yes'});expect(a.price?.value).toBe(100000);});
+it('investiție fără bifă → hide-price no',()=>{expect(mapInvestment({...d,storia_hide_price:false},input).attributes).toContainEqual({urn:HP,value:'urn:concept:no'});});
+it('unitate cu bifă → hide-price doar dacă taxonomia categoriei îl are',()=>{const r=mapPropertyToStoria(p,opts);expect(r.ok).toBe(true);if(!r.ok)return;const adv=r.listings[0]!.advert;const out=withInvestmentParent(adv,{status:'published',external_uuid:'parent'},{hidePrice:true});const has=out.attributes?.some(a=>a.urn===HP);expect(has).toBe(storiaAttributeSpec(adv.category_urn,HP)!==null);expect(storiaAttributeSpec('urn:concept:apartments-for-sale',HP)).toBeNull();});
+it('anunț simplu de agenție → niciodată hide-price',()=>{const r=mapPropertyToStoria(p,opts);expect(r.ok).toBe(true);if(r.ok)for(const l of r.listings)expect(l.advert.attributes?.some(a=>a.urn===HP)).toBeFalsy();});

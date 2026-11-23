@@ -3636,6 +3636,7 @@ export type Database = {
           price_per_sqm_from: number | null
           price_to: number | null
           status: string
+          storia_hide_price: boolean
           street: string | null
           street_number: string | null
           total_units: number | null
@@ -3675,6 +3676,7 @@ export type Database = {
           price_per_sqm_from?: number | null
           price_to?: number | null
           status?: string
+          storia_hide_price?: boolean
           street?: string | null
           street_number?: string | null
           total_units?: number | null
@@ -3714,6 +3716,7 @@ export type Database = {
           price_per_sqm_from?: number | null
           price_to?: number | null
           status?: string
+          storia_hide_price?: boolean
           street?: string | null
           street_number?: string | null
           total_units?: number | null

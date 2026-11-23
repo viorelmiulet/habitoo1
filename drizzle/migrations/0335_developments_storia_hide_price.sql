@@ -1,0 +1,1 @@
+ALTER TABLE public.developments ADD COLUMN IF NOT EXISTS storia_hide_price boolean NOT NULL DEFAULT false;

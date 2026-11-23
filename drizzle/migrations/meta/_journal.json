@@ -2346,6 +2346,13 @@
       "when": 1795463931638,
       "tag": "0334_properties_video_virtual_tour",
       "breakpoints": true
+    },
+    {
+      "idx": 335,
+      "version": "7",
+      "when": 1795464300404,
+      "tag": "0335_developments_storia_hide_price",
+      "breakpoints": true
     }
   ]
 }
