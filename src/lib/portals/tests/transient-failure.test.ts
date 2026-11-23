@@ -51,13 +51,13 @@ describe("reîncercarea automată la timeout", () => {
     );
   });
 
-  it("TIMEOUT la Imospot → 2 reîncercări, după 30 s și 2 min, apoi eroare", () => {
+  it("TIMEOUT la Imospot → reîncercări la 2 min și 10 min, … apoi eroare după ultima pauză", () => {
     const outcome = { portalId: "imospot", ok: false, code: "TIMEOUT", message: TIMEOUT_MESSAGE };
     const first = decideJobResult({ attempts: 1, portal_key: "imospot" }, outcome, undefined);
     const second = decideJobResult({ attempts: 2, portal_key: "imospot" }, outcome, undefined);
-    const third = decideJobResult({ attempts: 3, portal_key: "imospot" }, outcome, undefined);
-    expect(first).toMatchObject({ status: "queued", retryInMs: 30_000 });
-    expect(second).toMatchObject({ status: "queued", retryInMs: 120_000 });
+    const third = decideJobResult({ attempts: 6, portal_key: "imospot" }, outcome, undefined);
+    expect(first).toMatchObject({ status: "queued", retryInMs: 120_000 });
+    expect(second).toMatchObject({ status: "queued", retryInMs: 600_000 });
     expect(third.status).toBe("error");
   });
 
@@ -69,7 +69,7 @@ describe("reîncercarea automată la timeout", () => {
 
   it("NETWORK_ERROR la VDI se reîncearcă", () => {
     const outcome = { portalId: "vdi", ok: false, code: "NETWORK_ERROR", message: "VDI: Portalul nu a putut fi contactat." };
-    expect(decideJobResult({ attempts: 1, portal_key: "vdi" }, outcome, undefined)).toMatchObject({ status: "queued", retryInMs: 30_000 });
+    expect(decideJobResult({ attempts: 1, portal_key: "vdi" }, outcome, undefined)).toMatchObject({ status: "queued", retryInMs: 120_000 });
   });
 
   it("TIMEOUT la un portal neidempotent (Storia) → fără reîncercare", () => {

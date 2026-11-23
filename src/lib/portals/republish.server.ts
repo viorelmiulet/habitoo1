@@ -6,6 +6,7 @@ import { getPortalDefinition, portalDisplayName, type PortalId } from "./registr
 import {
   isPublishedPair,
   isRepublishableProperty,
+  isResumableFailedPublishedPair,
   isRetryFailedPair,
   locallyBlockedPairs,
   selectRepublishPairs,
@@ -44,11 +45,11 @@ export async function loadRepublishCandidates(admin: Admin, input: {
 export type RepublishExecute = (input: {
   organizationId: string; actorId: string; portalId: string; propertyId: string;
   action: "update" | "publish"; operationLabel: "republish"; skipSlotCheck: true;
-}) => Promise<{ ok: boolean; message?: string | null; code?: string | null; httpStatus?: number | null }>;
+}) => Promise<{ ok: boolean; message?: string | null; code?: string | null; httpStatus?: number | null; retryAfterMs?: number | null }>;
 
 /** Rulat de worker: reverifică starea actuală, apoi DOAR retrimite (update). */
 export async function runRepublishJob(admin: Admin, job: {
-  organization_id: string; property_id: string; portal_key: string; requested_by: string;
+  organization_id: string; property_id: string; portal_key: string; requested_by: string; attempts?: number;
 }, execute: RepublishExecute, options: { retryFailed?: boolean } = {}) {
   const name = getPortalDefinition(job.portal_key) ? portalDisplayName(job.portal_key as PortalId) : job.portal_key;
   const [{ data: property }, { data: listing }, { data: publication }] = await Promise.all([
@@ -56,7 +57,11 @@ export async function runRepublishJob(admin: Admin, job: {
     admin.from("portal_listings").select("property_id,portal,status,external_id").eq("property_id", job.property_id).eq("portal", job.portal_key).maybeSingle(),
     admin.from("portal_publications").select("property_id,portal_key,enabled,status,withdrawn_at").eq("property_id", job.property_id).eq("portal_key", job.portal_key).maybeSingle(),
   ]);
-  const published = isPublishedPair(listing ?? undefined, publication ?? undefined);
+  // A queued automatic retry (or recovery) of a temporary failure keeps the same operation:
+  // the earlier failure left the pair in error/retrying, which must not turn the retry into a skip.
+  const resumed = (job.attempts ?? 0) > 1;
+  const published = isPublishedPair(listing ?? undefined, publication ?? undefined)
+    || (resumed && isResumableFailedPublishedPair(listing ?? undefined, publication ?? undefined));
   // Only the republish batch retries failed selections, once, as a fresh publish; our own checks still run in execute.
   const retry = !published && options.retryFailed === true && isRetryFailedPair(listing ?? undefined, publication ?? undefined);
   if (!isRepublishableProperty(property ?? undefined) || (!published && !retry)) {
@@ -69,7 +74,7 @@ export async function runRepublishJob(admin: Admin, job: {
   return {
     portalId: job.portal_key, portalName: name, ok: res.ok, action: res.ok ? (retry ? "published" : "republished") : "blocked",
     message: res.ok ? (retry ? `${name}: publicat la reîncercare.` : `${name}: republicat.`) : (res.message ?? "Republicarea a eșuat."),
-    code: res.code ?? null, httpStatus: res.httpStatus ?? null,
+    code: res.code ?? null, httpStatus: res.httpStatus ?? null, retryAfterMs: res.retryAfterMs ?? null,
   };
 }
 

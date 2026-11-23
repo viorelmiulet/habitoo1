@@ -6,17 +6,24 @@
  * - maxim 3 joburi în paralel, maxim ~25 s per invocare;
  * - fiecare job = un singur portal, executat cu datele CURENTE ale ofertei prin
  *   `applyPortalSelectionForOrg` (care reverifică eligibilitatea și sloturile);
- * - erorile temporare (rețea, 5xx, 429) se reiau de maxim 3 ori, cu pauză crescătoare;
+ * - erorile temporare (rețea, 5xx, 429, IMAGE_REHOST_FAILED) se reiau automat la
+ *   2 min, 10 min, 30 min, 2 h și 6 h (429: cel puțin Retry-After); apoi eroare finală;
  *   erorile de validare sunt finale.
  */
-import { isRetryablePortalBulkError } from "./bulk";
-import { isTimeoutLikeFailure, timeoutRetryDelayMs } from "./transient-failure";
+import {
+  isTimeoutLikeFailure,
+  isTransientPublishFailure,
+  PACED_PUBLISH_PORTALS,
+  PUBLISH_RETRY_DELAYS_MS,
+  publishRetryDelayFor,
+  retryStatusLabel,
+} from "./transient-failure";
 
 export const PUBLISH_JOB_CONCURRENCY = 3;
 export const PUBLISH_JOB_BUDGET_MS = 25_000;
 export const PUBLISH_JOB_LEASE_SECONDS = 300;
-/** Încercări totale = 1 + 3 reluări. */
-export const PUBLISH_JOB_MAX_ATTEMPTS = 4;
+/** Încercări totale = 1 + câte o reluare pentru fiecare pauză. */
+export const PUBLISH_JOB_MAX_ATTEMPTS = 1 + PUBLISH_RETRY_DELAYS_MS.length;
 /** A job whose lease expired this many times without a saved result is closed as an error (SQL claim). */
 export const PUBLISH_JOB_MAX_SILENT_ATTEMPTS = 2;
 /** Hard cap for one job: a hung promise becomes a saved error instead of a silent `running`. */
@@ -69,13 +76,15 @@ export type PublishOutcome = {
   message: string | null;
   code?: string | null;
   httpStatus?: number | null;
+  /** Retry-After cerut de portal (429), în milisecunde. */
+  retryAfterMs?: number | null;
 };
 
 export type PublishApplyFn = (job: PublishJobRow) => Promise<PublishOutcome | null>;
 
-/** Pauza înainte de reluare: 30 s, 2 min, 8 min. */
+/** Pauza înainte de reluare (2 min … 6 h); după ultima pauză rămâne ultima valoare. */
 export function publishRetryDelayMs(attempts: number): number {
-  return 30_000 * 4 ** Math.max(0, attempts - 1);
+  return publishRetryDelayFor({ attemptNumber: attempts }) ?? PUBLISH_RETRY_DELAYS_MS[PUBLISH_RETRY_DELAYS_MS.length - 1]!;
 }
 
 export type JobDecision =
@@ -102,23 +111,39 @@ export function decideJobResult(
     message,
     portalId,
   };
-  // Timeout / rețea: max 2 reîncercări (30 s, 2 min), doar la portalurile idempotente.
-  if (isTimeoutLikeFailure(failure)) {
-    // Imobiliare has one bounded call: a timeout is final for this job, not another inline/queue loop.
-    if (portalId === "imobiliare_ro" && failure.code === "TIMEOUT") {
-      return { status: "error", ok: false, message: "Imobiliare.ro nu a răspuns în 15 secunde" };
-    }
-    const delay = timeoutRetryDelayMs({ portalId, attemptNumber: job.attempts });
-    return delay === null
-      ? { status: "error", ok: false, message: message.slice(0, 500) }
-      : { status: "queued", retryInMs: delay, message };
+  // Imobiliare has one bounded call: a timeout is final for this job, not another inline/queue loop.
+  if (isTimeoutLikeFailure(failure) && portalId === "imobiliare_ro" && failure.code === "TIMEOUT") {
+    return { status: "error", ok: false, message: "Imobiliare.ro nu a răspuns în 15 secunde" };
   }
   if (thrown instanceof PublishJobDeadlineError) return { status: "error", ok: false, message };
-  const transient = isRetryablePortalBulkError(failure);
-  if (transient && job.attempts < PUBLISH_JOB_MAX_ATTEMPTS) {
-    return { status: "queued", retryInMs: publishRetryDelayMs(job.attempts), message };
+  if (isTransientPublishFailure(failure)) {
+    const delay = publishRetryDelayFor({
+      attemptNumber: job.attempts,
+      retryAfterMs: thrown !== undefined ? null : (outcome?.retryAfterMs ?? null),
+    });
+    if (delay !== null) return { status: "queued", retryInMs: delay, message };
   }
   return { status: "error", ok: false, message: message.slice(0, 500) };
+}
+
+/**
+ * Cât timp reîncercarea e programată, publicarea nu e „Eroare”: devine
+ * „Se reîncearcă (încercarea N, următoarea la HH:MM)”. Doar selecțiile bifate.
+ */
+export async function markPublicationRetrying(admin: Admin, job: Pick<PublishJobRow, "organization_id" | "property_id" | "portal_key" | "attempts" | "enabled">, retryInMs: number, now = Date.now()): Promise<string> {
+  const label = retryStatusLabel(job.attempts + 1, new Date(now + retryInMs));
+  if (!job.enabled) return label;
+  try {
+  await admin.from("portal_publications").update({ status: "pending", last_error: label })
+    .eq("organization_id", job.organization_id).eq("property_id", job.property_id).eq("portal_key", job.portal_key)
+    .eq("enabled", true).eq("status", "error");
+  await admin.from("portal_listings").update({ status: "pending", last_error: label })
+    .eq("organization_id", job.organization_id).eq("property_id", job.property_id).eq("portal", job.portal_key)
+    .eq("status", "error");
+  } catch {
+    console.error("[portal-publish] starea de reîncercare nu a putut fi salvată");
+  }
+  return label;
 }
 
 /** Rulează sarcinile cu maxim `concurrency` simultan; nu pornește altele după buget. */
@@ -177,17 +202,24 @@ export async function runPortalPublishWorker(
 
   // Claims are serialized so the in-flight heavy counter cannot race.
   let heavyInFlight = 0;
+  // VDI, La Cheie, HomeDirect: un singur job simultan per portal, fără rafale (429).
+  const pacedInFlight = new Map<string, number>();
   let claimChain: Promise<unknown> = Promise.resolve();
   const claimOne = (): Promise<PublishJobRow[]> => {
     const next = claimChain.then(async () => {
+      const exclude = [
+        ...(heavyInFlight >= MAX_PARALLEL_HEAVY ? HEAVY_PUBLISH_PORTALS : []),
+        ...PACED_PUBLISH_PORTALS.filter((p) => (pacedInFlight.get(p) ?? 0) > 0),
+      ];
       const { data, error } = await admin.rpc("claim_portal_publish_jobs", {
         _limit: 1,
         _lease_seconds: PUBLISH_JOB_LEASE_SECONDS,
-        ...(heavyInFlight >= MAX_PARALLEL_HEAVY ? { _exclude_portals: [...HEAVY_PUBLISH_PORTALS] } : {}),
+        ...(exclude.length ? { _exclude_portals: exclude } : {}),
       });
       if (error) throw new Error(error.message);
       const rows = (data ?? []) as PublishJobRow[];
       heavyInFlight += rows.filter(isHeavyPublishJob).length;
+      for (const r of rows) if (PACED_PUBLISH_PORTALS.includes(r.portal_key)) pacedInFlight.set(r.portal_key, (pacedInFlight.get(r.portal_key) ?? 0) + 1);
       return rows;
     });
     claimChain = next.catch(() => undefined);
@@ -197,11 +229,15 @@ export async function runPortalPublishWorker(
   // Independent lanes: two slow jobs never create a batch barrier for the third lane.
   await Promise.all(Array.from({ length: concurrency }, async () => {
   let laneHeavy = 0;
+  let lanePaced: string[] = [];
+  const releasePaced = () => { for (const p of lanePaced) pacedInFlight.set(p, Math.max(0, (pacedInFlight.get(p) ?? 1) - 1)); lanePaced = []; };
   try {
   while (Date.now() - started < budgetMs) {
     if (laneHeavy) { heavyInFlight -= laneHeavy; laneHeavy = 0; }
+    releasePaced();
     const jobs = await claimOne();
     laneHeavy = jobs.filter(isHeavyPublishJob).length;
+    lanePaced = jobs.map((j) => j.portal_key).filter((p) => PACED_PUBLISH_PORTALS.includes(p));
     if (jobs.length === 0) break;
     stats.claimed += jobs.length;
 
@@ -238,6 +274,7 @@ export async function runPortalPublishWorker(
         });
         if (saveError) throw new Error("Rezultatul publicării nu a putut fi salvat.");
         if (!saved) continue;
+        if (decision.status === "queued") await markPublicationRetrying(admin, job, decision.retryInMs);
         if (decision.status === "queued") stats.retried += 1;
         else if (decision.status === "done") stats.done += 1;
         else stats.failed += 1;
@@ -258,6 +295,7 @@ export async function runPortalPublishWorker(
             result_message: decision.message.slice(0, 500),
           })
           .eq("id", job.id);
+        await markPublicationRetrying(admin, job, decision.retryInMs);
         continue;
       }
       if (decision.status === "done") stats.done += 1;
@@ -289,6 +327,7 @@ export async function runPortalPublishWorker(
   }
   } finally {
     heavyInFlight -= laneHeavy;
+    releasePaced();
   }
   }));
   return stats;

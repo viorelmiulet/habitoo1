@@ -206,7 +206,7 @@ describe("workerul", () => {
     }));
     expect(db.jobs[0]?.status).toBe("queued");
     expect(Date.parse(db.jobs[0]!.next_attempt_at)).toBeGreaterThan(Date.now());
-    expect(decideJobResult({ attempts: 4 }, { portalId: "x", ok: false, message: "x", httpStatus: 503 }, undefined).status).toBe("error");
+    expect(decideJobResult({ attempts: 6 }, { portalId: "x", ok: false, message: "x", httpStatus: 503 }, undefined).status).toBe("error");
     expect(decideJobResult({ attempts: 1 }, { portalId: "x", ok: false, message: "Câmp obligatoriu lipsă" }, undefined).status).toBe("error");
   });
 });

@@ -82,3 +82,55 @@ export function unconfirmedUpdateState(input: {
 export function isUnconfirmedUpdateNote(lastError: string | null | undefined): boolean {
   return Boolean(lastError && lastError.includes(UNCONFIRMED_UPDATE_NOTE));
 }
+
+/**
+ * Reîncercarea automată din coada `portal_publish_jobs` pentru erorile temporare:
+ * 5xx (inclusiv 521/522/524 Cloudflare), 429, timeout, rețea și
+ * `IMAGE_REHOST_FAILED` (HomeDirect). Aceeași operație, aceeași versiune.
+ * Pauze: 2 min, 10 min, 30 min, 2 h, 6 h; la 429 cel puțin `Retry-After`.
+ */
+export const PUBLISH_RETRY_DELAYS_MS: readonly number[] = [
+  2 * 60_000, 10 * 60_000, 30 * 60_000, 2 * 3_600_000, 6 * 3_600_000,
+];
+
+/** Portalurile trimise eșalonat de worker (un singur job simultan per portal). */
+export const PACED_PUBLISH_PORTALS: readonly string[] = ["vdi", "lacheie", "homedirect"];
+
+const DEFINITIVE_CODES = new Set(["VALIDATION_ERROR", "AUTH_ERROR", "UNAUTHORIZED", "FORBIDDEN", "TOKEN_EXPIRED", "INVALID_TOKEN", "NOT_PUBLISHABLE", "SLOT_LIMIT"]);
+const DEFINITIVE_TEXT = /nu este publicabil|drepturi|neautorizat|token|cheie api|validare|obligatori/i;
+const TRANSIENT_TEXT = /eroare temporar|temporar indisponibil|reîncearcă mai târziu|reincearca mai tarziu|reîncercăm automat|limita .* cereri|too many requests|bad gateway|service unavailable|gateway time/i;
+
+export function isTransientPublishFailure(input: {
+  code?: string | null;
+  httpStatus?: number | null;
+  message?: string | null;
+  portalId?: string | null;
+}): boolean {
+  const message = input.message ?? "";
+  if (/IMAGE_REHOST_FAILED/.test(message) || input.code === "IMAGE_REHOST_FAILED") return true;
+  if (input.code && DEFINITIVE_CODES.has(input.code)) return false;
+  const status = input.httpStatus ?? null;
+  if (status === 429 || input.code === "RATE_LIMIT" || (status !== null && status >= 500)) return true;
+  if (status !== null && status >= 400) return false;
+  if (DEFINITIVE_TEXT.test(message) && !TRANSIENT_TEXT.test(message)) return false;
+  // Timeout/rețea: doar unde retrimiterea nu poate dubla anunțul.
+  if (isTimeoutLikeFailure(input)) return isTimeoutRetryPortal(input.portalId);
+  return TRANSIENT_TEXT.test(message) || /\b5\d\d\b/.test(message);
+}
+
+/**
+ * Pauza până la următoarea încercare sau `null` = eroare finală.
+ * `attemptNumber` = încercarea care tocmai a eșuat (1 = prima trimitere).
+ */
+export function publishRetryDelayFor(input: { attemptNumber: number; retryAfterMs?: number | null }): number | null {
+  const base = PUBLISH_RETRY_DELAYS_MS[input.attemptNumber - 1];
+  if (base === undefined) return null;
+  const after = input.retryAfterMs && input.retryAfterMs > 0 ? input.retryAfterMs : 0;
+  return Math.max(base, after);
+}
+
+/** „Se reîncearcă (încercarea N, următoarea la HH:MM)” — ora României. */
+export function retryStatusLabel(nextAttemptNumber: number, at: Date): string {
+  const hhmm = new Intl.DateTimeFormat("ro-RO", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Europe/Bucharest" }).format(at);
+  return `Se reîncearcă (încercarea ${nextAttemptNumber}, următoarea la ${hhmm})`;
+}

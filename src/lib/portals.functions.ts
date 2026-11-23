@@ -3005,6 +3005,7 @@ export type PortalSelectionOutcome = {
   /** Cod/status tehnic folosit de workerul bulk pentru politica de retry. */
   code?: string | null;
   httpStatus?: number | null;
+  retryAfterMs?: number | null;
 };
 
 const applySelectionSchema = z.object({
@@ -3463,7 +3464,7 @@ export async function applyPortalSelectionForOrg(input: {
           message: res.ok
             ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.${res.promotionErrors?.length ? " " + res.promotionErrors.map((error) => error.message).join("; ") : ""}${res.mediaWarning ? ` Avertisment: ${res.mediaWarning}` : ""}`
             : withPortalPrefixOnce([name, definition.display_name], res.message),
-          ...(!res.ok ? { code: res.code, httpStatus: res.httpStatus ?? null } : {}),
+          ...(!res.ok ? { code: res.code, httpStatus: res.httpStatus ?? null, retryAfterMs: res.retryAfterMs ?? null } : {}),
         });
       } catch (error) {
         // Izolare per portal: un portal cu probleme nu oprește procesarea celorlalte.

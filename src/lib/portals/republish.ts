@@ -34,9 +34,23 @@ export function isPublishedPair(listing: RepublishListing | undefined, publicati
  * Retried as a fresh publish (create), never as an update.
  */
 export function isRetryFailedPair(listing: RepublishListing | undefined, publication: RepublishPublication | undefined): boolean {
+  if (isPendingRetryPair(listing, publication)) return true;
   if (!publication || publication.enabled !== true || publication.status !== "error" || publication.withdrawn_at) return false;
   if (!listing) return true;
   return !listing.external_id && listing.status !== "withdrawn" && listing.status !== "published" && listing.status !== "updated";
+}
+
+/** Live on the portal (has an external ID), still selected, last update failed temporarily. */
+export function isResumableFailedPublishedPair(listing: RepublishListing | undefined, publication: RepublishPublication | undefined): boolean {
+  if (!listing?.external_id || listing.status === "withdrawn") return false;
+  return Boolean(publication && publication.enabled === true && !publication.withdrawn_at
+    && (publication.status === "error" || publication.status === "pending"));
+}
+
+/** Selected and failed (or retrying) without ever going live. */
+function isPendingRetryPair(listing: RepublishListing | undefined, publication: RepublishPublication | undefined): boolean {
+  return Boolean(publication && publication.enabled === true && publication.status === "pending" && !publication.withdrawn_at
+    && (!listing || (!listing.external_id && listing.status !== "withdrawn")));
 }
 
 export function isRepublishableProperty(property: RepublishProperty | undefined): boolean {
