@@ -38,12 +38,13 @@ export function buildHomeActions(input: {
  const owned=(a:any)=>input.scope===null || a.assigned_to===input.scope;
  const props=new Map(input.properties.filter(owned).map(p=>[p.id,p]));
  const add=(kind:ActionKind,key:string,title:string,reason:string,to:string,at:string,agentId:string|null,button:string,options: {search?:Record<string,string>;source?:string|null;propertyTitle?:string|null;entityKey?:string}={})=>out.push({id:`${kind}:${key}`,kind,entityKey:options.entityKey??`${kind}:${key}`,title,reason,to,at,agentId,button,source:options.source??null,propertyTitle:options.propertyTitle??null,ageHours:Math.max(0,(now-Date.parse(at))/3600000),...(options.search?{search:options.search}:{})});
- const touch=(id:string,received:string,contactId?:string|null)=>input.activities.some(a=>(a.lead_id===id || a.request_id===id || (contactId && a.contact_id===contactId)) && (a.done || ['call','message','note'].includes(a.kind)) && Date.parse(a.updated_at)>Date.parse(received)) || input.events.some(e=>e.lead_id===id && e.actor_id && e.created_at>received);
+ const touch=(id:string,received:string,contactId?:string|null)=>input.activities.some(a=>(a.lead_id===id || a.request_id===id || (contactId && a.contact_id===contactId)) && a.status!=='cancelled' && Date.parse(a.created_at??a.updated_at)>Date.parse(received)) || input.events.some(e=>e.lead_id===id && e.actor_id && e.created_at>received);
  for (const l of input.leads.filter(owned)) {
   if (['won','lost','archived'].includes(l.stage)) continue;
   const elapsed=(now-Date.parse(l.created_at))/3600000;
-  if(l.stage==='new' && elapsed>2 && !(l.last_interaction_at && l.last_interaction_at>=l.created_at) && !touch(l.id,l.created_at,l.contact_id)) add('new_lead',l.id,'Contactează lead-ul',`Lead${l.source?` de pe ${l.source}`:''}, primit acum ${Math.floor(elapsed)} h, necontactat`,'/app/leads',l.created_at,l.assigned_to,'Deschide lead',{search:{lead:l.id},source:l.source,entityKey:`lead:${l.id}`});
-  if(l.next_followup_at && Date.parse(l.next_followup_at)<now) add('overdue',`lead-${l.id}`,'Follow-up restant','Termenul de revenire a fost depășit.','/app/leads',l.next_followup_at,l.assigned_to,'Deschide lead',{search:{lead:l.id},entityKey:`lead:${l.id}`});
+  const entityKey=l.property_id?`property:${l.property_id}`:`lead:${l.id}`;
+  if(l.stage==='new' && elapsed>2 && !(l.last_interaction_at && l.last_interaction_at>l.created_at) && !touch(l.id,l.created_at,l.contact_id)) add('new_lead',l.id,'Contactează lead-ul',`Lead${l.source?` de pe ${l.source}`:''}, primit acum ${Math.floor(elapsed)} h, necontactat`,'/app/leads',l.created_at,l.assigned_to,'Deschide lead',{search:{lead:l.id},source:l.source,entityKey});
+  if(l.next_followup_at && Date.parse(l.next_followup_at)<now) add('overdue',`lead-${l.id}`,'Follow-up restant','Termenul de revenire a fost depășit.','/app/leads',l.next_followup_at,l.assigned_to,'Deschide lead',{search:{lead:l.id},entityKey});
  }
  for(const r of input.requests.filter(owned)) if(r.status==='active' && now-Date.parse(r.created_at)>2*3600000 && !input.leads.some(l=>l.request_id===r.id) && !touch(r.id,r.created_at,r.contact_id)) add('new_lead',`request-${r.id}`,'Contactează cererea nouă',`Cerere${r.source?` de pe ${r.source}`:''}, necontactată de peste 2 h.`,`/app/requests/${r.id}`,r.created_at,r.assigned_to,'Deschide cererea',{source:r.source});
  for(const a of input.activities.filter(owned)) {
@@ -62,7 +63,7 @@ export function buildHomeActions(input: {
  for(const p of props.values()) {
   const published=input.listings.filter(l=>l.property_id===p.id && ['published','in_feed'].includes(l.status) && l.published_at).map(l=>l.published_at).sort()[0];
   if(p.publish_status==='published' && published && now-Date.parse(published)>45*DAY && now-Date.parse(p.updated_at)>45*DAY && !input.leads.some(l=>l.property_id===p.id)) add('old_listing',p.id,p.title,'Publicat de peste 45 de zile, fără lead-uri și fără modificări.',`/app/properties/${p.id}`,published,p.assigned_to,'Deschide anunț',{propertyTitle:p.title,entityKey:`property:${p.id}`});
-  if(p.status==='active' && p.owner_contact_id && now-Date.parse(p.created_at)>30*DAY && !input.activities.some(a=>a.contact_id===p.owner_contact_id && a.done && Date.parse(a.updated_at)>=now-30*DAY)) add('owner',p.id,p.title,'Activ de peste 30 de zile; fără activitate cu proprietarul în ultimele 30 de zile.',`/app/properties/${p.id}`,p.created_at,p.assigned_to,'Deschide anunț',{propertyTitle:p.title,entityKey:`property:${p.id}`});
+  if(p.status==='active' && p.owner_contact_id && now-Date.parse(p.created_at)>30*DAY && !input.activities.some(a=>a.contact_id===p.owner_contact_id && a.status!=='cancelled' && (a.done || ['call','message','note'].includes(a.kind)) && Date.parse(a.updated_at??a.created_at)>=now-30*DAY)) add('owner',p.id,p.title,'Activ de peste 30 de zile; fără activitate cu proprietarul în ultimele 30 de zile.',`/app/properties/${p.id}`,p.created_at,p.assigned_to,'Deschide anunț',{propertyTitle:p.title,entityKey:`property:${p.id}`});
  }
  for(const c of input.contracts.filter(owned)) {
   if(['cancelled','void','archived'].includes(c.status))continue;

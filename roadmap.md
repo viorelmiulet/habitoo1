@@ -5,10 +5,13 @@
 - [ ] Verificare în fișa reală: solicitantul nu are cont asociat pentru sesiune; necesită autentificarea în previzualizare.
 
 ## Acasă — acțiuni reale și clopoțel
-- [ ] Motor server, acces agent/agenție, preferințe personale și listă completă.
-- [ ] Ordine AI validată și aceeași listă în Agentul AI.
-- [ ] Erori portal numai în notificările existente: deduplicare, temporare 24h, rezolvare.
-- [ ] Teste strict noi/modificate, verificare și commit; fără publicare.
+- [x] Motor existent auditat: prioritate, contactare pe activități reale, unicitate per proprietate, acces agent/agenție, preferințe private și listă completă.
+- [x] Ordine AI validată și rezultat comun Acasă/Agent AI; Actualizează recalculează fără apel AI nou.
+- [x] Migrările 0326/0327 aplicate și confirmate în baza reală: ambele triggere prind erorile, verificarea izolează perechile, deduplicare fără reset la cod/operație pentru validări; temporare 24h, rezolvare și notificări de conectare păstrate.
+- [x] 45 teste țintite trec (41 motor/SQL + 4 controale), build OK; fără AI, notificări sau publicări reale în teste; commit la încheiere.
+- Tipurile fără date verificabile sunt omise conform cererii: nu există feedback structurat pentru vizionări sau marcaj de citire pentru mesajele portalurilor.
+- [ ] Verificare cap-coadă în cont real: solicitantul nu are utilizator asociat pentru sesiune; necesită autentificarea în previzualizare.
+- [ ] Starea efectivă a cronului existent portal-alerts-hourly: instrumentul de citire refuză accesul la cron; programul orar din migrarea existentă a fost păstrat, funcția apelată este verificată și testată.
 
 ## Import IMMOFLUX — configurare, etapa 1
 - [x] Import existent verificat: 216 proprietăți (162 external_id), 2.045 poze apcdn; configurare izolată și criptată exclusiv SuperAdmin, audit atomic și test conexiune

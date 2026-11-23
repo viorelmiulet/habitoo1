@@ -2283,6 +2283,20 @@
       "when": 1795412195877,
       "tag": "0325_home_actions_portal_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 326,
+      "version": "7",
+      "when": 1795413795844,
+      "tag": "0326_portal_alerts_fail_open",
+      "breakpoints": true
+    },
+    {
+      "idx": 327,
+      "version": "7",
+      "when": 1795414030875,
+      "tag": "0327_portal_alerts_stable_identity",
+      "breakpoints": true
     }
   ]
 }
