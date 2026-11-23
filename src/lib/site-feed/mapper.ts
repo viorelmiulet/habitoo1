@@ -129,6 +129,14 @@ export type FeedProperty = {
     emisii: number | null;
   };
   url: string | null;
+  /** Link video (YouTube/Vimeo), doar valid. */
+  video_url: string | null;
+  /** Link tur virtual, doar valid. */
+  tur_virtual_url: string | null;
+  /** URL-ul pozei marcate releveu (rămâne și în `images`). */
+  releveu: string | null;
+  /** true doar pentru unitățile unui ansamblu cu prețul ascuns. */
+  pret_la_cerere: boolean;
 };
 
 /** Statusurile Habitoo care pot apărea în feedul public. */
