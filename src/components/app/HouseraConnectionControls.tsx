@@ -36,6 +36,8 @@ export function HouseraConnectionControls(props: {
   oauth: HouseraOAuthInfo | null | undefined;
   beforeConnect?: () => Promise<unknown>;
   onChanged?: () => void;
+  /** Rând compact pentru lista de portaluri: stare + butoane pe o linie, fără note (notele stau în tooltip). */
+  layout?: "row";
 }) {
   const start = useServerFn(startHouseraConnect);
   const disconnect = useServerFn(disconnectHousera);
@@ -54,6 +56,22 @@ export function HouseraConnectionControls(props: {
   });
   const expiresAt = props.oauth?.expiresAt ?? null;
   const soon = props.connected && houseraExpiresSoon(expiresAt, Date.now());
+  if (props.layout === "row") {
+    return (
+      <div data-housera-row className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <StatusBadge className="h-7 text-[13px]" tone={props.connected ? "success" : "neutral"} dot>
+          {!props.connected ? "Deconectat" : expiresAt ? `Conectat · până la ${fmt(expiresAt)}` : "Conectat"}
+        </StatusBadge>
+        {soon ? <StatusBadge className="h-7 text-[13px]" tone="warning">Reconectează</StatusBadge> : null}
+        <Button className="h-11 min-w-44" disabled={!props.configured || connect.isPending} onClick={() => connect.mutate()}>
+          {!props.configured ? "Indisponibil" : props.connected ? "Reconectează Housera" : "Conectează cu Housera"}
+        </Button>
+        {props.connected ? (
+          <Button variant="outline" className="h-11" disabled={drop.isPending} onClick={() => drop.mutate()}>Deconectează</Button>
+        ) : null}
+      </div>
+    );
+  }
   return (
     <div className="w-full space-y-2">
       {props.connected ? (

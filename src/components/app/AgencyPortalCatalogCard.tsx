@@ -1,6 +1,10 @@
 import { StoriaAccountControls } from "@/components/app/StoriaAccountControls";
 import { isKeyRequestPortal, keyRequestLabel } from "@/lib/portals/imospot-key-request";
 import { useEffect } from "react";
+import type * as React from "react";
+import { Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { HOUSERA_APPROVAL_NOTE } from "@/lib/portals/housera/config";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -109,102 +113,99 @@ export function AgencyPortalCatalogCard() {
                 </li>
               );
             }
+            const info = portalInfo(item, state.key);
+            const statusBadge = (label: string, tone: "success" | "danger" | "neutral" | "warning") => (
+              <StatusBadge className="h-7 text-[13px]" tone={tone} dot>
+                {label}
+              </StatusBadge>
+            );
+            const btn = "h-11 w-full min-w-44 sm:w-auto";
+            let actions: React.ReactNode;
+            if (item.id === "storia" && organizationId) actions = null;
+            else if (item.id === "housera" && organizationId) {
+              actions = (
+                <HouseraConnectionControls
+                  layout="row"
+                  organizationId={organizationId}
+                  configured={item.houseraConfigured === true}
+                  connected={item.houseraConnected === true}
+                  oauth={item.houseraOAuth}
+                  beforeConnect={() => runActivate({ data: { portalId: "housera" } })}
+                  onChanged={() => void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] })}
+                />
+              );
+            } else if (item.id === "zup") {
+              actions = item.zupConfigured !== true ? (
+                statusBadge("Indisponibil", "neutral")
+              ) : (
+                <>
+                  {statusBadge(
+                    item.connectionStatus === "connected" ? "Conectat" : item.connectionStatus === "error" ? "Eroare" : "Deconectat",
+                    item.connectionStatus === "connected" ? "success" : item.connectionStatus === "error" ? "danger" : "neutral",
+                  )}
+                  <Button className={btn} disabled={busy || zupAction.isPending} onClick={() => connect.mutate("zup")}>
+                    {item.zupConnected ? "Reconectează" : "Conectează"}
+                  </Button>
+                  {item.zupConnected ? <><Button variant="outline" className="h-11" disabled={zupAction.isPending} onClick={() => zupAction.mutate("test")}>Testează conexiunea</Button><Button variant="outline" className="h-11" disabled={zupAction.isPending} onClick={() => zupAction.mutate("disconnect")}>Deconectează</Button></> : null}
+                </>
+              );
+            } else if (state.key === "connected") {
+              actions = (
+                <>
+                  {statusBadge(state.label, state.tone === "muted" ? "neutral" : state.tone)}
+                  <Button asChild variant="outline" className={btn}>
+                    <Link to="/app/portaluri/$portalId" params={{ portalId: item.id }} data-portal-settings>Setări portal</Link>
+                  </Button>
+                </>
+              );
+            } else if (state.key === "oauth") {
+              actions = (
+                <>
+                  {statusBadge("Deconectat", "neutral")}
+                  <Button className={btn} disabled={busy} onClick={() => connect.mutate(item.id)}>{state.buttonLabel}</Button>
+                </>
+              );
+            } else {
+              actions = (
+                <>
+                  {state.key === "pending" || (isKeyRequestPortal(item.id) && item.request?.status === "approved")
+                    ? statusBadge("În așteptare", "warning")
+                    : statusBadge("Deconectat", "neutral")}
+                  <Button asChild className={btn} variant="default">
+                    <Link to="/app/portaluri/$portalId" params={{ portalId: item.id }} data-portal-activate>{state.buttonLabel}</Link>
+                  </Button>
+                </>
+              );
+            }
             return (
               <li
                 key={item.id}
                 data-portal-card={item.id}
                 data-portal-state={state.key}
-                className="min-h-14 min-w-0 px-4 py-3 sm:px-5"
+                className="min-h-16 min-w-0 px-4 py-3 sm:px-5"
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <PortalLogoStack
-                      portalId={item.id}
-                      name={item.displayName}
-                      size={32}
-                      className="shrink-0"
-                    />
+                <div data-portal-row className="grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <div data-portal-identity className="flex min-w-0 items-center gap-3">
+                    <PortalLogoStack portalId={item.id} name={item.displayName} size={32} className="shrink-0" />
                     <p className="shrink-0 whitespace-nowrap text-[15px] leading-6 font-semibold">{item.displayName}</p>
-                  </div>
-                  <div data-portal-statuses className="flex min-w-0 flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
-                    {item.id === "storia" && organizationId ? <StoriaAccountControls organizationId={organizationId}/> : item.id === "housera" && organizationId ? (
-                      <HouseraConnectionControls
-                        organizationId={organizationId}
-                        configured={item.houseraConfigured === true}
-                        connected={item.houseraConnected === true}
-                        oauth={item.houseraOAuth}
-                        beforeConnect={() => runActivate({ data: { portalId: "housera" } })}
-                        onChanged={() => void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] })}
-                      />
-                    ) : item.id === "zup" ? (
-                      <>
-                        <StatusBadge
-                          className="h-7 text-[13px]"
-                          tone={
-                            item.connectionStatus === "connected"
-                              ? "success"
-                              : item.connectionStatus === "error"
-                                ? "danger"
-                                : "neutral"
-                          }
-                          dot
-                        >
-                          {item.connectionStatus === "connected" ? "Conectat" : item.connectionStatus === "error" ? "Eroare" : "Deconectat"}
-                        </StatusBadge>
-                        <Button className="h-auto min-h-11 w-full whitespace-normal text-center" disabled={busy || zupAction.isPending || item.zupConfigured !== true} onClick={() => connect.mutate("zup")}>
-                          {item.zupConfigured !== true ? ZUP_MISSING_MESSAGE : item.zupConnected ? "Reconectează contul ZUP" : "Conectează contul ZUP"}
-                        </Button>
-                        {item.zupConnected ? <><Button variant="outline" disabled={zupAction.isPending} onClick={() => zupAction.mutate("test")}>Testează conexiunea</Button><Button variant="outline" disabled={zupAction.isPending} onClick={() => zupAction.mutate("disconnect")}>Deconectează</Button></> : null}
-                      </>
-                    ) : state.key === "connected" ? (
-                      <>
-                        <StatusBadge
-                          className="h-7 text-[13px]"
-                          tone={state.tone === "muted" ? "neutral" : state.tone}
-                          dot
-                        >
-                          {state.label}
-                        </StatusBadge>
-                        <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
-                          <Link to="/app/portaluri/$portalId" params={{ portalId: item.id }} data-portal-settings>
-                            Setări portal
-                          </Link>
-                        </Button>
-                      </>
-                    ) : state.key === "oauth" ? (
-                      <Button className="h-11 w-full sm:w-auto" disabled={busy} onClick={() => connect.mutate(item.id)}>
-                        {state.buttonLabel}
-                      </Button>
-                    ) : (
-                      <Button asChild className="h-11 w-full sm:w-auto" variant="default">
-                        <Link to="/app/portaluri/$portalId" params={{ portalId: item.id }} data-portal-activate>
-                          {state.buttonLabel}
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                {isKeyRequestPortal(item.id) ? (
-                  <div className="mt-2 max-w-prose space-y-2 text-xs text-muted-foreground sm:pl-11">
-                    {item.request?.status === "approved" && state.key !== "connected" ? (
-                      <p data-imospot-sent className="font-medium text-foreground">
-                        Cererea a fost trimisă către {keyRequestLabel(item.id)}. Vei primi cheia pe email.
-                      </p>
-                    ) : (
-                      <p>
-                        Cheia API este emisă de {keyRequestLabel(item.id)}, de obicei în aceeași zi lucrătoare, și
-                        ajunge pe emailul administratorului.
-                      </p>
-                    )}
-                    {item.companyDataMissing.length > 0 ? (
-                      <p data-imospot-incomplete className="text-destructive">
-                        Completează datele firmei în{" "}
-                        <Link to="/app/settings" search={{ tab: "agency" }} className="underline">
-                          Setări → Agenție
-                        </Link>{" "}
-                        ca să poți solicita cheia {keyRequestLabel(item.id)}.
-                      </p>
+                    {info ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" aria-label={`Informații ${item.displayName}`} data-portal-info className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground">
+                            <Info className="size-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">{info}</TooltipContent>
+                      </Tooltip>
                     ) : null}
+                  </div>
+                  {actions ? (
+                    <div data-portal-statuses className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">{actions}</div>
+                  ) : null}
+                </div>
+                {item.id === "storia" && organizationId ? (
+                  <div data-storia-accounts className="mt-3 space-y-2 border-t border-border pt-3 sm:pl-11">
+                    <StoriaAccountControls organizationId={organizationId} layout="rows" />
                   </div>
                 ) : null}
               </li>
@@ -214,4 +215,20 @@ export function AgencyPortalCatalogCard() {
       )}
     </section>
   );
+}
+
+type CatalogItem = Awaited<ReturnType<typeof getAgencyPortalCatalog>>[number];
+
+/** Explicațiile scurte ale portalului: doar în tooltip, niciodată sub nume. */
+function portalInfo(item: CatalogItem, stateKey: string): string | null {
+  if (item.id === "housera") return HOUSERA_APPROVAL_NOTE;
+  if (item.id === "zup" && item.zupConfigured !== true) return ZUP_MISSING_MESSAGE;
+  if (isKeyRequestPortal(item.id)) {
+    const label = keyRequestLabel(item.id);
+    const base = item.request?.status === "approved" && stateKey !== "connected"
+      ? `Cererea a fost trimisă către ${label}. Vei primi cheia pe email.`
+      : `Cheia API este emisă de ${label}, de obicei în aceeași zi lucrătoare, și ajunge pe emailul administratorului.`;
+    return item.companyDataMissing.length > 0 ? `${base} Completează datele firmei în Setări → Agenție ca să poți solicita cheia.` : base;
+  }
+  return null;
 }

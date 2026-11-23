@@ -37,6 +37,8 @@ const catalogRows = [
     request: null,
     companyDataMissing: [],
   },
+  { id: "housera", displayName: "Housera", availability: "available", activated: false, activation: "oauth", connectionStatus: "disconnected", request: null, companyDataMissing: [], houseraConfigured: true, houseraConnected: false, houseraOAuth: null },
+  { id: "zup", displayName: "ZUP", availability: "available", activated: false, activation: "oauth", connectionStatus: "disconnected", request: null, companyDataMissing: [], zupConfigured: false, zupConnected: false },
 ];
 
 vi.mock("@tanstack/react-router", async () => {
@@ -65,7 +67,7 @@ vi.mock("@/hooks/use-session", () => ({
 }));
 vi.mock("@/components/app/StoriaAccountControls", () => ({ StoriaAccountControls: () => null }));
 vi.mock("@/components/app/HouseraConnectionControls", () => ({
-  HouseraConnectionControls: () => null,
+  HouseraConnectionControls: () => <button data-housera-mock>Conectează cu Housera</button>,
   useHouseraCallbackToast: () => undefined,
 }));
 vi.mock("@/components/app/FacebookCatalogCard", () => ({ FacebookCatalogCard: () => null }));
@@ -74,6 +76,7 @@ vi.mock("@/components/app/PortalLogo", () => ({
 }));
 
 import { AgencyPortalCatalogCard } from "./AgencyPortalCatalogCard";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 let root: ReturnType<typeof createRoot> | null = null;
 
@@ -86,7 +89,7 @@ async function renderCard() {
   await act(async () => {
     root?.render(
       <QueryClientProvider client={client}>
-        <AgencyPortalCatalogCard />
+        <TooltipProvider><AgencyPortalCatalogCard /></TooltipProvider>
       </QueryClientProvider>,
     );
   });
@@ -119,25 +122,32 @@ describe("rândurile din lista de portaluri (Setări)", () => {
     }
   });
 
-  it("textul explicativ Imospot stă sub rândul cu numele, nu în coloana butonului", async () => {
+  it("niciun text explicativ sub numele portalului (informația e în tooltip)", async () => {
     await renderCard();
-    const li = row("imospot");
-    const statuses = li.querySelector("[data-portal-statuses]");
-    expect(statuses).toBeTruthy();
-    // butonul rămâne în coloana din dreapta
-    expect(statuses?.textContent).toContain("Solicită activarea");
-    expect(statuses?.textContent).not.toContain("Cheia API este emisă");
-    // textul explicativ e un bloc separat, după rândul nume + buton
-    const headerRow = li.firstElementChild;
-    const textBlock = li.querySelector("[data-imospot-sent], div.mt-2");
-    expect(headerRow).toBeTruthy();
-    expect(textBlock).toBeTruthy();
-    expect(headerRow!.contains(textBlock)).toBe(false);
-    expect(textBlock!.textContent).toContain("Cheia API este emisă de Imospot");
-    // ordinea în document: întâi rândul cu numele, apoi textul
-    expect(
-      headerRow!.compareDocumentPosition(textBlock!) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    for (const id of ["imospot", "imo24", "zonata", "housera"]) {
+      const li = row(id);
+      expect(li.textContent).not.toContain("Cheia API este emisă");
+      expect(li.textContent).not.toContain("Aprobarea trebuie dată");
+      expect(li.querySelector("div.mt-2")).toBeNull();
+    }
+    expect(row("imospot").querySelector("[data-portal-info]")).toBeTruthy();
+  });
+
+  it("Housera: butonul stă în coloana din dreapta, nu peste logo", async () => {
+    await renderCard();
+    const li = row("housera");
+    const identity = li.querySelector("[data-portal-identity]")!;
+    const statuses = li.querySelector("[data-portal-statuses]")!;
+    expect(identity.querySelector("[data-housera-mock]")).toBeNull();
+    expect(statuses.querySelector("[data-housera-mock]")).toBeTruthy();
+    expect(identity.contains(statuses)).toBe(false);
+  });
+
+  it("ZUP neconfigurat: insigna Indisponibil, fără buton", async () => {
+    await renderCard();
+    const statuses = row("zup").querySelector("[data-portal-statuses]")!;
+    expect(statuses.textContent).toBe("Indisponibil");
+    expect(statuses.querySelector("button, a")).toBeNull();
   });
 
   it("fiecare rând are aceeași structură: nume + acțiuni pe primul rând", async () => {
@@ -145,9 +155,13 @@ describe("rândurile din lista de portaluri (Setări)", () => {
     for (const id of ["imospot", "imo24", "zonata"]) {
       const li = row(id);
       const headerRow = li.firstElementChild as HTMLElement;
-      expect(headerRow.className).toContain("sm:flex-row");
-      expect(headerRow.querySelector("[data-portal-statuses]")).toBeTruthy();
-      expect(headerRow.querySelector("[data-logo]")).toBeTruthy();
+      expect(headerRow.className).toContain("sm:grid-cols-[minmax(0,1fr)_auto]");
+      const identity = headerRow.querySelector("[data-portal-identity]")!;
+      const statuses = headerRow.querySelector("[data-portal-statuses]")!;
+      expect(identity.querySelector("[data-logo]")).toBeTruthy();
+      expect(identity.querySelector("p")?.textContent).toBeTruthy();
+      expect(statuses.firstElementChild?.className).toContain("rounded-full");
+      expect(statuses.querySelector("a, button")?.className).toContain("min-w-44");
     }
   });
 
