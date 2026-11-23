@@ -1,0 +1,1 @@
+ALTER TABLE public.acp_ai_insights ADD COLUMN IF NOT EXISTS fallback_used boolean NOT NULL DEFAULT false;

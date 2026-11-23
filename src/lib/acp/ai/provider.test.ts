@@ -57,11 +57,11 @@ describe("ACP AI shared registry and validated persistence", () => {
     vi.stubGlobal("fetch", mockFetch);
     const result = await run({ context: { userId: "user" }, data: { analysisId: "analysis" } });
     expect(result.status).toBe(scenario === "invalid" ? "failed" : "ok");
-    expect(mockFetch).toHaveBeenCalledTimes(scenario === "fallback" ? 4 : scenario === "valid" ? 1 : 2);
+    expect(mockFetch).toHaveBeenCalledTimes(scenario === "fallback" ? 7 : scenario === "valid" ? 1 : 2);
     const usage = fixtures.inserts.filter((entry) => entry.table === "ai_usage_events");
     expect(usage).toHaveLength(1);
     expect(usage[0]?.row).toMatchObject({ capability: "acp_ai", provider: scenario === "fallback" ? "mistral" : "gemini",
-      model: scenario === "fallback" ? "mistral-small-latest" : "gemini-2.5-flash", fallback_used: scenario === "fallback",
+      model: scenario === "fallback" ? "mistral-small-latest" : "gemini-3.5-flash", fallback_used: scenario === "fallback",
       input_tokens: scenario === "fallback" ? 80 : scenario === "valid" ? 100 : 200,
       output_tokens: scenario === "fallback" ? 10 : scenario === "valid" ? 20 : 40, success: scenario !== "invalid" });
     expect(fixtures.rpc).toHaveBeenNthCalledWith(1, "rate_limit_hit", { _bucket: "acp_ai:user:user", _limit: 10, _window_seconds: 3600 });

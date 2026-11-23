@@ -90,6 +90,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           error_reason: string | null
+          fallback_used: boolean
           id: string
           input_summary: Json
           insight: Json | null
@@ -108,6 +109,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           error_reason?: string | null
+          fallback_used?: boolean
           id?: string
           input_summary?: Json
           insight?: Json | null
@@ -126,6 +128,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           error_reason?: string | null
+          fallback_used?: boolean
           id?: string
           input_summary?: Json
           insight?: Json | null

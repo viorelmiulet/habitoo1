@@ -160,14 +160,19 @@ export function resolveAiProvider(modelClass: AiModelClass = "standard"): AIProv
   const mKey = mistralKey();
   const fallback = mKey
     ? lazyProvider("mistral", "fallback", (model) => createMistralProvider(mKey, model))
-    : undefined;
+    : gKey
+      ? createGeminiProvider(gKey, GEMINI_RESERVE_MODEL)
+      : undefined;
   if (!gKey) return fallback ?? null;
   return lazyProvider("gemini", modelClass, (model) => createGeminiProvider(gKey, model), fallback);
 }
 
-/** Autofill-only reserve when Mistral is not configured; do not alter other features. */
+/** Rezerva Gemini când Mistral nu e configurat (folosită doar la erori tranzitorii). */
+export const GEMINI_RESERVE_MODEL = "gemini-3.5-flash-lite";
+
+/** Autofill reserve when Mistral is not configured; do not alter other features. */
 export function resolveAutofillReserve(primary: AIProvider): AIProvider | undefined {
   if (primary.fallback) return primary.fallback;
   const key = geminiKey();
-  return key ? createGeminiProvider(key, "gemini-3.5-flash-lite") : undefined;
+  return key ? createGeminiProvider(key, GEMINI_RESERVE_MODEL) : undefined;
 }
