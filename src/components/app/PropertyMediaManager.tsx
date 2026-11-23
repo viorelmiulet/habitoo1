@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { canMarkFloorPlan, floorPlanChanges } from "@/lib/property-images/floor-plan";
 import {
   ChevronLeft,
   ChevronRight,
@@ -69,6 +70,7 @@ type ImageRow = {
   storage_path: string | null;
   position: number;
   is_primary: boolean;
+  is_floor_plan: boolean;
   include_in_publish: boolean;
   is_confidential: boolean;
   width: number | null;
@@ -105,7 +107,7 @@ export function PropertyMediaManager({
       const { data, error } = await supabase
         .from("property_images")
         .select(
-          "id,url,storage_path,position,is_primary,include_in_publish,is_confidential,width,height",
+          "id,url,storage_path,position,is_primary,is_floor_plan,include_in_publish,is_confidential,width,height",
         )
         .eq("property_id", propertyId)
         .order("position", { ascending: true });
@@ -170,6 +172,23 @@ export function PropertyMediaManager({
       if (error) throw error;
     },
     onSuccess: () => invalidate(),
+    onError: (e: Error) => toastError(e),
+  });
+
+  const floorPlan = useMutation({
+    mutationFn: async ({ id, mark }: { id: string; mark: boolean }) => {
+      for (const change of floorPlanChanges(images, id, mark)) {
+        const { error } = await supabase
+          .from("property_images")
+          .update({ is_floor_plan: change.is_floor_plan, updated_by: userId ?? null } as never)
+          .eq("id", change.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.mark ? "Poza a fost marcată ca releveu." : "Poza nu mai este releveu.");
+      invalidate();
+    },
     onError: (e: Error) => toastError(e),
   });
 
@@ -426,6 +445,11 @@ export function PropertyMediaManager({
                         <span className="absolute top-2 left-2 rounded-full bg-navy px-2.5 py-0.5 font-mono text-[11px] font-bold text-gold">
                           {String(idx + 1).padStart(2, "0")}{isFirst ? " · COPERTĂ" : ""}
                         </span>
+                        {img.is_floor_plan ? (
+                          <span className="absolute top-10 right-2 rounded-full bg-gold px-2.5 py-0.5 text-[11px] font-bold text-navy">
+                            Releveu
+                          </span>
+                        ) : null}
                         {img.is_confidential ? (
                           <span className="absolute top-2 right-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                             <EyeOff className="size-3" />
@@ -487,6 +511,16 @@ export function PropertyMediaManager({
                             </AlertDialogContent>
                           </AlertDialog>
                         </div>
+                        {canMarkFloorPlan(img) ? (
+                          <button
+                            type="button"
+                            className="block w-full border-t border-border px-2 py-1.5 text-left text-[11px] text-muted-foreground hover:text-foreground"
+                            disabled={floorPlan.isPending}
+                            onClick={() => floorPlan.mutate({ id: img.id, mark: !img.is_floor_plan })}
+                          >
+                            {img.is_floor_plan ? "Nu mai este releveu" : "Marchează ca releveu"}
+                          </button>
+                        ) : null}
                         <div className="flex items-center justify-between gap-2 border-t border-border px-2 py-1.5 text-[11px] text-muted-foreground">
                           <span>Publică</span>
                           <Switch

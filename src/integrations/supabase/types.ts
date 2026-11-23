@@ -11708,6 +11708,7 @@ export type Database = {
           id: string
           include_in_publish: boolean
           is_confidential: boolean
+          is_floor_plan: boolean
           is_primary: boolean
           organization_id: string
           position: number
@@ -11727,6 +11728,7 @@ export type Database = {
           id?: string
           include_in_publish?: boolean
           is_confidential?: boolean
+          is_floor_plan?: boolean
           is_primary?: boolean
           organization_id: string
           position?: number
@@ -11746,6 +11748,7 @@ export type Database = {
           id?: string
           include_in_publish?: boolean
           is_confidential?: boolean
+          is_floor_plan?: boolean
           is_primary?: boolean
           organization_id?: string
           position?: number

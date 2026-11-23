@@ -55,6 +55,7 @@ export type StoriaAdvert = {
   market: "primary" | "secondary";
   auto_extend: boolean;
   parent_uuid?: string;
+  floor_plan?: string;
 };
 
 export type StoriaListing = { transaction: StoriaTransaction; advert: StoriaAdvert };
@@ -210,8 +211,11 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
     reasons.push("Storia cere coordonate: setează locația pe hartă în pagina ofertei.");
   }
 
-  const eligibleImages = (options.images ?? [])
-    .filter(isImageFeedEligible)
+  const publishable = (options.images ?? []).filter(isImageFeedEligible);
+  // Releveul (OLX RE API `floor_plan`) se trimite separat și nu și în `images`.
+  const floorPlanImage = publishable.find((img) => img.is_floor_plan === true && !img.is_primary) ?? null;
+  const eligibleImages = publishable
+    .filter((img) => img !== floorPlanImage)
     .sort((a, b) =>
       a.is_primary === b.is_primary ? (a.position ?? 0) - (b.position ?? 0) : a.is_primary ? -1 : 1,
     );
@@ -290,6 +294,7 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
       price: { value: entry.value as number, currency: entry.currency },
       location: { lat: coords!.lat, lon: coords!.lng, exact: p.location_precise === true },
       images,
+      ...(floorPlanImage ? { floor_plan: feedImageUrl(options.baseUrl, floorPlanImage.id) } : {}),
       attributes,
       site_urn: STORIA_SITE_URN,
       custom_fields: {

@@ -2332,6 +2332,13 @@
       "when": 1795460505268,
       "tag": "0332_acp_ai_insights_fallback_used",
       "breakpoints": true
+    },
+    {
+      "idx": 333,
+      "version": "7",
+      "when": 1795463366777,
+      "tag": "0333_property_images_floor_plan",
+      "breakpoints": true
     }
   ]
 }
