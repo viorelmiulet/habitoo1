@@ -1,7 +1,7 @@
 import { readFeedImages } from "@/lib/site-feed/complete-read.server";
 import { errorResponse, type FeedAuthOk } from "@/lib/site-feed/auth.server";
 import { feedUrlsForRequest } from "@/lib/site-feed/config";
-import { buildFacebookCatalogCsv, buildFacebookProductsCsv, exclusionDetail } from "@/lib/site-feed/facebook-catalog";
+import { buildFacebookCombinedCsv, buildFacebookProductsCsv, exclusionDetail } from "@/lib/site-feed/facebook-catalog";
 import {
   FEED_PUBLIC_STATUSES,
   type PropertyImageRow,
@@ -27,23 +27,15 @@ export async function handleFacebookCatalog(
 
   const { baseUrl, publicSiteUrl } = feedUrlsForRequest(new URL(request.url));
   const products = new URL(request.url).searchParams.get("format") === "products";
-  let result;
-  if (products) {
-    const { data: org } = await supabaseAdmin
+  const { data: org } = await supabaseAdmin
       .from("organizations")
       .select("name")
       .eq("id", auth.organizationId)
       .maybeSingle();
-    result = buildFacebookProductsCsv({
-      properties,
-      imagesByProperty,
-      baseUrl,
-      publicSiteUrl,
-      brand: org?.name ?? "",
-    });
-  } else {
-    result = buildFacebookCatalogCsv({ properties, imagesByProperty, baseUrl, publicSiteUrl });
-  }
+  const brand = org?.name ?? "";
+  const result = products
+    ? buildFacebookProductsCsv({ properties, imagesByProperty, baseUrl, publicSiteUrl, brand })
+    : buildFacebookCombinedCsv({ properties, imagesByProperty, baseUrl, publicSiteUrl, brand });
 
   return {
     response: new Response(result.csv, {

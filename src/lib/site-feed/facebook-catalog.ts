@@ -337,3 +337,78 @@ export function buildFacebookProductsCsv(input: {
   }
   return { ...base, csv: `${lines.join("\r\n")}\r\n` };
 }
+
+/* ---------- Format combinat (implicit): Home Listings + Produse pe același rând ---------- */
+
+export const FACEBOOK_COMBINED_COLUMNS = [
+  // Home Listings
+  "home_listing_id", "name", "availability", "listing_type", "property_type", "num_beds", "num_baths",
+  "area_size", "area_unit", "year_built", "description", "url",
+  "address.addr1", "address.city", "address.region", "address.country", "address.postal_code",
+  "latitude", "longitude", "neighborhood[0]",
+  // Produse
+  "id", "title", "link", "image_link", "additional_image_link", "price", "condition", "brand", "inventory",
+  "google_product_category", "custom_label_0", "custom_label_1", "custom_label_2", "custom_label_3",
+  // Poze
+  "image",
+  ...Array.from({ length: FACEBOOK_MAX_IMAGES }, (_, i) => `image[${i}].url`),
+] as const;
+
+/** Stradă+număr doar la locație exactă; altfel zona/cartierul; altfel localitatea. Niciodată gol când există oraș. */
+export function metaAddr1(p: PropertyRow): string {
+  if (p.location_precise) {
+    const street = [p.street, p.street_number].filter((v) => v && String(v).trim()).join(" ").trim();
+    if (street) return street;
+  }
+  const { city, sector } = metaCity(p.city);
+  return normalizeRoDiacritics(p.district) || (sector ? `Sectorul ${sector}` : "") || city;
+}
+
+export function buildFacebookCombinedCsv(input: {
+  properties: PropertyRow[];
+  imagesByProperty: Map<string, PropertyImageRow[]>;
+  baseUrl: string;
+  publicSiteUrl: string;
+  brand: string;
+}): FacebookCatalogResult {
+  // Aceleași reguli de excludere ca formatul Home Listings.
+  const base = buildFacebookCatalogCsv(input);
+  const excludedIds = new Set((base.excludedItems ?? []).map((e) => e.id));
+  const lines = [FACEBOOK_COMBINED_COLUMNS.join(",")];
+  for (const p of input.properties) {
+    if (excludedIds.has(p.id)) continue;
+    const offer = pickOffer(p);
+    const coords = publicCoords(p);
+    if (!offer || !coords) continue;
+    const images = (input.imagesByProperty.get(p.id) ?? [])
+      .filter(isImageFeedEligible)
+      .sort((a, b) => a.is_primary === b.is_primary ? (a.position ?? 0) - (b.position ?? 0) : a.is_primary ? -1 : 1)
+      .slice(0, FACEBOOK_MAX_IMAGES)
+      .map((img) => feedImageUrl(input.baseUrl, img.id));
+    const { city, sector } = metaCity(p.city);
+    const area = p.usable_surface ?? p.surface ?? null;
+    const url = offerUrl(input.publicSiteUrl, p.id, (p as { public_slug?: string | null }).public_slug);
+    const stage = (p as { construction_stage?: string | null }).construction_stage ?? null;
+    const rooms = (p as { rooms?: number | null }).rooms ?? null;
+    const typeLabel = PROPERTY_TYPE_LABEL[p.property_type ?? ""] ?? p.property_type ?? "";
+    const ref = p.reference ?? p.id;
+    const row: (string | number | null)[] = [
+      ref, p.title, metaAvailability(p.status, offer.mode),
+      offer.mode === "sale" ? "for_sale_by_agent" : "for_rent_by_agent",
+      metaPropertyType(p.property_type), p.bedrooms ?? null, p.bathrooms ?? null,
+      area, area !== null ? "sq_m" : "", p.build_year ?? null, plainText(p.description), url,
+      metaAddr1(p), city, metaCity(p.county).city, "Romania", p.postal_code ?? "",
+      coords.lat, coords.lng, normalizeRoDiacritics(p.district) || (sector ? `Sectorul ${sector}` : ""),
+      ref, (p.title ?? "").slice(0, 150), url, images[0] ?? "",
+      images.slice(1, 1 + FACEBOOK_PRODUCTS_MAX_ADDITIONAL_IMAGES).join(","),
+      `${formatAmount(offer.amount)} ${offer.currency}`,
+      stage && NEW_CONSTRUCTION_STAGES.has(stage) ? "new" : "used",
+      input.brand, 1, typeLabel ? `Real Estate > ${typeLabel}` : "Real Estate",
+      offer.mode === "sale" ? "Vânzare" : "Închiriere", typeLabel, city, rooms,
+      JSON.stringify(images.map((u) => ({ url: u }))),
+      ...Array.from({ length: FACEBOOK_MAX_IMAGES }, (_, i) => images[i] ?? ""),
+    ];
+    lines.push(row.map(csvField).join(","));
+  }
+  return { ...base, csv: `${lines.join("\r\n")}\r\n` };
+}
