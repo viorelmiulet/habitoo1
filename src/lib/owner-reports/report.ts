@@ -3,6 +3,7 @@
  * Doar date existente; rândurile fără date se omit. Textul AI e validat
  * contra cifrelor din raport și a numelor clienților.
  */
+import type { PriceEstimate } from './price';
 export type ReportViews = { total: number; bySource: { label: string; views: number }[] };
 export type ReportAcp = { min: number; max: number; asking: number; currency: string; position: "below" | "within" | "above"; diffPercent: number };
 export type Recommendation = "price_adjust" | "keep";
@@ -16,6 +17,7 @@ export type OwnerReportData = {
   messages: number;
   viewings: { planned: number; done: number; feedback: number };
   acp: ReportAcp | null;
+  estimate?: PriceEstimate;
   recommendation: Recommendation;
   agent: { name: string; phone: string | null; email: string | null };
   agency: { name: string; accent: string | null };
@@ -33,6 +35,7 @@ export type RawReportInput = {
   inboundMessages: number;
   viewings: { status: string; description: string | null }[];
   acp: { estimated_min: number | null; estimated_max: number | null } | null;
+  estimate?: PriceEstimate;
   agent: OwnerReportData["agent"];
   agency: OwnerReportData["agency"];
   portalLabel?: (id: string) => string;
@@ -55,15 +58,15 @@ function groupCount<T>(items: T[], key: (t: T) => string): { key: string; count:
 export function buildReportData(raw: RawReportInput): OwnerReportData {
   const label = (s: string | null) => sourceLabel(s, raw.portalLabel);
   const viewMap = new Map<string, number>();
-  for (const v of raw.siteVisits) if (v.views > 0) viewMap.set(label(v.source ?? "site"), (viewMap.get(label(v.source ?? "site")) ?? 0) + v.views);
-  for (const v of raw.portalStats) if (v.views > 0) viewMap.set(label(v.portal), (viewMap.get(label(v.portal)) ?? 0) + v.views);
+  for (const v of raw.siteVisits) if (Number.isFinite(v.views) && v.views >= 0) viewMap.set(label(v.source ?? "site"), (viewMap.get(label(v.source ?? "site")) ?? 0) + v.views);
+  for (const v of raw.portalStats) if (Number.isFinite(v.views) && v.views >= 0) viewMap.set(label(v.portal), (viewMap.get(label(v.portal)) ?? 0) + v.views);
   const bySource = [...viewMap.entries()].map(([l, views]) => ({ label: l, views })).sort((a, b) => b.views - a.views);
   const views = bySource.length ? { total: bySource.reduce((s, v) => s + v.views, 0), bySource } : null;
 
   const asking = raw.property.price;
   let acp: ReportAcp | null = null;
-  if (raw.acp?.estimated_min != null && raw.acp.estimated_max != null && asking) {
-    const min = Number(raw.acp.estimated_min), max = Number(raw.acp.estimated_max);
+  if (raw.estimate?.status === 'ready' && asking) {
+    const min = raw.estimate.min, max = raw.estimate.max;
     const position = asking > max ? "above" : asking < min ? "below" : "within";
     const ref = position === "above" ? max : position === "below" ? min : asking;
     acp = { min, max, asking, currency: raw.property.currency, position, diffPercent: Math.round((Math.abs(asking - ref) / ref) * 100) };
@@ -82,6 +85,7 @@ export function buildReportData(raw: RawReportInput): OwnerReportData {
     messages: raw.inboundMessages,
     viewings,
     acp,
+    ...(raw.estimate ? { estimate: raw.estimate } : {}),
     // Recomandarea de preț doar când ultima ACP arată un preț cerut peste interval.
     recommendation: acp?.position === "above" ? "price_adjust" : "keep",
     agent: raw.agent,
@@ -106,16 +110,20 @@ export function reportLines(d: OwnerReportData): { label: string; value: string 
     const pos = d.acp.position === "within" ? "în intervalul estimat" : d.acp.position === "above" ? `cu ${d.acp.diffPercent}% peste intervalul estimat` : `cu ${d.acp.diffPercent}% sub intervalul estimat`;
     lines.push({ label: "Poziționare față de piață", value: `interval estimat ${formatNumberRo(d.acp.min)}–${formatNumberRo(d.acp.max)} ${d.acp.currency}; prețul cerut ${formatNumberRo(d.acp.asking)} ${d.acp.currency} este ${pos}` });
   }
+  if(d.estimate?.status === 'ready'){
+    lines.push({label:'Comparabile · prețuri cerute',value:d.estimate.comparables.map(c=>`${c.title} · ${formatNumberRo(c.price)} ${c.currency} · ${c.source}${c.url?` · ${c.url}`:''}`).join('\n')});
+    lines.push({label:'Criterii',value:d.estimate.criteria.join('\n')});
+  } else lines.push({label:'Estimare de preț',value:'Date insuficiente'});
   return lines;
 }
 
 export function templateNarrative(d: OwnerReportData): OwnerReportNarrative {
   const activity = d.leads.total + d.viewings.done + d.viewings.planned;
   return {
-    intro: `Vă trimitem raportul pentru ${d.property.title}, pentru săptămâna ${formatDateRo(d.week.start)} – ${formatDateRo(d.week.end)}.`,
+    intro: `Raport pentru ${d.property.title}, pentru perioada ${formatDateRo(d.week.start)} – ${formatDateRo(d.week.end)}.`,
     conclusion: activity > 0
-      ? `Săptămâna aceasta au existat ${plural(d.leads.total, "solicitare nouă", "solicitări noi")} și ${plural(d.viewings.done + d.viewings.planned, "vizionare", "vizionări")}.`
-      : "Săptămâna aceasta nu au existat solicitări sau vizionări noi.",
+      ? `În această perioadă au existat ${plural(d.leads.total, "solicitare nouă", "solicitări noi")} și ${plural(d.viewings.done + d.viewings.planned, "vizionare", "vizionări")}.`
+      : "În această perioadă nu au existat solicitări sau vizionări noi.",
     recommendation: d.recommendation === "price_adjust"
       ? "Pe baza analizei de piață, recomandăm să discutăm o ajustare a prețului."
       : "Continuăm promovarea în forma actuală și revenim cu noutăți.",
@@ -142,6 +150,7 @@ const PRICE_ADVICE = /ajust|reduce|scăde|scade|micșor|micsor|reducer/i;
 /** Acceptă textul AI doar fără cifre inventate, fără nume de clienți și fără sfat de preț nesusținut. */
 export function validateNarrative(n: OwnerReportNarrative, d: OwnerReportData, forbiddenNames: string[]): boolean {
   const all = `${n.intro}\n${n.conclusion}\n${n.recommendation}`;
+  if(/\b[^\s@]+@[^\s@]+\.[^\s@]+|(?:\+?\d[\s.-]?){9,}/.test(all))return false;
   if (!n.intro.trim() || !n.conclusion.trim() || !n.recommendation.trim() || all.length > 2500) return false;
   const allowed = allowedNumbers(d);
   for (const x of numbersIn(all)) if (![...allowed].some((a) => Math.abs(a - x) < 0.01)) return false;
@@ -159,7 +168,7 @@ export function validateNarrative(n: OwnerReportNarrative, d: OwnerReportData, f
 export function shortReportText(d: OwnerReportData, pdfUrl: string | null): string {
   const t = templateNarrative(d);
   return [
-    `Raport săptămânal ${formatDateRo(d.week.start)} – ${formatDateRo(d.week.end)}: ${d.property.title}`,
+    `Raport ${formatDateRo(d.week.start)} – ${formatDateRo(d.week.end)}: ${d.property.title}`,
     ...reportLines(d).map((l) => `• ${l.label}: ${l.value}`),
     t.recommendation,
     pdfUrl ? `Raportul complet (PDF): ${pdfUrl}` : null,
@@ -201,3 +210,10 @@ export function romaniaMidnightUtc(isoDate: string): string {
 }
 
 export const nextDay = (iso: string) => addDays(iso, 1);
+
+export function previousMonth(at:Date):{start:string;end:string}{
+  const {date}=romaniaParts(at);
+  const first=`${date.slice(0,7)}-01`;
+  const end=addDays(first,-1);
+  return {start:`${end.slice(0,7)}-01`,end};
+}

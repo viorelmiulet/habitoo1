@@ -1,6 +1,7 @@
 import { briefDate } from './brief';
 import type { CheckIssue } from '@/lib/listing-check/rules';
-export const ACTION_ORDER = ['qualified_lead','new_lead','overdue','viewing','match','portal_message','required','old_listing','owner','contract','collaboration','map'] as const;
+import { priceAlert, type PriceEstimate } from '@/lib/owner-reports/price';
+export const ACTION_ORDER = ['qualified_lead','new_lead','overdue','viewing','match','portal_message','price_review','required','old_listing','owner','contract','collaboration','map'] as const;
 export type ActionKind = typeof ACTION_ORDER[number];
 export type HomeAction = { id: string; kind: ActionKind; entityKey: string; title: string; reason: string; to: string; search?: Record<string,string>; button: string; at: string; source: string | null; propertyTitle: string | null; ageHours: number; agentId: string | null };
 export type Preference = { action_key: string; ignored: boolean; snoozed_until: string | null };
@@ -34,6 +35,7 @@ export function aiActionFacts(actions: HomeAction[]) { return actions.map((a,i) 
 export function buildHomeActions(input: {
  now: Date; scope: string | null;
  leadScores?: { lead_id: string; score: number | null; score_reason: string | null }[];
+ priceEstimates?: { propertyId: string; estimate: PriceEstimate; leadDates: string[] }[];
  leads: any[]; requests: any[]; activities: any[]; events: any[]; properties: any[]; matches: any[]; checks: {propertyId:string;issues:CheckIssue[]}[]; listings: any[]; contracts: any[]; proposals: any[]; map: any[];
 }): HomeAction[] {
  const out: HomeAction[]=[]; const now=input.now.getTime(); const day=briefDate(input.now); const tomorrow=briefDate(new Date(now+DAY));
@@ -66,6 +68,8 @@ export function buildHomeActions(input: {
  }
  for(const p of props.values()) {
   const published=input.listings.filter(l=>l.property_id===p.id && ['published','in_feed'].includes(l.status) && l.published_at).map(l=>l.published_at).sort()[0];
+  const pricing=input.priceEstimates?.find(e=>e.propertyId===p.id);
+  if(pricing && priceAlert(pricing.estimate,p.price,published??null,pricing.leadDates,input.now)) add('price_review',p.id,p.title,'Preț cu peste 10% peste mediana ofertelor comparabile, fără lead-uri în ultimele 30 de zile. Revizuiește prețul.',`/app/properties/${p.id}`,published??p.created_at,p.assigned_to,'Revizuiește prețul',{search:{tab:'acp'},propertyTitle:p.title,entityKey:`property:${p.id}`});
   if(p.publish_status==='published' && published && now-Date.parse(published)>45*DAY && now-Date.parse(p.updated_at)>45*DAY && !input.leads.some(l=>l.property_id===p.id)) add('old_listing',p.id,p.title,'Publicat de peste 45 de zile, fără lead-uri și fără modificări.',`/app/properties/${p.id}`,published,p.assigned_to,'Deschide anunț',{propertyTitle:p.title,entityKey:`property:${p.id}`});
   if(p.status==='active' && p.owner_contact_id && now-Date.parse(p.created_at)>30*DAY && !input.activities.some(a=>a.contact_id===p.owner_contact_id && a.status!=='cancelled' && (a.done || ['call','message','note'].includes(a.kind)) && Date.parse(a.updated_at??a.created_at)>=now-30*DAY)) add('owner',p.id,p.title,'Activ de peste 30 de zile; fără activitate cu proprietarul în ultimele 30 de zile.',`/app/properties/${p.id}`,p.created_at,p.assigned_to,'Deschide anunț',{propertyTitle:p.title,entityKey:`property:${p.id}`});
  }

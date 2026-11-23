@@ -34,6 +34,18 @@ export async function loadDailyBrief(db:SupabaseClient<Database>,organizationId:
  for(const p of ps){const result=checkListing({property:p,images:images.filter(x=>x.property_id===p.id).map(x=>({isPrimary:x.is_primary===true,isConfidential:x.is_confidential===true,includeInPublish:x.include_in_publish===true,storagePath:x.storage_path,sourceUrl:x.source_url,url:x.url})),publications:[],portalReports:[],zoneMedianPerSqm:null,duplicateDescription:false});checks.push({propertyId:p.id,issues:result.issues});}
  const scoreRows=leadAiEnabled?await completeRows((a,b)=>db.from('lead_ai_insights').select('lead_id,score,score_reason,updated_at').eq('organization_id',organizationId).eq('status','done').order('updated_at',{ascending:false}).order('id').range(a,b)):[];
  const leadScores=scoreRows.filter((row,index)=>scoreRows.findIndex(r=>r.lead_id===row.lead_id)===index);
- const actions=buildHomeActions({now,scope,leads,requests,activities,events,properties,matches,listings,contracts,proposals,checks,map,leadScores});
+ const priceEstimates: NonNullable<Parameters<typeof buildHomeActions>[0]['priceEstimates']>=[];
+ if(await isAiFeatureEnabled(organizationId,'acp_ai')){
+  const {loadPriceEstimate}=await import('@/lib/owner-reports/price.server');
+  const {supabaseAdmin}=await import('@/integrations/supabase/client.server');
+  for(const p of ps){
+   if(!listings.some(l=>l.property_id===p.id && l.published_at && Date.parse(l.published_at)<=now.getTime()-30*86400000))continue;
+   // All property leads, not only the current agent's leads: absence must be factual.
+   const {data:recent,count,error}=await supabaseAdmin.from('leads').select('created_at',{count:'exact'}).eq('organization_id',organizationId).eq('property_id',p.id).is('deleted_at',null).gte('created_at',new Date(now.getTime()-30*86400000).toISOString()).limit(1);
+   if(error || count===null || count>0)continue;
+   try{priceEstimates.push({propertyId:p.id,estimate:await loadPriceEstimate(db,organizationId,p.id,scope??undefined),leadDates:(recent??[]).map(l=>l.created_at)});}catch{/* Missing comparables never create an alert. */}
+  }
+ }
+ const actions=buildHomeActions({now,scope,leads,requests,activities,events,properties,matches,listings,contracts,proposals,checks,map,leadScores,priceEstimates});
  return {version:2,actions:selectActions(actions,preferences,now),computedAt:now.toISOString(),agents:profiles.map(p=>({id:p.id,name:p.full_name})),isAdmin:admin.data===true};
 }

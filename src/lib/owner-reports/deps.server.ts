@@ -1,5 +1,7 @@
 /** Implementările reale (baza de date, stocare, AI, email) pentru rapoartele de proprietar. */
 import type { GenerateDeps, LoadedRaw, ReportTarget, SendDeps } from "./run.server";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/integrations/supabase/types';
 import { nextDay, romaniaMidnightUtc, type OwnerReportData, type OwnerReportNarrative } from "./report";
 
 const BUCKET = "owner-reports";
@@ -10,35 +12,36 @@ async function admin(): Promise<Db> {
   return (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 }
 
-export async function loadRawReport(db: Db, t: ReportTarget, week: { start: string; end: string }): Promise<LoadedRaw | null> {
+export async function loadRawReport(db: Db, t: ReportTarget, week: { start: string; end: string }, caller?:SupabaseClient<Database>): Promise<LoadedRaw | null> {
   const from = romaniaMidnightUtc(week.start);
   const to = romaniaMidnightUtc(nextDay(week.end));
   const { data: p } = await db.from("properties").select("id,organization_id,title,reference,price,currency,city,status,deleted_at,archived_at,owner_contact_id,assigned_to").eq("id", t.property_id).maybeSingle();
-  if (!p || p.status !== "active" || p.deleted_at || p.archived_at || !p.owner_contact_id) return null;
+  if (!p || p.organization_id !== t.organization_id || p.status !== "active" || p.deleted_at || p.archived_at || !p.owner_contact_id) return null;
   const { portalDisplayName } = await import("@/lib/portals/registry");
+  const {readComplete}=await import('./price.server');
+  const rows=async<T>(q:(a:number,b:number)=>PromiseLike<{data:T[]|null;error:unknown}>)=>({data:await readComplete(q)});
   const portalLabel = (id: string) => { try { return portalDisplayName(id as never) || id; } catch { return id; } };
   const [visits, stats, listings, leads, msgs, viewings, acp, org, agent] = await Promise.all([
-    db.from("site_feed_visits").select("source,views").eq("property_id", p.id).gte("occurred_on", week.start).lte("occurred_on", week.end),
-    db.from("partner_api_statistics").select("portal,views").eq("property_id", p.id).eq("environment", "live").gte("date", week.start).lte("date", week.end),
-    db.from("portal_listings").select("portal,status").eq("property_id", p.id).in("status", ["published", "updated"]),
-    db.from("leads").select("name,source").eq("property_id", p.id).is("deleted_at", null).gte("created_at", from).lt("created_at", to),
+    rows<{source:string|null;views:number}>((a,b)=>db.from("site_feed_visits").select("source,views").eq("property_id", p.id).gte("occurred_on", week.start).lte("occurred_on", week.end).order('id').range(a,b)),
+    rows<{portal:string;views:number}>((a,b)=>db.from("partner_api_statistics").select("portal,views").eq("property_id", p.id).eq("environment", "live").gte("date", week.start).lte("date", week.end).order('date').order('portal').range(a,b)),
+    rows<{portal:string;status:string}>((a,b)=>db.from("portal_listings").select("portal,status").eq("property_id", p.id).in("status", ["published", "updated"]).order('id').range(a,b)),
+    rows<{source:string|null}>((a,b)=>db.from("leads").select("source").eq("organization_id",p.organization_id).eq("property_id", p.id).is("deleted_at", null).gte("created_at", from).lt("created_at", to).order('id').range(a,b)),
     db.from("portal_messages").select("id", { count: "exact", head: true }).eq("property_id", p.id).eq("direction", "in").gte("created_at", from).lt("created_at", to),
-    db.from("activities").select("status,description,contact_id").eq("property_id", p.id).eq("kind", "viewing").neq("status", "cancelled").gte("starts_at", from).lt("starts_at", to),
+    rows<{status:string;description:string|null}>((a,b)=>db.from("activities").select("status,description").eq("organization_id",p.organization_id).eq("property_id", p.id).eq("kind", "viewing").neq("status", "cancelled").gte("starts_at", from).lt("starts_at", to).order('id').range(a,b)),
     db.from("acp_analyses").select("estimated_min,estimated_max").eq("property_id", p.id).eq("organization_id", p.organization_id).not("estimated_min", "is", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     db.from("organizations").select("name,logo_path,material_accent_color").eq("id", p.organization_id).maybeSingle(),
     p.assigned_to ? db.from("profiles").select("full_name,phone,email").eq("id", p.assigned_to).maybeSingle() : Promise.resolve({ data: null }),
   ]);
-  const contactIds = [...new Set((viewings.data ?? []).map((v: { contact_id: string | null }) => v.contact_id).filter(Boolean))];
-  const { data: contacts } = contactIds.length ? await db.from("contacts").select("first_name,last_name").in("id", contactIds) : { data: [] };
-  const forbiddenNames = [
-    ...(leads.data ?? []).map((l: { name: string }) => l.name),
-    ...(contacts ?? []).map((c: { first_name: string; last_name: string }) => `${c.first_name} ${c.last_name}`),
-  ].filter(Boolean);
+  if(msgs.error || org.error || agent.error)throw new Error('Statisticile raportului nu sunt disponibile.');
   let logo: Uint8Array | null = null;
   if (org.data?.logo_path && /\.(png|jpe?g)$/i.test(org.data.logo_path)) {
     const { data: file } = await db.storage.from("agency-logos").download(org.data.logo_path);
     if (file) logo = new Uint8Array(await file.arrayBuffer());
   }
+  const {loadPriceEstimate}=await import('./price.server');
+  const role=caller?await caller.rpc('is_org_admin'):null;
+  if(role?.error)throw new Error('Accesul nu a putut fi verificat.');
+  const estimate=await loadPriceEstimate(caller??db,p.organization_id,p.id,role?.data===true?undefined:(t.actorUserId??p.assigned_to??undefined));
   const num = (v: unknown) => (v == null ? null : Number(v));
   return {
     raw: {
@@ -49,21 +52,22 @@ export async function loadRawReport(db: Db, t: ReportTarget, week: { start: stri
       publishedPortals: (listings.data ?? []).map((l: { portal: string }) => l.portal),
       leads: (leads.data ?? []).map((l: { source: string | null }) => ({ source: l.source })),
       inboundMessages: msgs.count ?? 0,
-      viewings: (viewings.data ?? []).map((v: { status: string; description: string | null }) => ({ status: v.status, description: v.description })),
+      viewings: (viewings.data ?? []).map((v: { status: string; description: string | null }) => ({ status: v.status, description: v.description?.trim()?'Feedback notat':null })),
       acp: acp.data ? { estimated_min: num(acp.data.estimated_min), estimated_max: num(acp.data.estimated_max) } : null,
+      estimate,
       agent: { name: agent.data?.full_name ?? org.data?.name ?? "Agentul tău", phone: agent.data?.phone ?? null, email: agent.data?.email ?? null },
       agency: { name: org.data?.name ?? "Agenția", accent: org.data?.material_accent_color ?? null },
       portalLabel: (id: string) => (id === "site" ? "Site agenție" : portalLabel(id)),
     },
-    forbiddenNames,
-    feedbackNotes: (viewings.data ?? []).map((v: { description: string | null }) => v.description ?? "").filter((d: string) => d.trim()),
+    forbiddenNames:[],
+    feedbackNotes:[],
     ownerContactId: p.owner_contact_id,
     agentId: p.assigned_to ?? null,
     logo,
   };
 }
 
-export async function createGenerateDeps(): Promise<GenerateDeps> {
+export async function createGenerateDeps(caller?:SupabaseClient<Database>): Promise<GenerateDeps> {
   const db = await admin();
   const { resolveAiProvider } = await import("@/lib/ai/providers/registry.server");
   const { isAiFeatureEnabled } = await import("@/lib/ai/features/features.server");
@@ -71,16 +75,34 @@ export async function createGenerateDeps(): Promise<GenerateDeps> {
   const { withAiProviderFallback } = await import("@/lib/ai/providers/fallback.server");
   const { buildOwnerReportPdf } = await import("./pdf.server");
   const primary = resolveAiProvider("standard");
+  const usage:{current:{provider:string;model:string;input_tokens:number|null;output_tokens:number|null;latency_ms:number}|null}={current:null};
+  const readUsage=()=>usage.current;
   return {
     claim: async (t, week) => {
-      const { data } = await db.from("owner_reports").upsert({ organization_id: t.organization_id, property_id: t.property_id, week_start: week.start, week_end: week.end, auto_send: t.auto_send }, { onConflict: "property_id,week_start", ignoreDuplicates: true }).select("id");
+      const { data,error } = await db.from("owner_reports").upsert({ organization_id: t.organization_id, property_id: t.property_id, week_start: week.start, week_end: week.end, auto_send: false }, { onConflict: "property_id,week_start", ignoreDuplicates: true }).select("id");
+      if(error)throw new Error('Ciorna raportului nu a putut fi creată.');
       return data?.[0]?.id ?? null;
     },
-    loadRaw: (t, week) => loadRawReport(db, t, week),
+    loadRaw: (t, week) => loadRawReport(db, t, week,caller),
     isFeatureEnabled: (org) => isAiFeatureEnabled(org, "ai_owner_report"),
     creditsBlocked: (org) => aiCreditsBlockedMessage(org),
-    withCredits: (actor, run, ok) => withAiCredits(actor, "owner_report", run, { isSuccess: ok }),
-    provider: primary ? { generate: async (req) => (await withAiProviderFallback(primary, (p) => p.generate(req))).result } : null,
+    withCredits: (actor, run, ok) => withAiCredits(actor, "owner_report", async()=>{
+      usage.current=null;
+      const result=await run();
+      const current=readUsage();
+      if(current){
+        const {writeAiUsage}=await import('@/lib/ai/usage/tracking.server');
+        await writeAiUsage(db,{...current,organization_id:actor.organizationId,user_id:actor.userId,capability:'owner_report',success:ok(result),tool_calls:0});
+      }
+      return result;
+    }, { isSuccess: ok }),
+    provider: primary ? { generate: async (req) => {
+      const started=Date.now();
+      const outcome=await withAiProviderFallback(primary,(p)=>p.generate(req));
+      // Usage is written in withCredits below with the verified requesting actor.
+      usage.current={provider:outcome.provider.id,model:outcome.provider.model,input_tokens:outcome.result.inputTokens,output_tokens:outcome.result.outputTokens,latency_ms:Date.now()-started};
+      return outcome.result;
+    } } : null,
     renderPdf: buildOwnerReportPdf,
     savePdf: async (id, bytes) => {
       const path = `${id}.pdf`;
@@ -88,7 +110,7 @@ export async function createGenerateDeps(): Promise<GenerateDeps> {
       if (error) throw new Error(error.message);
       return path;
     },
-    finalize: async (id, patch) => { await db.from("owner_reports").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id); },
+    finalize: async (id, patch) => { const {error}=await db.from("owner_reports").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id); if(error)throw new Error('Raportul nu a putut fi salvat.'); },
     // Un eșec eliberează slotul, ca o rulare ulterioară din aceeași zi să reîncerce.
     release: async (id) => { await db.from("owner_reports").delete().eq("id", id).is("pdf_path", null); },
     notify: async (n) => { await db.from("notifications").insert({ organization_id: n.organizationId, user_id: n.userId, type: "owner_report", title: n.title, body: n.body, link: n.link }); },

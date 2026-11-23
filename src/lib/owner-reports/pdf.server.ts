@@ -13,7 +13,7 @@ const MUTED = rgb(0.42, 0.45, 0.52);
 function hexColor(hex: string | null) {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex ?? "");
   if (!m) return rgb(0.72, 0.56, 0.24);
-  const n = parseInt(m[1]!, 16);
+  const n = parseInt(m[1]??'', 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
@@ -33,7 +33,7 @@ function wrap(text: string, font: PDFFont, size: number, max: number): string[] 
 export async function buildOwnerReportPdf(d: OwnerReportData, n: OwnerReportNarrative, logo: Uint8Array | null): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
-  doc.setTitle(`Raport săptămânal — ${d.property.title}`);
+  doc.setTitle(`Raport pentru proprietar — ${d.property.title}`);
   doc.setProducer("Habitoo CRM");
   let regular: PDFFont, bold: PDFFont;
   try {
@@ -64,9 +64,9 @@ export async function buildOwnerReportPdf(d: OwnerReportData, n: OwnerReportNarr
     page.drawImage(img, { x: M, y: y - img.height * s, width: img.width * s, height: img.height * s });
   } else page.drawText(d.agency.name, { x: M, y: y - 16, size: 16, font: bold, color: NAVY });
   y -= 60;
-  text("Raport săptămânal pentru proprietar", 20, bold, NAVY, 6);
+  text("Raport pentru proprietar", 20, bold, NAVY, 6);
   text(`${d.property.title}${d.property.reference ? ` · ${d.property.reference}` : ""}`, 12, regular, MUTED);
-  text(`Săptămâna ${formatDateRo(d.week.start)} – ${formatDateRo(d.week.end)}`, 12, regular, MUTED, 14);
+  text(`Perioada ${formatDateRo(d.week.start)} – ${formatDateRo(d.week.end)}`, 12, regular, MUTED, 14);
   text(n.intro, 11, regular, INK, 12);
 
   // Cifre

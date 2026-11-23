@@ -1,3 +1,11 @@
+## Funcții AI — preț și proprietari, calupul D
+- [x] Estimare deterministă din ofertele accesibile Habitoo, MAP și comparabilele selectate în ultima ACP; minimum 5, quartile/mediană, criterii și surse; fără date deduse sau Facebook, fără taxă AI pentru calcul.
+- [x] Alertă în Top acțiuni: strict peste 10% față de mediană, publicare de minimum 30 zile și niciun lead în ultimele 30 zile; numărătoarea include ceilalți agenți fără a expune clienți.
+- [x] Raport pentru luna încheiată la cerere sau prin workerul existent; PDF și ciornă, agregate fără date ale clienților, Gemini existent cu credite/usage, validare strictă și nicio trimitere automată.
+- [x] Teste exclusiv noi/modificate fără AI real; PDF real și flux vizual simulat desktop/390 fără erori/overflow, compilare curată; commit la final, fără publicare.
+- [ ] Flux real autentificat: solicitantul nu are cont asociat pentru sesiune; necesită autentificarea în previzualizare. Fără apeluri AI sau trimiteri reale.
+- Calendar păstrat fără modificări în producție: cronul existent owner-reports-weekly este activ lunea; după publicare pregătește o singură ciornă pentru luna încheiată, la prima rulare eligibilă din lună. Nu se publică în această cerere.
+
 ## Funcții AI — anunțuri și marketing, calupul C
 - [x] Variante română/engleză și Facebook/Instagram prin generatorul existent; formular fără salvare, descrieri separate OLX direct/Storia/Properstar prin ciorne aprobate, fără trimitere automată. European.realestate rămâne variantă de text, nu integrare nouă.
 - [x] Analiză fotografii cu motive și categorii fixe, galerie completă în loturi de 20, acces caller/agenție, credite; ordine și excludere numai confirmate, fără ștergere. Completarea existentă nu mai aplică automat ordinea.

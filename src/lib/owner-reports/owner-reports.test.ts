@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildReportData, canAutoSend, previousWeek, reportLines, validateNarrative, type RawReportInput } from "./report";
+import { buildReportData, canAutoSend, previousWeek, reportLines, validateNarrative, templateNarrative, type RawReportInput } from "./report";
 import { generateOwnerReport, sendOwnerReport, type GenerateDeps, type SendDeps } from "./run.server";
 
 vi.mock("@/lib/ai/credits/credits", () => ({ AiCreditsExhaustedError: class extends Error {} }));
@@ -27,7 +27,7 @@ function genDeps(over: Partial<GenerateDeps> = {}) {
     isFeatureEnabled: async () => true,
     creditsBlocked: async () => null,
     withCredits: async (_a, run) => run(),
-    provider: { generate: vi.fn(async () => ({ text: JSON.stringify({ intro: "Săptămâna aceasta au fost 3 solicitări.", conclusion: "Au fost 2 vizionări.", recommendation: "Continuăm promovarea." }) })) } as never,
+    provider: { generate: vi.fn(async () => ({ text: JSON.stringify(templateNarrative(buildReportData(raw()))) })) } as never,
     renderPdf: async () => new Uint8Array([1]), savePdf: async () => "p.pdf", finalize, release: async () => {}, notify, ...over,
   };
   return { deps, finalize, notify };
@@ -86,7 +86,7 @@ describe("raport proprietar", () => {
     await generateOwnerReport(deps, target, week);
     const patch = (finalize.mock.calls[0] as unknown as [string, Record<string, unknown>])[1];
     expect(patch.is_ai).toBe(false);
-    expect((deps.provider!.generate as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect((deps.provider?.generate as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
     expect(JSON.stringify(notify.mock.calls[0])).toMatch(/Fără text AI/);
   });
   it("nu se dublează în aceeași săptămână", async () => {

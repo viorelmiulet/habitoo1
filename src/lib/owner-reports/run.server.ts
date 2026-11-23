@@ -10,7 +10,7 @@ import {
   type OwnerReportData, type OwnerReportNarrative, type RawReportInput,
 } from "./report";
 
-export type ReportTarget = { property_id: string; organization_id: string; auto_send: boolean };
+export type ReportTarget = { property_id: string; organization_id: string; auto_send: boolean; actorUserId?: string };
 export type LoadedRaw = { raw: RawReportInput; forbiddenNames: string[]; feedbackNotes: string[]; ownerContactId: string | null; agentId: string | null; logo: Uint8Array | null };
 
 export type GenerateDeps = {
@@ -27,9 +27,9 @@ export type GenerateDeps = {
   notify: (n: { organizationId: string; userId: string; title: string; body: string; link: string }) => Promise<void>;
 };
 
-const narrativeSchema = z.object({ intro: z.string().max(800), conclusion: z.string().max(800), recommendation: z.string().max(600) });
+const narrativeSchema = z.object({ intro: z.string().max(800), conclusion: z.string().max(800), recommendation: z.string().max(600) }).strict();
 
-export const OWNER_REPORT_SYSTEM = `Ești asistentul Habitoo pentru agenți imobiliari din România. Scrii în română textul unui raport săptămânal către proprietarul unei locuințe.
+export const OWNER_REPORT_SYSTEM = `Ești asistentul Habitoo pentru agenți imobiliari din România. Compui un raport către proprietar numai din propozițiile furnizate în variante_validate. Copiază exact câte o propoziție pentru fiecare câmp, fără completări sau reformulări.
 Răspunde DOAR cu JSON: {"intro":string,"conclusion":string,"recommendation":string}.
 Reguli: folosește DOAR cifrele primite, fără alte numere, procente sau estimări. Nu menționa nume, telefoane sau emailuri de clienți. "recommendation": dacă "recomandare" este "price_adjust", recomanzi politicos discutarea unei ajustări de preț; altfel recomanzi continuarea promovării, fără să sugerezi schimbarea prețului. Ton profesionist și cald, 1–3 fraze pe câmp.`;
 
@@ -49,14 +49,17 @@ export async function composeNarrative(deps: Pick<GenerateDeps, "isFeatureEnable
     saptamana: `${data.week.start} – ${data.week.end}`,
     cifre: reportLines(data),
     recomandare: data.recommendation,
-    feedback_vizionari: loaded.feedbackNotes.map((n) => redactNames(n, loaded.forbiddenNames).slice(0, 300)),
+    feedback_agregat: { vizionari_cu_note: data.viewings.feedback },
+    variante_validate: {intro:[template.intro],conclusion:[template.conclusion],recommendation:[template.recommendation]},
   };
   try {
+    const provider=deps.provider;
+    if(!provider)return {narrative:template,isAi:false,notice:null};
     const result = await deps.withCredits(actor, async () => {
-      const r = await deps.provider!.generate({ system: OWNER_REPORT_SYSTEM, messages: [{ role: "user", content: JSON.stringify(facts) }], tools: [], maxOutputTokens: 1200 });
+      const r = await provider.generate({ system: OWNER_REPORT_SYSTEM, messages: [{ role: "user", content: JSON.stringify(facts) }], tools: [], maxOutputTokens: 1200 });
       const json = r.text.slice(r.text.indexOf("{"), r.text.lastIndexOf("}") + 1);
       const parsed = narrativeSchema.safeParse((() => { try { return JSON.parse(json); } catch { return null; } })());
-      return parsed.success && validateNarrative(parsed.data, data, loaded.forbiddenNames) ? parsed.data : null;
+      return parsed.success && validateNarrative(parsed.data, data, loaded.forbiddenNames) && parsed.data.intro===template.intro && parsed.data.conclusion===template.conclusion && parsed.data.recommendation===template.recommendation ? parsed.data : null;
     }, (r) => r !== null);
     return result ? { narrative: result, isAi: true, notice: null } : { narrative: template, isAi: false, notice: "Textul AI nu a trecut verificarea; raportul folosește textul standard." };
   } catch (e) {
@@ -74,16 +77,18 @@ export async function generateOwnerReport(deps: GenerateDeps, t: ReportTarget, w
     const loaded = await deps.loadRaw(t, week);
     if (!loaded) { await deps.finalize(reportId, { status: "skipped", send_error: "Proprietatea nu mai este eligibilă." }); return "skipped"; }
     const data = buildReportData(loaded.raw);
-    const actor = { organizationId: t.organization_id, userId: (loaded.agentId ?? null) as string };
+    const userId=t.actorUserId??loaded.agentId;
+    if(!userId)throw new Error('Agentul raportului nu este disponibil.');
+    const actor = { organizationId: t.organization_id, userId };
     const { narrative, isAi, notice } = await composeNarrative(deps, data, loaded, actor);
     const pdf = await deps.renderPdf(data, narrative, loaded.logo);
     const path = await deps.savePdf(reportId, pdf);
-    await deps.finalize(reportId, { data, narrative, is_ai: isAi, short_text: shortReportText(data, null), pdf_path: path, auto_send: t.auto_send, owner_contact_id: loaded.ownerContactId, agent_id: loaded.agentId });
+    await deps.finalize(reportId, { data, narrative, is_ai: isAi, short_text: shortReportText(data, null), pdf_path: path, auto_send: false, owner_contact_id: loaded.ownerContactId, agent_id: loaded.agentId });
     if (loaded.agentId) {
       await deps.notify({
         organizationId: t.organization_id, userId: loaded.agentId,
-        title: `Raportul săptămânal pentru ${data.property.title} e gata`,
-        body: [t.auto_send ? "Se trimite automat proprietarului la 09:00, dacă nu îl oprești." : "Verifică-l și trimite-l proprietarului.", notice ? `Fără text AI: ${notice}` : null].filter(Boolean).join(" "),
+        title: `Raportul pentru ${data.property.title} e gata`,
+        body: ["Verifică-l și trimite-l proprietarului.", notice ? `Fără text AI: ${notice}` : null].filter(Boolean).join(" "),
         link: `/app/properties/${t.property_id}?tab=owner-reports`,
       });
     }
@@ -113,6 +118,7 @@ export function ownerEmailBody(d: OwnerReportData, n: OwnerReportNarrative, firs
 
 /** Trimite ciorna o singură dată (blocare pe status), cu PDF atașat și Reply-To agentului. */
 export async function sendOwnerReport(deps: SendDeps, reportId: string, by: { userId: string | null; via: "email" | "auto" }): Promise<{ ok: boolean; message?: string }> {
+  if(by.via==='auto' || !by.userId)return {ok:false,message:'Raportul se trimite numai la confirmarea agentului.'};
   const r = await deps.lockDraft(reportId);
   if (!r) return { ok: false, message: "Raportul nu mai este o ciornă de trimis." };
   try {
@@ -122,10 +128,10 @@ export async function sendOwnerReport(deps: SendDeps, reportId: string, by: { us
     const pdf = r.pdf_path ? await deps.loadPdf(r.pdf_path) : null;
     if (!pdf) throw new Error("PDF-ul raportului lipsește.");
     const body = ownerEmailBody(r.data, r.narrative, rec.ownerFirstName);
-    const res = await deps.sendEmail({ to: rec.ownerEmail, replyTo: rec.agentEmail, subject: `Raport săptămânal: ${r.data.property.title}`, ...body, attachment: { filename: `raport-${r.data.week.start}.pdf`, data: pdf }, sendKey: `owner-report-${r.id}` });
+    const res = await deps.sendEmail({ to: rec.ownerEmail, replyTo: rec.agentEmail, subject: `Raport pentru proprietar: ${r.data.property.title}`, ...body, attachment: { filename: `raport-${r.data.week.start}.pdf`, data: pdf }, sendKey: `owner-report-${r.id}` });
     if (!res.ok) throw new Error(res.error ?? "Emailul nu a putut fi trimis.");
     await deps.markSent(r.id, by.userId, by.via);
-    await deps.logActivity({ organizationId: r.organization_id, propertyId: r.property_id, contactId: r.owner_contact_id, agentId: r.agent_id, title: "Raport săptămânal trimis proprietarului", description: `Săptămâna ${r.data.week.start} – ${r.data.week.end}, ${by.via === "auto" ? "trimis automat" : "trimis pe email"}.` });
+    await deps.logActivity({ organizationId: r.organization_id, propertyId: r.property_id, contactId: r.owner_contact_id, agentId: r.agent_id, title: "Raport trimis proprietarului", description: `Perioada ${r.data.week.start} – ${r.data.week.end}, trimis pe email.` });
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "Trimiterea a eșuat.";
