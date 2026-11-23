@@ -41,6 +41,8 @@ export function ActivityDialog({
   defaults?: {
     kind?: ActivityKind;
     title?: string;
+    description?: string;
+    status?: "planned" | "done" | "cancelled";
     propertyId?: string;
     contactId?: string;
     leadId?: string;
@@ -54,24 +56,24 @@ export function ActivityDialog({
   const now = new Date();
   const [kind, setKind] = useState<ActivityKind>(defaults?.kind ?? "call");
   const [title, setTitle] = useState(defaults?.title ?? "");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(defaults?.description ?? "");
   const [date, setDate] = useState(() => (defaults?.startsAt ?? now).toISOString().slice(0, 10));
   const [time, setTime] = useState(() => (defaults?.startsAt ?? now).toISOString().slice(11, 16));
   const [duration, setDuration] = useState("30");
   const [assignedTo, setAssignedTo] = useState<string>(userId ?? "");
-  const [status, setStatus] = useState<"planned" | "done" | "cancelled">("planned");
+  const [status, setStatus] = useState<"planned" | "done" | "cancelled">(defaults?.status ?? "planned");
 
   useEffect(() => {
     if (open) {
       setKind(defaults?.kind ?? "call");
       setTitle(defaults?.title ?? "");
-      setDescription("");
+      setDescription(defaults?.description ?? "");
       const base = defaults?.startsAt ?? new Date();
       setDate(base.toISOString().slice(0, 10));
       setTime(base.toISOString().slice(11, 16));
       setDuration("30");
       setAssignedTo(userId ?? "");
-      setStatus("planned");
+      setStatus(defaults?.status ?? "planned");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

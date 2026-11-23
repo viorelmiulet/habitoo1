@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LeadAiAssist, LeadAiBadges, useLeadAiBadges } from "@/components/app/ai/LeadAiAssist";
+import { ClientAiPanel } from "@/components/app/ai/ClientAiPanel";
 import { Slider } from "@/components/ui/slider";
 import {
   Dialog,
@@ -1233,6 +1234,7 @@ function LeadsPage() {
               {detailLead.notes ? (
                 <p className="rounded-[14px] border border-border bg-card p-3 text-sm">{detailLead.notes}</p>
               ) : null}
+              <ClientAiPanel key={`call-${detailLead.id}`} entity={{ kind: "lead", id: detailLead.id }} />
               <LeadAiAssist
                 key={detailLead.id}
                 leadId={detailLead.id}

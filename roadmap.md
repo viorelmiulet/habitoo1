@@ -1,3 +1,9 @@
+## Funcții AI — clienți și apeluri, calupul B
+- [x] Rezumat la cerere din istoricul contactului și al lead-urilor asociate, acces agent/agenție și Gemini existent cu credite; propoziții-sursă validate fără fapte inventate.
+- [x] Înregistrare WAV temporară contact/lead; transcriere și propuneri cu dovezi, activitate/follow-up prin ActivityDialog și cerere confirmată separat; fără audio în storage sau în istoric, fără salvări la generare.
+- [x] 32 teste noi în 6 fișiere trec, fără AI real; compilare curată; fără publicare, commit la încheiere.
+- [ ] Verificare cap-coadă în cont real: solicitantul nu are cont asociat pentru sesiune; necesită autentificarea în previzualizare. Nu s-au efectuat apeluri reale la AI.
+
 ## Funcții AI — lead-uri, calupul A
 - [x] Motorul existent extins pentru orice lead/mesaj/notă: Gemini existent, credite și consum; ciornă din propoziții cu fapte verificate și cerere cu fragmente-sursă.
 - [x] Scor 0–100 explicabil din mesaj/buget/potrivire/interacțiuni/viteza clientului; peste 70 intră înaintea celorlalte Top acțiuni, fără ocolirea accesului sau activării AI.
