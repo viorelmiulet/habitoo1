@@ -2339,6 +2339,13 @@
       "when": 1795463366777,
       "tag": "0333_property_images_floor_plan",
       "breakpoints": true
+    },
+    {
+      "idx": 334,
+      "version": "7",
+      "when": 1795463931638,
+      "tag": "0334_properties_video_virtual_tour",
+      "breakpoints": true
     }
   ]
 }

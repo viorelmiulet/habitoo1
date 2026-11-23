@@ -47,6 +47,7 @@ import { EmptyState } from "@/components/app/EmptyState";
 
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
+import { PropertyMediaLinks } from "@/components/app/PropertyMediaLinks";
 import { ListingAutofillCard } from "@/components/app/ai/ListingAutofillCard";
 import { AiFieldMarksContext } from "@/components/app/ai/AiFieldMarks";
 import { applyAutofillProposal, autofillKnownValues, clearAutofillField, currentAutofillValues, type AutofillSetters } from "@/components/app/ai/listing-autofill-apply";
@@ -1429,6 +1430,7 @@ function PropertyDetailContent() {
 
         <TabsContent value="media" data-tour="property-media">
           <PropertyMediaManager propertyId={id} orgId={orgId} userId={user?.userId} />
+          <PropertyMediaLinks propertyId={id} userId={user?.userId} />
         </TabsContent>
 
         <TabsContent value="acp" data-tour="property-acp">

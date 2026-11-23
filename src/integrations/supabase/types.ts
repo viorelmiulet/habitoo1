@@ -11224,7 +11224,9 @@ export type Database = {
           usable_surface: number | null
           utilities: string[]
           vat_included: boolean
+          video_url: string | null
           views: string[]
+          virtual_tour_url: string | null
           wall_finishes: string[]
           windows: string[]
         }
@@ -11367,7 +11369,9 @@ export type Database = {
           usable_surface?: number | null
           utilities?: string[]
           vat_included?: boolean
+          video_url?: string | null
           views?: string[]
+          virtual_tour_url?: string | null
           wall_finishes?: string[]
           windows?: string[]
         }
@@ -11510,7 +11514,9 @@ export type Database = {
           usable_surface?: number | null
           utilities?: string[]
           vat_included?: boolean
+          video_url?: string | null
           views?: string[]
+          virtual_tour_url?: string | null
           wall_finishes?: string[]
           windows?: string[]
         }
@@ -15870,7 +15876,9 @@ export type Database = {
           usable_surface: number | null
           utilities: string[]
           vat_included: boolean
+          video_url: string | null
           views: string[]
+          virtual_tour_url: string | null
           wall_finishes: string[]
           windows: string[]
         }[]

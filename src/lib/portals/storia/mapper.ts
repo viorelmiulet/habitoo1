@@ -1,3 +1,4 @@
+import { mediaLinkError, normalizeMediaLink } from "@/lib/property-media/links";
 /**
  * Mapper pur Habitoo → Storia.ro (OLX Group RE API). Fără DB, fără rețea.
  *
@@ -56,6 +57,8 @@ export type StoriaAdvert = {
   auto_extend: boolean;
   parent_uuid?: string;
   floor_plan?: string;
+  movie_url?: string;
+  virtual_walk?: string;
 };
 
 export type StoriaListing = { transaction: StoriaTransaction; advert: StoriaAdvert };
@@ -284,6 +287,21 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
 
   const reference = (p.reference ?? "").trim();
 
+  // Linkuri opționale: un link invalid se omite cu avertisment, nu blochează.
+  const mediaLinks: { movie_url?: string; virtual_walk?: string } = {};
+  const videoUrl = normalizeMediaLink(p.video_url);
+  if (videoUrl) {
+    const err = mediaLinkError(videoUrl, "video");
+    if (err) warnings.push(`${err} Nu se trimite la Storia.`);
+    else mediaLinks.movie_url = videoUrl;
+  }
+  const tourUrl = normalizeMediaLink(p.virtual_tour_url);
+  if (tourUrl) {
+    const err = mediaLinkError(tourUrl, "virtual_tour");
+    if (err) warnings.push(`${err} Nu se trimite la Storia.`);
+    else mediaLinks.virtual_walk = tourUrl;
+  }
+
   const listings: StoriaListing[] = priced.map((entry) => {
     const categoryUrn = categories.find((c) => c.transaction === entry.transaction)?.urn as string;
     const attributes = attributesByCategory.get(categoryUrn) ?? [];
@@ -294,6 +312,7 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
       price: { value: entry.value as number, currency: entry.currency },
       location: { lat: coords!.lat, lon: coords!.lng, exact: p.location_precise === true },
       images,
+      ...mediaLinks,
       ...(floorPlanImage ? { floor_plan: feedImageUrl(options.baseUrl, floorPlanImage.id) } : {}),
       attributes,
       site_urn: STORIA_SITE_URN,
