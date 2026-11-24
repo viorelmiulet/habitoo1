@@ -1,6 +1,6 @@
 /** Controlled promotion choices: only the parent publication action sends them. */
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { PromotionNumberInput } from "@/components/app/PromotionNumberInput";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import type { ImobiliarePromotionsView } from "@/lib/portals/imobiliare-promotions.functions";
@@ -33,7 +33,7 @@ export function PropertyImobiliarePromotionsCard({ view, drafts, disabled, error
       const error = errors[row.id] ?? row.error;
       return <li key={row.id} className="min-w-0">
         <div className="flex min-h-11 flex-wrap items-center gap-2">
-          {row.kind === "numeric" ? <Input type="number" min={0} max={row.max ?? undefined} value={typeof wanted === "number" ? wanted : 0} className="h-9 w-20 text-base" aria-label={`${row.label} pentru acest anunț`} disabled={disabled || blocked} onChange={(event) => onChange(row.id, Math.max(0, Math.trunc(Number(event.target.value) || 0)))} /> : <Checkbox id={`imobiliare-promotion-${row.id}`} checked={wanted === true} disabled={disabled || (blocked && wanted !== true)} aria-label={`${row.label} pentru acest anunț`} onCheckedChange={(checked) => onChange(row.id, checked === true)} />}
+          {row.kind === "numeric" ? <PromotionNumberInput max={row.max ?? null} value={typeof wanted === "number" ? wanted : 0} className="h-9 w-20 text-base" aria-label={`${row.label} pentru acest anunț`} disabled={disabled || blocked} onValue={(value) => onChange(row.id, value)} /> : <Checkbox id={`imobiliare-promotion-${row.id}`} checked={wanted === true} disabled={disabled || (blocked && wanted !== true)} aria-label={`${row.label} pentru acest anunț`} onCheckedChange={(checked) => onChange(row.id, checked === true)} />}
           <label htmlFor={row.kind === "boolean" ? `imobiliare-promotion-${row.id}` : undefined} className="min-w-0 flex-1 text-xs font-medium">{row.label}</label>
           <span className="text-xs text-muted-foreground">{row.slotType ? `${row.available ?? "—"}/${row.total ?? "—"} libere` : "Fără limită"}</span>
         </div>
