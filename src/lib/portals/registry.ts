@@ -392,6 +392,7 @@ export const STATIC_PORTALS: PortalDefinition[] = [
   },
   {
     id: "vrexa",
+    receives_leads: true,
     activation: "approval",
     display_name: "Vrexa.ro",
     description: "Integrare directă cu Vrexa.ro prin datele de acces generate de agenție în contul Vrexa. Publici, actualizezi și retragi anunțurile din Habitoo.",

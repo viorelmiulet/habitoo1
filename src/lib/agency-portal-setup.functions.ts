@@ -98,6 +98,8 @@ export type AgencyPortalSetup = {
     endpointUrl: string | null;
     lastSyncAt: string | null;
     lastSyncError: string | null;
+    /** Vrexa: mesajele sunt oprite în contul Vrexa (`messages_disabled`). */
+    vrexaMessagesDisabled?: boolean;
   };
   keys: { id: string; label: string; keyPrefix: string; lastUsedAt: string | null; requestCount: number }[];
 };
@@ -168,6 +170,7 @@ export async function loadAgencyPortalSetup(organizationId: string, portalId: st
             : null,
       lastSyncAt: row?.last_sync_at ?? null,
       lastSyncError: row?.last_sync_error ?? null,
+      ...(definition.id === "vrexa" ? { vrexaMessagesDisabled: typeof settings["vrexa_messages_disabled_at"] === "string" } : {}),
     },
     keys: (keys ?? []).map((k) => ({
       id: k.id,

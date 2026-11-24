@@ -60,6 +60,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { PortalLogo, hasPortalLogo } from "@/components/app/PortalLogo";
 import { HouseraReplyBox, HouseraRetryButton } from "@/components/app/HouseraReplyBox";
 import { HomezzReplyBox, HomezzRetryButton } from "@/components/app/HomezzReplyBox";
+import { VrexaReplyBox, VrexaRetryButton } from "@/components/app/VrexaReplyBox";
+import { vrexaReplyRetryable, VREXA_UNCONFIRMED } from "@/lib/portals/vrexa/replies";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { cn } from "@/lib/utils";
@@ -1331,7 +1333,7 @@ function LeadsPage() {
                             </StatusBadge>
                           ) : (
                             <StatusBadge tone="neutral">
-                              Sursa: {m.portal === "storia" ? "Storia.ro" : m.portal === "housera" ? "Housera.ro" : m.portal === "homezz" ? "HomeZZ.ro" : detailLead.source || getPortalDefinition(m.portal)?.display_name || m.portal}
+                              Sursa: {m.portal === "storia" ? "Storia.ro" : m.portal === "housera" ? "Housera.ro" : m.portal === "homezz" ? "HomeZZ.ro" : m.portal === "vrexa" ? "Vrexa.ro" : detailLead.source || getPortalDefinition(m.portal)?.display_name || m.portal}
                             </StatusBadge>
                           )}
                         </div>
@@ -1347,7 +1349,12 @@ function LeadsPage() {
                             Mesajul nu are conținut text.
                           </p>
                         )}
-                        {m.direction === "out" && m.delivery_status === "failed" ? (
+                        {m.portal === "vrexa" && m.direction === "out" && m.delivery_status !== "sent" && vrexaReplyRetryable(m, Date.now()) ? (
+                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs text-destructive">{m.delivery_status === "failed" ? m.delivery_error : VREXA_UNCONFIRMED}</p>
+                            <VrexaRetryButton leadId={detailLead.id} messageId={m.id} />
+                          </div>
+                        ) : m.portal !== "vrexa" && m.direction === "out" && m.delivery_status === "failed" ? (
                           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                             <p className="text-xs text-destructive">{m.delivery_error}</p>
                             {m.portal === "homezz" ? <HomezzRetryButton leadId={detailLead.id} messageId={m.id} /> : <HouseraRetryButton leadId={detailLead.id} messageId={m.id} />}
@@ -1378,6 +1385,7 @@ function LeadsPage() {
                   </ul>
                   <HouseraReplyBox leadId={detailLead.id} draft={aiDraft} />
                   <HomezzReplyBox leadId={detailLead.id} />
+                  <VrexaReplyBox leadId={detailLead.id} />
                   <p className="mt-3 text-[11px] text-muted-foreground">
                     Mesajele primite din portaluri se păstrează 180 de zile, apoi se șterg automat.
                   </p>

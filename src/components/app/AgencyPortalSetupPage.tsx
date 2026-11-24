@@ -1,4 +1,5 @@
 import { StoriaAccountControls } from "@/components/app/StoriaAccountControls";
+import { VREXA_MESSAGES_DISABLED } from "@/lib/portals/vrexa/messages";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -393,6 +394,7 @@ function AgencyPortalSetupBody({ portalId, organizationId }: { portalId: string;
               )}
             </div>
             {s.id === "homezz" && s.connection.hasPortalCredential ? <HomezzAgentsPanel /> : null}
+            {s.id === "vrexa" && s.connection.vrexaMessagesDisabled ? <p role="status" className="text-sm text-muted-foreground">{VREXA_MESSAGES_DISABLED}</p> : null}
           </>
         )}
       </section>

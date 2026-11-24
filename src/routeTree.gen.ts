@@ -163,6 +163,7 @@ import { Route as ApiPublicCronStoriaMetaRouteImport } from './routes/api/public
 import { Route as ApiPublicCronStoriaWebhookRetryRouteImport } from './routes/api/public/cron/storia-webhook-retry'
 import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
 import { Route as ApiPublicCronVdiLeadsRouteImport } from './routes/api/public/cron/vdi-leads'
+import { Route as ApiPublicCronVrexaMessagesRouteImport } from './routes/api/public/cron/vrexa-messages'
 import { Route as ApiPublicCronVrexaStatusRouteImport } from './routes/api/public/cron/vrexa-status'
 import { Route as ApiPublicCronVumsiStatusRouteImport } from './routes/api/public/cron/vumsi-status'
 import { Route as ApiPublicCronZonataStatusRouteImport } from './routes/api/public/cron/zonata-status'
@@ -1121,6 +1122,12 @@ const ApiPublicCronVdiLeadsRoute = ApiPublicCronVdiLeadsRouteImport.update({
   path: '/api/public/cron/vdi-leads',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronVrexaMessagesRoute =
+  ApiPublicCronVrexaMessagesRouteImport.update({
+    id: '/api/public/cron/vrexa-messages',
+    path: '/api/public/cron/vrexa-messages',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronVrexaStatusRoute =
   ApiPublicCronVrexaStatusRouteImport.update({
     id: '/api/public/cron/vrexa-status',
@@ -1876,6 +1883,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
+  '/api/public/cron/vrexa-messages': typeof ApiPublicCronVrexaMessagesRoute
   '/api/public/cron/vrexa-status': typeof ApiPublicCronVrexaStatusRoute
   '/api/public/cron/vumsi-status': typeof ApiPublicCronVumsiStatusRoute
   '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
@@ -2132,6 +2140,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
+  '/api/public/cron/vrexa-messages': typeof ApiPublicCronVrexaMessagesRoute
   '/api/public/cron/vrexa-status': typeof ApiPublicCronVrexaStatusRoute
   '/api/public/cron/vumsi-status': typeof ApiPublicCronVumsiStatusRoute
   '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
@@ -2394,6 +2403,7 @@ export interface FileRoutesById {
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
+  '/api/public/cron/vrexa-messages': typeof ApiPublicCronVrexaMessagesRoute
   '/api/public/cron/vrexa-status': typeof ApiPublicCronVrexaStatusRoute
   '/api/public/cron/vumsi-status': typeof ApiPublicCronVumsiStatusRoute
   '/api/public/cron/zonata-status': typeof ApiPublicCronZonataStatusRoute
@@ -2656,6 +2666,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/cron/vdi-leads'
+    | '/api/public/cron/vrexa-messages'
     | '/api/public/cron/vrexa-status'
     | '/api/public/cron/vumsi-status'
     | '/api/public/cron/zonata-status'
@@ -2912,6 +2923,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/cron/vdi-leads'
+    | '/api/public/cron/vrexa-messages'
     | '/api/public/cron/vrexa-status'
     | '/api/public/cron/vumsi-status'
     | '/api/public/cron/zonata-status'
@@ -3173,6 +3185,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/cron/vdi-leads'
+    | '/api/public/cron/vrexa-messages'
     | '/api/public/cron/vrexa-status'
     | '/api/public/cron/vumsi-status'
     | '/api/public/cron/zonata-status'
@@ -3371,6 +3384,7 @@ export interface RootRouteChildren {
   ApiPublicCronStoriaWebhookRetryRoute: typeof ApiPublicCronStoriaWebhookRetryRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
   ApiPublicCronVdiLeadsRoute: typeof ApiPublicCronVdiLeadsRoute
+  ApiPublicCronVrexaMessagesRoute: typeof ApiPublicCronVrexaMessagesRoute
   ApiPublicCronVrexaStatusRoute: typeof ApiPublicCronVrexaStatusRoute
   ApiPublicCronVumsiStatusRoute: typeof ApiPublicCronVumsiStatusRoute
   ApiPublicCronZonataStatusRoute: typeof ApiPublicCronZonataStatusRoute
@@ -4537,6 +4551,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/vdi-leads'
       fullPath: '/api/public/cron/vdi-leads'
       preLoaderRoute: typeof ApiPublicCronVdiLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/vrexa-messages': {
+      id: '/api/public/cron/vrexa-messages'
+      path: '/api/public/cron/vrexa-messages'
+      fullPath: '/api/public/cron/vrexa-messages'
+      preLoaderRoute: typeof ApiPublicCronVrexaMessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/vrexa-status': {
@@ -5795,6 +5816,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronStoriaWebhookRetryRoute: ApiPublicCronStoriaWebhookRetryRoute,
   ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
   ApiPublicCronVdiLeadsRoute: ApiPublicCronVdiLeadsRoute,
+  ApiPublicCronVrexaMessagesRoute: ApiPublicCronVrexaMessagesRoute,
   ApiPublicCronVrexaStatusRoute: ApiPublicCronVrexaStatusRoute,
   ApiPublicCronVumsiStatusRoute: ApiPublicCronVumsiStatusRoute,
   ApiPublicCronZonataStatusRoute: ApiPublicCronZonataStatusRoute,
