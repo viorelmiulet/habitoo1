@@ -3951,6 +3951,45 @@ export const refreshHomezzLajumateLinks = createServerFn({ method: "POST" })
     return refreshHomezzLajumate(organizationId, data.propertyId).catch(() => ({ checked: 0, saved: 0 }));
   });
 
+const homezzPromoInput = z.object({
+  organizationId: z.string().uuid().optional(), propertyId: z.string().uuid(),
+  internalId: z.string().regex(/^\d+$/).max(30), promotionId: z.number().int().positive(), confirmed: z.literal(true),
+});
+
+/** HomeZZ: promovarea activă și cele disponibile ale agentului anunțului (cel mult o citire pe minut per anunț). */
+export const getHomezzPromotions = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { organizationId, agentOnly } = await resolvePublishingOrg(context as unknown as AuthContext, data.organizationId);
+    await assertPortalPropertyAccess({ organizationId, propertyId: data.propertyId, agentOnly, userId: context.userId });
+    const { loadHomezzPromotions, homezzPromoDeps } = await import("@/lib/portals/homezz/promotions.server");
+    const offers = await homezzPromoDeps().then((d) => loadHomezzPromotions(d, organizationId, data.propertyId)).catch(() => null);
+    return { offers: offers ?? [] };
+  });
+
+/** HomeZZ: aplică o promovare din pachetul agenției (confirmare obligatorie, fără reîncercare automată). */
+export const promoteHomezzListing = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => homezzPromoInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { organizationId, agentOnly } = await resolvePublishingOrg(context as unknown as AuthContext, data.organizationId);
+    await assertPortalPropertyAccess({ organizationId, propertyId: data.propertyId, agentOnly, userId: context.userId });
+    const { promoteHomezzAd, homezzPromoDeps } = await import("@/lib/portals/homezz/promotions.server");
+    return promoteHomezzAd(await homezzPromoDeps(), { organizationId, propertyId: data.propertyId, internalId: data.internalId, promotionId: data.promotionId, confirmed: data.confirmed });
+  });
+
+/** HomeZZ: oprește promovarea activă (`replace-ad-promotion` cu `new_internal_id=0`). */
+export const stopHomezzListingPromotion = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => homezzPromoInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { organizationId, agentOnly } = await resolvePublishingOrg(context as unknown as AuthContext, data.organizationId);
+    await assertPortalPropertyAccess({ organizationId, propertyId: data.propertyId, agentOnly, userId: context.userId });
+    const { stopHomezzPromotion, homezzPromoDeps } = await import("@/lib/portals/homezz/promotions.server");
+    return stopHomezzPromotion(await homezzPromoDeps(), { organizationId, propertyId: data.propertyId, internalId: data.internalId, promotionId: data.promotionId, confirmed: data.confirmed });
+  });
+
 /** HomeZZ: linia de statistici a anunțului publicat (get-stats cel mult o dată la 10 minute per anunț); `null` la eroare. */
 export const getHomezzListingStats = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])

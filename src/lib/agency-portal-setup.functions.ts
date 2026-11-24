@@ -335,3 +335,19 @@ export const activateHomezzAgentFn = createServerFn({ method: "POST" })
     const { activateHomezzAgent, homezzAgentDeps } = await import("@/lib/portals/homezz/agents.server");
     return activateHomezzAgent(organizationId, (context as Ctx).userId, data.userId, { confirmed: data.confirmed }, await homezzAgentDeps());
   }));
+
+const promotionsInput = z.object({
+  organizationId: z.string().uuid().optional(),
+  userId: z.string().uuid(),
+  promotions: z.record(z.string().regex(/^\d+$/), z.number().int().min(0).max(100_000)),
+});
+/** Promovările HomeZZ alocate unui agent activat (`edit-agent` cu `promotions[tip]`); SuperAdmin sau administratorul agenției. */
+export const setHomezzAgentPromotionsFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: z.infer<typeof promotionsInput>) => promotionsInput.parse(input))
+  .handler(({ data, context }) => guard(async () => {
+    const organizationId = await requireHomezzManager(context as Ctx, data.organizationId);
+    const { setHomezzAgentPromotions, homezzAgentDeps } = await import("@/lib/portals/homezz/agents.server");
+    const promotions = Object.fromEntries(Object.entries(data.promotions).map(([k, v]) => [Number(k), v]));
+    return setHomezzAgentPromotions(organizationId, (context as Ctx).userId, data.userId, promotions, await homezzAgentDeps());
+  }));

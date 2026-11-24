@@ -32,6 +32,7 @@ import {
 import { ChevronDown, ExternalLink } from "lucide-react";
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { HomezzPromotionsPanel } from "@/components/app/HomezzPromotionsPanel";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1151,6 +1152,9 @@ export const PropertyPortalsCard = forwardRef<
                         />
                         {cell.portalId === "homezz" && homezzStats.data?.line ? (
                           <p className="mt-1 text-xs text-muted-foreground" data-homezz-stats>{homezzStats.data.line}</p>
+                        ) : null}
+                        {cell.portalId === "homezz" && cell.listingStatus === "published" ? (
+                          <HomezzPromotionsPanel organizationId={organizationId} propertyId={propertyId} />
                         ) : null}
                         {cell.portalId === "storia" ? (
                           <StoriaAutoRenewControl propertyId={propertyId} organizationId={organizationId} canManage={editing === true && canManage}

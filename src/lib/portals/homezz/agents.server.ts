@@ -4,6 +4,7 @@
  * loghează și nu se întorc niciodată.
  */
 import { homezzPost, type HomezzParams, type HomezzResult } from "./client";
+import { parseHomezzAgentPromotions } from "./promotions";
 
 export type HomezzAgent = { email: string; name: string | null; phone: string | null; assignedSlots: number | null; remainingSlots: number | null; promotions: unknown };
 export type HomezzAgentDeps = {
@@ -13,6 +14,10 @@ export type HomezzAgentDeps = {
   allocation: (organizationId: string, userId: string) => Promise<number | null>;
   link: (organizationId: string, userId: string, email: string) => Promise<void>;
   audit: (entry: { organizationId: string; actorId: string; userId: string; action: "add-agent" | "edit-agent" | "unchanged"; ads: number }) => Promise<void>;
+  /** Emailul HomeZZ al agentului activat (`portal_agent_links.external_key`); `null` = neactivat. */
+  linkedEmail?: (organizationId: string, userId: string) => Promise<string | null>;
+  /** Audit pentru modificarea promovărilor alocate. */
+  auditPromotions?: (entry: { organizationId: string; actorId: string; userId: string; promotions: Record<string, number> }) => Promise<void>;
 };
 
 export const HOMEZZ_NO_ALLOCATION = "Setează numărul de anunțuri HomeZZ pentru acest agent.";
@@ -96,6 +101,44 @@ export async function activateHomezzAgent(
   return { action, email };
 }
 
+// ---------------------------------------------------------------- promovări și sloturi per agent
+
+/** Alocarea de promovări pe tip (`edit-agent` cu `promotions[tip]`); refuzul HomeZZ se aruncă cu textul exact. */
+export async function setHomezzAgentPromotions(
+  organizationId: string, actorId: string, userId: string, promotions: Record<number, number>, deps: HomezzAgentDeps,
+): Promise<{ email: string }> {
+  const { HOMEZZ_PROMOTION_IDS } = await import("./promotions");
+  const clean: Record<string, number> = {};
+  for (const [k, v] of Object.entries(promotions)) {
+    const id = Number(k);
+    if (!HOMEZZ_PROMOTION_IDS.includes(id)) throw new Error("Tip de promovare necunoscut.");
+    if (!Number.isInteger(v) || v < 0) throw new Error("Numărul de promovări trebuie să fie un întreg ≥ 0.");
+    clean[String(id)] = v;
+  }
+  if (!Object.keys(clean).length) throw new Error("Nicio modificare.");
+  const email = await deps.linkedEmail?.(organizationId, userId);
+  if (!email) throw new Error("Agentul nu este activat pe HomeZZ.");
+  const r = await deps.post("edit-agent", { key: await deps.agencyKey(organizationId), email, promotions: clean });
+  if (!r.ok) fail(r);
+  await deps.auditPromotions?.({ organizationId, actorId, userId, promotions: clean });
+  return { email };
+}
+
+/** După schimbarea alocării de sloturi: `edit-agent` cu noul `ads`, doar pentru agenții activați. Nu aruncă: întoarce avertismentul. */
+export async function syncHomezzAgentSlots(
+  organizationId: string, userId: string, ads: number, deps: HomezzAgentDeps,
+): Promise<{ sent: boolean; warning: string | null }> {
+  try {
+    const email = await deps.linkedEmail?.(organizationId, userId);
+    if (!email) return { sent: false, warning: null };
+    const r = await deps.post("edit-agent", { key: await deps.agencyKey(organizationId), email, ads });
+    if (!r.ok) return { sent: true, warning: `HomeZZ nu a acceptat noua alocare: ${r.adError ? `${r.message} ${r.adError}` : r.message}` };
+    return { sent: true, warning: null };
+  } catch (e) {
+    return { sent: false, warning: `HomeZZ nu a putut fi actualizat: ${e instanceof Error ? e.message : "eroare"}` };
+  }
+}
+
 // ---------------------------------------------------------------- token temporar
 
 const tokenCache = new Map<string, { token: string; at: number }>();
@@ -173,6 +216,17 @@ export async function homezzAgentDeps(): Promise<HomezzAgentDeps> {
         { onConflict: "organization_id,portal,user_id" });
       if (error) throw new Error("Legătura agentului HomeZZ nu a putut fi salvată.");
     },
+    async linkedEmail(organizationId, userId) {
+      const { data } = await db.from("portal_agent_links").select("external_key").eq("organization_id", organizationId).eq("portal", "homezz").eq("user_id", userId).maybeSingle();
+      return ((data as { external_key?: string | null } | null)?.external_key ?? "").trim().toLowerCase() || null;
+    },
+    async auditPromotions(e) {
+      const { error } = await db.from("audit_logs").insert({
+        organization_id: e.organizationId, actor_id: e.actorId, created_by: e.actorId, action: "portal.homezz_agent_promotions",
+        entity: "profiles", entity_id: e.userId, new_values: { portal: "homezz", agent_id: e.userId, promotions: e.promotions },
+      } as never);
+      if (error) throw new Error("Modificarea s-a făcut, dar înregistrarea în jurnal nu a reușit.");
+    },
     async audit(e) {
       const { error } = await db.from("audit_logs").insert({
         organization_id: e.organizationId, actor_id: e.actorId, created_by: e.actorId, action: "portal.homezz_agent_activated",
@@ -198,7 +252,7 @@ export async function loadHomezzAgentRoster(organizationId: string) {
     error: remote.error,
     members: ((members ?? []) as { id: string; full_name: string | null; email: string | null }[]).map((m) => {
       const a = m.email ? byEmail.get(m.email.trim().toLowerCase()) : undefined;
-      return { userId: m.id, name: m.full_name ?? m.email ?? "", email: m.email, allocation: slots.get(m.id) ?? null, active: Boolean(a), assignedSlots: a?.assignedSlots ?? null, remainingSlots: a?.remainingSlots ?? null };
+      return { userId: m.id, name: m.full_name ?? m.email ?? "", email: m.email, allocation: slots.get(m.id) ?? null, active: Boolean(a), promotions: a ? parseHomezzAgentPromotions(a.promotions) : [], assignedSlots: a?.assignedSlots ?? null, remainingSlots: a?.remainingSlots ?? null };
     }),
   };
 }

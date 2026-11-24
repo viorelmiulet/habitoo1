@@ -279,11 +279,18 @@ export const setPortalSlotAllocation = createServerFn({ method: "POST" })
       portalKey: definition.id,
       actorId: context.userId,
     });
+    // HomeZZ: după retragerile automate, trimite noul `ads` doar pentru agenții deja activați; eșecul e doar avertisment.
+    let homezzWarning: string | null = null;
+    if (definition.id === "homezz" && data.slots !== null) {
+      const { syncHomezzAgentSlots, homezzAgentDeps } = await import("@/lib/portals/homezz/agents.server");
+      homezzWarning = (await syncHomezzAgentSlots(organizationId, data.userId, data.slots, await homezzAgentDeps())).warning;
+    }
     return {
       ok: true as const,
       slots: data.slots,
       withdrawals: queued.withdrawals,
       queueError: queued.queueError,
+      homezzWarning,
     };
   });
 

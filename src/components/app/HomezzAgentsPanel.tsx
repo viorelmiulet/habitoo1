@@ -6,7 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
-import { activateHomezzAgentFn, getHomezzAgents } from "@/lib/agency-portal-setup.functions";
+import { activateHomezzAgentFn, getHomezzAgents, setHomezzAgentPromotionsFn } from "@/lib/agency-portal-setup.functions";
+import { Input } from "@/components/ui/input";
 
 export const HOMEZZ_ACTIVATION_WARNING =
   "Dacă acest email are deja cont pe HomeZZ.ro, anunțurile lui de pe HomeZZ.ro și Lajumate.ro vor fi dezactivate automat, iar agentul nu le va mai putea administra din contul lui. Prin activare, agentul acceptă Termenii și Politica de confidențialitate HomeZZ.ro.";
@@ -18,6 +19,15 @@ export function HomezzAgentsPanel({ organizationId }: { organizationId?: string 
   const load = useServerFn(getHomezzAgents);
   const run = useServerFn(activateHomezzAgentFn);
   const roster = useQuery({ queryKey: key, queryFn: () => load({ data: organizationId ? { organizationId } : {} }) });
+  const savePromos = useServerFn(setHomezzAgentPromotionsFn);
+  const [promoDraft, setPromoDraft] = useState<Record<string, string>>({});
+  const promo = useMutation({
+    mutationFn: (v: { userId: string; id: number; value: number }) =>
+      savePromos({ data: { ...(organizationId ? { organizationId } : {}), userId: v.userId, promotions: { [String(v.id)]: v.value } } }),
+    onSuccess: () => { toast.success("Promovările agentului au fost actualizate pe HomeZZ."); void qc.invalidateQueries({ queryKey: key }); },
+    // Refuzul HomeZZ (de ex. peste contract) apare cu textul exact.
+    onError: (e) => toastError(e),
+  });
   const [target, setTarget] = useState<{ userId: string; name: string } | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const activate = useMutation({
@@ -40,6 +50,24 @@ export function HomezzAgentsPanel({ organizationId }: { organizationId?: string 
                 {m.active ? `Activ · ${m.assignedSlots ?? "–"} sloturi alocate, ${m.remainingSlots ?? "–"} rămase` : "Neactivat"}
                 {m.allocation === null ? " · fără alocare HomeZZ" : ` · alocare Habitoo: ${m.allocation}`}
               </p>
+              {m.active && m.promotions.length ? (
+                <div className="mt-2 flex flex-wrap gap-3" data-homezz-agent-promotions>
+                  {m.promotions.map((p) => {
+                    const k = `${m.userId}:${p.id}`;
+                    const val = promoDraft[k] ?? String(p.total ?? 0);
+                    return (
+                      <label key={p.id} className="flex items-center gap-1.5 text-xs">
+                        <span>{p.label}: {p.remaining ?? "–"} rămase din</span>
+                        <Input className="h-8 w-16" inputMode="numeric" value={val}
+                          onChange={(e) => setPromoDraft((d) => ({ ...d, [k]: e.target.value.replace(/\D/g, "") }))} />
+                        <Button type="button" size="compact" variant="outline"
+                          disabled={promo.isPending || val === "" || Number(val) === (p.total ?? 0)}
+                          onClick={() => promo.mutate({ userId: m.userId, id: p.id, value: Number(val) })}>Salvează</Button>
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : null}
             </div>
             <Button type="button" size="sm" variant="outline" onClick={() => { setConfirmed(false); setTarget({ userId: m.userId, name: m.name }); }}>
               Activează pe HomeZZ

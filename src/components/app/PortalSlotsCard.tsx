@@ -146,6 +146,7 @@ export function PortalSlotsCard({ organizationId }: { organizationId?: string })
         toast.success("Locurile de publicare au fost salvate.");
       }
       if (result.queueError) toast.error(result.queueError);
+      if ("homezzWarning" in result && result.homezzWarning) toast.warning(result.homezzWarning);
       refresh();
     } catch (error) {
       toastError(error);
