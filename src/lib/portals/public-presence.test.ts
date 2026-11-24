@@ -15,8 +15,12 @@ const availableIds = new Set([...PORTALS, ...PROMOTION_CATALOGS]
 const coveredIds = new Set(PORTAL_GROUPS
   .filter((group) => availableIds.has(group.primary))
   .flatMap((group) => group.covers));
+// Portaluri disponibile în CRM dar încă nelistate public (cerere explicită):
+// rămân testate la logo oficial, nu și la pagini publice, sitemap sau Acasă.
+const notPublicYet = new Set(["vrexa"]);
 const available = [...PORTALS, ...PROMOTION_CATALOGS]
-  .filter((portal) => availableIds.has(portal.id) || coveredIds.has(portal.id));
+  .filter((portal) => availableIds.has(portal.id) || coveredIds.has(portal.id))
+  .filter((portal) => !notPublicYet.has(portal.id));
 
 describe("Vumsi is public", () => {
   it("has a public page, card, homepage logo and sitemap URL", () => {

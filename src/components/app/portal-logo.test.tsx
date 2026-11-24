@@ -32,3 +32,18 @@ describe("logo-ul portalului Housera.ro", () => {
     expect(portalLogoIds("housera")).toEqual(["housera"]);
   });
 });
+
+describe("logo-ul portalului Vrexa.ro", () => {
+  it("are logo local, deci cardul nu afișează inițialele", () => {
+    expect(hasPortalLogo("vrexa")).toBe(true);
+    const html = renderToStaticMarkup(
+      <PortalLogo portalId="vrexa" name="Vrexa.ro" size={40} alt="Vrexa.ro" />,
+    );
+    expect(html).toContain("<img");
+    expect(html).not.toContain(">VR<");
+  });
+
+  it("nu afișează și alt logo alături de Vrexa", () => {
+    expect(portalLogoIds("vrexa")).toEqual(["vrexa"]);
+  });
+});
