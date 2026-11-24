@@ -395,13 +395,13 @@ export const STATIC_PORTALS: PortalDefinition[] = [
     activation: "approval",
     display_name: "HomeZZ.ro + Lajumate.ro",
     description:
-      "Integrare directă cu HomeZZ.ro (anunțurile apar și pe Lajumate.ro), cu cheia API emisă de HomeZZ pentru agenție. Deocamdată doar testul conexiunii.",
+      "Integrare directă cu HomeZZ.ro (anunțurile apar și pe Lajumate.ro), cu cheia API emisă de HomeZZ pentru agenție. Publici, actualizezi și retragi anunțurile din Habitoo.",
     logo: "homezz",
     status: "available",
     directions: ["habitoo_to_portal"],
     // Cheia o EMITE HOMEZZ; o introduce doar SuperAdminul, salvată criptat.
     authentication: ["portal_api_key"],
-    capabilities: ["test_connection"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing"],
     configuration_schema: {
       fields: [
         {
@@ -415,7 +415,7 @@ export const STATIC_PORTALS: PortalDefinition[] = [
     },
     website: "https://homezz.ro",
     notes:
-      "API HomeZZ xmlimport: POST https://homezz.ro/xmlimport/{acțiune}, corp form-urlencoded, prin releul cu IP fix. Testul conexiunii folosește details-agency. Publicarea nu este încă implementată.",
+      "API HomeZZ xmlimport: POST https://homezz.ro/xmlimport/{acțiune}, corp form-urlencoded, prin releul cu IP fix. Testul conexiunii folosește details-agency. Publicarea: insert/update per tranzacție (ad-info înainte de insert), retragere cu delete, reactivare cu activate, mutare între agenți cu move-ad. Fără promovări.",
   },
   {
     id: "zonata",

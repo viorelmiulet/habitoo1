@@ -9,6 +9,8 @@ import { storiaExpirySummary } from "@/lib/portals/storia/expiry";
 import { zupConfigured, ZUP_MISSING_MESSAGE } from "@/lib/portals/zup/config";
 import { portalCanPublish, publishUnavailableMessage } from "@/lib/portals/registry";
 import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/offer-links";
+import { portalListingLink } from "@/lib/portals/listing-links";
+import { parseHomezzOffers } from "@/lib/portals/homezz/publish";
 /**
  * Server functions pentru modulul de portaluri imobiliare.
  *
@@ -199,6 +201,20 @@ async function requireSuperadminOrg(context: AuthContext, organizationId: string
  * SESIUNE, niciodată pe una primită din input. Agentul este limitat la
  * ofertele unde este agentul responsabil (`agentOnly`).
  */
+/** HomeZZ: link HomeZZ și Lajumate per tranzacție, doar prin `portalListingLink`. */
+function homezzOfferLinks(value: unknown, state: string) {
+  const out: { transaction: string | null; url: string; label: string | null }[] = [];
+  const active = parseHomezzOffers(value).filter((o) => !o.deleted);
+  const tx = (t: string | null) => (active.length > 1 ? (t === "rent" ? " închiriere" : " vânzare") : "");
+  for (const o of active) {
+    for (const [url, site] of [[o.url, "HomeZZ"], [o.ljm_url, "Lajumate"]] as const) {
+      const href = portalListingLink({ portalId: "homezz", portalName: site, state, publicUrl: url }).href;
+      if (href) out.push({ transaction: o.transaction, url: href, label: `${site}${tx(o.transaction)}` });
+    }
+  }
+  return out;
+}
+
 export async function resolvePublishingOrg(
   context: AuthContext,
   requestedOrganizationId?: string,
@@ -2604,7 +2620,9 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
               : (feedback ? feedback.status === "published" ? feedback.url : null : listing?.public_url ?? null),
           // Storia: linkurile exportului automat pe OLX, doar cât anunțul e publicat.
           olxLinks: portal.id === "storia" ? visibleOlxLinks(listing?.portal_offers, listingStatus) : [],
-          offerLinks: parsePortalOffers(listing?.imobiliare_mode === "imoradar_only" ? [] : listing?.portal_offers).filter((o) => o.label !== "OLX").map((o) => ({
+          offerLinks: portal.id === "homezz"
+            ? homezzOfferLinks(listing?.portal_offers, state)
+            : parsePortalOffers(listing?.imobiliare_mode === "imoradar_only" ? [] : listing?.portal_offers).filter((o) => o.label !== "OLX").map((o) => ({
             transaction: o.transaction,
             url: o.url,
             label: o.label ?? null,
@@ -3918,6 +3936,19 @@ export const recheckOlxDirectListing = createServerFn({ method: "POST" })
     await assertPortalPropertyAccess({ organizationId, propertyId: data.propertyId, agentOnly, userId: context.userId });
     const { pollOlxPendingListings } = await import("@/lib/portals/adapters/olx-direct.server");
     return pollOlxPendingListings({ organizationId, propertyId: data.propertyId });
+  });
+
+/** HomeZZ: completează linkul Lajumate (ad-info cel mult o dată pe minut per anunț, după 10 minute de la publicare). */
+export const refreshHomezzLajumateLinks = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId, agentOnly } = await resolvePublishingOrg(context as unknown as AuthContext, data.organizationId);
+    await assertPortalPropertyAccess({ organizationId, propertyId: data.propertyId, agentOnly, userId: context.userId });
+    const { refreshHomezzLajumate } = await import("@/lib/portals/homezz/listing.server");
+    return refreshHomezzLajumate(organizationId, data.propertyId).catch(() => ({ checked: 0, saved: 0 }));
   });
 
 /** SuperAdmin: verifică IP-ul de ieșire al releului portalurilor (doar citire). */

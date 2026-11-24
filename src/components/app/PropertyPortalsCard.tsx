@@ -72,6 +72,7 @@ import {
   getPropertiesPortalMatrix,
   getPropertyPortalJournal,
   recheckOlxDirectListing,
+  refreshHomezzLajumateLinks,
   getPropertyPortalRequirements,
   getPropertyStoriaAutoRenew,
   setPropertyStoriaAutoRenew,
@@ -190,6 +191,15 @@ export const PropertyPortalsCard = forwardRef<
   const loadJobs = useServerFn(getPropertyPublishJobs);
   const queryKey = ["property-portals-selection", organizationId, propertyId] as const;
   const recheckOlxFn = useServerFn(recheckOlxDirectListing);
+  // HomeZZ: la deschiderea tabului, completează linkul Lajumate (serverul limitează la o dată pe minut).
+  const refreshLajumateFn = useServerFn(refreshHomezzLajumateLinks);
+  useEffect(() => {
+    let cancelled = false;
+    void refreshLajumateFn({ data: { ...(organizationId ? { organizationId } : {}), propertyId } })
+      .then((r) => { if (!cancelled && r.saved > 0) void queryClient.invalidateQueries({ queryKey: ["property-portals-selection", organizationId, propertyId] }); })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [organizationId, propertyId]); // eslint-disable-line react-hooks/exhaustive-deps
   const [olxRechecking, setOlxRechecking] = useState(false);
   const recheckOlx = async () => {
     setOlxRechecking(true);
@@ -1135,7 +1145,7 @@ export const PropertyPortalsCard = forwardRef<
                             visible={value === true || storiaAutoRenewVisible({ selected: cell.selected, listingStatus: cell.listingStatus, externalId: cell.externalId })} />
                         ) : null}
                       <div className="relative z-10 mt-3 flex min-w-0 flex-wrap items-center gap-2 [&>*]:pointer-events-auto">
-                        {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo" || cell.portalId === "imo24") &&
+                        {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo" || cell.portalId === "imo24" || cell.portalId === "homezz") &&
                         cell.offerLinks.length > 0 &&
                         !cell.publicWarning ? (
                           cell.offerLinks.map((link) => (
