@@ -21,15 +21,18 @@ export type HomezzCallbackDeps = {
   findListing: (organizationId: string, internalId: string) => Promise<HomezzListingHit | null>;
   markError: (listingId: string, message: string) => Promise<void>;
   notify: (n: { organizationId: string; propertyId: string; eventId: string; title: string; body: string }) => Promise<void>;
+  /** 503: mesajul devine lead (`homezz/leads.server.ts`). */
+  importMessage: (e: { organizationId: string; internalId: string | null; conversationId: string | null; message: string | null; receivedAt: string }) => Promise<string>;
   finish: (eventId: string, r: { processed: boolean; note: string; attempts: number; nextAttemptAt: string | null }) => Promise<void>;
 };
 
 export type HomezzCallbackResponse = { status: number; body: Record<string, unknown> };
 
 /** Aplică efectul unui eveniment salvat; aruncă la eroare de DB (se reia). */
-export async function applyHomezzEvent(deps: HomezzCallbackDeps, organizationId: string, eventId: string, c: HomezzCallback): Promise<string> {
+export async function applyHomezzEvent(deps: HomezzCallbackDeps, organizationId: string, eventId: string, c: HomezzCallback, receivedAt = new Date().toISOString()): Promise<string> {
   const effect = homezzCallbackEffect(c);
   if (effect.kind === "none") return effect.note;
+  if (effect.kind === "message") return deps.importMessage({ organizationId, internalId: c.internalId, conversationId: c.conversationId, message: c.text, receivedAt });
   if (!c.internalId) return "fără internal_id";
   const hit = await deps.findListing(organizationId, c.internalId);
   if (!hit) return "anunț necunoscut în agenție";
@@ -39,9 +42,9 @@ export async function applyHomezzEvent(deps: HomezzCallbackDeps, organizationId:
 }
 
 /** Procesează rândul și îl marchează; eșecurile rămân `processed=false` cu reluare programată. */
-export async function processHomezzEventRow(deps: HomezzCallbackDeps, eventId: string, organizationId: string, c: HomezzCallback, attempts: number, now = Date.now()): Promise<boolean> {
+export async function processHomezzEventRow(deps: HomezzCallbackDeps, eventId: string, organizationId: string, c: HomezzCallback, attempts: number, now = Date.now(), receivedAt = new Date(now).toISOString()): Promise<boolean> {
   try {
-    const note = await applyHomezzEvent(deps, organizationId, eventId, c);
+    const note = await applyHomezzEvent(deps, organizationId, eventId, c, receivedAt);
     await deps.finish(eventId, { processed: true, note, attempts: attempts + 1, nextAttemptAt: null });
     return true;
   } catch (err) {
@@ -81,7 +84,13 @@ type Admin = any;
 
 export async function homezzCallbackDeps(admin?: Admin): Promise<HomezzCallbackDeps> {
   const db: Admin = admin ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+  let leadDeps: import("./leads.server").HomezzLeadDeps | null = null;
   return {
+    async importMessage(e) {
+      const m = await import("./leads.server");
+      leadDeps ??= await m.homezzLeadDeps(db);
+      return m.importHomezzMessage(leadDeps, e);
+    },
     async resolveOrg(keyHash) {
       const { data, error } = await db.from("portal_connections").select("organization_id, portal_credentials_encrypted, settings")
         .eq("portal", "homezz").not("portal_credentials_encrypted", "is", null);
@@ -149,15 +158,15 @@ export async function retryHomezzEvents(admin?: Admin, max = 50): Promise<{ atte
   const deps = await homezzCallbackDeps(admin);
   const db: Admin = admin ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   const nowIso = new Date().toISOString();
-  const { data } = await db.from("portal_webhook_events").select("id, organization_id, parsed_payload, attempts, next_attempt_at")
+  const { data } = await db.from("portal_webhook_events").select("id, organization_id, parsed_payload, attempts, next_attempt_at, received_at")
     .eq("portal", "homezz").eq("processed", false).eq("signature_valid", true).not("organization_id", "is", null)
     .lt("attempts", HOMEZZ_EVENT_MAX_ATTEMPTS).order("received_at", { ascending: true }).limit(max);
   let attempted = 0, succeeded = 0;
-  for (const row of (data ?? []) as Array<{ id: string; organization_id: string; parsed_payload: unknown; attempts: number; next_attempt_at: string | null }>) {
+  for (const row of (data ?? []) as Array<{ id: string; organization_id: string; parsed_payload: unknown; attempts: number; next_attempt_at: string | null; received_at: string }>) {
     if (row.next_attempt_at && row.next_attempt_at > nowIso) continue;
     if (!row.parsed_payload || typeof row.parsed_payload !== "object") continue;
     attempted++;
-    if (await processHomezzEventRow(deps, row.id, row.organization_id, parseHomezzCallback(row.parsed_payload as Record<string, unknown>), row.attempts)) succeeded++;
+    if (await processHomezzEventRow(deps, row.id, row.organization_id, parseHomezzCallback(row.parsed_payload as Record<string, unknown>), row.attempts, Date.now(), row.received_at)) succeeded++;
   }
   return { attempted, succeeded };
 }

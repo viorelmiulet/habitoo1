@@ -73,6 +73,7 @@ import {
   getPropertyPortalJournal,
   recheckOlxDirectListing,
   refreshHomezzLajumateLinks,
+  getHomezzListingStats,
   getPropertyPortalRequirements,
   getPropertyStoriaAutoRenew,
   setPropertyStoriaAutoRenew,
@@ -200,6 +201,14 @@ export const PropertyPortalsCard = forwardRef<
       .catch(() => undefined);
     return () => { cancelled = true; };
   }, [organizationId, propertyId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // HomeZZ: statisticile anunțului publicat (serverul citește cel mult o dată la 10 minute); la eroare linia lipsește.
+  const homezzStatsFn = useServerFn(getHomezzListingStats);
+  const homezzStats = useQuery({
+    queryKey: ["homezz-listing-stats", organizationId, propertyId],
+    queryFn: () => homezzStatsFn({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }).catch(() => ({ line: null })),
+    staleTime: 10 * 60 * 1000,
+    retry: false,
+  });
   const [olxRechecking, setOlxRechecking] = useState(false);
   const recheckOlx = async () => {
     setOlxRechecking(true);
@@ -1140,6 +1149,9 @@ export const PropertyPortalsCard = forwardRef<
                         <AutoWithdrawLine
                           view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
                         />
+                        {cell.portalId === "homezz" && homezzStats.data?.line ? (
+                          <p className="mt-1 text-xs text-muted-foreground" data-homezz-stats>{homezzStats.data.line}</p>
+                        ) : null}
                         {cell.portalId === "storia" ? (
                           <StoriaAutoRenewControl propertyId={propertyId} organizationId={organizationId} canManage={editing === true && canManage}
                             visible={value === true || storiaAutoRenewVisible({ selected: cell.selected, listingStatus: cell.listingStatus, externalId: cell.externalId })} />

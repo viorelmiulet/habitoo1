@@ -3951,6 +3951,20 @@ export const refreshHomezzLajumateLinks = createServerFn({ method: "POST" })
     return refreshHomezzLajumate(organizationId, data.propertyId).catch(() => ({ checked: 0, saved: 0 }));
   });
 
+/** HomeZZ: linia de statistici a anunțului publicat (get-stats cel mult o dată la 10 minute per anunț); `null` la eroare. */
+export const getHomezzListingStats = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId, agentOnly } = await resolvePublishingOrg(context as unknown as AuthContext, data.organizationId);
+    await assertPortalPropertyAccess({ organizationId, propertyId: data.propertyId, agentOnly, userId: context.userId });
+    const { loadHomezzStatsLine, homezzStatsDeps } = await import("@/lib/portals/homezz/stats.server");
+    const line = await homezzStatsDeps().then((d) => loadHomezzStatsLine(d, organizationId, data.propertyId)).catch(() => null);
+    return { line };
+  });
+
 /** SuperAdmin: verifică IP-ul de ieșire al releului portalurilor (doar citire). */
 export const checkPortalRelayIp = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])

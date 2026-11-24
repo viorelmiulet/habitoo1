@@ -11,10 +11,13 @@ export const Route = createFileRoute("/api/public/cron/housera-events")({
         if (unauthorized) return unauthorized;
         const { runHouseraEventsCron } = await import("@/lib/portals/housera/cron.server");
         try {
-          const result = await runHouseraEventsCron();
-          // Reluarea notificărilor HomeZZ neprocesate (cel mult 5 încercări) rulează în același cron.
+          // Blocuri separate: HomeZZ se reia și când Housera aruncă eroare.
+          let result: Record<string, unknown> | null = null;
+          let houseraError: string | null = null;
+          try { result = (await runHouseraEventsCron()) as Record<string, unknown>; } catch (e) { houseraError = e instanceof Error ? e.message : "error"; }
           const { retryHomezzEvents } = await import("@/lib/portals/homezz/callback.server");
           const homezz = await retryHomezzEvents().catch(() => ({ attempted: 0, succeeded: 0 }));
+          if (houseraError) return Response.json({ ok: false, error: houseraError, homezz }, { status: 500 });
           return Response.json({ ...result, homezz });
         } catch (e) {
           return Response.json({ ok: false, error: e instanceof Error ? e.message : "error" }, { status: 500 });

@@ -26,6 +26,7 @@ async function world() {
     },
     markError: async (id, msg) => { const l = listings.get(id)!; l.status = "error"; l.lastError = msg; },
     notify: async (n) => { notifications.set(`${n.eventId}:${n.propertyId}`, { title: n.title, body: n.body }); },
+    importMessage: async () => "mesaj importat",
     finish: async (id, r) => { const e = events.find((x) => x.id === id)!; e.processed = r.processed; e.note = r.note; },
   };
   return { deps, events, listings, notifications };
@@ -73,7 +74,7 @@ describe("HomeZZ callback", () => {
     expect((w.events[0]!.payload["data"] as Record<string, unknown>)["internal_id"]).toBe("13761");
   });
 
-  it("503 → salvat și procesat, fără efect", async () => {
+  it("503 → salvat și procesat, fără efect de moderare", async () => {
     const w = await world();
     const raw = JSON.stringify({ meta: { code: 503, message: "Anuntul a primit un mesaj nou" }, data: { key: KEY, internal_id: "13761", conversation_id: "9", message: "Buna" } });
     const r = await handleHomezzCallback({ raw, contentType: "application/json" }, w.deps);

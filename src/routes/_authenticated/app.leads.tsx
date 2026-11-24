@@ -59,6 +59,7 @@ import { leadLostReasons, logAudit } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
 import { PortalLogo, hasPortalLogo } from "@/components/app/PortalLogo";
 import { HouseraReplyBox, HouseraRetryButton } from "@/components/app/HouseraReplyBox";
+import { HomezzReplyBox, HomezzRetryButton } from "@/components/app/HomezzReplyBox";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { cn } from "@/lib/utils";
@@ -1330,7 +1331,7 @@ function LeadsPage() {
                             </StatusBadge>
                           ) : (
                             <StatusBadge tone="neutral">
-                              Sursa: {m.portal === "storia" ? "Storia.ro" : m.portal === "housera" ? "Housera.ro" : detailLead.source || getPortalDefinition(m.portal)?.display_name || m.portal}
+                              Sursa: {m.portal === "storia" ? "Storia.ro" : m.portal === "housera" ? "Housera.ro" : m.portal === "homezz" ? "HomeZZ.ro" : detailLead.source || getPortalDefinition(m.portal)?.display_name || m.portal}
                             </StatusBadge>
                           )}
                         </div>
@@ -1349,7 +1350,7 @@ function LeadsPage() {
                         {m.direction === "out" && m.delivery_status === "failed" ? (
                           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                             <p className="text-xs text-destructive">{m.delivery_error}</p>
-                            <HouseraRetryButton leadId={detailLead.id} messageId={m.id} />
+                            {m.portal === "homezz" ? <HomezzRetryButton leadId={detailLead.id} messageId={m.id} /> : <HouseraRetryButton leadId={detailLead.id} messageId={m.id} />}
                           </div>
                         ) : null}
                         <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
@@ -1376,6 +1377,7 @@ function LeadsPage() {
                     ) : null}
                   </ul>
                   <HouseraReplyBox leadId={detailLead.id} draft={aiDraft} />
+                  <HomezzReplyBox leadId={detailLead.id} />
                   <p className="mt-3 text-[11px] text-muted-foreground">
                     Mesajele primite din portaluri se păstrează 180 de zile, apoi se șterg automat.
                   </p>

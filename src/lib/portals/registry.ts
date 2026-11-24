@@ -392,6 +392,7 @@ export const STATIC_PORTALS: PortalDefinition[] = [
   },
   {
     id: "homezz",
+    receives_leads: true,
     activation: "approval",
     display_name: "HomeZZ.ro + Lajumate.ro",
     description:
@@ -415,7 +416,7 @@ export const STATIC_PORTALS: PortalDefinition[] = [
     },
     website: "https://homezz.ro",
     notes:
-      "API HomeZZ xmlimport: POST https://homezz.ro/xmlimport/{acțiune}, corp form-urlencoded, prin releul cu IP fix. Testul conexiunii folosește details-agency. Publicarea: insert/update per tranzacție (ad-info înainte de insert), retragere cu delete, reactivare cu activate, mutare între agenți cu move-ad. Fără promovări.",
+      "API HomeZZ xmlimport: POST https://homezz.ro/xmlimport/{acțiune}, corp form-urlencoded, prin releul cu IP fix. Testul conexiunii folosește details-agency. Publicarea: insert/update per tranzacție (ad-info înainte de insert), retragere cu delete, reactivare cu activate, mutare între agenți cu move-ad. Mesajele clienților (notificarea 503) devin lead-uri, iar agentul răspunde din Habitoo (send-message). Statisticile anunțului vin din get-stats. Fără promovări.",
   },
   {
     id: "zonata",

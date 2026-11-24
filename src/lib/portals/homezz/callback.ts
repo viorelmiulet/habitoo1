@@ -13,6 +13,7 @@ export type HomezzCallback = {
   adError: string | null;
   predefinedMessage: string | null;
   conversationId: string | null;
+  text: string | null;
 };
 
 type Obj = Record<string, unknown>;
@@ -74,6 +75,7 @@ export function parseHomezzCallback(body: Obj): HomezzCallback {
     adError: homezzAdErrorText(data["ad_error"]),
     predefinedMessage: str(data["predefined_message"]),
     conversationId: str(data["conversation_id"]),
+    text: str(data["message"]),
   };
 }
 
@@ -87,13 +89,14 @@ export function redactHomezzCallback(body: Obj): Obj {
 
 export type HomezzCallbackEffect =
   | { kind: "moderation"; code: 501 | 502; lastError: string; title: string }
+  | { kind: "message" }
   | { kind: "none"; note: string };
 
 export function homezzCallbackEffect(c: HomezzCallback): HomezzCallbackEffect {
   const join = (...p: (string | null)[]) => p.filter((x): x is string => !!x).join(" ");
   if (c.code === 501) return { kind: "moderation", code: 501, lastError: `HomeZZ a trimis anunțul spre editare: ${join(c.adError, c.predefinedMessage)}`.trim(), title: "HomeZZ a trimis anunțul spre editare" };
   if (c.code === 502) return { kind: "moderation", code: 502, lastError: `HomeZZ nu a aprobat anunțul: ${join(c.predefinedMessage)}`.trim(), title: "HomeZZ nu a aprobat anunțul" };
-  if (c.code === 503) return { kind: "none", note: "mesaj nou (neprocesat în această etapă)" };
+  if (c.code === 503) return { kind: "message" };
   return { kind: "none", note: `cod necunoscut ${c.code ?? "-"}` };
 }
 
