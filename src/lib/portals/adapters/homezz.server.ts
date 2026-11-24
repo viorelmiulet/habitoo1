@@ -39,8 +39,8 @@ export type HomezzListingData = {
 };
 export type HomezzAdapterDeps = {
   load?: (organizationId: string, propertyId: string, opts: { withdraw: boolean }) => Promise<HomezzListingData>;
-  /** Rulează o acțiune cu token-ul agentului (reînnoit o dată la eroare de token). */
-  withToken?: (organizationId: string, userId: string, run: (token: string) => Promise<import("../homezz/client").HomezzResult>) => Promise<import("../homezz/client").HomezzResult>;
+  /** Rulează o acțiune cu token-ul agentului cu acest email HomeZZ (reînnoit o dată la eroare de token). */
+  withToken?: (organizationId: string, email: string, run: (token: string) => Promise<import("../homezz/client").HomezzResult>) => Promise<import("../homezz/client").HomezzResult>;
 };
 
 function publishFail(e: unknown): PortalFail {
@@ -53,13 +53,17 @@ function publishFail(e: unknown): PortalFail {
 
 export function createHomezzAdapter(transport: HomezzTransport = homezzRelayTransport, deps: HomezzAdapterDeps = {}): PortalAdapter {
   const load = deps.load ?? (async (o: string, p: string, opts: { withdraw: boolean }) => (await import("../homezz/listing.server")).loadHomezzListing(o, p, opts));
-  const withToken = deps.withToken ?? (async (o: string, u: string, run: (t: string) => Promise<import("../homezz/client").HomezzResult>) => {
+  const withToken = deps.withToken ?? (async (o: string, email: string, run: (t: string) => Promise<import("../homezz/client").HomezzResult>) => {
     const a = await import("../homezz/agents.server");
-    return a.withHomezzAgentToken(o, u, await a.homezzAgentDeps(), run);
+    return a.withHomezzEmailToken(o, email, await a.homezzAgentDeps(), run);
   });
-  const clientFor = (ctx: PortalContext, key: string, userId: string): HomezzPublishClient => ({
+  const clientFor = (ctx: PortalContext, key: string, defaultEmail: string | null): HomezzPublishClient => ({
     agency: (action, params) => homezzPost(action, { key, ...params }, transport),
-    agent: (action, params) => withToken(ctx.organizationId, userId, (token) => homezzPost(action, { token, ...params }, transport)),
+    agent: (action, params, email) => {
+      const who = (email ?? defaultEmail ?? "").trim().toLowerCase();
+      if (!who) throw new Error(HOMEZZ_AGENT_NOT_LINKED);
+      return withToken(ctx.organizationId, who, (token) => homezzPost(action, { token, ...params }, transport));
+    },
   });
 
   async function upsert(ctx: PortalContext, ref: ListingRef, action: "publish" | "update"): Promise<PortalResult<ListingOutcome>> {
@@ -73,7 +77,7 @@ export function createHomezzAdapter(transport: HomezzTransport = homezzRelayTran
       if (!ctx.allowLiveRequests) {
         return { ok: true, data: { externalId: null, live: false, processed: 0, detail: `homezz_dry_run action=${action} ads=${ads.length} images=${data.images.urls.length}`, message: `Trimiterile reale către HomeZZ sunt oprite. S-ar trimite ${ads.length} anunțuri cu ${data.images.urls.length} poze.` } };
       }
-      const r = await publishHomezz({ ads, stored: data.stored, reference: data.reference, agentEmail: data.agentEmail, images: data.images, client: clientFor(ctx, key, data.assignedTo) });
+      const r = await publishHomezz({ ads, stored: data.stored, reference: data.reference, agentEmail: data.agentEmail, images: data.images, client: clientFor(ctx, key, data.agentEmail) });
       const warnings = [...data.mapping.warnings, ...data.images.warnings];
       const active = r.offers.filter((o) => !o.deleted);
       return { ok: true, data: {
@@ -120,9 +124,10 @@ export function createHomezzAdapter(transport: HomezzTransport = homezzRelayTran
         if (!active.length) return { ok: true, data: { externalId: null, live: false, processed: 0, portalStatus: "withdrawn", detail: "homezz_withdraw nothing_stored", message: "Anunțul nu este publicat pe HomeZZ." } };
         const key = (ctx.portalCredential ?? "").trim();
         if (!key) return { ok: false, code: "CONFIG_ERROR", message: "Lipsește cheia API HomeZZ.ro a agenției.", detail: "homezz_no_key" };
-        if (!data.assignedTo || !data.agentEmail) return { ok: false, code: "VALIDATION_ERROR", message: HOMEZZ_AGENT_NOT_LINKED, detail: "homezz_agent_not_linked" };
+        // Retragerea folosește agentul salvat pe ofertă; agentul curent neactivat nu o blochează.
+        if (active.some((o) => !o.agent_email) && !data.agentEmail) return { ok: false, code: "VALIDATION_ERROR", message: HOMEZZ_AGENT_NOT_LINKED, detail: "homezz_agent_not_linked" };
         if (!ctx.allowLiveRequests) return { ok: true, data: { externalId: null, live: false, processed: 0, detail: `homezz_withdraw_dry_run ads=${active.length}`, message: "Trimiterile reale către HomeZZ sunt oprite; nimic nu a fost retras." } };
-        const r = await withdrawHomezz({ stored: data.stored, agentEmail: data.agentEmail, client: clientFor(ctx, key, data.assignedTo) });
+        const r = await withdrawHomezz({ stored: data.stored, agentEmail: data.agentEmail, client: clientFor(ctx, key, data.agentEmail) });
         return { ok: true, data: {
           externalId: null, live: true, processed: active.length, portalStatus: "withdrawn",
           detail: `homezz_withdraw reason=${ref.withdrawReason ?? "user"} ${r.actions.join(" ")}`,

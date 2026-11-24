@@ -244,6 +244,7 @@ import { Route as ApiPublicPartnerV1WebhookTestRouteImport } from './routes/api/
 import { Route as ApiPublicPortalV1PortalFeedDotxmlRouteImport } from './routes/api/public/portal/v1/$portal.feed[.]xml'
 import { Route as ApiPublicPortalV1BazaruldecaseFeedDotxmlRouteImport } from './routes/api/public/portal/v1/bazaruldecase.feed[.]xml'
 import { Route as ApiPublicPortalV1DevelopmentsIdRouteImport } from './routes/api/public/portal/v1/developments.$id'
+import { Route as ApiPublicPortalV1HomezzCallbackRouteImport } from './routes/api/public/portal/v1/homezz.callback'
 import { Route as ApiPublicPortalV1HouseraWebhookRouteImport } from './routes/api/public/portal/v1/housera.webhook'
 import { Route as ApiPublicPortalV1ImoveFeedRouteImport } from './routes/api/public/portal/v1/imove.feed'
 import { Route as ApiPublicPortalV1ImoveFeedDotcsvRouteImport } from './routes/api/public/portal/v1/imove.feed[.]csv'
@@ -1586,6 +1587,12 @@ const ApiPublicPortalV1DevelopmentsIdRoute =
     path: '/$id',
     getParentRoute: () => ApiPublicPortalV1DevelopmentsRoute,
   } as any)
+const ApiPublicPortalV1HomezzCallbackRoute =
+  ApiPublicPortalV1HomezzCallbackRouteImport.update({
+    id: '/api/public/portal/v1/homezz/callback',
+    path: '/api/public/portal/v1/homezz/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1HouseraWebhookRoute =
   ApiPublicPortalV1HouseraWebhookRouteImport.update({
     id: '/api/public/portal/v1/housera/webhook',
@@ -1953,6 +1960,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/developments/$id': typeof ApiPublicPortalV1DevelopmentsIdRoute
+  '/api/public/portal/v1/homezz/callback': typeof ApiPublicPortalV1HomezzCallbackRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
@@ -2207,6 +2215,7 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/developments/$id': typeof ApiPublicPortalV1DevelopmentsIdRoute
+  '/api/public/portal/v1/homezz/callback': typeof ApiPublicPortalV1HomezzCallbackRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
@@ -2467,6 +2476,7 @@ export interface FileRoutesById {
   '/api/public/portal/v1/$portal/feed.xml': typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   '/api/public/portal/v1/bazaruldecase/feed.xml': typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
   '/api/public/portal/v1/developments/$id': typeof ApiPublicPortalV1DevelopmentsIdRoute
+  '/api/public/portal/v1/homezz/callback': typeof ApiPublicPortalV1HomezzCallbackRoute
   '/api/public/portal/v1/housera/webhook': typeof ApiPublicPortalV1HouseraWebhookRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
@@ -2727,6 +2737,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
     | '/api/public/portal/v1/developments/$id'
+    | '/api/public/portal/v1/homezz/callback'
     | '/api/public/portal/v1/housera/webhook'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
@@ -2981,6 +2992,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
     | '/api/public/portal/v1/developments/$id'
+    | '/api/public/portal/v1/homezz/callback'
     | '/api/public/portal/v1/housera/webhook'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
@@ -3240,6 +3252,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/$portal/feed.xml'
     | '/api/public/portal/v1/bazaruldecase/feed.xml'
     | '/api/public/portal/v1/developments/$id'
+    | '/api/public/portal/v1/homezz/callback'
     | '/api/public/portal/v1/housera/webhook'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
@@ -3414,6 +3427,7 @@ export interface RootRouteChildren {
   ApiPublicPartnerV1SandboxSimulateRoute: typeof ApiPublicPartnerV1SandboxSimulateRoute
   ApiPublicPortalV1PortalFeedDotxmlRoute: typeof ApiPublicPortalV1PortalFeedDotxmlRoute
   ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute: typeof ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute
+  ApiPublicPortalV1HomezzCallbackRoute: typeof ApiPublicPortalV1HomezzCallbackRoute
   ApiPublicPortalV1HouseraWebhookRoute: typeof ApiPublicPortalV1HouseraWebhookRoute
   ApiPublicPortalV1ImoveFeedRoute: typeof ApiPublicPortalV1ImoveFeedRoute
   ApiPublicPortalV1ImoveFeedDotcsvRoute: typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
@@ -5078,6 +5092,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalV1DevelopmentsIdRouteImport
       parentRoute: typeof ApiPublicPortalV1DevelopmentsRoute
     }
+    '/api/public/portal/v1/homezz/callback': {
+      id: '/api/public/portal/v1/homezz/callback'
+      path: '/api/public/portal/v1/homezz/callback'
+      fullPath: '/api/public/portal/v1/homezz/callback'
+      preLoaderRoute: typeof ApiPublicPortalV1HomezzCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/housera/webhook': {
       id: '/api/public/portal/v1/housera/webhook'
       path: '/api/public/portal/v1/housera/webhook'
@@ -5842,6 +5863,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicPortalV1PortalFeedDotxmlRoute,
   ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute:
     ApiPublicPortalV1BazaruldecaseFeedDotxmlRoute,
+  ApiPublicPortalV1HomezzCallbackRoute: ApiPublicPortalV1HomezzCallbackRoute,
   ApiPublicPortalV1HouseraWebhookRoute: ApiPublicPortalV1HouseraWebhookRoute,
   ApiPublicPortalV1ImoveFeedRoute: ApiPublicPortalV1ImoveFeedRoute,
   ApiPublicPortalV1ImoveFeedDotcsvRoute: ApiPublicPortalV1ImoveFeedDotcsvRoute,

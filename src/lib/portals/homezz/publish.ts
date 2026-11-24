@@ -22,10 +22,14 @@ export type HomezzOffer = PortalOffer & {
   ljm_checked_at?: string | null;
 };
 
-/** `agency` adaugă `key`; `agent` adaugă token-ul agentului curent. */
+/**
+ * `agency` adaugă `key`; `agent` adaugă token-ul agentului cu `email`
+ * (implicit agentul responsabil curent). `delete`/`activate` pe o ofertă
+ * existentă folosesc agentul salvat pe ofertă (`agent_email`).
+ */
 export type HomezzPublishClient = {
   agency: (action: string, params: Record<string, HomezzValue>) => Promise<HomezzResult>;
-  agent: (action: string, params: Record<string, HomezzValue>) => Promise<HomezzResult>;
+  agent: (action: string, params: Record<string, HomezzValue>, email?: string) => Promise<HomezzResult>;
 };
 
 export class HomezzPublishError extends Error {
@@ -112,8 +116,8 @@ export type HomezzPublishOutput = { offers: HomezzOffer[]; actions: string[] };
 const imagesParam = (urls: string[]): HomezzValue => (urls.length ? urls.slice(0, HOMEZZ_MAX_IMAGES) : "");
 
 /** Delete idempotent: un anunț deja dezactivat sau inexistent contează ca succes. */
-async function deleteAd(client: HomezzPublishClient, internalId: string, actions: string[]) {
-  const r = await client.agent("delete", { internal_id: internalId });
+async function deleteAd(client: HomezzPublishClient, internalId: string, actions: string[], email?: string) {
+  const r = await client.agent("delete", { internal_id: internalId }, email);
   actions.push(`delete:${internalId}`);
   if (r.ok) return;
   if (r.kind !== "action_error") throw new HomezzPublishError(r, "delete");
@@ -147,8 +151,9 @@ export async function publishHomezz(input: HomezzPublishInput): Promise<HomezzPu
     let sendImages: boolean;
 
     if (prev) {
+      // Reactivarea se face cu agentul salvat pe ofertă, apoi mutarea la agentul curent.
+      if (prev.deleted) { await must(client.agent("activate", { internal_id: internalId }, prev.agent_email ?? agentEmail), "activate"); actions.push(`activate:${internalId}`); }
       await moveIfNeeded(client, prev, agentEmail, actions);
-      if (prev.deleted) { await must(client.agent("activate", { internal_id: internalId }), "activate"); actions.push(`activate:${internalId}`); }
       sendImages = prev.photos_hash !== hash;
       const r = await must(client.agent("update", sendImages ? { ...params, images: imagesParam(input.images.urls) } : params), "update");
       actions.push(`update:${internalId}`);
@@ -180,24 +185,23 @@ export async function publishHomezz(input: HomezzPublishInput): Promise<HomezzPu
 
   for (const old of input.stored) {
     if (old.transaction && wanted.has(old.transaction as HomezzTransaction)) continue;
-    if (!old.deleted) {
-      await moveIfNeeded(client, old, agentEmail, actions);
-      await deleteAd(client, old.internal_id, actions);
-    }
-    offers.push({ ...old, agent_email: old.deleted ? old.agent_email : agentEmail, deleted: true, status: "deleted" });
+    if (!old.deleted) await deleteAd(client, old.internal_id, actions, old.agent_email ?? agentEmail);
+    offers.push({ ...old, agent_email: old.agent_email ?? agentEmail, deleted: true, status: "deleted" });
   }
   return { offers, actions };
 }
 
-export async function withdrawHomezz(input: { stored: HomezzOffer[]; agentEmail: string; client: HomezzPublishClient }): Promise<HomezzPublishOutput> {
+/** Retragerea folosește agentul salvat pe ofertă; agentul curent doar dacă oferta nu are unul. Fără move-ad. */
+export async function withdrawHomezz(input: { stored: HomezzOffer[]; agentEmail: string | null; client: HomezzPublishClient }): Promise<HomezzPublishOutput> {
   const actions: string[] = [];
   const offers: HomezzOffer[] = [];
   for (const o of input.stored) {
+    const email = o.agent_email ?? input.agentEmail;
     if (!o.deleted) {
-      await moveIfNeeded(input.client, o, input.agentEmail, actions);
-      await deleteAd(input.client, o.internal_id, actions);
+      if (!email) throw new Error(HOMEZZ_AGENT_NOT_LINKED);
+      await deleteAd(input.client, o.internal_id, actions, email);
     }
-    offers.push({ ...o, agent_email: o.deleted ? o.agent_email : input.agentEmail, deleted: true, status: "deleted" });
+    offers.push({ ...o, agent_email: email, deleted: true, status: "deleted" });
   }
   return { offers, actions };
 }

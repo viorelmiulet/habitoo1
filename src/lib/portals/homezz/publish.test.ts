@@ -132,7 +132,7 @@ describe("HomeZZ adapter", () => {
 
   it("agent neactivat → niciun apel", async () => {
     const sent: string[] = [];
-    const a = createHomezzAdapter(async (url) => { sent.push(url); return new Response("{}"); }, { load: async () => ({ ...base, agentEmail: null }), withToken: async (_o, _u, run) => run("TOKEN") });
+    const a = createHomezzAdapter(async (url) => { sent.push(url); return new Response("{}"); }, { load: async () => ({ ...base, agentEmail: null }), withToken: async (_o, _e, run) => run("TOKEN") });
     const r = await a.publishListing!(ctx, { propertyId: "p1", externalId: null });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.message).toBe("Agentul responsabil nu este activat pe HomeZZ.");
@@ -147,7 +147,7 @@ describe("HomeZZ adapter", () => {
       if (action === "ad-info") return new Response(JSON.stringify({ meta: { code: 400, message: "nu exista" }, data: {} }), { status: 400 });
       return new Response(JSON.stringify({ meta: { code: 400, message: "Token SECRET-TOKEN invalid key=SECRET-KEY" }, data: { ad_error: "token SECRET-TOKEN" } }), { status: 400 });
     };
-    const a = createHomezzAdapter(transport, { load: async () => base, withToken: async (_o, _u, run) => run("SECRET-TOKEN") });
+    const a = createHomezzAdapter(transport, { load: async () => base, withToken: async (_o, _e, run) => run("SECRET-TOKEN") });
     const r = await a.publishListing!(ctx, { propertyId: "p1", externalId: null });
     expect(bodies.some((b) => b.includes("SECRET-TOKEN"))).toBe(true);
     const logged = JSON.stringify(r);
@@ -161,7 +161,7 @@ describe("HomeZZ adapter", () => {
       if (action === "ad-info") return new Response(JSON.stringify({ meta: { code: 400, message: "nu exista" }, data: {} }), { status: 400 });
       return new Response(JSON.stringify({ meta: { code: 200, message: "ok" }, data: { url: "https://homezz.ro/a.html", id: 5, internal_id: "13761" } }), { status: 200 });
     };
-    const a = createHomezzAdapter(transport, { load: async () => base, withToken: async (_o, _u, run) => run("T") });
+    const a = createHomezzAdapter(transport, { load: async () => base, withToken: async (_o, _e, run) => run("T") });
     const r = await a.publishListing!(ctx, { propertyId: "p1", externalId: null });
     expect(r.ok && r.data.publicUrl).toBe("https://homezz.ro/a.html");
     expect(r.ok && r.data.offers?.[0]?.reference).toBe("13761");

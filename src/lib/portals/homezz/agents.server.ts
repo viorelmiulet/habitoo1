@@ -102,12 +102,19 @@ const tokenCache = new Map<string, { token: string; at: number }>();
 export function clearHomezzTokenCache() { tokenCache.clear(); }
 
 export async function getHomezzAgentToken(organizationId: string, userId: string, deps: HomezzAgentDeps, opts: { force?: boolean } = {}): Promise<string> {
-  const cacheKey = `${organizationId}:${userId}`;
-  const hit = tokenCache.get(cacheKey);
-  if (!opts.force && hit && Date.now() - hit.at < HOMEZZ_TOKEN_TTL_MS) return hit.token;
   const member = await deps.member(organizationId, userId);
   const email = member?.email?.trim().toLowerCase();
   if (!email) throw new Error("Agentul nu aparține agenției sau nu are email.");
+  return getHomezzEmailToken(organizationId, email, deps, opts);
+}
+
+/** Token pentru un email HomeZZ (de ex. agentul salvat pe ofertă), independent de agentul responsabil curent. */
+export async function getHomezzEmailToken(organizationId: string, rawEmail: string, deps: HomezzAgentDeps, opts: { force?: boolean } = {}): Promise<string> {
+  const email = rawEmail.trim().toLowerCase();
+  if (!email) throw new Error("Lipsește emailul agentului HomeZZ.");
+  const cacheKey = `${organizationId}:${email}`;
+  const hit = tokenCache.get(cacheKey);
+  if (!opts.force && hit && Date.now() - hit.at < HOMEZZ_TOKEN_TTL_MS) return hit.token;
   const r = await deps.post("generate-token", { key: await deps.agencyKey(organizationId), email });
   if (!r.ok) fail(r);
   const token = str((r.data as { token?: unknown } | null)?.token);
@@ -125,6 +132,15 @@ export async function withHomezzAgentToken(
   const first = await run(await getHomezzAgentToken(organizationId, userId, deps));
   if (!isTokenError(first)) return first;
   return run(await getHomezzAgentToken(organizationId, userId, deps, { force: true }));
+}
+
+/** Ca `withHomezzAgentToken`, dar după emailul HomeZZ salvat. */
+export async function withHomezzEmailToken(
+  organizationId: string, email: string, deps: HomezzAgentDeps, run: (token: string) => Promise<HomezzResult>,
+): Promise<HomezzResult> {
+  const first = await run(await getHomezzEmailToken(organizationId, email, deps));
+  if (!isTokenError(first)) return first;
+  return run(await getHomezzEmailToken(organizationId, email, deps, { force: true }));
 }
 
 // ---------------------------------------------------------------- dependențe reale
