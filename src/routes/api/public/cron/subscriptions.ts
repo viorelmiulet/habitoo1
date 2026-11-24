@@ -2,6 +2,7 @@
 // se fac în baza de date (`subscription_enforce_daily`), iar această rută trimite
 // emailurile brandate pentru agențiile intrate azi în grație.
 // Apelantul este autentificat cu secretul de cron generat de platformă.
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 import { GRACE_DAYS } from "@/lib/subscription";
@@ -140,3 +141,6 @@ export const Route = createFileRoute("/api/public/cron/subscriptions")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

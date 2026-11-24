@@ -1,3 +1,4 @@
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import {createFileRoute} from "@tanstack/react-router";
 import {authenticateCronRequest} from "@/integrations/supabase/cron-auth";
 export const Route=createFileRoute("/api/public/jobs/partner-webhooks")({server:{handlers:{POST:async({request})=>{
@@ -7,3 +8,6 @@ export const Route=createFileRoute("/api/public/jobs/partner-webhooks")({server:
  const body=await request.json().catch(()=>({}));if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).length)return new Response("Invalid body",{status:422});
  const {runWebhookWorker}=await import("@/lib/partner-api/webhook.server");try{return Response.json(await runWebhookWorker());}catch{return Response.json({success:false},{status:503});}
 }}}});
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

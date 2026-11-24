@@ -3,6 +3,7 @@
  * (maximum unul pe conversație pe oră) se fac atomic în `chat_email_claim`.
  * Armat la trimiterea unui mesaj, dezarmat când nu mai există mesaje în așteptare.
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 import { CHAT_EMAIL_IMAGE_TTL, chatConversationUrl } from "@/lib/chat/email-data";
@@ -133,3 +134,6 @@ export const Route = createFileRoute("/api/public/cron/chat-email")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

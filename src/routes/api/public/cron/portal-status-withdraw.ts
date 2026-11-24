@@ -2,6 +2,7 @@
  * Worker-ul retragerilor automate la „Vândut” / „Închiriat” / „Arhivat”.
  * Armat la punerea în coadă, dezarmat când coada se golește.
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -41,3 +42,6 @@ export const Route = createFileRoute("/api/public/cron/portal-status-withdraw")(
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

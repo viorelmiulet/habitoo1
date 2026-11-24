@@ -1,4 +1,5 @@
 /** Cron zilnic Housera: reîmprospătează nomenclatorul (`GET schema`, ETag/304). Fără scrieri la Housera. */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -19,3 +20,6 @@ export const Route = createFileRoute("/api/public/cron/housera-schema")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

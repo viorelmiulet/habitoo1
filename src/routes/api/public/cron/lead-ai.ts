@@ -2,6 +2,7 @@
  * Coada asistentului de lead-uri: analizează un lot mărginit de mesaje primite
  * pe lead-uri. Nu trimite nimic clientului; eșecurile nu ating mesajul primit.
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -24,3 +25,6 @@ export const Route = createFileRoute("/api/public/cron/lead-ai")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

@@ -1,3 +1,4 @@
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 import { oferaWeeklySyncEnabled } from "@/lib/portals/ofera/nomenclature";
@@ -14,3 +15,5 @@ export const Route = createFileRoute("/api/public/cron/ofera-nomenclature")({
     return Response.json(result, { status: result.ok ? 200 : 503 });
   } } },
 });
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

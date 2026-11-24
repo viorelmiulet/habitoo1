@@ -1,4 +1,5 @@
 /** Cron (la 10 minute): statusul real al anunțurilor Vumsi bifate (doar citiri). */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -14,3 +15,6 @@ export const Route = createFileRoute("/api/public/cron/vumsi-status")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

@@ -1,3 +1,4 @@
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 import { completeMissingCommissionRates, getRonEurRateForDate } from "@/lib/commissions-rates.server";
@@ -40,3 +41,5 @@ export const Route = createFileRoute("/api/public/cron/commission-rates")({
     return Response.json({ ok: true, updated });
   } } },
 });
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

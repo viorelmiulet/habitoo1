@@ -2,6 +2,7 @@
  * Reprocesarea notificărilor Storia eșuate. Armat la eșec, dezarmat când
  * nu mai există evenimente de reluat.
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -39,3 +40,6 @@ export const Route = createFileRoute("/api/public/cron/storia-webhook-retry")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

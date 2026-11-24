@@ -1,4 +1,5 @@
 /** Cron Storia `/meta` (doar GET): `mode=pending` la 5 minute, `mode=reconcile` la 6 ore. */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -31,3 +32,6 @@ export const Route = createFileRoute("/api/public/cron/storia-meta")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

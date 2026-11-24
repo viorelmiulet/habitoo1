@@ -1,4 +1,5 @@
 /** Coada potrivirilor active: lot mărginit, detectare deterministă, fără AI și fără trimiteri. */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -22,3 +23,6 @@ export const Route = createFileRoute("/api/public/cron/active-match")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

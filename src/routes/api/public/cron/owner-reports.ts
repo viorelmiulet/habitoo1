@@ -1,4 +1,5 @@
 /** Rapoartele săptămânale pentru proprietari (lunea, ora României). */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -19,3 +20,6 @@ export const Route = createFileRoute("/api/public/cron/owner-reports")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

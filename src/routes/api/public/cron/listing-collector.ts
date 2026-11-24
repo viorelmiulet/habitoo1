@@ -5,6 +5,7 @@
  * câte una, cu lock per sursă și buget de timp per tick; progresul și erorile
  * se salvează în `collector_runs`.
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -70,3 +71,6 @@ export const Route = createFileRoute("/api/public/cron/listing-collector")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

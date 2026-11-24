@@ -1,4 +1,5 @@
 /** Cron la 15 minute: reia evenimentele Housera neprocesate și recuperează cele pierdute (`GET events`). */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -18,3 +19,6 @@ export const Route = createFileRoute("/api/public/cron/housera-events")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

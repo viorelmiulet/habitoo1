@@ -5,6 +5,7 @@
  * trimestru publicat este deja stocat și publicarea Eurostat nu este mai nouă
  * decât ce avem; fiecare rulare se jurnalizează în `market_import_runs`.
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -49,3 +50,6 @@ export const Route = createFileRoute("/api/public/cron/market-price-indices")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

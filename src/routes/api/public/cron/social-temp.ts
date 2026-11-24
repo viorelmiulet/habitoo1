@@ -2,6 +2,7 @@
  * Lucrător Instagram: termină Reel-urile rămase în procesare și șterge fișierele
  * temporare din `social-temp` mai vechi de 24 h. Iese imediat când nu are nimic de făcut.
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -62,3 +63,6 @@ export const Route = createFileRoute("/api/public/cron/social-temp")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

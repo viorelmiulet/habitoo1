@@ -2,6 +2,7 @@
  * Bulk outreach worker. Managed HTTP schedule every minute; exits after one query
  * when no campaign is in status "sending". Window, daily limit and claiming live in the DB.
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -24,3 +25,6 @@ export const Route = createFileRoute("/api/public/cron/outreach-send")({
     return Response.json({ ok: true, ...r });
   } } },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

@@ -37,3 +37,27 @@ export function keepAliveUntilSettled<T>(promise: Promise<T>): boolean {
   }
   return false;
 }
+
+type RouteWithHandlers = { options: { server?: { handlers?: unknown } } };
+
+/**
+ * Înregistrează la `waitUntil` lucrul fiecărui handler al unei rute de cron,
+ * ca pg_net/cron să nu taie execuția când închid conexiunea. Răspunsul rămâne
+ * exact cel întors de handler. Se aplică o singură dată, la încărcarea rutei.
+ */
+export function keepRouteHandlersAlive<R>(route: R): R {
+  const server = (route as unknown as RouteWithHandlers).options.server;
+  const handlers = server?.handlers as Record<string, unknown> | undefined;
+  if (!handlers || typeof handlers !== "object") return route;
+  for (const [method, handler] of Object.entries(handlers)) {
+    if (typeof handler !== "function" || (handler as { __keepAlive?: true }).__keepAlive) continue;
+    const wrapped = (...args: unknown[]) => {
+      const work = Promise.resolve().then(() => (handler as (...a: unknown[]) => unknown)(...args));
+      keepAliveUntilSettled(work);
+      return work;
+    };
+    (wrapped as { __keepAlive?: true }).__keepAlive = true;
+    handlers[method] = wrapped;
+  }
+  return route;
+}

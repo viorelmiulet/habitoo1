@@ -1,4 +1,5 @@
 /** Cron (la 3 minute, armat doar cât există anunțuri OLX în moderare): starea reală a anunțurilor. */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -21,3 +22,6 @@ export const Route = createFileRoute("/api/public/cron/olx-status")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

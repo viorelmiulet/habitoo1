@@ -1,4 +1,5 @@
 /** Cron VDI.ro: reia lead-urile neprocesate și trage `GET /apileaduri` (rezervă). */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -23,3 +24,6 @@ export const Route = createFileRoute("/api/public/cron/vdi-leads")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

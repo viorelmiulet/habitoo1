@@ -2,6 +2,7 @@
  * Programările de publicare pe portaluri: cronul rulează la fiecare minut, dar
  * lucrează doar când există programări scadente (EXISTS ieftin înainte de orice).
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
@@ -34,3 +35,6 @@ export const Route = createFileRoute("/api/public/cron/portal-schedules")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

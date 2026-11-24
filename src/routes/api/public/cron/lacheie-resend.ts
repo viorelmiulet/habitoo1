@@ -7,6 +7,7 @@
  * Nu pornește nimic din proprie inițiativă: procesează doar joburi create
  * explicit de un om.
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
@@ -104,3 +105,6 @@ export const Route = createFileRoute("/api/public/cron/lacheie-resend")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

@@ -5,6 +5,7 @@
  * retrage ofertele una câte una prin fluxul normal al portalului, cel mai
  * recent publicat primul, cu motivul „slot_limit”.
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 import { SLOT_LIMIT_WITHDRAW_REASON } from "@/lib/portals/slots";
@@ -91,3 +92,6 @@ export const Route = createFileRoute("/api/public/cron/portal-slot-withdraw")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);

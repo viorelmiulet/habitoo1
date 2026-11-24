@@ -2,6 +2,7 @@
  * Jobul programat de îmbogățire AI a ofertelor de piață pentru ACP.
  * „new” la 15 minute (lot mic), „backlog” noaptea (loturi mai mari).
  */
+import { keepRouteHandlersAlive } from "@/lib/after-response";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
@@ -30,3 +31,6 @@ export const Route = createFileRoute("/api/public/cron/acp-enrich")({
     },
   },
 });
+
+// Lucrul continuă prin waitUntil chiar dacă apelantul închide conexiunea; răspunsul rămâne același.
+keepRouteHandlersAlive(Route);
