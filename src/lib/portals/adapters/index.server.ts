@@ -21,6 +21,7 @@ import { vumsiAdapter } from "./vumsi.server";
 import { oferaAdapter } from "./ofera.server";
 import { zupAdapter } from "./zup.server";
 import { houseraAdapter } from "./housera.server";
+import { vrexaAdapter } from "./vrexa.server";
 
 const ADAPTERS: Record<string, PortalAdapter> = {
   clickimob: clickimobAdapter,
@@ -48,6 +49,7 @@ const ADAPTERS: Record<string, PortalAdapter> = {
   ofera: oferaAdapter,
   zup: zupAdapter,
   housera: houseraAdapter,
+  vrexa: vrexaAdapter,
 };
 
 export function getPortalAdapter(portalId: string): PortalAdapter | null {

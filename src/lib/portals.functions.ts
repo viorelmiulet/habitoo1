@@ -926,6 +926,10 @@ export async function savePortalConnectionCore(input: {
         throw new Error("Portalul nu folosește secret de webhook.");
       settings["webhook_secret_encrypted"] = encryptPortalCredential(data.webhookSecret);
     }
+    if (definition.id === "vrexa") {
+      const { vrexaConnectionEnv } = await import("@/lib/portals/vrexa/config");
+      settings["vrexa_env"] = vrexaConnectionEnv(settings, process.env);
+    }
     // Trimiterile reale nu au comutator separat: urmează mereu activarea.
     settings["allow_live"] = row?.activated === true;
 

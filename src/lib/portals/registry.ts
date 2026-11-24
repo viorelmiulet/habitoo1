@@ -391,6 +391,25 @@ export const STATIC_PORTALS: PortalDefinition[] = [
       "API imo24 v1.0.1, doar HTTPS pe https://imo24.ro/api/v1. Testul conexiunii folosește GET /me. Publicarea: PUT /anunturi/by-external/{external_id}, câte un anunț pe tranzacție; retragerea: DELETE pe același cod. Poze JPEG/WebP (max. 30); imaginile amânate se retrimit automat de cel mult 3 ori. Limita este 600 de cereri pe oră pe cheie; un răspuns 401 nu se reîncearcă. Creditele și promovarea nu se folosesc.",
   },
   {
+    id: "vrexa",
+    activation: "approval",
+    display_name: "Vrexa.ro",
+    description: "Conectare la Vrexa Partner API cu datele de acces generate de agenție în contul Vrexa. Deocamdată doar testul conexiunii.",
+    logo: "vrexa",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    authentication: ["portal_api_key"],
+    capabilities: ["test_connection"],
+    configuration_schema: {
+      fields: [
+        { key: "client_id", label: "Client ID Vrexa", help: "Generat de administratorul agenției în Vrexa: Configurare agenție → Integrare API.", target: "external_account_id" },
+        { key: "client_secret", label: "Client secret Vrexa", help: "Afișat o singură dată în Vrexa la generare. Îl salvăm criptat și nu îl afișăm niciodată.", secret: true, target: "credentials" },
+      ],
+    },
+    website: "https://vrexa.ro",
+    notes: "Vrexa Partner API v1: token OAuth client_credentials (POST /oauth/token, 30 min), apoi Bearer. Mediul din VREXA_ENV (implicit test → https://test.vrexa.ro; production → VREXA_PRODUCTION_URL), salvat pe conexiune. Testul: GET /partner/v1/listings?pageSize=1. Fără publicare încă.",
+  },
+  {
     id: "homezz",
     receives_leads: true,
     activation: "approval",
