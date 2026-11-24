@@ -116,6 +116,14 @@ async function zupReasonsLoader(admin: Admin, organizationId: string) {
   return (row: Record<string,any>) => loadZupPreview(row.id,organizationId).then(r => r.reasons).catch(() => ["La ZUP, verificarea ofertei a eșuat; reîncearcă."]);
 }
 
+async function homezzReasonsLoader(admin: Admin, organizationId: string) {
+  const { data: conn, error } = await admin.from("portal_connections").select("id").eq("organization_id", organizationId).eq("portal", "homezz").maybeSingle();
+  if (error) return async () => ["La HomeZZ, verificarea conexiunii a eșuat; reîncearcă."];
+  if (!conn) return null;
+  const { homezzReasonsFor } = await import("./homezz/preview.server");
+  return (row: Record<string, any>) => homezzReasonsFor(organizationId, row.id).catch(() => ["Verificarea HomeZZ a eșuat; reîncearcă."]);
+}
+
 export async function loadRequirementSubject(
   admin: Admin,
   organizationId: string,
@@ -151,6 +159,7 @@ export async function loadRequirementSubject(
   const vumsi = await vumsiReasonsLoaderFor(admin, organizationId);
   const ofera = await oferaReasonsLoader(admin, organizationId);
   const zup = await zupReasonsLoader(admin, organizationId);
+  const homezz = await homezzReasonsLoader(admin, organizationId);
   let agentProfile: any = null;
   let agentName: string | null = null;
   let agentEmail: string | null = null;
@@ -214,6 +223,7 @@ export async function loadRequirementSubject(
     ...(vumsi ? { vumsiReasons: vumsi(row as never) } : {}),
     ...(ofera ? { oferaReasons: await ofera(row) } : {}),
     ...(zup ? { zupReasons: await zup(row) } : {}),
+    ...(homezz ? { homezzReasons: await homezz(row) } : {}),
   };
 }
 
@@ -274,6 +284,7 @@ export async function loadRequirementSubjects(
   const profileById = new Map((profiles ?? []).map((p: any) => [p.id as string, p]));
   const ofera = await oferaReasonsLoader(admin, organizationId);
   const zup = await zupReasonsLoader(admin, organizationId);
+  const homezz = await homezzReasonsLoader(admin, organizationId);
 
   for (const property of properties ?? []) {
     const row = property as Record<string, any>;
@@ -323,6 +334,7 @@ export async function loadRequirementSubjects(
       ...(vumsiBatch ? { vumsiReasons: vumsiBatch(row as never) } : {}),
       ...(ofera ? { oferaReasons: await ofera(row) } : {}),
       ...(zup ? { zupReasons: await zup(row) } : {}),
+      ...(homezz ? { homezzReasons: await homezz(row) } : {}),
     });
   }
   return result;

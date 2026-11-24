@@ -4,6 +4,7 @@ import { homezzFee, homezzFloor, mapPropertyToHomezz, type HomezzMapContext } fr
 const ctx: HomezzMapContext = {
   location: { ok: true, cityId: 9812, areaId: 5, areaSource: "name" },
   agent: { name: "Ana Pop", phone: "+40 722 111 222" },
+  currentYear: 2026,
 };
 const DESC = "Apartament luminos, aproape de metrou, renovat recent, cu vedere deschisă.";
 const base = {
@@ -100,6 +101,7 @@ describe("mapPropertyToHomezz", () => {
   ])("apartament fără %s → blocat", (field, re) => {
     const p: Record<string, unknown> = { ...apt, [field]: null };
     if (field === "floor_label") p.floor = null;
+    if (field === "finish_state") p.construction_stage = null;
     expect(reasons(p).join(" ")).toMatch(re);
   });
   it.each([["rooms", /camere/], ["usable_surface", /suprafața utilă/], ["land_surface", /terenului/], ["build_year", /anul/], ["finish_state", /Starea/]])(
@@ -173,5 +175,28 @@ describe("cuvinte nepermise în titlu", () => {
   it("doar avertisment cu lista", () => {
     const r = ok({ ...apt, title: "Vând URGENT apartament ofertă 2 camere" });
     expect(r.warnings.find((w) => w.includes("nepermise"))).toContain("vand, oferta, urgent");
+  });
+});
+
+describe("homezz real_estate_state", () => {
+  const st = (o: object) => ok({ ...apt, ...o }).ads[0]!.params.real_estate_state;
+  it("în construcție → 6", () => expect(st({ construction_stage: "În construcție", finish_state: "Finisat" })).toBe(6));
+  it("corespondent direct", () => {
+    expect(st({ finish_state: "Bună" })).toBe(2);
+    expect(st({ finish_state: "Renovat" })).toBe(4);
+    expect(st({ finish_state: "De renovat" })).toBe(5);
+  });
+  it("finisat/ultrafinisat/necompletat+finalizată după an", () => {
+    expect(st({ finish_state: "Finisat", build_year: 2024 })).toBe(1);
+    expect(st({ finish_state: "Ultrafinisat", build_year: 2023 })).toBe(2);
+    expect(st({ finish_state: null, construction_stage: "Finalizată", build_year: 2025 })).toBe(1);
+    expect(st({ finish_state: null, construction_stage: "Finalizată", build_year: 2000 })).toBe(2);
+  });
+  it("semifinisat după an", () => {
+    expect(st({ finish_state: "Semifinisat", build_year: 2024 })).toBe(1);
+    expect(st({ finish_state: "Semifinisat", build_year: 2010 })).toBe(5);
+  });
+  it("altfel blocat", () => {
+    expect(reasons({ ...apt, finish_state: null, construction_stage: null }).join(" ")).toMatch(/Starea imobilului/);
   });
 });

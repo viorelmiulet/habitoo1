@@ -14,6 +14,8 @@ export type HomezzTransaction = "sale" | "rent";
 export type HomezzMapContext = {
   location: HomezzLocationResult;
   agent: { name: string | null; phone: string | null } | null;
+  /** Anul curent (mapper-ul rămâne pur). */
+  currentYear: number;
 };
 export type HomezzMapResult =
   | { ok: true; ads: { transaction: HomezzTransaction; params: HomezzParams }[]; warnings: string[] }
@@ -145,6 +147,19 @@ function nrParking(n: number | null): number | null {
 
 // ---------------------------------------------------------------- mapare
 
+const FINISHED = new Set(["finisat", "ultrafinisat"]);
+const STAGE_DONE = new Set(["finalizata", "finalizat"]);
+/** `real_estate_state`: în construcție → 6; corespondent direct; finisat/ultrafinisat/necompletat+finalizată → 1 sau 2; semifinisat → 1 sau 5. */
+export function homezzRealEstateState(stage: string, finish: string, year: number | null, currentYear: number): number | null {
+  if (STAGE_UNDER_CONSTRUCTION.has(stage)) return 6;
+  const direct = FINISH_STATE[finish];
+  if (direct !== undefined) return direct;
+  const recent = year !== null && year >= currentYear - 2;
+  if (FINISHED.has(finish) || (!finish && STAGE_DONE.has(stage))) return year === null ? null : recent ? 1 : 2;
+  if (finish === "semifinisat") return year === null ? null : recent ? 1 : 5;
+  return null;
+}
+
 export function mapPropertyToHomezz(p: Row, ctx: HomezzMapContext): HomezzMapResult {
   const reasons: string[] = [];
   const warnings: string[] = [];
@@ -227,7 +242,7 @@ export function mapPropertyToHomezz(p: Row, ctx: HomezzMapContext): HomezzMapRes
   };
   const stage = normalizeLabel(p.construction_stage);
   const finish = normalizeLabel(p.finish_state);
-  const realEstateState = STAGE_UNDER_CONSTRUCTION.has(stage) ? 6 : (FINISH_STATE[finish] ?? null);
+  const realEstateState = homezzRealEstateState(stage, finish, yearValue, ctx.currentYear);
   const buildingState = BUILDING_STATE_RENOVATE.has(finish) ? 2 : (BUILDING_STATE_STAGE[stage] ?? null);
   const parkingSpaces = num(p.parking_spaces);
   const parkingPlace = parkingSpaces !== null && parkingSpaces > 0 ? 1 : p.parking && p.parking.trim() ? 1 : null;
