@@ -2239,6 +2239,8 @@ import {
 } from "@/lib/portals/portal-state";
 
 import { houseraWithdrawnView, type HouseraView } from "@/lib/portals/housera/status-view";
+import { vrexaInactiveView } from "@/lib/portals/vrexa/status-view";
+import { vrexaConnectionEnv } from "@/lib/portals/vrexa/config";
 
 export type PropertyPortalCell = {
   storiaValidTo?: string | null;
@@ -2246,6 +2248,7 @@ export type PropertyPortalCell = {
   storiaExpiredDeselected?: boolean;
   apiPublication?: import("@/lib/partner-api/feedback").PublicationFeedback;
   houseraView?: HouseraView;
+  vrexaInactive?: boolean;
   imobiliareMode?: ImobiliarePublicationMode;
   imobiliareConfirmedMode?: ImobiliarePublicationMode;
   portalId: string;
@@ -2592,6 +2595,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
             imobiliareMode: pub?.imobiliare_mode === "imoradar_only" ? "imoradar_only" as const : "combined" as const,
             imobiliareConfirmedMode: listing?.imobiliare_mode === "imoradar_only" ? "imoradar_only" as const : "combined" as const,
           } : {}),
+          ...(portal.id === "vrexa" ? { vrexaInactive: vrexaInactiveView(Array.isArray(listing?.portal_offers) ? (listing?.portal_offers as Array<{ status?: string; env?: string }>) : [], vrexaConnectionEnv(null, process.env)) } : {}),
           ...(portal.id === "housera" ? { houseraView: houseraWithdrawnView(listingStatus, parsePortalOffers(listing?.portal_offers), listing?.external_id) } : {}),
           ...(portal.id === "storia" ? {
             storiaValidTo: listing?.valid_to ?? null,
@@ -4006,6 +4010,19 @@ export const getHomezzListingStats = createServerFn({ method: "POST" })
     const { loadHomezzStatsLine, homezzStatsDeps } = await import("@/lib/portals/homezz/stats.server");
     const line = await homezzStatsDeps().then((d) => loadHomezzStatsLine(d, organizationId, data.propertyId)).catch(() => null);
     return { line };
+  });
+
+/** Vrexa: citește starea de moderare la deschiderea tabului (cel mult o dată pe minut per anunț). */
+export const refreshVrexaListingStatus = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId, agentOnly } = await resolvePublishingOrg(context as unknown as AuthContext, data.organizationId);
+    await assertPortalPropertyAccess({ organizationId, propertyId: data.propertyId, agentOnly, userId: context.userId });
+    const { refreshVrexaOnOpen, vrexaStatusDeps } = await import("@/lib/portals/vrexa/status.server");
+    return vrexaStatusDeps().then((d) => refreshVrexaOnOpen(d, organizationId, data.propertyId)).catch(() => ({ refreshed: false }));
   });
 
 /** SuperAdmin: verifică IP-ul de ieșire al releului portalurilor (doar citire). */

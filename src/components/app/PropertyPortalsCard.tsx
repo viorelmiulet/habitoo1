@@ -2,6 +2,7 @@ import { sortPromotionPortals } from "@/lib/promotion-portal-order";
 import { deselectedErrorHidden } from "@/lib/portals/deselect-cleanup";
 import { publicationLabels } from "@/lib/partner-api/feedback";
 import { HOUSERA_PENDING_SENTENCE, HOUSERA_VIEW_LABEL, houseraPendingView } from "@/lib/portals/housera/status-view";
+import { VREXA_INACTIVE_LABEL, VREXA_PENDING_SENTENCE, vrexaPendingView } from "@/lib/portals/vrexa/status-view";
 import { portalCanPublish } from "@/lib/portals/registry";
 import { UNCONFIRMED_UPDATE_NOTE } from "@/lib/portals/transient-failure";
 /**
@@ -76,6 +77,7 @@ import {
   recheckOlxDirectListing,
   refreshHomezzLajumateLinks,
   getHomezzListingStats,
+  refreshVrexaListingStatus,
   getPropertyPortalRequirements,
   getPropertyStoriaAutoRenew,
   setPropertyStoriaAutoRenew,
@@ -211,6 +213,15 @@ export const PropertyPortalsCard = forwardRef<
     staleTime: 10 * 60 * 1000,
     retry: false,
   });
+  // Vrexa nu trimite notificări: starea se citește la deschiderea tabului (serverul limitează la o dată pe minut).
+  const vrexaRefreshFn = useServerFn(refreshVrexaListingStatus);
+  useEffect(() => {
+    let cancelled = false;
+    void vrexaRefreshFn({ data: { ...(organizationId ? { organizationId } : {}), propertyId } })
+      .then((r) => { if (!cancelled && r.refreshed) void queryClient.invalidateQueries({ queryKey: ["property-portals-selection", organizationId, propertyId] }); })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [organizationId, propertyId]); // eslint-disable-line react-hooks/exhaustive-deps
   const [olxRechecking, setOlxRechecking] = useState(false);
   const recheckOlx = async () => {
     setOlxRechecking(true);
@@ -1046,6 +1057,10 @@ export const PropertyPortalsCard = forwardRef<
                   ? { label: HOUSERA_VIEW_LABEL[cell.houseraView], pill: "inactive" as StatusPillState }
                   : houseraPendingView(cell.portalId, cell.state)
                   ? houseraPendingView(cell.portalId, cell.state)!
+                  : cell.portalId === "vrexa" && cell.vrexaInactive
+                  ? { label: VREXA_INACTIVE_LABEL, pill: "inactive" as StatusPillState }
+                  : vrexaPendingView(cell.portalId, cell.state)
+                  ? vrexaPendingView(cell.portalId, cell.state)!
                   : cell.portalId === "olx_direct" && cell.state === "syncing"
                   ? { label: "În moderare OLX", pill: "pending" as StatusPillState }
                   : cell.portalId === "zonata" && cell.state === "syncing"
@@ -1075,6 +1090,8 @@ export const PropertyPortalsCard = forwardRef<
                           : stateSentence({ ...cell, state: vumsiView.pill === "published" ? "published" : cell.state === "syncing" ? "withdrawn" : cell.state }, value)
                       : houseraPendingView(cell.portalId, cell.state)
                         ? HOUSERA_PENDING_SENTENCE
+                        : vrexaPendingView(cell.portalId, cell.state)
+                        ? VREXA_PENDING_SENTENCE
                         : stateSentence(cell, value);
 
               return (

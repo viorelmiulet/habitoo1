@@ -394,12 +394,12 @@ export const STATIC_PORTALS: PortalDefinition[] = [
     id: "vrexa",
     activation: "approval",
     display_name: "Vrexa.ro",
-    description: "Conectare la Vrexa Partner API cu datele de acces generate de agenție în contul Vrexa. Deocamdată doar testul conexiunii.",
+    description: "Integrare directă cu Vrexa.ro prin datele de acces generate de agenție în contul Vrexa. Publici, actualizezi și retragi anunțurile din Habitoo.",
     logo: "vrexa",
     status: "available",
     directions: ["habitoo_to_portal"],
     authentication: ["portal_api_key"],
-    capabilities: ["test_connection"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing"],
     configuration_schema: {
       fields: [
         { key: "client_id", label: "Client ID Vrexa", help: "Generat de administratorul agenției în Vrexa: Configurare agenție → Integrare API.", target: "external_account_id" },
@@ -407,7 +407,7 @@ export const STATIC_PORTALS: PortalDefinition[] = [
       ],
     },
     website: "https://vrexa.ro",
-    notes: "Vrexa Partner API v1: token OAuth client_credentials (POST /oauth/token, 30 min), apoi Bearer. Mediul din VREXA_ENV (implicit test → https://test.vrexa.ro; production → VREXA_PRODUCTION_URL), salvat pe conexiune. Testul: GET /partner/v1/listings?pageSize=1. Fără publicare încă.",
+    notes: "Vrexa Partner API v1: token OAuth client_credentials (POST /oauth/token, 30 min), apoi Bearer. Mediul din VREXA_ENV (implicit test → https://test.vrexa.ro; production → VREXA_PRODUCTION_URL), salvat pe conexiune. Testul: GET /partner/v1/listings?pageSize=1. Publicare: PUT/DELETE /partner/v1/listings/{externalId} per tranzacție (-V/-I), stare citită cu GET.",
   },
   {
     id: "homezz",

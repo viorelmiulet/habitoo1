@@ -6,7 +6,7 @@ export type VrexaCredentials = { organizationId: string; env: VrexaEnv; baseUrl:
 export type VrexaProblem = { code: string | null; detail: string | null; errors: Record<string, string[]> | null };
 export type VrexaResult<T = unknown> =
   | { ok: true; status: number; data: T }
-  | { ok: false; status: number | null; kind: "auth" | "agency_inactive" | "rate_limited" | "validation" | "not_found" | "http" | "network" | "config"; message: string; problem: VrexaProblem; retryAt?: string };
+  | { ok: false; status: number | null; kind: "auth" | "agency_inactive" | "rate_limited" | "validation" | "not_found" | "http" | "network" | "config"; message: string; problem: VrexaProblem; retryAt?: string; retryAfterMs?: number };
 
 export const VREXA_TOKEN_TTL_MS = 25 * 60_000;
 export const VREXA_MAX_RETRY_AFTER_S = 10;
@@ -39,16 +39,17 @@ async function readProblem(res: Response, secrets: string[]): Promise<{ body: un
   return { body, problem: { code: typeof b["code"] === "string" ? b["code"] : null, detail, errors } };
 }
 
-function fail(status: number | null, problem: VrexaProblem, fallback: string, retryAt?: string): VrexaResult<never> {
+function fail(status: number | null, problem: VrexaProblem, fallback: string, retryAt?: string, retryAfterMs?: number): VrexaResult<never> {
   const code = problem.code;
   if (code === "agency_inactive") return { ok: false, status, kind: "agency_inactive", message: VREXA_AGENCY_INACTIVE, problem };
   if (status === 401 || code === "invalid_client" || code === "unauthorized") return { ok: false, status, kind: "auth", message: VREXA_BAD_CREDENTIALS, problem };
   if (status === 429 || code === "rate_limited" || code === "daily_limit_reached" || code === "daily_reply_limit_reached")
-    return { ok: false, status, kind: "rate_limited", message: retryAt ? `Vrexa a limitat cererile; se poate relua după ${retryAt}.` : `Vrexa a limitat cererile${problem.detail ? `: ${problem.detail}` : "."}`, problem, ...(retryAt ? { retryAt } : {}) };
+    return { ok: false, status, kind: "rate_limited", message: retryAt ? `Vrexa a limitat cererile; se poate relua după ${retryAt}.` : `Vrexa a limitat cererile${problem.detail ? `: ${problem.detail}` : "."}`, problem, ...(retryAt ? { retryAt } : {}), ...(retryAfterMs ? { retryAfterMs } : {}) };
   if (code === "validation_failed") {
     const fields = problem.errors ? Object.entries(problem.errors).map(([k, v]) => `${k}: ${(Array.isArray(v) ? v : [v]).join(", ")}`).join("; ") : "";
     return { ok: false, status, kind: "validation", message: `Vrexa a respins datele${fields ? `: ${fields}` : problem.detail ? `: ${problem.detail}` : "."}`, problem };
   }
+  if (code === "type_mismatch") return { ok: false, status, kind: "http", message: problem.detail ? `Vrexa: ${problem.detail}` : "Vrexa: tipul anunțului diferă de cel existent.", problem };
   if (code === "not_found" || status === 404) return { ok: false, status, kind: "not_found", message: problem.detail ?? "Vrexa: resursa nu există.", problem };
   return { ok: false, status, kind: "http", message: problem.detail ? `Vrexa: ${problem.detail}` : fallback, problem };
 }
@@ -122,7 +123,7 @@ export async function vrexaRequest<T = unknown>(c: VrexaCredentials, method: "GE
       }
       const { problem } = await readProblem(res, [c.clientSecret, t.data]);
       const at = new Date(d.now() + seconds * 1000).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" });
-      return fail(429, { ...problem, code: problem.code ?? "rate_limited" }, "Vrexa a limitat cererile.", at);
+      return fail(429, { ...problem, code: problem.code ?? "rate_limited" }, "Vrexa a limitat cererile.", at, seconds * 1000);
     }
     const { body, problem } = await readProblem(res, [c.clientSecret, t.data]);
     if (!res.ok) return fail(res.status, problem, `Vrexa a răspuns cu HTTP ${res.status}.`);
