@@ -5,12 +5,13 @@
  * `PORTAL_RELAY_KEY` rămâne obligatorie — fără ea cererea pleacă direct.
  * Cheia nu apare niciodată în loguri sau mesaje de eroare.
  */
-export type RelayPortal = "vdi" | "imobiliare";
+export type RelayPortal = "vdi" | "imobiliare" | "homezz";
 import { withPortalDeadline } from "./publication-resilience";
 
 const PORTAL_HOSTS: Record<RelayPortal, string> = {
   vdi: "vdi.ro",
   imobiliare: "www.imobiliare.ro",
+  homezz: "homezz.ro",
 };
 
 /** Adresa releului cu IP fix, folosită când `PORTAL_RELAY_URL` nu e setat. */

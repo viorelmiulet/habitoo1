@@ -391,6 +391,33 @@ export const STATIC_PORTALS: PortalDefinition[] = [
       "API imo24 v1.0.1, doar HTTPS pe https://imo24.ro/api/v1. Testul conexiunii folosește GET /me. Publicarea: PUT /anunturi/by-external/{external_id}, câte un anunț pe tranzacție; retragerea: DELETE pe același cod. Poze JPEG/WebP (max. 30); imaginile amânate se retrimit automat de cel mult 3 ori. Limita este 600 de cereri pe oră pe cheie; un răspuns 401 nu se reîncearcă. Creditele și promovarea nu se folosesc.",
   },
   {
+    id: "homezz",
+    activation: "approval",
+    display_name: "HomeZZ.ro + Lajumate.ro",
+    description:
+      "Integrare directă cu HomeZZ.ro (anunțurile apar și pe Lajumate.ro), cu cheia API emisă de HomeZZ pentru agenție. Deocamdată doar testul conexiunii.",
+    logo: "homezz",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    // Cheia o EMITE HOMEZZ; o introduce doar SuperAdminul, salvată criptat.
+    authentication: ["portal_api_key"],
+    capabilities: ["test_connection"],
+    configuration_schema: {
+      fields: [
+        {
+          key: "api_key",
+          label: "Cheie API HomeZZ.ro",
+          help: "Cheia de agenție primită de la HomeZZ.ro. O salvăm criptat și nu o afișăm niciodată.",
+          secret: true,
+          target: "credentials",
+        },
+      ],
+    },
+    website: "https://homezz.ro",
+    notes:
+      "API HomeZZ xmlimport: POST https://homezz.ro/xmlimport/{acțiune}, corp form-urlencoded, prin releul cu IP fix. Testul conexiunii folosește details-agency. Publicarea nu este încă implementată.",
+  },
+  {
     id: "zonata",
     display_name: "ZonaTa.ro",
     description:
