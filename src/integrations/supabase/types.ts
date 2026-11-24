@@ -8937,6 +8937,7 @@ export type Database = {
           created_at: string
           external_account_id: string | null
           external_id: number
+          external_key: string | null
           id: string
           last_error: string | null
           organization_id: string
@@ -8950,6 +8951,7 @@ export type Database = {
           created_at?: string
           external_account_id?: string | null
           external_id?: number
+          external_key?: string | null
           id?: string
           last_error?: string | null
           organization_id: string
@@ -8963,6 +8965,7 @@ export type Database = {
           created_at?: string
           external_account_id?: string | null
           external_id?: number
+          external_key?: string | null
           id?: string
           last_error?: string | null
           organization_id?: string

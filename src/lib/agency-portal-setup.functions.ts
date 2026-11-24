@@ -10,6 +10,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   derivePortalConnectionStatus,
   getPortalDefinition,
@@ -305,3 +306,32 @@ export const revokeAgencyPortalApiKey = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ keyId: z.string().uuid(), organizationId: z.string().uuid().optional() }).parse(input))
   .handler(async ({ data, context }) => guard(() => revokeAgencyPortalKey(context as unknown as Ctx, data)));
+
+// ---------------------------------------------------------------- agenți HomeZZ
+
+/** SuperAdmin (cu agenția cerută) sau administratorul propriei agenții. */
+async function requireHomezzManager(context: Ctx, organizationId?: string): Promise<string> {
+  const { data: superadmin } = await (context.supabase as { rpc: (n: string) => Promise<{ data: unknown }> }).rpc("is_superadmin");
+  if (superadmin === true && organizationId) return organizationId;
+  return requireAgencyPortalAdmin(context, organizationId);
+}
+const orgInput = z.object({ organizationId: z.string().uuid().optional() });
+
+export const getHomezzAgents = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: z.infer<typeof orgInput>) => orgInput.parse(input))
+  .handler(({ data, context }) => guard(async () => {
+    const organizationId = await requireHomezzManager(context as Ctx, data.organizationId);
+    const { loadHomezzAgentRoster } = await import("@/lib/portals/homezz/agents.server");
+    return loadHomezzAgentRoster(organizationId);
+  }));
+
+const activateInput = z.object({ organizationId: z.string().uuid().optional(), userId: z.string().uuid(), confirmed: z.literal(true) });
+export const activateHomezzAgentFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: z.infer<typeof activateInput>) => activateInput.parse(input))
+  .handler(({ data, context }) => guard(async () => {
+    const organizationId = await requireHomezzManager(context as Ctx, data.organizationId);
+    const { activateHomezzAgent, homezzAgentDeps } = await import("@/lib/portals/homezz/agents.server");
+    return activateHomezzAgent(organizationId, (context as Ctx).userId, data.userId, { confirmed: data.confirmed }, await homezzAgentDeps());
+  }));

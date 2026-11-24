@@ -1,0 +1,1 @@
+ALTER TABLE public.portal_agent_links ADD COLUMN IF NOT EXISTS external_key text;

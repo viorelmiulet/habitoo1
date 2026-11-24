@@ -13,6 +13,7 @@ import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { LaCheieActivationPanel } from "@/components/app/LaCheieActivationPanel";
+import { HomezzAgentsPanel } from "@/components/app/HomezzAgentsPanel";
 import { useCurrentUser } from "@/hooks/use-session";
 import { toastError } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
@@ -391,6 +392,7 @@ function AgencyPortalSetupBody({ portalId, organizationId }: { portalId: string;
                 <Button type="button" disabled={busy} onClick={() => active.mutate(true)}>Activează portalul</Button>
               )}
             </div>
+            {s.id === "homezz" && s.connection.hasPortalCredential ? <HomezzAgentsPanel /> : null}
           </>
         )}
       </section>
