@@ -4,6 +4,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
+import { keepAliveUntilSettled } from "@/lib/after-response";
 
 async function authenticate(request: Request): Promise<Response | null> {
   const nonce = request.headers.get("x-cron-nonce");
@@ -25,6 +26,16 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
       POST: async ({ request }) => {
         const unauthorized = await authenticate(request);
         if (unauthorized) return unauthorized;
+        // Lucrul continuă prin waitUntil chiar dacă pg_net închide conexiunea; răspunsul rămâne același.
+        const work = runPortalPublishRequest();
+        keepAliveUntilSettled(work);
+        return work;
+      },
+    },
+  },
+});
+
+export async function runPortalPublishRequest(): Promise<Response> {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { runPortalPublishWorker } = await import("@/lib/portals/publish-jobs.server");
         const { applyPortalSelectionForOrg, executeListingAction } = await import("@/lib/portals.functions");
@@ -85,7 +96,4 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
         return new Response(JSON.stringify({ ok: true, ...result }), {
           headers: { "Content-Type": "application/json" },
         });
-      },
-    },
-  },
-});
+}

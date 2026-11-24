@@ -23,3 +23,17 @@ export function runAfterResponse(task: () => Promise<unknown>): void {
   const ctx = storage.getStore();
   if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(promise);
 }
+
+/**
+ * Înregistrează o promisiune deja pornită la `waitUntil`, ca execuția să
+ * continue chiar dacă apelantul închide conexiunea. Întoarce aceeași
+ * promisiune, ca răspunsul să rămână neschimbat. `true` = înregistrată.
+ */
+export function keepAliveUntilSettled<T>(promise: Promise<T>): boolean {
+  const ctx = storage.getStore();
+  if (ctx && typeof ctx.waitUntil === "function") {
+    ctx.waitUntil(promise.catch(() => undefined));
+    return true;
+  }
+  return false;
+}
