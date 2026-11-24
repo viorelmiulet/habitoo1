@@ -2381,6 +2381,13 @@
       "when": 1795515310381,
       "tag": "0339_background_kick_timeouts",
       "breakpoints": true
+    },
+    {
+      "idx": 340,
+      "version": "7",
+      "when": 1795546741673,
+      "tag": "0340_homezz_nomenclature",
+      "breakpoints": true
     }
   ]
 }

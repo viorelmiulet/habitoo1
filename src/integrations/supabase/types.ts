@@ -4619,6 +4619,65 @@ export type Database = {
         }
         Relationships: []
       }
+      homezz_areas: {
+        Row: {
+          city_id: number
+          id: number
+          lat: number | null
+          lng: number | null
+          name: string
+        }
+        Insert: {
+          city_id: number
+          id: number
+          lat?: number | null
+          lng?: number | null
+          name: string
+        }
+        Update: {
+          city_id?: number
+          id?: number
+          lat?: number | null
+          lng?: number | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homezz_areas_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "homezz_cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homezz_cities: {
+        Row: {
+          country_code: string
+          county_code: string
+          id: number
+          lat: number | null
+          lng: number | null
+          name: string
+        }
+        Insert: {
+          country_code?: string
+          county_code: string
+          id: number
+          lat?: number | null
+          lng?: number | null
+          name: string
+        }
+        Update: {
+          country_code?: string
+          county_code?: string
+          id?: number
+          lat?: number | null
+          lng?: number | null
+          name?: string
+        }
+        Relationships: []
+      }
       immoflux_connections: {
         Row: {
           api_key_encrypted: string
