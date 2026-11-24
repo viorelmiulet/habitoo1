@@ -19,13 +19,35 @@ import {
   retryStatusLabel,
 } from "./transient-failure";
 
+/**
+ * Heartbeat: reîmprospătează `locked_at` doar pe rândul cu același `claim_token`
+ * și `status = 'running'`. Întoarce funcția de oprire.
+ */
+export function startJobHeartbeat(
+  admin: { from: (t: "portal_publish_jobs") => any },
+  job: { id: string; claim_token?: string | null },
+  intervalMs: number = PUBLISH_JOB_HEARTBEAT_MS,
+): () => void {
+  if (!job.claim_token) return () => undefined;
+  const token = job.claim_token;
+  const timer = setInterval(() => {
+    Promise.resolve(
+      admin.from("portal_publish_jobs").update({ locked_at: new Date().toISOString() })
+        .eq("id", job.id).eq("claim_token", token).eq("status", "running"),
+    ).catch(() => console.error("[portal-publish] heartbeat eșuat"));
+  }, intervalMs);
+  return () => clearInterval(timer);
+}
+
 export const PUBLISH_JOB_CONCURRENCY = 3;
 export const PUBLISH_JOB_BUDGET_MS = 25_000;
-export const PUBLISH_JOB_LEASE_SECONDS = 300;
+export const PUBLISH_JOB_LEASE_SECONDS = 60;
+/** Cât rulează un job, `locked_at` se reîmprospătează la acest interval. */
+export const PUBLISH_JOB_HEARTBEAT_MS = 15_000;
 /** Încercări totale = 1 + câte o reluare pentru fiecare pauză. */
 export const PUBLISH_JOB_MAX_ATTEMPTS = 1 + PUBLISH_RETRY_DELAYS_MS.length;
 /** A job whose lease expired this many times without a saved result is closed as an error (SQL claim). */
-export const PUBLISH_JOB_MAX_SILENT_ATTEMPTS = 2;
+export const PUBLISH_JOB_MAX_SILENT_ATTEMPTS = 3;
 /** Hard cap for one job: a hung promise becomes a saved error instead of a silent `running`. */
 export const PUBLISH_JOB_DEADLINE_MS = 120_000;
 export const PUBLISH_JOB_DEADLINE_MESSAGE = "Publicarea nu s-a terminat în 2 minute și a fost oprită. Reia actualizarea.";
@@ -249,6 +271,7 @@ export async function runPortalPublishWorker(
       }
       let outcome: PublishOutcome | null = null;
       let thrown: unknown = undefined;
+      const stopHeartbeat = startJobHeartbeat(admin, job);
       try {
         if (job.portal_key === "zonata") {
           const { runZonataLoggedJob } = await import("./zonata/job-log.server");
@@ -263,6 +286,8 @@ export async function runPortalPublishWorker(
         }
       } catch (e) {
         thrown = e;
+      } finally {
+        stopHeartbeat();
       }
       const decision = decideJobResult(job, outcome, thrown);
       const name = opts.portalName?.(job.portal_key) ?? outcome?.portalName ?? job.portal_key;

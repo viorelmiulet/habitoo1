@@ -2367,6 +2367,13 @@
       "when": 1795513266168,
       "tag": "0337_portal_publish_kick_timeout",
       "breakpoints": true
+    },
+    {
+      "idx": 338,
+      "version": "7",
+      "when": 1795513403100,
+      "tag": "0338_portal_publish_claim_three_silent_stops",
+      "breakpoints": true
     }
   ]
 }
