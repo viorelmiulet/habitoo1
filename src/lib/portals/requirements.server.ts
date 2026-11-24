@@ -116,6 +116,14 @@ async function zupReasonsLoader(admin: Admin, organizationId: string) {
   return (row: Record<string,any>) => loadZupPreview(row.id,organizationId).then(r => r.reasons).catch(() => ["La ZUP, verificarea ofertei a eșuat; reîncearcă."]);
 }
 
+async function vrexaReasonsLoader(admin: Admin, organizationId: string) {
+  const { data: conn, error } = await admin.from("portal_connections").select("id").eq("organization_id", organizationId).eq("portal", "vrexa").maybeSingle();
+  if (error) return async () => ["La Vrexa, verificarea conexiunii a eșuat; reîncearcă."];
+  if (!conn) return null;
+  const { vrexaReasonsFor } = await import("./vrexa/preview.server");
+  return (row: Record<string, any>) => vrexaReasonsFor(organizationId, row.id).catch(() => ["Verificarea Vrexa a eșuat; reîncearcă."]);
+}
+
 async function homezzReasonsLoader(admin: Admin, organizationId: string) {
   const { data: conn, error } = await admin.from("portal_connections").select("id").eq("organization_id", organizationId).eq("portal", "homezz").maybeSingle();
   if (error) return async () => ["La HomeZZ, verificarea conexiunii a eșuat; reîncearcă."];
@@ -160,6 +168,7 @@ export async function loadRequirementSubject(
   const ofera = await oferaReasonsLoader(admin, organizationId);
   const zup = await zupReasonsLoader(admin, organizationId);
   const homezz = await homezzReasonsLoader(admin, organizationId);
+  const vrexa = await vrexaReasonsLoader(admin, organizationId);
   let agentProfile: any = null;
   let agentName: string | null = null;
   let agentEmail: string | null = null;
@@ -224,6 +233,7 @@ export async function loadRequirementSubject(
     ...(ofera ? { oferaReasons: await ofera(row) } : {}),
     ...(zup ? { zupReasons: await zup(row) } : {}),
     ...(homezz ? { homezzReasons: await homezz(row) } : {}),
+    ...(vrexa ? { vrexaReasons: await vrexa(row) } : {}),
   };
 }
 
@@ -285,6 +295,7 @@ export async function loadRequirementSubjects(
   const ofera = await oferaReasonsLoader(admin, organizationId);
   const zup = await zupReasonsLoader(admin, organizationId);
   const homezz = await homezzReasonsLoader(admin, organizationId);
+  const vrexa = await vrexaReasonsLoader(admin, organizationId);
 
   for (const property of properties ?? []) {
     const row = property as Record<string, any>;
@@ -335,6 +346,7 @@ export async function loadRequirementSubjects(
       ...(ofera ? { oferaReasons: await ofera(row) } : {}),
       ...(zup ? { zupReasons: await zup(row) } : {}),
       ...(homezz ? { homezzReasons: await homezz(row) } : {}),
+    ...(vrexa ? { vrexaReasons: await vrexa(row) } : {}),
     });
   }
   return result;

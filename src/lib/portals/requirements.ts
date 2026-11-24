@@ -77,6 +77,8 @@ export type PortalRequirementSubject = {
   zupReasons?: string[];
   /** HomeZZ: motivele blocante din `mapPropertyToHomezz` (prin `homezz/preview.server.ts`). */
   homezzReasons?: string[];
+  /** Vrexa: motivele blocante din `mapPropertyToVrexa` (prin `vrexa/preview.server.ts`). */
+  vrexaReasons?: string[];
 };
 
 export type PortalRequirementRule = {
@@ -314,6 +316,7 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
   zup: { required: BASE_REQUIRED, allowed: COMMON_ALLOWED, mapperReasons: (s) => s.zupReasons ?? ["La ZUP, verificarea ofertei nu este disponibilă."] },
   ofera: { required: [], allowed: COMMON_ALLOWED, mapperReasons: s => s.oferaReasons ?? [] },
   homezz: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.homezzReasons ?? [] },
+  vrexa: { required: [], allowed: COMMON_ALLOWED, mapperReasons: (s) => s.vrexaReasons ?? [] },
   // OLX.ro direct: doar conectarea contului; cerințele de publicare vin la pasul de publicare.
   olx_direct: {
     required: BASE_REQUIRED,

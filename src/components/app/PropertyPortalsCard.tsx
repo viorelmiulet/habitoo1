@@ -43,6 +43,7 @@ import { VumsiPreviewButton } from "@/components/app/VumsiPreviewButton";
 import { OferaPreviewButton } from "@/components/app/OferaPreviewButton";
 import { ZupPreviewButton } from "@/components/app/ZupPreviewButton";
 import { HomezzPreviewButton } from "@/components/app/HomezzPreviewButton";
+import { VrexaPreviewButton } from "@/components/app/VrexaPreviewButton";
 import { OferaStatusPanel } from "@/components/app/OferaStatusPanel";
 import { ZonataStatusPanel } from "@/components/app/ZonataStatusPanel";
 import { getVumsiListingStatus } from "@/lib/portals/vumsi/status.functions";
@@ -736,6 +737,7 @@ export const PropertyPortalsCard = forwardRef<
               {isSuperadmin ? <OferaPreviewButton propertyId={propertyId} /> : null}
               {isSuperadmin ? <ZupPreviewButton propertyId={propertyId} /> : null}
               {isSuperadmin ? <HomezzPreviewButton organizationId={organizationId} propertyId={propertyId} /> : null}
+              {isSuperadmin ? <VrexaPreviewButton organizationId={organizationId} propertyId={propertyId} /> : null}
               {pendingCount > 0 ? (
                 <span className="text-xs text-muted-foreground">
                   {pendingCount} {pendingCount === 1 ? "modificare" : "modificări"} de aplicat
