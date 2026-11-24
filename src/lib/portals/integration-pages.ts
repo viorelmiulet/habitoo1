@@ -8,7 +8,7 @@ import { isKeyRequestPortal } from "./imospot-key-request";
 export const INTEGRATION_PAGES_LASTMOD = "2026-10-29";
 
 /** Portaluri unde Habitoo preia efectiv mesajele ca lead-uri (webhook/parser în cod). */
-const LEAD_PORTALS = new Set(["storia", "vdi", "properstar", "housera"]);
+const LEAD_PORTALS = new Set(["storia", "vdi", "properstar", "housera", "homezz"]);
 
 type Content = {
   slug: string;
@@ -180,6 +180,30 @@ const CONTENT: Record<string, Content> = {
       { q: "Cum retrag o ofertă de pe Imobiliare+?", a: "Debifezi Imobiliare+ pentru oferta respectivă sau o marchezi vândută ori închiriată. Oferta nu mai este disponibilă portalului și se retrage la următoarea citire." },
       { q: "Costă publicarea pe Imobiliare+?", a: "Habitoo nu percepe niciun cost pentru integrarea cu Imobiliare+. Publicarea pe Imobiliare+ este gratuită în primele 6 luni; după aceea, Imobiliare+ le propune agențiilor un abonament. Dacă agenția nu continuă, Imobiliare+ oprește preluarea și retrage anunțurile; ele pot fi preluate din nou oricând." },
     ],
+  },
+  homezz: {
+    slug: "homezz",
+    name: "HomeZZ.ro + Lajumate.ro",
+    description: "Publici anunțurile pe HomeZZ.ro din Habitoo CRM, cu apariție automată și pe Lajumate.ro, promovări din pachetul agenției, lead-uri din mesaje și statistici.",
+    intro: [
+      "Prin integrarea HomeZZ.ro publici anunțurile agenției direct din Habitoo, iar ele apar automat și pe Lajumate.ro. Adaugi, actualizezi, retragi și reactivezi anunțurile din CRM, fără să introduci din nou oferta pe portal. O proprietate oferită la vânzare și la închiriere devine două anunțuri separate, cu până la 18 fotografii fiecare.",
+      "Promovările din pachetul HomeZZ al agenției se aplică din Habitoo: Premium, Prima Pagină, Top Listă și reînnoire instant. În fișa proprietății vezi promovarea activă și câte promovări mai are disponibile agentul. Pentru fiecare anunț publicat vezi și statisticile: mesaje, afișări ale numărului de telefon și adăugări la favorite.",
+      "Mesajele clienților de pe HomeZZ.ro ajung în Habitoo ca lead-uri, legate de proprietatea potrivită și atribuite agentului responsabil, iar agentul poate răspunde direct din Habitoo. Dacă HomeZZ respinge un anunț sau cere modificări, primești o notificare, cu motivul transmis de portal.",
+    ],
+    activation: "Agenția are contract cu HomeZZ.ro și primește de la HomeZZ cheia de acces. Administratorul cere activarea din Setări → Portaluri, iar echipa Habitoo configurează cheia. După aceea, administratorul agenției activează individual agenții care publică pe HomeZZ.ro.",
+    notes: [
+      "Integrarea cere un contract al agenției cu HomeZZ.ro și cheia de acces primită de la HomeZZ.",
+      "Anunțurile publicate pe HomeZZ.ro apar automat și pe Lajumate.ro.",
+      "Promovările folosesc doar pachetul HomeZZ existent al agenției; Habitoo nu cumpără promovări.",
+    ],
+    faq: [
+      { q: "Cum activez HomeZZ.ro?", a: "Agenția are nevoie de un contract cu HomeZZ.ro, care îi dă cheia de acces. Administratorul cere activarea din Setări → Portaluri, echipa Habitoo configurează cheia, apoi administratorul activează individual agenții care publică pe HomeZZ.ro." },
+      { q: "Anunțurile apar și pe Lajumate.ro?", a: "Da. Anunțurile publicate pe HomeZZ.ro din Habitoo apar automat și pe Lajumate.ro, fără nicio altă setare." },
+      { q: "Pot promova anunțurile din Habitoo?", a: "Da, din pachetul HomeZZ al agenției: Premium, Prima Pagină, Top Listă și reînnoire instant. Fiecare promovare se aplică după confirmare și consumă una din pachet." },
+      { q: "Cum ajung mesajele clienților?", a: "Mesajele de pe HomeZZ.ro devin lead-uri în Habitoo, legate de proprietate și atribuite agentului responsabil. Agentul răspunde clientului direct din fișa lead-ului." },
+      { q: "Ce statistici văd pentru un anunț?", a: "Pentru fiecare anunț publicat vezi numărul de mesaje, de afișări ale numărului de telefon și de adăugări la favorite." },
+    ],
+    website: { href: "https://homezz.ro", label: "homezz.ro" },
   },
   imo24: {
     slug: "imo24",

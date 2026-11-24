@@ -111,6 +111,7 @@ Introduci proprietatea o dată și ajunge pe toate portalurile alese, cu actuali
 * [La Cheie](/integrari/la-cheie)
 * [Imospot.ro](/integrari/imospot)
 * [imo24.ro](/integrari/imo24)
+* [HomeZZ.ro + Lajumate.ro](/integrari/homezz)
 * [ZonaTa.ro](/integrari/zonata)
 * [HomeDirect.ro](/integrari/homedirect)
 * [Vumsi.com](/integrari/vumsi)
@@ -228,7 +229,7 @@ Un CRM imobiliar este un program în care agenția își gestionează portofoliu
 
 ### Pe ce portaluri imobiliare pot publica anunțurile din Habitoo?
 
-Din Habitoo poți publica pe Imobiliare.ro, Storia și OLX, Publi24 (prin Romimo), iMove, Imospot, imo24.ro, ZonaTa.ro, HomeDirect.ro, HomePitch, Imopedia.ro, Ofera.ro, ZUP.ro, Imobli.ro, Imobiliare Militari, Locuit.ro, BazarulDeCase.ro, Imobiliare+, Vumsi.com, Housera.ro, PrimulAnunț, LaCheie, ClickImob și VDI.ro, iar internațional pe Properstar. Alegi pentru fiecare anunț pe ce portaluri apare. Modificările se trimit când apeși „Publică”, iar portalurile care preiau anunțurile prin feed le actualizează la următoarea sincronizare. Poți trimite anunțurile și în Catalogul Facebook (Meta), pentru reclame și afișare în Facebook și Instagram, alegând pe fiecare anunț dacă intră în catalog.
+Din Habitoo poți publica pe Imobiliare.ro, Storia și OLX, Publi24 (prin Romimo), iMove, Imospot, imo24.ro, ZonaTa.ro, HomeDirect.ro, HomePitch, Imopedia.ro, Ofera.ro, ZUP.ro, Imobli.ro, Imobiliare Militari, Locuit.ro, BazarulDeCase.ro, Imobiliare+, Vumsi.com, Housera.ro, HomeZZ.ro + Lajumate.ro, PrimulAnunț, LaCheie, ClickImob și VDI.ro, iar internațional pe Properstar. Alegi pentru fiecare anunț pe ce portaluri apare. Modificările se trimit când apeși „Publică”, iar portalurile care preiau anunțurile prin feed le actualizează la următoarea sincronizare. Poți trimite anunțurile și în Catalogul Facebook (Meta), pentru reclame și afișare în Facebook și Instagram, alegând pe fiecare anunț dacă intră în catalog.
 
 ### Cum funcționează potrivirea automată dintre cereri și proprietăți?
 

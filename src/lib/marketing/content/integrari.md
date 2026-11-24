@@ -51,6 +51,7 @@ Apeși Publică în fișa proprietății, iar anunțul pleacă imediat spre port
 * [La Cheie](/integrari/la-cheie)
 * [Imospot.ro](/integrari/imospot)
 * [imo24.ro](/integrari/imo24)
+* [HomeZZ.ro + Lajumate.ro](/integrari/homezz)
 * [ZonaTa.ro](/integrari/zonata)
 * [HomeDirect.ro](/integrari/homedirect)
 * [Vumsi.com](/integrari/vumsi)
@@ -87,6 +88,7 @@ Mesajele clienților de pe aceste portaluri ajung ca lead-uri în Habitoo, la ag
 * [Properstar](/integrari/properstar)
 * [Storia.ro + OLX.ro](/integrari/storia)
 * [Housera.ro](/integrari/housera)
+* [HomeZZ.ro + Lajumate.ro](/integrari/homezz)
 * [VDI.ro](/integrari/vdi)
 * [mvaimobiliare.ro](/integrari/mvaimobiliare)
 
@@ -105,6 +107,7 @@ Mesajele clienților de pe aceste portaluri ajung ca lead-uri în Habitoo, la ag
 | [La Cheie](/integrari/la-cheie) |  |  |  |  |
 | [Imospot.ro](/integrari/imospot) |  |  |  |  |
 | [imo24.ro](/integrari/imo24) |  |  |  |  |
+| [HomeZZ.ro + Lajumate.ro](/integrari/homezz) |  |  |  |  |
 | [ZonaTa.ro](/integrari/zonata) |  |  |  |  |
 | [HomeDirect.ro](/integrari/homedirect) |  |  |  |  |
 | [Vumsi.com](/integrari/vumsi) |  |  |  |  |
@@ -262,6 +265,13 @@ Cererile clienților de pe portalurile care le trimit intră direct în CRM, la 
   + Publicare directă
   + Retragere automată
   + Activezi singur[Vezi detalii](/integrari/housera)
+* ### HomeZZ.ro + Lajumate.ro
+
+  Prin integrarea HomeZZ.ro publici anunțurile agenției direct din Habitoo, iar ele apar automat și pe Lajumate.ro. Adaugi, actualizezi, retragi și reactivezi anunțurile din CRM, fără să introduci din nou oferta pe portal. O proprietate oferită la vânzare și la închiriere devine două anunțuri separate, cu până la 18 fotografii fiecare.
+
+  + Publicare directă
+  + Retragere automată
+  + Cereri clienți în CRM[Vezi detalii](/integrari/homezz)
 * ### OLX.ro (pachetul agenției)
 
   Publici pe OLX folosind pachetul existent al agenției.
