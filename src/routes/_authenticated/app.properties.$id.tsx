@@ -158,7 +158,9 @@ import { announceGuideContext } from "@/lib/onboarding-tour";
 import { DevelopmentSelect } from "@/components/app/developments/DevelopmentSelect";
 import { DevelopmentBadge } from "@/components/app/developments/DevelopmentBadge";
 import { CloneMarks, useCloneLinks } from "@/components/app/developments/CloneMarks";
-import { developmentsOptions } from "@/lib/developments";
+import { developmentsOptions, developmentOptions } from "@/lib/developments";
+import { unitInheritsLocation, withoutInheritedLocation, inheritedLocationReadNote } from "@/lib/developments/unit-location";
+import { DevelopmentLocationNote } from "@/components/app/developments/DevelopmentLocationNote";
 
 function cleanLocation(district: string | null, city: string | null): string {
   const normalizedCity = (city ?? "")
@@ -390,6 +392,19 @@ function PropertyDetailContent() {
   // Poziția pe hartă (Leaflet/OpenStreetMap) și precizia locației, în modul editare.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationPrecise, setLocationPrecise] = useState(false);
+  // Ansamblul ales (în editare) sau cel salvat (în citire): locația unității vine de la el.
+  const locationDevelopmentId = (editing ? draft.development_id : property?.development_id) || null;
+  const { data: locationDevelopment } = useQuery({ ...developmentOptions(locationDevelopmentId ?? ""), enabled: Boolean(locationDevelopmentId) });
+  const inheritsLocation = unitInheritsLocation(locationDevelopmentId, locationDevelopment);
+  const linkingToDevelopment = editing && !property?.development_id && Boolean(draft.development_id);
+  useEffect(() => {
+    if (!editing || !inheritsLocation || !locationDevelopment) return;
+    const d = locationDevelopment;
+    setLocation({ countyName: d.county ?? "", countySirutaCode: d.county_siruta_code, uatSirutaCode: d.uat_siruta_code, localitySirutaCode: d.locality_siruta_code, localityName: d.city ?? "" });
+    setDraft((x) => ({ ...x, city: d.city ?? "", district: d.district ?? "", address: d.address ?? "" }));
+    if (d.lat != null && d.lng != null) setCoords({ lat: d.lat, lng: d.lng });
+    setLocationPrecise(Boolean(d.location_precise));
+  }, [editing, inheritsLocation, locationDevelopment]);
   // „Corectează cu AI”: doar propuneri în formular, marcate „AI”.
   const [aiMarked, setAiMarked] = useState<string[]>([]);
   const aiMarks = useMemo(() => new Set(aiMarked), [aiMarked]);
@@ -1083,11 +1098,13 @@ function PropertyDetailContent() {
             save.mutate(buildEditPatch());
           }}>
               <FormSection title="Localizare">
+                {locationDevelopmentId && locationDevelopment ? <DevelopmentLocationNote development={locationDevelopment} inherits={inheritsLocation} linking={linkingToDevelopment} /> : null}
                 <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,552px)_minmax(0,1fr)]">
                 <div className="min-w-0 space-y-3 [&>div]:grid [&>div]:min-w-0 [&>div]:gap-x-3 [&>div]:gap-y-1 [&>div]:space-y-0 sm:[&>div]:grid-cols-[120px_minmax(0,420px)] [&_label]:self-center [&_label]:text-left [&_input]:h-10 [&_select]:h-10 [&>div>p]:min-w-0 sm:[&>div>p]:col-start-2 [&>div>div]:min-w-0">
                   <LocationPicker
                     showDistrictHint={false}
                     idPrefix="edit"
+                    disabled={inheritsLocation}
                     value={location}
                     onChange={setLocation}
                     onPostalCode={(code) => setDraft((d) => ({ ...d, postal_code: code ?? "" }))}
@@ -1096,6 +1113,7 @@ function PropertyDetailContent() {
                     <Label htmlFor="district">Zonă</Label>
                     <Input
                       id="district"
+                      disabled={inheritsLocation}
                       value={draft.district ?? ""}
                       onChange={(e) => setDraft((d) => ({ ...d, district: e.target.value }))}
                     />
@@ -1105,6 +1123,7 @@ function PropertyDetailContent() {
                     <Label htmlFor="address">Adresă</Label>
                     <Input
                       id="address"
+                      disabled={inheritsLocation}
                       value={draft.address ?? ""}
                       onChange={(e) => setDraft((d) => ({ ...d, address: e.target.value }))}
                     />
@@ -1125,7 +1144,7 @@ function PropertyDetailContent() {
                     ) : null}
                   </div>
                 </div>
-                <PropertyLocationMap
+                <fieldset disabled={inheritsLocation} className="min-w-0 disabled:pointer-events-none"><PropertyLocationMap
                   layout="side"
                   idPrefix="edit"
                   seed={property.id}
@@ -1140,7 +1159,7 @@ function PropertyDetailContent() {
                   ]}
                   onCoordsChange={setCoords}
                   onPreciseChange={setLocationPrecise}
-                />
+                /></fieldset>
                 </div>
               </FormSection>
 
@@ -1167,6 +1186,7 @@ function PropertyDetailContent() {
             {mapCoords && !mapCoords.precise ? <p className="text-xs text-muted-foreground">Hartă estimativă — zonă de aproximativ {APPROX_RADIUS_M} m.</p> : null}
             </div>
             </div>
+            {inheritsLocation && locationDevelopment ? <p className="text-sm text-muted-foreground" data-testid="inherited-location-read">{inheritedLocationReadNote(locationDevelopment.name.trim())} · <Link to="/app/developments/$id" params={{ id: locationDevelopment.id }} className="font-medium text-primary underline-offset-2 hover:underline">Deschide ansamblul</Link></p> : null}
           </FormSection>}
         </TabsContent>
 
@@ -1256,7 +1276,7 @@ function PropertyDetailContent() {
                 mode="edit"
                 propertyId={id}
                 onProposal={(p) => {
-                  const { proposal, keys } = applyAutofillProposal(p, autofillSetters, editAutofillCurrent());
+                  const { proposal, keys } = applyAutofillProposal(withoutInheritedLocation(p, inheritsLocation), autofillSetters, editAutofillCurrent());
                   setAiMarked(keys);
                   return proposal;
                 }}

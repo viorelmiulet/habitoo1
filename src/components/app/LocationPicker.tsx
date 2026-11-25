@@ -151,7 +151,10 @@ export function LocationPicker({
   required = false,
   onPostalCode,
   showDistrictHint = true,
+  disabled = false,
 }: {
+  /** Doar citire: județul și localitatea se afișează fără căutare sau ștergere. */
+  disabled?: boolean;
   /** Codul poștal al localității alese (6 cifre) sau `null` la golire/schimbarea județului. */
   onPostalCode?: (code: string | null) => void;
   value: LocationValue;
@@ -271,6 +274,21 @@ export function LocationPicker({
     onPostalCode?.(null);
     setTerm("");
   };
+
+  if (disabled) {
+    return (
+      <>
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-county`}>Județ</Label>
+          <Input id={`${idPrefix}-county`} value={value.countyName} readOnly disabled />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-locality`}>Localitate</Label>
+          <Input id={`${idPrefix}-locality`} value={value.localityName} readOnly disabled />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

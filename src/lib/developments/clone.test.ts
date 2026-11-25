@@ -19,7 +19,7 @@ describe("portalurile copiei", () => {
     expect(clonePortalIds(new Set([push.id]), defs)).toEqual([]);
   });
   it("textul de confirmare", () => {
-    expect(cloneConfirmText(3)).toBe("Se vor crea 3 copii noi în ansamblu; anunțurile originale rămân neschimbate.");
+    expect(cloneConfirmText(3)).toBe("Se vor crea 3 copii noi în ansamblu; anunțurile originale rămân neschimbate. Copiile preiau locația ansamblului.");
   });
 });
 

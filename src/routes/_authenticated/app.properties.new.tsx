@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DevelopmentSelect } from "@/components/app/developments/DevelopmentSelect";
 import { developmentOptions } from "@/lib/developments";
+import { unitInheritsLocation, withoutInheritedLocation } from "@/lib/developments/unit-location";
+import { DevelopmentLocationNote } from "@/components/app/developments/DevelopmentLocationNote";
 import { withoutUnchosenDefaults } from "@/lib/ai/listing-autofill/empty";
 import { ListingAutofillCard } from "@/components/app/ai/ListingAutofillCard";
 import { AiFieldMarksContext, AiMark } from "@/components/app/ai/AiFieldMarks";
@@ -80,7 +82,9 @@ const NEW_DETAILS_DEFAULTS: PropertyDetailsValue = { property_type: "apartment" 
 function NewPropertyPage() {
   const search = Route.useSearch();
   const [developmentId, setDevelopmentId] = useState<string | null>(search.development ?? null);
-  const { data: development } = useQuery({ ...developmentOptions(search.development ?? ""), enabled: Boolean(search.development) });
+  const { data: development } = useQuery({ ...developmentOptions(developmentId ?? ""), enabled: Boolean(developmentId) });
+  // Aceeași regulă ca în baza de date: ansamblul cu locație completă impune locația unității.
+  const inheritsLocation = unitInheritsLocation(developmentId, development);
   const seededDevelopment = useRef<string | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -124,13 +128,13 @@ function NewPropertyPage() {
   // Seed stabil pentru aproximarea zonei înainte ca proprietatea să aibă id.
   const [mapSeed] = useState(() => `new-${Math.random().toString(36).slice(2)}`);
   useEffect(() => {
-    if (!development || seededDevelopment.current === development.id) return;
+    if (!inheritsLocation || !development || seededDevelopment.current === development.id) return;
     seededDevelopment.current = development.id;
     setLocation({ countyName: development.county ?? "", countySirutaCode: development.county_siruta_code, uatSirutaCode: development.uat_siruta_code, localitySirutaCode: development.locality_siruta_code, localityName: development.city ?? "" });
     setForm(f => ({ ...f, city: development.city ?? "", county: development.county ?? "", district: development.district ?? "", address: development.address ?? "" }));
     if (development.lat != null && development.lng != null) setCoords({ lat: development.lat, lng: development.lng });
     setLocationPrecise(development.location_precise);
-  }, [development]);
+  }, [development, inheritsLocation]);
 
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -198,7 +202,8 @@ function NewPropertyPage() {
         .insert({
           organization_id: user.organization.id,
           development_id: developmentId,
-          ...(developmentId ? { market: "primary", street: development?.street, street_number: development?.street_number } : {}),
+          ...(developmentId ? { market: "primary" } : {}),
+          ...(inheritsLocation && development ? { street: development.street || null, street_number: development.street_number || null } : {}),
           assigned_to: user.userId,
           created_by: user.userId,
           reference,
@@ -286,7 +291,7 @@ function NewPropertyPage() {
           photos={pendingPhotos}
           onPhotosChange={setPendingPhotos}
           onProposal={(p) => {
-            const { proposal, keys } = applyAutofillProposal(p, autofillSetters, newFormCurrent());
+            const { proposal, keys } = applyAutofillProposal(withoutInheritedLocation(p, inheritsLocation), autofillSetters, newFormCurrent());
             setAiMarked(keys);
             return proposal;
           }}
@@ -356,12 +361,14 @@ function NewPropertyPage() {
         />
 
         <div data-tour="new-location"><FormSection title="Localizare">
+          {developmentId && development ? <DevelopmentLocationNote development={development} inherits={inheritsLocation} /> : null}
           <div className="grid gap-4 md:grid-cols-2">
-            <LocationPicker idPrefix="new" value={location} onChange={setLocation} />
+            <LocationPicker idPrefix="new" value={location} onChange={setLocation} disabled={inheritsLocation} />
             <div className="space-y-2">
               <Label htmlFor="district">Zonă / cartier<AiMark field="district" /></Label>
               <Input
                 id="district"
+                disabled={inheritsLocation}
                 value={form.district}
                 onChange={(e) => set("district", e.target.value)}
               />
@@ -370,12 +377,13 @@ function NewPropertyPage() {
               <Label htmlFor="address">Adresă<AiMark field="address" /></Label>
               <Input
                 id="address"
+                disabled={inheritsLocation}
                 value={form.address}
                 onChange={(e) => set("address", e.target.value)}
               />
             </div>
           </div>
-          <PropertyLocationMap
+          <fieldset disabled={inheritsLocation} className="min-w-0 disabled:pointer-events-none"><PropertyLocationMap
             idPrefix="new"
             seed={mapSeed}
             lat={coords?.lat ?? null}
@@ -384,7 +392,7 @@ function NewPropertyPage() {
             addressParts={[form.address, form.district, location.localityName, location.countyName]}
             onCoordsChange={setCoords}
             onPreciseChange={setLocationPrecise}
-          />
+          /></fieldset>
         </FormSection>
 
         </div><FormSection title="Tranzacție și preț" description="Alege vânzare, închiriere sau ambele.">

@@ -57,6 +57,14 @@ export type SirutaImportSummary = {
   importedAt: string;
 };
 
+/** SIRUTA CSV loses the leading zero (Ilfov, Giurgiu, București): 5 digits → 6; anything else invalid → null. */
+export function normalizeSirutaPostal(raw: string | null | undefined): string | null {
+  const v = (raw ?? "").trim();
+  if (/^[0-9]{6}$/.test(v)) return v;
+  if (/^[0-9]{5}$/.test(v)) return "0" + v;
+  return null;
+}
+
 function parseCsv(text: string): SirutaRow[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
   lines.shift(); // header
@@ -68,7 +76,7 @@ function parseCsv(text: string): SirutaRow[] {
       niv: Number(cells[0]),
       siruta: Number(cells[1]),
       name: cells[2].trim(),
-      postal: cells[3] && cells[3] !== "0" ? cells[3].trim() : null,
+      postal: normalizeSirutaPostal(cells[3]),
       jud: Number(cells[4]),
       sirsup: Number(cells[5]),
       tip: Number(cells[6]),

@@ -35,3 +35,11 @@ it('linkul notificării deschide direct fila Publicare',async()=>{
  const selected=container.querySelector('[role="tab"][data-state="active"]');expect(selected?.textContent).toBe('Publicare');
  window.history.replaceState({},'', '/');qc.clear();
 });
+it('Localizare arată că locația se aplică unităților și cere locația completă',async()=>{
+ container=document.createElement('div');document.body.append(container);root=createRoot(container);
+ const qc=new QueryClient({defaultOptions:{queries:{retry:false}}});
+ await act(async()=>root?.render(<QueryClientProvider client={qc}><DevelopmentForm/></QueryClientProvider>));
+ const note=container.querySelector('[data-testid="development-location-note"]')?.textContent??'';
+ expect(note).toContain('Locația se aplică tuturor anunțurilor din ansamblu.');
+ expect(note).toContain('Completează județul, localitatea și poziția pe hartă ca anunțurile să preia locația.');
+});

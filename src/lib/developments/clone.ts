@@ -25,5 +25,5 @@ export function clonePortalIds(activated: Set<string>, definitions: PortalDefini
 }
 
 export function cloneConfirmText(n: number): string {
-  return `Se vor crea ${n} ${n === 1 ? "copie nouă" : "copii noi"} în ansamblu; anunțurile originale rămân neschimbate.`;
+  return `Se vor crea ${n} ${n === 1 ? "copie nouă" : "copii noi"} în ansamblu; anunțurile originale rămân neschimbate. Copiile preiau locația ansamblului.`;
 }

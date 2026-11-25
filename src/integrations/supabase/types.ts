@@ -14322,6 +14322,10 @@ export type Database = {
         Returns: number
       }
       ai_media_monthly_usage: { Args: never; Returns: Json }
+      align_development_units_location: {
+        Args: { _development_id: string }
+        Returns: number
+      }
       approve_organization: { Args: { _org: string }; Returns: undefined }
       approve_registration_request: {
         Args: { _request_id: string }
@@ -14852,6 +14856,11 @@ export type Database = {
       }
       development_clone_job_step: { Args: { _job_id: string }; Returns: Json }
       development_clone_kick: { Args: never; Returns: undefined }
+      development_location_complete: {
+        Args: { _city: string; _county: string; _lat: number; _lng: number }
+        Returns: boolean
+      }
+      development_location_text: { Args: { _v: string }; Returns: string }
       development_portal_job_advance: {
         Args: { _index: number; _job_id: string; _reason: string }
         Returns: undefined
