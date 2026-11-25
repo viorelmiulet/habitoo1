@@ -59,7 +59,7 @@ const triggerBase = cn(fieldBase, "relative justify-start pr-7 text-left font-no
 
 function Row({ label, htmlFor, children, advanced, expanded }: { label: string; htmlFor?: string; children: ReactNode; advanced?: boolean; expanded?: boolean }) {
   return (
-    <div data-filter-row={label} className={cn("grid grid-cols-1 gap-1 md:grid-cols-[minmax(104px,140px)_minmax(140px,220px)] md:items-center md:gap-3 xl:gap-2", advanced && !expanded && "hidden md:grid")}>
+    <div data-filter-row={label} className={cn("grid grid-cols-1 gap-1 md:grid-cols-[minmax(104px,140px)_minmax(140px,220px)] md:items-center md:gap-3 xl:gap-2", advanced && !expanded && "hidden")}>
       <label htmlFor={htmlFor} className="text-[13px] font-semibold text-muted-foreground md:truncate md:text-right">{label}</label>
       <div className="min-w-0">{children}</div>
     </div>
@@ -111,6 +111,18 @@ function MultiSelect({ id, label, empty, options, value, onChange }: { id: strin
   );
 }
 
+/** Numărul filtrelor active ascunse în starea restrânsă (rândurile `advanced`). */
+export function advancedFiltersCount(f: PropertyListFilters, placeValue: string, showAgent: boolean, hasPortals = true): number {
+  const geo = geographyFromPlaces(placeValue || f.locuri);
+  const checks = [
+    geo.cities.length > 0, geo.zones.length > 0, Boolean(f.street), Boolean(f.rooms),
+    Boolean(f.surfaceMin || f.surfaceMax), Boolean(f.priceMin || f.priceMax), Boolean(f.statuses),
+    Boolean(f.addedAfter || f.addedBefore), Boolean(f.updatedAfter || f.updatedBefore),
+    hasPortals && (f.portal !== "all" || Boolean(f.promotion)), f.destination !== "all", otherFiltersCount(f, showAgent) > 0,
+  ];
+  return checks.filter(Boolean).length;
+}
+
 export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
   const { data: developments = [] } = useQuery(developmentsOptions());
   const { applied, placeValue, onApply, onTab, onReset, placeOptions, showAgent } = props;
@@ -130,6 +142,8 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
   const cities = cityOptions(placeOptions, geo.county).map((o) => ({ value: o.value, label: o.label }));
   const zones = zoneOptions(placeOptions, geo.county, geo.cities).map((o) => ({ value: o.value, label: o.label }));
 
+  const advancedCount = advancedFiltersCount(applied, placeValue, showAgent, props.portalOptions.length > 0);
+  const col = expanded ? "space-y-2" : "contents";
   const submit = (e: React.FormEvent) => { e.preventDefault(); onApply(draft); };
 
   return (
@@ -144,8 +158,8 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
         ))}
       </div>
       <form onSubmit={submit} data-tour="properties-filters" className="mt-3 rounded-[14px] border border-border bg-surface p-5">
-        <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2 xl:grid-cols-4">
-          <div data-filter-column="1" className="space-y-2">
+        <div data-filter-layout={expanded ? "expanded" : "compact"} className={cn("grid grid-cols-1 gap-x-4", expanded ? "md:grid-cols-2 xl:grid-cols-4" : "gap-y-2 md:grid-cols-2 xl:grid-cols-3")}>
+          <div data-filter-column="1" className={col}>
             <Row label="Județ" htmlFor="pf-county">
               <SimpleSelect id="pf-county" value={geo.county || "all"} active={Boolean(geo.county)} onChange={(v) => setGeo({ county: v === "all" ? "" : v, cities: [], zones: [] })} options={[["all", "Toată Țara"], ...counties.map((c) => [c.value, c.label] as [string, string])]} />
             </Row>
@@ -159,7 +173,7 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
               <input id="pf-street" value={draft.street} onChange={(e) => set("street", e.target.value)} placeholder="Caută stradă după nume" className={cn(fieldBase, draft.street && valued)} />
             </Row>
           </div>
-          <div data-filter-column="2" className="mt-2 space-y-2 md:mt-0">
+          <div data-filter-column="2" className={cn(col, expanded && "mt-2 md:mt-0")}>
             <label className="flex min-h-10 items-center gap-2 text-[13px] font-semibold text-muted-foreground">
               <Checkbox checked={draft.showDevelopments} onCheckedChange={(c) => setDraft((d) => ({ ...d, showDevelopments: c === true, development: c === true ? d.development : "all" }))} />
               Afișează anunțuri din ansambluri
@@ -183,7 +197,7 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
               <Range idPrefix="pf-price" label="Preț" min={draft.priceMin} max={draft.priceMax} format={formatThousands} onMin={(v) => set("priceMin", digitsOnly(v))} onMax={(v) => set("priceMax", digitsOnly(v))} />
             </Row>
           </div>
-          <div data-filter-column="3" className="mt-2 space-y-2 xl:mt-0">
+          <div data-filter-column="3" className={cn(col, expanded && "mt-2 xl:mt-0")}>
             <Row label="Valabilitate" htmlFor="pf-statuses" advanced expanded={expanded}>
               <Popover>
                 <PopoverTrigger asChild>
@@ -217,7 +231,7 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
               </Row>
             ) : null}
           </div>
-          <div data-filter-column="4" className="mt-2 space-y-2 xl:mt-0">
+          <div data-filter-column="4" className={cn(col, expanded && "mt-2 xl:mt-0")}>
             <Row label="Cuvinte cheie" htmlFor="pf-keywords">
               <input id="pf-keywords" value={draft.q} onChange={(e) => set("q", e.target.value)} placeholder="Titlu, HB-…, adresă" className={cn(fieldBase, draft.q && valued)} />
             </Row>
@@ -254,8 +268,8 @@ export function PropertyFilterPanel(props: PropertyFilterPanelProps) {
         </div>
         <div className="mt-4 grid grid-cols-1 items-center gap-3 md:flex md:justify-end xl:grid xl:grid-cols-4 xl:gap-x-4">
           <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 md:justify-end xl:col-span-3">
-            <button type="button" data-tour="properties-filters-toggle" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="inline-flex items-center gap-1 text-sm font-semibold text-gold-dark md:hidden">
-              {expanded ? "Mai puține filtre" : "Mai multe filtre"}{expanded ? <ChevronUp className="size-4" aria-hidden /> : <ChevronDown className="size-4" aria-hidden />}
+            <button type="button" data-tour="properties-filters-toggle" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="inline-flex items-center gap-1 text-sm font-semibold text-gold-dark">
+              {expanded ? "Mai puține filtre" : advancedCount > 0 ? `Mai multe filtre (${advancedCount})` : "Mai multe filtre"}{expanded ? <ChevronUp className="size-4" aria-hidden /> : <ChevronDown className="size-4" aria-hidden />}
             </button>
             {props.savedLinks}
             <button type="button" onClick={onReset} className="text-sm font-semibold text-gold-dark hover:text-gold-dark/80">Resetează toate filtrele</button>

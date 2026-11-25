@@ -128,4 +128,39 @@ describe("PropertyFilterPanel", () => {
     expect(onTab).toHaveBeenCalledWith("apartments");
     expect(onApply).not.toHaveBeenCalled();
   });
+
+  describe("restrângere", () => {
+    const row = (label: string) => container.querySelector(`[data-filter-row="${label}"]`);
+    const hidden = (label: string) => row(label)?.classList.contains("hidden");
+    const toggle = () => container.querySelector('[data-tour="properties-filters-toggle"]');
+    it("implicit restrâns: avansatele ascunse, cele de bază vizibile", async () => {
+      await render();
+      for (const l of ["Localități", "Zonă", "Stradă", "Camere", "Preț", "Valabilitate", "Portaluri", "Destinație", "Alte filtre"]) expect(hidden(l)).toBe(true);
+      for (const l of ["Județ", "Ansamblu", "Tip proprietate", "Tip tranzacție", "Cuvinte cheie"]) expect(hidden(l)).toBe(false);
+      expect(toggle()?.className).not.toContain("md:hidden");
+      expect(toggle()?.textContent).toBe("Mai multe filtre");
+    });
+    it("primul clic arată, al doilea ascunde", async () => {
+      await render();
+      await click(toggle());
+      expect(hidden("Preț")).toBe(false);
+      expect(toggle()?.textContent).toBe("Mai puține filtre");
+      await click(toggle());
+      expect(hidden("Preț")).toBe(true);
+    });
+    it("cu filtre avansate active rămâne restrâns și arată numărul", async () => {
+      await render({ ...emptyPropertyListFilters, priceMin: "100", rooms: "2", destination: "Birouri" });
+      expect(hidden("Preț")).toBe(true);
+      expect(toggle()?.textContent).toBe("Mai multe filtre (3)");
+    });
+    it("Caută nu schimbă starea", async () => {
+      const { onApply } = await render();
+      await click(search());
+      expect(onApply).toHaveBeenCalled();
+      expect(hidden("Preț")).toBe(true);
+      await click(toggle());
+      await click(search());
+      expect(hidden("Preț")).toBe(false);
+    });
+  });
 });
