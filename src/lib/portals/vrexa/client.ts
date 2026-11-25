@@ -56,6 +56,18 @@ function fail(status: number | null, problem: VrexaProblem, fallback: string, re
 
 const empty: VrexaProblem = { code: null, detail: null, errors: null };
 
+function networkFailure(error: unknown, secrets: string[]): VrexaResult<never> {
+  const name = error instanceof Error ? error.name : "Error";
+  const reason = error instanceof Error ? error.message : String(error);
+  const detail = redactVrexa(`${name}: ${reason}`, secrets);
+  const timeout = name === "TimeoutError" || name === "AbortError";
+  return {
+    ok: false, status: null, kind: "network",
+    message: timeout ? "Vrexa nu a răspuns în 30 de secunde." : `Vrexa nu a putut fi contactat: ${detail}`,
+    problem: { code: null, detail, errors: null },
+  };
+}
+
 async function requestToken(c: VrexaCredentials, d: Required<Deps>): Promise<VrexaResult<string>> {
   const url = `${c.baseUrl}/oauth/token`;
   assertHttps(url);
@@ -63,8 +75,8 @@ async function requestToken(c: VrexaCredentials, d: Required<Deps>): Promise<Vre
   let res: Response;
   try {
     res = await d.transport(url, { method: "POST", redirect: "manual", headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" }, body, signal: AbortSignal.timeout(VREXA_TIMEOUT_MS) });
-  } catch {
-    return { ok: false, status: null, kind: "network", message: "Vrexa nu a răspuns la cererea de autentificare.", problem: empty };
+  } catch (error) {
+    return networkFailure(error, [c.clientSecret]);
   }
   if (res.status >= 300 && res.status < 400) return { ok: false, status: res.status, kind: "http", message: "Vrexa a răspuns cu o redirecționare neașteptată.", problem: empty };
   const { body: json, problem } = await readProblem(res, [c.clientSecret]);
@@ -88,7 +100,7 @@ async function getToken(c: VrexaCredentials, d: Required<Deps>, fresh: boolean):
 
 /** Apel autentificat: token nou o singură dată la 401; o singură reîncercare la 429 (Retry-After ≤ 10 s). */
 export async function vrexaRequest<T = unknown>(c: VrexaCredentials, method: "GET" | "POST" | "PUT" | "DELETE", path: string, payload?: unknown, deps: Deps = {}): Promise<VrexaResult<T>> {
-  const d: Required<Deps> = { transport: deps.transport ?? fetch, now: deps.now ?? Date.now, sleep: deps.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms))) };
+  const d: Required<Deps> = { transport: deps.transport ?? ((url, init) => fetch(url, init)), now: deps.now ?? Date.now, sleep: deps.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms))) };
   const url = `${c.baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
   assertHttps(url);
   let refreshed = false, retried429 = false;
@@ -102,8 +114,8 @@ export async function vrexaRequest<T = unknown>(c: VrexaCredentials, method: "GE
         headers: { Authorization: `Bearer ${t.data}`, Accept: "application/json", ...(payload !== undefined ? { "Content-Type": "application/json" } : {}) },
         ...(payload !== undefined ? { body: JSON.stringify(payload) } : {}),
       });
-    } catch {
-      return { ok: false, status: null, kind: "network", message: "Vrexa nu a răspuns.", problem: empty };
+    } catch (error) {
+      return networkFailure(error, [c.clientSecret, t.data]);
     }
     if (res.status >= 300 && res.status < 400) return { ok: false, status: res.status, kind: "http", message: "Vrexa a răspuns cu o redirecționare neașteptată.", problem: empty };
     if (res.status === 401 && !refreshed) {

@@ -1108,7 +1108,7 @@ export async function testPortalConnectionCore(input: { organizationId: string; 
       portal: definition.id,
       operation: "test_connection",
       success: result.ok,
-      errorCode: result.ok ? null : result.code,
+      errorCode: result.ok ? null : definition.id === "vrexa" && result.detail ? result.detail : result.code,
       errorMessage: result.ok ? null : result.message,
       ...(result.ok ? {} : { httpStatus: result.httpStatus ?? null }),
       ...(result.ok
@@ -1758,10 +1758,10 @@ export async function executeListingAction(input: {
     portal: definition.id,
     operation: input.operationLabel ?? action,
     success: result.ok,
-    // OLX: codul tehnic exact (ex. `olx_http_400`, `taxonomy_empty`), nu cel generic.
+    // OLX/Vrexa: păstrăm diagnosticul tehnic sanitizat, nu doar codul generic.
     errorCode: result.ok
       ? null
-      : definition.id === "olx_direct" && result.detail
+      : (definition.id === "olx_direct" || definition.id === "vrexa") && result.detail
         ? result.detail
         : result.code,
     // imo24: și la succes păstrăm mesajul (rezultat, avertismente), afișat ca informație în card.

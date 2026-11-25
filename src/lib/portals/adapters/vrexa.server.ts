@@ -42,7 +42,7 @@ function toFail(e: unknown): Fail {
     const r = e.result;
     const code = r.kind === "rate_limited" ? "RATE_LIMIT" : r.kind === "network" ? "NETWORK_ERROR" : r.kind === "auth" || r.kind === "agency_inactive" ? "AUTH_ERROR"
       : r.kind === "validation" ? "VALIDATION_ERROR" : r.status !== null && r.status >= 500 ? "PORTAL_ERROR" : "INVALID_REQUEST";
-    return { ok: false, code, message: e.message, detail: `vrexa_kind=${r.kind} code=${r.problem.code ?? "-"}`, httpStatus: r.status, ...(r.retryAfterMs ? { retryAfterMs: r.retryAfterMs } : {}) };
+    return { ok: false, code, message: e.message, detail: `vrexa_kind=${r.kind} code=${r.problem.code ?? "-"}${r.problem.detail ? ` detail=${r.problem.detail}` : ""}`, httpStatus: r.status, ...(r.retryAfterMs ? { retryAfterMs: r.retryAfterMs } : {}) };
   }
   return { ok: false, code: "PORTAL_ERROR", message: e instanceof Error ? e.message : "Eroare Vrexa.", detail: "vrexa_exception", httpStatus: null };
 }
@@ -102,7 +102,7 @@ export function createVrexaAdapter(opts: VrexaAdapterDeps = {}): PortalAdapter {
       if (!ctx.allowLiveRequests) return { ok: true, data: { configured: true, live: false, detail: `vrexa_dry_run env=${c.env}` } };
       const r: VrexaResult<{ totalCount?: number }> = await vrexaRequest<{ totalCount?: number }>(c, "GET", "/partner/v1/listings?pageSize=1", undefined, opts.transport ? { transport: opts.transport } : {});
       if (!r.ok) {
-        return { ok: false, code: r.kind === "auth" || r.kind === "agency_inactive" ? "AUTH_ERROR" : r.kind === "rate_limited" ? "RATE_LIMIT" : "PORTAL_ERROR", message: r.message, detail: `vrexa_kind=${r.kind} code=${r.problem.code ?? "-"}${r.retryAt ? ` retry_at=${r.retryAt}` : ""}`, httpStatus: r.status };
+        return { ok: false, code: r.kind === "auth" || r.kind === "agency_inactive" ? "AUTH_ERROR" : r.kind === "rate_limited" ? "RATE_LIMIT" : "PORTAL_ERROR", message: r.message, detail: `vrexa_kind=${r.kind} code=${r.problem.code ?? "-"}${r.problem.detail ? ` detail=${r.problem.detail}` : ""}${r.retryAt ? ` retry_at=${r.retryAt}` : ""}`, httpStatus: r.status };
       }
       const total = typeof r.data?.totalCount === "number" ? r.data.totalCount : 0;
       return { ok: true, data: { configured: true, live: true, detail: `Conectat la Vrexa (${vrexaEnvLabel(c.env)}). Anunțuri prin API: ${total}.` } };
