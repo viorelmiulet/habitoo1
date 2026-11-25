@@ -392,7 +392,7 @@ function PropertiesPage() {
     ]);
     return unifiedPortalValues(filters.portal, filters.promotion).filter((value) => valid.has(value));
   }, [filters.portal, filters.promotion, promotionGroups, portalOptions]);
-  const { data: promotionIds, isLoading: promotionIdsLoading } = useQuery({
+  const { data: promotionIds, isLoading: promotionIdsLoading, isError: promotionIdsError, refetch: refetchPromotionIds } = useQuery({
     queryKey: ["promotion-filter-ids", orgId, promotionValues],
     enabled: Boolean(orgId) && promotionValues.length > 0,
     queryFn: () => loadPromotionIds({ data: { organizationId: orgId, values: promotionValues } }),
@@ -710,7 +710,18 @@ function PropertiesPage() {
   const filtersActive = activePills.length > 0 || Boolean(filters.locuri);
 
   /** Stare goală utilă: fără portofoliu vs. fără rezultate la filtrare. */
-  const emptyBlock = filtersActive ? (
+  const emptyBlock = promotionValues.length > 0 && promotionIdsError ? (
+    <EmptyState
+      icon={X}
+      title="Filtrul Portaluri nu a putut fi aplicat"
+      description="Serverul a refuzat sau nu a putut calcula selecția de portaluri. Încearcă din nou sau renunță la acest filtru."
+      action={
+        <Button size="sm" variant="outline" onClick={() => void refetchPromotionIds()}>
+          Încearcă din nou
+        </Button>
+      }
+    />
+  ) : filtersActive ? (
     <EmptyState
       icon={Building2}
       title="Nicio proprietate pentru filtrele curente"

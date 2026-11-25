@@ -44,6 +44,28 @@ export function deriveState(input: {
   return input.selected ? "selected" : "not_selected";
 }
 
+/**
+ * Identificatorul unui portal în filtre: portalurile statice folosesc `_`,
+ * cele dinamice (feed din SuperAdmin) pot avea cratime (`propri-ro`).
+ */
+export const PORTAL_ID_PATTERN = "[a-z0-9][a-z0-9_-]*";
+
+/**
+ * Răspunsul portalului (`partner_api_publications`) are prioritate peste
+ * starea derivată: published → publicat, pending_review → în sincronizare,
+ * rejected → eroare, altceva → retras. Folosit de card și de filtru.
+ */
+export function applyPortalFeedback(
+  state: PortalSelectionState,
+  feedbackStatus: string | null | undefined,
+): PortalSelectionState {
+  if (!feedbackStatus) return state;
+  if (feedbackStatus === "published") return "published";
+  if (feedbackStatus === "pending_review") return "syncing";
+  if (feedbackStatus === "rejected") return "error";
+  return "withdrawn";
+}
+
 export type PortalFilterBucket = "published" | "unpublished" | "error";
 
 /** Publicate = published/in_feed; Cu erori = error; restul = Nepublicate. */
@@ -57,7 +79,7 @@ export type PortalFilter = { portal: string; state: PortalFilterBucket };
 
 /** Valoarea din filtre: `all` sau `<portalId|any>:<published|unpublished|error>`. */
 export function parsePortalFilter(value: string): PortalFilter | null {
-  const m = /^([a-z0-9_]+|any):(published|unpublished|error)$/.exec(value);
+  const m = new RegExp(`^(${PORTAL_ID_PATTERN}|any):(published|unpublished|error)$`).exec(value);
   return m ? { portal: m[1], state: m[2] as PortalFilterBucket } : null;
 }
 

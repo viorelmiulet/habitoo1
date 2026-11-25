@@ -98,6 +98,15 @@ export type PromotionSelection = {
   errorPortals: string[];
 };
 
+/** Răspunsurile „rejected” ale portalului devin rânduri de eroare pentru filtrul „Cu erori”. */
+export function rejectedFeedbackErrorRows(
+  rows: { property_id: string; portal: string; status: string }[],
+): { property_id: string; portal_key: string; enabled: boolean; status: string }[] {
+  return rows
+    .filter((row) => row.status === "rejected")
+    .map((row) => ({ property_id: row.property_id, portal_key: row.portal, enabled: true, status: "error" }));
+}
+
 /** Valorile din URL (separate prin virgulă) → selecție structurată. */
 export function parsePromotionSelection(raw: string): PromotionSelection {
   const values = raw.split(",").map((v) => v.trim()).filter(Boolean);

@@ -8,7 +8,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { parsePortalFilter, matchesPortalFilter } from "@/lib/portals/portal-state";
+import { parsePortalFilter, matchesPortalFilter, PORTAL_ID_PATTERN } from "@/lib/portals/portal-state";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
   activatedPortalIds,
@@ -20,6 +20,7 @@ import {
   buildPromotionInfos,
   PUBLISHED_LISTING_STATUSES,
   parsePromotionSelection,
+  rejectedFeedbackErrorRows,
   promotionFilterGroups,
   promotionSelectionIsEmpty,
   matchingPropertyIds,
@@ -143,7 +144,7 @@ export const getPromotionFilterOptions = createServerFn({ method: "POST" })
   });
 
 const promotionValuesSchema = z
-  .array(z.string().regex(/^(any|none|imobiliare_ro:[a-z0-9_]+|[a-z0-9_]+:(promoted|published|unpublished|error)|storia:(auto_renew_(on|off)|expired))$/))
+  .array(z.string().regex(new RegExp(`^(any|none|imobiliare_ro:[a-z0-9_]+|${PORTAL_ID_PATTERN}:(promoted|published|unpublished|error)|storia:(auto_renew_(on|off)|expired))$`)))
   .max(100);
 
 /**
@@ -175,7 +176,7 @@ export const getPropertyIdsByPromotion = createServerFn({ method: "POST" })
     const admin = await loadAdmin();
     const hasPromotions = selection.any || selection.none || selection.imobiliareServices.length > 0 || selection.flagPortals.length > 0;
     const expiredFilter = storiaExpiredListingFilter();
-    const [rows, autoRenew, errors, all, states, storiaExpired] = await Promise.all([
+    const [rows, autoRenew, publicationErrors, rejected, all, states, storiaExpired] = await Promise.all([
       hasPromotions ? fetchPromotionRows(organizationId) : Promise.resolve({ listings: [], states: [], publications: [] }),
       selection.storiaAutoRenew.length ? fetchStoriaAutoRenewValues(organizationId) : Promise.resolve(new Map<string, boolean>()),
       selection.errorPortals.length ? fetchAllRows((a, b) =>
@@ -186,6 +187,15 @@ export const getPropertyIdsByPromotion = createServerFn({ method: "POST" })
           .eq("status", "error")
           .in("portal_key", selection.errorPortals)
           .order("id").range(a, b),
+      ) : Promise.resolve([]),
+      // Anunțurile respinse de portal (răspunsul din partner_api_publications), ca pe card.
+      selection.errorPortals.length ? fetchAllRows((a, b) =>
+        admin.from("partner_api_publications")
+          .select("property_id, portal, status")
+          .eq("organization_id", organizationId)
+          .eq("status", "rejected")
+          .in("portal", selection.errorPortals)
+          .order("property_id").order("portal").range(a, b),
       ) : Promise.resolve([]),
       selection.none ? fetchAllRows((a, b) =>
         admin
@@ -209,6 +219,7 @@ export const getPropertyIdsByPromotion = createServerFn({ method: "POST" })
           .range(a, b),
       ) : Promise.resolve([]),
     ]);
+    const errors = [...publicationErrors, ...rejectedFeedbackErrorRows(rejected as { property_id: string; portal: string; status: string }[])];
     const stateIds = stateFilters.length ? [...states].filter(([, cells]) => stateFilters.some((f) => f.state !== "error" && matchesPortalFilter(cells, f))).map(([id]) => id) : undefined;
     return matchingPropertyIds(selection, buildPromotionInfos(rows), autoRenew, errors, all.map((row) => row.id), stateIds, (storiaExpired as { property_id: string }[]).map((row) => row.property_id));
   });

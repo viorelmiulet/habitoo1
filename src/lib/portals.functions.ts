@@ -2350,7 +2350,7 @@ export async function computeOrgPortalStates(
   const admin = await loadAdmin();
   const visible = await activatedPortalIds(organizationId);
   const portals = PORTALS.filter((p) => !isPortalCovered(p.id) && visible.has(p.id));
-  const [propertyRows, publications, listings, { data: connections }, { data: activeKeys }] =
+  const [propertyRows, publications, listings, { data: connections }, { data: activeKeys }, feedbackRows] =
     await Promise.all([
       fetchAllRows((a, b) =>
         admin
@@ -2379,8 +2379,18 @@ export async function computeOrgPortalStates(
       ),
       admin.from("portal_connections").select("portal, status, activated").eq("organization_id", organizationId),
       admin.from("portal_api_keys").select("portal").eq("organization_id", organizationId).eq("status", "active"),
+      fetchAllRows((a, b) =>
+        admin
+          .from("partner_api_publications")
+          .select("property_id, portal, status")
+          .eq("organization_id", organizationId)
+          .order("property_id")
+          .order("portal")
+          .range(a, b),
+      ),
     ]);
   const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
+  const feedbackBy = new Map(feedbackRows.map((f) => [`${f.property_id}|${f.portal}`, f.status]));
   const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
   const pubBy = new Map(publications.map((p) => [`${p.property_id}|${p.portal_key}`, p]));
   const listBy = new Map(listings.map((l) => [`${l.property_id}|${l.portal}`, l]));
@@ -2400,15 +2410,18 @@ export async function computeOrgPortalStates(
           (pushSupported ? connectionReady : keyedPortals.has(portal.id) || connectionReady);
         return {
           portalId: portal.id,
-          state: deriveState({
-            availability: portal.status,
-            configured,
-            selected: pub?.enabled === true,
-            listingStatus: listing?.status ?? "not_published",
-            publicationStatus: pub?.status ?? null,
-            pushSupported,
-            feedEligible,
-          }),
+          state: applyPortalFeedback(
+            deriveState({
+              availability: portal.status,
+              configured,
+              selected: pub?.enabled === true,
+              listingStatus: listing?.status ?? "not_published",
+              publicationStatus: pub?.status ?? null,
+              pushSupported,
+              feedEligible,
+            }),
+            feedbackBy.get(`${row.id}|${portal.id}`),
+          ),
         };
       }),
     );
@@ -2423,7 +2436,7 @@ export const getPropertyIdsByPortalState = createServerFn({ method: "POST" })
     z
       .object({
         organizationId: z.string().uuid().optional(),
-        portal: z.string().regex(/^([a-z0-9_]+|any)$/),
+        portal: z.string().regex(new RegExp(`^(${PORTAL_ID_PATTERN}|any)$`)),
         state: z.enum(["published", "unpublished", "error"]),
       })
       .parse(input),
@@ -2608,7 +2621,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           selected: pub?.enabled === true,
           configured,
           listingStatus,
-          state: feedback ? feedback.status === "published" ? "published" : feedback.status === "pending_review" ? "syncing" : feedback.status === "rejected" ? "error" : "withdrawn" : state,
+          state: applyPortalFeedback(state, feedback?.status),
           pushSupported,
           lastSyncAt: listing?.last_sync_at ?? pub?.last_synced_at ?? null,
           lastError:
