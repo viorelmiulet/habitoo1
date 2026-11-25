@@ -53,6 +53,96 @@ export function useCounties() {
 }
 
 type LocalityHit = LocalitySuggestion;
+type County = { sirutaCode: number; name: string };
+
+const foldRo = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+/** Filtrare locală fără diacritice/majuscule; potrivirile de la începutul numelui primele. */
+export function filterCounties(counties: County[], term: string): County[] {
+  const q = foldRo(term);
+  if (!q) return [];
+  const starts: County[] = [];
+  const contains: County[] = [];
+  for (const c of counties) {
+    const n = foldRo(c.name);
+    if (n.startsWith(q)) starts.push(c);
+    else if (n.includes(q)) contains.push(c);
+  }
+  return [...starts, ...contains];
+}
+
+function CountySearch({ idPrefix, required, counties, value, onSelect }: {
+  idPrefix: string; required: boolean; counties: County[]; value: LocationValue; onSelect: (code: string) => void;
+}) {
+  const [term, setTerm] = useState("");
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const results = useMemo(() => filterCounties(counties, term), [counties, term]);
+  useEffect(() => { setActive(results.length > 0 ? 0 : -1); }, [results]);
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+  const missing = required && !value.countySirutaCode;
+  useEffect(() => { inputRef.current?.setCustomValidity(missing ? "Alege județul din listă." : ""); });
+  const pick = (c: County) => { onSelect(String(c.sirutaCode)); setTerm(""); setOpen(false); setActive(-1); };
+  const showList = open && term.trim().length > 0;
+
+  if (value.countySirutaCode) {
+    const name = value.countyName || counties.find((c) => c.sirutaCode === value.countySirutaCode)?.name || "";
+    return (
+      <div className="flex items-center justify-between gap-2 rounded-md border border-input bg-muted/40 px-3 py-2 text-sm">
+        <span className="flex min-w-0 items-center gap-2">
+          <MapPin className="size-4 shrink-0 text-muted-foreground" />
+          <span className="truncate">{name}</span>
+        </span>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onSelect("")} aria-label="Șterge județul">
+          <X className="size-4" />
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className="relative" ref={boxRef}>
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        ref={inputRef}
+        id={`${idPrefix}-county`}
+        className="pl-9"
+        autoComplete="off"
+        placeholder="Caută județul…"
+        value={term}
+        required={required}
+        onChange={(e) => { setTerm(e.target.value); setOpen(true); }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") { setOpen(false); setActive(-1); return; }
+          if (!showList || results.length === 0) return;
+          if (e.key === "ArrowDown") { e.preventDefault(); setActive((i) => (i + 1) % results.length); }
+          else if (e.key === "ArrowUp") { e.preventDefault(); setActive((i) => (i <= 0 ? results.length - 1 : i - 1)); }
+          else if (e.key === "Enter" && active >= 0 && results[active]) { e.preventDefault(); pick(results[active]); }
+        }}
+        role="combobox"
+        aria-expanded={showList && results.length > 0}
+        aria-controls={`${idPrefix}-county-list`}
+        aria-activedescendant={active >= 0 && results[active] ? `${idPrefix}-county-option-${results[active].sirutaCode}` : undefined}
+      />
+      {showList && (
+        <div id={`${idPrefix}-county-list`} role="listbox" className="absolute z-(--z-floating) mt-1 max-h-[min(18rem,50vh)] w-full overflow-y-auto overscroll-contain rounded-md border bg-popover p-1 shadow-lg">
+          {results.length > 0 ? results.map((c, index) => (
+            <button key={c.sirutaCode} id={`${idPrefix}-county-option-${c.sirutaCode}`} type="button" role="option" aria-selected={index === active}
+              onClick={() => pick(c)} onMouseEnter={() => setActive(index)}
+              className={cn("flex w-full items-center rounded-sm px-2 py-2 text-left text-sm font-medium hover:bg-accent", index === active && "bg-accent")}>
+              {c.name}
+            </button>
+          )) : <p className="px-2 py-3 text-sm text-muted-foreground">Niciun județ găsit.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function LocationPicker({
   value,
@@ -188,20 +278,13 @@ export function LocationPicker({
         <Label htmlFor={`${idPrefix}-county`}>
           Județ {required && <span className="text-destructive">*</span>}
         </Label>
-        <select
-          id={`${idPrefix}-county`}
-          className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
-          value={value.countySirutaCode ? String(value.countySirutaCode) : ""}
-          onChange={(e) => selectCounty(e.target.value)}
+        <CountySearch
+          idPrefix={idPrefix}
           required={required}
-        >
-          <option value="">Alege județul…</option>
-          {counties.data?.map((c) => (
-            <option key={c.sirutaCode} value={String(c.sirutaCode)}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          counties={counties.data ?? []}
+          value={value}
+          onSelect={(code) => selectCounty(code)}
+        />
         {counties.isLoading && (
           <p className="text-xs text-muted-foreground">Se încarcă județele…</p>
         )}
