@@ -569,6 +569,11 @@ export function requirementBlockMessage(
   portalName: string,
   report: PortalRequirementReport,
 ): string {
+  if (report.portalId === "vrexa") {
+    // Motivele Vrexa sunt propoziții complete (din mapper), nu nume de câmpuri.
+    const text = report.missing.map((m) => m.label.trim()).join(" ");
+    return `${portalName}: publicarea este blocată. ${text}`.replace(/\.{2,}$/, ".");
+  }
   const fields = report.missing.map((m) => (m.requirement ? `${m.label} (${m.requirement})` : m.label)).join(", ");
   return `${portalName}: publicarea este blocată — completează: ${fields}.`;
 }

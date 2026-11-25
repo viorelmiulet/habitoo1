@@ -66,7 +66,7 @@ const ACCESS: Record<string, string> = { asfaltate: "asphaltRoad", betonate: "pa
 const SURROUNDINGS: Record<string, string> = { "spre padure": "forest", "spre lac": "lake", "spre munte": "mountains", "spre mare": "sea" };
 const HOUSE_TYPE: Record<string, string> = { duplex: "duplex", triplex: "triplex", individuala: "detached", cuplata: "semiDetached", insiruita: "terraced", bungalow: "bungalow", conac: "mansion", cabana: "cottage", ferma: "farmhouse" };
 
-export const VREXA_NO_COOLING_WARNING = "Vrexa cere tipul de climatizare; fără el anunțul poate fi refuzat la validare.";
+export const VREXA_NO_COOLING_REASON = "Vrexa cere obligatoriu tipul de climatizare (aer condiționat, ventiloconvectoare sau aeroterme) și nu are opțiunea «fără». Completează «Sisteme de răcire» în fișă dacă proprietatea are; altfel anunțul nu poate fi publicat pe Vrexa până primim răspunsul echipei Vrexa.";
 export const VREXA_FLOOR_UNSUPPORTED = "Vrexa nu acceptă încă demisol sau mansardă; am cerut clarificări echipei Vrexa.";
 
 // ---------------------------------------------------------------- utilitare pure
@@ -192,7 +192,7 @@ export function mapPropertyToVrexa(p: Row, ctx: VrexaMapContext): VrexaMapResult
     need("refurbishStatus", refurbish, "starea finisajelor");
     const cooling = mapList(list(p.cooling_systems), COOLING)[0] ?? null;
     if (cooling) b.airConditioning = cooling;
-    else warnings.push(VREXA_NO_COOLING_WARNING);
+    else reasons.push(VREXA_NO_COOLING_REASON);
     need("heatingType", mapList(heatingValues, HEATING)[0] ?? null, "tipul de încălzire");
     need("furnishing", look(FURNISHING, p.furnishing), "mobilarea");
     b.utilities = utilities;

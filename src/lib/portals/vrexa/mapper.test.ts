@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { mapPropertyToVrexa, VREXA_ALLOWED_KEYS, VREXA_FLOOR_UNSUPPORTED, VREXA_NO_COOLING_WARNING, type VrexaMapContext, type VrexaType } from "./mapper";
-import { PORTAL_REQUIREMENTS } from "../requirements";
+import { describe, expect, it, vi } from "vitest";
+import { mapPropertyToVrexa, VREXA_ALLOWED_KEYS, VREXA_FLOOR_UNSUPPORTED, VREXA_NO_COOLING_REASON, type VrexaMapContext, type VrexaType } from "./mapper";
+import { PORTAL_REQUIREMENTS, requirementBlockMessage, type PortalRequirementReport } from "../requirements";
+import { createVrexaAdapter } from "../adapters/vrexa.server";
+import type { PortalContext } from "../adapter";
 
 const agent = { name: "Ana-Maria Ionescu!", email: "ana@agentie.ro", phone: "0722 123 456" };
 const ctx: VrexaMapContext = { agent };
@@ -79,11 +81,46 @@ describe("mapPropertyToVrexa", () => {
     expect(r.listings[0]!.body.floor).toBe(0);
   });
 
-  it("fără climatizare → câmp omis + avertisment", () => {
-    const r = mapPropertyToVrexa({ ...apartment, cooling_systems: [] } as never, ctx);
-    if (!r.ok) throw new Error("blocat");
+  it.each([["apartament", apartment], ["casă", house]])("%s fără climatizare → blocat, fără valoare implicită", (_n, prop) => {
+    const r = mapPropertyToVrexa({ ...prop, cooling_systems: [] } as never, ctx);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reasons).toContain(VREXA_NO_COOLING_REASON);
+    expect(VREXA_NO_COOLING_REASON).toBe("Vrexa cere obligatoriu tipul de climatizare (aer condiționat, ventiloconvectoare sau aeroterme) și nu are opțiunea «fără». Completează «Sisteme de răcire» în fișă dacă proprietatea are; altfel anunțul nu poate fi publicat pe Vrexa până primim răspunsul echipei Vrexa.");
+  });
+
+  it.each([["apartament", apartment], ["casă", house]])("%s cu „Aer condiționat” → trece", (_n, prop) => {
+    const r = mapPropertyToVrexa(prop as never, ctx);
+    if (!r.ok) throw new Error(r.reasons.join(" "));
+    expect(r.listings[0]!.body.airConditioning).toBe("airConditioning");
+  });
+
+  it("spațiu comercial fără climatizare → trece, câmp omis", () => {
+    const r = mapPropertyToVrexa({ ...commercial, cooling_systems: [] } as never, ctx);
+    if (!r.ok) throw new Error(r.reasons.join(" "));
     expect(r.listings[0]!.body).not.toHaveProperty("airConditioning");
-    expect(r.warnings).toContain(VREXA_NO_COOLING_WARNING);
+  });
+
+  it.each([["apartament", apartment], ["casă", house]])("%s fără climatizare → zero apeluri de transport", async (_n, prop) => {
+    const mapping = mapPropertyToVrexa({ ...prop, cooling_systems: [] } as never, ctx);
+    const t = vi.fn(async () => new Response("{}", { status: 200 }));
+    const a = createVrexaAdapter({ transport: t as never, env: () => ({}), load: async () => ({ mapping, reference: "HB-1", stored: [], images: [], imageWarnings: [] }) as never });
+    const pc = { organizationId: "o", definition: {}, direction: "habitoo_to_portal", authenticationMode: "portal_api_key", externalAccountId: "cid", portalCredential: "s", settings: {}, allowLiveRequests: true } as unknown as PortalContext;
+    const r = await a.publishListing(pc, { propertyId: "p1", externalId: null });
+    expect(r.ok).toBe(false);
+    expect(t).not.toHaveBeenCalled();
+  });
+
+  it("mesajul de blocare Vrexa (demisol) fără „completează:” și fără „..”", () => {
+    const r = mapPropertyToVrexa({ ...apartment, floor_label: "Demisol", floor: -1 } as never, ctx);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const report: PortalRequirementReport = { portalId: "vrexa", known: true, ok: false, missing: r.reasons.map((x, i) => ({ key: `vrexa_${i}`, label: x, requirement: "" })), required: [], allowed: [] } as never;
+    const msg = requirementBlockMessage("Vrexa.ro", report);
+    expect(msg.startsWith("Vrexa.ro: publicarea este blocată. ")).toBe(true);
+    expect(msg).toContain(VREXA_FLOOR_UNSUPPORTED);
+    expect(msg).not.toContain("completează:");
+    expect(msg).not.toContain("..");
   });
 
   it("adresă curățată; număr doar la locație exactă", () => {
