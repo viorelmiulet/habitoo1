@@ -2233,8 +2233,10 @@ export const getPortalLogs = createServerFn({ method: "POST" })
 /* ------------------------------------------------------------------------- */
 
 import {
+  applyPortalFeedback,
   deriveState,
   matchesPortalFilter,
+  PORTAL_ID_PATTERN,
   type PortalSelectionState,
 } from "@/lib/portals/portal-state";
 
