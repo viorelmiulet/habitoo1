@@ -66,9 +66,6 @@ const ACCESS: Record<string, string> = { asfaltate: "asphaltRoad", betonate: "pa
 const SURROUNDINGS: Record<string, string> = { "spre padure": "forest", "spre lac": "lake", "spre munte": "mountains", "spre mare": "sea" };
 const HOUSE_TYPE: Record<string, string> = { duplex: "duplex", triplex: "triplex", individuala: "detached", cuplata: "semiDetached", insiruita: "terraced", bungalow: "bungalow", conac: "mansion", cabana: "cottage", ferma: "farmhouse" };
 
-export const VREXA_NO_COOLING_REASON = "Vrexa cere obligatoriu tipul de climatizare (aer condiționat, ventiloconvectoare sau aeroterme) și nu are opțiunea «fără». Completează «Sisteme de răcire» în fișă dacă proprietatea are; altfel anunțul nu poate fi publicat pe Vrexa până primim răspunsul echipei Vrexa.";
-export const VREXA_FLOOR_UNSUPPORTED = "Vrexa nu acceptă încă demisol sau mansardă; am cerut clarificări echipei Vrexa.";
-
 // ---------------------------------------------------------------- utilitare pure
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -102,12 +99,16 @@ export function vrexaCleanPhone(text: string): string {
   return text.replace(/[^0-9.+() ]/g, "").trim();
 }
 
-/** Etajul Vrexa: parter/parter înalt → 0, etaj n → n; demisol/mansardă → "unsupported"; altfel null. */
-export function vrexaFloor(label: unknown, floor: unknown): number | "unsupported" | null {
+/** Valori confirmate de Vrexa la 2026-11-25: subsol -2, demisol -1, parter 0, mansardă 101. */
+export function vrexaFloor(label: unknown, floor: unknown): number | null {
   const l = normalizeLabel(str(label));
-  if (l === "demisol" || l === "mansarda") return "unsupported";
+  if (l === "subsol") return -2;
+  if (l === "demisol") return -1;
+  if (l === "mansarda") return 101;
   if (l === "parter" || l === "parter inalt") return 0;
   const n = num(floor);
+  // normalizeLabel elimină „+”; verifică eticheta originală înainte de „Etaj 10”.
+  if (l === "etaj 10" && str(label).includes("+")) return n !== null && n >= 10 ? n : null;
   const m = /^etaj (\d+)$/.exec(l);
   if (m) return Number(m[1]);
   if (/^etaj 10/.test(l)) return n !== null && n >= 10 ? n : null;
@@ -178,8 +179,7 @@ export function mapPropertyToVrexa(p: Row, ctx: VrexaMapContext): VrexaMapResult
   const parking = num(p.parking_spaces);
   const floor = vrexaFloor(p.floor_label, p.floor);
   const needFloor = () => {
-    if (floor === "unsupported") reasons.push(VREXA_FLOOR_UNSUPPORTED);
-    else need("floor", inRange(floor, 0, 100), "etajul");
+    need("floor", floor !== null && Number.isInteger(floor) ? inRange(floor, -2, 101) : null, "etajul");
   };
   const energy = /^[a-g]$/i.test(str(p.energy_class).trim().charAt(0)) && str(p.energy_class).trim().length <= 2 ? str(p.energy_class).trim().charAt(0).toLowerCase() : null;
 
@@ -191,8 +191,7 @@ export function mapPropertyToVrexa(p: Row, ctx: VrexaMapContext): VrexaMapResult
     b.buildingServices = mapList(amenities, SERVICES);
     need("refurbishStatus", refurbish, "starea finisajelor");
     const cooling = mapList(list(p.cooling_systems), COOLING)[0] ?? null;
-    if (cooling) b.airConditioning = cooling;
-    else reasons.push(VREXA_NO_COOLING_REASON);
+    b.airConditioning = cooling ?? "noAirConditioning";
     need("heatingType", mapList(heatingValues, HEATING)[0] ?? null, "tipul de încălzire");
     need("furnishing", look(FURNISHING, p.furnishing), "mobilarea");
     b.utilities = utilities;

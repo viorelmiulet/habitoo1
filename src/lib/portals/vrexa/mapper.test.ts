@@ -1,8 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
-import { mapPropertyToVrexa, VREXA_ALLOWED_KEYS, VREXA_FLOOR_UNSUPPORTED, VREXA_NO_COOLING_REASON, type VrexaMapContext, type VrexaType } from "./mapper";
+import { describe, expect, it } from "vitest";
+import { mapPropertyToVrexa, VREXA_ALLOWED_KEYS, type VrexaMapContext, type VrexaType } from "./mapper";
 import { PORTAL_REQUIREMENTS, requirementBlockMessage, type PortalRequirementReport } from "../requirements";
-import { createVrexaAdapter } from "../adapters/vrexa.server";
-import type { PortalContext } from "../adapter";
 
 const agent = { name: "Ana-Maria Ionescu!", email: "ana@agentie.ro", phone: "0722 123 456" };
 const ctx: VrexaMapContext = { agent };
@@ -70,55 +68,71 @@ describe("mapPropertyToVrexa", () => {
     expect(usd.ok).toBe(false);
   });
 
-  it("demisol și mansardă blocate cu motivul cerut; parter înalt → 0", () => {
-    for (const floor_label of ["Demisol", "Mansardă"]) {
-      const r = mapPropertyToVrexa({ ...apartment, floor_label } as never, ctx);
+  describe.each([["apartament", apartment], ["comercial", commercial]])("etaje %s", (_name, prop) => {
+    it.each([
+      ["Demisol", 3, -1], ["Mansardă", 3, 101], ["Mansardă", 12, 101],
+      ["Subsol", 3, -2], ["Parter", 3, 0], ["Parter înalt", 3, 0],
+      ["Etaj 3", 3, 3], ["Etaj 10+", 12, 12], ["Etaj 100", 100, 100],
+    ])("%s (floor %s) → %s", (floor_label, floor, expected) => {
+      const r = mapPropertyToVrexa({ ...prop, floor_label, floor }, ctx);
+      if (!r.ok) throw new Error(r.reasons.join(" "));
+      expect(r.listings[0]?.body.floor).toBe(expected);
+    });
+    it.each([102, 12.5])("etaj obișnuit invalid %s → blocat", (floor) => {
+      const r = mapPropertyToVrexa({ ...prop, floor_label: "Etaj 10+", floor }, ctx);
       expect(r.ok).toBe(false);
-      if (!r.ok) expect(r.reasons).toContain(VREXA_FLOOR_UNSUPPORTED);
-    }
-    const r = mapPropertyToVrexa({ ...apartment, floor_label: "Parter înalt" } as never, ctx);
-    if (!r.ok) throw new Error("blocat");
-    expect(r.listings[0]!.body.floor).toBe(0);
+      if (!r.ok) expect(r.reasons).toContain("Completează etajul pentru Vrexa.");
+    });
   });
 
-  it.each([["apartament", apartment], ["casă", house]])("%s fără climatizare → blocat, fără valoare implicită", (_n, prop) => {
+  it.each([["apartament", apartment], ["casă", house]])("%s fără climatizare → noAirConditioning, fără avertisment", (_n, prop) => {
     const r = mapPropertyToVrexa({ ...prop, cooling_systems: [] } as never, ctx);
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.reasons).toContain(VREXA_NO_COOLING_REASON);
-    expect(VREXA_NO_COOLING_REASON).toBe("Vrexa cere obligatoriu tipul de climatizare (aer condiționat, ventiloconvectoare sau aeroterme) și nu are opțiunea «fără». Completează «Sisteme de răcire» în fișă dacă proprietatea are; altfel anunțul nu poate fi publicat pe Vrexa până primim răspunsul echipei Vrexa.");
+    if (!r.ok) throw new Error(r.reasons.join(" "));
+    expect(r.listings[0]?.body.airConditioning).toBe("noAirConditioning");
+    expect(r.warnings).toEqual([]);
   });
 
   it.each([["apartament", apartment], ["casă", house]])("%s cu „Aer condiționat” → trece", (_n, prop) => {
     const r = mapPropertyToVrexa(prop as never, ctx);
     if (!r.ok) throw new Error(r.reasons.join(" "));
-    expect(r.listings[0]!.body.airConditioning).toBe("airConditioning");
+    expect(r.listings[0]?.body.airConditioning).toBe("airConditioning");
   });
 
   it("spațiu comercial fără climatizare → trece, câmp omis", () => {
     const r = mapPropertyToVrexa({ ...commercial, cooling_systems: [] } as never, ctx);
     if (!r.ok) throw new Error(r.reasons.join(" "));
-    expect(r.listings[0]!.body).not.toHaveProperty("airConditioning");
+    expect(r.listings[0]?.body).not.toHaveProperty("airConditioning");
   });
 
-  it.each([["apartament", apartment], ["casă", house]])("%s fără climatizare → zero apeluri de transport", async (_n, prop) => {
-    const mapping = mapPropertyToVrexa({ ...prop, cooling_systems: [] } as never, ctx);
-    const t = vi.fn(async () => new Response("{}", { status: 200 }));
-    const a = createVrexaAdapter({ transport: t as never, env: () => ({}), load: async () => ({ mapping, reference: "HB-1", stored: [], images: [], imageWarnings: [] }) as never });
-    const pc = { organizationId: "o", definition: {}, direction: "habitoo_to_portal", authenticationMode: "portal_api_key", externalAccountId: "cid", portalCredential: "s", settings: {}, allowLiveRequests: true } as unknown as PortalContext;
-    const r = await a.publishListing(pc, { propertyId: "p1", externalId: null });
-    expect(r.ok).toBe(false);
-    expect(t).not.toHaveBeenCalled();
+  it.each([["apartament", apartment], ["casă", house]])("%s: climatizare necunoscută → fără; tipurile reale au prioritate", (_name, prop) => {
+    for (const [cooling_systems, expected] of [
+      [["Necunoscut"], "noAirConditioning"],
+      [["Necunoscut", "Aer condiționat"], "airConditioning"],
+      [["Ventiloconvectoare"], "fanCoils"],
+      [["Aeroterme"], "heaters"],
+    ] as const) {
+      const r = mapPropertyToVrexa({ ...prop, cooling_systems: [...cooling_systems] }, ctx);
+      if (!r.ok) throw new Error(r.reasons.join(" "));
+      expect(r.listings[0]?.body.airConditioning).toBe(expected);
+      expect(r.warnings).toEqual([]);
+    }
   });
 
-  it("mesajul de blocare Vrexa (demisol) fără „completează:” și fără „..”", () => {
-    const r = mapPropertyToVrexa({ ...apartment, floor_label: "Demisol", floor: -1 } as never, ctx);
+  it.each(["Demisol", "Mansardă"])("cerințele Vrexa nu blochează %s fără climatizare", (floor_label) => {
+    const r = mapPropertyToVrexa({ ...apartment, floor_label, cooling_systems: [] }, ctx);
+    expect(r.ok).toBe(true);
+    const reasons = r.ok ? [] : r.reasons;
+    expect(PORTAL_REQUIREMENTS.vrexa?.mapperReasons?.({ vrexaReasons: reasons } as never)).toEqual([]);
+  });
+
+  it("mesajul de blocare Vrexa pentru o lipsă reală, fără „completează:” și fără „..”", () => {
+    const r = mapPropertyToVrexa({ ...apartment, title: "Scurt" } as never, ctx);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const report: PortalRequirementReport = { portalId: "vrexa", known: true, ok: false, missing: r.reasons.map((x, i) => ({ key: `vrexa_${i}`, label: x, requirement: "" })), required: [], allowed: [] } as never;
     const msg = requirementBlockMessage("Vrexa.ro", report);
     expect(msg.startsWith("Vrexa.ro: publicarea este blocată. ")).toBe(true);
-    expect(msg).toContain(VREXA_FLOOR_UNSUPPORTED);
+    expect(msg).toContain("Titlul trebuie să aibă cel puțin 10 caractere pentru Vrexa.");
     expect(msg).not.toContain("completează:");
     expect(msg).not.toContain("..");
   });
