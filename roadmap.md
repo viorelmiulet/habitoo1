@@ -813,3 +813,7 @@
 - [x] Token separat per agenție, doar hash, rotire atomică la schimbarea cheii și livrare/reîncercare prin PUT /agency.
 - [x] Rute contacts/visits/views cu autentificare și aceleași handlere/efecte ca feedul; fără schimbări în feed. /visits și /views sunt contorul existent, iar cererile clienților vin prin /contacts.
 - [x] 33/33 teste noi/modificate; migrarea și accesul numai service-role confirmate, compilare fără erori; commit fără publicare sau apeluri reale.
+
+## mvaimobiliare — eligibilitate ansambluri și copii
+- [x] Lista API explicită în regula comună: doar mvaimobiliare activat; fără modificarea bifelor sau a regulilor de stare.
+- [x] 18/18 teste din cele trei fișiere modificate; eligibilitate, preselecția copiilor și calculul comun al stării confirmate; build OK, fără publicare.

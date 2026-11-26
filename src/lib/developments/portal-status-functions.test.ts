@@ -23,6 +23,7 @@ vi.mock('@tanstack/react-start', () => ({
   },
 }));
 vi.mock('@/lib/org-access', () => ({ requireActiveOrgAuth: {} }));
+vi.mock('@/lib/feed-registry', () => ({ feedDefinitions: () => [] }));
 vi.mock('@/lib/portals.functions', () => ({ activatedPortalIds: mocks.activated, computeOrgPortalStates: mocks.compute }));
 vi.mock('@/lib/site-feed/complete-read.server', () => ({
   readCompleteRows: async (build: (from: number, to: number) => PromiseLike<{ data: Row[] | null; error: unknown }>) => {
@@ -93,6 +94,24 @@ it('funcția folosește regula comună doar cu unitățile neșterse ale ansambl
 it('Storia numără din storia_development_units și întoarce starea ansamblului separat', async () => {
   const result = await readDevelopmentPortalStates({ from } as never, id);
   expect(result.portals.find(portal => portal.portalId === 'storia')).toMatchObject({ total: 3, published: 1, errors: 1, unpublished: 1, developmentState: 'published' });
+});
+it('mvaimobiliare activat este numărat prin regula comună, fără includerea altor portaluri push', async () => {
+  mocks.activated.mockResolvedValue(new Set(['mvaimobiliare', 'lacheie']));
+  mocks.compute.mockResolvedValue(new Map([
+    ['u1', [cell('mvaimobiliare', 'published')]],
+    ['u2', [cell('mvaimobiliare', 'error')]],
+    ['u3', [cell('mvaimobiliare', 'not_published', false)]],
+  ]));
+  const result = await readDevelopmentPortalStates({ from } as never, id);
+  expect(mocks.compute).toHaveBeenCalledWith('org', { propertyIds: ['u1', 'u2', 'u3'], portalIds: new Set(['mvaimobiliare']) });
+  expect(result.portals.find(portal => portal.portalId === 'mvaimobiliare')).toMatchObject({ total: 3, published: 1, errors: 1, unpublished: 1, covered: true });
+  expect(result.portals.some(portal => portal.portalId === 'lacheie')).toBe(false);
+});
+
+it('mvaimobiliare neactivat nu este inclus în calculul stării', async () => {
+  const result = await readDevelopmentPortalStates({ from } as never, id);
+  expect(mocks.compute).toHaveBeenCalledWith('org', { propertyIds: ['u1', 'u2', 'u3'], portalIds: new Set(['clickimob']) });
+  expect(result.portals.some(portal => portal.portalId === 'mvaimobiliare')).toBe(false);
 });
 
 it('portalul neacoperit primește doar numărul unităților bifate', async () => {

@@ -9,7 +9,7 @@ describe("portalurile copiei", () => {
   it("Storia (dezvoltator) și feed-urile activate, determinate din registry", () => {
     const defs = allPortals();
     const feed = defs.find((d) => d.status === "available" && isFeedPullPortal(d));
-    const push = defs.find((d) => d.status === "available" && d.id !== "storia" && d.capabilities.includes("publish_listing") && !d.capabilities.includes("feed_pull") && !d.dynamic_feed && !d.public_feed_path_template);
+    const push = getPortalDefinition("lacheie");
     if(!feed||!push)throw new Error('Missing portal fixtures');
     expect(feed && push && getPortalDefinition("storia")).toBeTruthy();
     const out = clonePortalIds(new Set(["storia", feed.id, push.id]), defs);
@@ -17,6 +17,11 @@ describe("portalurile copiei", () => {
     expect(out).toContain(feed.id);
     expect(out).not.toContain(push.id);
     expect(clonePortalIds(new Set([push.id]), defs)).toEqual([]);
+  });
+  it.each([true, false])("mvaimobiliare este preselectat numai dacă este activat (%s)", (activated) => {
+    const ids = clonePortalIds(new Set(activated ? ["mvaimobiliare", "lacheie"] : ["lacheie"]), allPortals());
+    expect(ids.includes("mvaimobiliare")).toBe(activated);
+    expect(ids).not.toContain("lacheie");
   });
   it("textul de confirmare", () => {
     expect(cloneConfirmText(3)).toBe("Se vor crea 3 copii noi în ansamblu; anunțurile originale rămân neschimbate. Copiile preiau locația ansamblului.");
@@ -43,9 +48,10 @@ describe("cloneToDevelopmentCore", () => {
 describe("preselecția pentru copia unui anunț publicat", () => {
   it("bifează Storia și feed-urile fără eroarea „nu este publicabilă”", async () => {
     const feeds = allPortals().filter((d) => d.status === "available" && d.id !== "storia" && isFeedPullPortal(d)).map((d) => d.id).slice(0, 2);
-    const activated = new Set(["storia", ...feeds]);
+    const activated = new Set(["storia", "mvaimobiliare", ...feeds]);
     const expected = clonePortalIds(activated, allPortals());
     expect(expected).toContain("storia");
+    expect(expected).toContain("mvaimobiliare");
     for (const f of feeds) expect(expected).toContain(f);
     const copyState = { publish_status: "published" };
     const rpc = vi.fn(async () => ({ error: null, data: { copies: [{ original_id: "o", original_reference: "HB-1", copy_id: "c", copy_reference: "HB-2" }], skipped: [], files: [] } }));
