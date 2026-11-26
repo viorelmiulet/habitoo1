@@ -61,6 +61,7 @@ import { StoriaAutoRenewBulkDialog } from "@/components/app/StoriaAutoRenewBulkD
 import { PortalRepublishButton } from "@/components/app/PortalRepublishDialog";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { CHROME_EXTENSION_URL } from "@/components/marketing/chrome-extension-content";
+import { IncompletePropertiesBand } from "@/components/app/properties/IncompletePropertiesBand";
 import { ESSENTIALS_COLUMNS, missingEssentials, type EssentialsRow } from "@/lib/property-essentials";
 import { PortalLogoLinks } from "@/components/app/properties/PortalLogoLinks";
 import { portalLogoLayout } from "@/components/app/properties/portal-logo-layout";
@@ -399,17 +400,19 @@ function PropertiesPage() {
   });
 
   // Banda AI: proprietăți active cu fișa incompletă (aceeași regulă ca pe Acasă).
-  const [onlyIncomplete, setOnlyIncomplete] = useState(false);
-  const { data: incompleteIds = [] } = useQuery({
+  const { data: incompleteItems = [] } = useQuery({
     queryKey: ["properties-incomplete", orgId],
     enabled: Boolean(orgId),
     staleTime: 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("properties")
-        .select(ESSENTIALS_COLUMNS)
+        .select(`reference,title,${ESSENTIALS_COLUMNS}` as string)
         .eq("organization_id", orgId as string).is("deleted_at", null).eq("status", "active").limit(1000);
       if (error) throw error;
-      return (data ?? []).filter((x) => missingEssentials(x as unknown as EssentialsRow).length > 0).map((x) => (x as unknown as { id: string }).id);
+      return (data ?? []).map((x) => {
+        const r = x as unknown as EssentialsRow & { id: string; reference: string | null; title: string | null };
+        return { id: r.id, reference: r.reference, title: r.title, missing: missingEssentials(r) };
+      }).filter((x) => x.missing.length > 0);
     },
   });
 
@@ -420,7 +423,7 @@ function PropertiesPage() {
 
   const { data: result, isLoading: listLoading } = useQuery({
     // (isLoading de mai jos combină și încărcarea filtrelor de portaluri/promovare)
-    queryKey: ["properties", orgId, filters, sort, page, PAGE_SIZE, favoriteIds, promotionIds, onlyIncomplete ? incompleteIds : null],
+    queryKey: ["properties", orgId, filters, sort, page, PAGE_SIZE, favoriteIds, promotionIds],
     enabled:
       Boolean(orgId) &&
       !portalOptionsLoading && !promotionOptionsLoading &&
@@ -439,10 +442,6 @@ function PropertiesPage() {
       if (filters.favoritesOnly) {
         if (favoriteIds.length === 0) return { rows: [], count: 0 };
         query = query.in("id", favoriteIds);
-      }
-      if (onlyIncomplete) {
-        if (incompleteIds.length === 0) return { rows: [], count: 0 };
-        query = query.in("id", incompleteIds);
       }
       if (promotionValues.length > 0) {
         if (!promotionIds || promotionIds.length === 0) return { rows: [], count: 0 };
@@ -615,7 +614,6 @@ function PropertiesPage() {
     if (!orgId || exporting) return;
     const sets: string[][] = [];
     if (filters.favoritesOnly) sets.push(favoriteIds);
-    if (onlyIncomplete) sets.push(incompleteIds);
     if (promotionValues.length > 0) sets.push(promotionIds ?? []);
     const restrictIds = sets.length ? sets.reduce((a, b) => a.filter((x) => b.includes(x))) : null;
     setExporting(true);
@@ -783,17 +781,7 @@ function PropertiesPage() {
       />
 
       <div className="space-y-4">
-        {incompleteIds.length > 0 || onlyIncomplete ? (
-          <div data-testid="properties-ai-band" className="flex flex-col gap-3 rounded-card border border-ai/30 bg-ai/5 px-4 py-3 sm:flex-row sm:items-center">
-            <p className="min-w-0 flex-1 text-sm">
-              <span className="font-semibold text-ai">✦ {incompleteIds.length} {incompleteIds.length === 1 ? "fișă incompletă poate fi completată" : "fișe incomplete pot fi completate"} cu AI</span>
-              <span className="text-muted-foreground"> — lipsesc etajul, suprafața, camerele sau dotările.</span>
-            </p>
-            <Button size="sm" variant="outline" aria-pressed={onlyIncomplete} onClick={() => { setPage(0); setOnlyIncomplete((v) => !v); }} className="shrink-0 border-ai/50 text-ai hover:bg-ai/10 hover:text-ai">
-              {onlyIncomplete ? "Arată toate" : "Completează cu AI"}
-            </Button>
-          </div>
-        ) : null}
+        <IncompletePropertiesBand items={incompleteItems} />
         <PropertyFilterPanel
           applied={filters}
           placeValue={placeValue}
