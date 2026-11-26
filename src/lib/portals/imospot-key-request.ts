@@ -26,7 +26,7 @@ export const IMOSPOT_DEFAULT_SETTINGS: ImospotSettings = {
  * Portalurile la care cheia API o emite portalul după cererea Habitoo
  * (activare prin aprobare automată + email). Același flux, text pe portal.
  */
-export type KeyRequestPortalId = "imospot" | "vdi";
+export type KeyRequestPortalId = "imospot" | "vdi" | "mvaimobiliare";
 type KeyRequestPortalConfig = {
   label: string;
   settingsKey: string;
@@ -58,6 +58,13 @@ export const KEY_REQUEST_PORTALS: Record<KeyRequestPortalId, KeyRequestPortalCon
       "Bună ziua,\n\nVă rugăm să creați contul VDI.ro și să emiteți cheia API VDI.ro pentru agenția de mai jos, partener Habitoo CRM:",
     outro: [KEY_SEND_LINE, THANKS],
   },
+  mvaimobiliare: {
+    label: "mvaimobiliare.ro",
+    settingsKey: "mvaimobiliare_key_request",
+    defaults: { to: "contact@mvaimobiliare.ro", from: "contact@habitoo.ro", cc: "contact@habitoo.ro" },
+    intro: "Bună ziua,\n\nVă rugăm să emiteți cheia API mvaimobiliare.ro pentru agenția de mai jos, partener Habitoo CRM:",
+    outro: [KEY_SEND_LINE, THANKS],
+  },
 };
 export const KEY_REQUEST_PORTAL_IDS = Object.keys(KEY_REQUEST_PORTALS) as KeyRequestPortalId[];
 
@@ -79,6 +86,7 @@ export function resolveImospotSettings(raw: unknown): ImospotSettings {
 }
 
 export type ImospotCompanyData = {
+  organizationId?: string;
   agencyName: string | null;
   legalName: string | null;
   cui: string | null;
@@ -117,6 +125,7 @@ export function buildKeyRequestEmail(portal: KeyRequestPortalId, d: ImospotCompa
     ["Telefon", d.adminPhone ?? "—"],
     ["Oraș", d.city ?? "—"],
   ];
+  if (portal === "mvaimobiliare") rows.push(["ID agenție Habitoo", d.organizationId ?? "—"]);
 
   const intro = cfg.intro;
   const outro = cfg.outro;
@@ -186,7 +195,7 @@ export async function notifyKeyRequestForRequest(
 
   const portal = row.portal;
   const settings = await deps.loadSettings(portal);
-  const email = buildKeyRequestEmail(portal, company, settings);
+  const email = buildKeyRequestEmail(portal, { ...company, organizationId: row.organizationId }, settings);
   let result: { ok: boolean; error?: string };
   try {
     result = await deps.send(email);

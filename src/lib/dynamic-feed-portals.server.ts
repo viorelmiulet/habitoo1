@@ -12,7 +12,8 @@ export async function loadDynamicFeedPortals(): Promise<DynamicFeedPortal[]> {
 export async function resolveIndexPortal(slug: string) {
   const fixed = INDEX_PORTALS[slug as keyof typeof INDEX_PORTALS];
   if (fixed) return { ...fixed, active: true };
-  if ([...STATIC_PORTALS, ...PROMOTION_CATALOGS].some(p => p.id === slug)) return null;
+  // MVA keeps its existing feed identity during API onboarding. Other static slugs remain reserved.
+  if (slug !== "mvaimobiliare" && [...STATIC_PORTALS, ...PROMOTION_CATALOGS].some(p => p.id === slug)) return null;
   const row = (await loadDynamicFeedPortals()).find(p => p.slug === slug);
   return row ? { prefix: row.key_prefix, secret: null, version: `habitoo-${slug}-index/1.0`, active: row.active,
     ...(row.xml_enabled ? { xmlPath: `/api/public/portal/v1/${slug}/feed.xml` } : {}) } : null;

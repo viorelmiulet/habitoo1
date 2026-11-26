@@ -1,3 +1,8 @@
+## mvaimobiliare — activare prin cheie API
+- [x] Definiție statică și cerere de cheie prin fluxul existent; cheia rămâne editabilă numai de SuperAdmin, fără trimitere de anunțuri.
+- [x] Compatibilitate index/feed și text public de activare; pagina și logo-ul verificate HTTP, 67 de anunțuri selectate confirmate doar prin citire.
+- [x] 17/17 teste exclusiv noi/modificate și compilare fără erori; commit la încheiere, fără publicare sau modificări de date.
+
 ## Funcții AI — prospectare și management, calupul E
 - [x] Ciorne MAP/Facebook/Argus prin Gemini/rezerva existente, credite și usage; propoziții factuale validate, text numai editabil/copiabil, fără trimiteri sau stocare Argus.
 - [x] Posibile duplicate în detaliul MAP/Facebook și fila ACP a proprietății: ofertele caller/agenție, MAP și ultimele snapshoturi ACP; dHash/adresă/coordonate/suprafață/etaj, motive și încredere, fără scrieri/unire.

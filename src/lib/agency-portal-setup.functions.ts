@@ -31,7 +31,7 @@ export class AgencyPortalAccessError extends Error {
 /** Portaluri gestionate în altă parte (catalog, OAuth, panou propriu). */
 export const AGENCY_SETUP_EXCLUDED = new Set(["facebook_catalog"]);
 /** Câmpuri rezervate Superadminului (ex. ID-ul agenției la Ofera). */
-const SUPERADMIN_ONLY_FIELD_PORTALS = new Set(["ofera"]);
+const SUPERADMIN_ONLY_FIELD_PORTALS = new Set(["ofera", "mvaimobiliare"]);
 export const AGENCY_TEST_INTERVAL_MS = 10_000;
 
 type Ctx = { userId: string; supabase: unknown };

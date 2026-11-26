@@ -2,7 +2,7 @@
  * Paginile publice /integrari/<slug>: o pagină per integrare disponibilă din registru.
  * Textele sunt scrise pentru agenți, fără termeni tehnici, și descriu doar ce face codul.
  */
-import { isPortalCovered, PORTAL_GROUPS, PORTALS, PROMOTION_CATALOGS, portalIntegrationOwner, type PortalDefinition } from "./registry";
+import { getPortalDefinition, isPortalCovered, PORTAL_GROUPS, PORTALS, PROMOTION_CATALOGS, portalIntegrationOwner, type PortalDefinition } from "./registry";
 import { isKeyRequestPortal } from "./imospot-key-request";
 
 export const INTEGRATION_PAGES_LASTMOD = "2026-10-29";
@@ -712,7 +712,7 @@ const DYNAMIC_CONTENT: Record<string, Content & { canDo: string[]; dailyWork: st
       "Modificările ajung pe site în cel mult 15 minute.",
       "Un anunț retras sau dezactivat dispare de pe site.",
     ],
-    activationText: "Administratorul agenției solicită activarea din Setări → Portaluri, iar după aprobare, portalul apare în lista fiecărui anunț.",
+    activationText: "Administratorul agenției solicită activarea din Setări → Portaluri; mvaimobiliare.ro emite cheia API, iar echipa Habitoo o introduce în contul agenției.",
     notes: [
       "Publicarea este gratuită.",
       "Strada apare doar dacă anunțul are bifată „locație precisă”.",
@@ -733,7 +733,7 @@ const DYNAMIC_CONTENT: Record<string, Content & { canDo: string[]; dailyWork: st
 export const DYNAMIC_INTEGRATION_PAGES: IntegrationPage[] = Object.values(DYNAMIC_CONTENT).map((c) => ({
   ...c,
   portalId: c.slug,
-  definition: {
+  definition: getPortalDefinition(c.slug) ?? {
     id: c.slug, display_name: c.name, description: c.description, logo: c.name.slice(0, 2).toUpperCase(), status: "available",
     activation: "approval", directions: ["habitoo_to_portal"], authentication: ["none"],
     capabilities: ["feed_pull", "update_listing", "withdraw_listing"], receives_leads: true, withdraws_via_feed: true,
@@ -743,6 +743,10 @@ export const DYNAMIC_INTEGRATION_PAGES: IntegrationPage[] = Object.values(DYNAMI
   related: BASE.slice(0, 3).map((r) => ({ slug: r.c.slug, name: r.c.name })),
   title: `Integrare ${c.name} cu CRM imobiliar | Habitoo`,
 }));
+
+// Keep the curated MVA page unchanged when its registry definition becomes static.
+const mvaPage = DYNAMIC_INTEGRATION_PAGES.find((p) => p.slug === "mvaimobiliare");
+if (mvaPage) INTEGRATION_PAGES.push(mvaPage);
 
 /** Text generat din datele portalului din SuperAdmin; descrierea proprie (dacă există) înlocuiește introducerea. */
 export function buildDynamicIntegrationPage(def: PortalDefinition): IntegrationPage {

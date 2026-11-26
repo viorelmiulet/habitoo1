@@ -362,6 +362,22 @@ export const STATIC_PORTALS: PortalDefinition[] = [
       "Publicarea este PUSH direct, idempotentă după external_id (derivat din identificatorul intern al ofertei). Retragerea arhivează anunțul la Imospot, nu îl șterge definitiv, iar o nouă publicare îl readuce live. Cerințe obligatorii verificate înainte de trimitere: titlu de minimum 8 caractere, descriere de minimum 60 caractere, preț întreg pozitiv, telefon de contact, județ și localitate, minimum o imagine publicabilă. O proprietate cu ambele tranzacții active generează două anunțuri separate (vânzare și închiriere). Promovările plătite nu sunt trimise din Habitoo.",
   },
   {
+    id: "mvaimobiliare",
+    display_name: "mvaimobiliare.ro",
+    description: "Cheia API a agenției este emisă de mvaimobiliare.ro și introdusă de echipa Habitoo după solicitarea activării.",
+    logo: "MVA",
+    logo_url: "/api/public/feed/mvaimobiliare/logo",
+    status: "available",
+    activation: "approval",
+    directions: ["habitoo_to_portal"],
+    authentication: ["portal_api_key"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing"],
+    receives_leads: true,
+    configuration_schema: { fields: [{ key: "api_key", label: "Cheie API mvaimobiliare.ro", secret: true, target: "credentials" }] },
+    website: "https://www.mvaimobiliare.ro",
+    notes: "API mvaimobiliare.ro: https://www.mvaimobiliare.ro/api/public/habitoo/v1, Bearer cu cheia agenției.",
+  },
+  {
     id: "imo24",
     display_name: "imo24.ro",
     description:

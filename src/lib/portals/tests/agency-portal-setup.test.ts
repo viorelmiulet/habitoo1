@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { validatePortalConfigValues } from "@/lib/portals/registry";
 
-vi.mock("@tanstack/react-start", () => {
+vi.mock("@tanstack/react-start", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-start")>();
   const build = () => {
     const self: Record<string, unknown> = {};
     self["middleware"] = () => self;
@@ -10,7 +11,7 @@ vi.mock("@tanstack/react-start", () => {
     self["handler"] = (fn: unknown) => fn;
     return self;
   };
-  return { createServerFn: () => build() };
+  return { ...actual, createServerFn: () => build() };
 });
 vi.mock("@tanstack/react-start/server", () => ({ setResponseStatus: () => undefined }));
 vi.mock("@/lib/org-access", () => ({ requireActiveOrgAuth: {} }));
@@ -59,6 +60,12 @@ beforeEach(() => {
 });
 
 describe("configurare portal de către administratorul agenției", () => {
+  it("MVA: cheia poate fi introdusă doar de SuperAdmin, nu de administratorul agenției", async () => {
+    const m = await load();
+    expect(m.agencyEditableFields("mvaimobiliare")).toEqual([]);
+    await expect(m.saveAgencyPortal(ctx(true), { portalId: "mvaimobiliare", credential: "fictitious-portal-key" })).rejects.toThrow("Acest portal nu are date de acces de completat.");
+    expect(save).not.toHaveBeenCalled();
+  });
   it("configurează, testează, activează (source agency) și dezactivează pe agenția din sesiune", async () => {
     const m = await load();
     await m.saveAgencyPortal(ctx(true), { portalId: "imo24", credential: "imo24_" + "a".repeat(40) }).catch(() => undefined);
