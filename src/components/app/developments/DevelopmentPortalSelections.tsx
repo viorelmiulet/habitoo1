@@ -14,7 +14,7 @@ import { errorMessage } from '@/lib/developments/error-message';
 
 type PendingChange = { portalKey: string; enabled: boolean };
 
-export function DevelopmentPortalSelections({ id, editable, storiaConnected }: { id: string; editable: boolean; storiaConnected: boolean }) {
+export function DevelopmentPortalSelections({ id, editable, storiaConnected, missingPageContent = false }: { id: string; editable: boolean; storiaConnected: boolean; missingPageContent?: boolean }) {
   const load = useServerFn(getDevelopmentPortalSelections);
   const loadStates = useServerFn(getDevelopmentPortalStates);
   const save = useServerFn(setDevelopmentPortalSelections);
@@ -89,6 +89,7 @@ export function DevelopmentPortalSelections({ id, editable, storiaConnected }: {
         Actualizează starea
       </Button>
     </div>
+    {missingPageContent ? <p className="text-sm text-muted-foreground">Fără descriere și fotografie, unele portaluri nu afișează pagina ansamblului.</p> : null}
     {q.isError ? <p role="alert" className="text-sm text-destructive">Portalurile ansamblului nu au putut fi citite.</p> : null}
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{q.data?.portals.map(portal => {
       const enabled = draft[portal.id] ?? saved.get(portal.id) ?? false;

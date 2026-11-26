@@ -7,18 +7,17 @@ import {CRM_URL} from '@/lib/host';
 import {readStoriaAdvertError} from './advert-errors';
 import type {StoriaEventShape} from './leads.server';
 import type {Tables} from '@/integrations/supabase/types';
+import {readInvestmentData} from './investment-data.server';
 type Db=(typeof import('@/integrations/supabase/client.server'))['supabaseAdmin'];
 async function request(org:string,method:'POST'|'PUT',path:string,payload?:unknown,account:'agency'|'developer'='developer'){
  const r=await olxAuthorizedRequest(org,method,path,payload,false,account);if(r.status<200||r.status>=300)throw new Error(`Storia a refuzat operațiunea (HTTP ${r.status}).`);return r.body;
 }
 async function investmentPayload(db:Db,d:Tables<'developments'>){
- const [{data:images},{data:org},{data:agent},{data:properties}]=await Promise.all([
- db.from('development_images').select('*').eq('development_id',d.id).order('position'),db.from('organizations').select('*').eq('id',d.organization_id).single(),db.from('profiles').select('id,full_name,email,phone,avatar_url,is_active,public_profile_hidden').eq('id',d.assigned_to??'').eq('organization_id',d.organization_id).single(),db.from('properties').select('sale_price,sale_currency,currency,for_sale,status').eq('development_id',d.id).is('deleted_at',null)]);
+ const [{images,agent,price,currency},{data:org}]=await Promise.all([readInvestmentData(db,d),db.from('organizations').select('*').eq('id',d.organization_id).single()]);
  const {publishableImageTarget}=await import('@/lib/site-feed/property-media.server');
  const urls:string[]=[];let floorPlan:string|null=null;for(const image of images??[]){const url=await publishableImageTarget(db,{...image,include_in_publish:true,is_confidential:false},{status:'active',publish_status:'published',deleted_at:null} as Tables<'properties'>,org);if(!url)continue;if(image.is_floor_plan&&!image.is_primary&&!floorPlan)floorPlan=url;else urls.push(url);}
  const warnings:string[]=[];
- const active=(properties??[]).filter(p=>p.status==='active'&&p.for_sale&&p.sale_price&&p.sale_price>0);const currencies=new Set(active.map(p=>p.sale_currency??p.currency));const price=d.price_from??(currencies.size===1?Math.min(...active.map(p=>p.sale_price??Infinity)):null);
- const advert=mapInvestment(d,{images:urls,floorPlan,warnings,contact:{name:agent?.full_name??'',email:agent?.email??'',...(agent?.phone?{phone:agent.phone}:{}),...(storiaAgentPhotoUrl(CRM_URL,agent)?{photo:storiaAgentPhotoUrl(CRM_URL,agent) as string}:{})},price:Number.isFinite(price)?price:null,currency:d.price_from!=null?d.currency:active[0]?.sale_currency??active[0]?.currency??null});
+ const advert=mapInvestment(d,{images:urls,floorPlan,warnings,contact:{name:agent?.full_name??'',email:agent?.email??'',...(agent?.phone?{phone:agent.phone}:{}),...(storiaAgentPhotoUrl(CRM_URL,agent)?{photo:storiaAgentPhotoUrl(CRM_URL,agent) as string}:{})},price,currency});
  if(warnings.length)console.warn('[storia investment]',d.id,warnings.join(' '));
  return advert;
 }

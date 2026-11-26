@@ -793,3 +793,8 @@
 - [x] Migrare 0346 aditivă, salvare atomică și compatibilitate cu operațiile existente.
 - [x] Apel nou și worker cu o singură trecere, notificare comună și lista modificărilor la citire.
 - [x] 35 teste în cele 4 fișiere noi/modificate; schemă și drepturi confirmate, fără interfață/publicare/apeluri reale.
+
+## Storia ansamblu — lipsuri înainte de trimitere
+- [x] Verificare pură comună, toate etichetele în română și aceleași date la citire/trimitere, fără semnare la citire.
+- [x] Avertismente în Publicare, fără schimbarea butoanelor, payloadului sau unităților.
+- [x] 13/13 teste noi/modificate; build OK; fără publicare sau apeluri reale către portaluri.
