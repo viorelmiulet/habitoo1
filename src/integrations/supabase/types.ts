@@ -3366,6 +3366,7 @@ export type Database = {
           development_id: string
           height: number | null
           id: string
+          is_floor_plan: boolean
           is_primary: boolean
           organization_id: string
           position: number
@@ -3380,6 +3381,7 @@ export type Database = {
           development_id: string
           height?: number | null
           id?: string
+          is_floor_plan?: boolean
           is_primary?: boolean
           organization_id: string
           position?: number
@@ -3394,6 +3396,7 @@ export type Database = {
           development_id?: string
           height?: number | null
           id?: string
+          is_floor_plan?: boolean
           is_primary?: boolean
           organization_id?: string
           position?: number
@@ -3610,6 +3613,8 @@ export type Database = {
           area_to: number | null
           assigned_to: string | null
           buildings_count: number | null
+          ceiling_height_from_cm: number | null
+          ceiling_height_to_cm: number | null
           city: string | null
           construction_stage: string | null
           construction_start_date: string | null
@@ -3632,17 +3637,24 @@ export type Database = {
           locality_siruta_code: number | null
           location_precise: boolean
           name: string
+          net_area_m2: number | null
+          number_of_rooms: string | null
+          on_demand: boolean
           organization_id: string
           price_from: number | null
           price_per_sqm_from: number | null
           price_to: number | null
+          remote_services: boolean
           status: string
+          storia_auto_extend: boolean
           storia_hide_price: boolean
           street: string | null
           street_number: string | null
           total_units: number | null
           uat_siruta_code: number | null
           updated_at: string
+          video_url: string | null
+          virtual_tour_url: string | null
         }
         Insert: {
           address?: string | null
@@ -3651,6 +3663,8 @@ export type Database = {
           area_to?: number | null
           assigned_to?: string | null
           buildings_count?: number | null
+          ceiling_height_from_cm?: number | null
+          ceiling_height_to_cm?: number | null
           city?: string | null
           construction_stage?: string | null
           construction_start_date?: string | null
@@ -3673,17 +3687,24 @@ export type Database = {
           locality_siruta_code?: number | null
           location_precise?: boolean
           name: string
+          net_area_m2?: number | null
+          number_of_rooms?: string | null
+          on_demand?: boolean
           organization_id: string
           price_from?: number | null
           price_per_sqm_from?: number | null
           price_to?: number | null
+          remote_services?: boolean
           status?: string
+          storia_auto_extend?: boolean
           storia_hide_price?: boolean
           street?: string | null
           street_number?: string | null
           total_units?: number | null
           uat_siruta_code?: number | null
           updated_at?: string
+          video_url?: string | null
+          virtual_tour_url?: string | null
         }
         Update: {
           address?: string | null
@@ -3692,6 +3713,8 @@ export type Database = {
           area_to?: number | null
           assigned_to?: string | null
           buildings_count?: number | null
+          ceiling_height_from_cm?: number | null
+          ceiling_height_to_cm?: number | null
           city?: string | null
           construction_stage?: string | null
           construction_start_date?: string | null
@@ -3714,17 +3737,24 @@ export type Database = {
           locality_siruta_code?: number | null
           location_precise?: boolean
           name?: string
+          net_area_m2?: number | null
+          number_of_rooms?: string | null
+          on_demand?: boolean
           organization_id?: string
           price_from?: number | null
           price_per_sqm_from?: number | null
           price_to?: number | null
+          remote_services?: boolean
           status?: string
+          storia_auto_extend?: boolean
           storia_hide_price?: boolean
           street?: string | null
           street_number?: string | null
           total_units?: number | null
           uat_siruta_code?: number | null
           updated_at?: string
+          video_url?: string | null
+          virtual_tour_url?: string | null
         }
         Relationships: [
           {

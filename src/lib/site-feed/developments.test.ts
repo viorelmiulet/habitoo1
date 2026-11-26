@@ -39,7 +39,7 @@ const req=(path='/developments')=>new Request('http://localhost:8080/api/public/
 function parent(overrides:Row={}): DevelopmentRow {
   return {id:D,organization_id:'org-a',status:'active',deleted_at:null,name:'Fictiv',developer_name:null,description:null,
     address:null,area_from:null,area_to:null,construction_start_date:null,county_siruta_code:null,created_by:null,
-    estate_type:null,storia_hide_price:false,developer_website:null,locality_siruta_code:null,price_per_sqm_from:null,uat_siruta_code:null,
+    estate_type:null,storia_hide_price:false,developer_website:null,ceiling_height_from_cm:null,ceiling_height_to_cm:null,net_area_m2:null,number_of_rooms:null,remote_services:false,on_demand:false,video_url:null,virtual_tour_url:null,storia_auto_extend:false,locality_siruta_code:null,price_per_sqm_from:null,uat_siruta_code:null,
     city:null,county:null,district:null,street:'Privată',street_number:'9',lat:44.4,lng:26.1,location_precise:false,
     construction_stage:'În construcție',delivery_date:'2027-12-01',buildings_count:2,floors_count:5,total_units:30,
     amenities:[],price_from:null,price_to:null,currency:'EUR',assigned_to:null,created_at:'2026-11-01T00:00:00Z',updated_at:'2026-11-20T00:00:00Z',...overrides} as DevelopmentRow;

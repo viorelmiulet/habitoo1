@@ -2416,6 +2416,13 @@
       "when": 1795640788831,
       "tag": "0344_development_units_location",
       "breakpoints": true
+    },
+    {
+      "idx": 345,
+      "version": "7",
+      "when": 1795676699610,
+      "tag": "0345_development_storia_fields",
+      "breakpoints": true
     }
   ]
 }
