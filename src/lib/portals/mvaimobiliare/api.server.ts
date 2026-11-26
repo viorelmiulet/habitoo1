@@ -6,7 +6,7 @@ export const MVA_TIMEOUT_MS = 20_000;
 /** Never persist provider bodies: even a field error can echo the credential. */
 function safeText(value: unknown, key: string): string {
   const text = Array.isArray(value) ? value.map(v => typeof v === 'string' ? v : 'invalid').join(', ') : typeof value === 'string' ? value : 'invalid';
-  return text.split(key).join('[redacted]').replace(/Bearer\s+\S+/gi, 'Bearer [redacted]').slice(0, 300);
+  return text.split(key).join('[redacted]').replace(/hbml_[A-Za-z0-9_-]{43}/g, '[redacted]').replace(/Bearer\s+\S+/gi, 'Bearer [redacted]').slice(0, 300);
 }
 export async function mvaRequest<T>(ctx: PortalContext, method: 'GET' | 'PUT' | 'DELETE', path: string, payload?: unknown): Promise<PortalResult<T>> {
   const key = ctx.portalCredential?.trim();

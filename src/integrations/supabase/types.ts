@@ -7091,6 +7091,44 @@ export type Database = {
           },
         ]
       }
+      mva_lead_tokens: {
+        Row: {
+          claim_token: string | null
+          credential_hash: string | null
+          delivered_at: string | null
+          issued_at: string | null
+          locked_until: string | null
+          organization_id: string
+          token_hash: string | null
+        }
+        Insert: {
+          claim_token?: string | null
+          credential_hash?: string | null
+          delivered_at?: string | null
+          issued_at?: string | null
+          locked_until?: string | null
+          organization_id: string
+          token_hash?: string | null
+        }
+        Update: {
+          claim_token?: string | null
+          credential_hash?: string | null
+          delivered_at?: string | null
+          issued_at?: string | null
+          locked_until?: string | null
+          organization_id?: string
+          token_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mva_lead_tokens_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       neutral_offer_links: {
         Row: {
           code: string
@@ -14725,6 +14763,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_mva_lead_delivery: {
+        Args: { _credential_hash: string; _encrypted: string; _org: string }
+        Returns: Json
+      }
       claim_onboarding_guide: { Args: { p_guide_id: string }; Returns: boolean }
       claim_portal_bulk_property: {
         Args: { _job_id: string; _property_id: string; _ttl_seconds: number }
@@ -15119,6 +15161,10 @@ export type Database = {
       }
       finish_mva_initial_sync: {
         Args: { _error?: string; _id: string; _token: string }
+        Returns: boolean
+      }
+      finish_mva_lead_delivery: {
+        Args: { _claim: string; _delivered: boolean; _org: string }
         Returns: boolean
       }
       finish_offer_client_delivery: { Args: { _id: string }; Returns: string }
@@ -16267,6 +16313,10 @@ export type Database = {
           _reason: string
         }
         Returns: Json
+      }
+      store_mva_lead_token_hash: {
+        Args: { _claim: string; _hash: string; _org: string }
+        Returns: boolean
       }
       storia_record_expiry: {
         Args: {

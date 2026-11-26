@@ -905,7 +905,7 @@ export async function savePortalConnectionCore(input: {
 
     const admin = await loadAdmin();
     const { encryptPortalCredential } = await import("@/lib/portals/crypto.server");
-    const { row } = await buildContext(organizationId, definition);
+    const { row, ctx: savedContext } = await buildContext(organizationId, definition);
     const settings = { ...((row?.settings ?? {}) as Record<string, unknown>) };
     if (data.endpointUrl !== undefined && definition.id === "ofera") {
       const providerId = oferaProviderId(data.endpointUrl);
@@ -946,7 +946,10 @@ export async function savePortalConnectionCore(input: {
     }
     if (data.credential) {
       if (definition.id === "ofera") throw new Error("Credențialele Ofera se configurează doar în secretele serverului.");
-      patch["portal_credentials_encrypted"] = encryptPortalCredential(data.credential);
+      // Preserve MVA ciphertext when the same key is re-entered; only a real key change rotates the lead token.
+      if (definition.id !== "mvaimobiliare" || data.credential.trim() !== savedContext.portalCredential?.trim()) {
+        patch["portal_credentials_encrypted"] = encryptPortalCredential(data.credential);
+      }
       if (definition.id === "zonata") {
         // Doar modul (din prefixul public), nu cheia: afișat lângă cheie în SuperAdmin.
         const { zonataKeyMode } = await import("@/lib/portals/zonata/key");

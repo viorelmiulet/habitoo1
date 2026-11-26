@@ -2,6 +2,7 @@ import type { PortalAdapter, PortalContext, ListingRef, ListingOutcome, Connecti
 import { properstarEntityId } from '../properstar/mapper';
 import { mvaRequest } from '../mvaimobiliare/api.server';
 import { buildMvaAgency, buildMvaPayload, mvaListingId } from '../mvaimobiliare/payload.server';
+import { prepareMvaLeadDelivery, finishMvaLeadDelivery, MVA_LEADS_BASE_URL } from '../mvaimobiliare/lead-tokens.server';
 import { createIndexFeedAdapter } from './clickimob.server';
 
 const feed = createIndexFeedAdapter('mvaimobiliare', 'mvaimobiliare.ro');
@@ -23,8 +24,16 @@ async function account(ctx: PortalContext, updateAgency: boolean): Promise<Porta
   if (!result.ok) return result;
   if (result.data?.agency_id !== properstarEntityId('hb', ctx.organizationId)) return { ok: false, code: 'AUTH_ERROR', message: 'Cheia aparține altei agenții pe mvaimobiliare.ro.' };
   if (updateAgency) {
-    const updated = await mvaRequest(ctx, 'PUT', '/agency', await buildMvaAgency(ctx.organizationId));
-    if (!updated.ok) return updated;
+    try {
+      const agency = await buildMvaAgency(ctx.organizationId);
+      const delivery = await prepareMvaLeadDelivery(ctx);
+      const updated = await mvaRequest(ctx, 'PUT', '/agency', { ...agency, ...(delivery ? { habitoo_leads: { base_url: MVA_LEADS_BASE_URL, token: delivery.token } } : {}) });
+      const confirmed = delivery ? await finishMvaLeadDelivery(ctx, delivery, updated.ok) : true;
+      if (!updated.ok) return updated;
+      if (!confirmed) return { ok: false, code: 'CONFIG_ERROR', message: 'Livrarea tokenului mvaimobiliare.ro nu a putut fi confirmată. Repetă testul.' };
+    } catch {
+      return { ok: false, code: 'CONFIG_ERROR', message: 'Tokenul pentru cererile mvaimobiliare.ro nu poate fi livrat acum. Repetă testul conexiunii.' };
+    }
   }
   return { ok: true, data: { configured: true, live: true, detail: 'Conexiune mvaimobiliare.ro verificată.' } };
 }

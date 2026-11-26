@@ -808,3 +808,8 @@
 - [x] Identitate email și adaptor cu mapperii feedului; teste fără apeluri reale.
 - [x] Sincronizare inițială durabilă prin coada existentă și o notificare.
 - [x] Compatibilitate fără cheie; 41/41 teste noi/modificate, compilare verificată; commit fără publicare.
+
+## mvaimobiliare — lead-uri fără feed
+- [x] Token separat per agenție, doar hash, rotire atomică la schimbarea cheii și livrare/reîncercare prin PUT /agency.
+- [x] Rute contacts/visits/views cu autentificare și aceleași handlere/efecte ca feedul; fără schimbări în feed. /visits și /views sunt contorul existent, iar cererile clienților vin prin /contacts.
+- [x] 33/33 teste noi/modificate; migrarea și accesul numai service-role confirmate, compilare fără erori; commit fără publicare sau apeluri reale.

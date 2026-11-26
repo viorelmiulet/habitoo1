@@ -251,6 +251,9 @@ import { Route as ApiPublicPortalV1HouseraWebhookRouteImport } from './routes/ap
 import { Route as ApiPublicPortalV1ImoveFeedRouteImport } from './routes/api/public/portal/v1/imove.feed'
 import { Route as ApiPublicPortalV1ImoveFeedDotcsvRouteImport } from './routes/api/public/portal/v1/imove.feed[.]csv'
 import { Route as ApiPublicPortalV1ImoveFeedDotjsonRouteImport } from './routes/api/public/portal/v1/imove.feed[.]json'
+import { Route as ApiPublicPortalV1MvaimobiliareContactsRouteImport } from './routes/api/public/portal/v1/mvaimobiliare/contacts'
+import { Route as ApiPublicPortalV1MvaimobiliareViewsRouteImport } from './routes/api/public/portal/v1/mvaimobiliare/views'
+import { Route as ApiPublicPortalV1MvaimobiliareVisitsRouteImport } from './routes/api/public/portal/v1/mvaimobiliare/visits'
 import { Route as ApiPublicPortalV1ProperstarLeadsRouteImport } from './routes/api/public/portal/v1/properstar.leads'
 import { Route as ApiPublicPortalV1PropertiesIdRouteImport } from './routes/api/public/portal/v1/properties.$id'
 import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './routes/api/public/portal/v1/storia.notifications'
@@ -1631,6 +1634,24 @@ const ApiPublicPortalV1ImoveFeedDotjsonRoute =
     path: '/api/public/portal/v1/imove/feed.json',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPortalV1MvaimobiliareContactsRoute =
+  ApiPublicPortalV1MvaimobiliareContactsRouteImport.update({
+    id: '/api/public/portal/v1/mvaimobiliare/contacts',
+    path: '/api/public/portal/v1/mvaimobiliare/contacts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPortalV1MvaimobiliareViewsRoute =
+  ApiPublicPortalV1MvaimobiliareViewsRouteImport.update({
+    id: '/api/public/portal/v1/mvaimobiliare/views',
+    path: '/api/public/portal/v1/mvaimobiliare/views',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPortalV1MvaimobiliareVisitsRoute =
+  ApiPublicPortalV1MvaimobiliareVisitsRouteImport.update({
+    id: '/api/public/portal/v1/mvaimobiliare/visits',
+    path: '/api/public/portal/v1/mvaimobiliare/visits',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1ProperstarLeadsRoute =
   ApiPublicPortalV1ProperstarLeadsRouteImport.update({
     id: '/api/public/portal/v1/properstar/leads',
@@ -1981,6 +2002,9 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
+  '/api/public/portal/v1/mvaimobiliare/contacts': typeof ApiPublicPortalV1MvaimobiliareContactsRoute
+  '/api/public/portal/v1/mvaimobiliare/views': typeof ApiPublicPortalV1MvaimobiliareViewsRoute
+  '/api/public/portal/v1/mvaimobiliare/visits': typeof ApiPublicPortalV1MvaimobiliareVisitsRoute
   '/api/public/portal/v1/properstar/leads': typeof ApiPublicPortalV1ProperstarLeadsRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
@@ -2238,6 +2262,9 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
+  '/api/public/portal/v1/mvaimobiliare/contacts': typeof ApiPublicPortalV1MvaimobiliareContactsRoute
+  '/api/public/portal/v1/mvaimobiliare/views': typeof ApiPublicPortalV1MvaimobiliareViewsRoute
+  '/api/public/portal/v1/mvaimobiliare/visits': typeof ApiPublicPortalV1MvaimobiliareVisitsRoute
   '/api/public/portal/v1/properstar/leads': typeof ApiPublicPortalV1ProperstarLeadsRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
@@ -2501,6 +2528,9 @@ export interface FileRoutesById {
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
+  '/api/public/portal/v1/mvaimobiliare/contacts': typeof ApiPublicPortalV1MvaimobiliareContactsRoute
+  '/api/public/portal/v1/mvaimobiliare/views': typeof ApiPublicPortalV1MvaimobiliareViewsRoute
+  '/api/public/portal/v1/mvaimobiliare/visits': typeof ApiPublicPortalV1MvaimobiliareVisitsRoute
   '/api/public/portal/v1/properstar/leads': typeof ApiPublicPortalV1ProperstarLeadsRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
@@ -2764,6 +2794,9 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
+    | '/api/public/portal/v1/mvaimobiliare/contacts'
+    | '/api/public/portal/v1/mvaimobiliare/views'
+    | '/api/public/portal/v1/mvaimobiliare/visits'
     | '/api/public/portal/v1/properstar/leads'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
@@ -3021,6 +3054,9 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
+    | '/api/public/portal/v1/mvaimobiliare/contacts'
+    | '/api/public/portal/v1/mvaimobiliare/views'
+    | '/api/public/portal/v1/mvaimobiliare/visits'
     | '/api/public/portal/v1/properstar/leads'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
@@ -3283,6 +3319,9 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
+    | '/api/public/portal/v1/mvaimobiliare/contacts'
+    | '/api/public/portal/v1/mvaimobiliare/views'
+    | '/api/public/portal/v1/mvaimobiliare/visits'
     | '/api/public/portal/v1/properstar/leads'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
@@ -3460,6 +3499,9 @@ export interface RootRouteChildren {
   ApiPublicPortalV1ImoveFeedRoute: typeof ApiPublicPortalV1ImoveFeedRoute
   ApiPublicPortalV1ImoveFeedDotcsvRoute: typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   ApiPublicPortalV1ImoveFeedDotjsonRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
+  ApiPublicPortalV1MvaimobiliareContactsRoute: typeof ApiPublicPortalV1MvaimobiliareContactsRoute
+  ApiPublicPortalV1MvaimobiliareViewsRoute: typeof ApiPublicPortalV1MvaimobiliareViewsRoute
+  ApiPublicPortalV1MvaimobiliareVisitsRoute: typeof ApiPublicPortalV1MvaimobiliareVisitsRoute
   ApiPublicPortalV1ProperstarLeadsRoute: typeof ApiPublicPortalV1ProperstarLeadsRoute
   ApiPublicPortalV1StoriaNotificationsRoute: typeof ApiPublicPortalV1StoriaNotificationsRoute
   ApiPublicPortalV1VdiLeadsRoute: typeof ApiPublicPortalV1VdiLeadsRoute
@@ -5169,6 +5211,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal/v1/mvaimobiliare/contacts': {
+      id: '/api/public/portal/v1/mvaimobiliare/contacts'
+      path: '/api/public/portal/v1/mvaimobiliare/contacts'
+      fullPath: '/api/public/portal/v1/mvaimobiliare/contacts'
+      preLoaderRoute: typeof ApiPublicPortalV1MvaimobiliareContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/portal/v1/mvaimobiliare/views': {
+      id: '/api/public/portal/v1/mvaimobiliare/views'
+      path: '/api/public/portal/v1/mvaimobiliare/views'
+      fullPath: '/api/public/portal/v1/mvaimobiliare/views'
+      preLoaderRoute: typeof ApiPublicPortalV1MvaimobiliareViewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/portal/v1/mvaimobiliare/visits': {
+      id: '/api/public/portal/v1/mvaimobiliare/visits'
+      path: '/api/public/portal/v1/mvaimobiliare/visits'
+      fullPath: '/api/public/portal/v1/mvaimobiliare/visits'
+      preLoaderRoute: typeof ApiPublicPortalV1MvaimobiliareVisitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/properstar/leads': {
       id: '/api/public/portal/v1/properstar/leads'
       path: '/api/public/portal/v1/properstar/leads'
@@ -5913,6 +5976,12 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPortalV1ImoveFeedDotcsvRoute: ApiPublicPortalV1ImoveFeedDotcsvRoute,
   ApiPublicPortalV1ImoveFeedDotjsonRoute:
     ApiPublicPortalV1ImoveFeedDotjsonRoute,
+  ApiPublicPortalV1MvaimobiliareContactsRoute:
+    ApiPublicPortalV1MvaimobiliareContactsRoute,
+  ApiPublicPortalV1MvaimobiliareViewsRoute:
+    ApiPublicPortalV1MvaimobiliareViewsRoute,
+  ApiPublicPortalV1MvaimobiliareVisitsRoute:
+    ApiPublicPortalV1MvaimobiliareVisitsRoute,
   ApiPublicPortalV1ProperstarLeadsRoute: ApiPublicPortalV1ProperstarLeadsRoute,
   ApiPublicPortalV1StoriaNotificationsRoute:
     ApiPublicPortalV1StoriaNotificationsRoute,

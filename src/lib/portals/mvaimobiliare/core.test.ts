@@ -1,4 +1,8 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+vi.mock('./lead-tokens.server', () => ({
+  prepareMvaLeadDelivery: async () => null, finishMvaLeadDelivery: async () => true,
+  MVA_LEADS_BASE_URL: 'https://crm.habitoo.ro/api/public/portal/v1/mvaimobiliare',
+}));
 import { fakeMvaDb } from './test-db';
 import { properstarEntityId } from '../properstar/mapper';
 import { mvaCredentialHash } from './sync.server';
