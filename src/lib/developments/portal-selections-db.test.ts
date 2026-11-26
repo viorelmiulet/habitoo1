@@ -1,8 +1,9 @@
 import {beforeAll,afterAll,it,expect,vi} from 'vitest';
 import {PGlite} from '@electric-sql/pglite';
 import {readFileSync} from 'node:fs';
-import {runDevelopmentPortalJob,type DevelopmentPortalJob,type DevelopmentPortalJobDb,type DevelopmentPortalItem} from './portal-jobs';
+import {runDevelopmentPortalJob,applyDevelopmentPortalChanges,type DevelopmentPortalJob,type DevelopmentPortalJobDb,type DevelopmentPortalItem} from './portal-jobs';
 let db:PGlite;
+let migrationJobBefore:unknown;let migrationJobAfter:unknown;
 const id=(n:number)=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 async function as(uid:number|null){await db.exec(`reset role;set request.jwt.claim.sub='';set request.jwt.claims='{}';set test.uid='${uid===null?'':id(uid)}';${uid===null?'':'set role authenticated;'}`);}
 async function call<T>(name:string,args:unknown[]=[]) {const r=await db.query<{r:T}>(`select ${name}(${args.map((_,i)=>`$${i+1}`).join(',')}) r`,args);const row=r.rows[0];if(!row)throw new Error('Missing RPC result');return row.r;}
@@ -62,6 +63,11 @@ beforeAll(async()=>{
  const access=readFileSync('drizzle/migrations/0292_ans1_developments.sql','utf8');const accessStart=access.indexOf('CREATE FUNCTION public.can_access_development');const accessEnd=access.indexOf('REVOKE ALL ON FUNCTION public.can_access_development',accessStart);
  await db.exec(access.slice(accessStart,accessEnd).replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION'));
  await db.exec(readFileSync('drizzle/migrations/0309_development_portal_selections.sql','utf8'));
+ await db.query("insert into development_portal_jobs(id,organization_id,development_id,portal_key,enabled,requested_by,property_ids,total,status,processed,attempts,current_item,locked_until) values($1,$2,$3,'imove',true,$4,$5,2,'running',0,1,$6,now()+interval '2 minutes')",[id(90),id(1),id(30),id(10),[id(41),id(42)],JSON.stringify({index:0,propertyId:id(41),portals:['imove'],skip:false})]);
+ migrationJobBefore=(await db.query('select to_jsonb(j) job from development_portal_jobs j where id=$1',[id(90)])).rows[0];
+ await db.exec(readFileSync('drizzle/migrations/0346_development_portal_batch.sql','utf8'));
+ migrationJobAfter=(await db.query("select to_jsonb(j)-'changes'-'batch_transaction' job from development_portal_jobs j where id=$1",[id(90)])).rows[0];
+ await db.query('delete from development_portal_jobs where id=$1',[id(90)]);
 });
 afterAll(async()=>{await db.close();});
 
@@ -120,3 +126,82 @@ it('copiile noi nu pot bifa un portal neales și clonarea păstrează originalul
  await as(null);await expect(db.query("insert into portal_publications values($1,'clickimob',true,'published')",[id(42)])).rejects.toThrow('Portalul nu este bifat');
  expect((await db.query('select development_id from properties where id=$1',[id(40)])).rows[0]).toEqual({development_id:null});
 });
+
+type Change={portal_key:string;enabled:boolean};
+async function batch(changes:Change[],eligible:string[]=['clickimob','imobli','storia']){
+ await as(null);return safeCall<{ok:boolean;jobId:string|null;changes:Change[]}>('set_development_portal_selections',[id(30),id(10),JSON.stringify(changes),eligible]);
+}
+async function safeCall<T>(name:string,args:unknown[]){await db.exec('savepoint expected_call');try{const r=await call<T>(name,args);await db.exec('release savepoint expected_call');return r;}catch(e){await db.exec('rollback to savepoint expected_call;release savepoint expected_call');throw e;}}
+async function isolated(run:()=>Promise<void>){await as(null);await db.exec('begin');try{await run();}finally{await db.exec('rollback');await as(null);}}
+async function snapshots(){await as(null);return {
+ selections:(await db.query('select * from development_portal_selections order by portal_key')).rows,
+ jobs:(await db.query('select * from development_portal_jobs order by id')).rows,
+ queues:(await db.query('select * from unit_queues')).rows,
+ };}
+const batchChanges:Change[]=[{portal_key:'clickimob',enabled:true},{portal_key:'imobli',enabled:true},{portal_key:'imove',enabled:false}];
+it('migrarea păstrează integral jobul aflat în lucru înaintea aplicării ei',()=>{
+ expect(migrationJobBefore).toBeDefined();expect(migrationJobAfter).toEqual(migrationJobBefore);
+});
+async function seedBatch(){await as(null);await db.exec('alter table development_portal_selections disable trigger development_portal_selection_changed');await as(10);await db.query("update development_portal_selections set enabled=true where development_id=$1 and portal_key='imove'",[id(30)]);await as(null);await db.exec('alter table development_portal_selections enable trigger development_portal_selection_changed');await db.exec("set habitoo.development_operation='on'");await db.query('update properties set development_withdrawn_at=null where development_id=$1',[id(30)]);await db.exec("set habitoo.development_operation='off'");}
+const batchApply=vi.fn(async(input:Parameters<Parameters<typeof applyDevelopmentPortalChanges>[2]>[0])=>{
+ await as(null);for(const s of input.data.selections)await db.query('insert into portal_publications(property_id,portal_key,enabled,status) values($1,$2,$3,$4) on conflict(property_id,portal_key) do update set enabled=excluded.enabled,status=excluded.status',[input.data.propertyId,s.portalId,s.enabled,s.enabled?'published':'disabled']);
+ return {results:input.data.selections.map(s=>({portalId:s.portalId,ok:true,message:null}))};
+});
+async function drainBatch(){for(let i=0;i<20;i++){await as(null);const j=(await db.query<DevelopmentPortalJob>('select * from claim_development_portal_job()')).rows[0];if(!j)return;await runDevelopmentPortalJob(j,worker,(job,item)=>applyDevelopmentPortalChanges(job,item,batchApply));}throw new Error('Batch did not drain');}
+it('trei modificări salvează trei selecții și un singur job, cu totalul unităților și o notificare',async()=>isolated(async()=>{
+ await seedBatch();const before=await snapshots();await as(null);const unitCount=(await db.query<{n:number}>('select count(*)::int n from properties where development_id=$1 and deleted_at is null',[id(30)])).rows[0]?.n;
+ const r=await batch(batchChanges);expect(r.changes).toEqual(batchChanges);expect(r.jobId).toBeTruthy();
+ const after=await snapshots();expect(after.jobs).toHaveLength(before.jobs.length+1);
+ expect((await db.query('select changes,total from development_portal_jobs where id=$1',[r.jobId])).rows[0]).toEqual({changes:batchChanges,total:unitCount});
+ expect((await db.query('select portal_key,enabled from development_portal_selections where portal_key=any($1) order by portal_key',[batchChanges.map(c=>c.portal_key)])).rows).toEqual([{portal_key:'clickimob',enabled:true},{portal_key:'imobli',enabled:true},{portal_key:'imove',enabled:false}]);
+ const notificationsBefore=(await db.query('select * from notifications')).rows.length;batchApply.mockClear();
+ const j=(await db.query<DevelopmentPortalJob>('select * from claim_development_portal_job()')).rows[0];if(!j)throw new Error('Missing batch');
+ await runDevelopmentPortalJob(j,worker,(job,item)=>applyDevelopmentPortalChanges(job,item,batchApply));
+ await as(null);expect((await db.query('select processed from development_portal_jobs where id=$1',[r.jobId])).rows[0]).toEqual({processed:1});
+ expect(batchApply.mock.calls.flatMap(([v])=>v.data.selections)).toEqual([{portalId:'clickimob',enabled:true},{portalId:'imobli',enabled:true},{portalId:'imove',enabled:false}]);
+ await drainBatch();await as(null);const notes=(await db.query<{body:string}>('select body from notifications')).rows;expect(notes).toHaveLength(notificationsBefore+1);expect(notes.at(-1)?.body).toContain('clickimob, imobli, imove');await drainBatch();expect((await db.query('select * from notifications')).rows).toHaveLength(notificationsBefore+1);
+}));
+it('portalul neeligibil și Storia fără cont anulează toate selecțiile și jobul',async()=>isolated(async()=>{
+ const before=await snapshots();await expect(batch([{portal_key:'clickimob',enabled:true},{portal_key:'bad-portal',enabled:true}])).rejects.toThrow('bad-portal: Portalul nu este eligibil');
+ expect(await snapshots()).toEqual(before);
+ await as(null);await db.exec("update portal_connections set status='disconnected';alter table development_portal_selections disable trigger development_portal_selection_changed");await as(10);await db.exec("update development_portal_selections set enabled=false where portal_key='storia'");await as(null);await db.exec('alter table development_portal_selections enable trigger development_portal_selection_changed');
+ const disconnected=await snapshots();await expect(batch([{portal_key:'clickimob',enabled:true},{portal_key:'storia',enabled:true}])).rejects.toThrow('storia: Conectează contul dezvoltator Storia');expect(await snapshots()).toEqual(disconnected);
+}));
+it('o operație activă refuză întregul lot, inclusiv un lot fără efect',async()=>isolated(async()=>{
+ await batch([{portal_key:'clickimob',enabled:true}]);const before=await snapshots();await expect(batch([{portal_key:'imobli',enabled:true}])).rejects.toThrow('O operație este deja în curs pentru acest ansamblu.');await expect(batch([{portal_key:'clickimob',enabled:true}])).rejects.toThrow('O operație este deja în curs');expect(await snapshots()).toEqual(before);
+}));
+it('modificările fără efect nu scriu selecții și nu creează job, inclusiv o debifare nesalvată',async()=>isolated(async()=>{
+ const before=await snapshots();const r=await batch([{portal_key:'storia',enabled:true},{portal_key:'never-selected',enabled:false}]);expect(r).toEqual({ok:true,jobId:null,changes:[]});expect(await snapshots()).toEqual(before);
+}));
+it('lotul cu Storia solicită fluxul existent exact o dată',async()=>isolated(async()=>{
+ const before=await snapshots();await batch([{portal_key:'clickimob',enabled:true},{portal_key:'storia',enabled:false}]);const after=await snapshots();expect(after.jobs).toHaveLength(before.jobs.length+1);expect(after.queues).toHaveLength(before.queues.length+1);expect(after.queues.at(-1)).toMatchObject({development_id:id(30),operation:'withdraw'});
+}));
+it('unitatea retrasă sare bifările, dar aplică debifarea',async()=>isolated(async()=>{
+ await seedBatch();await as(null);await db.exec("set habitoo.development_operation='on'");await db.query('update properties set development_withdrawn_at=now() where id=$1',[id(41)]);await db.exec("set habitoo.development_operation='off'");await batch(batchChanges);
+ await as(null);const j=(await db.query<DevelopmentPortalJob>('select * from claim_development_portal_job()')).rows[0];if(!j)throw new Error('Missing job');const item=await worker.step(j.id);expect(item).toMatchObject({propertyId:id(41),skip:false,changes:[{portal_key:'imove',enabled:false}]});batchApply.mockClear();await runDevelopmentPortalJob(j,worker,(job,i)=>applyDevelopmentPortalChanges(job,i,batchApply));expect(batchApply.mock.calls.flatMap(([v])=>v.data.selections)).toEqual([{portalId:'imove',enabled:false}]);
+}));
+it('workerul nou reia un job vechi în lucru, cu current_item fără listă',async()=>isolated(async()=>{
+ await toggle('imove',false);await as(null);const j=(await db.query<DevelopmentPortalJob>('select * from claim_development_portal_job()')).rows[0];if(!j)throw new Error('Missing legacy job');expect(j.changes).toBeNull();
+ await db.query('update development_portal_jobs set current_item=$2 where id=$1',[j.id,JSON.stringify({index:0,propertyId:id(41),reference:'HB-1390',portals:['imove'],skip:false})]);
+ batchApply.mockClear();await runDevelopmentPortalJob(j,worker,(job,i)=>applyDevelopmentPortalChanges(job,i,batchApply));await drainBatch();await as(null);expect((await db.query('select status,processed,total from development_portal_jobs where id=$1',[j.id])).rows[0]).toMatchObject({status:'done'});expect(batchApply.mock.calls.every(([v])=>v.superadmin&&v.data.selections.length===1&&v.data.selections[0]?.portalId==='imove')).toBe(true);
+}));
+it('RPC-ul de lot refuză authenticated/anon și reverifică accesul actorului',async()=>isolated(async()=>{
+ const before=await snapshots();await as(10);await expect(safeCall('set_development_portal_selections',[id(30),id(10),JSON.stringify(batchChanges),['clickimob','imobli']])).rejects.toThrow('permission denied');await as(null);await db.exec('set role anon');await expect(safeCall('set_development_portal_selections',[id(30),id(10),'[]',[]])).rejects.toThrow('permission denied');await as(null);await expect(safeCall('set_development_portal_selections',[id(30),id(20),JSON.stringify(batchChanges),['clickimob','imobli']])).rejects.toThrow('Nu ai drepturi');expect(await snapshots()).toEqual(before);
+}));
+it('DB refuză un lot gol, peste 50 sau cu portal duplicat, fără nicio scriere',async()=>isolated(async()=>{
+ const before=await snapshots();await expect(batch([])).rejects.toThrow('între 1 și 50');await expect(batch(Array.from({length:51},(_,i)=>({portal_key:`p-${i}`,enabled:false})))).rejects.toThrow('între 1 și 50');await expect(batch([{portal_key:'clickimob',enabled:true},{portal_key:'clickimob',enabled:false}])).rejects.toThrow('o singură dată');expect(await snapshots()).toEqual(before);
+}));
+it('lotul reține numai modificările efective',async()=>isolated(async()=>{
+ const r=await batch([{portal_key:'storia',enabled:true},{portal_key:'clickimob',enabled:true},{portal_key:'never-selected',enabled:false}]);expect(r.changes).toEqual([{portal_key:'clickimob',enabled:true}]);await as(null);expect((await db.query('select changes from development_portal_jobs where id=$1',[r.jobId])).rows[0]).toEqual({changes:[{portal_key:'clickimob',enabled:true}]});
+}));
+it('pasul sare unitățile șterse, mutate sau din altă agenție',async()=>isolated(async()=>{
+ const r=await batch([{portal_key:'clickimob',enabled:true}]);await as(null);const j=(await db.query<DevelopmentPortalJob>('select * from claim_development_portal_job()')).rows[0];if(!j)throw new Error('Missing job');
+ for(const state of ['deleted','moved','other-org']){
+  await db.exec('savepoint membership');await db.exec('alter table properties disable trigger all');
+  if(state==='deleted')await db.query('update properties set deleted_at=now() where id=$1',[id(41)]);
+  if(state==='moved')await db.query('update properties set development_id=null where id=$1',[id(41)]);
+  if(state==='other-org')await db.query('update properties set organization_id=$2 where id=$1',[id(41),id(2)]);
+  await db.exec('alter table properties enable trigger all');expect(await worker.step(j.id)).toMatchObject({propertyId:id(41),skip:true});await db.exec('rollback to savepoint membership;release savepoint membership');
+ }
+ expect(r.jobId).toBe(j.id);
+}));

@@ -1,5 +1,5 @@
 import {it,expect} from 'vitest';
-import {eligibleDevelopmentPortalIds,selectedDevelopmentPortalIds,developmentSelectedForPortal} from './portal-selections';
+import {eligibleDevelopmentPortalIds,selectedDevelopmentPortalIds,developmentSelectedForPortal,developmentPortalChangesSchema} from './portal-selections';
 import {allPortals} from '@/lib/portals/registry';
 import {dynamicPortalDefinition} from '@/lib/dynamic-feed-portals';
 it('eligibilitatea include Storia dezvoltator, feed-uri activate și Partner API, fără push sau portaluri inactive',()=>{
@@ -12,4 +12,11 @@ it('preselecția este intersecția portalurilor eligibile și bifate, fără fal
  expect(selectedDevelopmentPortalIds(s,'d',['storia','clickimob','cauta'])).toEqual(['clickimob']);
  expect(selectedDevelopmentPortalIds([],'new',['storia','clickimob'])).toEqual([]);
  expect(developmentSelectedForPortal(s,'d','storia')).toBe(false);
+});
+it('modificările sunt între 1 și 50, fără duplicate, cu ID-uri dinamice permise',()=>{
+ expect(developmentPortalChangesSchema.safeParse([]).success).toBe(false);
+ expect(developmentPortalChangesSchema.safeParse([{portalKey:'propri-ro',enabled:true}]).success).toBe(true);
+ expect(developmentPortalChangesSchema.safeParse([{portalKey:'storia',enabled:true},{portalKey:'storia',enabled:false}]).success).toBe(false);
+ expect(developmentPortalChangesSchema.safeParse(Array.from({length:50},(_,i)=>({portalKey:`p-${i}`,enabled:true}))).success).toBe(true);
+ expect(developmentPortalChangesSchema.safeParse(Array.from({length:51},(_,i)=>({portalKey:`p-${i}`,enabled:true}))).success).toBe(false);
 });

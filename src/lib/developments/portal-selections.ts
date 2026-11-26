@@ -1,5 +1,11 @@
 import {clonePortalIds} from './clone';
 import type {PortalDefinition} from '@/lib/portals/registry';
+import {z} from 'zod';
+
+export const developmentPortalChangesSchema=z.array(z.object({
+ portalKey:z.string().regex(/^[a-z0-9][a-z0-9_-]{0,99}$/),enabled:z.boolean(),
+})).min(1).max(50).refine(changes=>new Set(changes.map(c=>c.portalKey)).size===changes.length,'Un portal poate apărea o singură dată.');
+export type DevelopmentPortalChange={portal_key:string;enabled:boolean};
 
 export type DevelopmentPortalSelection={development_id:string;portal_key:string;enabled:boolean};
 /** Storia uses the developer account; dynamic Partner portals share the feed registry. */

@@ -788,3 +788,8 @@
 - [x] Galerie de maximum 30, principală prima, avertisment în publicare și verificare.
 - [x] Recuperare automată numai cu versiunea corectată; verificare reală: două anunțuri cu încercări ulterioare, zero duplicate create.
 - [x] Teste exclusiv noi/modificate și verificare a aplicației; fără publicare.
+
+## Portaluri ansamblu — salvare multiplă, server
+- [x] Migrare 0346 aditivă, salvare atomică și compatibilitate cu operațiile existente.
+- [x] Apel nou și worker cu o singură trecere, notificare comună și lista modificărilor la citire.
+- [x] 35 teste în cele 4 fișiere noi/modificate; schemă și drepturi confirmate, fără interfață/publicare/apeluri reale.

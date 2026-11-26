@@ -3425,6 +3425,8 @@ export type Database = {
       development_portal_jobs: {
         Row: {
           attempts: number
+          batch_transaction: string | null
+          changes: Json | null
           created_at: string
           current_item: Json | null
           development_id: string
@@ -3445,6 +3447,8 @@ export type Database = {
         }
         Insert: {
           attempts?: number
+          batch_transaction?: string | null
+          changes?: Json | null
           created_at?: string
           current_item?: Json | null
           development_id: string
@@ -3465,6 +3469,8 @@ export type Database = {
         }
         Update: {
           attempts?: number
+          batch_transaction?: string | null
+          changes?: Json | null
           created_at?: string
           current_item?: Json | null
           development_id?: string
@@ -14508,6 +14514,8 @@ export type Database = {
         Args: never
         Returns: {
           attempts: number
+          batch_transaction: string | null
+          changes: Json | null
           created_at: string
           current_item: Json | null
           development_id: string
@@ -16030,6 +16038,15 @@ export type Database = {
         }
       }
       seo_indexnow_claim: { Args: never; Returns: boolean }
+      set_development_portal_selections: {
+        Args: {
+          _actor_id: string
+          _changes: Json
+          _development_id: string
+          _eligible_portals: string[]
+        }
+        Returns: Json
+      }
       set_organization_subscription: {
         Args: { _org: string; _term: string }
         Returns: string

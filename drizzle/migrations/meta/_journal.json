@@ -2423,6 +2423,13 @@
       "when": 1795676699610,
       "tag": "0345_development_storia_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 346,
+      "version": "7",
+      "when": 1795714377714,
+      "tag": "0346_development_portal_batch",
+      "breakpoints": true
     }
   ]
 }

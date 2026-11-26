@@ -1,6 +1,6 @@
 import { runCloneJobOnce, type CloneJobItem, type CloneJobRow } from "./clone-jobs";
 import {runUnitOperationOnce, type UnitOperationItem, type UnitOperationJob} from './unit-operations';
-import {runDevelopmentPortalJob,type DevelopmentPortalJob,type DevelopmentPortalItem} from './portal-jobs';
+import {runDevelopmentPortalJob,applyDevelopmentPortalChanges,type DevelopmentPortalJob,type DevelopmentPortalItem} from './portal-jobs';
 import {readDevelopmentPortals} from './portal-selections.server';
 
 /** Production worker: admin client for the job RPCs (which recheck the requester's rights) and storage copies. */
@@ -51,7 +51,7 @@ export async function runDevelopmentCloneJobs(): Promise<{ runs: number; process
       advance:async(id,index,reason)=>{await call('development_portal_job_advance',{_job_id:id,_index:index,_reason:reason});},
       release:async id=>{await call('development_portal_job_release',{_job_id:id});},
       finish:async(id,reason)=>{await call('development_portal_job_finish',{_job_id:id,_error:reason});},
-    },async(j,item)=>(await applyPortalSelectionForOrg({organizationId:j.organization_id,actorId:j.requested_by,superadmin:!j.enabled,data:{propertyId:item.propertyId,syncExisting:false,selections:[{portalId:j.portal_key,enabled:j.enabled}]}})).results);
+    },(j,item)=>applyDevelopmentPortalChanges(j,item,applyPortalSelectionForOrg));
     return {runs:1,processed:r.processed};
   }
   while (Date.now() - started < 20_000 && runs < 5) {
