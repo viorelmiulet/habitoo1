@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildRecommendations, isAllCapsTitle, type RecProperty } from "./home-recommendations";
 
-const full: RecProperty = { id: "p1", title: "Apartament 3 camere Militari", ref: "RF-1024", floor: 2, surface: 70, rooms: 3, features: ["lift"], propertyType: "apartment" };
+const full: RecProperty = { id: "p1", title: "Apartament 3 camere Militari", ref: "RF-1024", missing: [] };
 
 describe("CR2 — recomandări deterministe pe Acasă", () => {
   it("potriviri noi → Vezi potrivirile, pentru proprietatea cu cele mai multe", () => {
@@ -10,7 +10,7 @@ describe("CR2 — recomandări deterministe pe Acasă", () => {
     expect(r[0]!.title).toContain("RF-1024");
   });
   it("fișă incompletă (etaj, suprafață, camere, dotări) → Completează cu AI", () => {
-    const r = buildRecommendations({ properties: [full, { ...full, id: "p3", floor: null, features: [] }, { ...full, id: "p4", rooms: null }], matches: [] });
+    const r = buildRecommendations({ properties: [full, { ...full, id: "p3", missing: ["etajul", "dotările"] }, { ...full, id: "p4", missing: ["camerele"] }], matches: [] });
     expect(r).toHaveLength(1);
     expect(r[0]).toMatchObject({ kind: "incomplete", propertyId: "p3", count: 2, action: "Completează cu AI" });
     expect(r[0]!.text).toContain("etajul, dotările");
@@ -23,7 +23,7 @@ describe("CR2 — recomandări deterministe pe Acasă", () => {
   });
   it("fără probleme → nicio recomandare; maximum 3", () => {
     expect(buildRecommendations({ properties: [full], matches: [] })).toEqual([]);
-    const r = buildRecommendations({ properties: [{ ...full, title: "CASA MARE", rooms: null }], matches: [{ propertyId: "p1", propertyTitle: null }] });
+    const r = buildRecommendations({ properties: [{ ...full, title: "CASA MARE", missing: ["camerele"] }], matches: [{ propertyId: "p1", propertyTitle: null }] });
     expect(r.map((x) => x.kind)).toEqual(["matches", "incomplete", "caps"]);
   });
 });

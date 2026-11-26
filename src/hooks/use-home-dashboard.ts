@@ -4,6 +4,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ESSENTIALS_COLUMNS, missingEssentials, type EssentialsRow } from "@/lib/property-essentials";
 import type { RecMatch, RecProperty } from "@/components/app/dashboard/home-recommendations";
 
 export const HOME_STAGES = ["new", "contacted", "viewing", "offer", "negotiation"] as const;
@@ -89,7 +90,7 @@ export function useHomeDashboard(organizationId?: string | null) {
           .gte("starts_at", dayStart.toISOString()).lt("starts_at", dayEnd.toISOString())
           .order("starts_at", { ascending: true }).limit(20),
         supabase.from("profiles").select("id,full_name").eq("organization_id", org),
-        supabase.from("properties").select("id,title,reference,floor,surface,usable_surface,rooms,features,property_type")
+        supabase.from("properties").select(`title,reference,${ESSENTIALS_COLUMNS}` as string)
           .eq("organization_id", org).is("deleted_at", null).eq("status", "active")
           .order("updated_at", { ascending: false }).limit(200),
         supabase.from("active_match_alerts").select("property_id,property:properties(title)")
@@ -144,8 +145,7 @@ export function useHomeDashboard(organizationId?: string | null) {
         })),
         today: (today.data ?? []).map((a) => ({ id: a.id, title: a.title, startsAt: a.starts_at, kind: a.kind, description: a.description })),
         recProperties: (recP.data ?? []).map((x) => ({
-          id: x.id, title: x.title, ref: x.reference, floor: x.floor,
-          surface: x.usable_surface ?? x.surface, rooms: x.rooms, features: x.features ?? [], propertyType: x.property_type,
+          ...((r) => ({ id: r.id, title: r.title, ref: r.reference }))(x as unknown as { id: string; title: string; reference: string | null }), missing: missingEssentials(x as unknown as EssentialsRow),
         })),
         newMatches: ((matches.data ?? []) as unknown as { property_id: string; property: { title: string } | null }[])
           .map((m) => ({ propertyId: m.property_id, propertyTitle: m.property?.title ?? null })),

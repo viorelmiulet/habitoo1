@@ -8,11 +8,8 @@ export type RecProperty = {
   id: string;
   title: string;
   ref?: string | null;
-  floor: number | null;
-  surface: number | null;
-  rooms: number | null;
-  features: string[];
-  propertyType?: string | null;
+  /** Lipsurile calculate cu `missingEssentials` din `@/lib/property-essentials`. */
+  missing: string[];
 };
 export type RecMatch = { propertyId: string; propertyTitle: string | null };
 
@@ -20,18 +17,6 @@ export type Recommendation =
   | { kind: "matches"; propertyId: string; count: number; title: string; text: string; action: "Vezi potrivirile" }
   | { kind: "incomplete"; propertyId: string; count: number; title: string; text: string; action: "Completează cu AI" }
   | { kind: "caps"; propertyId: string; title: string; text: string; action: "Corectează" };
-
-const FLOOR_TYPES = new Set(["apartment", "apartament", "studio", "office", "birou", "spatiu_comercial", "commercial"]);
-
-export function missingEssentials(p: RecProperty): string[] {
-  const missing: string[] = [];
-  const needsFloor = !p.propertyType || FLOOR_TYPES.has(p.propertyType);
-  if (needsFloor && p.floor === null) missing.push("etajul");
-  if (!p.surface) missing.push("suprafața");
-  if (!p.rooms) missing.push("camerele");
-  if (!p.features?.length) missing.push("dotările");
-  return missing;
-}
 
 /** Aceeași detecție ca la corectarea textului: titlul s-ar schimba doar prin majuscule. */
 export function isAllCapsTitle(title: string): boolean {
@@ -61,7 +46,7 @@ export function buildRecommendations(input: { properties: RecProperty[]; matches
       text: "Buget, zonă și număr de camere potrivite pentru această proprietate.",
     });
   }
-  const incomplete = input.properties.map((p) => ({ p, missing: missingEssentials(p) })).filter((x) => x.missing.length);
+  const incomplete = input.properties.map((p) => ({ p, missing: p.missing })).filter((x) => x.missing.length);
   if (incomplete.length) {
     const first = incomplete[0]!;
     const n = incomplete.length;

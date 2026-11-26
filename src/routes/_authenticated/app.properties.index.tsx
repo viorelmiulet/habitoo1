@@ -61,7 +61,7 @@ import { StoriaAutoRenewBulkDialog } from "@/components/app/StoriaAutoRenewBulkD
 import { PortalRepublishButton } from "@/components/app/PortalRepublishDialog";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { CHROME_EXTENSION_URL } from "@/components/marketing/chrome-extension-content";
-import { missingEssentials } from "@/components/app/dashboard/home-recommendations";
+import { ESSENTIALS_COLUMNS, missingEssentials, type EssentialsRow } from "@/lib/property-essentials";
 import { PortalLogoLinks } from "@/components/app/properties/PortalLogoLinks";
 import { portalLogoLayout } from "@/components/app/properties/portal-logo-layout";
 import { portalLogoIds } from "@/lib/portals/registry";
@@ -406,10 +406,10 @@ function PropertiesPage() {
     staleTime: 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("properties")
-        .select("id,floor,surface,usable_surface,rooms,features,property_type")
+        .select(ESSENTIALS_COLUMNS)
         .eq("organization_id", orgId as string).is("deleted_at", null).eq("status", "active").limit(1000);
       if (error) throw error;
-      return (data ?? []).filter((x) => missingEssentials({ id: x.id, title: "", floor: x.floor, surface: x.usable_surface ?? x.surface, rooms: x.rooms, features: x.features ?? [], propertyType: x.property_type }).length > 0).map((x) => x.id);
+      return (data ?? []).filter((x) => missingEssentials(x as unknown as EssentialsRow).length > 0).map((x) => (x as unknown as { id: string }).id);
     },
   });
 
