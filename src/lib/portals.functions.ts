@@ -2348,55 +2348,56 @@ async function fetchAllRows<T>(
  */
 export async function computeOrgPortalStates(
   organizationId: string,
-): Promise<Map<string, { portalId: string; state: PortalSelectionState }[]>> {
+  scope?: { propertyIds?: string[]; portalIds?: ReadonlySet<string> },
+): Promise<Map<string, { portalId: string; state: PortalSelectionState; selected: boolean }[]>> {
+  if (scope?.propertyIds?.length === 0 || scope?.portalIds?.size === 0) return new Map();
   const admin = await loadAdmin();
-  const visible = await activatedPortalIds(organizationId);
+  const visible = scope?.portalIds ?? await activatedPortalIds(organizationId);
   const portals = PORTALS.filter((p) => !isPortalCovered(p.id) && visible.has(p.id));
+  const propertyIds = scope?.propertyIds;
   const [propertyRows, publications, listings, { data: connections }, { data: activeKeys }, feedbackRows] =
     await Promise.all([
-      fetchAllRows((a, b) =>
-        admin
+      fetchAllRows((a, b) => {
+        let query = admin
           .from("properties")
           .select("id, publish_status, status, deleted_at")
-          .eq("organization_id", organizationId)
-          .is("deleted_at", null)
-          .order("id")
-          .range(a, b),
-      ),
-      fetchAllRows((a, b) =>
-        admin
+          .eq("organization_id", organizationId);
+        if (propertyIds) query = query.in("id", propertyIds);
+        return query.is("deleted_at", null).order("id").range(a, b);
+      }),
+      fetchAllRows((a, b) => {
+        let query = admin
           .from("portal_publications")
           .select("property_id, portal_key, enabled, status")
-          .eq("organization_id", organizationId)
-          .order("id")
-          .range(a, b),
-      ),
-      fetchAllRows((a, b) =>
-        admin
+          .eq("organization_id", organizationId);
+        if (propertyIds) query = query.in("property_id", propertyIds);
+        return query.order("id").range(a, b);
+      }),
+      fetchAllRows((a, b) => {
+        let query = admin
           .from("portal_listings")
           .select("property_id, portal, status")
-          .eq("organization_id", organizationId)
-          .order("id")
-          .range(a, b),
-      ),
+          .eq("organization_id", organizationId);
+        if (propertyIds) query = query.in("property_id", propertyIds);
+        return query.order("id").range(a, b);
+      }),
       admin.from("portal_connections").select("portal, status, activated").eq("organization_id", organizationId),
       admin.from("portal_api_keys").select("portal").eq("organization_id", organizationId).eq("status", "active"),
-      fetchAllRows((a, b) =>
-        admin
+      fetchAllRows((a, b) => {
+        let query = admin
           .from("partner_api_publications")
           .select("property_id, portal, status")
-          .eq("organization_id", organizationId)
-          .order("property_id")
-          .order("portal")
-          .range(a, b),
-      ),
+          .eq("organization_id", organizationId);
+        if (propertyIds) query = query.in("property_id", propertyIds);
+        return query.order("property_id").order("portal").range(a, b);
+      }),
     ]);
   const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
   const feedbackBy = new Map(feedbackRows.map((f) => [`${f.property_id}|${f.portal}`, f.status]));
   const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
   const pubBy = new Map(publications.map((p) => [`${p.property_id}|${p.portal_key}`, p]));
   const listBy = new Map(listings.map((l) => [`${l.property_id}|${l.portal}`, l]));
-  const result = new Map<string, { portalId: string; state: PortalSelectionState }[]>();
+  const result = new Map<string, { portalId: string; state: PortalSelectionState; selected: boolean }[]>();
   for (const row of propertyRows) {
     const feedEligible = isPropertyFeedEligible(row as never) === true;
     result.set(
@@ -2412,6 +2413,7 @@ export async function computeOrgPortalStates(
           (pushSupported ? connectionReady : keyedPortals.has(portal.id) || connectionReady);
         return {
           portalId: portal.id,
+          selected: pub?.enabled === true,
           state: applyPortalFeedback(
             deriveState({
               availability: portal.status,

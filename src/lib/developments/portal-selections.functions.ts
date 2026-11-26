@@ -13,6 +13,11 @@ export const getDevelopmentPortalSelections=createServerFn({method:'POST'}).midd
  const changes=job?z.array(z.object({portal_key:z.string(),enabled:z.boolean()})).parse(job.changes??[{portal_key:job.portal_key,enabled:job.enabled}]):null;
  return {portals:definitions.filter(p=>eligible.includes(p.id)).map(p=>({id:p.id,name:p.display_name})),selections,job:job?{...job,changes}:null};
 });
+/** Read-only unit counts for the development grid; the parent Storia state stays separate. */
+export const getDevelopmentPortalStates=createServerFn({method:'POST'}).middleware([requireActiveOrgAuth]).inputValidator((v:unknown)=>input.parse(v)).handler(async({data,context})=>{
+ const {readDevelopmentPortalStates}=await import('./portal-status.server');
+ return readDevelopmentPortalStates(context.supabase,data.id);
+});
 export const setDevelopmentPortalSelection=createServerFn({method:'POST'}).middleware([requireActiveOrgAuth]).inputValidator((v:unknown)=>input.extend({portalKey:z.string().min(1).max(100),enabled:z.boolean()}).parse(v)).handler(async({data,context})=>{
  const {data:allowed,error:accessError}=await context.supabase.rpc('can_access_development',{_id:data.id,_edit:true});if(accessError||!allowed)throw new Error('Nu ai drepturi să editezi acest ansamblu.');
  const {data:d,error}=await context.supabase.from('developments').select('organization_id').eq('id',data.id).single();if(error||!d)throw new Error('Ansamblu inaccesibil.');

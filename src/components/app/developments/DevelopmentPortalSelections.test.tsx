@@ -9,6 +9,7 @@ Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
 const mocks = vi.hoisted(() => ({
   load: vi.fn(),
+  loadStates: vi.fn(),
   save: vi.fn(),
   legacySave: vi.fn(),
   success: vi.fn(),
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@tanstack/react-start', () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock('@/lib/developments/portal-selections.functions', () => ({
   getDevelopmentPortalSelections: (input: unknown) => mocks.load(input),
+  getDevelopmentPortalStates: (input: unknown) => mocks.loadStates(input),
   setDevelopmentPortalSelections: (input: unknown) => mocks.save(input),
   setDevelopmentPortalSelection: (input: unknown) => mocks.legacySave(input),
 }));
@@ -84,6 +86,7 @@ async function click(element: HTMLElement) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.loadStates.mockResolvedValue({ portals: [] });
   mocks.save.mockResolvedValue({ ok: true, jobId: '8a720502-62a4-4df0-a108-aa83888f2de2', changes: [] });
 });
 
@@ -96,6 +99,7 @@ afterEach(async () => {
     item.container.remove();
   }
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 it('două bife schimbate nu apelează serverul și afișează 2 modificări de aplicat', async () => {
@@ -183,4 +187,63 @@ it('răspunsul fără schimbări golește ciorna fără mesaj de pornire', async
   expect(mocks.success).not.toHaveBeenCalled();
   expect(container.textContent).not.toContain('1 modificare de aplicat');
   expect(checkbox(container, 'imobli.ro').getAttribute('aria-checked')).toBe('false');
+});
+
+it('afișează starea la portalul bifat și nimic la cele nebifate', async () => {
+  mocks.loadStates.mockResolvedValue({ portals: [
+    { portalId: 'cauta', total: 5, published: 3, errors: 1, unpublished: 1, covered: true, selected: 5 },
+    { portalId: 'storia', total: 5, published: 4, errors: 0, unpublished: 1, covered: true, selected: 5, developmentState: 'published' },
+    { portalId: 'imobli', total: 5, published: 2, errors: 0, unpublished: 3, covered: true, selected: 5 },
+  ] });
+  const container = await render();
+  expect(container.textContent).toContain('3 din 5 unități publicate · 1 cu erori');
+  expect(container.textContent).not.toContain('4 din 5 unități publicate');
+  expect(container.textContent).not.toContain('2 din 5 unități publicate');
+  expect(container.textContent).not.toContain('Ansamblul: Publicat');
+});
+
+it('portalul neacoperit afișează numai unitățile bifate', async () => {
+  const data = baseData();
+  data.selections.push({ development_id: 'd', portal_key: 'imobli', enabled: true });
+  mocks.loadStates.mockResolvedValue({ portals: [{ portalId: 'imobli', total: 5, published: 0, errors: 0, unpublished: 0, covered: false, selected: 2 }] });
+  const container = await render(data);
+  expect(container.textContent).toContain('2 din 5 unități bifate');
+  expect(container.textContent).not.toContain('0 din 5 unități publicate');
+});
+
+it('starea nu se reîncarcă la fiecare 3 secunde', async () => {
+  vi.useFakeTimers();
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  mounted.push({ root, container, qc });
+  mocks.load.mockResolvedValue(baseData());
+  await act(async () => {
+    root.render(<QueryClientProvider client={qc}><DevelopmentPortalSelections id="d" editable storiaConnected /></QueryClientProvider>);
+    await vi.advanceTimersByTimeAsync(30);
+  });
+  expect(mocks.loadStates).toHaveBeenCalledTimes(1);
+  await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+  expect(mocks.load).toHaveBeenCalledTimes(2);
+  expect(mocks.loadStates).toHaveBeenCalledTimes(1);
+});
+
+it('starea se reîncarcă când operația în curs se termină', async () => {
+  vi.useFakeTimers();
+  const running = baseData();
+  running.job = { id: '8a720502-62a4-4df0-a108-aa83888f2de2', portal_key: 'cauta', enabled: true, changes: null, status: 'running', total: 3, processed: 1, result: null, last_error: null };
+  mocks.load.mockResolvedValueOnce(running).mockResolvedValue(baseData());
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  mounted.push({ root, container, qc });
+  await act(async () => {
+    root.render(<QueryClientProvider client={qc}><DevelopmentPortalSelections id="d" editable storiaConnected /></QueryClientProvider>);
+    await vi.advanceTimersByTimeAsync(30);
+  });
+  expect(mocks.loadStates).toHaveBeenCalledTimes(1);
+  await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+  expect(mocks.loadStates).toHaveBeenCalledTimes(2);
 });

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   getDevelopmentPortalSelections,
+  getDevelopmentPortalStates,
   setDevelopmentPortalSelections,
 } from '@/lib/developments/portal-selections.functions';
 import { UNIT_OPERATION_STARTED, type UnitOperationResult } from '@/lib/developments/unit-operations';
@@ -15,6 +16,7 @@ type PendingChange = { portalKey: string; enabled: boolean };
 
 export function DevelopmentPortalSelections({ id, editable, storiaConnected }: { id: string; editable: boolean; storiaConnected: boolean }) {
   const load = useServerFn(getDevelopmentPortalSelections);
+  const loadStates = useServerFn(getDevelopmentPortalStates);
   const save = useServerFn(setDevelopmentPortalSelections);
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Record<string, boolean>>({});
@@ -22,6 +24,10 @@ export function DevelopmentPortalSelections({ id, editable, storiaConnected }: {
     queryKey: ['development-portal-selections', id],
     queryFn: () => load({ data: { id } }),
     refetchInterval: 3000,
+  });
+  const states = useQuery({
+    queryKey: ['development-portal-states', id],
+    queryFn: () => loadStates({ data: { id } }),
   });
 
   const saved = useMemo(
@@ -49,6 +55,12 @@ export function DevelopmentPortalSelections({ id, editable, storiaConnected }: {
   });
 
   const running = q.data?.job ? ['queued', 'running'].includes(q.data.job.status) : false;
+  const wasRunning = useRef(running);
+  const refetchStates = states.refetch;
+  useEffect(() => {
+    if (wasRunning.current && !running) void refetchStates();
+    wasRunning.current = running;
+  }, [running, refetchStates]);
   const result = q.data?.job?.result as unknown as UnitOperationResult | undefined;
   const portalName = (portalKey: string) => q.data?.portals.find(portal => portal.id === portalKey)?.name ?? portalKey;
   const operationChanges = q.data?.job?.changes ?? (q.data?.job ? [{ portal_key: q.data.job.portal_key, enabled: q.data.job.enabled }] : []);
@@ -71,18 +83,35 @@ export function DevelopmentPortalSelections({ id, editable, storiaConnected }: {
   };
 
   return <section className="space-y-3 border-b pb-5">
-    <h2 className="text-lg font-semibold">Portaluri ansamblu</h2>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h2 className="text-lg font-semibold">Portaluri ansamblu</h2>
+      <Button type="button" variant="outline" size="sm" disabled={states.isFetching} onClick={() => void states.refetch()}>
+        Actualizează starea
+      </Button>
+    </div>
     {q.isError ? <p role="alert" className="text-sm text-destructive">Portalurile ansamblului nu au putut fi citite.</p> : null}
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{q.data?.portals.map(portal => {
       const enabled = draft[portal.id] ?? saved.get(portal.id) ?? false;
-      return <label key={portal.id} className="flex min-h-11 items-center gap-2">
+      const status = states.data?.portals.find(item => item.portalId === portal.id);
+      const showStatus = saved.get(portal.id) === true && status;
+      const developmentLabel = status?.developmentState === 'published' ? 'Publicat' : status?.developmentState === 'error' ? 'Cu erori' : 'Nepublicat';
+      return <label key={portal.id} className="flex min-h-11 items-start gap-2">
         <Checkbox
+          className="mt-0.5"
           aria-label={portal.id === 'storia' ? 'Storia — Cont dezvoltator' : portal.name}
           checked={enabled}
           disabled={!editable || mutation.isPending || running || (portal.id === 'storia' && !storiaConnected && !enabled)}
           onCheckedChange={value => setChecked(portal.id, value === true)}
         />
-        <span>{portal.id === 'storia' ? 'Storia — Cont dezvoltator' : portal.name}</span>
+        <span>
+          <span>{portal.id === 'storia' ? 'Storia — Cont dezvoltator' : portal.name}</span>
+          {showStatus ? <span className="block text-xs text-muted-foreground">
+            {status.covered
+              ? `${status.published} din ${status.total} unități publicate${status.errors ? ` · ${status.errors} cu erori` : ''}`
+              : `${status.selected} din ${status.total} unități bifate`}
+          </span> : null}
+          {showStatus && status.developmentState ? <span className="block text-xs text-muted-foreground">Ansamblul: {developmentLabel}</span> : null}
+        </span>
       </label>;
     })}</div>
     {changes.length ? <p className="text-sm text-muted-foreground" aria-live="polite">
