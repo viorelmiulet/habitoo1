@@ -47,6 +47,10 @@ export async function runPortalPublishRequest(): Promise<Response> {
           console.error("[lacheie] reluarea limitei de poze a eșuat"),
         );
         const result = await runPortalPublishWorker(supabaseAdmin, async (job) => {
+          if (job.portal_key === "mvaimobiliare" && job.mva_sync_id) {
+            const { runMvaInitialPublishJob } = await import("@/lib/portals/mvaimobiliare/sync.server");
+            return runMvaInitialPublishJob(supabaseAdmin, job, executeListingAction);
+          }
           if (job.operation === "update") {
             const { runContactUpdateJob } = await import("@/lib/portals/contact-update.server");
             return runContactUpdateJob(supabaseAdmin, job, input => executeListingAction(input));
@@ -89,6 +93,8 @@ export async function runPortalPublishRequest(): Promise<Response> {
         });
         const { runDevelopmentWorker } = await import("@/lib/portals/storia/development.server");
         await runDevelopmentWorker(supabaseAdmin);
+        const { runMvaInitialSyncTick } = await import("@/lib/portals/mvaimobiliare/sync.server");
+        await runMvaInitialSyncTick(supabaseAdmin).catch(() => console.error("[mvaimobiliare] sincronizarea nu a putut avansa"));
         await relayRecovery;
         await refreshRepublishBatches(supabaseAdmin).catch((e: unknown) =>
           console.error("[portal-republish] progresul nu a putut fi actualizat", String(e).slice(0, 200)),

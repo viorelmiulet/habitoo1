@@ -1,3 +1,4 @@
+import { properstarEntityId } from "@/lib/portals/properstar/mapper";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { allPortals, getPortalDefinition, portalActivationMode } from "@/lib/portals/registry";
 import { dynamicPortalDefinition, type DynamicFeedPortal } from "@/lib/dynamic-feed-portals";
@@ -86,8 +87,8 @@ describe("activare MVA fără întreruperea feedului", () => {
     expect(send).toHaveBeenCalledTimes(1);
     expect(send).toHaveBeenCalledWith(expect.objectContaining({ to: "contact@mvaimobiliare.ro", from: "Habitoo CRM <contact@habitoo.ro>", cc: "contact@habitoo.ro", replyTo: "ana@example.org" }));
     const email = send.mock.calls[0]?.[0] as Parameters<NotifyDeps["send"]>[0] | undefined;
-    expect(email?.text).toContain(`ID agenție Habitoo: ${org}`);
-    for (const value of [org, "Agenție fictivă", "Firmă fictivă SRL", "RO123456", "J40/1/2020", "Ana Test", "ana@example.org", "0700000000", "București"]) {
+    expect(email?.text).toContain(`ID agenție Habitoo: ${properstarEntityId("hb", org)}`);
+    for (const value of [properstarEntityId("hb", org), "Agenție fictivă", "Firmă fictivă SRL", "RO123456", "J40/1/2020", "Ana Test", "ana@example.org", "0700000000", "București"]) {
       expect(email?.text).toContain(value);
       expect(email?.html).toContain(value);
     }

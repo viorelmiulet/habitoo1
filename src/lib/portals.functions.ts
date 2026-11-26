@@ -1120,6 +1120,11 @@ export async function testPortalConnectionCore(input: { organizationId: string; 
       durationMs: testDurationMs,
     });
 
+    if (definition.id === "mvaimobiliare" && result.ok && result.data.live && ctx.portalCredential && row?.portal_credentials_encrypted) {
+      const { startMvaInitialSync } = await import("@/lib/portals/mvaimobiliare/sync.server");
+      await startMvaInitialSync(admin, { organizationId, actorId: context.userId, credential: ctx.portalCredential, encrypted: row.portal_credentials_encrypted });
+    }
+
     return result.ok
       ? {
           ok: true as const,
@@ -1307,6 +1312,7 @@ export async function persistListingFailure(
     propertyId: string;
     actorId: string | null;
     message: string;
+    suppressFailureNotification?: boolean;
   },
 ): Promise<void> {
   const now = new Date().toISOString();
@@ -1332,6 +1338,7 @@ export async function persistListingFailure(
     .eq("organization_id", input.organizationId)
     .eq("portal", input.portalKey)
     .eq("property_id", input.propertyId);
+  if (input.suppressFailureNotification) return;
   const { notifyPortalFailure } = await import("@/lib/portals/failure-notification.server");
   await notifyPortalFailure(admin, {
     organizationId: input.organizationId,
@@ -1376,6 +1383,8 @@ export async function executeListingAction(input: {
   imobiliarePromotions?: ImobiliarePromotionChanges;
   imobiliareMode?: ImobiliarePublicationMode;
   imobiliareModeChanged?: boolean;
+  /** Initial MVA sync reports once at completion instead of one alert per listing. */
+  suppressFailureNotification?: boolean;
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
   const startedAt = Date.now();
@@ -1407,6 +1416,7 @@ export async function executeListingAction(input: {
       portalKey: definition.id,
       propertyId,
       actorId,
+      suppressFailureNotification: input.suppressFailureNotification,
       message: `${definition.display_name}: ${message}`,
     });
     return {
@@ -1444,6 +1454,7 @@ export async function executeListingAction(input: {
         portalKey: definition.id,
         propertyId,
         actorId,
+        suppressFailureNotification: input.suppressFailureNotification,
         message,
       });
       return { ok: false as const, code: "VALIDATION_ERROR", message };
@@ -1481,6 +1492,7 @@ export async function executeListingAction(input: {
         portalKey: definition.id,
         propertyId,
         actorId,
+        suppressFailureNotification: input.suppressFailureNotification,
         message: guard.message,
       });
       return { ok: false as const, code: "VALIDATION_ERROR", message: guard.message };
@@ -1496,6 +1508,7 @@ export async function executeListingAction(input: {
       portalKey: definition.id,
       propertyId,
       actorId,
+      suppressFailureNotification: input.suppressFailureNotification,
       message,
     });
     return {
@@ -1617,6 +1630,10 @@ export async function executeListingAction(input: {
       message: `${definition.display_name}: ${portalError.message}`,
       detail: portalError.detail,
     };
+  }
+  if (definition.id === "mvaimobiliare" && !result.ok && result.code === "AUTH_ERROR") {
+    const { markMvaAuthError } = await import("@/lib/portals/mvaimobiliare/sync.server");
+    await markMvaAuthError(admin, organizationId, result);
   }
   const portalDurationMs = Date.now() - portalStartedAt;
 
@@ -1779,7 +1796,7 @@ export async function executeListingAction(input: {
   });
 
   // Jurnal: „Promovare activată/dezactivată” când promovarea confirmată se schimbă.
-  if (status === "error") {
+  if (status === "error" && !input.suppressFailureNotification) {
     const { notifyPortalFailure } = await import("@/lib/portals/failure-notification.server");
     await notifyPortalFailure(admin, {
       organizationId, propertyId, portalKey: definition.id,

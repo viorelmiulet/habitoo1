@@ -4,6 +4,7 @@ import { createIndexFeedAdapter, clickimobAdapter, imobliAdapter, imobiliaremili
 import { getPortalDefinition } from "../registry";
 import { imobiliareAdapter } from "./imobiliare.server";
 import { imoveAdapter } from "./imove.server";
+import { mvaimobiliareAdapter } from "./mvaimobiliare.server";
 import { imospotAdapter } from "./imospot.server";
 import { imo24Adapter } from "./imo24.server";
 import { imopediaAdapter } from "./imopedia.server";
@@ -33,6 +34,7 @@ const ADAPTERS: Record<string, PortalAdapter> = {
   imobiliare_ro: imobiliareAdapter,
   imove: imoveAdapter,
   imospot: imospotAdapter,
+  mvaimobiliare: mvaimobiliareAdapter,
   imo24: imo24Adapter,
   imopedia: imopediaAdapter,
   homezz: homezzAdapter,

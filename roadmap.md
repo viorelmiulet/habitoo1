@@ -803,3 +803,8 @@
 - [x] Verificare pură comună, toate etichetele în română și aceleași date la citire/trimitere, fără semnare la citire.
 - [x] Avertismente în Publicare, fără schimbarea butoanelor, payloadului sau unităților.
 - [x] 13/13 teste noi/modificate; build OK; fără publicare sau apeluri reale către portaluri.
+
+## mvaimobiliare — API direct
+- [x] Identitate email și adaptor cu mapperii feedului; teste fără apeluri reale.
+- [x] Sincronizare inițială durabilă prin coada existentă și o notificare.
+- [x] Compatibilitate fără cheie; 41/41 teste noi/modificate, compilare verificată; commit fără publicare.

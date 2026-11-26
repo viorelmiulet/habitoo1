@@ -88,6 +88,7 @@ export type PublishJobRow = {
   operation?: string;
   ofera_intent?: "activate" | "resend" | null;
   republish_batch_id?: string | null;
+  mva_sync_id?: string | null;
 };
 
 export type PublishOutcome = {
@@ -303,7 +304,7 @@ export async function runPortalPublishWorker(
         if (decision.status === "queued") stats.retried += 1;
         else if (decision.status === "done") stats.done += 1;
         else stats.failed += 1;
-        if (decision.status !== "error" || job.republish_batch_id) continue;
+        if (decision.status !== "error" || job.republish_batch_id || job.mva_sync_id) continue;
         await admin.from("notifications").insert({ organization_id: job.organization_id, user_id: job.requested_by,
           type: "portal_publish_error", title: `${name}: publicarea a eșuat`, body: decision.message,
           link: `/app/properties/${job.property_id}`, created_by: job.requested_by });
@@ -338,7 +339,7 @@ export async function runPortalPublishWorker(
         .eq("id", job.id);
       // Clopoțelul arată doar erori: succesul nu creează notificare.
       // Republicarea în lot trimite o singură notificare, la final.
-      if (decision.ok || job.republish_batch_id) continue;
+      if (decision.ok || job.republish_batch_id || job.mva_sync_id) continue;
       await admin.from("notifications").insert({
         organization_id: job.organization_id,
         user_id: job.requested_by,

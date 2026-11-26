@@ -7020,6 +7020,77 @@ export type Database = {
           },
         ]
       }
+      mva_initial_syncs: {
+        Row: {
+          attempts: number
+          claim_token: string | null
+          created_at: string
+          credential_hash: string
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          next_attempt_at: string
+          organization_id: string
+          page: number
+          pending_property_ids: string[]
+          phase: string
+          remote_listings: Json
+          remote_total: number | null
+          requested_by: string
+          withdrawal_cursor: number
+          withdrawn: number
+        }
+        Insert: {
+          attempts?: number
+          claim_token?: string | null
+          created_at?: string
+          credential_hash: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          next_attempt_at?: string
+          organization_id: string
+          page?: number
+          pending_property_ids?: string[]
+          phase?: string
+          remote_listings?: Json
+          remote_total?: number | null
+          requested_by: string
+          withdrawal_cursor?: number
+          withdrawn?: number
+        }
+        Update: {
+          attempts?: number
+          claim_token?: string | null
+          created_at?: string
+          credential_hash?: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          next_attempt_at?: string
+          organization_id?: string
+          page?: number
+          pending_property_ids?: string[]
+          phase?: string
+          remote_listings?: Json
+          remote_total?: number | null
+          requested_by?: string
+          withdrawal_cursor?: number
+          withdrawn?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mva_initial_syncs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       neutral_offer_links: {
         Row: {
           code: string
@@ -10031,6 +10102,7 @@ export type Database = {
           imobiliare_promotions: Json | null
           lacheie_image_limit_retry_of: string | null
           locked_at: string | null
+          mva_sync_id: string | null
           next_attempt_at: string
           ofera_intent: string | null
           operation: string
@@ -10061,6 +10133,7 @@ export type Database = {
           imobiliare_promotions?: Json | null
           lacheie_image_limit_retry_of?: string | null
           locked_at?: string | null
+          mva_sync_id?: string | null
           next_attempt_at?: string
           ofera_intent?: string | null
           operation?: string
@@ -10091,6 +10164,7 @@ export type Database = {
           imobiliare_promotions?: Json | null
           lacheie_image_limit_retry_of?: string | null
           locked_at?: string | null
+          mva_sync_id?: string | null
           next_attempt_at?: string
           ofera_intent?: string | null
           operation?: string
@@ -10108,6 +10182,13 @@ export type Database = {
           sync_existing?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "portal_publish_jobs_mva_sync_id_fkey"
+            columns: ["mva_sync_id"]
+            isOneToOne: false
+            referencedRelation: "mva_initial_syncs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "portal_publish_jobs_organization_id_fkey"
             columns: ["organization_id"]
@@ -14615,6 +14696,35 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_mva_initial_sync: {
+        Args: never
+        Returns: {
+          attempts: number
+          claim_token: string | null
+          created_at: string
+          credential_hash: string
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          next_attempt_at: string
+          organization_id: string
+          page: number
+          pending_property_ids: string[]
+          phase: string
+          remote_listings: Json
+          remote_total: number | null
+          requested_by: string
+          withdrawal_cursor: number
+          withdrawn: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mva_initial_syncs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       claim_onboarding_guide: { Args: { p_guide_id: string }; Returns: boolean }
       claim_portal_bulk_property: {
         Args: { _job_id: string; _property_id: string; _ttl_seconds: number }
@@ -14661,6 +14771,7 @@ export type Database = {
           imobiliare_promotions: Json | null
           lacheie_image_limit_retry_of: string | null
           locked_at: string | null
+          mva_sync_id: string | null
           next_attempt_at: string
           ofera_intent: string | null
           operation: string
@@ -14970,6 +15081,10 @@ export type Database = {
         Returns: number
       }
       email_threads_trash: { Args: { _thread_ids: string[] }; Returns: number }
+      enqueue_mva_initial_pending: {
+        Args: { _id: string; _token: string }
+        Returns: number
+      }
       enqueue_portal_contact_update: {
         Args: {
           _actor: string
@@ -15001,6 +15116,10 @@ export type Database = {
       finish_collaborator_offer_delivery: {
         Args: { _id: string }
         Returns: string
+      }
+      finish_mva_initial_sync: {
+        Args: { _error?: string; _id: string; _token: string }
+        Returns: boolean
       }
       finish_offer_client_delivery: { Args: { _id: string }; Returns: string }
       finish_onboarding_guide: {
@@ -16082,6 +16201,15 @@ export type Database = {
           _development_id: string
           _operation: string
           _property_ids: string[]
+        }
+        Returns: string
+      }
+      start_mva_initial_sync: {
+        Args: {
+          _actor: string
+          _encrypted: string
+          _hash: string
+          _org: string
         }
         Returns: string
       }

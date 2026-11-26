@@ -13,6 +13,7 @@
 /** Portalurile la care retrimiterea actualizează același anunț. */
 export const TIMEOUT_RETRY_PORTALS: ReadonlySet<string> = new Set([
   "imospot",
+  "mvaimobiliare",
   "primulanunt",
   "lacheie",
   "vdi",

@@ -3,6 +3,7 @@
  * Reguli pure (fără rețea), folosite de server și de teste.
  */
 import { z } from "zod";
+import { properstarEntityId } from "./properstar/mapper";
 
 export const IMOSPOT_PORTAL_ID = "imospot";
 export const IMOSPOT_SETTINGS_KEY = "imospot_key_request";
@@ -125,7 +126,7 @@ export function buildKeyRequestEmail(portal: KeyRequestPortalId, d: ImospotCompa
     ["Telefon", d.adminPhone ?? "—"],
     ["Oraș", d.city ?? "—"],
   ];
-  if (portal === "mvaimobiliare") rows.push(["ID agenție Habitoo", d.organizationId ?? "—"]);
+  if (portal === "mvaimobiliare") rows.push(["ID agenție Habitoo", d.organizationId ? properstarEntityId("hb", d.organizationId) : "—"]);
 
   const intro = cfg.intro;
   const outro = cfg.outro;

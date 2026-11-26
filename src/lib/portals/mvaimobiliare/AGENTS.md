@@ -1,0 +1,1 @@
+- API payloads reuse feed mappers/contact/media reads; initial key-hash syncs use the existing publication queue and cron with leased complete-inventory cleanup and atomic final notification. Why: preserve feed parity, agency isolation and retry-safe migration without secret exposure.

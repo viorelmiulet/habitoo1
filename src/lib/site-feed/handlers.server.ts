@@ -47,7 +47,7 @@ export function requireFeedScope(auth: FeedAuthOk, scope: string): FeedHandlerRe
 }
 
 /** Portalurile pe care oferta este publicată activ (model generic + legacy). */
-async function portalKeysFor(
+export async function portalKeysFor(
   organizationId: string,
   propertyIds: string[],
 ): Promise<Map<string, string[]>> {
