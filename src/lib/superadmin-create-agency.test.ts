@@ -22,7 +22,7 @@ describe("createAgencyCore", () => {
     const res = await createAgencyCore(d, minimal);
     expect(res).toEqual({ organizationId: "org1", userId: "u1" });
     expect(d.createAuthUser).toHaveBeenCalledWith("admin@x.ro", "parola123");
-    const rows = d.createAgencyRows.mock.calls[0] as unknown as [string, Record<string, unknown>];
+    const rows = vi.mocked(d.createAgencyRows).mock.calls[0] as unknown as [string, Record<string, unknown>];
     expect(rows[0]).toBe("u1");
     expect(rows[1]).not.toHaveProperty("password");
     expect(d.deleteAuthUser).not.toHaveBeenCalled();
