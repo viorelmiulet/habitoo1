@@ -49,7 +49,7 @@ function SuperadminPortalsPage() {
     else if (zup) toast.error("Conectarea ZUP nu s-a finalizat. Pornește conectarea din nou.");
   }, [zup]);
 
-  const orgs = useQuery({ queryKey: ["portal-organizations"], queryFn: () => loadOrgs({}) });
+  const orgs = useQuery({ queryKey: ["portal-organizations", "operational", organizationId], queryFn: () => loadOrgs({ data: { operationalOnly: true, ...(organizationId ? { includeOrganizationId: organizationId } : {}) } }) });
 
   useEffect(() => {
     if (orgFromLink) setOrganizationId(orgFromLink);
@@ -71,8 +71,8 @@ function SuperadminPortalsPage() {
   }, [storia, storiaError]);
 
   useEffect(() => {
-    if (!organizationId && orgs.data && orgs.data.length > 0) {
-      setOrganizationId(orgs.data[0]!.id);
+    if (!organizationId && orgs.data?.[0]) {
+      setOrganizationId(orgs.data[0].id);
     }
   }, [orgs.data, organizationId]);
 

@@ -1,3 +1,4 @@
+import { isOperationalAgency } from "@/lib/superadmin-status";
 // Statistici per agenție/agent, exclusiv superadmin. Agregatele vin gata calculate din RPC-uri
 // SECURITY DEFINER care verifică is_superadmin(); aici verificăm încă o dată înainte de apel.
 import { createServerFn } from "@tanstack/react-start";
@@ -39,7 +40,7 @@ export async function assertSuperadminCaller(supabase: Rpc) {
 
 export const getAgencyStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ includeDemo: z.boolean().default(false) }).parse(d ?? {}))
+  .inputValidator((d: unknown) => z.object({ includeDemo: z.boolean().default(false), operationalOnly: z.boolean().default(false) }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Rpc;
     await assertSuperadminCaller(sb);
@@ -51,8 +52,22 @@ export const getAgencyStats = createServerFn({ method: "GET" })
     if (a.error) throw new Error(a.error.message);
     if (t.error) throw new Error(t.error.message);
     if (inactive.error) throw new Error(inactive.error.message);
-    return { agencies: (a.data ?? []) as AgencyStatsRow[], totals: t.data as PlatformTotals,
-      inactiveAgencies: (inactive.data ?? []) as InactiveAgencyRow[] };
+    let agencies = (a.data ?? []) as AgencyStatsRow[];
+    const inactiveAgencies = (inactive.data ?? []) as InactiveAgencyRow[];
+    if (data.operationalOnly) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { readCompleteRows } = await import("@/lib/site-feed/complete-read.server");
+      const { readGraceAgencyStats } = await import("@/lib/operational-agency-stats.server");
+      const now = Date.now();
+      const orgs = (await readCompleteRows((from, to) => supabaseAdmin.from("organizations").select("*").order("id").range(from, to)))
+        .filter(org => isOperationalAgency(org, now) && (data.includeDemo || !org.is_demo));
+      const eligible = new Set(orgs.map(org => org.id));
+      agencies = agencies.filter(org => eligible.has(org.id));
+      const existing = new Set(agencies.map(org => org.id));
+      agencies.push(...await Promise.all(orgs.filter(org => !existing.has(org.id)).map(org =>
+        readGraceAgencyStats(supabaseAdmin, org, inactiveAgencies.find(row => row.id === org.id)?.last_activity_at ?? null, now))));
+    }
+    return { agencies, totals: t.data as PlatformTotals, inactiveAgencies };
   });
 
 export const getAgencyAgentStats = createServerFn({ method: "GET" })

@@ -1,3 +1,5 @@
+import { isOperationalAgency, orgStatusBadge } from "@/lib/superadmin-status";
+import { subscriptionState } from "@/lib/subscription";
 import { currentPartnerKeyError } from "@/lib/portals/partner-key-status";
 import { shouldRewithdrawInactive } from "@/lib/portals/withdraw-retry";
 import { publicationReason as awaitReason } from "@/lib/partner-api/feedback";
@@ -3562,11 +3564,24 @@ export async function applyPortalSelectionForOrg(input: {
 /** Agențiile disponibile în panoul Superadmin → Portaluri. */
 export const listPortalOrganizations = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .handler(async ({ context }): Promise<{ id: string; name: string }[]> => {
+  .inputValidator((input: unknown) => z.object({
+    operationalOnly: z.boolean().default(false),
+    includeOrganizationId: z.string().uuid().optional(),
+  }).optional().parse(input))
+  .handler(async ({ data, context }): Promise<{ id: string; name: string; statusLabel?: string }[]> => {
     await requireSuperadmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
-    const { data } = await admin.from("organizations").select("id, name").order("name");
-    return (data ?? []).map((o) => ({ id: o.id, name: o.name }));
+    const { readCompleteRows } = await import("@/lib/site-feed/complete-read.server");
+    const rows = await readCompleteRows((from, to) => admin.from("organizations")
+      .select("id, name, status, is_trial, archived_at, subscription_expires_at").order("name").order("id").range(from, to));
+    const now = Date.now();
+    return rows.filter((o) => !data?.operationalOnly || isOperationalAgency(o, now) || o.id === data.includeOrganizationId)
+      .map((o) => ({ id: o.id, name: o.name,
+        ...(data?.operationalOnly && !isOperationalAgency(o, now) ? {
+          statusLabel: o.archived_at || (o.status !== "active" && o.status !== "trial")
+            ? orgStatusBadge(o).label : subscriptionState(o, now).kind === "expired" ? "Expirată" : orgStatusBadge(o).label,
+        } : {}),
+      }));
   });
 
 /** Ofertele unei agenții, pentru selecția de portaluri din Superadmin. */

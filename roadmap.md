@@ -817,3 +817,8 @@
 ## mvaimobiliare — eligibilitate ansambluri și copii
 - [x] Lista API explicită în regula comună: doar mvaimobiliare activat; fără modificarea bifelor sau a regulilor de stare.
 - [x] 18/18 teste din cele trei fișiere modificate; eligibilitate, preselecția copiilor și calculul comun al stării confirmate; build OK, fără publicare.
+
+## Liste administrative — agenții operaționale
+- [x] Regulă comună, liste Agenții/utilizare și selectoare Portaluri, cu excepție pentru link direct; grația inclusă prin citiri suplimentare, agregatele istorice păstrate.
+- [x] 24/24 teste strict noi/modificate și build OK; fără date, migrări sau publicare.
+- [ ] Verificare vizuală în cont real: solicitantul nu are cont asociat previzualizării; necesită autentificarea sa, fără utilizatori de test.

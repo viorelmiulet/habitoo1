@@ -12,14 +12,12 @@ import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
 import { PLAN_LABELS, normalizePlan } from "@/lib/plans";
-import { orgStatusBadge } from "@/lib/superadmin-status";
+import { isOperationalAgency, orgStatusBadge } from "@/lib/superadmin-status";
 import { appHead } from "@/components/app/app-head";
 import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
 import { AgencyStatsTable } from "@/components/superadmin/AgencyStatsTable";
@@ -154,7 +152,6 @@ function RegistrationRequestListItem({
 function AgenciesPage() {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showArchived, setShowArchived] = useState(false);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const { approveRequest, rejectRequest } = useRegistrationRequestActions();
@@ -191,7 +188,7 @@ function AgenciesPage() {
   };
   const needle = q.trim().toLowerCase();
   const rows = orgs
-    .filter((o) => (showArchived ? true : !o.archived_at))
+    .filter((o) => isOperationalAgency(o))
     .filter((o) => {
       if (statusFilter === "all") return true;
       if (statusFilter === "trial") return orgStatusBadge(o).label === "În probă";
@@ -238,8 +235,8 @@ function AgenciesPage() {
         <AgencyStatsTable />
       </SuperadminSection>
 
-      <SuperadminSection title="Toate agențiile" description="Inclusiv arhivate și în așteptare. Apasă pe o agenție pentru pagina ei de detaliu.">
-        <div className="mb-4 grid gap-3 rounded-[14px] border border-border bg-card p-4 md:grid-cols-[minmax(0,1fr)_200px_auto] md:items-center">
+      <SuperadminSection title="Toate agențiile" description="Agenții active sau în perioada de probă.">
+        <div className="mb-4 grid gap-3 rounded-[14px] border border-border bg-card p-4 md:grid-cols-[minmax(0,1fr)_200px] md:items-center">
           <div className="relative min-w-0">
             <Search className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Caută agenție, oraș sau CUI…" aria-label="Caută agenție" className="h-11 pl-9" />
@@ -247,18 +244,11 @@ function AgenciesPage() {
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger aria-label="Filtrează după stare" className="h-11"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toate stările</SelectItem>
+              <SelectItem value="all">Toate</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="trial">În probă</SelectItem>
-              <SelectItem value="pending_approval">În așteptare</SelectItem>
-              <SelectItem value="suspended">Suspendate</SelectItem>
-              <SelectItem value="cancelled">Anulate</SelectItem>
             </SelectContent>
           </Select>
-          <div className="flex min-h-11 items-center gap-2">
-            <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
-            <Label htmlFor="show-archived" className="text-sm text-muted-foreground">Arată și arhivate</Label>
-          </div>
         </div>
         {isLoading ? <ListSkeleton rows={6} /> : rows.length === 0 ? (
           <div className="rounded-[14px] border border-border bg-card"><EmptyState icon={Building2} title="Nicio agenție găsită" /></div>
@@ -290,6 +280,7 @@ function AgenciesPage() {
             })}
           </ul>
         )}
+        <Link to="/superadmin/stare-agentii" className="mt-4 inline-block text-sm text-muted-foreground hover:underline">Agenții expirate, suspendate sau arhivate →</Link>
       </SuperadminSection>
     </div>
   );

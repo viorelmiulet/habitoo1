@@ -1,3 +1,4 @@
+import { isOperationalAgency } from "@/lib/superadmin-status";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,8 +9,7 @@ import { SummaryCard } from "@/components/superadmin/SuperadminUi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { agencyInactiveLabel, type AgencyStatsScope } from "@/lib/agency-stats-scope";
+import { agencyInactiveLabel } from "@/lib/agency-stats-scope";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { planLabel, seatLimitLabel } from "@/lib/plans";
 import { getPortalDefinition } from "@/lib/portals/registry";
@@ -84,17 +84,16 @@ export function InactiveAgenciesTable({ rows }: { rows: InactiveAgencyRow[] }) {
 export function AgencyStatsTable() {
   const fetchStats = useServerFn(getAgencyStats);
   const [includeDemo, setIncludeDemo] = useState(false);
-  const [scope, setScope] = useState<AgencyStatsScope>("active");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "listings", dir: -1 });
   const [openOrg, setOpenOrg] = useState<AgencyStatsRow | null>(null);
   const { data, isLoading, error } = useQuery({
-    queryKey: ["superadmin-stats", "sa2", includeDemo],
-    queryFn: () => fetchStats({ data: { includeDemo } }),
+    queryKey: ["superadmin-stats", "sa2", "operational", includeDemo],
+    queryFn: () => fetchStats({ data: { includeDemo, operationalOnly: true } }),
   });
 
   const rows = useMemo(() => {
-    const list = (data?.agencies ?? []).filter((r) => r.name.toLowerCase().includes(q.trim().toLowerCase()));
+    const list = (data?.agencies ?? []).filter((r) => isOperationalAgency(r) && r.name.toLowerCase().includes(q.trim().toLowerCase()));
     const col = COLS.find((c) => c.key === sort.key);
     if (sort.key === "name") return [...list].sort((a, b) => a.name.localeCompare(b.name, "ro") * sort.dir);
     const num = col?.num;
@@ -102,30 +101,19 @@ export function AgencyStatsTable() {
     return [...list].sort((a, b) => (num(a) - num(b)) * sort.dir);
   }, [data, q, sort]);
 
-  const inactiveRows = useMemo(() => (data?.inactiveAgencies ?? []).filter((r) =>
-    r.name.toLowerCase().includes(q.trim().toLowerCase())), [data, q]);
-
   const toggleSort = (key: string) => setSort((s) => ({ key, dir: s.key === key ? (s.dir === 1 ? -1 : 1) : -1 }));
   const exportCsv = () => {
-    const csv = scope === "active"
-      ? toCsv(["Agenție", ...COLS.map((c) => c.label)], rows.map((r) => [r.name, ...COLS.map((c) => c.csv(r))]))
-      : toCsv(["Agenție", ...INACTIVE_COLS.map((c) => c.label)], inactiveRows.map((r) => [r.name, ...INACTIVE_COLS.map((c) => c.csv(r))]));
+    const csv = toCsv(["Agenție", ...COLS.map((c) => c.label)], rows.map((r) => [r.name, ...COLS.map((c) => c.csv(r))]));
     const url = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
-    a.href = url; a.download = `agentii-${scope}-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    a.href = url; a.download = `agentii-active-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
   const t = data?.totals;
 
   return (
     <div className="space-y-5">
-      <Tabs value={scope} onValueChange={(value) => { setScope(value === "inactive" ? "inactive" : "active"); setOpenOrg(null); }}>
-        <TabsList className="flex h-auto flex-wrap justify-start">
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="inactive">Expirate / suspendate ({data?.inactiveAgencies.length ?? "…"})</TabsTrigger>
-        </TabsList>
-      </Tabs>
-      {scope === "active" && t && (
+      {t && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           <SummaryCard label="Agenții active / trial" value={`${t.agencies_active} / ${t.agencies_trial}`} />
           <SummaryCard label="Utilizatori activi" value={t.users_active} />
@@ -144,11 +132,11 @@ export function AgencyStatsTable() {
           <Switch checked={includeDemo} onCheckedChange={setIncludeDemo} aria-label="Arată și agențiile demo" />
           Arată și agențiile demo
         </label>
-        <Button variant="outline" onClick={exportCsv} disabled={isLoading || !!error || !(scope === "active" ? rows.length : inactiveRows.length)}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
+        <Button variant="outline" onClick={exportCsv} disabled={isLoading || !!error || !rows.length}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
       </div>
       {isLoading ? <ListSkeleton /> : error ? (
         <p className="text-sm text-destructive">{(error as Error).message}</p>
-      ) : scope === "inactive" ? <InactiveAgenciesTable rows={inactiveRows} /> : (
+      ) : (
         <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[1400px] text-sm">
             <thead className="bg-muted/40 font-mono text-[11px] uppercase text-muted-foreground">
@@ -172,7 +160,7 @@ export function AgencyStatsTable() {
           </table>
         </div>
       )}
-      {scope === "active" && openOrg && <AgentPanel org={openOrg} onClose={() => setOpenOrg(null)} />}
+      {openOrg && <AgentPanel org={openOrg} onClose={() => setOpenOrg(null)} />}
     </div>
   );
 }

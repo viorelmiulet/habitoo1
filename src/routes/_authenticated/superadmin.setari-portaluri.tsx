@@ -46,15 +46,15 @@ function PortalSettingsPage() {
   const [search, setSearch] = useState("");
   const [propertyId, setPropertyId] = useState<string>("");
 
-  const orgs = useQuery({ queryKey: ["portal-organizations"], queryFn: () => loadOrgs({}) });
+  const orgs = useQuery({ queryKey: ["portal-organizations", "operational", organizationId], queryFn: () => loadOrgs({ data: { operationalOnly: true, ...(organizationId ? { includeOrganizationId: organizationId } : {}) } }) });
 
   useEffect(() => {
     if (orgFromLink) setOrganizationId(orgFromLink);
   }, [orgFromLink]);
 
   useEffect(() => {
-    if (!organizationId && orgs.data && orgs.data.length > 0) {
-      setOrganizationId(orgs.data[0]!.id);
+    if (!organizationId && orgs.data?.[0]) {
+      setOrganizationId(orgs.data[0].id);
     }
   }, [orgs.data, organizationId]);
 

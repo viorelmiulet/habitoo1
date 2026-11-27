@@ -1,3 +1,5 @@
+import { subscriptionState } from "@/lib/subscription";
+
 export type StatusTone = "success" | "warning" | "danger" | "neutral" | "primary";
 
 export const ORG_STATUS_LABELS: Record<string, string> = {
@@ -57,4 +59,9 @@ export function superadminGateDecision(
   if (isLoading) return "loading";
   if (!user) return "signed_out";
   return canAccessSuperadmin(user) ? "granted" : "denied";
+}
+
+/** Eligibilitate pentru listele administrative, fără schimbarea accesului agenției. */
+export function isOperationalAgency(org: { status: string; archived_at?: string | null; subscription_expires_at?: string | null }, now = Date.now()): boolean {
+  return !org.archived_at && (org.status === "active" || org.status === "trial") && subscriptionState(org, now).kind !== "expired";
 }

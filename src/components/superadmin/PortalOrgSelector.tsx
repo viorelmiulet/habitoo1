@@ -11,7 +11,7 @@ type Props = {
     isLoading: boolean;
     isError: boolean;
     error: unknown;
-    data?: { id: string; name: string }[];
+    data?: { id: string; name: string; statusLabel?: string }[];
     refetch: () => unknown;
   };
 };
@@ -33,7 +33,7 @@ export function PortalOrgSelector({ value, onChange, orgs }: Props) {
             <SelectContent>
               {(orgs.data ?? []).map((o) => (
                 <SelectItem key={o.id} value={o.id}>
-                  {o.name}
+                  {o.name}{o.statusLabel ? <span className="ml-2 text-xs text-muted-foreground"> · {o.statusLabel}</span> : null}
                 </SelectItem>
               ))}
             </SelectContent>
