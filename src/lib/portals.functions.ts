@@ -1390,6 +1390,8 @@ export async function executeListingAction(input: {
   imobiliareModeChanged?: boolean;
   /** Initial MVA sync reports once at completion instead of one alert per listing. */
   suppressFailureNotification?: boolean;
+  /** Saved publication identifier carried by an MVA withdrawal job only. */
+  mvaWithdrawIdstr?: string;
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
   const startedAt = Date.now();
@@ -1581,6 +1583,14 @@ export async function executeListingAction(input: {
     .eq("property_id", propertyId)
     .maybeSingle();
 
+  let mvaExternalId: string | null = null;
+  if (definition.id === "mvaimobiliare" && action === "withdraw") {
+    const { data: publication } = await admin.from("portal_publications")
+      .select("external_ref").eq("organization_id", organizationId)
+      .eq("property_id", propertyId).eq("portal_key", definition.id).maybeSingle();
+    mvaExternalId = input.mvaWithdrawIdstr ?? listing?.external_id ?? publication?.external_ref ?? null;
+  }
+
   /**
    * O excepție aruncată aici (token expirat, portal nereachable, validare care
    * aruncă în loc să returneze) NU trebuie să iasă din funcție: altfel oprea
@@ -1609,7 +1619,7 @@ export async function executeListingAction(input: {
     const { ctx } = await buildContext(organizationId, definition);
     const ref = {
       propertyId,
-      externalId: listing?.external_id ?? null,
+      externalId: mvaExternalId ?? listing?.external_id ?? null,
       ...(promotionFlag ? { promoted: requestedPromoted } : {}),
       ...(definition.id === "imobiliare_ro" ? {
         ...(action === "publish" || input.imobiliareModeChanged ? { imobiliarePromotions: input.imobiliarePromotions } : {}),
@@ -1755,6 +1765,8 @@ export async function executeListingAction(input: {
       external_ref:
         result.ok && result.data.externalId
           ? result.data.externalId
+          : definition.id === "mvaimobiliare" && action === "withdraw"
+            ? mvaExternalId
           : unconfirmed
             ? (listing?.external_id ?? null)
             : null,
@@ -1892,6 +1904,7 @@ export async function performPortalWithdraw(input: {
   attempted: boolean;
   /** Portalul nu cunoștea oferta (404): nu era nimic de retras. */
   alreadyWithdrawn: boolean;
+  queued?: boolean;
   message: string;
   code?: string | null;
   httpStatus?: number | null;
@@ -1900,6 +1913,47 @@ export async function performPortalWithdraw(input: {
   if (!definition) throw new Error("Portal necunoscut.");
   const name = definition.display_name;
   const pushSupported = definition.capabilities.includes("publish_listing");
+
+  // MVA API deselection is durable, including historical feed listings without
+  // portal_listings.external_id. The SQL trigger and this call share one job.
+  if (definition.id === "mvaimobiliare") {
+    const { ctx } = await buildContext(input.organizationId, definition);
+    if (ctx.portalCredential?.trim()) {
+      const admin = await loadAdmin();
+      // A status queue may arrive after the publication worker has confirmed
+      // DELETE. Historical feed withdrawals had no external_id: never use
+      // those empty records as proof that an API withdrawal succeeded.
+      const [listing, publication] = await Promise.all([
+        admin.from("portal_listings").select("status,external_id")
+          .eq("organization_id", input.organizationId).eq("property_id", input.propertyId)
+          .eq("portal", definition.id).maybeSingle(),
+        admin.from("portal_publications").select("enabled")
+          .eq("organization_id", input.organizationId).eq("property_id", input.propertyId)
+          .eq("portal_key", definition.id).maybeSingle(),
+      ]);
+      if (listing.data?.status === "withdrawn" && listing.data.external_id && publication.data?.enabled === false) {
+        return { ok: true, attempted: false, alreadyWithdrawn: true, message: `${name}: oferta a fost deja retrasă.` };
+      }
+      // Account deletion already runs in its durable worker and must await
+      // DELETE before removing the property (and its FK-linked publish jobs).
+      if (input.withdrawReason === "account_deleted") {
+        const result = await executeListingAction({ organizationId: input.organizationId,
+          actorId: input.actorId, propertyId: input.propertyId, portalId: definition.id,
+          action: "withdraw", withdrawReason: input.withdrawReason });
+        return result.ok
+          ? { ok: true, attempted: true, alreadyWithdrawn: false, message: `${name}: oferta a fost retrasă.` }
+          : { ok: false, attempted: true, alreadyWithdrawn: false, message: result.message,
+              code: result.code, httpStatus: result.httpStatus };
+      }
+      const { data: jobId, error } = await admin.rpc("request_mva_withdrawal", {
+        _org: input.organizationId, _property: input.propertyId,
+        ...(input.actorId ? { _actor: input.actorId } : {}),
+      });
+      return { ok: !error && Boolean(jobId), attempted: false, alreadyWithdrawn: false,
+        queued: !error && Boolean(jobId),
+        message: error || !jobId ? `${name}: retragerea nu a putut fi pusă în coadă.` : `${name}: retragerea a fost pusă în coadă.` };
+    }
+  }
 
   if (!pushSupported) {
     return {
@@ -2834,7 +2888,7 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
       return {
         ok: withdrawal.ok,
         enabled: false as const,
-        withdrawn: withdrawal.ok,
+        withdrawn: withdrawal.ok && !withdrawal.queued,
         attempted: withdrawal.attempted,
         alreadyWithdrawn: withdrawal.alreadyWithdrawn,
         message: withdrawal.message,
@@ -3426,7 +3480,7 @@ export async function applyPortalSelectionForOrg(input: {
               (listingRow as { external_id?: string | null } | undefined)?.external_id ?? null,
             ...(input.withdrawReason ? { withdrawReason: input.withdrawReason } : {}),
           });
-          if (withdrawal.ok) {
+          if (withdrawal.ok && !withdrawal.queued) {
             const { clearDeselectedPortalError } = await import("@/lib/portals/deselect-cleanup");
             await clearDeselectedPortalError(admin as never, {
               organizationId,
@@ -3437,7 +3491,7 @@ export async function applyPortalSelectionForOrg(input: {
           results.push({
             portalId: definition.id,
             portalName: name,
-            action: withdrawal.ok ? "withdrawn" : "blocked",
+            action: withdrawal.ok ? withdrawal.queued ? "selected" : "withdrawn" : "blocked",
             ok: withdrawal.ok,
             message: withdrawal.message,
           });

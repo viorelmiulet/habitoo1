@@ -827,3 +827,8 @@
 - [x] Creator eligibil, apoi agentul alocat: resolver comun pentru Storia, feed și Partner API; citire în loturi și contact informativ în Publicare.
 - [x] 21/21 teste în cele trei fișiere noi/modificate și build OK; fără date, drepturi, contactele unităților sau publicare.
 - Verificarea în cont real rămâne neconfirmată: solicitantul nu are cont asociat previzualizării; fără utilizatori de test sau apeluri reale.
+
+## mvaimobiliare — retragere API la deselectare
+- [x] Confirmate deselectările fără HTTP și cele 48 de listări retrase fără identificator; declanșatoare strict mva și coada existentă păstrează idstr, inclusiv după publicări în lucru.
+- [x] 33/33 teste în cele două fișiere noi/modificate: DELETE corect, retry 5xx, 404 succes, neeligibilitate, protecția secretelor și izolarea altor portaluri; build OK.
+- [x] Migrările 0350/0351 aplicate fără modificări ale anunțurilor existente; citirea live confirmă zero retrageri noi și cele 48 intacte; fără apeluri reale sau publicare.

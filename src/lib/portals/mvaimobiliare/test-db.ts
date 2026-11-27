@@ -23,6 +23,12 @@ export function fakeMvaDb(rows: Record<string, Row[]> = {}) {
         range: (a: number, b: number) => { range = [a, b]; return q; },
         update: (p: Row) => { patch = p; return q; },
         insert: async (row: Row) => { (rows[table] ??= []).push(row); return { error: null }; },
+        upsert: async (row: Row) => {
+          const key = table === 'portal_publications' ? 'portal_key' : 'portal';
+          const existing = (rows[table] ?? []).find(r => r['organization_id'] === row['organization_id'] && r['property_id'] === row['property_id'] && r[key] === row[key]);
+          if (existing) Object.assign(existing, row); else (rows[table] ??= []).push(row);
+          return { error: null };
+        },
         maybeSingle: async () => ({ ...result(), data: result().data[0] ?? null }),
         single: async () => ({ ...result(), data: result().data[0] ?? null }),
         then: (resolve: (r: any) => any) => Promise.resolve(result()).then(resolve),

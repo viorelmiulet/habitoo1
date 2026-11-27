@@ -57,12 +57,15 @@ export const mvaimobiliareAdapter: PortalAdapter = {
   updateListing: push,
   async withdrawListing(ctx, ref) {
     if (!ctx.portalCredential?.trim()) return feed.withdrawListing(ctx, ref);
-    if (!ctx.allowLiveRequests) return { ok: true, data: { externalId: ref.externalId, live: false, detail: 'dry_run mvaimobiliare withdraw' } };
+    if (!ctx.allowLiveRequests) return { ok: false, code: 'CONFIG_ERROR', message: 'Apelurile către mvaimobiliare.ro sunt oprite; retragerea nu a fost trimisă.' };
     const id = ref.externalId ?? await mvaListingId(ctx.organizationId, ref.propertyId);
     const result = await deleteMvaListing(ctx, id);
+    if (!result.ok && result.httpStatus === 404) {
+      return { ok: true, data: { externalId: id, live: true, detail: 'mvaimobiliare listing already withdrawn', portalStatus: 'withdrawn', httpStatus: 404, portalResponse: result.portalResponse } };
+    }
     if (!result.ok) return result;
-    if (result.data?.status !== 'withdrawn') return { ok: false, code: 'PORTAL_ERROR', message: 'mvaimobiliare.ro nu a confirmat retragerea anunțului.' };
-    return { ok: true, data: { externalId: id, live: true, detail: 'mvaimobiliare listing withdrawn', portalStatus: 'withdrawn' } };
+    if (result.data?.status !== 'withdrawn') return { ok: false, code: 'PORTAL_ERROR', message: 'mvaimobiliare.ro nu a confirmat retragerea anunțului.', httpStatus: result.httpStatus ?? null, portalResponse: result.portalResponse };
+    return { ok: true, data: { externalId: id, live: true, detail: 'mvaimobiliare listing withdrawn', portalStatus: 'withdrawn', httpStatus: result.httpStatus ?? null, portalResponse: result.portalResponse } };
   },
   async sync(ctx, refs) {
     let processed = 0; let failed = 0;

@@ -2451,6 +2451,20 @@
       "when": 1795726690583,
       "tag": "0349_mva_lead_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 350,
+      "version": "7",
+      "when": 1795757052227,
+      "tag": "0350_mva_durable_withdrawals",
+      "breakpoints": true
+    },
+    {
+      "idx": 351,
+      "version": "7",
+      "when": 1795757406967,
+      "tag": "0351_mva_withdraw_queue_snapshot",
+      "breakpoints": true
     }
   ]
 }

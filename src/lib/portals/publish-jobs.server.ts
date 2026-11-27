@@ -89,6 +89,8 @@ export type PublishJobRow = {
   ofera_intent?: "activate" | "resend" | null;
   republish_batch_id?: string | null;
   mva_sync_id?: string | null;
+  mva_withdraw_idstr?: string | null;
+  mva_withdraw_requested_at?: string | null;
 };
 
 export type PublishOutcome = {

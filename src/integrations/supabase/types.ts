@@ -10141,6 +10141,8 @@ export type Database = {
           lacheie_image_limit_retry_of: string | null
           locked_at: string | null
           mva_sync_id: string | null
+          mva_withdraw_idstr: string | null
+          mva_withdraw_requested_at: string | null
           next_attempt_at: string
           ofera_intent: string | null
           operation: string
@@ -10172,6 +10174,8 @@ export type Database = {
           lacheie_image_limit_retry_of?: string | null
           locked_at?: string | null
           mva_sync_id?: string | null
+          mva_withdraw_idstr?: string | null
+          mva_withdraw_requested_at?: string | null
           next_attempt_at?: string
           ofera_intent?: string | null
           operation?: string
@@ -10203,6 +10207,8 @@ export type Database = {
           lacheie_image_limit_retry_of?: string | null
           locked_at?: string | null
           mva_sync_id?: string | null
+          mva_withdraw_idstr?: string | null
+          mva_withdraw_requested_at?: string | null
           next_attempt_at?: string
           ofera_intent?: string | null
           operation?: string
@@ -14814,6 +14820,8 @@ export type Database = {
           lacheie_image_limit_retry_of: string | null
           locked_at: string | null
           mva_sync_id: string | null
+          mva_withdraw_idstr: string | null
+          mva_withdraw_requested_at: string | null
           next_attempt_at: string
           ofera_intent: string | null
           operation: string
@@ -15886,6 +15894,10 @@ export type Database = {
       reorder_development_images: {
         Args: { _id: string; _images: string[] }
         Returns: undefined
+      }
+      request_mva_withdrawal: {
+        Args: { _actor?: string; _org: string; _property: string }
+        Returns: string
       }
       request_storia_development: {
         Args: { _confirmed?: string[]; _id: string; _withdraw?: boolean }

@@ -47,6 +47,10 @@ export async function runPortalPublishRequest(): Promise<Response> {
           console.error("[lacheie] reluarea limitei de poze a eșuat"),
         );
         const result = await runPortalPublishWorker(supabaseAdmin, async (job) => {
+          if (job.portal_key === "mvaimobiliare" && !job.enabled) {
+            const { runMvaWithdrawalJob } = await import("@/lib/portals/mvaimobiliare/withdraw.server");
+            return runMvaWithdrawalJob(supabaseAdmin, job, executeListingAction);
+          }
           if (job.portal_key === "mvaimobiliare" && job.mva_sync_id) {
             const { runMvaInitialPublishJob } = await import("@/lib/portals/mvaimobiliare/sync.server");
             return runMvaInitialPublishJob(supabaseAdmin, job, executeListingAction);

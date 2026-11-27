@@ -7,6 +7,8 @@ import { fakeMvaDb } from './test-db';
 import { properstarEntityId } from '../properstar/mapper';
 import { mvaCredentialHash } from './sync.server';
 import { mvaimobiliareAdapter } from '../adapters/mvaimobiliare.server';
+import { runMvaWithdrawalJob } from './withdraw.server';
+import { runPortalPublishWorker, type PublishJobRow } from '../publish-jobs.server';
 vi.mock('@tanstack/react-start', async importOriginal => {
   const actual = await importOriginal<typeof import('@tanstack/react-start')>();
   const build = () => {
@@ -79,5 +81,108 @@ describe('conexiune și publicare prin funcțiile comune — API simulată', () 
     alert.mockClear(); limited = true;
     await executeListingAction({ organizationId: ORG, actorId: 'actor1', portalId: 'mvaimobiliare', propertyId: 'p1', action: 'publish', skipSlotCheck: true, suppressFailureNotification: true });
     expect(alert).not.toHaveBeenCalled();
+  });
+  it.each(['listă', 'fișă', 'acțiuni în masă'])('deselectare din %s: pune în coadă, apoi un DELETE cu idstr-ul publicat', async source => {
+    db.rows['portal_listings'] = [{ id: 'l1', organization_id: ORG, property_id: 'p1', portal: 'mvaimobiliare', external_id: 'HB-1465', status: 'published' }];
+    const { applyPortalSelectionForOrg, setPropertyPortalSelection, executeListingAction } = await import('@/lib/portals.functions');
+    const job: PublishJobRow = { id: 'j1', organization_id: ORG, property_id: 'p1', portal_key: 'mvaimobiliare', enabled: false,
+      promoted: null, sync_existing: false, requested_by: 'actor1', superadmin: true, attempts: 1, mva_withdraw_idstr: 'HB-1465' };
+    db.rpc = vi.fn(async () => ({ data: 'j1', error: null }));
+    if (source === 'listă') {
+      await (setPropertyPortalSelection as unknown as (args: unknown) => Promise<unknown>)({
+        data: { organizationId: ORG, propertyId: 'p1', portalId: 'mvaimobiliare', enabled: false },
+        context: { userId: 'actor1', supabase: { rpc: async () => ({ data: true }) } },
+      });
+    } else {
+      expect(await applyPortalSelectionForOrg({ organizationId: ORG, superadmin: true, actorId: 'actor1',
+        data: { propertyId: 'p1', selections: [{ portalId: 'mvaimobiliare', enabled: false }], syncExisting: false } })).toMatchObject({ ok: true });
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(db.rpc).toHaveBeenCalledWith('request_mva_withdrawal', { _org: ORG, _property: 'p1', _actor: 'actor1' });
+    fetchMock.mockResolvedValue(reply({ status: 'withdrawn' }));
+    expect(await runMvaWithdrawalJob(db, job, executeListingAction)).toMatchObject({ ok: true, action: 'withdrawn' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://www.mvaimobiliare.ro/api/public/habitoo/v1/listings/HB-1465');
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('DELETE');
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({ Authorization: `Bearer ${KEY}` });
+    expect(db.rows['portal_operation_logs']?.find(r => r['operation'] === 'withdraw')).toMatchObject({ success: true, http_status: 200 });
+    const { performPortalWithdraw } = await import('@/lib/portals.functions');
+    db.rpc = vi.fn(async () => ({ data: 'j2', error: null }));
+    expect(await performPortalWithdraw({ organizationId: ORG, propertyId: 'p1', portalId: 'mvaimobiliare', actorId: 'actor1', withdrawReason: 'status_sold' })).toMatchObject({ ok: true, alreadyWithdrawn: true });
+    expect(db.rpc).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  it('5xx păstrează idstr și workerul programează retry, apoi confirmă DELETE', async () => {
+    const { executeListingAction } = await import('@/lib/portals.functions');
+    db.rows['portal_publications'] = [{ organization_id: ORG, property_id: 'p1', portal_key: 'mvaimobiliare', enabled: false, external_ref: 'HB-1465' }];
+    const job = { id: 'j1', organization_id: ORG, property_id: 'p1', portal_key: 'mvaimobiliare', enabled: false,
+      promoted: null, sync_existing: false, requested_by: 'actor1', superadmin: true, attempts: 0,
+      mva_withdraw_idstr: 'HB-1465', status: 'queued', next_attempt_at: new Date(0).toISOString() };
+    db.rows['portal_publish_jobs'] = [job];
+    db.rpc = vi.fn(async () => {
+      if (job.status !== 'queued' || Date.parse(job.next_attempt_at) > Date.now()) return { data: [], error: null };
+      job.status = 'running'; job.attempts++;
+      return { data: [{ ...job }], error: null };
+    });
+    fetchMock.mockResolvedValueOnce(reply({ error: `temporary ${KEY}` }, 503)).mockResolvedValueOnce(reply({ status: 'withdrawn' }));
+    const apply = (j: PublishJobRow) => runMvaWithdrawalJob(db, j, executeListingAction);
+    expect(await runPortalPublishWorker(db, apply, { concurrency: 1 })).toMatchObject({ retried: 1 });
+    expect(job.status).toBe('queued');
+    expect(Date.parse(job.next_attempt_at)).toBeGreaterThan(Date.now() + 115_000);
+    expect(db.rows['portal_publications']?.[0]?.['external_ref']).toBe('HB-1465');
+    expect(db.rows['portal_operation_logs']?.[0]).toMatchObject({ operation: 'withdraw', success: false, http_status: 503 });
+    expect(JSON.stringify(db.rows['portal_operation_logs'])).not.toContain(KEY);
+    job.next_attempt_at = new Date(0).toISOString();
+    expect(await runPortalPublishWorker(db, apply, { concurrency: 1 })).toMatchObject({ done: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls.map(c => c[1]?.method)).toEqual(['DELETE', 'DELETE']);
+  });
+  it('404 este succes în starea locală și în jurnalul withdraw, cu răspunsul portalului', async () => {
+    const { executeListingAction } = await import('@/lib/portals.functions');
+    db.rows['portal_publications'] = [{ organization_id: ORG, property_id: 'p1', portal_key: 'mvaimobiliare', enabled: false, external_ref: 'HB-1465' }];
+    fetchMock.mockResolvedValue(reply({ error: 'not_found' }, 404));
+    expect(await executeListingAction({ organizationId: ORG, propertyId: 'p1', portalId: 'mvaimobiliare', actorId: 'actor1', action: 'withdraw' })).toMatchObject({ ok: true, status: 'withdrawn' });
+    expect(db.rows['portal_publications']?.[0]).toMatchObject({ status: 'disabled', last_error: null });
+    const log = db.rows['portal_operation_logs']?.[0];
+    expect(log).toMatchObject({ operation: 'withdraw', success: true, http_status: 404 });
+    expect(JSON.stringify(log?.['portal_response'])).toContain('not_found');
+    expect(alert).not.toHaveBeenCalled();
+  });
+  it('jurnalul răspunsului elimină cheia și tokenurile inclusiv din numele câmpurilor', async () => {
+    const { executeListingAction } = await import('@/lib/portals.functions');
+    fetchMock.mockResolvedValue(reply({ [KEY]: KEY, token: 'hbml_' + 'a'.repeat(43), nested: { authorization: `Bearer ${KEY}` } }, 503));
+    await executeListingAction({ organizationId: ORG, propertyId: 'p1', portalId: 'mvaimobiliare', actorId: 'actor1', action: 'withdraw', mvaWithdrawIdstr: 'HB-1465' });
+    const logs = JSON.stringify(db.rows['portal_operation_logs']);
+    expect(logs).not.toContain(KEY);
+    expect(logs).not.toContain('hbml_' + 'a'.repeat(43));
+    expect(db.rows['portal_operation_logs']?.[0]).toMatchObject({ operation: 'withdraw', http_status: 503 });
+  });
+  it('apelurile live oprite nu raportează o retragere API reușită', async () => {
+    const connection = db.rows['portal_connections']?.[0];
+    if (!connection) throw new Error('Missing fixture');
+    connection['settings'] = { allow_live: false };
+    const { executeListingAction } = await import('@/lib/portals.functions');
+    expect(await executeListingAction({ organizationId: ORG, propertyId: 'p1', portalId: 'mvaimobiliare', actorId: 'actor1', action: 'withdraw', mvaWithdrawIdstr: 'HB-1465' })).toMatchObject({ ok: false, code: 'CONFIG_ERROR' });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(db.rows['portal_listings']?.[0]?.['status']).toBe('error');
+  });
+  it('workerul ștergerii contului așteaptă DELETE și nu pierde retragerea prin ștergerea joburilor', async () => {
+    const { performPortalWithdraw } = await import('@/lib/portals.functions');
+    fetchMock.mockResolvedValue(reply({ status: 'withdrawn' }));
+    expect(await performPortalWithdraw({ organizationId: ORG, propertyId: 'p1', portalId: 'mvaimobiliare', actorId: 'actor1', withdrawReason: 'account_deleted' })).toMatchObject({ ok: true, attempted: true });
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('DELETE');
+    expect(db.rpc).not.toHaveBeenCalled();
+  });
+  it.each(['sold', 'archived', 'deleted', 'withdrawn'])('workerul retrage oferta neeligibilă: %s', async reason => {
+    const { executeListingAction } = await import('@/lib/portals.functions');
+    const property = db.rows['properties']?.[0];
+    if (!property) throw new Error('Missing fixture');
+    if (reason === 'deleted') property['deleted_at'] = '2026-11-27';
+    else if (reason === 'withdrawn') property['publish_status'] = 'withdrawn';
+    else property['status'] = reason;
+    fetchMock.mockResolvedValue(reply({ status: 'withdrawn' }));
+    expect(await runMvaWithdrawalJob(db, { id: 'j1', organization_id: ORG, property_id: 'p1', portal_key: 'mvaimobiliare', enabled: false,
+      promoted: null, sync_existing: false, requested_by: 'actor1', superadmin: true, attempts: 1, mva_withdraw_idstr: 'HB-1465' }, executeListingAction)).toMatchObject({ ok: true, action: 'withdrawn' });
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('DELETE');
   });
 });
