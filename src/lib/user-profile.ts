@@ -51,8 +51,11 @@ export function mustCompleteUserProfile(input: {
   roles: string[];
   impersonating: boolean;
   profile: { full_name?: string | null; phone?: string | null } | null;
+  org?: { created_by_superadmin?: boolean | null } | null;
 }): boolean {
   if (input.impersonating) return false;
+  // Agențiile create direct de superadmin: profilul nu blochează accesul (admin și agenți).
+  if (input.org?.created_by_superadmin === true) return false;
   if (input.roles.includes("superadmin")) return false;
   if (!input.roles.includes("agent") && !input.roles.includes("agency_admin")) return false;
   return !isProfileComplete(input.profile);

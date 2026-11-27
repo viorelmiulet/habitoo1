@@ -97,7 +97,7 @@ export const requireActiveOrgAuth = createMiddleware({ type: "function" })
 
     const { data: org } = await supabaseAdmin
       .from("organizations")
-      .select("status,archived_at,suspended_reason,email,phone,material_address,city,postal_code")
+      .select("status,archived_at,suspended_reason,email,phone,material_address,city,postal_code,created_by_superadmin")
       .eq("id", profile.organization_id)
       .maybeSingle();
 

@@ -21,6 +21,7 @@ import { isOperationalAgency, orgStatusBadge } from "@/lib/superadmin-status";
 import { appHead } from "@/components/app/app-head";
 import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
 import { AgencyStatsTable } from "@/components/superadmin/AgencyStatsTable";
+import { CreateAgencyDialog } from "@/components/superadmin/CreateAgencyDialog";
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies/")({
   head: () => {
@@ -199,7 +200,7 @@ function AgenciesPage() {
 
   return (
     <div className="min-w-0 max-w-full space-y-8 overflow-x-hidden">
-      <PageHeader title="Agenții" description="Cererile noi de înscriere și toate agențiile platformei. Deschide o agenție pentru plan, abonament, echipă și portaluri." />
+      <PageHeader title="Agenții" description="Cererile noi de înscriere și toate agențiile platformei. Deschide o agenție pentru plan, abonament, echipă și portaluri." actions={<CreateAgencyDialog />} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <SummaryCard label="Cereri în așteptare" value={loadingRequests ? "—" : counts.pending} tone="warning" />

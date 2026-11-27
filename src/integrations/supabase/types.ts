@@ -7729,6 +7729,7 @@ export type Database = {
           county: string | null
           created_at: string
           created_by: string | null
+          created_by_superadmin: boolean
           cui: string | null
           demo_seed_version: string | null
           demo_seeded_at: string | null
@@ -7800,6 +7801,7 @@ export type Database = {
           county?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_superadmin?: boolean
           cui?: string | null
           demo_seed_version?: string | null
           demo_seeded_at?: string | null
@@ -7871,6 +7873,7 @@ export type Database = {
           county?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_superadmin?: boolean
           cui?: string | null
           demo_seed_version?: string | null
           demo_seeded_at?: string | null
@@ -16385,6 +16388,22 @@ export type Database = {
       superadmin_agency_stats: {
         Args: { _include_demo?: boolean }
         Returns: Json
+      }
+      superadmin_create_agency: {
+        Args: {
+          _city: string
+          _cui: string
+          _email: string
+          _full_name: string
+          _legal_name: string
+          _name: string
+          _phone: string
+          _plan: string
+          _term: string
+          _trade_registry_number: string
+          _user_id: string
+        }
+        Returns: string
       }
       superadmin_delete_organization: {
         Args: { _actor?: string; _org: string }

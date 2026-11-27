@@ -72,6 +72,7 @@ function AppLayout() {
       roles: user.roles,
       impersonating: Boolean(user.impersonation),
       profile: user.profile,
+      org: user.organization,
     })
   ) {
     return <CompleteUserProfile user={user} />;

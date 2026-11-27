@@ -21,7 +21,10 @@ export const AGENCY_FIELD_LABELS: Record<AgencyRequiredField, string> = {
 
 export const AGENCY_DATA_INCOMPLETE_CODE = "AGENCY_DATA_INCOMPLETE";
 
-type OrgLike = Partial<Record<AgencyRequiredField, string | null>> & { status?: string | null };
+type OrgLike = Partial<Record<AgencyRequiredField, string | null>> & {
+  status?: string | null;
+  created_by_superadmin?: boolean | null;
+};
 
 export function missingAgencyPublicFields(org: OrgLike | null | undefined): AgencyRequiredField[] {
   if (!org) return [];
@@ -41,6 +44,8 @@ export function mustCompleteAgencyData(input: {
   if (input.roles.includes("superadmin")) return false;
   if (!input.roles.includes("agency_admin")) return false;
   if (!input.org || (input.org.status ?? "active") !== "active") return false;
+  // Agențiile create direct de superadmin nu sunt blocate de datele obligatorii.
+  if (input.org.created_by_superadmin === true) return false;
   return missingAgencyPublicFields(input.org).length > 0;
 }
 
