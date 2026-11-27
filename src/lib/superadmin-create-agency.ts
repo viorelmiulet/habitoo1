@@ -38,7 +38,7 @@ export async function createAgencyCore(deps: CreateAgencyDeps, raw: CreateAgency
   const { password, ...rest } = createAgencySchema.parse(raw);
   const created = await deps.createAuthUser(rest.email, password);
   if ("error" in created) {
-    throw new Error(created.emailInUse ? EMAIL_IN_USE_MESSAGE : "Contul administratorului nu a putut fi creat.");
+    throw new Error(created.emailInUse ? EMAIL_IN_USE_MESSAGE : created.error);
   }
   try {
     const organizationId = await deps.createAgencyRows(created.id, rest);
@@ -49,7 +49,23 @@ export async function createAgencyCore(deps: CreateAgencyDeps, raw: CreateAgency
   }
 }
 
-export function isEmailInUseError(err: { message?: string; code?: string; status?: number } | null | undefined) {
+type AuthError = { message?: string; code?: string; status?: number } | null | undefined;
+
+/** Email in use only by explicit Auth code or message; status 422 also covers weak passwords and invalid emails. */
+export function isEmailInUseError(err: AuthError) {
   if (!err) return false;
-  return err.code === "email_exists" || err.status === 422 || /already (been )?registered|already exists/i.test(err.message ?? "");
+  return err.code === "email_exists" || err.code === "user_already_exists" || /already (been )?registered|already exists/i.test(err.message ?? "");
+}
+
+export const WEAK_PASSWORD_MESSAGE = "Parola nu respectă regulile de securitate (folosește cel puțin 8 caractere, literă mare, cifră și simbol, și nu o parolă cunoscută ca fiind compromisă).";
+
+/** Romanian reason for a refused admin account; the password is stripped from any provider text. */
+export function authCreateErrorMessage(err: AuthError, password: string) {
+  if (isEmailInUseError(err)) return EMAIL_IN_USE_MESSAGE;
+  if (err?.code === "weak_password") return WEAK_PASSWORD_MESSAGE;
+  if (err?.code === "email_address_invalid") return "Adresa de email nu este acceptată.";
+  let reason = (err?.message ?? "").slice(0, 300);
+  if (password) reason = reason.split(password).join("***");
+  reason = reason.trim().replace(/[.\s]+$/, "") || "eroare necunoscută";
+  return `Contul administratorului nu a putut fi creat: ${reason}.`;
 }

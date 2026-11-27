@@ -64,3 +64,24 @@ describe("blocări pentru agențiile create de superadmin", () => {
     expect(mustCompleteUserProfile({ roles: ["agent"], impersonating: false, profile })).toBe(true);
   });
 });
+
+import { authCreateErrorMessage, isEmailInUseError as inUse, WEAK_PASSWORD_MESSAGE } from "./superadmin-create-agency";
+describe("motivul refuzului contului", () => {
+  it("422 weak_password → mesajul despre parolă, nu email folosit", () => {
+    const err = { status: 422, code: "weak_password", message: "Password is known to be weak" };
+    expect(inUse(err)).toBe(false);
+    expect(authCreateErrorMessage(err, "Parola123!")).toBe(WEAK_PASSWORD_MESSAGE);
+  });
+  it("email_exists → email folosit", () => {
+    expect(authCreateErrorMessage({ status: 422, code: "email_exists" }, "x")).toContain("Există deja un cont cu acest email.");
+    expect(inUse({ code: "user_already_exists" })).toBe(true);
+  });
+  it("email_address_invalid → adresă neacceptată", () => {
+    expect(authCreateErrorMessage({ status: 400, code: "email_address_invalid" }, "x")).toBe("Adresa de email nu este acceptată.");
+  });
+  it("altă eroare → mesaj generic cu motivul, fără parolă", () => {
+    const msg = authCreateErrorMessage({ status: 422, code: "other", message: "Signups for SecretPass9 not allowed." }, "SecretPass9");
+    expect(msg).toBe("Contul administratorului nu a putut fi creat: Signups for *** not allowed.");
+    expect(msg).not.toContain("SecretPass9");
+  });
+});

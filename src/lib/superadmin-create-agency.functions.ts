@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createAgencyCore, createAgencySchema, isEmailInUseError } from "@/lib/superadmin-create-agency";
+import { authCreateErrorMessage, createAgencyCore, createAgencySchema, isEmailInUseError } from "@/lib/superadmin-create-agency";
 
 export const superadminCreateAgency = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -16,8 +16,8 @@ export const superadminCreateAgency = createServerFn({ method: "POST" })
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { data: res, error } = await supabaseAdmin.auth.admin.createUser({ email, password, email_confirm: true });
           if (error || !res.user) {
-            console.error("superadminCreateAgency: createUser failed", error?.code ?? error?.status);
-            return { error: "create_failed", emailInUse: isEmailInUseError(error) };
+            console.error("superadminCreateAgency: createUser failed", { code: error?.code ?? null, status: error?.status ?? null });
+            return { error: authCreateErrorMessage(error, password), emailInUse: isEmailInUseError(error) };
           }
           return { id: res.user.id };
         },
