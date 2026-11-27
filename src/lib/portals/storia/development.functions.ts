@@ -11,7 +11,7 @@ export const getDevelopmentPublishing=createServerFn({method:'POST'}).middleware
  const connected=Boolean(await loadStoriaTokens(d.organization_id,'developer'));
  const {data:publication}=await context.supabase.from('development_portal_publications').select('*').eq('development_id',d.id).maybeSingle();
  const {data:units}=await context.supabase.from('storia_development_units').select('*').eq('development_id',d.id);
- return {connected,publication,units:units??[],missingFields};
+ return {connected,publication,units:units??[],missingFields,contactAgent:investment.agent?{name:investment.agent.full_name,phone:investment.agent.phone}:null};
 });
 export const requestDevelopmentPublishing=createServerFn({method:'POST'}).middleware([requireActiveOrgAuth]).inputValidator((v:unknown)=>z.object({id:z.string().uuid(),withdraw:z.boolean().default(false)}).parse(v)).handler(async({data,context})=>{
  const {error}=await context.supabase.rpc('request_storia_development',{_id:data.id,_withdraw:data.withdraw});if(error)throw new Error(error.message);return {ok:true};

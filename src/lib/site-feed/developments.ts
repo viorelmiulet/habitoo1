@@ -36,7 +36,7 @@ export function developmentFeedPrices(d: DevelopmentRow, units: PropertyRow[]) {
   };
 }
 
-export function mapDevelopmentToFeed(d: DevelopmentRow, units: PropertyRow[], images: DevelopmentImageRow[], baseUrl: string): FeedDevelopment {
+export function mapDevelopmentToFeed(d: DevelopmentRow, units: PropertyRow[], images: DevelopmentImageRow[], baseUrl: string, contactAgentId: string | null = d.assigned_to ?? null): FeedDevelopment {
   const location = publicLocation(d);
   const prices = developmentFeedPrices(d, units);
   return {
@@ -54,7 +54,7 @@ export function mapDevelopmentToFeed(d: DevelopmentRow, units: PropertyRow[], im
     })),
     unitati: units.map(p => p.reference ?? p.id),
     pret_la_cerere: d.storia_hide_price === true, site_dezvoltator: /^https:\/\//i.test(d.developer_website ?? '') ? d.developer_website : null,
-    agent_id: d.assigned_to,
+    agent_id: contactAgentId,
     dataadaugare: d.created_at, datamodificare: d.updated_at,
   };
 }

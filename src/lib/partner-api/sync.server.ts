@@ -1,3 +1,4 @@
+import { readDevelopmentContacts } from "@/lib/developments/contact.server";
 /**
  * Recomputes the Partner API state for (portal, agency) pairs and records
  * events. Eligibility is the feed's: selectedPropertyIdsForPortal (activated
@@ -87,7 +88,8 @@ export function supabaseSyncDeps(db: Admin): SyncDeps {
           .eq("status", "active").is("deleted_at", null).order("id").range(from, to)));
         images.push(...await readCompleteRows((from, to) => db.from("development_images").select("*").eq("organization_id", org).in("development_id", chunk).order("id").range(from, to)));
       }
-      return eligiblePartnerDevelopments(org, devs, units, images);
+      const contacts = await readDevelopmentContacts(db,devs);
+      return eligiblePartnerDevelopments(org, devs, units, images, undefined, new Map([...contacts].map(([id, contact]) => [id, contact?.id ?? null])));
     },
     async developmentState(portal, org) {
       const { readCompleteRows } = await import("@/lib/site-feed/complete-read.server");

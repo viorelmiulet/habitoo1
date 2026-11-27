@@ -8,11 +8,11 @@ import { feedImageUrl, type PropertyRow } from "@/lib/site-feed/mapper";
 import { developmentFeedPrices, type DevelopmentRow, type DevelopmentImageRow } from "@/lib/site-feed/developments";
 import { stableJson, type PartnerDevelopment } from "./schema";
 
-export function mapPartnerDevelopment(d: DevelopmentRow, units: PropertyRow[], images: DevelopmentImageRow[], baseUrl = CRM_URL): PartnerDevelopment {
+export function mapPartnerDevelopment(d: DevelopmentRow, units: PropertyRow[], images: DevelopmentImageRow[], baseUrl = CRM_URL, contactAgentId: string | null = d.assigned_to ?? null): PartnerDevelopment {
   const location = publicLocation(d);
   const prices = developmentFeedPrices(d, units);
   return {
-    id: d.id, agency_id: d.organization_id, agent_id: d.assigned_to ?? null, name: d.name,
+    id: d.id, agency_id: d.organization_id, agent_id: contactAgentId, name: d.name,
     developer_name: d.developer_name ?? null, description: d.description ?? null,
     location: {
       county: d.county ?? null, city: d.city ?? null, district: d.district ?? null,
@@ -31,14 +31,14 @@ export function mapPartnerDevelopment(d: DevelopmentRow, units: PropertyRow[], i
 }
 
 /** Active, non-deleted developments of the agency with at least one eligible unit; links only to eligible developments. */
-export function eligiblePartnerDevelopments(org: string, developments: DevelopmentRow[], units: PropertyRow[], images: DevelopmentImageRow[], baseUrl = CRM_URL) {
+export function eligiblePartnerDevelopments(org: string, developments: DevelopmentRow[], units: PropertyRow[], images: DevelopmentImageRow[], baseUrl = CRM_URL, contactIds?: ReadonlyMap<string, string | null>) {
   const byDev = new Map<string, PropertyRow[]>();
   for (const u of units) if (u.development_id && u.organization_id === org) byDev.set(u.development_id, [...(byDev.get(u.development_id) ?? []), u]);
   const out: PartnerDevelopment[] = []; const links: Record<string, string> = {};
   for (const d of developments) {
     const list = byDev.get(d.id);
     if (!list?.length || d.organization_id !== org || d.status !== "active" || d.deleted_at) continue;
-    out.push(mapPartnerDevelopment(d, list, images.filter(i => i.development_id === d.id), baseUrl));
+    out.push(mapPartnerDevelopment(d, list, images.filter(i => i.development_id === d.id), baseUrl, contactIds ? contactIds.get(d.id) ?? null : d.assigned_to ?? null));
     for (const u of list) links[u.id] = d.id;
   }
   return { developments: out.sort((a, b) => a.id.localeCompare(b.id)), links };

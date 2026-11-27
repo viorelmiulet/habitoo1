@@ -822,3 +822,8 @@
 - [x] Regulă comună, liste Agenții/utilizare și selectoare Portaluri, cu excepție pentru link direct; grația inclusă prin citiri suplimentare, agregatele istorice păstrate.
 - [x] 24/24 teste strict noi/modificate și build OK; fără date, migrări sau publicare.
 - [ ] Verificare vizuală în cont real: solicitantul nu are cont asociat previzualizării; necesită autentificarea sa, fără utilizatori de test.
+
+## Contactul ansamblului pe portaluri
+- [x] Creator eligibil, apoi agentul alocat: resolver comun pentru Storia, feed și Partner API; citire în loturi și contact informativ în Publicare.
+- [x] 21/21 teste în cele trei fișiere noi/modificate și build OK; fără date, drepturi, contactele unităților sau publicare.
+- Verificarea în cont real rămâne neconfirmată: solicitantul nu are cont asociat previzualizării; fără utilizatori de test sau apeluri reale.

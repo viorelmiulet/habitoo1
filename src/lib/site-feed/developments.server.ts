@@ -1,9 +1,10 @@
+import { readDevelopmentContacts, resolveDevelopmentContact } from "@/lib/developments/contact.server";
 import { feedSelectionPortal } from './agency-site';
 import { selectedPropertyIdsForPortal } from './selection.server';
 import { readCompleteRows } from './complete-read.server';
 import { errorResponse, jsonResponse, FEED_API_VERSION, type FeedAuthOk } from './auth.server';
 import { buildPaginatedFeed, parsePagination, isPropertyFeedEligible, FEED_PUBLIC_STATUSES, type PropertyRow } from './mapper';
-import { mapDevelopmentToFeed, type DevelopmentRow, type DevelopmentImageRow } from './developments';
+import { mapDevelopmentToFeed, type DevelopmentRow } from './developments';
 import { feedUrlsForRequest } from './config';
 import type { FeedHandlerResult } from './handlers.server';
 import {selectedDevelopmentIds} from '@/lib/developments/portal-selections.server';
@@ -58,9 +59,9 @@ export async function handleDevelopmentsList(request: Request, auth: FeedAuthOk)
     .in('id',ids.slice(i,i+300)).order('id').range(from,to)));
   parents.sort((a,b) => b.updated_at.localeCompare(a.updated_at) || a.id.localeCompare(b.id));
   const rows = parents.slice((page-1)*perPage,page*perPage);
-  const images = await imagesFor(db,auth.organizationId,rows.map(d=>d.id));
+  const [images, contacts] = await Promise.all([imagesFor(db,auth.organizationId,rows.map(d=>d.id)), readDevelopmentContacts(db, rows)]);
   const baseUrl = feedUrlsForRequest(url).baseUrl;
-  const feed = buildPaginatedFeed({data:rows.map(d=>mapDevelopmentToFeed(d,unitMap.get(d.id) ?? [],images.filter(i=>i.development_id===d.id),baseUrl)),total:parents.length,page,perPage,requestUrl:url});
+  const feed = buildPaginatedFeed({data:rows.map(d=>mapDevelopmentToFeed(d,unitMap.get(d.id) ?? [],images.filter(i=>i.development_id===d.id),baseUrl,contacts.get(d.id)?.id ?? null)),total:parents.length,page,perPage,requestUrl:url});
   return {response:jsonResponse({...feed,api_version:FEED_API_VERSION},200,60),items:rows.length};
 }
 
@@ -76,7 +77,7 @@ export async function handleDevelopmentDetail(request: Request, auth: FeedAuthOk
   if (!d) return missing();
   const units = await readDevelopmentFeedUnits(auth,id);
   if (!units.length) return missing();
-  const images: DevelopmentImageRow[] = await imagesFor(db,auth.organizationId,[id]);
-  const mapped = mapDevelopmentToFeed(d,units,images,feedUrlsForRequest(new URL(request.url)).baseUrl);
+  const [images, contact] = await Promise.all([imagesFor(db,auth.organizationId,[id]), resolveDevelopmentContact(db,d)]);
+  const mapped = mapDevelopmentToFeed(d,units,images,feedUrlsForRequest(new URL(request.url)).baseUrl,contact?.id ?? null);
   return {response:jsonResponse({data:mapped,api_version:FEED_API_VERSION},200,60),items:1};
 }

@@ -5,11 +5,11 @@ import {beforeEach,it,expect,vi} from 'vitest';
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
 import {DevelopmentPublishing} from './DevelopmentPublishing';
 Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});
-const mocks=vi.hoisted(()=>({result:{connected:false,publication:null,units:[],missingFields:[] as string[]},send:vi.fn()}));
+const mocks=vi.hoisted(()=>({result:{connected:false,publication:null,units:[],missingFields:[] as string[],contactAgent:null as {name:string;phone:string|null}|null},send:vi.fn()}));
 vi.mock('@tanstack/react-start',()=>({useServerFn:(f:unknown)=>f}));
 vi.mock('@/lib/portals/storia/development.functions',()=>({getDevelopmentPublishing:async()=>mocks.result,requestDevelopmentPublishing:mocks.send}));
 vi.mock('@/lib/developments/portal-selections.functions',()=>({getDevelopmentPortalSelections:async()=>({portals:[{id:'storia',name:'Storia'}],selections:[],job:null}),getDevelopmentPortalStates:async()=>({portals:[]}),setDevelopmentPortalSelections:vi.fn()}));
-beforeEach(()=>{mocks.result={connected:false,publication:null,units:[],missingFields:[]};vi.clearAllMocks();});
+beforeEach(()=>{mocks.result={connected:false,publication:null,units:[],missingFields:[],contactAgent:null};vi.clearAllMocks();});
 async function renderPublishing(check:(c:HTMLDivElement)=>void){
  const c=document.createElement('div');document.body.append(c);const root=createRoot(c);const qc=new QueryClient({defaultOptions:{queries:{retry:false}}});
  try{
@@ -32,4 +32,8 @@ it('nota apare și când lipsește numai fotografia',async()=>{
 });
 it('ansamblul complet nu afișează avertismente',async()=>{
  await renderPublishing(c=>{expect(c.textContent).not.toContain('Storia va refuza');expect(c.textContent).not.toContain('Fără descriere și fotografie');});
+});
+it("afișează contactul informativ fără a trimite publicări",async()=>{
+ mocks.result.contactAgent={name:"Creator fictiv",phone:"0700000001"};
+ await renderPublishing(c=>{expect(c.textContent).toContain("Contact pe portaluri: Creator fictiv, 0700000001");expect(mocks.send).not.toHaveBeenCalled();});
 });

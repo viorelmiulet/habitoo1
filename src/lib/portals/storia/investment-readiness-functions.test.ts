@@ -12,8 +12,8 @@ vi.mock('./oauth.server',()=>({loadStoriaTokens:mocks.tokens}));
 vi.mock('@/lib/site-feed/property-media.server',()=>({publishableImageTarget:mocks.sign}));
 function from(table:string){
  const filters:[string,unknown][]=[];mocks.reads.push({table,filters});
- const result=()=>({data:(mocks.tables[table]??[]).filter(row=>filters.every(([key,value])=>(row[key]??null)===value)),error:null});
- const query={select:()=>query,eq:(key:string,value:unknown)=>{filters.push([key,value]);return query;},is:(key:string,value:unknown)=>{filters.push([key,value]);return query;},order:()=>query,single:async()=>({...result(),data:result().data[0]??null}),maybeSingle:async()=>({...result(),data:result().data[0]??null}),then:(resolve:(v:unknown)=>unknown)=>Promise.resolve(result()).then(resolve)};
+ const result=()=>({data:(mocks.tables[table]??[]).filter(row=>filters.every(([key,value])=>Array.isArray(value)?value.includes(row[key]):(row[key]??null)===value)),error:null});
+ const query={select:()=>query,eq:(key:string,value:unknown)=>{filters.push([key,value]);return query;},is:(key:string,value:unknown)=>{filters.push([key,value]);return query;},in:(key:string,values:unknown[])=>{filters.push([key,values]);return query;},range:()=>query,order:()=>query,single:async()=>({...result(),data:result().data[0]??null}),maybeSingle:async()=>({...result(),data:result().data[0]??null}),then:(resolve:(v:unknown)=>unknown)=>Promise.resolve(result()).then(resolve)};
  return query;
 }
 import {getDevelopmentPublishing} from './development.functions';
@@ -31,7 +31,7 @@ it('citirea întoarce cele patru lipsuri folosind prețul, agentul și fotografi
  const result=await getDevelopmentPublishing({data:{id}});
  expect(result.missingFields).toEqual(['Descriere','Suprafață minimă (m²)','Suprafață maximă (m²)','Preț minim pe m²']);
  expect(mocks.reads.find(r=>r.table==='properties')?.filters).toEqual([['development_id',id],['deleted_at',null]]);
- expect(mocks.reads.find(r=>r.table==='profiles')?.filters).toEqual([['id','agent'],['organization_id','org']]);
+ expect(mocks.reads.find(r=>r.table==='profiles')?.filters).toEqual([['organization_id','org'],['id',['agent']]]);
  expect(mocks.sign).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled();
 });
 it('numără numai fotografiile publicabile, excluzând planul separat',async()=>{
@@ -43,4 +43,11 @@ it('ansamblul inaccesibil nu permite alte citiri',async()=>{
  mocks.tables['developments']=[];
  await expect(getDevelopmentPublishing({data:{id}})).rejects.toThrow('Ansamblu inaccesibil.');
  expect(mocks.reads.map(r=>r.table)).toEqual(['developments']);expect(mocks.tokens).not.toHaveBeenCalled();
+});
+it('contactul informativ folosește același creator ca preflightul Storia',async()=>{
+ const d=mocks.tables['developments']?.[0];if(!d)throw new Error('Lipsește ansamblul fictiv');
+ d['created_by']='creator';
+ mocks.tables['profiles']?.push({id:'creator',organization_id:'org',is_active:true,full_name:'Creator fictiv',email:'creator@e.test',phone:'0700000001'});
+ const result=await getDevelopmentPublishing({data:{id}});
+ expect(result.contactAgent).toEqual({name:'Creator fictiv',phone:'0700000001'});
 });
