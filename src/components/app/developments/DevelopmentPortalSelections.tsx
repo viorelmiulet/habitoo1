@@ -95,17 +95,19 @@ export function DevelopmentPortalSelections({ id, editable, storiaConnected, mis
       const enabled = draft[portal.id] ?? saved.get(portal.id) ?? false;
       const status = states.data?.portals.find(item => item.portalId === portal.id);
       const showStatus = saved.get(portal.id) === true && status;
+      const notAllowed = Boolean(q.data?.allowedPortals) && !q.data?.allowedPortals?.includes(portal.id) && !enabled;
       const developmentLabel = status?.developmentState === 'published' ? 'Publicat' : status?.developmentState === 'error' ? 'Cu erori' : 'Nepublicat';
       return <label key={portal.id} className="flex min-h-11 items-start gap-2">
         <Checkbox
           className="mt-0.5"
           aria-label={portal.id === 'storia' ? 'Storia — Cont dezvoltator' : portal.name}
           checked={enabled}
-          disabled={!editable || mutation.isPending || running || (portal.id === 'storia' && !storiaConnected && !enabled)}
+          disabled={!editable || mutation.isPending || running || (portal.id === 'storia' && !storiaConnected && !enabled) || notAllowed}
           onCheckedChange={value => setChecked(portal.id, value === true)}
         />
         <span>
           <span>{portal.id === 'storia' ? 'Storia — Cont dezvoltator' : portal.name}</span>
+          {notAllowed ? <span className="block text-xs text-muted-foreground">Nepermis de administrator</span> : null}
           {showStatus ? <span className="block text-xs text-muted-foreground">
             {status.covered
               ? `${status.published} din ${status.total} unități publicate${status.errors ? ` · ${status.errors} cu erori` : ''}`

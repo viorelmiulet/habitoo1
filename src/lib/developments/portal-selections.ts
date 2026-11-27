@@ -17,4 +17,11 @@ export function selectedDevelopmentPortalIds(selections:DevelopmentPortalSelecti
 }
 export function developmentSelectedForPortal(selections:DevelopmentPortalSelection[],developmentId:string,portal:string) {
  return selections.some(s=>s.development_id===developmentId&&s.portal_key===portal&&s.enabled);
+}/** Portals an agent may enable: admin allow-list intersected with agency eligibility; null = unrestricted (admin/superadmin). */
+export function agentAllowedDevelopmentPortals(eligible:string[],allowed:string[]|null):string[]|null{return allowed===null?null:eligible.filter(id=>allowed.includes(id));}
+/** First enabling change outside the actor's allow-list; disabling is always permitted. */
+export function forbiddenDevelopmentPortal(changes:{portalKey:string;enabled:boolean}[],allowed:string[]|null):string|null{
+ if(allowed===null)return null;return changes.find(c=>c.enabled&&!allowed.includes(c.portalKey))?.portalKey??null;
 }
+export const DEVELOPMENT_PORTAL_NOT_ALLOWED='Nepermis de administrator';
+export const DEVELOPMENT_CREATE_NOT_ALLOWED='Administratorul agenției nu ți-a dat dreptul să creezi ansambluri.';

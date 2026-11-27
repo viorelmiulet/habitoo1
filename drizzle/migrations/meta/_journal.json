@@ -2472,6 +2472,13 @@
       "when": 1795785964434,
       "tag": "0352_superadmin_create_agency",
       "breakpoints": true
+    },
+    {
+      "idx": 353,
+      "version": "7",
+      "when": 1795787112852,
+      "tag": "0353_agent_development_permissions",
+      "breakpoints": true
     }
   ]
 }

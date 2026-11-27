@@ -12,6 +12,7 @@ import { UserAvatar } from "@/components/app/UserAvatar";
 import { AgentPortfolioList, type AgentPortfolioProperty } from "@/components/app/AgentPortfolioList";
 import { TeamMemberActions, teamQueryKey } from "@/components/app/team/TeamMemberActions";
 import { Button } from "@/components/ui/button";
+import { AgentDevelopmentPermissions } from "@/components/app/developments/DevelopmentPermissions";
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
 import { normalizeRoMobile } from "@/lib/user-profile";
@@ -142,6 +143,10 @@ function AgentDetailPage() {
         <Stat label="Vândute / închiriate" value={props.isLoading ? null : closed.length} />
         <Stat label="Total portofoliu" value={props.isLoading ? null : list.length} />
       </div>
+
+      {member.roles.includes("agent") && !member.roles.includes("agency_admin") && !member.roles.includes("superadmin") ? (
+        <AgentDevelopmentPermissions userId={member.id} />
+      ) : null}
 
       <section data-tour="team-portfolio" className="overflow-hidden rounded-[14px] border border-border bg-card">
         <div className="border-b border-border px-4 py-3 sm:px-5">

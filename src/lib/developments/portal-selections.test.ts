@@ -1,5 +1,5 @@
 import {it,expect} from 'vitest';
-import {eligibleDevelopmentPortalIds,selectedDevelopmentPortalIds,developmentSelectedForPortal,developmentPortalChangesSchema} from './portal-selections';
+import {agentAllowedDevelopmentPortals,forbiddenDevelopmentPortal,eligibleDevelopmentPortalIds,selectedDevelopmentPortalIds,developmentSelectedForPortal,developmentPortalChangesSchema} from './portal-selections';
 import {allPortals} from '@/lib/portals/registry';
 import {dynamicPortalDefinition} from '@/lib/dynamic-feed-portals';
 it('eligibilitatea include Storia dezvoltator, feed-uri activate și Partner API, fără push sau portaluri inactive',()=>{
@@ -26,4 +26,11 @@ it('modificările sunt între 1 și 50, fără duplicate, cu ID-uri dinamice per
  expect(developmentPortalChangesSchema.safeParse([{portalKey:'storia',enabled:true},{portalKey:'storia',enabled:false}]).success).toBe(false);
  expect(developmentPortalChangesSchema.safeParse(Array.from({length:50},(_,i)=>({portalKey:`p-${i}`,enabled:true}))).success).toBe(true);
  expect(developmentPortalChangesSchema.safeParse(Array.from({length:51},(_,i)=>({portalKey:`p-${i}`,enabled:true}))).success).toBe(false);
+});
+it('lista agentului este intersectată cu eligibilitatea; debifările sunt mereu permise',()=>{
+ expect(agentAllowedDevelopmentPortals(['storia','clickimob'],null)).toBeNull();
+ expect(agentAllowedDevelopmentPortals(['storia','clickimob'],['clickimob','imobli'])).toEqual(['clickimob']);
+ expect(forbiddenDevelopmentPortal([{portalKey:'storia',enabled:true}],null)).toBeNull();
+ expect(forbiddenDevelopmentPortal([{portalKey:'storia',enabled:false},{portalKey:'clickimob',enabled:true}],['clickimob'])).toBeNull();
+ expect(forbiddenDevelopmentPortal([{portalKey:'clickimob',enabled:true},{portalKey:'storia',enabled:true}],['clickimob'])).toBe('storia');
 });

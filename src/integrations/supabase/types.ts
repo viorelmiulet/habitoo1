@@ -1053,6 +1053,41 @@ export type Database = {
           },
         ]
       }
+      agent_development_permissions: {
+        Row: {
+          allowed_portals: string[]
+          can_create: boolean
+          organization_id: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          allowed_portals?: string[]
+          can_create?: boolean
+          organization_id: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          allowed_portals?: string[]
+          can_create?: boolean
+          organization_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_development_permissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_portal_preferences: {
         Row: {
           created_at: string
@@ -14449,6 +14484,7 @@ export type Database = {
         }
         Returns: string
       }
+      agent_can_create_development: { Args: { _org: string }; Returns: boolean }
       ai_credit_limit: { Args: { p_org: string }; Returns: number }
       ai_credit_month: { Args: { p_at?: string }; Returns: string }
       ai_credit_refund_stale: { Args: never; Returns: number }
