@@ -832,3 +832,8 @@
 - [x] Confirmate deselectările fără HTTP și cele 48 de listări retrase fără identificator; declanșatoare strict mva și coada existentă păstrează idstr, inclusiv după publicări în lucru.
 - [x] 33/33 teste în cele două fișiere noi/modificate: DELETE corect, retry 5xx, 404 succes, neeligibilitate, protecția secretelor și izolarea altor portaluri; build OK.
 - [x] Migrările 0350/0351 aplicate fără modificări ale anunțurilor existente; citirea live confirmă zero retrageri noi și cele 48 intacte; fără apeluri reale sau publicare.
+
+## Google Search Console — site-ul publicat Lovable
+- [x] Etichetă META și sitemap cu adresa Lovable, fără schimbarea sitemapului domeniului public; 11/11 teste modificate și verificare locală.
+- [ ] Publicare cu aprobare, verificare și adăugare proprietate URL-prefix.
+- [ ] Trimiterea sitemapului după confirmarea adresei live.

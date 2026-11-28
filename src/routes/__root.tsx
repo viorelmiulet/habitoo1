@@ -176,6 +176,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "google-site-verification", content: "wJfWVfZiGs4Tl0iih3cb1TotB3Fd1nt86hCkmqohNus" },
       ...(matches.some(m => m.pathname.startsWith('/o/')) ? [] : [{ name: "author", content: "Habitoo" }]),
       ...(matches.some(m => m.pathname.startsWith('/o/')) ? [] : [
       // Sitewide default — folosit doar de paginile fără titlu propriu.

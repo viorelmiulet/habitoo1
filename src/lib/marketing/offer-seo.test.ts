@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
-import { offerSlug, offerCanonicalUrl, isOfferIndexable, buildOfferSitemapXml, buildRootSitemapIndexXml, offerSitemapPages } from "./offer-seo";
+import { offerSlug, offerCanonicalUrl, isOfferIndexable, buildOfferSitemapXml, buildRootSitemapIndexXml, offerSitemapPages, buildLovablePublishedSitemapXml, isLovablePublishedHostname } from "./offer-seo";
 import { flushOfferIndexNow } from "./indexnow.server";
 import { shouldTagNoindex } from "@/lib/host-policy";
 
@@ -47,6 +47,14 @@ describe("sitemap oferte", () => {
     const idx = buildRootSitemapIndexXml(90001);
     expect(idx).toContain("<loc>https://www.habitoo.ro/sitemap-pages.xml</loc>");
     expect(idx).toContain("<loc>https://www.habitoo.ro/sitemap-oferte.xml?pagina=3</loc>");
+  });
+  it("sitemap Lovable pe aceeași origine, fără schimbarea domeniului public", () => {
+    expect(isLovablePublishedHostname("habitoocrm.lovable.app")).toBe(true);
+    expect(isLovablePublishedHostname("www.habitoo.ro")).toBe(false);
+    const xml = buildLovablePublishedSitemapXml();
+    expect(xml).toContain("<loc>https://habitoocrm.lovable.app/</loc>");
+    expect(xml).not.toContain("https://www.habitoo.ro");
+    expect(buildRootSitemapIndexXml(0)).toContain("<loc>https://www.habitoo.ro/sitemap-pages.xml</loc>");
   });
 });
 

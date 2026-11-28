@@ -1,5 +1,6 @@
 /** Browser-safe SEO helpers for public offer pages (/oferta/{slug}). Mirrors public.offer_slug in the database. */
 export const OFFER_SITE = "https://www.habitoo.ro";
+export const LOVABLE_PUBLISHED_SITE = "https://habitoocrm.lovable.app";
 export const OFFER_SITEMAP_PAGE_SIZE = 45000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (value: string) => UUID.test(value);
@@ -81,4 +82,11 @@ export function buildOfferSitemapXml(rows: { slug: string; lastmod: string | nul
 export function buildRootSitemapIndexXml(offerTotal: number) {
   const locs = [`${OFFER_SITE}/sitemap-pages.xml`, `${OFFER_SITE}/sitemap-blog.xml`, `${OFFER_SITE}/sitemap-agentii.xml`, ...Array.from({ length: offerSitemapPages(offerTotal) }, (_, i) => offerSitemapPageUrl(i + 1))];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${locs.map(l => `  <sitemap><loc>${esc(l)}</loc></sitemap>`).join("\n")}\n</sitemapindex>\n`;
+}
+export function isLovablePublishedHostname(hostname: string) {
+  return hostname.toLowerCase() === new URL(LOVABLE_PUBLISHED_SITE).hostname;
+}
+/** Search Console URL-prefix verification requires a sitemap on the exact published origin. */
+export function buildLovablePublishedSitemapXml() {
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${LOVABLE_PUBLISHED_SITE}/</loc></url>\n</urlset>\n`;
 }
