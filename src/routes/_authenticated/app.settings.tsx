@@ -30,7 +30,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { PublicProfileLink } from "@/components/app/PublicProfileLink";
 import { AgencyDescriptionPreview } from "@/components/app/AgencyDescriptionPreview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { ImobiliarePromotionsAdminCard } from "@/components/app/ImobiliarePromotionsAdminCard";
 import { ImoradarAutoCard } from "@/components/app/ImoradarAutoCard";
 
@@ -702,7 +701,6 @@ function SettingsPage() {
             <TabsContent data-tour="settings-portals" value="portals" className="mt-0">
               <div className="space-y-6">
                 <AgencyPortalCatalogCard />
-                <PortalSlotsCard />
                 <ImoradarAutoCard />
                 <ImobiliarePromotionsAdminCard />
                 <ProperstarFeedCard />

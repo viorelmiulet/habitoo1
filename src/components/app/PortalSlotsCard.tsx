@@ -59,7 +59,7 @@ function formatSlots(value: number | null): string {
   return value === null ? "" : String(value);
 }
 
-export function PortalSlotsCard({ organizationId }: { organizationId?: string }) {
+export function PortalSlotsCard({ organizationId, portalId }: { organizationId?: string; portalId?: string }) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPortalSlotMatrix);
   const loadTrail = useServerFn(getPortalSlotAuditTrail);
@@ -194,12 +194,15 @@ export function PortalSlotsCard({ organizationId }: { organizationId?: string })
   if (matrix.isError) return <QueryError error={matrix.error} onRetry={() => matrix.refetch()} />;
 
   const data = matrix.data;
-  const job = status.data;
+  const portals = (data?.portals ?? []).filter((portal) => !portalId || portal.portalId === portalId);
+  const entries = (trail.data ?? []).filter((entry) => !portalId || entry.portalKey === portalId);
+  const job = !portalId || status.data?.portalKey === portalId ? status.data : null;
+  const contentClass = portalId ? "py-4" : "px-5 py-4";
 
   return (
-    <section className="panel">
-      <header className="border-b border-border px-5 py-4">
-        <h2 className="text-sm font-semibold tracking-wide uppercase">Sloturi portaluri</h2>
+    <section className={portalId ? "min-w-0 border-t border-border" : "panel"}>
+      <header className={`border-b border-border ${contentClass}`}>
+        <h2 className="text-sm font-semibold tracking-wide uppercase">{portalId ? `Sloturi pe ${portals[0]?.portalName ?? portalId}` : "Sloturi portaluri"}</h2>
         <p className="text-xs text-muted-foreground">
           Câte oferte poate avea publicate fiecare agent pe fiecare portal. Câmp gol = nelimitat.
           Locul este consumat de agentul responsabil al ofertei.
@@ -226,17 +229,17 @@ export function PortalSlotsCard({ organizationId }: { organizationId?: string })
         </div>
       ) : null}
 
-      {data && data.portals.length === 0 ? (
+      {data && portals.length === 0 ? (
         <p className="px-5 py-6 text-sm text-muted-foreground">
           Agenția nu are încă niciun portal activat.
         </p>
       ) : null}
 
-      {data?.portals.map((portal) => (
-        <div key={portal.portalId} className="border-b border-border px-5 py-4 last:border-b-0">
+      {portals.map((portal) => (
+        <div key={portal.portalId} className={`border-b border-border ${contentClass} last:border-b-0`}>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold">{portal.portalName}</h3>
+              {!portalId ? <h3 className="text-sm font-semibold">{portal.portalName}</h3> : null}
               <p className="text-xs text-muted-foreground">
                 Total folosit: {portal.agencyUsed}
                 {portal.agencyTotal === null ? " (nelimitat)" : ` / ${portal.agencyTotal}`}
@@ -269,7 +272,8 @@ export function PortalSlotsCard({ organizationId }: { organizationId?: string })
             </div>
           </div>
 
-          <table className="mt-4 w-full text-sm">
+          <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground">
                 <th className="py-1">Utilizator</th>
@@ -279,7 +283,7 @@ export function PortalSlotsCard({ organizationId }: { organizationId?: string })
               </tr>
             </thead>
             <tbody>
-              {data.users.map((user) => {
+              {(data?.users ?? []).map((user) => {
                 const cell = portal.cells.find((row) => row.userId === user.userId);
                 const key = `user:${portal.portalId}:${user.userId}`;
                 return (
@@ -320,14 +324,15 @@ export function PortalSlotsCard({ organizationId }: { organizationId?: string })
               })}
             </tbody>
           </table>
+          </div>
         </div>
       ))}
 
-      {(trail.data ?? []).length > 0 ? (
-        <div className="border-t border-border px-5 py-4">
+      {entries.length > 0 ? (
+        <div className={`border-t border-border ${contentClass}`}>
           <h3 className="text-xs font-semibold tracking-wide uppercase">Istoric modificări</h3>
           <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-            {(trail.data ?? []).map((entry) => (
+            {entries.map((entry) => (
               <li key={entry.id}>
                 {entry.createdAt ? new Date(entry.createdAt).toLocaleString("ro-RO") : "—"} —{" "}
                 {entry.actorName ?? "necunoscut"} a schimbat{" "}

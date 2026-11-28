@@ -13,7 +13,6 @@ const MOVED = [
   '<ImospotSettingsCard portal="imospot"',
   '<ImospotSettingsCard portal="vdi"',
   "<LaCheieCard",
-  "<PortalSlotsCard",
   "Publicarea ofertelor pe portaluri",
 ];
 
@@ -28,10 +27,9 @@ describe("Setări portaluri", () => {
     expect(canAccessSuperadmin(null)).toBe(false);
   });
 
-  it("meniul are „Setări portaluri” imediat după „Portaluri”", () => {
+  it("meniul păstrează accesul la „Setări portaluri”", () => {
     const items = superadminNav.flatMap((g) => g.items);
-    const i = items.findIndex((x) => x.label === "Portaluri");
-    expect(items[i + 1]).toMatchObject({ label: "Setări portaluri", to: "/superadmin/setari-portaluri" });
+    expect(items.find((x) => x.label === "Setări portaluri")).toMatchObject({ to: "/superadmin/setari-portaluri" });
   });
 
   it("cardurile mutate lipsesc din Portaluri și apar toate pe pagina nouă", () => {
@@ -43,6 +41,7 @@ describe("Setări portaluri", () => {
     expect(portalsSource).toContain("<PortalsCard");
     expect(portalsSource).toContain("Jurnal portaluri");
     expect(settingsSource).toContain("Jurnal portaluri");
+    expect(settingsSource).not.toContain("<PortalSlotsCard");
   });
 
   it("?org= preselectează agenția pe ambele pagini", () => {

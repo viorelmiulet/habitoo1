@@ -1,4 +1,5 @@
 import { StoriaAccountControls } from "@/components/app/StoriaAccountControls";
+import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { VREXA_MESSAGES_DISABLED } from "@/lib/portals/vrexa/messages";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -393,10 +394,11 @@ function AgencyPortalSetupBody({ portalId, organizationId }: { portalId: string;
                 <Button type="button" disabled={busy} onClick={() => active.mutate(true)}>Activează portalul</Button>
               )}
             </div>
-            {s.id === "homezz" && s.connection.hasPortalCredential ? <HomezzAgentsPanel /> : null}
             {s.id === "vrexa" && s.connection.vrexaMessagesDisabled ? <p role="status" className="text-sm text-muted-foreground">{VREXA_MESSAGES_DISABLED}</p> : null}
           </>
         )}
+        {s.connection.activated ? <PortalSlotsCard portalId={s.id} /> : null}
+        {s.id === "homezz" && s.connection.hasPortalCredential ? <HomezzAgentsPanel /> : null}
       </section>
 
       <ConfirmDialog

@@ -1,4 +1,5 @@
 import { HomezzAgentsPanel } from "@/components/app/HomezzAgentsPanel";
+import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { StoriaAccountControls } from "@/components/app/StoriaAccountControls";
 /**
  * Hub-ul de portaluri imobiliare (Superadmin → Portaluri), per agenție.
@@ -545,9 +546,6 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
               {dirty ? <StatusBadge className="h-7 text-[13px]" tone="warning">Modificări nesalvate</StatusBadge> : null}
             </div>
 
-            {item.portal.id === "homezz" && item.connection.hasPortalCredential ? (
-              <div className="px-4 pb-4 sm:px-5"><HomezzAgentsPanel organizationId={organizationId} /></div>
-            ) : null}
             {hasError && item.connection.lastSyncError ? (
               <p className="px-4 pb-4 text-sm break-words text-destructive sm:px-5">{item.connection.lastSyncError}</p>
             ) : null}
@@ -1112,6 +1110,11 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                         </Button>
                       ) : null}
                     </div>
+
+                    {item.connection.activated ? <PortalSlotsCard organizationId={organizationId} portalId={item.portal.id} /> : null}
+                    {item.portal.id === "homezz" && item.connection.hasPortalCredential ? (
+                      <div className="px-4 pb-4 sm:px-5"><HomezzAgentsPanel organizationId={organizationId} /></div>
+                    ) : null}
 
                     <div className="flex flex-wrap gap-1.5">
                       {item.portal.capabilities.map((c) => (

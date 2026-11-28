@@ -21,7 +21,6 @@ import { PortalRelayCard } from "@/components/superadmin/PortalRelayCard";
 import { LaCheieCard } from "@/components/superadmin/LaCheieCard";
 import { PortalOrgSelector } from "@/components/superadmin/PortalOrgSelector";
 import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
-import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { listOrgPropertiesForPortals, listPortalOrganizations } from "@/lib/portals.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/setari-portaluri")({
@@ -112,7 +111,6 @@ function PortalSettingsPage() {
       {organizationId ? (
         <div className="mt-6 space-y-6">
           <LaCheieCard organizationId={organizationId} />
-          <PortalSlotsCard organizationId={organizationId} />
 
           <section className="panel rounded-[14px]">
             <header className="space-y-3 border-b border-border px-5 py-4">

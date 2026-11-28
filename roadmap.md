@@ -1,3 +1,8 @@
+## Sloturi în activarea fiecărui portal
+- [x] Variantă încorporată filtrată per portal, mutată sub butoane în SuperAdmin și contul administratorului; cardurile separate eliminate.
+- [x] 11/11 teste în cele trei fișiere exclusiv noi/modificate, compilare fără erori; fără scrieri sau publicare, commit final.
+- [ ] Verificare vizuală în cont real: solicitantul nu are cont asociat previzualizării; necesită autentificarea lui, fără crearea unui utilizator de test.
+
 ## HomeZZ — prima publicare și recuperare ID inexistent
 - [x] HB-1649 confirmat prin citire: ofertă goală, update refuzat cu ID inexistent; identificatori stricți, un insert de rezervă și jurnal redactat implementate.
 - [x] 30/30 teste exclusiv publish.test.ts trec, fără publicare sau apeluri reale; verificarea compilării și commit la încheiere.
