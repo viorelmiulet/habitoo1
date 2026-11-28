@@ -4,6 +4,7 @@
  * date, storage, portaluri, autentificare), ca testele să ruleze integral pe mock-uri.
  */
 import { isRetryablePortalBulkError } from "@/lib/portals/bulk";
+import { isPartnerApiSandboxAgency, PARTNER_API_SANDBOX_DELETE_ERROR } from "@/lib/partner-api/sandbox-identity";
 
 export const MEDIA_BUCKET = "property-media";
 export const ORG_BUCKETS = ["agency-logos", "avatars", "ai-media", "acp-reports", "crm-documents"] as const;
@@ -116,6 +117,9 @@ export type StartDeletionInput = {
 
 /** Protecțiile cerute; aruncă cu un mesaj clar, altfel întoarce contextul validat. */
 export async function validateDeletionRequest(store: DeletionStore, input: StartDeletionInput) {
+  if (input.kind === "organization" && isPartnerApiSandboxAgency(input.targetId)) {
+    throw new Error(PARTNER_API_SANDBOX_DELETE_ERROR);
+  }
   const actor = await store.getProfile(input.actorId);
   let targetOrgId: string | null = null;
   let label: string | null = null;

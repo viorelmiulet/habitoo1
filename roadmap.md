@@ -1,3 +1,8 @@
+## Partner API — reprovizionarea și protecția agenției demo
+- [x] Organizația și allowlist-ul recreate idempotent prin 0354; reset verificat la 12 anunțuri, 2 agenți și 1 ansamblu pentru fiecare cauta-ro/propri-ro, fără profiluri CRM necesare.
+- [x] Protecție DB/UI la ștergere, arhivare și suspendare; excludere din liste și statistici prin 0355, public/campanii verificate; erori DB jurnalizate și afișate corect.
+- [x] 51/51 teste exclusiv noi/modificate și compilare OK; fără vand-ro, chei/date live modificate sau publicare; commit la încheiere.
+
 ## Promovări în activarea fiecărui portal
 - [x] Imobiliare.ro încorporat sub sloturi în SuperAdmin și pentru administratorul agenției; cardul separat eliminat.
 - [x] Imopedia afișează pachetul de boost-uri prin funcția și cache-ul existente, inclusiv eroarea, fără consum.

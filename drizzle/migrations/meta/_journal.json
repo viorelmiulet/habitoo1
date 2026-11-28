@@ -2479,6 +2479,20 @@
       "when": 1795787112852,
       "tag": "0353_agent_development_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 354,
+      "version": "7",
+      "when": 1795854406883,
+      "tag": "0354_partner_api_sandbox_restore",
+      "breakpoints": true
+    },
+    {
+      "idx": 355,
+      "version": "7",
+      "when": 1795854423539,
+      "tag": "0355_partner_api_sandbox_statistics",
+      "breakpoints": true
     }
   ]
 }

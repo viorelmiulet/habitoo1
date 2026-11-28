@@ -18,6 +18,7 @@ import { useCurrentUser } from "@/hooks/use-session";
 import { listSuperadminOrganizationIds } from "@/lib/account-deletion.functions";
 import { listPlatformUsers } from "@/lib/superadmin-users.functions";
 import { organizationDeletionBlock } from "@/lib/user-deletion";
+import { isPartnerApiSandboxAgency } from "@/lib/partner-api/sandbox-identity";
 import { approveRegistrationRequest } from "@/lib/registration-approval.functions";
 import { setOrganizationAiEnabled } from "@/lib/ai/features/features.functions";
 import { PLAN_AGENT_LIMITS, PLAN_KEYS, PLAN_LABELS, PLAN_PRICES, normalizePlan, planAgentLimitLabel, planPriceLabel, type PlanKey } from "@/lib/plans";
@@ -102,13 +103,14 @@ function useOrgMutations() {
 /** Plan, abonament și stare — în cardul „Abonament și plan”. */
 export function AgencySubscriptionControls({ org }: { org: Org }) {
   const { update, saveSubscription, savePlan, approve } = useOrgMutations();
+  const isSandbox = isPartnerApiSandboxAgency(org.id);
   return (
     <div className="space-y-4">
       <PlanPicker plan={org.plan} term={org.subscription_term} onSave={(plan) => savePlan.mutate({ id: org.id, plan, previous: org.plan })} saving={savePlan.isPending} />
       <SubscriptionPicker key={`${org.id}-${org.subscription_term ?? "none"}-${org.subscription_expires_at ?? ""}`} term={org.subscription_term} onSave={(term) => saveSubscription.mutate({ id: org.id, term })} saving={saveSubscription.isPending} />
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">Stare</span>
-        <Select value={org.status} onValueChange={(v) => update.mutate({ id: org.id, patch: { status: v } })}>
+        <Select value={org.status} disabled={isSandbox} onValueChange={(v) => update.mutate({ id: org.id, patch: { status: v } })}>
           <SelectTrigger aria-label="Starea agenției" className="h-11 w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
             {selectableStatuses.map((k) => <SelectItem key={k} value={k}>{ORG_STATUS_LABELS[k]}</SelectItem>)}
@@ -126,6 +128,7 @@ export function AgencySubscriptionControls({ org }: { org: Org }) {
 /** Acțiunile din antetul paginii de agenție: import, editare, arhivare, ștergere. */
 export function AgencyHeaderActions({ org }: { org: Org }) {
   const { setArchived, me } = useOrgMutations();
+  const isSandbox = isPartnerApiSandboxAgency(org.id);
   const [editing, setEditing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [archiving, setArchiving] = useState(false);
@@ -144,14 +147,14 @@ export function AgencyHeaderActions({ org }: { org: Org }) {
     <div className="grid gap-2 sm:flex sm:flex-wrap sm:items-center">
       <Button variant="outline" className="h-11 w-full sm:w-auto" onClick={() => setImporting(true)}><FileUp className="mr-1.5 size-4" />Importă proprietăți</Button>
       <Button variant="outline" className="h-11 w-full sm:w-auto" onClick={() => setEditing(true)}><Pencil className="mr-1.5 size-4" />Editează datele</Button>
-      {org.archived_at ? (
+      {!isSandbox ? (org.archived_at ? (
         <Button variant="outline" className="h-11 w-full sm:w-auto" disabled={setArchived.isPending} onClick={() => setArchived.mutate({ id: org.id, archived: false })}><ArchiveRestore className="mr-1.5 size-4" />Reactivează</Button>
       ) : (
         <Button variant="destructive" className="h-11 w-full sm:w-auto" disabled={setArchived.isPending} onClick={() => setArchiving(true)}><Archive className="mr-1.5 size-4" />Arhivează</Button>
-      )}
-      {block ? (
+      )) : null}
+      {!isSandbox ? (block ? (
         <TooltipProvider><Tooltip><TooltipTrigger asChild><span tabIndex={0} aria-label={block} className="grid sm:inline-flex">{deleteBtn}</span></TooltipTrigger><TooltipContent>{block}</TooltipContent></Tooltip></TooltipProvider>
-      ) : deleteBtn}
+      ) : deleteBtn) : null}
 
       {editing ? <AgencyDetailsDialog org={org as never} onClose={() => setEditing(false)} /> : null}
       <ConfirmDialog

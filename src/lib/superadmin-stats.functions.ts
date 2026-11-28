@@ -1,4 +1,5 @@
 import { isOperationalAgency } from "@/lib/superadmin-status";
+import { isPartnerApiSandboxAgency } from "@/lib/partner-api/sandbox-identity";
 // Statistici per agenție/agent, exclusiv superadmin. Agregatele vin gata calculate din RPC-uri
 // SECURITY DEFINER care verifică is_superadmin(); aici verificăm încă o dată înainte de apel.
 import { createServerFn } from "@tanstack/react-start";
@@ -52,15 +53,15 @@ export const getAgencyStats = createServerFn({ method: "GET" })
     if (a.error) throw new Error(a.error.message);
     if (t.error) throw new Error(t.error.message);
     if (inactive.error) throw new Error(inactive.error.message);
-    let agencies = (a.data ?? []) as AgencyStatsRow[];
-    const inactiveAgencies = (inactive.data ?? []) as InactiveAgencyRow[];
+    let agencies = ((a.data ?? []) as AgencyStatsRow[]).filter((org) => !isPartnerApiSandboxAgency(org.id));
+    const inactiveAgencies = ((inactive.data ?? []) as InactiveAgencyRow[]).filter((org) => !isPartnerApiSandboxAgency(org.id));
     if (data.operationalOnly) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { readCompleteRows } = await import("@/lib/site-feed/complete-read.server");
       const { readGraceAgencyStats } = await import("@/lib/operational-agency-stats.server");
       const now = Date.now();
       const orgs = (await readCompleteRows((from, to) => supabaseAdmin.from("organizations").select("*").order("id").range(from, to)))
-        .filter(org => isOperationalAgency(org, now) && (data.includeDemo || !org.is_demo));
+        .filter(org => !isPartnerApiSandboxAgency(org.id) && isOperationalAgency(org, now) && (data.includeDemo || !org.is_demo));
       const eligible = new Set(orgs.map(org => org.id));
       agencies = agencies.filter(org => eligible.has(org.id));
       const existing = new Set(agencies.map(org => org.id));
@@ -76,6 +77,7 @@ export const getAgencyAgentStats = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Rpc;
     await assertSuperadminCaller(sb);
+    if (isPartnerApiSandboxAgency(data.organizationId)) return [] as AgentStatsRow[];
     const { data: rows, error } = await sb.rpc("superadmin_agency_agent_stats", { _org: data.organizationId });
     if (error) throw new Error(error.message);
     if (!Array.isArray(rows) || rows.length === 0) return [] as AgentStatsRow[];

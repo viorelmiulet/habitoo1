@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { canConfirmDeletion, deletePlatformUserInput, groupDeletionDestinations } from "./user-deletion";
 import { validateDeletionRequest, type DeletionStore } from "./account-deletion.server";
+import { SANDBOX_AGENCY_ID, PARTNER_API_SANDBOX_DELETE_ERROR } from "./partner-api/sandbox-identity";
 
 const u = (id: string, org: string | null, extra: Partial<{ roles: string[]; is_active: boolean }> = {}) => ({
   id, full_name: `User ${id}`, is_active: extra.is_active ?? true, organization_id: org, organization_name: org ? `Org ${org}` : null, roles: extra.roles ?? ["agent"],
@@ -59,6 +60,11 @@ describe("dialog ștergere agenție", () => {
   it("serverul nu mai cere numele agenției", () => {
     const id = "00000000-0000-4000-8000-000000000002";
     expect(deleteOrganizationInput.parse({ organizationId: id })).toEqual({ organizationId: id, mode: "delete", reassignToUserId: null });
+  });
+  it("sandboxul Partner API este blocat înaintea oricărei citiri sau operații de ștergere", async () => {
+    expect(organizationDeletionBlock(SANDBOX_AGENCY_ID, null, [])).toBe(PARTNER_API_SANDBOX_DELETE_ERROR);
+    await expect(validateDeletionRequest({} as DeletionStore, { actorId: "admin", kind: "organization", targetId: SANDBOX_AGENCY_ID, mode: "delete", reassignToUserId: null }))
+      .rejects.toThrow(PARTNER_API_SANDBOX_DELETE_ERROR);
   });
   it("agenția proprie și cea cu superadmin sunt blocate", () => {
     expect(organizationDeletionBlock("o1", "o1", [])).toBe("Nu poți șterge agenția din care faci parte.");

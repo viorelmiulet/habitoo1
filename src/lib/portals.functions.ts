@@ -1,4 +1,5 @@
 import { isOperationalAgency, orgStatusBadge } from "@/lib/superadmin-status";
+import { isPartnerApiSandboxAgency } from "@/lib/partner-api/sandbox-identity";
 import { subscriptionState } from "@/lib/subscription";
 import { currentPartnerKeyError } from "@/lib/portals/partner-key-status";
 import { shouldRewithdrawInactive } from "@/lib/portals/withdraw-retry";
@@ -3629,7 +3630,8 @@ export const listPortalOrganizations = createServerFn({ method: "POST" })
     const rows = await readCompleteRows((from, to) => admin.from("organizations")
       .select("id, name, status, is_trial, archived_at, subscription_expires_at").order("name").order("id").range(from, to));
     const now = Date.now();
-    return rows.filter((o) => !data?.operationalOnly || isOperationalAgency(o, now) || o.id === data.includeOrganizationId)
+    return rows.filter((o) => !isPartnerApiSandboxAgency(o.id))
+      .filter((o) => !data?.operationalOnly || isOperationalAgency(o, now) || o.id === data.includeOrganizationId)
       .map((o) => ({ id: o.id, name: o.name,
         ...(data?.operationalOnly && !isOperationalAgency(o, now) ? {
           statusLabel: o.archived_at || (o.status !== "active" && o.status !== "trial")

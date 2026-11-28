@@ -1,6 +1,7 @@
 // Reguli pure pentru dialogul „Șterge utilizatorul” (Superadmin › Utilizatori).
 import { z } from "zod";
 import { portalDisplayName, type PortalId } from "@/lib/portals/registry";
+import { isPartnerApiSandboxAgency, PARTNER_API_SANDBOX_DELETE_ERROR } from "@/lib/partner-api/sandbox-identity";
 
 /** Intrarea pentru `deletePlatformUser`: fără confirmare prin numele contului. */
 export const deletePlatformUserInput = z.object({
@@ -69,6 +70,7 @@ export function deletionJobMode(workload: Record<string, number>, choice: Deleti
 
 /** De ce nu se poate șterge o agenție (sau null dacă se poate). */
 export function organizationDeletionBlock(orgId: string, actorOrgId: string | null | undefined, superadminOrgIds: string[]) {
+  if (isPartnerApiSandboxAgency(orgId)) return PARTNER_API_SANDBOX_DELETE_ERROR;
   if (actorOrgId && actorOrgId === orgId) return "Nu poți șterge agenția din care faci parte.";
   if (superadminOrgIds.includes(orgId)) return "Agenția are un cont de superadmin și nu poate fi ștearsă.";
   return null;

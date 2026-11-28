@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { SANDBOX_AGENCY_ID } from './partner-api/sandbox-identity';
 const mock = vi.hoisted(() => ({ rows: [] as Record<string, unknown>[], rpc: vi.fn(), from: vi.fn(), grace: vi.fn(), totals: {}, stats: [] as Record<string, unknown>[], inactive: [] as Record<string, unknown>[] }));
 vi.mock('@tanstack/react-start', () => ({ createServerFn: () => {
   let validate: (input: unknown) => unknown = x => x;
@@ -62,6 +63,15 @@ it('citirea statisticilor fără opțiune păstrează rezultatele istorice', asy
   const result = await getAgencyStats({ data: {} });
   expect(result.agencies).toEqual(mock.stats);
   expect(mock.grace).not.toHaveBeenCalled();
+});
+it('sandboxul este exclus din selecții și statistici chiar cu demo sau link direct', async () => {
+  const sandbox = { id: SANDBOX_AGENCY_ID, name: 'Habitoo Partner API Sandbox', status: 'active', is_demo: true };
+  mock.rows.push(sandbox); mock.stats.push(sandbox); mock.inactive.push(sandbox);
+  expect((await listPortalOrganizations({})).some(row => row.id === SANDBOX_AGENCY_ID)).toBe(false);
+  expect((await listPortalOrganizations({ data: { operationalOnly: true, includeOrganizationId: SANDBOX_AGENCY_ID } })).some(row => row.id === SANDBOX_AGENCY_ID)).toBe(false);
+  const result = await getAgencyStats({ data: { includeDemo: true } });
+  expect(result.agencies.some(row => row.id === SANDBOX_AGENCY_ID)).toBe(false);
+  expect(result.inactiveAgencies.some(row => row.id === SANDBOX_AGENCY_ID)).toBe(false);
 });
 it('refuză citirea dacă solicitantul nu este superadmin', async () => {
   mock.rpc.mockResolvedValue({ data: false, error: null });

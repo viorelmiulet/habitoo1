@@ -2,6 +2,7 @@ import { beforeAll, afterAll, expect, it } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { agenciesInScope, agencyInactiveReason, agencyInactivitySql } from "./agency-stats-scope";
+import { SANDBOX_AGENCY_ID } from "./partner-api/sandbox-identity";
 
 let db: PGlite;
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -13,6 +14,7 @@ const orgs = [
   { id: id(4), name: "C", status: "cancelled", subscription_expires_at: null },
 ];
 const migration = readFileSync("drizzle/migrations/0291_sa2_active_agency_statistics.sql", "utf8");
+const sandboxMigration = readFileSync("drizzle/migrations/0355_partner_api_sandbox_statistics.sql", "utf8");
 
 beforeAll(async () => {
   db = new PGlite();
@@ -37,6 +39,7 @@ beforeAll(async () => {
     create table activities(organization_id uuid,assigned_to uuid,created_at timestamptz);
   `);
   await db.exec(migration);
+  await db.exec(sandboxMigration);
   for (const [index, org] of orgs.entries()) {
     await db.query("insert into organizations(id,name,status,subscription_expires_at) values($1,$2,$3,$4)", [org.id, org.name, org.status, org.subscription_expires_at]);
     await db.query("insert into profiles values($1,$2,true,$3)", [id(10 + index), org.id, org.name]);
@@ -49,6 +52,11 @@ beforeAll(async () => {
   }
   await db.query("insert into organizations(id,name,status,is_demo) values($1,'Demo','active',true)", [id(5)]);
   await db.query("insert into organizations(id,name,status,archived_at) values($1,'Arhivată','active',now())", [id(6)]);
+  await db.query("insert into organizations(id,name,status,is_demo) values($1,'Habitoo Partner API Sandbox','active',true)", [SANDBOX_AGENCY_ID]);
+  await db.query("insert into profiles values($1,$2,true,'Agent Sandbox')", [id(20), SANDBOX_AGENCY_ID]);
+  await db.query("insert into properties(id,organization_id,status) values($1,$2,'active')", [id(500), SANDBOX_AGENCY_ID]);
+  await db.query("insert into portal_publications values($1,$2,true,'synced')", [id(500), SANDBOX_AGENCY_ID]);
+  await db.query("insert into leads(organization_id,stage) values($1,'new')", [SANDBOX_AGENCY_ID]);
   await db.exec("set test.superadmin='true'");
 });
 afterAll(async () => { await db.close(); });
@@ -81,8 +89,9 @@ it("trialul expirat și grația sunt inactive; termenul exact nu este încă tre
   const r = await db.query<{ reason: string }>("select agency_stats_inactive_reason('trial',$1,$2) reason", [exp.subscription_expires_at, new Date(now).toISOString()]);
   expect(r.rows[0]?.reason).toBe("expired");
 });
-it("demo este exclusă implicit și arhivatele nu reapar cu demo activat", async () => {
+it("demo este exclusă implicit, sandboxul nu apare niciodată, iar arhivatele nu reapar cu demo activat", async () => {
   expect((await rpc<{ name: string }[]>("superadmin_agency_stats", "true"))?.map((o) => o.name)).toEqual(["A", "Demo"]);
+  expect(await rpc("superadmin_agency_agent_stats", `'${SANDBOX_AGENCY_ID}'`)).toEqual([]);
   expect(agenciesInScope([...orgs, { ...orgs[0], name: "Demo", is_demo: true }, { ...orgs[0], name: "Arhivată", archived_at: "2026-11-01" }], "active", false, now).map((o) => o.name)).toEqual(["A"]);
 });
 it("panoul de agenți întoarce gol pentru toate agențiile inactive", async () => {

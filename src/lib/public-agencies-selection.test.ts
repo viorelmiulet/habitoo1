@@ -2,6 +2,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { toPublicPartners } from "./public-partners";
+import { SANDBOX_AGENCY_ID } from "./partner-api/sandbox-identity";
 
 let db: PGlite;
 beforeAll(async () => {
@@ -23,6 +24,7 @@ beforeAll(async () => {
     ('Alfa arhivată','cancelled',now(),now()-interval '1 month',true,false,false,'arhivata','Descriere','Cluj'),
     ('Gamma expirată','active',null,now()-interval '1 day',true,false,false,'expirata','Descriere','Timișoara'),
     ('Demo','active',null,null,false,true,false,'demo','Descriere','București'),
+    ('Habitoo Partner API Sandbox','active',null,null,false,true,false,'partner-api-sandbox','Descriere','București'),
     ('Ascunsă','active',null,null,false,false,true,'ascunsa','Descriere','București');
     INSERT INTO profiles SELECT id,'Agent Test',null,null,'0700000000',true,true,true FROM organizations;`);
 }, 15000);
@@ -48,7 +50,8 @@ describe("AG1 public selection", () => {
     expect((await db.query("SELECT * FROM public_agency_agents((SELECT id FROM organizations WHERE public_slug='alfa'))")).rows).toHaveLength(1);
   });
   it("hidden/demo profiles remain unavailable and profile opt-in stays required", async () => {
-    for (const slug of ['demo','ascunsa']) expect((await db.query("SELECT * FROM public_agency_profile($1)",[slug])).rows).toEqual([]);
+    for (const slug of ['demo','partner-api-sandbox','ascunsa']) expect((await db.query("SELECT * FROM public_agency_profile($1)",[slug])).rows).toEqual([]);
+    expect((await db.query("SELECT * FROM public_partner_agencies() WHERE id=$1",[SANDBOX_AGENCY_ID])).rows).toEqual([]);
     await db.exec("UPDATE organizations SET public_profile_enabled=false WHERE public_slug='beta'");
     expect((await db.query("SELECT * FROM public_agency_profile('beta')")).rows).toEqual([]);
     expect((await db.query("SELECT * FROM public_partner_agencies() WHERE name='Beta suspendată'")).rows).toHaveLength(1);

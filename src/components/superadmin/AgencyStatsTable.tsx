@@ -1,4 +1,5 @@
 import { isOperationalAgency } from "@/lib/superadmin-status";
+import { isPartnerApiSandboxAgency } from "@/lib/partner-api/sandbox-identity";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -93,7 +94,7 @@ export function AgencyStatsTable() {
   });
 
   const rows = useMemo(() => {
-    const list = (data?.agencies ?? []).filter((r) => isOperationalAgency(r) && r.name.toLowerCase().includes(q.trim().toLowerCase()));
+    const list = (data?.agencies ?? []).filter((r) => !isPartnerApiSandboxAgency(r.id) && isOperationalAgency(r) && r.name.toLowerCase().includes(q.trim().toLowerCase()));
     const col = COLS.find((c) => c.key === sort.key);
     if (sort.key === "name") return [...list].sort((a, b) => a.name.localeCompare(b.name, "ro") * sort.dir);
     const num = col?.num;

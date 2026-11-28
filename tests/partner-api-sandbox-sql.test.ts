@@ -5,21 +5,35 @@ import {sandboxAgents,sandboxListings,SANDBOX_AGENCY_ID} from "@/lib/partner-api
 let db:PGlite;
 beforeAll(async()=>{
   db=new PGlite();await db.exec(`CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role;CREATE FUNCTION is_superadmin() RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
-    CREATE TABLE organizations(id uuid primary key,is_demo boolean);CREATE TABLE dynamic_feed_portals(slug text primary key,active boolean,integration_mode text);CREATE TABLE partner_api_test_agencies(organization_id uuid);
+    CREATE TABLE organizations(id uuid primary key,name text,slug text,email text,status text,is_demo boolean,public_hidden_by_admin boolean,public_profile_enabled boolean,demo_seeded_at timestamptz,demo_seed_version text,archived_at timestamptz);CREATE TABLE dynamic_feed_portals(slug text primary key,active boolean,integration_mode text);CREATE TABLE partner_api_test_agencies(organization_id uuid primary key);
     CREATE TABLE notifications(user_id uuid,type text,title text,body text,link text);CREATE TABLE user_roles(user_id uuid,role text);
     CREATE TABLE partner_api_rate_windows(window_start timestamptz);CREATE TABLE partner_api_idempotency(expires_at timestamptz);CREATE TABLE partner_api_request_logs(created_at timestamptz);
     CREATE TABLE partner_api_agency_state(portal text,organization_id uuid,active boolean,activated_at timestamptz,deactivated_at timestamptz,updated_at timestamptz,PRIMARY KEY(portal,organization_id));
     CREATE TABLE partner_api_listing_state(portal text,property_id uuid,organization_id uuid,agent_id uuid,content_hash text,visible boolean,payload jsonb,withdrawn_at timestamptz,updated_at timestamptz DEFAULT now(),PRIMARY KEY(portal,property_id));
     CREATE TABLE partner_api_agent_state(portal text,agent_id uuid,organization_id uuid,content_hash text,payload jsonb,updated_at timestamptz DEFAULT now());
     CREATE TABLE partner_api_events(seq bigserial,portal text,type text,entity_type text,entity_id uuid,organization_id uuid,occurred_at timestamptz DEFAULT now());
-    INSERT INTO organizations VALUES('${SANDBOX_AGENCY_ID}',true);INSERT INTO partner_api_test_agencies VALUES('${SANDBOX_AGENCY_ID}');`);
+    INSERT INTO organizations(id,name,status,is_demo) VALUES('${SANDBOX_AGENCY_ID}','Habitoo Partner API Sandbox','active',true);INSERT INTO partner_api_test_agencies VALUES('${SANDBOX_AGENCY_ID}');`);
   await db.exec(readFileSync("drizzle/migrations/0254_partner_api_sandbox.sql","utf8"));
   for(const payload of sandboxAgents)await db.query("INSERT INTO partner_api_sandbox_templates VALUES('agent',$1,$2)",[payload.id,JSON.stringify(payload)]);
   for(const payload of sandboxListings({apartment:"a",house:"h",land:"l"}))await db.query("INSERT INTO partner_api_sandbox_templates VALUES('listing',$1,$2)",[payload.id,JSON.stringify(payload)]);
   await db.exec("INSERT INTO dynamic_feed_portals VALUES('example',true,'api'),('other',true,'api')");
+  await db.exec(readFileSync("drizzle/migrations/0354_partner_api_sandbox_restore.sql","utf8"));
 },15000);
 afterAll(async()=>{await db.close();});
 describe("P5 durable sandbox rules",()=>{
+  it("organizația sandbox nu poate fi ștearsă, arhivată sau suspendată",async()=>{
+    await expect(db.exec(`DELETE FROM organizations WHERE id='${SANDBOX_AGENCY_ID}'`)).rejects.toThrow("Agenția demo a Partner API nu poate fi ștearsă.");
+    await expect(db.exec(`UPDATE organizations SET archived_at=now() WHERE id='${SANDBOX_AGENCY_ID}'`)).rejects.toThrow("Agenția demo a Partner API nu poate fi ștearsă.");
+    await expect(db.exec(`UPDATE organizations SET status='suspended' WHERE id='${SANDBOX_AGENCY_ID}'`)).rejects.toThrow("Agenția demo a Partner API nu poate fi ștearsă.");
+    expect((await db.query("SELECT status,is_demo,archived_at FROM organizations WHERE id=$1",[SANDBOX_AGENCY_ID])).rows[0]).toEqual({status:"active",is_demo:true,archived_at:null});
+  });
+  it("migrarea este idempotentă, iar un portal API nou este provisionat izolat",async()=>{
+    await db.exec(readFileSync("drizzle/migrations/0354_partner_api_sandbox_restore.sql","utf8"));
+    await db.exec("INSERT INTO dynamic_feed_portals VALUES('new-api',true,'api')");
+    expect((await db.query("SELECT count(*)::int n FROM partner_api_listing_state WHERE portal='new-api' AND visible")).rows[0]).toEqual({n:12});
+    expect((await db.query("SELECT count(*)::int n FROM partner_api_agent_state WHERE portal='new-api'")).rows[0]).toEqual({n:2});
+    expect((await db.query("SELECT count(*)::int n FROM partner_api_listing_state WHERE portal='example' AND visible")).rows[0]).toEqual({n:12});
+  });
   it("reset restores exactly initial 12 active listings and 2 agents without changing another portal",async()=>{
     await db.query("SELECT partner_api_sandbox_simulate('example','listing_create')");await db.query("SELECT partner_api_sandbox_simulate('example','listing_withdraw')");await db.query("SELECT partner_api_sandbox_simulate('example','agent_update')");
     await db.query("SELECT partner_api_sandbox_reset('example')");

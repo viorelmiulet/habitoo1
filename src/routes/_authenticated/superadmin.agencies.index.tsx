@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
 import { PLAN_LABELS, normalizePlan } from "@/lib/plans";
 import { isOperationalAgency, orgStatusBadge } from "@/lib/superadmin-status";
+import { isPartnerApiSandboxAgency } from "@/lib/partner-api/sandbox-identity";
 import { appHead } from "@/components/app/app-head";
 import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
 import { AgencyStatsTable } from "@/components/superadmin/AgencyStatsTable";
@@ -178,7 +179,7 @@ function AgenciesPage() {
     },
   });
 
-  const orgs = data?.orgs ?? [];
+  const orgs = (data?.orgs ?? []).filter((org) => !isPartnerApiSandboxAgency(org.id));
   const logoUrls = useAgencyLogoUrls(orgs.map((org) => org.logo_path));
   const live = orgs.filter((o) => !o.archived_at);
   const counts = {

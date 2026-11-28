@@ -2,6 +2,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
+import { SANDBOX_AGENCY_ID } from '@/lib/partner-api/sandbox-identity';
 import { AgencyStatsTable } from './AgencyStatsTable';
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mocks = vi.hoisted(() => ({ fetch: vi.fn(), query: vi.fn() }));
@@ -16,6 +17,7 @@ vi.mock('@tanstack/react-query', () => ({ useQuery: (options: unknown) => { mock
     { id: 'E', name: 'E', status: 'active', subscription_expires_at: '2026-11-20' },
     { id: 'S', name: 'S', status: 'suspended' }, { id: 'C', name: 'C', status: 'cancelled' },
     { id: 'P', name: 'P', status: 'pending_approval' }, { id: 'R', name: 'R', status: 'active', archived_at: '2026-11-26' },
+    { id: SANDBOX_AGENCY_ID, name: 'Habitoo Partner API Sandbox', status: 'active', is_demo: true },
   ].map(row => ({ ...row, listings_active: 1, listings_total: 1, listings_by_status: { active: 1 }, portals: [], plan: 'basic' })),
   inactiveAgencies: [{ id: 'S', name: 'S', inactive_reason: 'suspended' }],
 } }; } }));

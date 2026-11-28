@@ -5,6 +5,17 @@ import { dynamicFeedPortalSchema } from "@/lib/dynamic-feed-portals";
 
 export const partnerPortalSchema=dynamicFeedPortalSchema.extend({integration_mode:z.enum(["feed","api","both"]),rate_limit_per_minute:z.number().int().min(1).max(100000),active:z.boolean().default(true)});
 const slugSchema=dynamicFeedPortalSchema.shape.slug;
+type PartnerDbError={code?:string;message?:string};
+export function partnerPortalDbMessage(error:PartnerDbError,fallback:string):string{
+  if(error.code==="23505")return "Identificatorul există deja.";
+  if(error.message?.includes("Sandbox not provisioned"))return "Agenția demo a Partner API lipsește.";
+  return error.message||fallback;
+}
+function throwPartnerPortalDbError(error:PartnerDbError,fallback:string):never{
+  const code=error.code??"unknown";const message=error.message??fallback;
+  console.error("[partner-api/savePartnerPortal] DB error",{code,message});
+  throw new Error(partnerPortalDbMessage(error,fallback));
+}
 export const listPartnerPortals=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
   const access=await context.supabase.rpc("is_superadmin");if(access.error||access.data!==true)throw new Error("Acces refuzat.");
   const portals=await context.supabase.from("dynamic_feed_portals").select("slug,display_name,key_prefix,website,logo_path,xml_enabled,active,show_public,integration_mode,rate_limit_per_minute").order("display_name");
@@ -16,7 +27,7 @@ export const savePartnerPortal=createServerFn({method:"POST"}).middleware([requi
   const access=await context.supabase.rpc("is_superadmin");if(access.error||access.data!==true)throw new Error("Acces refuzat.");
   if(data.logo_path&&!data.logo_path.startsWith(`${data.slug}/`))throw new Error("Logo invalid.");
   const {editing,slug,...patch}=data;
-  if(editing){const r=await context.supabase.from("dynamic_feed_portals").update(patch).eq("slug",slug).select("slug").single();if(r.error)throw new Error("Portalul nu a putut fi salvat.");}
+  if(editing){const r=await context.supabase.from("dynamic_feed_portals").update(patch).eq("slug",slug).select("slug").single();if(r.error)throwPartnerPortalDbError(r.error,"Portalul nu a putut fi salvat.");}
   else {
     const {STATIC_PORTALS,PROMOTION_CATALOGS}=await import("@/lib/portals/registry");
     if([...STATIC_PORTALS,...PROMOTION_CATALOGS].some(p=>p.id===slug))throw new Error("Identificatorul există deja în registry.");
@@ -25,7 +36,7 @@ export const savePartnerPortal=createServerFn({method:"POST"}).middleware([requi
     const current=await context.supabase.from("dynamic_feed_portals").select("slug,key_prefix");if(current.error)throw new Error("Catalog indisponibil.");
     if(current.data.some(p=>p.slug===slug))throw new Error("Identificatorul există deja.");
     const key_prefix=chooseFeedPrefix(slug,[...Object.values(INDEX_PORTALS).map(p=>p.prefix),"hbps_",...current.data.map(p=>p.key_prefix)]);
-    const r=await context.supabase.from("dynamic_feed_portals").insert({...patch,slug,key_prefix,created_by:context.userId});if(r.error)throw new Error("Portalul nu a putut fi creat; verifică identificatorul unic.");
+    const r=await context.supabase.from("dynamic_feed_portals").insert({...patch,slug,key_prefix,created_by:context.userId});if(r.error)throwPartnerPortalDbError(r.error,"Portalul nu a putut fi creat; verifică identificatorul unic.");
   }
   return {ok:true};
 });
