@@ -835,5 +835,5 @@
 
 ## Google Search Console — site-ul publicat Lovable
 - [x] Etichetă META și sitemap cu adresa Lovable, fără schimbarea sitemapului domeniului public; 11/11 teste modificate și verificare locală.
-- [ ] Publicare cu aprobare, verificare și adăugare proprietate URL-prefix.
-- [ ] Trimiterea sitemapului după confirmarea adresei live.
+- [x] Publicare aprobată, etichetă live confirmată, verificare reușită și proprietate URL-prefix adăugată.
+- [x] Sitemap trimis după confirmarea adresei live.
