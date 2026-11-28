@@ -77,8 +77,9 @@ type AdInfo = { exists: boolean; deleted: boolean; url: string | null; ljmUrl: s
 export function parseHomezzAdInfo(r: HomezzResult): AdInfo {
   if (!r.ok) return { exists: false, deleted: false, url: null, ljmUrl: null };
   const ad = (r.data as { ad?: unknown } | null)?.ad;
-  if (!ad || typeof ad !== "object") return { exists: false, deleted: false, url: null, ljmUrl: null };
+  if (!ad || typeof ad !== "object" || Array.isArray(ad)) return { exists: false, deleted: false, url: null, ljmUrl: null };
   const a = ad as Record<string, unknown>;
+  if (!str(a["internal_id"]) && !str(a["id"]) && !str(a["homezz_url"])) return { exists: false, deleted: false, url: null, ljmUrl: null };
   const del = a["deleted"];
   return { exists: true, deleted: del === true || del === 1 || del === "1", url: https(a["homezz_url"]), ljmUrl: https(a["ljm_url"]) };
 }
@@ -114,6 +115,28 @@ export type HomezzPublishInput = {
 export type HomezzPublishOutput = { offers: HomezzOffer[]; actions: string[] };
 
 const imagesParam = (urls: string[]): HomezzValue => (urls.length ? urls.slice(0, HOMEZZ_MAX_IMAGES) : "");
+
+/** Only the explicit missing internal_id rejection permits one insert, never other failures. */
+function missingInternalId(r: HomezzResult): boolean {
+  if (r.ok || r.kind !== "action_error" || !r.adError) return false;
+  try {
+    const error: unknown = JSON.parse(r.adError);
+    if (!error || typeof error !== "object" || Array.isArray(error)) return false;
+    const message = (error as Record<string, unknown>)["internal_id"];
+    return typeof message === "string" && /\b(?:acest\s+)?id\s+nu\s+exista\b/i.test(message.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+  } catch { return false; }
+}
+
+async function updateOrInsert(client: HomezzPublishClient, params: Record<string, HomezzValue>, insertParams: Record<string, HomezzValue>, actions: string[], internalId: string) {
+  actions.push(`update:${internalId}`);
+  const r = await client.agent("update", params);
+  if (missingInternalId(r)) {
+    actions.push(`insert:${internalId}`);
+    return { result: await must(client.agent("insert", insertParams), "insert"), inserted: true };
+  }
+  if (!r.ok) throw new HomezzPublishError(r, "update");
+  return { result: r, inserted: false };
+}
 
 /** Delete idempotent: un anunț deja dezactivat sau inexistent contează ca succes. */
 async function deleteAd(client: HomezzPublishClient, internalId: string, actions: string[], email?: string) {
@@ -155,9 +178,12 @@ export async function publishHomezz(input: HomezzPublishInput): Promise<HomezzPu
       if (prev.deleted) { await must(client.agent("activate", { internal_id: internalId }, prev.agent_email ?? agentEmail), "activate"); actions.push(`activate:${internalId}`); }
       await moveIfNeeded(client, prev, agentEmail, actions);
       sendImages = prev.photos_hash !== hash;
-      const r = await must(client.agent("update", sendImages ? { ...params, images: imagesParam(input.images.urls) } : params), "update");
-      actions.push(`update:${internalId}`);
-      const w = fromWrite(r); url = w.url ?? url; homezzId = w.id ?? homezzId;
+      const withImages = { ...params, images: imagesParam(input.images.urls) };
+      const write = await updateOrInsert(client, sendImages ? withImages : params, withImages, actions, internalId);
+      const w = fromWrite(write.result);
+      if (write.inserted) {
+        url = w.url ?? ""; homezzId = w.id; ljm = null; publishedAt = nowIso; sendImages = true;
+      } else { url = w.url ?? url; homezzId = w.id ?? homezzId; }
     } else {
       const info = await adInfo(client, internalId);
       actions.push(`ad-info:${internalId}`);
@@ -165,9 +191,8 @@ export async function publishHomezz(input: HomezzPublishInput): Promise<HomezzPu
       const withImages = { ...params, images: imagesParam(input.images.urls) };
       if (info.exists) {
         if (info.deleted) { await must(client.agent("activate", { internal_id: internalId }), "activate"); actions.push(`activate:${internalId}`); }
-        const r = await must(client.agent("update", withImages), "update");
-        actions.push(`update:${internalId}`);
-        const w = fromWrite(r); url = w.url ?? info.url ?? ""; homezzId = w.id; ljm = info.ljmUrl;
+        const write = await updateOrInsert(client, withImages, withImages, actions, internalId);
+        const w = fromWrite(write.result); url = w.url ?? (write.inserted ? "" : info.url) ?? ""; homezzId = w.id; ljm = write.inserted ? null : info.ljmUrl;
       } else {
         const r = await must(client.agent("insert", withImages), "insert");
         actions.push(`insert:${internalId}`);

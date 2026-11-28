@@ -7,7 +7,7 @@ import type { ConnectionStatusOutcome, PortalAdapter, PortalContext, PortalFail,
 import type { ListingOutcome, ListingRef } from "../adapter";
 import { notSupported } from "../adapter";
 import type { PortalErrorCode } from "../errors";
-import { describeHomezzAgency, homezzPost, type HomezzFailKind, type HomezzTransport } from "../homezz/client";
+import { describeHomezzAgency, homezzPost, redactHomezz, type HomezzFailKind, type HomezzResult, type HomezzTransport } from "../homezz/client";
 import { relayFetch } from "../relay.server";
 import {
   HOMEZZ_AGENT_NOT_LINKED, HomezzPublishError, homezzPublicUrl, parseHomezzOffers, publishHomezz, withdrawHomezz,
@@ -67,6 +67,7 @@ export function createHomezzAdapter(transport: HomezzTransport = homezzRelayTran
   });
 
   async function upsert(ctx: PortalContext, ref: ListingRef, action: "publish" | "update"): Promise<PortalResult<ListingOutcome>> {
+    const responses: { action: string; http_status: number | null; body: string }[] = [];
     try {
       const key = (ctx.portalCredential ?? "").trim();
       if (!key) return { ok: false, code: "CONFIG_ERROR", message: "Lipsește cheia API HomeZZ.ro a agenției.", detail: "homezz_no_key" };
@@ -77,20 +78,34 @@ export function createHomezzAdapter(transport: HomezzTransport = homezzRelayTran
       if (!ctx.allowLiveRequests) {
         return { ok: true, data: { externalId: null, live: false, processed: 0, detail: `homezz_dry_run action=${action} ads=${ads.length} images=${data.images.urls.length}`, message: `Trimiterile reale către HomeZZ sunt oprite. S-ar trimite ${ads.length} anunțuri cu ${data.images.urls.length} poze.` } };
       }
-      const r = await publishHomezz({ ads, stored: data.stored, reference: data.reference, agentEmail: data.agentEmail, images: data.images, client: clientFor(ctx, key, data.agentEmail) });
+      const baseClient = clientFor(ctx, key, data.agentEmail);
+      const record = async (step: string, request: Promise<HomezzResult>) => {
+        const result = await request;
+        responses.push({ action: step, http_status: result.status, body: redactHomezz(result.raw, [key]) });
+        return result;
+      };
+      const client: HomezzPublishClient = {
+        agency: (step, params) => record(step, baseClient.agency(step, params)),
+        agent: (step, params, email) => record(step, baseClient.agent(step, params, email)),
+      };
+      const r = await publishHomezz({ ads, stored: data.stored, reference: data.reference, agentEmail: data.agentEmail, images: data.images, client });
       const warnings = [...data.mapping.warnings, ...data.images.warnings];
       const active = r.offers.filter((o) => !o.deleted);
       return { ok: true, data: {
         externalId: active.map((o) => o.homezz_id ?? o.internal_id).join(",") || null,
         live: true, processed: active.length,
         detail: `homezz_${action} ${r.actions.join(" ")}`,
+        httpStatus: responses.at(-1)?.http_status ?? null,
+        portalResponse: { actions: responses.map((response) => response.action), responses },
         message: "Anunțul a fost trimis la HomeZZ.",
         publicUrl: homezzPublicUrl(r.offers),
         offers: r.offers,
         mediaWarning: warnings.length ? warnings.join(" · ") : null,
       } };
     } catch (e) {
-      return publishFail(e);
+      const fail = publishFail(e);
+      if (!responses.length) return fail;
+      return { ...fail, detail: `${fail.detail ?? ""} actions=${responses.map((response) => response.action).join(" ")}`, portalResponse: { actions: responses.map((response) => response.action), responses } };
     }
   }
 

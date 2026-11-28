@@ -1,3 +1,7 @@
+## HomeZZ — prima publicare și recuperare ID inexistent
+- [x] HB-1649 confirmat prin citire: ofertă goală, update refuzat cu ID inexistent; identificatori stricți, un insert de rezervă și jurnal redactat implementate.
+- [x] 30/30 teste exclusiv publish.test.ts trec, fără publicare sau apeluri reale; verificarea compilării și commit la încheiere.
+
 ## mvaimobiliare — activare prin cheie API
 - [x] Definiție statică și cerere de cheie prin fluxul existent; cheia rămâne editabilă numai de SuperAdmin, fără trimitere de anunțuri.
 - [x] Compatibilitate index/feed și text public de activare; pagina și logo-ul verificate HTTP, 67 de anunțuri selectate confirmate doar prin citire.
