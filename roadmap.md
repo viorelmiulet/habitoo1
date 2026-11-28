@@ -1,3 +1,8 @@
+## HomeZZ — promovări vizibile pentru fiecare agent activ
+- [x] Agenții activi primesc toate cele patru tipuri canonice, cu zerouri doar pentru tipurile lipsă; cei neactivați rămân fără promovări.
+- [x] Rezumat `details-agency` → `contract.promos`, neblocant la eroare, afișat deasupra listei; salvarea și regulile existente rămân neschimbate.
+- [x] 11/11 teste exclusiv noi/modificate și compilare OK, fără apeluri reale sau publicare; commit la încheiere.
+
 ## Sloturi în activarea fiecărui portal
 - [x] Variantă încorporată filtrată per portal, mutată sub butoane în SuperAdmin și contul administratorului; cardurile separate eliminate.
 - [x] 11/11 teste în cele trei fișiere exclusiv noi/modificate, compilare fără erori; fără scrieri sau publicare, commit final.

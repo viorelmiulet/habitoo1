@@ -4,7 +4,7 @@
  * loghează și nu se întorc niciodată.
  */
 import { homezzPost, type HomezzParams, type HomezzResult } from "./client";
-import { parseHomezzAgentPromotions } from "./promotions";
+import { completeHomezzAgentPromotions, parseHomezzContractPromotions, type HomezzContractPromotion } from "./promotions";
 
 export type HomezzAgent = { email: string; name: string | null; phone: string | null; assignedSlots: number | null; remainingSlots: number | null; promotions: unknown };
 export type HomezzAgentDeps = {
@@ -237,22 +237,47 @@ export async function homezzAgentDeps(): Promise<HomezzAgentDeps> {
   };
 }
 
+/** Rezumat contractual opțional: eșecul citirii nu împiedică administrarea agenților. */
+export async function loadHomezzContractPromotions(organizationId: string, deps: HomezzAgentDeps): Promise<HomezzContractPromotion[] | null> {
+  try {
+    const r = await deps.post("details-agency", { key: await deps.agencyKey(organizationId) });
+    return r.ok ? parseHomezzContractPromotions(r.data) : null;
+  } catch {
+    return null;
+  }
+}
+
+type RosterMember = { id: string; full_name: string | null; email: string | null };
+type RosterAllocation = { user_id: string; slots: number | null };
+type RosterRemote = { agents: HomezzAgent[]; error: string | null };
+
+/** Construcție pură a rosterului, separată de citirile DB/HomeZZ pentru reguli testabile. */
+export function buildHomezzAgentRoster(
+  members: RosterMember[], allocations: RosterAllocation[], remote: RosterRemote, contractPromotions: HomezzContractPromotion[] | null,
+) {
+  const byEmail = new Map(remote.agents.map((a) => [a.email, a]));
+  const slots = new Map(allocations.map((a) => [a.user_id, a.slots]));
+  return {
+    error: remote.error,
+    contractPromotions,
+    members: members.map((m) => {
+      const a = m.email ? byEmail.get(m.email.trim().toLowerCase()) : undefined;
+      return { userId: m.id, name: m.full_name ?? m.email ?? "", email: m.email, allocation: slots.get(m.id) ?? null, active: Boolean(a), promotions: a ? completeHomezzAgentPromotions(a.promotions) : [], assignedSlots: a?.assignedSlots ?? null, remainingSlots: a?.remainingSlots ?? null };
+    }),
+  };
+}
+
 /** Membrii agenției cu starea lor HomeZZ (pentru card). */
 export async function loadHomezzAgentRoster(organizationId: string) {
   const deps = await homezzAgentDeps();
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-  const [{ data: members }, { data: allocs }, remote] = await Promise.all([
+  const [{ data: members }, { data: allocs }, remote, contractPromotions] = await Promise.all([
     db.from("profiles").select("id, full_name, email").eq("organization_id", organizationId).order("full_name"),
     db.from("portal_slot_allocations").select("user_id, slots").eq("organization_id", organizationId).eq("portal_key", "homezz"),
     listHomezzAgents(organizationId, deps).then((a) => ({ agents: a, error: null as string | null }), (e: Error) => ({ agents: [] as HomezzAgent[], error: e.message })),
+    loadHomezzContractPromotions(organizationId, deps),
   ]);
-  const byEmail = new Map(remote.agents.map((a) => [a.email, a]));
-  const slots = new Map(((allocs ?? []) as { user_id: string; slots: number | null }[]).map((a) => [a.user_id, a.slots]));
-  return {
-    error: remote.error,
-    members: ((members ?? []) as { id: string; full_name: string | null; email: string | null }[]).map((m) => {
-      const a = m.email ? byEmail.get(m.email.trim().toLowerCase()) : undefined;
-      return { userId: m.id, name: m.full_name ?? m.email ?? "", email: m.email, allocation: slots.get(m.id) ?? null, active: Boolean(a), promotions: a ? parseHomezzAgentPromotions(a.promotions) : [], assignedSlots: a?.assignedSlots ?? null, remainingSlots: a?.remainingSlots ?? null };
-    }),
-  };
+  return buildHomezzAgentRoster(
+    (members ?? []) as RosterMember[], (allocs ?? []) as RosterAllocation[], remote, contractPromotions,
+  );
 }

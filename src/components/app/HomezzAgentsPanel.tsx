@@ -41,6 +41,12 @@ export function HomezzAgentsPanel({ organizationId }: { organizationId?: string 
       {roster.isLoading ? <p className="text-sm text-muted-foreground">Se încarcă…</p> : null}
       {roster.error ? <p role="alert" className="text-sm text-destructive">{roster.error.message}</p> : null}
       {roster.data?.error ? <p role="alert" className="text-sm text-destructive">{roster.data.error}</p> : null}
+      {roster.data?.contractPromotions?.length ? (
+        <p className="text-xs text-muted-foreground" data-homezz-contract-promotions>
+          <span className="font-medium text-foreground">Promovări în contract:</span>{" "}
+          {roster.data.contractPromotions.map((p) => `${p.label} ${p.allocated}/${p.total} alocate`).join(" · ")}
+        </p>
+      ) : null}
       <ul className="divide-y rounded-md border">
         {(roster.data?.members ?? []).map((m) => (
           <li key={m.userId} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
@@ -50,7 +56,7 @@ export function HomezzAgentsPanel({ organizationId }: { organizationId?: string 
                 {m.active ? `Activ · ${m.assignedSlots ?? "–"} sloturi alocate, ${m.remainingSlots ?? "–"} rămase` : "Neactivat"}
                 {m.allocation === null ? " · fără alocare HomeZZ" : ` · alocare Habitoo: ${m.allocation}`}
               </p>
-              {m.active && m.promotions.length ? (
+              {m.active ? (
                 <div className="mt-2 flex flex-wrap gap-3" data-homezz-agent-promotions>
                   {m.promotions.map((p) => {
                     const k = `${m.userId}:${p.id}`;

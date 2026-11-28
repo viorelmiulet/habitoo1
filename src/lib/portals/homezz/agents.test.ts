@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  HOMEZZ_NO_ALLOCATION, activateHomezzAgent, clearHomezzTokenCache, getHomezzAgentToken, isValidHomezzPassword,
-  withHomezzAgentToken, type HomezzAgentDeps,
+  HOMEZZ_NO_ALLOCATION, activateHomezzAgent, buildHomezzAgentRoster, clearHomezzTokenCache, getHomezzAgentToken,
+  isValidHomezzPassword, loadHomezzContractPromotions, withHomezzAgentToken, type HomezzAgentDeps,
 } from "./agents.server";
+import { parseHomezzContractPromotions } from "./promotions";
 import type { HomezzResult } from "./client";
 
 const ok = (data: unknown): HomezzResult => ({ ok: true, status: 200, message: "OK", data, raw: "" });
@@ -81,5 +82,65 @@ describe("token agent", () => {
     expect(calls.filter((c) => c.action === "generate-token")).toHaveLength(2);
     const logged = JSON.stringify([...log.mock.calls, ...err.mock.calls]);
     expect(logged).not.toContain("tok-");
+  });
+});
+
+describe("roster și contract HomeZZ", () => {
+  const members = [
+    { id: "active", full_name: "Agent activ", email: "activ@example.ro" },
+    { id: "inactive", full_name: "Agent neactivat", email: "neactivat@example.ro" },
+  ];
+  const agent = (promotions: unknown) => ({
+    email: "activ@example.ro", name: "Agent activ", phone: null, assignedSlots: 10, remainingSlots: 10, promotions,
+  });
+
+  it("agent activ fără promovări HomeZZ → patru tipuri cu zero; neactivat → fără promovări", () => {
+    const roster = buildHomezzAgentRoster(members, [], { agents: [agent(null)], error: null }, null);
+    expect(roster.members[0]!.promotions.map((p) => ({ id: p.id, total: p.total, remaining: p.remaining }))).toEqual([
+      { id: 3, total: 0, remaining: 0 }, { id: 6, total: 0, remaining: 0 },
+      { id: 9, total: 0, remaining: 0 }, { id: 7, total: 0, remaining: 0 },
+    ]);
+    expect(roster.members[1]!.active).toBe(false);
+    expect(roster.members[1]!.promotions).toEqual([]);
+  });
+
+  it("agent activ cu un tip primit → valoarea este păstrată, celelalte sunt zero", () => {
+    const roster = buildHomezzAgentRoster(members, [], {
+      agents: [agent({ 6: { total: "2", remaining: 1, text: "Prima pagina" } })], error: null,
+    }, null);
+    expect(roster.members[0]!.promotions).toEqual([
+      { id: 3, label: "Premium", total: 0, remaining: 0, text: null },
+      { id: 6, label: "Prima Pagină", total: 2, remaining: 1, text: "Prima pagina" },
+      { id: 9, label: "Top Listă", total: 0, remaining: 0, text: null },
+      { id: 7, label: "Reînnoire instant", total: 0, remaining: 0, text: null },
+    ]);
+  });
+
+  it("rezumatul citește total, allocated și remaining din contract.promos", async () => {
+    const data = { contract: { promos: {
+      3: { name: "Premium", total: "2", allocated: 0, remaining: 2 },
+      6: { name: "Prima pagina", total: "2", allocated: 1, remaining: 1 },
+      7: { name: "Reinnoire Instant", total: "2", allocated: 2, remaining: 0 },
+      9: { name: "Top Lista", total: "2", allocated: 0, remaining: 2 },
+    } } };
+    expect(parseHomezzContractPromotions(data)).toEqual([
+      { id: 3, label: "Premium", total: 2, allocated: 0, remaining: 2 },
+      { id: 6, label: "Prima Pagină", total: 2, allocated: 1, remaining: 1 },
+      { id: 9, label: "Top Listă", total: 2, allocated: 0, remaining: 2 },
+      { id: 7, label: "Reînnoire instant", total: 2, allocated: 2, remaining: 0 },
+    ]);
+    const { d, calls } = deps();
+    d.post = async (action, params) => { calls.push({ action, params }); return ok(data); };
+    expect(await loadHomezzContractPromotions("o", d)).toEqual(parseHomezzContractPromotions(data));
+    expect(calls).toEqual([{ action: "details-agency", params: { key: "SECRET-KEY" } }]);
+  });
+
+  it("rezumatul este null la refuz sau excepție, fără să blocheze rosterul", async () => {
+    const refused = deps().d;
+    refused.post = async () => bad("Contract indisponibil");
+    expect(await loadHomezzContractPromotions("o", refused)).toBeNull();
+    const thrown = deps().d;
+    thrown.post = async () => { throw new Error("HomeZZ nu a răspuns"); };
+    expect(await loadHomezzContractPromotions("o", thrown)).toBeNull();
   });
 });

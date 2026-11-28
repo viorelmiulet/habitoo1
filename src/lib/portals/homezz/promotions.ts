@@ -78,3 +78,28 @@ export function parseHomezzAgentPromotions(v: unknown): HomezzAgentPromotion[] {
   else if (isObj(v)) for (const [k, e] of Object.entries(v)) push(k, e);
   return rows.sort((a, b) => HOMEZZ_PROMOTION_IDS.indexOf(a.id) - HOMEZZ_PROMOTION_IDS.indexOf(b.id));
 }
+
+/** Agentul activ are câte un câmp pentru fiecare tip canonic; doar tipurile absente primesc zero. */
+export function completeHomezzAgentPromotions(v: unknown): HomezzAgentPromotion[] {
+  const received = parseHomezzAgentPromotions(v);
+  return HOMEZZ_PROMOTION_TYPES.map((type) => received.find((p) => p.id === type.id) ?? {
+    id: type.id, label: type.label, total: 0, remaining: 0, text: null,
+  });
+}
+
+export type HomezzContractPromotion = { id: number; label: string; total: number; allocated: number; remaining: number };
+/** Rezumatul `details-agency` → `contract.promos`, în ordinea canonică; forma absentă nu inventează un contract. */
+export function parseHomezzContractPromotions(data: unknown): HomezzContractPromotion[] {
+  if (!isObj(data) || !isObj(data["contract"]) || !isObj(data["contract"]["promos"])) return [];
+  const promos = data["contract"]["promos"];
+  return HOMEZZ_PROMOTION_TYPES.map((type) => {
+    const entry = promos[String(type.id)];
+    return {
+      id: type.id,
+      label: type.label,
+      total: isObj(entry) ? num(entry["total"]) ?? 0 : 0,
+      allocated: isObj(entry) ? num(entry["allocated"]) ?? 0 : 0,
+      remaining: isObj(entry) ? num(entry["remaining"]) ?? 0 : 0,
+    };
+  });
+}
