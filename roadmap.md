@@ -1,3 +1,8 @@
+## Promovări în activarea fiecărui portal
+- [x] Imobiliare.ro încorporat sub sloturi în SuperAdmin și pentru administratorul agenției; cardul separat eliminat.
+- [x] Imopedia afișează pachetul de boost-uri prin funcția și cache-ul existente, inclusiv eroarea, fără consum.
+- [x] 32/32 teste exclusiv noi/modificate și compilare OK; fără Storia, reguli noi, apeluri reale sau publicare; commit la încheiere.
+
 ## HomeZZ — promovări vizibile pentru fiecare agent activ
 - [x] Agenții activi primesc toate cele patru tipuri canonice, cu zerouri doar pentru tipurile lipsă; cei neactivați rămân fără promovări.
 - [x] Rezumat `details-agency` → `contract.promos`, neblocant la eroare, afișat deasupra listei; salvarea și regulile existente rămân neschimbate.

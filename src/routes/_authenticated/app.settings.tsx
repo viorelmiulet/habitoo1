@@ -30,7 +30,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { PublicProfileLink } from "@/components/app/PublicProfileLink";
 import { AgencyDescriptionPreview } from "@/components/app/AgencyDescriptionPreview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ImobiliarePromotionsAdminCard } from "@/components/app/ImobiliarePromotionsAdminCard";
 import { ImoradarAutoCard } from "@/components/app/ImoradarAutoCard";
 
 import { ProperstarFeedCard } from "@/components/app/ProperstarFeedCard";
@@ -702,7 +701,6 @@ function SettingsPage() {
               <div className="space-y-6">
                 <AgencyPortalCatalogCard />
                 <ImoradarAutoCard />
-                <ImobiliarePromotionsAdminCard />
                 <ProperstarFeedCard />
                 <AgencySitePortalCard />
               </div>

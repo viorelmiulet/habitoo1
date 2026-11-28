@@ -1,4 +1,6 @@
 import { HomezzAgentsPanel } from "@/components/app/HomezzAgentsPanel";
+import { ImobiliarePromotionsAdminCard } from "@/components/app/ImobiliarePromotionsAdminCard";
+import { ImopediaPackageBoostInfo } from "@/components/app/ImopediaPackageBoostInfo";
 import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { StoriaAccountControls } from "@/components/app/StoriaAccountControls";
 /**
@@ -1112,6 +1114,8 @@ export function PortalsCard({ organizationId, onSelectedChange }: { organization
                     </div>
 
                     {item.connection.activated ? <PortalSlotsCard organizationId={organizationId} portalId={item.portal.id} /> : null}
+                    {item.connection.activated && item.portal.id === "imobiliare_ro" ? <ImobiliarePromotionsAdminCard organizationId={organizationId} embedded /> : null}
+                    {item.connection.activated && item.portal.id === "imopedia" && item.connection.hasPortalCredential ? <ImopediaPackageBoostInfo organizationId={organizationId} /> : null}
                     {item.portal.id === "homezz" && item.connection.hasPortalCredential ? (
                       <div className="px-4 pb-4 sm:px-5"><HomezzAgentsPanel organizationId={organizationId} /></div>
                     ) : null}

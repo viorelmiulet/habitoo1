@@ -6,7 +6,7 @@
  * gol = limita este rezerva cumpărată la portal; alocarea goală = nelimitat în
  * limita agenției. „Puncte Energy” este un buget numeric, nu un număr de locuri.
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ElementType } from "react";
 import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -63,7 +63,10 @@ function numberOrNull(value: string): number | null {
   return Math.trunc(parsed);
 }
 
-export function ImobiliarePromotionsAdminCard({ organizationId }: { organizationId?: string }) {
+export function ImobiliarePromotionsAdminCard({ organizationId, embedded = false }: { organizationId?: string; embedded?: boolean }) {
+  const Outer = (embedded ? "section" : Card) as ElementType;
+  const Header = (embedded ? "div" : CardHeader) as ElementType;
+  const Content = (embedded ? "div" : CardContent) as ElementType;
   const queryClient = useQueryClient();
   const load = useServerFn(getImobiliarePromotionAdmin);
   const saveService = useServerFn(setImobiliarePromotionService);
@@ -164,15 +167,26 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
   const services = useMemo(() => view.data?.services ?? [], [view.data]);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-3">
+    <Outer
+      className={embedded ? "border-t border-border px-4 py-4 sm:px-5" : undefined}
+      data-imobiliare-promotions-admin={embedded ? "" : undefined}
+    >
+      <Header className="flex flex-row items-start justify-between gap-3">
         <div>
-          <CardTitle>Promovări Imobiliare.ro</CardTitle>
-          <CardDescription>
-            Alege serviciile folosite de agenție, plafonul pe fiecare serviciu și cât primește
-            fiecare coleg. Câmp gol la plafon = limita este rezerva cumpărată la portal; câmp gol la
-            alocare = nelimitat în limita agenției.
-          </CardDescription>
+          {embedded ? <h2 className="text-base font-semibold">Promovări Imobiliare.ro</h2> : <CardTitle>Promovări Imobiliare.ro</CardTitle>}
+          {embedded ? (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Alege serviciile folosite de agenție, plafonul pe fiecare serviciu și cât primește
+              fiecare coleg. Câmp gol la plafon = limita este rezerva cumpărată la portal; câmp gol la
+              alocare = nelimitat în limita agenției.
+            </p>
+          ) : (
+            <CardDescription>
+              Alege serviciile folosite de agenție, plafonul pe fiecare serviciu și cât primește
+              fiecare coleg. Câmp gol la plafon = limita este rezerva cumpărată la portal; câmp gol la
+              alocare = nelimitat în limita agenției.
+            </CardDescription>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {view.data?.syncedAt ? (
@@ -191,9 +205,9 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
             Sincronizează
           </Button>
         </div>
-      </CardHeader>
+      </Header>
 
-      <CardContent className="space-y-4">
+      <Content className={cn("space-y-4", embedded && "mt-4")}>
         {view.isLoading ? (
           <p className="text-sm text-muted-foreground">
             <Loader2 className="mr-1.5 inline size-3.5 animate-spin" aria-hidden />
@@ -378,7 +392,7 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
             );
           })
         )}
-      </CardContent>
+      </Content>
 
       {/* Confirmarea retragerii: anularea nu schimbă nimic. */}
       <AlertDialog open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
@@ -424,6 +438,6 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </Outer>
   );
 }

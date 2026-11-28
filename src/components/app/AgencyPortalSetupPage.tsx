@@ -1,4 +1,6 @@
 import { StoriaAccountControls } from "@/components/app/StoriaAccountControls";
+import { ImobiliarePromotionsAdminCard } from "@/components/app/ImobiliarePromotionsAdminCard";
+import { ImopediaPackageBoostInfo } from "@/components/app/ImopediaPackageBoostInfo";
 import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { VREXA_MESSAGES_DISABLED } from "@/lib/portals/vrexa/messages";
 import { useState } from "react";
@@ -398,6 +400,8 @@ function AgencyPortalSetupBody({ portalId, organizationId }: { portalId: string;
           </>
         )}
         {s.connection.activated ? <PortalSlotsCard portalId={s.id} /> : null}
+        {s.connection.activated && s.id === "imobiliare_ro" ? <ImobiliarePromotionsAdminCard embedded /> : null}
+        {s.connection.activated && s.id === "imopedia" && s.connection.hasPortalCredential ? <ImopediaPackageBoostInfo /> : null}
         {s.id === "homezz" && s.connection.hasPortalCredential ? <HomezzAgentsPanel /> : null}
       </section>
 
