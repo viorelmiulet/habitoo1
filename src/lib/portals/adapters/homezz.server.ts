@@ -14,6 +14,7 @@ import {
   type HomezzOffer, type HomezzPublishClient,
 } from "../homezz/publish";
 import type { HomezzMapResult } from "../homezz/mapper";
+import { homezzImageLogUrl } from "../homezz/images.server";
 
 const FAIL_CODE: Record<HomezzFailKind, PortalErrorCode> = {
   action_error: "INVALID_REQUEST",
@@ -67,7 +68,8 @@ export function createHomezzAdapter(transport: HomezzTransport = homezzRelayTran
   });
 
   async function upsert(ctx: PortalContext, ref: ListingRef, action: "publish" | "update"): Promise<PortalResult<ListingOutcome>> {
-    const responses: { action: string; http_status: number | null; body: string }[] = [];
+    const responses: { action: string; http_status: number | null; body: string; photos_sent: number; photo_urls: string[] }[] = [];
+    const imageSecrets: string[] = [];
     try {
       const key = (ctx.portalCredential ?? "").trim();
       if (!key) return { ok: false, code: "CONFIG_ERROR", message: "Lipsește cheia API HomeZZ.ro a agenției.", detail: "homezz_no_key" };
@@ -79,14 +81,19 @@ export function createHomezzAdapter(transport: HomezzTransport = homezzRelayTran
         return { ok: true, data: { externalId: null, live: false, processed: 0, detail: `homezz_dry_run action=${action} ads=${ads.length} images=${data.images.urls.length}`, message: `Trimiterile reale către HomeZZ sunt oprite. S-ar trimite ${ads.length} anunțuri cu ${data.images.urls.length} poze.` } };
       }
       const baseClient = clientFor(ctx, key, data.agentEmail);
-      const record = async (step: string, request: Promise<HomezzResult>) => {
+      for (const raw of data.images.urls) {
+        try { for (const [name, value] of new URL(raw).searchParams) if (/token|signature|key/i.test(name)) imageSecrets.push(value); } catch { /* no capability */ }
+      }
+      const record = async (step: string, params: Record<string, import("../homezz/client").HomezzValue>, request: Promise<HomezzResult>) => {
         const result = await request;
-        responses.push({ action: step, http_status: result.status, body: redactHomezz(result.raw, [key]) });
-        return result;
+        const photos = Array.isArray(params["images"]) ? params["images"].filter((v): v is string => typeof v === "string") : [];
+        const body = redactHomezz(result.raw, [key, ...imageSecrets]);
+        responses.push({ action: step, http_status: result.status, body, photos_sent: photos.length, photo_urls: photos.slice(0, 3).map(homezzImageLogUrl) });
+        return result.ok ? { ...result, raw: body } : { ...result, raw: body, message: redactHomezz(result.message, imageSecrets), adError: result.adError ? redactHomezz(result.adError, imageSecrets) : null };
       };
       const client: HomezzPublishClient = {
-        agency: (step, params) => record(step, baseClient.agency(step, params)),
-        agent: (step, params, email) => record(step, baseClient.agent(step, params, email)),
+        agency: (step, params) => record(step, params, baseClient.agency(step, params)),
+        agent: (step, params, email) => record(step, params, baseClient.agent(step, params, email)),
       };
       const r = await publishHomezz({ ads, stored: data.stored, reference: data.reference, agentEmail: data.agentEmail, images: data.images, client });
       const warnings = [...data.mapping.warnings, ...data.images.warnings];
@@ -103,7 +110,8 @@ export function createHomezzAdapter(transport: HomezzTransport = homezzRelayTran
         mediaWarning: warnings.length ? warnings.join(" · ") : null,
       } };
     } catch (e) {
-      const fail = publishFail(e);
+      const failure = publishFail(e);
+      const fail = { ...failure, message: redactHomezz(failure.message, imageSecrets) };
       if (!responses.length) return fail;
       return { ...fail, detail: `${fail.detail ?? ""} actions=${responses.map((response) => response.action).join(" ")}`, portalResponse: { actions: responses.map((response) => response.action), responses } };
     }

@@ -25,15 +25,15 @@ async function loadDb(db?: Db): Promise<Db> {
 }
 
 /** Cu parametri: varianta redimensionată; la orice eșec, originalul. */
-export async function signed(db: Db, bucket: string, path: string, params?: ImageParams | null): Promise<string | null> {
+export async function signed(db: Db, bucket: string, path: string, params?: ImageParams | null, ttlSeconds = SIGNED_URL_TTL): Promise<string | null> {
   if (params) {
     try {
-      const { data, error } = await db.storage.from(bucket).createSignedUrl(path, SIGNED_URL_TTL, { transform: storageTransform(params) });
+      const { data, error } = await db.storage.from(bucket).createSignedUrl(path, ttlSeconds, { transform: storageTransform(params) });
       const url = !error ? httpsUrlOrNull(data?.signedUrl ?? null) : null;
       if (url) return url;
     } catch { /* revenim la original */ }
   }
-  const { data } = await db.storage.from(bucket).createSignedUrl(path, SIGNED_URL_TTL);
+  const { data } = await db.storage.from(bucket).createSignedUrl(path, ttlSeconds);
   return httpsUrlOrNull(data?.signedUrl ?? null);
 }
 

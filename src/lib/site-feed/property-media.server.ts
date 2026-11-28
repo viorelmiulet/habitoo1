@@ -18,13 +18,13 @@ export const PUBLIC_MEDIA_SIGNED_TTL_MS = (24 * 60 * 60 - 5 * 60) * 1000;
 const targets = createMediaCache<string>(PUBLIC_MEDIA_ACCESS_TTL_MS);
 const signatures = createMediaCache<string>(PUBLIC_MEDIA_SIGNED_TTL_MS);
 
-/** Same access and watermark policy for redirects and HomeDirect's direct URLs. */
-export async function publishableImageTarget(db: Db, image: Image, property: Property, org: Org, params?: ImageParams | null) {
+/** Same access and watermark policy for redirects and direct portal URLs. */
+export async function publishableImageTarget(db: Db, image: Image, property: Property, org: Org, params?: ImageParams | null, signing?: { ttlSeconds: number }) {
   if (image.include_in_publish !== true || image.is_confidential === true || !isPropertyFeedEligible(property)) return null;
   if (!image.storage_path) return httpsUrlOrNull(image.url);
   const cfg = watermarkFromOrg(org);
   const key = JSON.stringify([image.storage_path, cfg, params ?? null]);
-  return signatures(key, async () => {
+  const resolve = async () => {
     let path = image.storage_path;
     if (!path) return null;
     if (cfg.enabled) {
@@ -32,8 +32,10 @@ export async function publishableImageTarget(db: Db, image: Image, property: Pro
       path = (await ensureWatermarkedPath(db, path, cfg)) ?? path;
     }
     // A failed signature must not be cached as a successful original URL.
-    return signed(db, "property-media", path, params);
-  });
+    return signed(db, "property-media", path, params, signing?.ttlSeconds);
+  };
+  // A portal requiring a minimum remaining lifetime needs a fresh signature.
+  return signing ? resolve() : signatures(key, resolve);
 }
 
 export async function propertyMediaTarget(rawId: unknown, params?: ImageParams | null, dbIn?: Db) {

@@ -45,7 +45,7 @@ export function homezzInternalId(reference: string | null | undefined, transacti
 }
 
 export function homezzPhotosHash(imageIds: string[]): string {
-  return imageIds.slice(0, HOMEZZ_MAX_IMAGES).join(",");
+  return `direct-1024x768-contain-v1:${imageIds.slice(0, HOMEZZ_MAX_IMAGES).join(",")}`;
 }
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : typeof v === "number" ? String(v) : null);

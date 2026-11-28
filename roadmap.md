@@ -1,3 +1,7 @@
+## HomeZZ — fotografii directe verificate
+- [x] Adrese finale semnate proaspăt 25h, transformare 1024×768 contain cu original verificat de rezervă; GET maximum 8s/adresă, fără redirecturi, avertismente fără blocare și ordinea/limita/watermark păstrate.
+- [x] Hash versionat pentru retrimiterea la următoarea actualizare, jurnal cu număr/primele trei adrese fără semnături; 42/42 teste exclusiv noi/modificate și compilare OK, inclusiv flux pregătire→actualizare→fără retrimitere. HB-1649 confirmat read-only cu hash vechi și 17 poze; fără publicare, scrieri sau retrimitere reală.
+
 ## Partner API — reprovizionarea și protecția agenției demo
 - [x] Organizația și allowlist-ul recreate idempotent prin 0354; reset verificat la 12 anunțuri, 2 agenți și 1 ansamblu pentru fiecare cauta-ro/propri-ro, fără profiluri CRM necesare.
 - [x] Protecție DB/UI la ștergere, arhivare și suspendare; excludere din liste și statistici prin 0355, public/campanii verificate; erori DB jurnalizate și afișate corect.

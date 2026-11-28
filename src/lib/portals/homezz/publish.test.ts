@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { encodeHomezzForm, homezzPost, type HomezzResult, type HomezzValue } from "./client";
 import { HomezzPublishError, homezzInternalId, homezzLajumateDue, homezzPhotosHash, parseHomezzAdInfo, parseHomezzOffers, publishHomezz, withdrawHomezz, type HomezzOffer, type HomezzPublishClient } from "./publish";
 import { createHomezzAdapter, type HomezzListingData } from "../adapters/homezz.server";
-import { homezzImages } from "./listing.server";
 
 type Call = { scope: "agency" | "agent"; action: string; params: Record<string, HomezzValue> };
 const ok = (data: unknown = {}): HomezzResult => ({ ok: true, status: 200, message: "", data, raw: "" });
@@ -100,6 +99,18 @@ describe("HomeZZ publish", () => {
     expect("images" in f.calls[0]!.params).toBe(false);
   });
 
+  it("hash vechi → retrimite galeria o dată, apoi omite images", async () => {
+    const first = fake();
+    const old = offer("sale", { photos_hash: images(3).ids.join(",") });
+    const result = await publishHomezz({ ads: ads("sale"), stored: [old], reference: "HB-1649", agentEmail: "a@x.ro", images: images(3), client: first.client });
+    expect(first.calls[0]?.params["images"]).toEqual(images(3).urls);
+    expect(result.offers[0]?.photos_hash).toBe(`direct-1024x768-contain-v1:${images(3).ids.join(",")}`);
+    const next = fake();
+    await publishHomezz({ ads: ads("sale"), stored: result.offers, reference: "HB-1649", agentEmail: "a@x.ro", images: images(3), client: next.client });
+    expect(next.calls).toHaveLength(1);
+    expect(next.calls[0]?.params).not.toHaveProperty("images");
+  });
+
   it("poze schimbate → images[0..17]", async () => {
     const f = fake();
     await publishHomezz({ ads: ads("sale"), stored: [offer("sale")], reference: "HB-1376", agentEmail: "a@x.ro", images: images(25), client: f.client });
@@ -155,13 +166,6 @@ describe("HomeZZ publish", () => {
     expect(homezzLajumateDue(offer("sale", { published_at: "2026-11-24T11:40:00Z", ljm_checked_at: "2026-11-24T11:59:30Z" }), now)).toBe(false);
   });
 
-  it("imagini: primele 18, redimensionate la 1024×768 fără decupare", () => {
-    const r = homezzImages(Array.from({ length: 20 }, (_, i) => `https://crm.habitoo.ro/api/public/sites/v1/media/id${i}.jpg`));
-    expect(r.urls).toHaveLength(18);
-    expect(r.ids[0]).toBe("id0");
-    expect(r.urls[0]).toBe("https://crm.habitoo.ro/api/public/sites/v1/media/id0.jpg?w=1024&h=768&fit=contain");
-  });
-
   it("parseHomezzOffers păstrează internal_id salvat", () => {
     expect(parseHomezzOffers([{ transaction: "sale", internal_id: "99991", reference: "99991", id: "H1", url: "" }])[0]!.internal_id).toBe("99991");
   });
@@ -170,6 +174,22 @@ describe("HomeZZ publish", () => {
 describe("HomeZZ adapter", () => {
   const base: HomezzListingData = { mapping: { ok: true, ads: ads("sale"), warnings: [] }, reference: "HB-1376", assignedTo: "u1", agentEmail: "a@x.ro", stored: [], images: { ...images(1), warnings: [] } };
   const ctx = { organizationId: "o1", portalCredential: "SECRET-KEY", allowLiveRequests: true } as never;
+
+  it("jurnalul arată numărul trimis și maximum trei adrese fără semnături; avertismentul ajunge în card", async () => {
+    const urls = Array.from({ length: 4 }, (_, i) => `https://images.example.org/${i}.jpg?token=PHOTO-SIGNATURE-${i}&width=1024&height=768&resize=contain`);
+    const data = { ...base, images: { ids: ["a", "b", "c", "d"], urls, warnings: ["HomeZZ: 1 poze nu au putut fi pregătite"] } };
+    const adapter = createHomezzAdapter(async () => new Response(JSON.stringify({ meta: { code: 200 }, data: { id: 4315985, images: urls } })), { load: async () => data, withToken: async (_o, _e, run) => run("TOKEN") });
+    if (!adapter.publishListing) throw new Error("Missing publishListing");
+    const result = await adapter.publishListing(ctx, { propertyId: "p1", externalId: null });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Expected successful listing");
+    const log = result.data.portalResponse as { responses: { action: string; photos_sent: number; photo_urls: string[] }[] };
+    const insert = log.responses.find((r) => r.action === "insert");
+    expect(insert?.photos_sent).toBe(4);
+    expect(insert?.photo_urls).toEqual(urls.slice(0, 3).map((url) => url.replace(/token=PHOTO-SIGNATURE-\d&/, "")));
+    expect(JSON.stringify(result)).not.toContain("PHOTO-SIGNATURE");
+    expect(result.data.mediaWarning).toBe("HomeZZ: 1 poze nu au putut fi pregătite");
+  });
 
   it.each([false, true])("jurnal cu ad-info update insert și răspunsuri redactate (eșec=%s)", async (failed) => {
     const transport = async (url: string) => {
