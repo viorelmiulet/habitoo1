@@ -23,6 +23,7 @@ import {
   destinationOptions,
   floorLabelOptions,
   layoutOptions,
+  houseTypeOptions,
   orientationOptions,
   parkingOptions,
   seismicRiskOptions,
@@ -328,6 +329,9 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
               </SelectContent>
             </Select>
           </FormRow>
+          {["house", "villa"].includes(ctx.str("property_type")) ? (
+            <SelectField ctx={ctx} field="category" label="Tip casă" options={houseTypeOptions} />
+          ) : null}
           <SelectField ctx={ctx} field="layout" label="Compartimentare" options={layoutOptions} />
           <SelectField ctx={ctx} field="comfort" label="Confort" options={comfortOptions} />
           <SelectField ctx={ctx} field="destination" label="Destinație" options={destinationOptions} />

@@ -857,6 +857,11 @@
 - [x] 33/33 teste în cele două fișiere noi/modificate: DELETE corect, retry 5xx, 404 succes, neeligibilitate, protecția secretelor și izolarea altor portaluri; build OK.
 - [x] Migrările 0350/0351 aplicate fără modificări ale anunțurilor existente; citirea live confirmă zero retrageri noi și cele 48 intacte; fără apeluri reale sau publicare.
 
+## Tip casă — formular și portaluri
+- [x] Select opțional comun creare/editare, category în patch, vizualizare și acces din Publicare.
+- [x] Vrexa acceptă toate cele nouă valori; Housera acceptă șase și refuză explicit Bungalow/Cabană/Fermă, fără inventarea subtipurilor. Partner API reutilizează property_subtype; feedul nu are câmp de categorie pentru case și rămâne neschimbat.
+- [x] 42/42 teste noi trecute și build OK; fără date sau publicare. Verificarea în cont real nu este disponibilă: solicitantul nu are cont asociat previzualizării.
+
 ## Google Search Console — site-ul publicat Lovable
 - [x] Etichetă META și sitemap cu adresa Lovable, fără schimbarea sitemapului domeniului public; 11/11 teste modificate și verificare locală.
 - [x] Publicare aprobată, etichetă live confirmată, verificare reușită și proprietate URL-prefix adăugată.

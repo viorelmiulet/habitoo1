@@ -17,6 +17,11 @@ export const propertyKindOptions = [
   "Penthouse",
 ] as const;
 
+export const houseTypeOptions = [
+  "Individuală", "Cuplată", "Înșiruită", "Duplex", "Triplex",
+  "Bungalow", "Conac", "Cabană", "Fermă",
+] as const;
+
 export const layoutOptions = [
   "Decomandat",
   "Semidecomandat",

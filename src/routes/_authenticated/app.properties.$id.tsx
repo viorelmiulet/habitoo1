@@ -782,6 +782,7 @@ function PropertyDetailContent() {
 
   const specs: { label: string; value: string }[] = [
     { label: "Tip", value: propertyTypeLabels[property.property_type] ?? property.property_type },
+    { label: "Tip casă", value: ["house", "villa"].includes(property.property_type) ? property.category ?? "" : "" },
     { label: "Compartimentare", value: property.layout ?? "" },
     { label: "Confort", value: property.comfort ?? "" },
     { label: "Destinație", value: property.destination ?? "" },
@@ -1542,7 +1543,7 @@ function PropertyDetailContent() {
               setTab("overview");
               requestAnimationFrame(() =>
                 document
-                  .getElementById("property-details-form")
+                  .getElementById(["house", "villa"].includes(property.property_type) ? "edit-category" : "property-details-form")
                   ?.scrollIntoView({ behavior: "smooth" }),
               );
             }}

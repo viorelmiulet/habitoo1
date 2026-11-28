@@ -5,6 +5,7 @@
 export const PROPERTY_DETAIL_FIELDS = [
   // Detalii
   "property_type",
+  "category",
   "layout",
   "comfort",
   "destination",

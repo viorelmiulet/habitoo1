@@ -112,10 +112,13 @@ export function houseraTypeFor(p: HouseraMapperProperty): { type: string; subtyp
     case "studio": return { type: "apartment", subtype: "studio" };
     case "apartment": return { type: "apartment", subtype: fromCat("apartment") ?? "standard" };
     case "penthouse": case "duplex": return { type: "apartment", subtype: pt };
-    case "villa": return { type: "house", subtype: "villa" };
+    case "villa":
     case "house": {
-      const s = fromCat("house");
-      return s ? { type: "house", subtype: s } : { type: "house", subtype: null, error: "Subtipul casei lipsește (individuală, vilă, duplex, înșiruită, cuplată…): completează categoria." };
+      const s = fromCat("house") ?? (pt === "villa" && cats.length === 0 ? "villa" : null);
+      if (s) return { type: "house", subtype: s };
+      return { type: "house", subtype: null, error: cats.length
+        ? `Tipul casei „${p.category}” nu are corespondent ca subtip de casă în Housera. Publicarea pe Housera este blocată.`
+        : "Subtipul casei lipsește: completează «Tip casă» în fișa proprietății." };
     }
     case "land": {
       const s = fromCat("land") ?? LAND_SUBTYPE_BY_DESTINATION[norm(p.destination)] ?? null;
